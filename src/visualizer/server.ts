@@ -87,9 +87,25 @@ app.get("/manifest.webmanifest", appFile("manifest.webmanifest"));
 app.get("/sw.js", appFile("sw.js"));
 app.get("/app/:file", (c) => {
   const name = c.req.param("file");
-  if (!/^[\w-]+\.(png|svg|js)$/.test(name) || !existsSync(appRoot + name)) return c.text("Not found", 404);
-  return appFile(name)(c);
+  if (name === "memory") return c.redirect("/app/memory/");
+  if (/^[\w-]+\.(png|svg|js)$/.test(name) && existsSync(appRoot + name)) return appFile(name)(c);
+  // Nova Hub's shared look (themes) for Nova Index, fetched once from Nova Bot's worker
+  if (SHARED.includes(name)) return shared(c, name);
+  return c.text("Not found", 404);
 });
+const SHARED = ["themes.css", "themes.js"];
+const sharedCache = new Map<string, { at: number; body: string; type: string }>();
+async function shared(c: any, name: string) {
+  const hit = sharedCache.get(name);
+  if (!hit || Date.now() - hit.at > 10 * 60_000) {
+    try {
+      const res = await fetch(`${config.workerUrl}/app/${name}`, { signal: AbortSignal.timeout(8000) });
+      if (res.ok) sharedCache.set(name, { at: Date.now(), body: await res.text(), type: res.headers.get("content-type") || TYPES[extname(name)] });
+    } catch {}
+  }
+  const got = sharedCache.get(name);
+  return got ? c.body(got.body, 200, { "Content-Type": got.type, "Cache-Control": "no-cache" }) : c.text("Not found", 404);
+}
 
 // ---- Nova Observatory and Nova Notes, served from their folders next to Nova Agent ----
 // So they're always on while Nova Agent is, and open inside it in any browser (as part of
@@ -112,6 +128,46 @@ function serveFolder(prefix: string, folder: string, missing: string) {
 }
 serveFolder("/observatory", "../../../no/", "Nova Observatory isn't next to Nova Agent (expected it in ../no).");
 serveFolder("/notes", "../../../nn/", "Nova Notes isn't next to Nova Agent (expected it in ../nn).");
+serveFolder("/app/memory", "../../../ni/app/", "Nova Index isn't next to Nova Agent (expected it in ../ni).");
+
+// ---- Nova Index's data, through Nova Agent's own key ----
+// The same addresses the app uses in Nova Hub (/app/api/memory/...), passed on to the
+// memory engine as Nova Agent: the studio's memory and staff memory, never customers'.
+// Approvals (customers' facts) stay behind Nova Hub's sign-in.
+async function toEngine(path: string, init: RequestInit = {}) {
+  const res = await fetch(`${config.workerUrl}/memory${path}`, {
+    ...init,
+    headers: { ...((init.headers as Record<string, string>) || {}), Authorization: `Bearer ${config.agentNovaKey}`, "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(15_000),
+  });
+  return { status: res.status, data: await res.json().catch(() => ({})) };
+}
+app.all("/app/api/memory/*", async (c) => {
+  if (!config.agentNovaKey) return c.json({ error: "Nova Agent isn't connected to Nova Bot (AGENT_NOVA_KEY)" }, 503);
+  // Changes only from the page itself (the header makes other websites' requests fail)
+  if (c.req.method !== "GET" && c.req.header("X-Nova-App") !== "index") return c.json({ error: "Forbidden" }, 403);
+  const route = c.req.path.slice("/app/api/memory".length);
+  const query = new URL(c.req.url).search;
+  if (route === "/pending") return c.json({ pending: [], locked: true });
+  if (route.startsWith("/pending/")) return c.json({ error: "Approvals need Nova Hub's sign-in" }, 403);
+  if (route === "/stats") {
+    const { data } = await toEngine("/index");
+    const by = new Map<string, { scope: string; files: number; facts: number }>();
+    for (const f of (data.files || []) as { scope: string; facts: number }[]) {
+      const s = by.get(f.scope) || { scope: f.scope, files: 0, facts: 0 };
+      s.files += 1;
+      s.facts += f.facts || 0;
+      by.set(f.scope, s);
+    }
+    return c.json({ scopes: [...by.values()], pending: 0, locked: true });
+  }
+  if (route === "/index" || route === "/file") {
+    const body = c.req.method === "PUT" ? await c.req.text() : undefined;
+    const { status, data } = await toEngine(route + query, { method: c.req.method, body });
+    return c.json(data, status as any);
+  }
+  return c.json({ error: "Not found" }, 404);
+});
 
 // ---- Nova Calendar, served from the calendar folder ----
 // Its own offline helper isn't needed (or wanted) here: Nova Agent is the server.

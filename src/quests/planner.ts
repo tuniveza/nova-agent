@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { readCalendar } from "../calendar/store";
 import { askForJson } from "../llm";
+import { memoryFor } from "../memory";
 import { splitLong } from "./lengths";
 import { notifyMission } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
@@ -56,6 +57,8 @@ export async function createMission(request: string, hints: { deadline?: string 
   const active = data.missions.filter((m) => m.status === "active").map((m) => `- ${m.title}${m.deadline ? ` (due ${m.deadline})` : ""}`).join("\n");
   const r = data.rhythm;
 
+  // What the Nova suite remembers about this person and the work (Nova Index)
+  const memory = await memoryFor(request);
   const plan = await askForJson({
     purpose: "plan a Nova Mission",
     schema: PlanSchema,
@@ -75,7 +78,7 @@ Make the plan genuinely good:
     prompt: `Today is ${dayName(now)}, ${fromMin(now).slice(11)} (UK time).
 Home base: ${r.homeBase}. They're up from ${r.wake} and sleep at ${r.sleep}.
 ${hints.deadline ? `The mission's deadline: ${hints.deadline}\n` : ""}${active ? `Other missions already in progress:\n${active}\n` : ""}${taken ? `Already in the calendar:\n${taken}\n` : ""}
-The mission, in their words:
+${memory ? memory + "\n\n" : ""}The mission, in their words:
 """${request.slice(0, 4000)}"""`,
   });
 

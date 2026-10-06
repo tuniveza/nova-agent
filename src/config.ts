@@ -57,6 +57,9 @@ export const config = {
   // AGENT_NOVA_KEY must match the worker's AGENT_NOVA_KEY secret.
   workerUrl: readText("NOVA_WORKER_URL", "https://novacane-worker.novacane-studio.workers.dev"),
   agentNovaKey: readText("AGENT_NOVA_KEY"),
+  // Who's using this Nova Agent, for Nova Index's memory (their own staff facts).
+  // One id per person (e.g. "tuniveza"), so each person's rhythm and habits stay apart.
+  staffId: readText("NOVA_STAFF_ID", "owner").toLowerCase(),
   // How long to wait before asking again when the worker answers straight
   // away (an older worker, or a problem). A worker that holds the call open
   // until a job comes in is asked again immediately.

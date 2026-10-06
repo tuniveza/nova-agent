@@ -15,6 +15,7 @@ import { z } from "zod";
 import { addDay, addNote, AESTHETICS, listRange, PRESETS, readCalendar, removeDay, removeNote, THEMES, updateDay, updateNote } from "./calendar/store";
 import { config } from "./config";
 import { getClient } from "./llm";
+import { learnFrom, memoryFor } from "./memory";
 import { checkLogin, describeAppointments, listTask } from "./tasks";
 import { getRecentEvents, trace } from "./trace";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
@@ -63,6 +64,7 @@ You also run Nova Missions and Nova Quests, a smart planner for the people you t
 - Nova Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
 - Help them prioritise and pivot: for "what should I do now?" use what_now and give one clear recommendation. When plans change ("I'm running late", "I'm out tonight", "I'm ill today"), block the time or update the quest, then say what moved. Mark quests done, started or skipped when they tell you. Point out quests at risk of missing a deadline and suggest what to drop, shorten or move.
 - Their daily rhythm (wake, sleep, buffers, breaks, reminders, phone notifications) can be changed with rhythm_set.
+- The Nova suite remembers (Nova Index): durable facts from these chats (preferences, how they work, people and projects they mention) are saved automatically after each conversation, and what's relevant is given to you below when there is any. When someone tells you something to remember, just say you'll remember it. Never claim you have no memory. They can see and edit everything remembered in Nova Index.
 
 What you can do:
 - Nova Calendar: read, add, change and remove note cards (a title, the note itself, an author, a start and finish time) and day cards (a date with a title, a preset, a title aesthetic, a colour theme, information, a location, tags, and optionally repeating every year). Use the calendar tools for this; the calendar beside the chat updates straight away.
@@ -454,11 +456,14 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
 
   const actions: ChatAction[] = [];
   const model = config.novaModel || DEFAULT_MODEL;
+  // What the Nova suite remembers that matters for this message (Nova Index)
+  const asked = String(messages[messages.length - 1].content);
+  const memory = await memoryFor(asked);
   trace("llm", "start", `Chat: asking ${model}`);
   const final = await getClient().beta.messages.toolRunner({
     model,
     max_tokens: 16000,
-    system: systemPrompt(),
+    system: memory ? `${systemPrompt()}\n\n${memory}` : systemPrompt(),
     tools: [...tools(actions), ...questTools(actions)],
     messages,
     output_config: { effort: "low" },
@@ -477,5 +482,7 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
     .join("\n\n")
     .trim();
   trace("llm", "ok", `Chat: answered (${final.usage.output_tokens} tokens)`);
+  // The suite keeps learning from what's said here (in the background, on Nova Bot's worker)
+  learnFrom([...messages.map((m) => ({ role: m.role, content: String(m.content) })), { role: "assistant", content: reply }]);
   return { reply: reply || (actions.length ? "Done ✦" : "I'm not sure what to say to that."), actions };
 }
