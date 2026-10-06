@@ -6,14 +6,15 @@ import { readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
 import { config } from "../config";
 import { fromMin, planQuests, toMin, type Busy } from "./scheduler";
 import { nextSession } from "./lengths";
+import { isPulse } from "./pulses";
 import { readQuests, writeQuests, type QuestData } from "./store";
 
 const QUEST_NOTE = "quest-";
 const BLOCK_NOTE = "block-";
 
 // "Now" as UK wall-clock minutes (the planner's time), to the second
-export function nowMinutes(): number {
-  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: config.timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+export function nowMinutes(at: Date = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: config.timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(at);
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
   return toMin(`${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`);
 }
@@ -29,7 +30,7 @@ function calendarBusy(): Busy[] {
 export function replan(data: QuestData = readQuests()): { data: QuestData; atRisk: number; unplaced: { id: string; title: string; why: string }[] } {
   const now = nowMinutes();
   for (const q of data.quests) {
-    if (!q.ongoing || q.status === "done" || q.status === "skipped") continue;
+    if (!q.ongoing || isPulse(q) || q.status === "done" || q.status === "skipped") continue;
     // An ongoing quest stops by itself at its deadline
     if (q.deadline && toMin(q.deadline) <= now) {
       q.status = "done";
@@ -54,13 +55,19 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
   }
   // Quests of paused or finished missions wait
   const paused = new Set(data.missions.filter((m) => m.status !== "active").map((m) => m.id));
-  const planning = data.quests.filter((q) => !paused.has(q.missionId));
+  // Pulses run on their own timers (pulses.ts), not in the plan
+  const planning = data.quests.filter((q) => !paused.has(q.missionId) && !isPulse(q));
   const busy: Busy[] = [...calendarBusy(), ...data.blocks.map((b) => ({ start: b.start, end: b.end, label: b.reason }))];
   const result = planQuests({ rhythm: data.rhythm, quests: planning, busy, now });
 
   const unplaced: { id: string; title: string; why: string }[] = [];
   for (const q of data.quests) {
     if (q.status === "done" || q.status === "skipped") continue;
+    if (isPulse(q)) {
+      q.start = q.end = q.travelStart = "";
+      q.atRisk = false;
+      continue;
+    }
     if (paused.has(q.missionId)) {
       if (q.status === "todo") q.start = q.end = q.travelStart = "";
       continue;

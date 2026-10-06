@@ -10,11 +10,12 @@ import { config } from "../config";
 import { trace } from "../trace";
 import { replan, nowMinutes } from "./plan";
 import { describeLength } from "./lengths";
+import { isPulse } from "./pulses";
 import { fromMin, toMin } from "./scheduler";
 import { questEvents, readQuests, writeQuests, type Quest } from "./store";
 
 export interface QuestNotice {
-  kind: "starting" | "leave" | "checkin" | "moved" | "briefing" | "wrapup" | "mission";
+  kind: "starting" | "leave" | "checkin" | "moved" | "briefing" | "wrapup" | "mission" | "pulse";
   title: string;
   message: string;
   questId?: string;
@@ -33,6 +34,7 @@ const PHONE: Record<QuestNotice["kind"], { ttl: number; urgent: boolean }> = {
   briefing: { ttl: 4 * 3600, urgent: false },
   wrapup: { ttl: 2 * 3600, urgent: false },
   mission: { ttl: 86400, urgent: false },
+  pulse: { ttl: 60, urgent: false },
 };
 
 function notify(n: Omit<QuestNotice, "time">, push: boolean) {
@@ -47,7 +49,22 @@ function notify(n: Omit<QuestNotice, "time">, push: boolean) {
     fetch(`${config.workerUrl}/hub/notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.agentNovaKey}` },
-      body: JSON.stringify({ title: n.title, message: n.message, source, kind: n.kind, tag: n.questId || n.kind, ...PHONE[n.kind] }),
+      // Pulses replace each other on the phone and stay out of Nova Hub's Alerts list
+      body: JSON.stringify({ title: n.title, message: n.message, source, kind: n.kind, tag: n.questId || n.kind, ...PHONE[n.kind], keep: n.kind !== "pulse" }),
+      signal: AbortSignal.timeout(10_000),
+    }).catch(() => {});
+  }
+}
+
+// One beat of a pulse (see pulses.ts): a quick ping, not kept in the notices list
+export function pulseBeat(q: Quest, push: boolean): void {
+  const n = { kind: "pulse" as const, title: q.title, message: `${describeLength(q)}${q.deadline ? ` · until ${q.deadline.slice(11, 16)}` : ""}`, questId: q.id };
+  questEvents.emit("notice", { ...n, time: new Date().toISOString() });
+  if (push && config.agentNovaKey) {
+    fetch(`${config.workerUrl}/hub/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.agentNovaKey}` },
+      body: JSON.stringify({ title: n.title, message: n.message, source: "quest", kind: "pulse", tag: q.id, ...PHONE.pulse, keep: false }),
       signal: AbortSignal.timeout(10_000),
     }).catch(() => {});
   }
@@ -76,7 +93,7 @@ function tick() {
   let needsReplan = false;
 
   for (const q of data.quests) {
-    if (!q.start || q.status === "done" || q.status === "skipped") continue;
+    if (!q.start || q.status === "done" || q.status === "skipped" || isPulse(q)) continue;
     const start = toMin(q.start);
     const leave = toMin(q.travelStart || q.start);
     const end = toMin(q.end);

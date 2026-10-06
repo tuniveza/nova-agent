@@ -35,6 +35,7 @@ import { chat, type ChatTurn } from "../chat";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
 import { createMission } from "../quests/planner";
+import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { questEvents } from "../quests/store";
 
@@ -291,3 +292,4 @@ try {
   console.warn("Nova Quests couldn't plan on start-up:", (error as Error).message);
 }
 startQuestReminders();
+startPulses();

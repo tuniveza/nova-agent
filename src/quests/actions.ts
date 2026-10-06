@@ -5,6 +5,7 @@
 import { randomUUID } from "node:crypto";
 import { replan, nowMinutes } from "./plan";
 import { nextSession, splitLong } from "./lengths";
+import { isPulse } from "./pulses";
 import { notifyMission, recentNotices } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
 import { cleanQuest, readQuests, writeQuests, type Block, type Mission, type Quest, type QuestData, type Rhythm } from "./store";
@@ -31,7 +32,7 @@ export function questState() {
   const nowStamp = fromMin(now);
   const open = data.quests.filter((q) => q.status === "todo" || q.status === "doing");
   const doing = data.quests.find((q) => q.status === "doing") || open.find((q) => q.start && q.start <= nowStamp && q.end > nowStamp) || null;
-  const next = open.filter((q) => q.start && q.start > nowStamp && q.id !== doing?.id).sort((a, b) => a.start.localeCompare(b.start)).slice(0, 3);
+  const next = open.filter((q) => !isPulse(q) && q.start && q.start > nowStamp && q.id !== doing?.id).sort((a, b) => a.start.localeCompare(b.start)).slice(0, 3);
   return {
     now: nowStamp,
     rhythm: data.rhythm,
@@ -41,7 +42,8 @@ export function questState() {
     current: doing,
     next,
     overdue: open.filter((q) => q.start && toMin(q.end) < now && q.status === "todo"),
-    unplanned: open.filter((q) => !q.start),
+    unplanned: open.filter((q) => !q.start && !isPulse(q)),
+    pulses: open.filter(isPulse),
     notices: recentNotices().slice(-10),
   };
 }
@@ -51,6 +53,13 @@ export function questState() {
 export function setQuestStatus(id: string, status: Quest["status"], finish = false): Quest {
   const data = readQuests();
   const q = find(data.quests, id, "quest");
+  // A pulse just counts it (it keeps its own beat)
+  if (isPulse(q) && status === "done" && !finish) {
+    q.sessions += 1;
+    q.updated = new Date().toISOString();
+    writeQuests(data);
+    return q;
+  }
   if (q.ongoing && status === "done" && !finish) {
     const sessionStart = q.start || fromMin(nowMinutes());
     q.sessions += 1;

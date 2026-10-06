@@ -671,6 +671,9 @@
       for (const k of keys) html += `<div class="up-day"><h4>${escH(dayLong(k))}</h4><ul>${days[k].sort((a, b) => a.start.localeCompare(b.start)).map((q) => `<li><time>${hhmm(q.start)}</time>${q.atRisk ? '⚠ ' : ''}${escH(q.title)}</li>`).join('')}</ul></div>`;
       html += '</div>';
     }
+    if (st.pulses && st.pulses.length) {
+      html += `<div class="section-h">Pulses \u00B7 quick repeats</div><div class="upcoming"><div class="up-day"><ul>${st.pulses.map((q) => `<li>\u221E ${escH(q.title)} \u00B7 ${dur(q)} <button class="mini" data-q="${q.id}" data-a="finish">Stop</button></li>`).join('')}</ul></div></div>`;
+    }
     if (st.unplanned.length) {
       html += `<div class="section-h">Needs a slot</div><div class="upcoming"><div class="up-day"><ul>${st.unplanned.map((q) => `<li>⚠ ${escH(q.title)} · ${dur(q)}</li>`).join('')}</ul></div></div>`;
     }
@@ -772,6 +775,7 @@
   // Pop-up reminders: on the page, as a system notification, with a bright ping (a different one for each kind)
   let audio = null;
   const PINGS = {
+    pulse: [2093],
     starting: [1318.5, 1975.5],
     leave: [1174.7, 1568, 2093],
     checkin: [1760, 1760, 2349.3, 2349.3],
@@ -814,6 +818,30 @@
     $('toasts').appendChild(el);
     setTimeout(() => el.remove(), n.kind === 'checkin' || n.kind === 'starting' || n.kind === 'leave' ? 120000 : 12000);
   }
+  // One card per pulse, updated on every beat (with a count), instead of a new pop-up each time
+  const beats = {};
+  function pulse(n) {
+    beats[n.questId] = (beats[n.questId] || 0) + 1;
+    let el = document.querySelector(`.toast[data-pulse="${n.questId}"]`);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'toast';
+      el.dataset.pulse = n.questId;
+      el.innerHTML = `<button class="x" aria-label="Close">\u00D7</button><h5></h5><p></p><div class="row-btns"><button class="mini" data-q="${n.questId}" data-a="done">\u2713 Did it</button><button class="mini" data-q="${n.questId}" data-a="finish">Stop</button></div>`;
+      el.querySelector('.x').addEventListener('click', () => el.remove());
+      $('toasts').appendChild(el);
+    }
+    el.querySelector('h5').textContent = `\u221E ${n.title}`;
+    el.querySelector('p').textContent = `${n.message} \u00B7 beat ${beats[n.questId]}`;
+    el.animate([{ boxShadow: '0 0 0 2px var(--hi), 0 0 40px -6px var(--hi)' }, { boxShadow: '0 30px 70px -20px #000, 0 0 40px -16px var(--hi)' }], { duration: 600 });
+    clearTimeout(el.hideTimer);
+    el.hideTimer = setTimeout(() => el.remove(), 15000);
+    chime('pulse');
+    if ('Notification' in window && Notification.permission === 'granted' && document.hidden && swReg) {
+      swReg.showNotification(`\u221E ${n.title}`, { body: n.message, tag: n.questId, renotify: true, icon: '/app/icon-192.png', silent: false }).catch(() => {});
+    }
+  }
+
   function notice(n) {
     toast(n);
     chime(n.kind);
@@ -841,7 +869,14 @@
     const es = new EventSource('/quests/events');
     let t = null;
     es.addEventListener('changed', () => { clearTimeout(t); t = setTimeout(loadPlan, 250); });
-    es.addEventListener('notice', (e) => { try { notice(JSON.parse(e.data)); } catch (err) {} loadPlan(); });
+    es.addEventListener('notice', (e) => {
+      let n = null;
+      try { n = JSON.parse(e.data); } catch (err) { return; }
+      // Pulses (quick repeats): one ticking card and a short ping each beat, nothing else redrawn
+      if (n.kind === 'pulse') return pulse(n);
+      notice(n);
+      loadPlan();
+    });
     new EventSource('/calendar-api/events').addEventListener('change', () => { clearTimeout(t); t = setTimeout(loadPlan, 250); });
   } catch (e) {}
   setInterval(loadPlan, 60000); // keeps the now-line and progress moving

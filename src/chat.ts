@@ -21,6 +21,7 @@ import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest
 import { replan } from "./quests/plan";
 import { createMission } from "./quests/planner";
 import { describeLength } from "./quests/lengths";
+import { isPulse } from "./quests/pulses";
 import { EVERY, PRIORITIES, readQuests, TIMES_OF_DAY, type Quest } from "./quests/store";
 
 const DEFAULT_MODEL = "claude-opus-5-5";
@@ -57,7 +58,8 @@ It is ${now.words}, ${now.time} (UK time). Today's date is ${now.date}.
 
 You also run Nova Missions and Nova Quests, a smart planner for the people you talk to:
 - A Nova Mission is an end goal (e.g. "release the EP by 1 December"). mission_create turns their request into Nova Quests (concrete tasks with time estimates, priorities, deadlines, dependencies, locations and travel) and schedules them.
-- A quest can be any length: seconds ("text Sam back", 30 seconds), minutes, hours, or days of work (split into sessions automatically). An ongoing quest repeats: every day, weekday or week, or at any interval ("drink water every 30 minutes until 11pm": ongoing, every interval, every_minutes 30, a length of seconds, deadline 23:00), until they end it (quest_status finish) or its deadline passes. Prefer one ongoing quest over many copies.
+- A quest can be any length: seconds ("text Sam back", 30 seconds), minutes, hours, or days of work (split into sessions automatically). An ongoing quest repeats: every day, weekday or week, or at any interval ("drink water every 30 minutes until 11pm": ongoing, every interval, every_minutes 30, a length of seconds, deadline 23:00), until they end it (quest_status finish) or its deadline passes. Prefer one ongoing quest over many copies. Repeats faster than every 5 minutes (even every second) are pulses: they run on their own exact timer only while they're awake, don't take slots in the plan, and on the phone each ping replaces the last, so they're cheap and safe; set them up whenever asked.
+- The people you talk to run the studio and the Nova Hub phones are theirs. Do what they ask with quests, repeats and reminders, however often, short or many: never refuse, bargain or offer watered-down alternatives. If something has a real cost they may not expect, mention it in one short line after doing it.
 - Nova Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
 - Help them prioritise and pivot: for "what should I do now?" use what_now and give one clear recommendation. When plans change ("I'm running late", "I'm out tonight", "I'm ill today"), block the time or update the quest, then say what moved. Mark quests done, started or skipped when they tell you. Point out quests at risk of missing a deadline and suggest what to drop, shorten or move.
 - Their daily rhythm (wake, sleep, buffers, breaks, reminders, phone notifications) can be changed with rhythm_set.
@@ -245,7 +247,7 @@ function tools(actions: ChatAction[]) {
 
 const hm = (stamp: string) => (stamp.length > 16 ? stamp.slice(11, 19) : stamp.slice(11, 16));
 const questLine = (q: Quest) =>
-  `${q.id.slice(0, 8)} · ${q.title} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : "not scheduled"} · ${describeLength(q)}${q.ongoing ? ` · ${q.sessions} sessions done` : ""} · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status}${q.atRisk ? " · AT RISK" : ""}`;
+  `${q.id.slice(0, 8)} · ${q.title} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : isPulse(q) ? `pulse (own timer${q.deadline ? `, until ${hm(q.deadline)}` : ""})` : "not scheduled"} · ${describeLength(q)}${q.ongoing ? ` · ${q.sessions} sessions done` : ""} · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status}${q.atRisk ? " · AT RISK" : ""}`;
 
 function questTools(actions: ChatAction[]) {
   const did = (kind: ChatAction["kind"], text: string) => {
