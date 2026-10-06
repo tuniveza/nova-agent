@@ -66,8 +66,8 @@
 
   /* Main: chat and calendar */
   .main { display: grid; grid-template-columns: minmax(360px, 520px) minmax(0, 1fr); gap: 12px; min-height: 0; }
-  .chat, .calendar { min-height: 0; border-radius: 24px; overflow: hidden; }
-  .chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+  .chat, .calendar { min-height: 0; min-width: 0; border-radius: 24px; overflow: hidden; }
+  .chat { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
   .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
   .chat-head h2, .cal-head h2 { margin: 0; font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; color: var(--muted); }
   .icon-btn { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; }
@@ -117,15 +117,156 @@
   .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
   .calendar iframe { width: 100%; height: 100%; border: 0; background: var(--void); }
 
+
+  /* ===== The plan board: Today, Missions, Calendar ===== */
+  .board { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; min-width: 0; border-radius: 24px; overflow: hidden; }
+  .board-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .seg { display: flex; gap: 4px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); }
+  .seg button { border: 0; background: none; padding: 6px 14px; border-radius: 999px; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+  .seg button[aria-selected="true"] { background: var(--grad); color: var(--on-accent); box-shadow: 0 6px 18px -8px var(--accent); }
+  .spacer { flex: 1; }
+  .view { min-height: 0; overflow-y: auto; padding: 16px 18px 28px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
+  .view.cal { padding: 0; overflow: hidden; }
+  .view.cal iframe { width: 100%; height: 100%; border: 0; background: var(--void); }
+
+  .day-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .day-head h3 { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: 22px; line-height: 1.1; color: #fff; }
+  .day-head h3 span { color: var(--hi); }
+  .day-sub { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; color: var(--muted); }
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stat { padding: 6px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 55%, transparent); font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
+  .stat b { display: block; font-family: var(--f-display); font-stretch: 112%; font-size: 17px; color: #fff; }
+  .stat.warn b { color: #FFB86B; }
+
+  .now-card { position: relative; margin: 0 0 18px; padding: 16px 18px; border-radius: 20px; border: 1px solid transparent;
+    background: linear-gradient(color-mix(in srgb, var(--panel-2) 92%, transparent), color-mix(in srgb, var(--panel-2) 92%, transparent)) padding-box, var(--edge) border-box;
+    box-shadow: 0 20px 50px -30px var(--accent), 0 0 40px -24px var(--hi); }
+  .now-kicker { font-family: var(--f-mono); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--hi); }
+  .now-title { margin: 4px 0 2px; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 20px; color: #fff; }
+  .now-meta { font-size: 13px; color: var(--muted); }
+  .bar { height: 6px; margin: 12px 0; border-radius: 6px; background: color-mix(in srgb, var(--void) 60%, transparent); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--hi), var(--lilac)); border-radius: 6px; box-shadow: 0 0 12px var(--hi); transition: width .6s ease; }
+  .row-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mini { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 55%, transparent); color: var(--text); font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; cursor: pointer; transition: border-color .2s, background-color .2s, color .2s; }
+  .mini:hover { border-color: var(--line-strong); color: #fff; background: color-mix(in srgb, var(--accent) 24%, transparent); }
+  .mini.go { background: var(--grad); border-color: transparent; color: var(--on-accent); }
+
+  .timeline { position: relative; display: grid; gap: 8px; margin-left: 4px; }
+  .tl-item { position: relative; display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 12px; align-items: start; }
+  .tl-time { padding-top: 10px; font-family: var(--f-mono); font-size: 12px; color: var(--soft); text-align: right; line-height: 1.25; }
+  .tl-time small { display: block; color: var(--muted); font-size: 10.5px; }
+  .tl-card { padding: 10px 14px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 75%, transparent); border-left: 3px solid var(--hi); }
+  .tl-card.busy { border-left-color: var(--muted); background: color-mix(in srgb, var(--void) 35%, transparent); }
+  .tl-card.block { border-left-color: #E5484D; background: color-mix(in srgb, #E5484D 8%, transparent); }
+  .tl-card.done { opacity: .55; }
+  .tl-card.done .tl-title { text-decoration: line-through; text-decoration-color: var(--hi); }
+  .tl-card.doing { box-shadow: 0 0 0 1px var(--hi), 0 0 24px -8px var(--hi); }
+  .tl-card.risk { border-left-color: #FFB86B; }
+  .tl-item.past .tl-card:not(.done):not(.doing) { opacity: .7; }
+  .tl-title { font-weight: 600; color: #fff; }
+  .tl-card { min-width: 0; overflow-wrap: anywhere; }
+  .tl-meta { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
+  .tl-meta .chip-m { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .06em; background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--soft); }
+  .tl-card .row-btns { margin-top: 8px; }
+  .prio { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+  .prio.critical { color: #FF8A8A; } .prio.high { color: #FFB86B; } .prio.normal { color: var(--lilac); } .prio.low { color: var(--muted); }
+  .now-line { position: relative; height: 0; margin: 2px 0 2px 74px; border-top: 2px solid var(--hi); box-shadow: 0 0 10px var(--hi); }
+  .now-line::before { content: "NOW"; position: absolute; left: -74px; top: -8px; width: 62px; text-align: right; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .2em; color: var(--hi); }
+  .empty { padding: 24px; border-radius: 18px; border: 1px dashed var(--line); text-align: center; color: var(--muted); }
+  .section-h { margin: 22px 0 10px; font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: var(--muted); }
+  .upcoming { display: grid; gap: 10px; }
+  .up-day { padding: 10px 14px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 55%, transparent); }
+  .up-day h4 { margin: 0 0 6px; font-family: var(--f-display); font-stretch: 110%; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--soft); }
+  .up-day li { font-size: 13px; color: var(--text); list-style: none; }
+  .up-day ul { margin: 0; padding: 0; display: grid; gap: 3px; }
+  .up-day time { display: inline-block; width: 48px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+
+  .mission-new { display: grid; gap: 10px; padding: 16px; border-radius: 20px; border: 1px solid transparent; margin-bottom: 18px;
+    background: linear-gradient(color-mix(in srgb, var(--panel-2) 90%, transparent), color-mix(in srgb, var(--panel-2) 90%, transparent)) padding-box, var(--edge) border-box; }
+  .mission-new h3 { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: 17px; color: #fff; }
+  .mission-new p { margin: 0; font-size: 13px; color: var(--muted); }
+  .mission-new textarea, .field input, .field select { width: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text); font: inherit; }
+  .mission-new textarea { min-height: 84px; resize: vertical; }
+  .mission-new textarea:focus, .field input:focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 20%, transparent); }
+  .mission-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .mission-row label { display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
+  .mission-row input[type="date"] { width: auto; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text); }
+  .missions { display: grid; gap: 12px; }
+  .mission { padding: 14px 16px; border-radius: 20px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 70%, transparent); }
+  .mission.paused { opacity: .7; } .mission.done { border-color: color-mix(in srgb, #5CFFC0 40%, transparent); }
+  .mission-top { display: flex; gap: 14px; align-items: center; }
+  .ring { --p: 0; flex: none; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-mono); font-size: 12px; font-weight: 600; color: #fff;
+    background: radial-gradient(closest-side, var(--deep) 76%, transparent 78% 100%), conic-gradient(var(--hi) calc(var(--p) * 1%), color-mix(in srgb, var(--line) 80%, transparent) 0); box-shadow: 0 0 18px -6px var(--hi); }
+  .mission h4 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 16px; color: #fff; }
+  .mission .sum { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .badge { padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
+  .badge.warn { border-color: #FFB86B88; color: #FFB86B; }
+  .badge.ok { border-color: #5CFFC088; color: #5CFFC0; }
+  .mission details { margin-top: 10px; }
+  .mission summary { cursor: pointer; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--lilac); }
+  .q-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+  .q-list li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13.5px; }
+  .q-list .tick { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid color-mix(in srgb, var(--hi) 70%, transparent); background: none; padding: 0; cursor: pointer; color: transparent; font-size: 12px; line-height: 1; }
+  .q-list .tick.on { background: var(--grad); border-color: transparent; color: #fff; }
+  .q-list .when { font-family: var(--f-mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .q-list .done-t { color: var(--muted); text-decoration: line-through; }
+  .q-list .risk-t { color: #FFB86B; }
+
+  /* Now / next strip above the chat */
+  .nowstrip { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 13px; }
+  .nowstrip b { color: #fff; }
+  .nowstrip .k { font-family: var(--f-mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--hi); white-space: nowrap; }
+  .nowstrip .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Pop-ups */
+  .toasts { position: fixed; right: 18px; bottom: 18px; z-index: 50; display: grid; gap: 10px; width: min(380px, calc(100vw - 36px)); }
+  .toast { padding: 14px 16px; border-radius: 18px; border: 1px solid transparent; animation: toast-in .35s cubic-bezier(.2, .8, .2, 1);
+    background: linear-gradient(var(--deep), var(--deep)) padding-box, var(--edge) border-box; box-shadow: 0 30px 70px -20px #000, 0 0 40px -16px var(--hi); }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(16px) scale(.97); } }
+  .toast h5 { margin: 0 0 4px; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 14px; color: #fff; }
+  .toast p { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+  .toast .x { float: right; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 16px; }
+
+  /* Rhythm settings */
+  dialog.rhythm { padding: 0; border: 0; background: transparent; color: var(--text); width: min(560px, calc(100vw - 24px)); }
+  dialog.rhythm::backdrop { background: rgba(3, 2, 8, .72); backdrop-filter: blur(6px); }
+  .rh { display: grid; gap: 14px; padding: 20px; border-radius: 24px; border: 1px solid transparent; background: linear-gradient(var(--deep), var(--deep)) padding-box, var(--edge) border-box; box-shadow: 0 40px 120px -30px #000; }
+  .rh h3 { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: 18px; color: #fff; }
+  .rh p { margin: 0; font-size: 13px; color: var(--muted); }
+  .rh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .field { display: grid; gap: 5px; }
+  .field span { font-family: var(--f-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+  .checks { display: grid; gap: 8px; }
+  .checks label { display: flex; gap: 10px; align-items: center; font-size: 14px; cursor: pointer; }
+  .checks input { width: 17px; height: 17px; accent-color: var(--accent); }
+  .rh-foot { display: flex; justify-content: flex-end; gap: 8px; }
+  .busy-dots { display: inline-flex; gap: 4px; } .busy-dots span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: orbit 1.2s ease-in-out infinite; }
+  .busy-dots span:nth-child(2) { animation-delay: .15s; } .busy-dots span:nth-child(3) { animation-delay: .3s; }
   .tabs { display: none; }
+  html, body { overflow-x: clip; }
   @media (max-width: 980px) {
     .main { grid-template-columns: minmax(0, 1fr); }
     .tabs { display: flex; gap: 6px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); }
     .tabs button { border: 0; background: none; padding: 6px 12px; border-radius: 999px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
     .tabs button[aria-selected="true"] { background: var(--grad); color: var(--on-accent); }
-    .shell[data-tab="chat"] .calendar, .shell[data-tab="calendar"] .chat { display: none; }
+    .shell[data-tab="chat"] .board, .shell[data-tab="plan"] .chat { display: none; }
     .links .btn span, .status .label { display: none; }
     .kicker { display: none; }
+    .board-head { padding: 8px; gap: 4px; }
+    .seg button { padding: 6px 10px; letter-spacing: .08em; }
+    .view { padding: 14px 12px 24px; }
+    .tl-item { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+    .now-line { margin-left: 52px; } .now-line::before { left: -52px; width: 44px; letter-spacing: .1em; }
+    .toasts { right: 12px; left: 12px; bottom: 12px; width: auto; }
+  }
+  @media (max-width: 600px) {
+    .links { display: none; }
+    .shell > * { min-width: 0; }
+  }
+  @media (max-width: 420px) {
+    .seg button { padding: 6px 8px; font-size: 10px; }
+    .board-head .icon-btn { width: 32px; height: 32px; }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
@@ -152,6 +293,9 @@
     <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="i-clear" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+    <symbol id="i-replan" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></symbol>
     <symbol id="i-open" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
   </defs>
 </svg>
@@ -166,7 +310,7 @@
     </a>
     <div class="tabs" role="tablist" aria-label="View">
       <button type="button" role="tab" data-tab="chat" aria-selected="true">Chat</button>
-      <button type="button" role="tab" data-tab="calendar" aria-selected="false">Calendar</button>
+      <button type="button" role="tab" data-tab="plan" aria-selected="false">Plan</button>
     </div>
     <span class="status" id="status" title="Nova Agent's mode"><span class="dot"></span><span class="label" id="status-text">Connecting…</span></span>
     <nav class="links">
@@ -181,12 +325,16 @@
         <h2>Talk to Nova Agent</h2>
         <button type="button" class="icon-btn" id="clear" title="Start a new chat" aria-label="Start a new chat"><svg class="ico"><use href="#i-clear"/></svg></button>
       </div>
+      <div class="nowstrip" id="nowstrip" hidden></div>
       <div class="log" id="log" aria-live="polite">
         <div class="welcome" id="welcome">
           <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
           <h3>Hey, I'm Nova Agent</h3>
-          <p>Ask me what's on, add note cards and day cards to Nova Calendar, or check on the studio's Acuity bookings.</p>
+          <p>Give me a goal and I'll turn it into a Nova Mission, plan your days hour by hour, and keep you on track. I can also run Nova Calendar and check the studio's Acuity bookings.</p>
           <div class="suggest">
+            <button type="button" class="chip">What should I do now?</button>
+            <button type="button" class="chip">Plan a mission: finish the EP by 1 December</button>
+            <button type="button" class="chip">I'm out tonight from 7 to 11</button>
             <button type="button" class="chip">What's on this week?</button>
             <button type="button" class="chip">Add a note card for Friday at 2pm: mix review</button>
             <button type="button" class="chip">Make 31 October a Halloween day card</button>
@@ -201,16 +349,67 @@
       </form>
     </section>
 
-    <section class="calendar glass" aria-label="Nova Calendar">
-      <div class="cal-head">
-        <h2>Nova Calendar</h2>
-        <a class="icon-btn" href="/calendar/" target="_blank" rel="noopener" title="Open the calendar in its own tab" aria-label="Open the calendar in its own tab"><svg class="ico"><use href="#i-open"/></svg></a>
+    <section class="board glass" aria-label="Your plan">
+      <div class="board-head">
+        <div class="seg" role="tablist" aria-label="Plan view">
+          <button type="button" role="tab" data-view="today" aria-selected="true">Today</button>
+          <button type="button" role="tab" data-view="missions" aria-selected="false">Missions</button>
+          <button type="button" role="tab" data-view="calendar" aria-selected="false">Calendar</button>
+        </div>
+        <span class="spacer"></span>
+        <button type="button" class="icon-btn" id="btn-replan" title="Re-plan everything from now" aria-label="Re-plan everything from now"><svg class="ico"><use href="#i-replan"/></svg></button>
+        <button type="button" class="icon-btn" id="btn-bell" title="Turn on pop-up reminders" aria-label="Turn on pop-up reminders"><svg class="ico"><use href="#i-bell"/></svg></button>
+        <button type="button" class="icon-btn" id="btn-rhythm" title="Your daily rhythm" aria-label="Your daily rhythm"><svg class="ico"><use href="#i-gear"/></svg></button>
       </div>
-      <iframe id="cal" src="/calendar/" title="Nova Calendar"></iframe>
+      <div class="view" id="view-today"></div>
+      <div class="view" id="view-missions" hidden>
+        <form class="mission-new" id="mission-form">
+          <h3>✦ New Nova Mission</h3>
+          <p>Say what you want to achieve, and by when. Nova Agent turns it into quests and fits them into your days.</p>
+          <textarea id="mission-text" placeholder="e.g. Finish and release the 4-track EP by 1 December: two songs still need vocals, then mixing, mastering, artwork and a launch post." required></textarea>
+          <div class="mission-row">
+            <label>Deadline <input type="date" id="mission-deadline"></label>
+            <span class="spacer"></span>
+            <button type="submit" class="btn primary" id="mission-go">Plan the mission</button>
+          </div>
+          <p id="mission-msg" role="status"></p>
+        </form>
+        <div class="missions" id="missions"></div>
+      </div>
+      <div class="view cal" id="view-calendar" hidden><iframe id="cal" src="/calendar/" title="Nova Calendar"></iframe></div>
     </section>
   </main>
 </div>
 
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<dialog class="rhythm" id="rhythm">
+  <form class="rh" id="rhythm-form" method="dialog">
+    <h3>✦ Your daily rhythm</h3>
+    <p>The planner fits quests around these, and re-plans the moment you save.</p>
+    <div class="rh-grid">
+      <label class="field"><span>Get up</span><input type="time" name="wake"></label>
+      <label class="field"><span>Go to sleep</span><input type="time" name="sleep"></label>
+      <label class="field"><span>Start-up (min)</span><input type="number" name="startUpMinutes" min="0" max="240"></label>
+      <label class="field"><span>Wind-down (min)</span><input type="number" name="windDownMinutes" min="0" max="240"></label>
+      <label class="field"><span>Buffer between (min)</span><input type="number" name="bufferMinutes" min="0" max="60"></label>
+      <label class="field"><span>Break after (min)</span><input type="number" name="breakAfterMinutes" min="30" max="480"></label>
+      <label class="field"><span>Break length (min)</span><input type="number" name="breakMinutes" min="0" max="120"></label>
+      <label class="field"><span>Max quest hours / day</span><input type="number" name="maxQuestHoursPerDay" min="1" max="18"></label>
+      <label class="field"><span>Remind before (min)</span><input type="number" name="remindMinutesBefore" min="0" max="120"></label>
+      <label class="field"><span>Plan ahead (days)</span><input type="number" name="horizonDays" min="3" max="90"></label>
+    </div>
+    <label class="field"><span>Home base (for travel)</span><input type="text" name="homeBase"></label>
+    <div class="checks">
+      <label><input type="checkbox" name="checkIns"> Check in when a quest should be finished</label>
+      <label><input type="checkbox" name="dailyBriefing"> Morning plan and evening wrap-up</label>
+      <label><input type="checkbox" name="phonePush"> Also send reminders to the Nova Hub phones</label>
+    </div>
+    <div class="rh-foot">
+      <button type="button" class="btn" id="rhythm-cancel">Cancel</button>
+      <button type="submit" class="btn primary">Save &amp; re-plan</button>
+    </div>
+  </form>
+</dialog>
 <script src="/calendar/js/themes.js"></script>
 <script src="/calendar/js/backdrop.js"></script>
 <script>
@@ -313,6 +512,7 @@
       history.push({ role: 'assistant', content: data.reply, actions: data.actions });
       save();
       bubble('assistant', data.reply, data.actions);
+      if (data.actions && data.actions.length && typeof loadPlan === 'function') loadPlan();
     } catch (err) {
       typing.remove();
       history.pop();
@@ -346,6 +546,261 @@
       document.querySelectorAll('.tabs button').forEach((x) => x.setAttribute('aria-selected', x === t ? 'true' : 'false'));
     });
   }
+
+  // ===================== NOVA MISSIONS & QUESTS =====================
+  let st = null;
+  const api = (path, body) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
+  const hhmm = (s) => (s ? s.slice(11, 16) : '');
+  const dayLong = (ymd) => new Date(ymd + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const mins = (s) => { const [d, t] = s.split('T'); const [y, mo, da] = d.split('-').map(Number); const [h, mi] = t.split(':').map(Number); return Date.UTC(y, mo - 1, da, h, mi) / 60000; };
+  const escH = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  let calNotes = [];
+
+  async function loadPlan() {
+    try {
+      const [state, cal] = await Promise.all([fetch('/quests/state').then((r) => r.json()), fetch('/calendar-api/data').then((r) => r.json())]);
+      st = state;
+      calNotes = (cal.notes || []).filter((n) => !n.id.startsWith('quest-') && !n.id.startsWith('block-'));
+      renderToday();
+      renderMissions();
+      renderStrip();
+    } catch (e) {
+      $('view-today').innerHTML = '<div class="empty">Couldn’t load the plan.</div>';
+    }
+  }
+
+  function questButtons(q) {
+    const b = [];
+    if (q.status === 'todo') b.push(`<button class="mini go" data-q="${q.id}" data-a="start">▶ Start</button>`);
+    if (q.status !== 'done') b.push(`<button class="mini" data-q="${q.id}" data-a="done">✓ Done</button>`);
+    if (q.status === 'doing') b.push(`<button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">+15 min</button>`);
+    if (q.status === 'todo') b.push(`<button class="mini" data-q="${q.id}" data-a="snooze" data-m="60">Not now</button>`, `<button class="mini" data-q="${q.id}" data-a="skip">Skip</button>`);
+    if (q.status === 'done' || q.status === 'skipped') b.push(`<button class="mini" data-q="${q.id}" data-a="reopen">Undo</button>`);
+    return `<div class="row-btns">${b.join('')}</div>`;
+  }
+
+  function missionName(id) { const m = st.missions.find((x) => x.id === id); return m ? m.title : ''; }
+
+  function renderToday() {
+    const today = st.now.slice(0, 10);
+    const nowM = mins(st.now);
+    const items = [];
+    for (const q of st.quests) if (q.start && q.start.startsWith(today) && q.status !== 'skipped') items.push({ kind: 'quest', start: q.start, end: q.end, q });
+    for (const b of st.blocks) if (b.start.slice(0, 10) <= today && b.end.slice(0, 10) >= today) items.push({ kind: 'block', start: b.start, end: b.end, b });
+    for (const n of calNotes) if (n.start.slice(0, 10) <= today && n.end.slice(0, 10) >= today) items.push({ kind: 'busy', start: n.start, end: n.end, n });
+    items.sort((a, b) => a.start.localeCompare(b.start));
+    const quests = items.filter((i) => i.kind === 'quest');
+    const plannedMin = quests.reduce((n, i) => n + i.q.minutes, 0);
+    const done = quests.filter((i) => i.q.status === 'done').length;
+    const atRisk = st.quests.filter((q) => q.atRisk && q.status !== 'done' && q.status !== 'skipped').length;
+    const r = st.rhythm;
+
+    let html = `<div class="day-head"><div><div class="day-sub">TODAY · up ${r.wake} · sleep ${r.sleep}</div><h3>${escH(dayLong(today)).replace(/^(\w+)/, '<span>$1</span>')}</h3></div>
+      <div class="stats"><div class="stat"><b>${quests.length}</b>quests</div><div class="stat"><b>${(plannedMin / 60).toFixed(1)}h</b>planned</div><div class="stat"><b>${done}</b>done</div>${atRisk ? `<div class="stat warn"><b>${atRisk}</b>at risk</div>` : ''}</div></div>`;
+
+    const cur = st.current;
+    if (cur) {
+      const pct = cur.start && cur.end ? Math.max(0, Math.min(100, ((nowM - mins(cur.start)) / Math.max(1, mins(cur.end) - mins(cur.start))) * 100)) : 0;
+      html += `<div class="now-card"><div class="now-kicker">${cur.status === 'doing' ? 'In progress' : 'Happening now'}</div><div class="now-title">${escH(cur.title)}</div>
+        <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${cur.minutes} min${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>
+        <div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div>${questButtons(cur)}</div>`;
+    } else if (st.next[0]) {
+      const n = st.next[0];
+      html += `<div class="now-card"><div class="now-kicker">Up next</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${n.minutes} min${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div><div style="margin-top:10px">${questButtons(n)}</div></div>`;
+    }
+
+    if (!items.length) {
+      html += `<div class="empty">Nothing planned today.<br>Ask me to plan a mission, or say what you need to get done.</div>`;
+    } else {
+      html += '<div class="timeline">';
+      let lineDone = false;
+      for (const it of items) {
+        if (!lineDone && mins(it.start) > nowM) { html += '<div class="now-line"></div>'; lineDone = true; }
+        const past = mins(it.end) <= nowM;
+        if (it.kind === 'quest') {
+          const q = it.q;
+          html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
+            <div class="tl-card ${q.status}${q.atRisk ? ' risk' : ''}"><div class="tl-title">${q.atRisk ? '⚠ ' : ''}${escH(q.title)}</div>
+            <div class="tl-meta">${missionName(q.missionId) ? `<span class="chip-m">${escH(missionName(q.missionId))}</span>` : ''}<span class="prio ${q.priority}">${q.priority}</span> · ${q.minutes} min${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
+            ${q.status === 'done' ? '' : questButtons(q)}</div></div>`;
+        } else if (it.kind === 'block') {
+          html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card block"><div class="tl-title">Busy · ${escH(it.b.reason)}</div><div class="tl-meta">Blocked out · <button class="mini" data-unblock="${it.b.id}">Unblock</button></div></div></div>`;
+        } else {
+          html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card busy"><div class="tl-title">${escH(it.n.title || 'Note card')}</div><div class="tl-meta">From Nova Calendar</div></div></div>`;
+        }
+      }
+      if (!lineDone) html += '<div class="now-line"></div>';
+      html += '</div>';
+    }
+
+    // The next few days
+    const days = {};
+    for (const q of st.quests) {
+      if (!q.start || q.start.slice(0, 10) <= today || q.status === 'skipped') continue;
+      (days[q.start.slice(0, 10)] = days[q.start.slice(0, 10)] || []).push(q);
+    }
+    const keys = Object.keys(days).sort().slice(0, 6);
+    if (keys.length) {
+      html += '<div class="section-h">Coming up</div><div class="upcoming">';
+      for (const k of keys) html += `<div class="up-day"><h4>${escH(dayLong(k))}</h4><ul>${days[k].sort((a, b) => a.start.localeCompare(b.start)).map((q) => `<li><time>${hhmm(q.start)}</time>${q.atRisk ? '⚠ ' : ''}${escH(q.title)}</li>`).join('')}</ul></div>`;
+      html += '</div>';
+    }
+    if (st.unplanned.length) {
+      html += `<div class="section-h">Needs a slot</div><div class="upcoming"><div class="up-day"><ul>${st.unplanned.map((q) => `<li>⚠ ${escH(q.title)} · ${q.minutes} min</li>`).join('')}</ul></div></div>`;
+    }
+    $('view-today').innerHTML = html;
+  }
+
+  function renderMissions() {
+    const box = $('missions');
+    if (!st.missions.length) { box.innerHTML = '<div class="empty">No missions yet. Describe one above, or ask in the chat.</div>'; return; }
+    const order = { active: 0, paused: 1, done: 2 };
+    box.innerHTML = [...st.missions].sort((a, b) => order[a.status] - order[b.status] || b.created.localeCompare(a.created)).map((m) => {
+      const p = m.progress;
+      const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
+      const qs = st.quests.filter((q) => q.missionId === m.id).sort((a, b) => (a.start || 'z').localeCompare(b.start || 'z'));
+      return `<article class="mission ${m.status}"><div class="mission-top"><div class="ring" style="--p:${pct}">${pct}%</div><div style="min-width:0;flex:1"><h4>${escH(m.title)}</h4><p class="sum">${escH(m.summary)}</p></div></div>
+        <div class="badges">${m.deadline ? `<span class="badge">Due ${escH(m.deadline.replace('T', ' '))}</span>` : ''}<span class="badge">${p.done}/${p.total} quests</span><span class="badge">${(p.minutesLeft / 60).toFixed(1)}h left</span>${p.atRisk ? `<span class="badge warn">${p.atRisk} at risk</span>` : ''}${m.status === 'done' ? '<span class="badge ok">Mission complete</span>' : ''}${m.status === 'paused' ? '<span class="badge">Paused</span>' : ''}</div>
+        <details><summary>Quests</summary><ul class="q-list">${qs.map((q) => `<li><button class="tick${q.status === 'done' ? ' on' : ''}" data-q="${q.id}" data-a="${q.status === 'done' ? 'reopen' : 'done'}" aria-label="Done">✓</button><span class="${q.status === 'done' ? 'done-t' : q.atRisk ? 'risk-t' : ''}">${escH(q.title)}</span><span class="when">${q.start ? `${new Date(q.start.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })} ${hhmm(q.start)}` : q.status === 'skipped' ? 'skipped' : 'unplanned'}</span></li>`).join('')}</ul>
+        <div class="row-btns" style="margin-top:10px">${m.status === 'active' ? `<button class="mini" data-m="${m.id}" data-ma="paused">Pause</button>` : m.status === 'paused' ? `<button class="mini" data-m="${m.id}" data-ma="active">Resume</button>` : ''}<button class="mini" data-m="${m.id}" data-ma="remove">Remove</button></div></details></article>`;
+    }).join('');
+  }
+
+  function renderStrip() {
+    const strip = $('nowstrip');
+    const q = st.current || st.next[0];
+    if (!q) { strip.hidden = true; return; }
+    strip.hidden = false;
+    const isNow = st.current && st.current.id === q.id;
+    strip.innerHTML = `<span class="k">${isNow ? 'Now' : 'Next'}</span><span class="t"><b>${escH(q.title)}</b> · ${q.start.startsWith(st.now.slice(0, 10)) ? '' : escH(dayLong(q.start.slice(0, 10))) + ' '}${hhmm(q.start)}–${hhmm(q.end)}</span>${isNow ? `<button class="mini" data-q="${q.id}" data-a="done">✓ Done</button>` : `<button class="mini go" data-q="${q.id}" data-a="start">▶ Start</button>`}`;
+  }
+
+  // Buttons anywhere on the page
+  document.addEventListener('click', async (e) => {
+    const qb = e.target.closest('[data-q][data-a]');
+    if (qb) {
+      qb.disabled = true;
+      const res = await api(`/actions/quests/${qb.dataset.q}`, { action: qb.dataset.a, minutes: Number(qb.dataset.m) || undefined });
+      if (!res.ok) toast({ title: 'That didn’t work', message: res.message });
+      const t = qb.closest('.toast'); if (t) t.remove();
+      return loadPlan();
+    }
+    const mb = e.target.closest('[data-m][data-ma]');
+    if (mb) {
+      const a = mb.dataset.ma;
+      await api(`/actions/missions/${mb.dataset.m}`, a === 'remove' ? { remove: true } : { status: a });
+      return loadPlan();
+    }
+    const ub = e.target.closest('[data-unblock]');
+    if (ub) { await api('/actions/blocks', { remove: true, id: ub.dataset.unblock }); return loadPlan(); }
+  });
+
+  for (const b of document.querySelectorAll('.seg button')) {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
+      for (const v of ['today', 'missions', 'calendar']) $(`view-${v}`).hidden = v !== b.dataset.view;
+    });
+  }
+
+  $('mission-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = $('mission-text').value.trim();
+    if (!text) return;
+    $('mission-go').disabled = true;
+    $('mission-msg').innerHTML = 'Planning your mission <span class="busy-dots"><span></span><span></span><span></span></span>';
+    const res = await api('/actions/missions', { request: text, deadline: $('mission-deadline').value || undefined });
+    $('mission-go').disabled = false;
+    if (res.ok) {
+      $('mission-text').value = '';
+      $('mission-msg').textContent = `✦ “${res.result.mission.title}”: ${res.result.quests.length} quests planned${res.result.atRisk ? `, ${res.result.atRisk} at risk` : ''}.`;
+      loadPlan();
+    } else {
+      $('mission-msg').textContent = /api[_ ]?key|authentication/i.test(res.message || '') ? 'Nova Agent can’t reach Claude yet: add ANTHROPIC_API_KEY to its .env.' : res.message || 'Couldn’t plan that just now.';
+    }
+  });
+
+  $('btn-replan').addEventListener('click', async () => {
+    const res = await api('/actions/replan');
+    toast({ title: 'Re-planned ✦', message: res.ok ? `${res.result.atRisk} quest${res.result.atRisk === 1 ? '' : 's'} at risk.` : res.message });
+    loadPlan();
+  });
+
+  // Rhythm settings
+  const rf = $('rhythm-form');
+  $('btn-rhythm').addEventListener('click', () => {
+    if (!st) return;
+    for (const [k, v] of Object.entries(st.rhythm)) { const f = rf.elements[k]; if (!f) continue; if (f.type === 'checkbox') f.checked = v; else f.value = v; }
+    $('rhythm').showModal();
+  });
+  $('rhythm-cancel').addEventListener('click', () => $('rhythm').close());
+  rf.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = {};
+    for (const f of rf.elements) { if (!f.name) continue; body[f.name] = f.type === 'checkbox' ? f.checked : f.type === 'number' ? Number(f.value) : f.value; }
+    const res = await api('/actions/rhythm', body);
+    $('rhythm').close();
+    toast({ title: res.ok ? 'Rhythm saved ✦' : 'Couldn’t save', message: res.ok ? 'Everything has been re-planned around it.' : res.message });
+    loadPlan();
+  });
+
+  // Pop-up reminders: on the page, as a system notification, with a soft chime
+  let audio = null;
+  function chime() {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      const t = audio.currentTime;
+      [659.25, 987.77, 1318.5].forEach((f, i) => {
+        const o = audio.createOscillator(); const g = audio.createGain();
+        o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(audio.destination);
+        g.gain.setValueAtTime(0.0001, t + i * 0.12); g.gain.exponentialRampToValueAtTime(0.05, t + i * 0.12 + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.12 + 0.9);
+        o.start(t + i * 0.12); o.stop(t + i * 0.12 + 1);
+      });
+    } catch (e) {}
+  }
+  function toast(n) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    const q = n.questId ? (st && st.quests.find((x) => x.id === n.questId)) : null;
+    let btns = '';
+    if (q && q.status !== 'done') {
+      if (n.kind === 'checkin') btns = `<div class="row-btns"><button class="mini go" data-q="${q.id}" data-a="done">✓ Done</button><button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">+15 min</button><button class="mini" data-q="${q.id}" data-a="snooze" data-m="60">Move it</button></div>`;
+      else if (n.kind === 'starting' || n.kind === 'leave') btns = `<div class="row-btns"><button class="mini go" data-q="${q.id}" data-a="start">▶ Start</button><button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">In 15 min</button></div>`;
+    }
+    el.innerHTML = `<button class="x" aria-label="Close">×</button><h5>${escH(n.title)}</h5><p>${escH(n.message)}</p>${btns}`;
+    el.querySelector('.x').addEventListener('click', () => el.remove());
+    $('toasts').appendChild(el);
+    setTimeout(() => el.remove(), n.kind === 'checkin' || n.kind === 'starting' || n.kind === 'leave' ? 120000 : 12000);
+  }
+  function notice(n) {
+    toast(n);
+    chime();
+    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+      try { const sys = new Notification(n.title, { body: n.message, tag: n.questId || n.kind }); sys.onclick = () => { window.focus(); sys.close(); }; } catch (e) {}
+    }
+  }
+  function bellState() {
+    const on = 'Notification' in window && Notification.permission === 'granted';
+    $('btn-bell').style.color = on ? 'var(--hi)' : '';
+    $('btn-bell').title = on ? 'Pop-up reminders are on' : 'Turn on pop-up reminders';
+  }
+  $('btn-bell').addEventListener('click', async () => {
+    if (!('Notification' in window)) return toast({ title: 'Not available', message: 'This browser can’t show system pop-ups; reminders still appear here.' });
+    const p = await Notification.requestPermission();
+    bellState();
+    if (p === 'granted') { chime(); toast({ title: 'Pop-up reminders on ✦', message: 'You’ll get a pop-up before each quest and a check-in when it should be done, even with this tab in the background.' }); }
+  });
+  bellState();
+
+  // Live: re-draw when the plan changes; pop up reminders as they come
+  try {
+    const es = new EventSource('/quests/events');
+    let t = null;
+    es.addEventListener('changed', () => { clearTimeout(t); t = setTimeout(loadPlan, 250); });
+    es.addEventListener('notice', (e) => { try { notice(JSON.parse(e.data)); } catch (err) {} loadPlan(); });
+    new EventSource('/calendar-api/events').addEventListener('change', () => { clearTimeout(t); t = setTimeout(loadPlan, 250); });
+  } catch (e) {}
+  setInterval(loadPlan, 60000); // keeps the now-line and progress moving
+  loadPlan();
   input.focus();
 })();
 </script>

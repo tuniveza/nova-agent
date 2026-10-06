@@ -17,6 +17,10 @@ import { config } from "./config";
 import { getClient } from "./llm";
 import { checkLogin, describeAppointments, listTask } from "./tasks";
 import { getRecentEvents, trace } from "./trace";
+import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
+import { replan } from "./quests/plan";
+import { createMission } from "./quests/planner";
+import { PRIORITIES, readQuests, TIMES_OF_DAY, type Quest } from "./quests/store";
 
 const DEFAULT_MODEL = "claude-opus-5-5";
 const MAX_HISTORY = 40;
@@ -49,6 +53,12 @@ function systemPrompt(): string {
   return `You are Nova Agent, part of the Nova suite for Novacane Studios (a recording studio in Forest Hill, London). You run on the studio computer. People from the studio chat with you here.
 
 It is ${now.words}, ${now.time} (UK time). Today's date is ${now.date}.
+
+You also run Nova Missions and Nova Quests, a smart planner for the people you talk to:
+- A Nova Mission is an end goal (e.g. "release the EP by 1 December"). mission_create turns their request into Nova Quests (concrete tasks with time estimates, priorities, deadlines, dependencies, locations and travel) and schedules them.
+- Nova Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
+- Help them prioritise and pivot: for "what should I do now?" use what_now and give one clear recommendation. When plans change ("I'm running late", "I'm out tonight", "I'm ill today"), block the time or update the quest, then say what moved. Mark quests done, started or skipped when they tell you. Point out quests at risk of missing a deadline and suggest what to drop, shorten or move.
+- Their daily rhythm (wake, sleep, buffers, breaks, reminders, phone notifications) can be changed with rhythm_set.
 
 What you can do:
 - Nova Calendar: read, add, change and remove note cards (a title, the note itself, an author, a start and finish time) and day cards (a date with a title, a preset, a title aesthetic, a colour theme, information, a location, tags, and optionally repeating every year). Use the calendar tools for this; the calendar beside the chat updates straight away.
@@ -231,6 +241,188 @@ function tools(actions: ChatAction[]) {
   ];
 }
 
+const hm = (stamp: string) => stamp.slice(11, 16);
+const questLine = (q: Quest) =>
+  `${q.id.slice(0, 8)} · ${q.title} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : "not scheduled"} · ${q.minutes} min · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status}${q.atRisk ? " · AT RISK" : ""}`;
+
+function questTools(actions: ChatAction[]) {
+  const did = (kind: ChatAction["kind"], text: string) => {
+    actions.push({ kind, text });
+    trace("input", "ok", `Chat: ${text}`);
+  };
+  const STAMP_OR_EMPTY = z.string().describe('"YYYY-MM-DDTHH:MM" (UK time), or "" for none');
+  return [
+    betaZodTool({
+      name: "mission_create",
+      description: "Create a Nova Mission from what the person wants to achieve: it's broken into Nova Quests and scheduled straight away. Pass their goal in their own words, with any constraints they mentioned.",
+      inputSchema: z.object({ request: z.string().min(3), deadline: z.string().optional().describe('The mission deadline if they gave one: "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM"') }),
+      run: async ({ request, deadline }) => {
+        const r = await createMission(request, { deadline });
+        did("added", `Nova Mission “${r.mission.title}”: ${r.quests.length} quests planned`);
+        return `Created mission ${r.mission.id.slice(0, 8)} “${r.mission.title}” (${r.mission.summary}). ${r.quests.length} quests, ${r.atRisk} at risk:\n${r.quests.sort((a, b) => (a.start || "z").localeCompare(b.start || "z")).map(questLine).join("\n")}${r.unplaced.length ? `\nCouldn't place: ${r.unplaced.join("; ")}` : ""}`;
+      },
+    }),
+    betaZodTool({
+      name: "what_now",
+      description: "The quest happening now, the next few, anything overdue or unplanned, and missions at risk. Use it for 'what should I do now?' and before giving advice on priorities.",
+      inputSchema: z.object({}),
+      run: async () => {
+        const st = questState();
+        return JSON.stringify({
+          now: st.now,
+          current: st.current ? questLine(st.current) : null,
+          next: st.next.map(questLine),
+          overdue: st.overdue.map(questLine),
+          unplanned: st.unplanned.map(questLine),
+          missions: st.missions.filter((m) => m.status === "active").map((m) => `${m.id.slice(0, 8)} · ${m.title}${m.deadline ? ` · due ${m.deadline}` : ""} · ${m.progress.done}/${m.progress.total} done · ${m.progress.atRisk} at risk · ${Math.round(m.progress.minutesLeft / 60)} h left`),
+        });
+      },
+    }),
+    betaZodTool({
+      name: "quests_list",
+      description: "Quests scheduled between two dates, or all quests of one mission. Use it to find a quest's id.",
+      inputSchema: z.object({ from: DATE.optional(), to: DATE.optional(), mission_id: z.string().optional() }),
+      run: async ({ from, to, mission_id }) => {
+        const qs = readQuests().quests.filter((q) => (mission_id ? q.missionId.startsWith(mission_id) : true) && (from ? q.start.slice(0, 10) >= from : true) && (to ? q.start && q.start.slice(0, 10) <= to : true));
+        return qs.length ? qs.sort((a, b) => (a.start || "z").localeCompare(b.start || "z")).map(questLine).join("\n") : "No quests found.";
+      },
+    }),
+    betaZodTool({
+      name: "quest_add",
+      description: "Add a single Nova Quest (optionally to a mission). It's scheduled automatically unless fixed_start pins it.",
+      inputSchema: z.object({
+        title: z.string().min(1),
+        minutes: z.number().int().min(5).max(600),
+        mission_id: z.string().optional(),
+        priority: z.enum(PRIORITIES).optional(),
+        deadline: STAMP_OR_EMPTY.optional(),
+        fixed_start: STAMP_OR_EMPTY.optional(),
+        location: z.string().optional(),
+        travel_minutes: z.number().int().min(0).max(300).optional(),
+        time_of_day: z.enum(TIMES_OF_DAY).optional(),
+        notes: z.string().optional(),
+      }),
+      run: async (i) => {
+        const missionId = i.mission_id ? readQuests().missions.find((m) => m.id.startsWith(i.mission_id!))?.id ?? "" : "";
+        const q = addQuest({ title: i.title, minutes: i.minutes, missionId, priority: i.priority, deadline: i.deadline, fixedStart: i.fixed_start, location: i.location, travelMinutes: i.travel_minutes, timeOfDay: i.time_of_day, notes: i.notes });
+        did("added", `Quest “${q.title}”${q.start ? `: ${longDate(q.start.slice(0, 10))} ${hm(q.start)}` : ""}`);
+        return `Added: ${questLine(q)}`;
+      },
+    }),
+    betaZodTool({
+      name: "quest_update",
+      description: "Change a quest: its length, priority, deadline, location/travel, preferred time of day, notes, or pin it to a time with fixed_start (\"\" unpins it so the planner chooses). Everything re-plans.",
+      inputSchema: z.object({
+        id: z.string(),
+        title: z.string().optional(),
+        minutes: z.number().int().min(5).max(600).optional(),
+        priority: z.enum(PRIORITIES).optional(),
+        deadline: STAMP_OR_EMPTY.optional(),
+        fixed_start: STAMP_OR_EMPTY.optional(),
+        location: z.string().optional(),
+        travel_minutes: z.number().int().min(0).max(300).optional(),
+        time_of_day: z.enum(TIMES_OF_DAY).optional(),
+        notes: z.string().optional(),
+      }),
+      run: async ({ id, fixed_start, travel_minutes, time_of_day, ...rest }) => {
+        const q = updateQuest(id, { ...rest, fixedStart: fixed_start, travelMinutes: travel_minutes, timeOfDay: time_of_day });
+        did("changed", `Quest “${q.title}”${q.start ? `: now ${longDate(q.start.slice(0, 10))} ${hm(q.start)}` : ""}`);
+        return `Updated: ${questLine(q)}`;
+      },
+    }),
+    betaZodTool({
+      name: "quest_status",
+      description: "Mark a quest done, started (doing), skipped, or back to to-do; or remove it entirely.",
+      inputSchema: z.object({ id: z.string(), status: z.enum(["done", "doing", "skipped", "todo", "remove"]) }),
+      run: async ({ id, status }) => {
+        if (status === "remove") {
+          const q = removeQuest(id);
+          did("removed", `Removed quest “${q.title}”`);
+          return `Removed “${q.title}”.`;
+        }
+        const q = setQuestStatus(id, status);
+        did(status === "done" ? "changed" : "changed", `${status === "done" ? "Done" : status === "doing" ? "Started" : status === "skipped" ? "Skipped" : "Reopened"}: “${q.title}”`);
+        return `${q.title}: ${q.status}.`;
+      },
+    }),
+    betaZodTool({
+      name: "quest_snooze",
+      description: "Not now: push a quest back by some minutes (if it's under way, gives it more time instead).",
+      inputSchema: z.object({ id: z.string(), minutes: z.number().int().min(5).max(1440) }),
+      run: async ({ id, minutes }) => {
+        const q = snoozeQuest(id, minutes);
+        did("changed", `Snoozed “${q.title}”${q.start ? ` to ${hm(q.start)}` : ""}`);
+        return `Snoozed: ${questLine(q)}`;
+      },
+    }),
+    betaZodTool({
+      name: "block_time",
+      description: "Block out time that's taken (plans changed, out for the evening, ill, appointment): quests move out of the way. Or remove a block by id.",
+      inputSchema: z.object({ start: STAMP.optional(), end: STAMP.optional(), reason: z.string().optional(), remove_id: z.string().optional() }),
+      run: async ({ start, end, reason, remove_id }) => {
+        if (remove_id) {
+          const b = removeBlock(remove_id);
+          did("removed", `Unblocked ${b.reason}`);
+          return `Removed the block “${b.reason}”.`;
+        }
+        if (!start || !end) return "Give a start and end time.";
+        const b = addBlock(start, end, reason || "Busy");
+        did("added", `Blocked ${longDate(start.slice(0, 10))} ${hm(start)}–${hm(end)}: ${b.reason}`);
+        return `Blocked ${b.start}–${b.end} (${b.reason}), id ${b.id.slice(0, 8)}. Quests have moved around it.`;
+      },
+    }),
+    betaZodTool({
+      name: "mission_update",
+      description: "Rename a mission, change its deadline, pause or resume it, mark it done, or remove it (with its quests).",
+      inputSchema: z.object({ id: z.string(), title: z.string().optional(), deadline: z.string().optional(), status: z.enum(["active", "paused", "done"]).optional(), remove: z.boolean().optional() }),
+      run: async ({ id, remove, ...changes }) => {
+        if (remove) {
+          const m = removeMission(id);
+          did("removed", `Removed mission “${m.title}”`);
+          return `Removed “${m.title}” and its quests.`;
+        }
+        const m = updateMission(id, changes);
+        did("changed", `Mission “${m.title}”: ${m.status}`);
+        return `Updated mission “${m.title}”.`;
+      },
+    }),
+    betaZodTool({
+      name: "rhythm_set",
+      description: "Change the daily rhythm the planner works to. Only send what changes.",
+      inputSchema: z.object({
+        wake: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+        sleep: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+        wind_down_minutes: z.number().int().optional(),
+        start_up_minutes: z.number().int().optional(),
+        buffer_minutes: z.number().int().optional(),
+        break_after_minutes: z.number().int().optional(),
+        break_minutes: z.number().int().optional(),
+        max_quest_hours_per_day: z.number().int().optional(),
+        home_base: z.string().optional(),
+        remind_minutes_before: z.number().int().optional(),
+        check_ins: z.boolean().optional(),
+        daily_briefing: z.boolean().optional(),
+        phone_push: z.boolean().optional().describe("Also send reminders to the Nova Hub phones"),
+      }),
+      run: async (i) => {
+        const r = setRhythm({ wake: i.wake, sleep: i.sleep, windDownMinutes: i.wind_down_minutes, startUpMinutes: i.start_up_minutes, bufferMinutes: i.buffer_minutes, breakAfterMinutes: i.break_after_minutes, breakMinutes: i.break_minutes, maxQuestHoursPerDay: i.max_quest_hours_per_day, homeBase: i.home_base, remindMinutesBefore: i.remind_minutes_before, checkIns: i.check_ins, dailyBriefing: i.daily_briefing, phonePush: i.phone_push });
+        did("changed", `Rhythm: up ${r.wake}, sleep ${r.sleep}`);
+        return `Rhythm now: ${JSON.stringify(r)}. Everything has been re-planned.`;
+      },
+    }),
+    betaZodTool({
+      name: "replan",
+      description: "Re-plan everything from now (after big changes, or when asked to optimise the schedule).",
+      inputSchema: z.object({}),
+      run: async () => {
+        const r = replan();
+        did("changed", "Re-planned every quest");
+        return `Re-planned. ${r.atRisk} quest(s) at risk.${r.unplaced.length ? ` Couldn't place: ${r.unplaced.map((u) => `${u.title} (${u.why})`).join("; ")}` : ""}`;
+      },
+    }),
+  ];
+}
+
 // One chat turn: the conversation so far in, Nova Agent's reply (and what it did) out
 export async function chat(history: ChatTurn[]): Promise<{ reply: string; actions: ChatAction[] }> {
   const messages: Anthropic.Beta.BetaMessageParam[] = history
@@ -248,10 +440,10 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
     model,
     max_tokens: 16000,
     system: systemPrompt(),
-    tools: tools(actions),
+    tools: [...tools(actions), ...questTools(actions)],
     messages,
     output_config: { effort: "low" },
-    max_iterations: 12,
+    max_iterations: 16,
     // If this model declines a request, the API retries it on a suitable fallback model inside the same call
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",

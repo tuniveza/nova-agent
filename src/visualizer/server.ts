@@ -32,6 +32,11 @@ import { checkLogin, describeAppointments, listTask, readOnlyTour } from "../tas
 import { getRecentEvents, onTrace, trace } from "../trace";
 import { calendarEvents, normalise, readCalendar, writeCalendar } from "../calendar/store";
 import { chat, type ChatTurn } from "../chat";
+import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
+import { replan } from "../quests/plan";
+import { createMission } from "../quests/planner";
+import { startQuestReminders } from "../quests/reminders";
+import { questEvents } from "../quests/store";
 
 const pageFile = fileURLToPath(new URL("./page.html", import.meta.url));
 const chatFile = fileURLToPath(new URL("./chat.html", import.meta.url));
@@ -124,6 +129,65 @@ app.get("/status", (c) =>
   c.json({ live: !config.dryRun, connected: Boolean(config.agentNovaKey), model: config.novaModel || "claude-opus-5-5" }),
 );
 
+// ---- Nova Missions and Nova Quests ----
+app.get("/quests/state", (c) => c.json(questState()));
+// Live: the plan changed, or a reminder / check-in is due
+app.get("/quests/events", (c) =>
+  streamSSE(c, async (stream) => {
+    const changed = () => void stream.writeSSE({ event: "changed", data: String(Date.now()) });
+    const notice = (n: unknown) => void stream.writeSSE({ event: "notice", data: JSON.stringify(n) });
+    questEvents.on("changed", changed);
+    questEvents.on("notice", notice);
+    stream.onAbort(() => {
+      questEvents.off("changed", changed);
+      questEvents.off("notice", notice);
+    });
+    while (!stream.aborted) {
+      await stream.sleep(20_000);
+      await stream.writeSSE({ event: "ping", data: "" });
+    }
+  }),
+);
+const questAction = async (c: any, fn: () => unknown) => {
+  try {
+    return c.json({ ok: true, result: await fn() });
+  } catch (error) {
+    return c.json({ ok: false, message: (error as Error).message }, 400);
+  }
+};
+app.post("/actions/missions", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  if (typeof body.request !== "string" || !body.request.trim()) return c.json({ ok: false, message: "Describe the mission first." }, 400);
+  return questAction(c, () => createMission(body.request, { deadline: body.deadline }));
+});
+app.post("/actions/missions/:id", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  return questAction(c, () => (body.remove ? removeMission(c.req.param("id")) : updateMission(c.req.param("id"), body)));
+});
+app.post("/actions/quests", async (c) => questAction(c, async () => addQuest(await c.req.json())));
+app.post("/actions/quests/:id", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const id = c.req.param("id");
+  return questAction(c, () => {
+    if (body.action === "done") return setQuestStatus(id, "done");
+    if (body.action === "start") return setQuestStatus(id, "doing");
+    if (body.action === "skip") return setQuestStatus(id, "skipped");
+    if (body.action === "reopen") return setQuestStatus(id, "todo");
+    if (body.action === "snooze") return snoozeQuest(id, Number(body.minutes) || 15);
+    if (body.action === "remove") return removeQuest(id);
+    return updateQuest(id, body.changes || {});
+  });
+});
+app.post("/actions/blocks", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  return questAction(c, () => (body.remove ? removeBlock(body.id) : addBlock(body.start, body.end, body.reason)));
+});
+app.post("/actions/rhythm", async (c) => questAction(c, async () => setRhythm(await c.req.json())));
+app.post("/actions/replan", (c) => questAction(c, () => {
+  const r = replan();
+  return { atRisk: r.atRisk, unplaced: r.unplaced };
+}));
+
 // ---- The chat ----
 app.post("/actions/chat", async (c) => {
   let messages: ChatTurn[] = [];
@@ -206,3 +270,12 @@ cron.schedule(
 console.log(`Daily healthcheck scheduled: "${config.healthcheckSchedule}" (${config.timezone})`);
 
 startCollectingJobs();
+
+// Nova Quests: plan on start-up, then reminders and check-ins every 30 seconds
+try {
+  tidyBlocks();
+  replan();
+} catch (error) {
+  console.warn("Nova Quests couldn't plan on start-up:", (error as Error).message);
+}
+startQuestReminders();

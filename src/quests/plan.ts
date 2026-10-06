@@ -1,0 +1,97 @@
+// Re-planning: run the planner over everything open, save the times, and show
+// the plan in Nova Calendar (each planned quest and each blocked time becomes a
+// note card there, kept in step automatically).
+
+import { readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
+import { config } from "../config";
+import { planQuests, toMin, type Busy } from "./scheduler";
+import { readQuests, writeQuests, type QuestData } from "./store";
+
+const QUEST_NOTE = "quest-";
+const BLOCK_NOTE = "block-";
+
+// "Now" as UK wall-clock minutes (the planner's time)
+export function nowMinutes(): number {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: config.timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  return toMin(`${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`);
+}
+
+// Calendar entries the person made themselves count as taken time
+function calendarBusy(): Busy[] {
+  return readCalendar()
+    .notes.filter((n) => !n.id.startsWith(QUEST_NOTE) && !n.id.startsWith(BLOCK_NOTE) && n.end > n.start)
+    .map((n) => ({ start: n.start, end: n.end, label: n.title }));
+}
+
+// Plan everything again. Returns a short summary of what changed.
+export function replan(data: QuestData = readQuests()): { data: QuestData; atRisk: number; unplaced: { id: string; title: string; why: string }[] } {
+  const now = nowMinutes();
+  // Anything not finished whose time has well passed goes back in the pot
+  for (const q of data.quests) {
+    if (q.status === "todo" && q.start && !q.fixedStart && toMin(q.end) + 60 < now) {
+      q.missed += 1;
+      q.start = q.end = q.travelStart = "";
+    }
+  }
+  // Quests of paused or finished missions wait
+  const paused = new Set(data.missions.filter((m) => m.status !== "active").map((m) => m.id));
+  const planning = data.quests.filter((q) => !paused.has(q.missionId));
+  const busy: Busy[] = [...calendarBusy(), ...data.blocks.map((b) => ({ start: b.start, end: b.end, label: b.reason }))];
+  const result = planQuests({ rhythm: data.rhythm, quests: planning, busy, now });
+
+  const unplaced: { id: string; title: string; why: string }[] = [];
+  for (const q of data.quests) {
+    if (q.status === "done" || q.status === "skipped") continue;
+    if (paused.has(q.missionId)) {
+      if (q.status === "todo") q.start = q.end = q.travelStart = "";
+      continue;
+    }
+    const p = result.placed.get(q.id);
+    if (p) {
+      q.start = p.start;
+      q.end = p.end;
+      q.travelStart = p.travelStart;
+      q.atRisk = p.atRisk;
+    } else if (result.unplaced.has(q.id)) {
+      q.start = q.end = q.travelStart = "";
+      q.atRisk = true;
+      unplaced.push({ id: q.id, title: q.title, why: result.unplaced.get(q.id)! });
+    }
+  }
+  writeQuests(data);
+  syncCalendar(data);
+  return { data, atRisk: data.quests.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length, unplaced };
+}
+
+// Keep Nova Calendar showing the plan: one note card per planned quest and per blocked time
+export function syncCalendar(data: QuestData): void {
+  const cal = readCalendar();
+  const missions = new Map(data.missions.map((m) => [m.id, m]));
+  const seed = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const ours: NoteCard[] = [];
+  for (const q of data.quests) {
+    if (!q.start || q.status === "skipped") continue;
+    const mission = missions.get(q.missionId);
+    ours.push({
+      id: `${QUEST_NOTE}${q.id}`,
+      title: `${q.status === "done" ? "✓" : q.atRisk ? "⚠" : "✦"} ${q.title}`.slice(0, 120),
+      body: [mission ? `Nova Mission: ${mission.title}` : "Nova Quest", q.location ? `At ${q.location}${q.travelMinutes ? ` (${q.travelMinutes} min travel first)` : ""}` : "", q.notes].filter(Boolean).join("\n"),
+      author: "Nova Quest",
+      start: q.start,
+      end: q.end,
+      art: { seed: seed(q.id), subject: "auto" },
+      created: q.created,
+      updated: q.updated,
+    });
+  }
+  for (const b of data.blocks) {
+    ours.push({ id: `${BLOCK_NOTE}${b.id}`, title: `Busy · ${b.reason}`.slice(0, 120), body: "Blocked out in Nova Agent", author: "Nova Agent", start: b.start, end: b.end, art: { seed: seed(b.id), subject: "auto" }, created: b.start, updated: b.start });
+  }
+  const others = cal.notes.filter((n) => !n.id.startsWith(QUEST_NOTE) && !n.id.startsWith(BLOCK_NOTE));
+  const before = JSON.stringify(cal.notes.filter((n) => n.id.startsWith(QUEST_NOTE) || n.id.startsWith(BLOCK_NOTE)).map((n) => [n.id, n.title, n.start, n.end, n.body]).sort());
+  const after = JSON.stringify(ours.map((n) => [n.id, n.title, n.start, n.end, n.body]).sort());
+  if (before === after) return; // nothing to change, so the calendar doesn't flicker
+  cal.notes = [...others, ...ours];
+  writeCalendar(cal, true);
+}

@@ -34,6 +34,26 @@ where the button went, the answer is checked, and the fix is remembered for next
   2pm", "make 31 October a Halloween day card"), look at the studio's Acuity bookings, check
   the Acuity login, or ask how it's doing. Claude answers with tools; the calendar beside the
   chat updates as it works. Acuity is read-only from the chat for now.
+- **Nova Missions and Nova Quests** (`src/quests/`): tell Nova Agent a goal ("release the EP by
+  1 December") and it becomes a **Mission**: Claude breaks it into **Quests** (each with a
+  length, a priority, a deadline, what it depends on, where it happens and the travel to get
+  there), then a deterministic planner fits every quest into your days, hour by hour:
+  - around your **sleep** (get up, start-up, wind-down, bedtime), Nova Calendar entries and
+    any time you block out ("I'm out tonight from 7 to 11");
+  - most urgent first (deadline pressure weighted by priority), never before the quests it
+    depends on, in the part of the day it suits, with a buffer after each one, a proper break
+    after long ones, and a cap on quest hours per day;
+  - with **travel time** in front of anything somewhere else, and a "leave by" reminder;
+  - flagging anything that can't make its deadline as **at risk**.
+
+  It **re-plans on every change**: finish early and the rest moves up, snooze a quest and it
+  finds a new slot, and a quest left unanswered an hour after its end is moved and you're told
+  where. Pop-up **reminders** come before each quest, a **check-in** comes when it should be
+  done (Done, More time or Move it), and there's a morning plan and an evening wrap-up, with a
+  soft chime, system notifications, and optionally the Nova Hub phones. The chat can do all
+  of it too ("what should I do now?", "I'm running late, push everything an hour"). Travel
+  times are Claude's estimates for now (a live traffic API is a later option). Quests also
+  show up in Nova Calendar as ✦ note cards.
 - **Nova Calendar built in** (`calendar/`, the [nova-calendar](https://github.com/tuniveza/nova-calendar)
   repo as a git submodule): served at `/calendar/`, saving to Nova Agent (`data/calendar.json`)
   instead of only the browser, so the chat and the calendar always agree.
@@ -57,6 +77,8 @@ where the button went, the answer is checked, and the fix is remembered for next
 
 ## Screenshots
 
+<p align="center"><img src="docs/media/today.jpg" width="900" alt="Nova Agent's Today plan: the quest in progress, an hour-by-hour timeline with a now line, and a pop-up reminder"></p>
+<p align="center"><img src="docs/media/missions.jpg" width="900" alt="Nova Missions: describe a goal, and each mission shows its progress ring and its quests"></p>
 <p align="center"><img src="docs/media/chat.jpg" width="900" alt="Nova Agent's chat beside Nova Calendar, in the Nova suite style"></p>
 
 <p align="center">
@@ -202,7 +224,9 @@ result, screenshots, daily logs (`data/logs/<date>.jsonl`, which include client 
 
 ## Tests
 
-There's no automated test suite in this repo yet; `npm run typecheck` checks the types, and
+`npx tsx test/scheduler.test.ts` checks the Nova Quest planner (sleep, deadlines, priorities,
+dependencies, travel, buffers, breaks, the daily cap, blocked time and at-risk flags).
+`npm run typecheck` checks the types, and
 `npm run healthcheck` is a read-only check against the real Acuity pages. The Worker side of
 the job queue is covered by Nova Bot's tests (`test/agent-nova.spec.js`).
 
@@ -232,8 +256,15 @@ src/jobs.ts               collecting jobs from Nova Bot's Worker and reporting r
 src/healthcheck.ts        the daily read-only healthcheck
 src/alerts.ts             alerts to the console, data/alerts.log and staff phones
 src/llm.ts                the Claude client
-src/chat.ts               the chat: Claude with calendar, Acuity (read-only) and status tools
+src/chat.ts               the chat: Claude with quest, calendar, Acuity (read-only) and status tools
 src/calendar/store.ts     Nova Calendar's data, kept in data/calendar.json
+src/quests/store.ts       Missions, Quests, blocked time and your rhythm (data/quests.json)
+src/quests/scheduler.ts   the planner: places every quest at a time, hour by hour (no AI)
+src/quests/planner.ts     turning a goal into a Mission and its Quests (Claude)
+src/quests/plan.ts        re-planning, and mirroring quests into Nova Calendar
+src/quests/reminders.ts   reminders, check-ins, the morning plan and evening wrap-up
+src/quests/actions.ts     everything the chat and the page can do with them
+test/scheduler.test.ts    planner checks
 src/heal/                 resolve() and the selector cache
 src/acuity/               Acuity pages: login, list, book, cancel, edit, targets, types
 src/trace.ts              every step, for the console, logs and visualizer
