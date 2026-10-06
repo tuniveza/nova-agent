@@ -1,8 +1,10 @@
-// Nova Hub's Quests tab: Nova Agent sends its plan (missions, quests, pulses)
+// Nova Hub's Quests and Calendar tabs: Nova Agent sends its plan (missions,
+// quests, pulses, and Nova Calendar's note and day cards)
 // to Nova Bot's worker whenever it changes (and every minute, so "now" moves
 // on), and carries out the taps made in Nova Hub (Done, Start, Not now...).
 // Taps also arrive with each job check (jobs.ts), so they land within a second.
 
+import { calendarEvents, readCalendar } from "../calendar/store";
 import { config } from "../config";
 import { trace } from "../trace";
 import { applyQuestTap, questState, type QuestTap } from "./actions";
@@ -20,8 +22,21 @@ function snapshot() {
     const { notes, remindedFor, checkedFor, created, updated, completed, ...rest } = q;
     return rest;
   };
+  // Nova Calendar's own cards (not the quest and blocked-time copies) from a week ago to two months ahead
+  const cal = readCalendar();
+  const from = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  const to = new Date(Date.now() + 62 * 864e5).toISOString().slice(0, 10);
+  const calendar = {
+    notes: cal.notes
+      .filter((n) => !n.id.startsWith("quest-") && !n.id.startsWith("block-") && n.end.slice(0, 10) >= from && n.start.slice(0, 10) <= to)
+      .map((n) => ({ id: n.id, title: n.title, body: n.body.slice(0, 300), author: n.author, start: n.start, end: n.end })),
+    days: cal.days
+      .filter((d) => d.repeat === "yearly" || (d.date >= from && d.date <= to))
+      .map((d) => ({ id: d.id, date: d.date, title: d.title, preset: d.preset, info: d.info.slice(0, 300), location: d.location, repeat: d.repeat })),
+  };
   return {
     now: st.now,
+    calendar,
     rhythm: { wake: st.rhythm.wake, sleep: st.rhythm.sleep, paceLimits: st.rhythm.paceLimits },
     missions: st.missions.map(({ request, ...m }) => m),
     quests: quests.map(slim),
@@ -69,6 +84,7 @@ export function startHubSync(): void {
     soon = setTimeout(send, 1500);
   };
   questEvents.on("changed", later);
+  calendarEvents.on("change", later);
   setTimeout(send, 3000);
   setInterval(send, 60_000);
 }
