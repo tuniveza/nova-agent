@@ -8,9 +8,11 @@
 import { z } from "zod";
 import { readCalendar } from "../calendar/store";
 import { askForJson } from "../llm";
+import { splitLong } from "./lengths";
+import { notifyMission } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
 import { nowMinutes, replan } from "./plan";
-import { cleanMission, cleanQuest, PRIORITIES, readQuests, TIMES_OF_DAY, type Mission, type Quest } from "./store";
+import { cleanMission, cleanQuest, EVERY, PRIORITIES, readQuests, TIMES_OF_DAY, type Mission, type Quest } from "./store";
 
 const DateOrStamp = z.string().describe('"YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" (UK time), or "" for none');
 
@@ -23,7 +25,10 @@ const PlanSchema = z.object({
       z.object({
         title: z.string().describe("Starts with a verb, specific: 'Record lead vocals for track 2'"),
         notes: z.string().describe("What done looks like, and any useful detail. Can be empty."),
-        minutes: z.number().int().describe("Realistic working time, 15 to 180; split anything longer into several quests"),
+        minutes: z.number().describe("Realistic working time in minutes, any length: fractions for seconds (0.5 = 30 seconds), or many hours for big work (it's split into sessions automatically). For an ongoing quest, the length of each session."),
+        ongoing: z.boolean().describe("true only for open-ended work that never finishes (a daily practice, a habit, upkeep): it gets a session every day, weekday or week"),
+        every: z.enum(EVERY).describe('How often an ongoing quest has a session: day, weekday, week, or interval (every every_minutes); "day" if not ongoing'),
+        every_minutes: z.number().describe("For interval repeats: minutes between session starts (fractions for seconds); 0 otherwise"),
         priority: z.enum(PRIORITIES),
         deadline: DateOrStamp,
         earliest: DateOrStamp.describe("Not before this (e.g. waiting for a delivery), or empty"),
@@ -58,7 +63,9 @@ export async function createMission(request: string, hints: { deadline?: string 
 
 Make the plan genuinely good:
 - Cover everything needed to reach the goal, including preparation, the work itself, reviews, buffers for feedback, and the final delivery. Leave out padding and busywork.
-- Each quest is one sitting of focused work: 15 to 180 minutes, realistically estimated (add ~15% for things that usually overrun). Split bigger work into several quests.
+- Quests can be any length, realistically estimated (add ~15% for things that usually overrun): seconds for a quick action (send a text: 0.5), minutes, or many hours for big work, which the planner splits into sessions by itself. Still make separate quests for genuinely separate steps.
+- Use an ongoing quest (ongoing: true, minutes per session, every day/weekday/week) for open-ended things that keep going, like daily vocal warm-ups or posting on socials; never for work that has an end.
+- For something repeated at short intervals ("drink water every 30 minutes until bed"), make ONE ongoing quest with every "interval", every_minutes 30, a realistic length (a glass of water: 0.5), and its deadline when it should stop. Never write out each repeat as its own quest.
 - Set dependencies so nothing is scheduled before what it needs. Work deadlines backwards from the mission's deadline, leaving slack before it.
 - Priority: critical = the mission fails without it on time; high = important; normal = should happen; low = nice to have.
 - time_of_day: deep creative or focused work suits mornings; admin and calls suit afternoons; use "any" when it doesn't matter.
@@ -82,6 +89,9 @@ The mission, in their words:
       title: q.title,
       notes: q.notes,
       minutes: q.minutes,
+      ongoing: q.ongoing,
+      every: q.every,
+      everyMinutes: q.every_minutes,
       priority: q.priority,
       deadline: q.deadline || (mission.deadline ? mission.deadline : ""),
       earliest: q.earliest,
@@ -93,8 +103,16 @@ The mission, in their words:
     }),
   );
   data.missions.push(mission);
-  data.quests.push(...quests);
+  data.quests.push(...quests.flatMap((q) => splitLong(q, data.rhythm)));
   const result = replan(data);
   const saved = result.data.quests.filter((q) => q.missionId === mission.id);
-  return { mission, quests: saved, atRisk: saved.filter((q) => q.atRisk).length, unplaced: result.unplaced.filter((u) => ids.includes(u.id)).map((u) => `${u.title}: ${u.why}`) };
+  const first = saved.filter((q) => q.start).sort((a, b) => a.start.localeCompare(b.start))[0];
+  const risky = saved.filter((q) => q.atRisk).length;
+  notifyMission(
+    "planned",
+    `Mission planned ✦ ${mission.title}`,
+    `${saved.length} quest${saved.length === 1 ? "" : "s"}${first ? ` · first: ${first.title}, ${dayName(toMin(first.start)).replace(/ \d{4}$/, "")} at ${first.start.slice(11, 16)}` : ""}${risky ? ` · ${risky} at risk` : ""}`,
+    mission.id,
+  );
+  return { mission, quests: saved, atRisk: saved.filter((q) => q.atRisk).length, unplaced: result.unplaced.filter((u) => saved.some((q) => q.id === u.id)).map((u) => `${u.title}: ${u.why}`) };
 }

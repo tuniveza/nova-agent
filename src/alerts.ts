@@ -36,7 +36,7 @@ export async function sendAlert(title: string, message: string): Promise<void> {
     const response = await fetch(`${config.workerUrl}/hub/notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.agentNovaKey}` },
-      body: JSON.stringify({ title, message }),
+      body: JSON.stringify({ title, message, source: "agent", kind: "agent", urgent: true }),
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) trace("task", "warn", `Novabot's worker didn't accept the alert (${response.status})`);

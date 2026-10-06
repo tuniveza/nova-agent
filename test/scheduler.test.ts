@@ -1,6 +1,7 @@
 // The Nova Quest planner, on known quests and busy times.  Run: npx tsx test/scheduler.test.ts
 import assert from "node:assert/strict";
-import { planQuests, toMin } from "../src/quests/scheduler";
+import { describeLength, nextSession, splitLong } from "../src/quests/lengths";
+import { fromMin, planQuests, toMin } from "../src/quests/scheduler";
 import { cleanQuest, DEFAULT_RHYTHM } from "../src/quests/store";
 
 const rhythm = { ...DEFAULT_RHYTHM, wake: "07:30", sleep: "23:30", startUpMinutes: 45, windDownMinutes: 45, bufferMinutes: 10, breakAfterMinutes: 90, breakMinutes: 20, maxQuestHoursPerDay: 6, horizonDays: 14 };
@@ -83,6 +84,72 @@ check("finished quests are left alone", () => {
   const r = planQuests({ rhythm, quests: [q({ id: "done", status: "done" }), q({ id: "a" })], busy: [], now });
   assert.ok(!r.placed.has("done"));
   assert.equal(r.placed.get("a")!.start, "2026-10-07T08:15");
+});
+
+check("times keep their seconds, and drop them on the minute", () => {
+  assert.equal(fromMin(toMin("2026-10-07T08:15:30")), "2026-10-07T08:15:30");
+  assert.equal(fromMin(toMin("2026-10-07T08:15")), "2026-10-07T08:15");
+  assert.equal(toMin("2026-10-07T08:15:30") - toMin("2026-10-07T08:15"), 0.5);
+});
+
+check("a 1-second quest is kept to the second", () => {
+  const one = q({ id: "s", minutes: 1 / 60 });
+  assert.equal(one.minutes, 1 / 60);
+  const r = planQuests({ rhythm, quests: [one], busy: [], now });
+  assert.equal(r.placed.get("s")!.start, "2026-10-07T08:15");
+  assert.equal(r.placed.get("s")!.end, "2026-10-07T08:15:01");
+});
+
+check("quick quests go back to back, to the minute (no buffer)", () => {
+  const r = planQuests({ rhythm, quests: [q({ id: "a", minutes: 0.5 }), q({ id: "b", minutes: 2, dependsOn: ["a"] })], busy: [], now });
+  assert.equal(r.placed.get("a")!.end, "2026-10-07T08:15:30");
+  assert.equal(r.placed.get("b")!.start, "2026-10-07T08:16");
+});
+
+check("long quests become sessions, in order, all placed", () => {
+  const big = q({ id: "album", title: "Mix the album", minutes: 20 * 60, deadline: "2026-10-20T18:00" });
+  const parts = splitLong(big, rhythm);
+  assert.equal(parts.length, 7); // 20 h in sessions of at most 3 h
+  assert.equal(parts.at(-1)!.id, "album"); // anything waiting for the quest waits for all of it
+  assert.equal(parts[1].dependsOn[0], parts[0].id);
+  assert.match(parts[0].title, /part 1 of 7/);
+  assert.equal(Math.round(parts.reduce((n, p) => n + p.minutes, 0)), 20 * 60);
+  const r = planQuests({ rhythm, quests: parts, busy: [], now });
+  assert.equal(r.unplaced.size, 0);
+  const starts = parts.map((p) => r.placed.get(p.id)!.start);
+  assert.deepEqual([...starts].sort(), starts);
+  assert.ok(parts.every((p) => !r.placed.get(p.id)!.atRisk));
+});
+
+check("an ongoing quest is never split, and its next session follows its rhythm", () => {
+  assert.equal(splitLong(q({ id: "o", ongoing: true, minutes: 300 }), rhythm).length, 1);
+  assert.equal(nextSession("day", "2026-10-07T09:00"), "2026-10-08T00:00");
+  assert.equal(nextSession("weekday", "2026-10-09T09:00"), "2026-10-12T00:00"); // Friday -> Monday
+  assert.equal(nextSession("week", "2026-10-07T09:00"), "2026-10-14T00:00");
+});
+
+check("lengths read naturally, from seconds to forever", () => {
+  assert.equal(describeLength(q({ minutes: 0.5 })), "30 s");
+  assert.equal(describeLength(q({ minutes: 2.5 })), "2 min 30 s");
+  assert.equal(describeLength(q({ minutes: 90 })), "1 h 30 min");
+  assert.equal(describeLength(q({ minutes: 3 * 1440 + 240 })), "3 days 4 h");
+  assert.equal(describeLength(q({ minutes: 30, ongoing: true })), "∞ · 30 min a day");
+});
+
+check("a daily ongoing quest gets its session today, ahead of big work with no deadline", () => {
+  const parts = splitLong(q({ id: "album", minutes: 20 * 60 }), rhythm);
+  const r = planQuests({ rhythm, quests: [...parts, q({ id: "warm", minutes: 20, ongoing: true, timeOfDay: "morning" })], busy: [], now });
+  assert.equal(r.placed.get("warm")!.start, "2026-10-07T08:15");
+});
+
+check("a repeat every 30 seconds keeps exact times, right from now", () => {
+  const at = toMin("2026-10-07T10:00:10");
+  const r = planQuests({ rhythm, quests: [q({ id: "w", minutes: 1 / 60, ongoing: true, every: "interval", everyMinutes: 0.5, earliest: "2026-10-07T10:00:30" })], busy: [], now: at });
+  assert.equal(r.placed.get("w")!.start, "2026-10-07T10:00:30");
+  assert.equal(nextSession("interval", "2026-10-07T10:00:30", 0.5), "2026-10-07T10:01");
+  // Fell behind: it skips to the next slot from now, in step
+  assert.equal(nextSession("interval", "2026-10-07T10:00", 30, toMin("2026-10-07T11:10")), "2026-10-07T11:30");
+  assert.equal(describeLength(q({ minutes: 0.5, ongoing: true, every: "interval", everyMinutes: 30 })), "∞ · 30 s every 30 min");
 });
 
 console.log(`\n${passed} planner checks passed`);

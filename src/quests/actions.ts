@@ -4,7 +4,8 @@
 
 import { randomUUID } from "node:crypto";
 import { replan, nowMinutes } from "./plan";
-import { recentNotices } from "./reminders";
+import { nextSession, splitLong } from "./lengths";
+import { notifyMission, recentNotices } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
 import { cleanQuest, readQuests, writeQuests, type Block, type Mission, type Quest, type QuestData, type Rhythm } from "./store";
 
@@ -45,9 +46,26 @@ export function questState() {
   };
 }
 
-export function setQuestStatus(id: string, status: Quest["status"]): Quest {
+// For an ongoing quest, "done" finishes this session and lines up the next one;
+// `finish` ends the quest for good.
+export function setQuestStatus(id: string, status: Quest["status"], finish = false): Quest {
   const data = readQuests();
   const q = find(data.quests, id, "quest");
+  if (q.ongoing && status === "done" && !finish) {
+    const sessionStart = q.start || fromMin(nowMinutes());
+    q.sessions += 1;
+    q.completed = new Date().toISOString();
+    q.status = "todo";
+    q.earliest = nextSession(q.every, sessionStart, q.everyMinutes, nowMinutes());
+    q.start = q.end = q.travelStart = q.fixedStart = "";
+    q.remindedFor = q.checkedFor = "";
+    // Past its deadline: that was the last session
+    if (q.deadline && q.earliest >= q.deadline) q.status = "done";
+    q.updated = q.completed;
+    writeQuests(data);
+    replan();
+    return readQuests().quests.find((x) => x.id === q.id)!;
+  }
   q.status = status;
   q.updated = new Date().toISOString();
   if (status === "done") q.completed = q.updated;
@@ -70,7 +88,11 @@ export function setQuestStatus(id: string, status: Quest["status"]): Quest {
   if (status === "todo") q.start = q.end = q.travelStart = "";
   // Finishing every quest finishes the mission
   const mission = data.missions.find((m) => m.id === q.missionId);
-  if (mission && data.quests.filter((x) => x.missionId === mission.id).every((x) => x.status === "done" || x.status === "skipped")) mission.status = "done";
+  if (mission && mission.status !== "done" && data.quests.filter((x) => x.missionId === mission.id).every((x) => x.status === "done" || x.status === "skipped")) {
+    mission.status = "done";
+    const count = data.quests.filter((x) => x.missionId === mission.id && x.status === "done").length;
+    notifyMission("complete", `Mission complete ✦ ${mission.title}`, `All ${count} quest${count === 1 ? "" : "s"} done. Brilliant work.`, mission.id);
+  }
   writeQuests(data);
   replan();
   return readQuests().quests.find((x) => x.id === q.id)!;
@@ -98,7 +120,8 @@ export function snoozeQuest(id: string, minutes = 15): Quest {
 export function addQuest(input: Partial<Quest>): Quest {
   const data = readQuests();
   const q = cleanQuest({ ...input, id: randomUUID(), status: "todo" });
-  data.quests.push(q);
+  // A long quest becomes sessions; the last one keeps the id
+  data.quests.push(...splitLong(q, data.rhythm));
   writeQuests(data);
   replan();
   return readQuests().quests.find((x) => x.id === q.id)!;
@@ -109,7 +132,8 @@ export function updateQuest(id: string, changes: Partial<Quest>): Quest {
   const q = find(data.quests, id, "quest");
   const merged = cleanQuest({ ...q, ...Object.fromEntries(Object.entries(changes).filter(([, v]) => v !== undefined)), id: q.id, updated: new Date().toISOString() });
   if (changes.fixedStart !== undefined || changes.minutes !== undefined) merged.remindedFor = merged.checkedFor = "";
-  data.quests[data.quests.indexOf(q)] = merged;
+  // Made longer than a session: it becomes sessions (the last one keeps the id)
+  data.quests.splice(data.quests.indexOf(q), 1, ...splitLong(merged, data.rhythm));
   writeQuests(data);
   replan();
   return readQuests().quests.find((x) => x.id === q.id)!;

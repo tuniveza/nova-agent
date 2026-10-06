@@ -78,6 +78,17 @@ app.use("/actions/*", async (c, next) => {
 app.get("/", (c) => c.html(readFileSync(chatFile, "utf8")));
 app.get("/visualizer", (c) => c.html(readFileSync(pageFile, "utf8")));
 
+// ---- The installable app: manifest, service worker and icons ----
+const appRoot = fileURLToPath(new URL("./app/", import.meta.url));
+const appFile = (name: string) => (c: any) => c.body(readFileSync(appRoot + name), 200, { "Content-Type": TYPES[extname(name)], "Cache-Control": "no-cache" });
+app.get("/manifest.webmanifest", appFile("manifest.webmanifest"));
+app.get("/sw.js", appFile("sw.js"));
+app.get("/app/:file", (c) => {
+  const name = c.req.param("file");
+  if (!/^[\w-]+\.(png|svg)$/.test(name) || !existsSync(appRoot + name)) return c.text("Not found", 404);
+  return appFile(name)(c);
+});
+
 // ---- Nova Calendar, served from the calendar folder ----
 // Its own offline helper isn't needed (or wanted) here: Nova Agent is the server.
 app.get("/calendar/sw.js", (c) => c.text("// not used inside Nova Agent", 404));
@@ -170,6 +181,7 @@ app.post("/actions/quests/:id", async (c) => {
   const id = c.req.param("id");
   return questAction(c, () => {
     if (body.action === "done") return setQuestStatus(id, "done");
+    if (body.action === "finish") return setQuestStatus(id, "done", true);
     if (body.action === "start") return setQuestStatus(id, "doing");
     if (body.action === "skip") return setQuestStatus(id, "skipped");
     if (body.action === "reopen") return setQuestStatus(id, "todo");

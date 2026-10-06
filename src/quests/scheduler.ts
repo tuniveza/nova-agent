@@ -14,9 +14,15 @@
 //      part of the day it suits if it has one, on a day that isn't already full,
 //      before its deadline if at all possible (otherwise it's flagged at risk).
 //   4. After each quest comes a buffer, or a proper break after a long one.
+//      Quick quests (under 5 minutes) go back to back, to the minute.
 // Times are naive local minutes (UK wall-clock), so "09:00" is always 09:00.
+// They can be fractions of a minute: a 30-second quest is 0.5.
 
 import type { Quest, Rhythm } from "./store";
+
+// An ongoing quest's session is due by the end of its window (that day, that week, or before the next interval)
+const sessionDue = (q: Quest, from: number) =>
+  q.every === "interval" ? from + q.everyMinutes : Math.floor(from / 1440) * 1440 + (q.every === "week" ? 7 : 1) * 1440;
 
 export interface Busy {
   start: string;
@@ -40,15 +46,20 @@ const WEIGHT = { critical: 4, high: 2, normal: 1, low: 0.5 } as const;
 export const toMin = (stamp: string): number => {
   const [d, t = "00:00"] = stamp.split("T");
   const [y, mo, da] = d.split("-").map(Number);
-  const [h, mi] = t.split(":").map(Number);
-  return Date.UTC(y, mo - 1, da, h, mi) / 60000;
+  const [h, mi, se = 0] = t.split(":").map(Number);
+  return Date.UTC(y, mo - 1, da, h, mi, se) / 60000;
 };
-export const fromMin = (m: number): string => new Date(m * 60000).toISOString().slice(0, 16);
+// "2026-10-09T14:00", or with seconds when it isn't on the minute ("2026-10-09T14:00:30")
+export const fromMin = (m: number): string => {
+  const iso = new Date(Math.round(m * 60) * 1000).toISOString();
+  return iso.slice(17, 19) === "00" ? iso.slice(0, 16) : iso.slice(0, 19);
+};
 const hm = (s: string) => {
   const [h, m] = s.split(":").map(Number);
   return h * 60 + m;
 };
-const roundUp = (m: number, step = 5) => Math.ceil(m / step) * step;
+const roundUp = (m: number, step = 5) => Math.ceil(m / step - 1e-9) * step;
+const QUICK = 5; // quests shorter than this many minutes go back to back
 
 type Interval = [number, number];
 
@@ -94,6 +105,8 @@ function partOfDay(rhythm: Rhythm, day: number, part: Quest["timeOfDay"]): Inter
 
 export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Busy[]; now: number }): PlanResult {
   const { rhythm, quests, busy } = options;
+  // Planned work starts a few minutes from now; quick quests (and repeats) can start right away
+  const exactNow = options.now;
   const now = roundUp(options.now + 5);
   const placed = new Map<string, Placement>();
   const unplaced = new Map<string, string>();
@@ -101,7 +114,7 @@ export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Bus
 
   // 1. Free time
   const windows = dayWindows(rhythm, now);
-  let free: Interval[] = windows.map((w) => [Math.max(w.from, now), w.to] as Interval).filter(([s, e]) => e > s);
+  let free: Interval[] = windows.map((w) => [Math.max(w.from, exactNow), w.to] as Interval).filter(([s, e]) => e > s);
   const load = new Map<number, number>(); // minutes of quests per day
   const addLoad = (start: number, minutes: number) => {
     const day = windows.find((w) => start >= w.from - 6 * 60 && start < w.to)?.day ?? Math.floor(start / DAY) * DAY;
@@ -124,8 +137,13 @@ export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Bus
   // 2. The order: most urgent first (hours until the deadline, divided by how much it matters)
   const open = quests.filter((q) => (q.status === "todo" || (q.status === "doing" && !q.start)) && !placed.has(q.id));
   const horizonEnd = windows.length ? windows[windows.length - 1].to : now + rhythm.horizonDays * DAY;
+  const due = (q: Quest) => {
+    const own = q.deadline ? toMin(q.deadline) : Infinity;
+    return q.ongoing ? Math.min(own, sessionDue(q, Math.max(now, q.earliest ? toMin(q.earliest) : 0))) : own;
+  };
   const urgency = (q: Quest) => {
-    const hours = q.deadline ? Math.max(1, (toMin(q.deadline) - now) / 60) : (horizonEnd - now) / 60 + 24;
+    const d = due(q);
+    const hours = Number.isFinite(d) ? Math.max(1 / 60, (d - now) / 60) : (horizonEnd - now) / 60 + 24;
     return hours / WEIGHT[q.priority];
   };
   const isDone = (id: string) => {
@@ -149,10 +167,11 @@ export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Bus
     waiting.delete(q.id);
 
     const afterDeps = Math.max(0, ...q.dependsOn.map((d) => (placed.has(d) ? toMin(placed.get(d)!.end) : 0)));
-    const notBefore = Math.max(now, q.earliest ? toMin(q.earliest) : 0, afterDeps);
-    const deadline = q.deadline ? toMin(q.deadline) : Infinity;
+    const quick = q.minutes < QUICK;
+    const notBefore = Math.max(quick ? exactNow : now, q.earliest ? toMin(q.earliest) : 0, afterDeps);
+    const deadline = due(q);
     const need = q.travelMinutes + q.minutes;
-    const rest = q.minutes >= rhythm.breakAfterMinutes ? Math.max(rhythm.breakMinutes, rhythm.bufferMinutes) : rhythm.bufferMinutes;
+    const rest = quick ? 0 : q.minutes >= rhythm.breakAfterMinutes ? Math.max(rhythm.breakMinutes, rhythm.bufferMinutes) : rhythm.bufferMinutes;
     const cap = rhythm.maxQuestHoursPerDay * 60;
 
     const tryFit = (part: Quest["timeOfDay"], by: number): number | null => {
@@ -161,7 +180,9 @@ export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Bus
         if (!w) continue;
         if ((load.get(w.day) ?? 0) + q.minutes > cap) continue;
         const [ps, pe] = partOfDay(rhythm, w.day, part);
-        const start = roundUp(Math.max(s, notBefore, part === "any" ? s : ps));
+        // Repeats keep their exact times (to the second); other quick quests start on the minute
+        const step = quick ? (q.ongoing && q.every === "interval" ? 1 / 60 : 1) : 5;
+        const start = roundUp(Math.max(s, notBefore, part === "any" ? s : ps), step);
         if (start >= e || (part !== "any" && start >= pe)) continue;
         if (start + need > e) continue;
         if (start + need > by) continue;
@@ -178,7 +199,7 @@ export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Bus
       unplaced.set(
         q.id,
         q.minutes > cap
-          ? `It's longer than the most quest time in a day (${rhythm.maxQuestHoursPerDay} h): split it into smaller quests.`
+          ? `It's longer than the most quest time in a day (${rhythm.maxQuestHoursPerDay} h): ${q.ongoing ? "shorten its sessions" : "split it into smaller quests"}.`
           : !free.some(([s, e]) => e - s >= need)
             ? "It's longer than any free stretch: split it into smaller quests."
             : "There's no free time for it in the planning window.",

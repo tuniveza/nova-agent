@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "Nova Agent",
+  "short_name": "Nova Agent",
+  "description": "Nova Missions, Nova Quests, Nova Calendar and the Acuity helper, in one chat: part of the Nova suite.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#06040D",
+  "theme_color": "#06040D",
+  "categories": ["productivity", "business"],
+  "launch_handler": { "client_mode": "focus-existing" },
+  "icons": [
+    { "src": "/app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/app/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Today", "short_name": "Today", "description": "Your quests, hour by hour", "url": "/?view=today", "icons": [{ "src": "/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "New Nova Mission", "short_name": "Missions", "description": "Plan a goal", "url": "/?view=missions", "icons": [{ "src": "/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Nova Calendar", "short_name": "Calendar", "url": "/?view=calendar", "icons": [{ "src": "/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Visualizer", "short_name": "Visualizer", "url": "/visualizer", "icons": [{ "src": "/app/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

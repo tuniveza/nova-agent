@@ -46,14 +46,26 @@ where the button went, the answer is checked, and the fix is remembered for next
   - with **travel time** in front of anything somewhere else, and a "leave by" reminder;
   - flagging anything that can't make its deadline as **at risk**.
 
+  Quests can be **any length, from a second to forever**: seconds ("text Sam back", 30 s) are
+  placed to the second and quick ones go back to back; long work (20 hours of mixing) is split
+  into sessions of up to 3 hours, in order; and an **ongoing** quest never ends, with a session
+  every day, weekday or week, or at any interval ("drink water every 30 minutes until 11pm"),
+  until you end it or its deadline passes.
+
   It **re-plans on every change**: finish early and the rest moves up, snooze a quest and it
   finds a new slot, and a quest left unanswered an hour after its end is moved and you're told
   where. Pop-up **reminders** come before each quest, a **check-in** comes when it should be
   done (Done, More time or Move it), and there's a morning plan and an evening wrap-up, with a
-  soft chime, system notifications, and optionally the Nova Hub phones. The chat can do all
+  bright ping (a different one for each kind), system notifications, and the **Nova Hub** phones,
+  where Nova Agent, Nova Quest and Nova Mission alerts each have their own label and buzz,
+  check-ins stay on screen until they're answered, and an open Nova Hub pings and drops a
+  banner. The chat can do all
   of it too ("what should I do now?", "I'm running late, push everything an hour"). Travel
   times are Claude's estimates for now (a live traffic API is a later option). Quests also
   show up in Nova Calendar as ✦ note cards.
+- **An app for your launcher**: open `http://localhost:4545` in a Chromium browser and press
+  **Install app**; it opens in its own window, with shortcuts to Today, a new mission, Nova
+  Calendar and the visualizer.
 - **Nova Calendar built in** (`calendar/`, the [nova-calendar](https://github.com/tuniveza/nova-calendar)
   repo as a git submodule): served at `/calendar/`, saving to Nova Agent (`data/calendar.json`)
   instead of only the browser, so the chat and the calendar always agree.
@@ -259,7 +271,8 @@ src/llm.ts                the Claude client
 src/chat.ts               the chat: Claude with quest, calendar, Acuity (read-only) and status tools
 src/calendar/store.ts     Nova Calendar's data, kept in data/calendar.json
 src/quests/store.ts       Missions, Quests, blocked time and your rhythm (data/quests.json)
-src/quests/scheduler.ts   the planner: places every quest at a time, hour by hour (no AI)
+src/quests/scheduler.ts   the planner: places every quest at a time, to the second (no AI)
+src/quests/lengths.ts     lengths from a second to forever: sessions, repeats, plain words
 src/quests/planner.ts     turning a goal into a Mission and its Quests (Claude)
 src/quests/plan.ts        re-planning, and mirroring quests into Nova Calendar
 src/quests/reminders.ts   reminders, check-ins, the morning plan and evening wrap-up
@@ -268,6 +281,7 @@ test/scheduler.test.ts    planner checks
 src/heal/                 resolve() and the selector cache
 src/acuity/               Acuity pages: login, list, book, cancel, edit, targets, types
 src/trace.ts              every step, for the console, logs and visualizer
+src/visualizer/app/       the installable app: manifest, service worker, icons
 src/visualizer/           the local pages: chat.html (the chat), page.html (the visualizer),
                           calendar-sync.js (makes the calendar save to Nova Agent), server.ts
 calendar/                 Nova Calendar (git submodule: tuniveza/nova-calendar)

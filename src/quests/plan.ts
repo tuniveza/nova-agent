@@ -4,17 +4,18 @@
 
 import { readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
 import { config } from "../config";
-import { planQuests, toMin, type Busy } from "./scheduler";
+import { fromMin, planQuests, toMin, type Busy } from "./scheduler";
+import { nextSession } from "./lengths";
 import { readQuests, writeQuests, type QuestData } from "./store";
 
 const QUEST_NOTE = "quest-";
 const BLOCK_NOTE = "block-";
 
-// "Now" as UK wall-clock minutes (the planner's time)
+// "Now" as UK wall-clock minutes (the planner's time), to the second
 export function nowMinutes(): number {
-  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: config.timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: config.timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
-  return toMin(`${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`);
+  return toMin(`${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`);
 }
 
 // Calendar entries the person made themselves count as taken time
@@ -27,6 +28,23 @@ function calendarBusy(): Busy[] {
 // Plan everything again. Returns a short summary of what changed.
 export function replan(data: QuestData = readQuests()): { data: QuestData; atRisk: number; unplaced: { id: string; title: string; why: string }[] } {
   const now = nowMinutes();
+  for (const q of data.quests) {
+    if (!q.ongoing || q.status === "done" || q.status === "skipped") continue;
+    // An ongoing quest stops by itself at its deadline
+    if (q.deadline && toMin(q.deadline) <= now) {
+      q.status = "done";
+      q.completed = new Date().toISOString();
+      continue;
+    }
+    // A repeat whose time has passed moves on to its next slot (it isn't piled up)
+    if (q.every === "interval" && q.status === "todo" && q.start && toMin(q.end) <= now) {
+      q.missed += 1;
+      q.earliest = nextSession("interval", q.start, q.everyMinutes, now);
+      q.start = q.end = q.travelStart = q.fixedStart = "";
+      q.remindedFor = q.checkedFor = "";
+      if (q.deadline && q.earliest >= q.deadline) q.status = "done";
+    }
+  }
   // Anything not finished whose time has well passed goes back in the pot
   for (const q of data.quests) {
     if (q.status === "todo" && q.start && !q.fixedStart && toMin(q.end) + 60 < now) {
@@ -73,13 +91,16 @@ export function syncCalendar(data: QuestData): void {
   for (const q of data.quests) {
     if (!q.start || q.status === "skipped") continue;
     const mission = missions.get(q.missionId);
+    // The calendar works to the minute: a quest of seconds still shows as a minute
+    const start = q.start.slice(0, 16);
+    const end = q.end.slice(0, 16) > start ? q.end.slice(0, 16) : fromMin(toMin(start) + 1);
     ours.push({
       id: `${QUEST_NOTE}${q.id}`,
-      title: `${q.status === "done" ? "✓" : q.atRisk ? "⚠" : "✦"} ${q.title}`.slice(0, 120),
+      title: `${q.status === "done" ? "✓" : q.atRisk ? "⚠" : q.ongoing ? "∞" : "✦"} ${q.title}`.slice(0, 120),
       body: [mission ? `Nova Mission: ${mission.title}` : "Nova Quest", q.location ? `At ${q.location}${q.travelMinutes ? ` (${q.travelMinutes} min travel first)` : ""}` : "", q.notes].filter(Boolean).join("\n"),
       author: "Nova Quest",
-      start: q.start,
-      end: q.end,
+      start,
+      end,
       art: { seed: seed(q.id), subject: "auto" },
       created: q.created,
       updated: q.updated,

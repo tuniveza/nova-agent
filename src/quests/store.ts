@@ -1,14 +1,17 @@
 // Nova Missions and Nova Quests: what they are, and where they're kept.
 //
 //   Nova Mission  an end goal ("Release the EP by 1 December"), turned into quests
-//   Nova Quest    one actionable task: how long it takes, how much it matters,
-//                 when it's due, what it waits for, where it happens
+//   Nova Quest    one actionable task: how long it takes (anything from a second
+//                 up; long ones are split into sessions, and an ongoing quest
+//                 never ends: it gets a session every day, weekday or week),
+//                 how much it matters, when it's due, what it waits for, where
 //   Block         time that's taken ("out tonight 7-11", "off sick today")
 //   Rhythm        how the days work: wake, sleep, wind-down, buffers, breaks,
 //                 reminders
 //
 // Everything lives in data/quests.json. Times are local UK wall-clock times,
-// written like the calendar's: "2026-10-09T14:00".
+// written like the calendar's: "2026-10-09T14:00" (with seconds when a quest
+// needs them: "2026-10-09T14:00:30").
 
 import { EventEmitter } from "node:events";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
@@ -20,6 +23,12 @@ export type Priority = (typeof PRIORITIES)[number];
 export const TIMES_OF_DAY = ["any", "morning", "afternoon", "evening"] as const;
 export type TimeOfDay = (typeof TIMES_OF_DAY)[number];
 export type QuestStatus = "todo" | "doing" | "done" | "skipped";
+export const EVERY = ["day", "weekday", "week", "interval"] as const; // interval: every `everyMinutes`
+export type Every = (typeof EVERY)[number];
+
+// The shortest quest is a second; the longest single session the planner places
+export const MIN_MINUTES = 1 / 60;
+export const MAX_SESSION_MINUTES = 180;
 
 export interface Mission {
   id: string;
@@ -37,7 +46,12 @@ export interface Quest {
   missionId: string; // "" for a quest on its own
   title: string;
   notes: string;
-  minutes: number; // how long the work takes
+  minutes: number; // how long the work takes (can be a fraction: 0.5 = 30 seconds); for an ongoing quest, each session
+  ongoing: boolean; // never finishes: a session every `every` until it's ended
+  every: Every;
+  everyMinutes: number; // for every = "interval": the gap from one session's start to the next (a second up)
+  sessions: number; // sessions done so far (ongoing quests)
+  // An ongoing quest with a deadline stops by itself then ("every 30 minutes until 23:00")
   priority: Priority;
   deadline: string; // must be finished by ("" = none)
   earliest: string; // not before ("" = any time)
@@ -109,18 +123,23 @@ export const DEFAULT_RHYTHM: Rhythm = {
   remindMinutesBefore: 10,
   checkIns: true,
   dailyBriefing: true,
-  phonePush: false,
+  phonePush: true,
 };
 
 const file = `${config.paths.dataDir}quests.json`;
 const now = () => new Date().toISOString();
 const text = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
-const isStamp = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s);
+const isStamp = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(s);
 const isDay = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const isHm = (s: unknown): s is string => typeof s === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
 const num = (v: unknown, min: number, max: number, fallback: number) => {
   const n = Number(v);
   return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback;
+};
+// A length in minutes, kept to the nearest second (a second up to about two years)
+const length = (v: unknown, fallback: number) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.min(1_000_000, Math.max(MIN_MINUTES, Math.round(n * 60) / 60)) : fallback;
 };
 const stampOrEmpty = (v: unknown) => (isStamp(v) ? v : isDay(v) ? `${v}T23:59` : "");
 
@@ -153,7 +172,11 @@ export function cleanQuest(q: any): Quest {
     missionId: text(q?.missionId, 64),
     title: text(q?.title, 140) || "Untitled quest",
     notes: text(q?.notes, 2000),
-    minutes: num(q?.minutes, 5, 600, 60),
+    minutes: length(q?.minutes, 60),
+    ongoing: q?.ongoing === true,
+    every: (EVERY as readonly string[]).includes(q?.every) ? q.every : "day",
+    everyMinutes: length(q?.everyMinutes, 60),
+    sessions: num(q?.sessions, 0, 1_000_000, 0),
     priority: (PRIORITIES as readonly string[]).includes(q?.priority) ? q.priority : "normal",
     deadline: stampOrEmpty(q?.deadline),
     earliest: isStamp(q?.earliest) ? q.earliest : isDay(q?.earliest) ? `${q.earliest}T00:00` : "",

@@ -20,7 +20,8 @@ import { getRecentEvents, trace } from "./trace";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
 import { createMission } from "./quests/planner";
-import { PRIORITIES, readQuests, TIMES_OF_DAY, type Quest } from "./quests/store";
+import { describeLength } from "./quests/lengths";
+import { EVERY, PRIORITIES, readQuests, TIMES_OF_DAY, type Quest } from "./quests/store";
 
 const DEFAULT_MODEL = "claude-opus-5-5";
 const MAX_HISTORY = 40;
@@ -56,6 +57,7 @@ It is ${now.words}, ${now.time} (UK time). Today's date is ${now.date}.
 
 You also run Nova Missions and Nova Quests, a smart planner for the people you talk to:
 - A Nova Mission is an end goal (e.g. "release the EP by 1 December"). mission_create turns their request into Nova Quests (concrete tasks with time estimates, priorities, deadlines, dependencies, locations and travel) and schedules them.
+- A quest can be any length: seconds ("text Sam back", 30 seconds), minutes, hours, or days of work (split into sessions automatically). An ongoing quest repeats: every day, weekday or week, or at any interval ("drink water every 30 minutes until 11pm": ongoing, every interval, every_minutes 30, a length of seconds, deadline 23:00), until they end it (quest_status finish) or its deadline passes. Prefer one ongoing quest over many copies.
 - Nova Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
 - Help them prioritise and pivot: for "what should I do now?" use what_now and give one clear recommendation. When plans change ("I'm running late", "I'm out tonight", "I'm ill today"), block the time or update the quest, then say what moved. Mark quests done, started or skipped when they tell you. Point out quests at risk of missing a deadline and suggest what to drop, shorten or move.
 - Their daily rhythm (wake, sleep, buffers, breaks, reminders, phone notifications) can be changed with rhythm_set.
@@ -241,16 +243,30 @@ function tools(actions: ChatAction[]) {
   ];
 }
 
-const hm = (stamp: string) => stamp.slice(11, 16);
+const hm = (stamp: string) => (stamp.length > 16 ? stamp.slice(11, 19) : stamp.slice(11, 16));
 const questLine = (q: Quest) =>
-  `${q.id.slice(0, 8)} · ${q.title} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : "not scheduled"} · ${q.minutes} min · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status}${q.atRisk ? " · AT RISK" : ""}`;
+  `${q.id.slice(0, 8)} · ${q.title} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : "not scheduled"} · ${describeLength(q)}${q.ongoing ? ` · ${q.sessions} sessions done` : ""} · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status}${q.atRisk ? " · AT RISK" : ""}`;
 
 function questTools(actions: ChatAction[]) {
   const did = (kind: ChatAction["kind"], text: string) => {
     actions.push({ kind, text });
     trace("input", "ok", `Chat: ${text}`);
   };
-  const STAMP_OR_EMPTY = z.string().describe('"YYYY-MM-DDTHH:MM" (UK time), or "" for none');
+  const STAMP_OR_EMPTY = z.string().describe('"YYYY-MM-DDTHH:MM" (UK time, ":SS" seconds allowed), or "" for none');
+  // Any length, from a second up: give it in whichever units fit (they're added together)
+  const LENGTH = {
+    seconds: z.number().min(0).optional(),
+    minutes: z.number().min(0).optional(),
+    hours: z.number().min(0).optional(),
+    days: z.number().min(0).optional().describe("Days of work time (24 h each); long work is split into sessions automatically"),
+    ongoing: z.boolean().optional().describe("Never finishes: a session (of the length given) every day, weekday or week until it's ended"),
+    every: z.enum(EVERY).optional().describe('"interval" repeats every every_minutes (e.g. drink water every 30 minutes); set deadline to stop it then'),
+    every_minutes: z.number().positive().optional().describe("For every = interval: minutes between session starts (fractions for seconds)"),
+  };
+  const totalMinutes = (i: { seconds?: number; minutes?: number; hours?: number; days?: number }) => {
+    const t = (i.seconds ?? 0) / 60 + (i.minutes ?? 0) + (i.hours ?? 0) * 60 + (i.days ?? 0) * 1440;
+    return t > 0 ? t : undefined;
+  };
   return [
     betaZodTool({
       name: "mission_create",
@@ -292,7 +308,7 @@ function questTools(actions: ChatAction[]) {
       description: "Add a single Nova Quest (optionally to a mission). It's scheduled automatically unless fixed_start pins it.",
       inputSchema: z.object({
         title: z.string().min(1),
-        minutes: z.number().int().min(5).max(600),
+        ...LENGTH,
         mission_id: z.string().optional(),
         priority: z.enum(PRIORITIES).optional(),
         deadline: STAMP_OR_EMPTY.optional(),
@@ -304,7 +320,7 @@ function questTools(actions: ChatAction[]) {
       }),
       run: async (i) => {
         const missionId = i.mission_id ? readQuests().missions.find((m) => m.id.startsWith(i.mission_id!))?.id ?? "" : "";
-        const q = addQuest({ title: i.title, minutes: i.minutes, missionId, priority: i.priority, deadline: i.deadline, fixedStart: i.fixed_start, location: i.location, travelMinutes: i.travel_minutes, timeOfDay: i.time_of_day, notes: i.notes });
+        const q = addQuest({ title: i.title, minutes: totalMinutes(i) ?? 60, ongoing: i.ongoing, every: i.every, everyMinutes: i.every_minutes, missionId, priority: i.priority, deadline: i.deadline, fixedStart: i.fixed_start, location: i.location, travelMinutes: i.travel_minutes, timeOfDay: i.time_of_day, notes: i.notes });
         did("added", `Quest “${q.title}”${q.start ? `: ${longDate(q.start.slice(0, 10))} ${hm(q.start)}` : ""}`);
         return `Added: ${questLine(q)}`;
       },
@@ -315,7 +331,7 @@ function questTools(actions: ChatAction[]) {
       inputSchema: z.object({
         id: z.string(),
         title: z.string().optional(),
-        minutes: z.number().int().min(5).max(600).optional(),
+        ...LENGTH,
         priority: z.enum(PRIORITIES).optional(),
         deadline: STAMP_OR_EMPTY.optional(),
         fixed_start: STAMP_OR_EMPTY.optional(),
@@ -324,24 +340,24 @@ function questTools(actions: ChatAction[]) {
         time_of_day: z.enum(TIMES_OF_DAY).optional(),
         notes: z.string().optional(),
       }),
-      run: async ({ id, fixed_start, travel_minutes, time_of_day, ...rest }) => {
-        const q = updateQuest(id, { ...rest, fixedStart: fixed_start, travelMinutes: travel_minutes, timeOfDay: time_of_day });
+      run: async ({ id, fixed_start, travel_minutes, time_of_day, seconds, minutes, hours, days, every_minutes, ...rest }) => {
+        const q = updateQuest(id, { ...rest, everyMinutes: every_minutes, minutes: totalMinutes({ seconds, minutes, hours, days }), fixedStart: fixed_start, travelMinutes: travel_minutes, timeOfDay: time_of_day });
         did("changed", `Quest “${q.title}”${q.start ? `: now ${longDate(q.start.slice(0, 10))} ${hm(q.start)}` : ""}`);
         return `Updated: ${questLine(q)}`;
       },
     }),
     betaZodTool({
       name: "quest_status",
-      description: "Mark a quest done, started (doing), skipped, or back to to-do; or remove it entirely.",
-      inputSchema: z.object({ id: z.string(), status: z.enum(["done", "doing", "skipped", "todo", "remove"]) }),
+      description: "Mark a quest done, started (doing), skipped, or back to to-do; or remove it entirely. For an ongoing quest, done finishes this session and lines up the next; finish ends the ongoing quest for good.",
+      inputSchema: z.object({ id: z.string(), status: z.enum(["done", "doing", "skipped", "todo", "remove", "finish"]) }),
       run: async ({ id, status }) => {
         if (status === "remove") {
           const q = removeQuest(id);
           did("removed", `Removed quest “${q.title}”`);
           return `Removed “${q.title}”.`;
         }
-        const q = setQuestStatus(id, status);
-        did(status === "done" ? "changed" : "changed", `${status === "done" ? "Done" : status === "doing" ? "Started" : status === "skipped" ? "Skipped" : "Reopened"}: “${q.title}”`);
+        const q = status === "finish" ? setQuestStatus(id, "done", true) : setQuestStatus(id, status);
+        did("changed", `${status === "finish" ? "Ended" : status === "done" ? (q.ongoing ? "Session done" : "Done") : status === "doing" ? "Started" : status === "skipped" ? "Skipped" : "Reopened"}: “${q.title}”`);
         return `${q.title}: ${q.status}.`;
       },
     }),

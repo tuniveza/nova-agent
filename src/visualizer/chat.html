@@ -8,7 +8,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,500&display=swap">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2306040D'/%3E%3Cpath d='M32 12 50 52h-9l-3.5-8h-11L23 52h-9zm0 13-4 10h8z' fill='%23FF5FA8'/%3E%3C/svg%3E">
+<link rel="icon" href="/app/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
+<meta name="application-name" content="Nova Agent">
+<meta name="apple-mobile-web-app-title" content="Nova Agent">
 <style>
   :root {
     --void: #06040D; --deep: #100816; --panel: #1C1129; --panel-2: #241640;
@@ -293,6 +297,7 @@
     <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="i-clear" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12M6 11l6 6 6-6M5 21h14"/></symbol>
     <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
     <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
     <symbol id="i-replan" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></symbol>
@@ -314,6 +319,7 @@
     </div>
     <span class="status" id="status" title="Nova Agent's mode"><span class="dot"></span><span class="label" id="status-text">Connecting…</span></span>
     <nav class="links">
+      <button type="button" class="btn primary" id="install" hidden><svg class="ico"><use href="#i-down"/></svg><span>Install app</span></button>
       <a class="btn" href="/calendar/" target="_blank" rel="noopener"><svg class="ico"><use href="#i-cal"/></svg><span>Calendar</span></a>
       <a class="btn" href="/visualizer" target="_blank" rel="noopener"><svg class="ico"><use href="#i-eye"/></svg><span>Visualizer</span></a>
     </nav>
@@ -550,7 +556,25 @@
   // ===================== NOVA MISSIONS & QUESTS =====================
   let st = null;
   const api = (path, body) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
-  const hhmm = (s) => (s ? s.slice(11, 16) : '');
+  const hhmm = (s) => (s ? s.slice(11, s.length > 16 ? 19 : 16) : '');
+  // "30 s", "2 min 30 s", "1 h 30 min", "3 days 4 h"; ongoing: "∞ · 30 min a day"
+  function dur(q) {
+    const secs = Math.round(q.minutes * 60);
+    let t;
+    if (secs < 60) t = `${secs} s`;
+    else {
+      const m = Math.floor(secs / 60), sr = secs % 60;
+      if (m < 60) t = sr ? `${m} min ${sr} s` : `${m} min`;
+      else {
+        const h = Math.floor(m / 60), mm = m % 60;
+        if (h < 48) t = mm ? `${h} h ${mm} min` : `${h} h`;
+        else { const d = Math.floor(h / 24), hh = h % 24; t = hh ? `${d} days ${hh} h` : `${d} days`; }
+      }
+    }
+    if (!q.ongoing) return t;
+    const every = q.every === 'interval' ? `every ${dur({ minutes: q.everyMinutes })}` : q.every === 'week' ? 'a week' : q.every === 'weekday' ? 'each weekday' : 'a day';
+    return `∞ · ${t} ${every}${q.sessions ? ` · ${q.sessions} done` : ''}${q.deadline ? ` · until ${q.deadline.slice(11, 16)}` : ''}`;
+  }
   const dayLong = (ymd) => new Date(ymd + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   const mins = (s) => { const [d, t] = s.split('T'); const [y, mo, da] = d.split('-').map(Number); const [h, mi] = t.split(':').map(Number); return Date.UTC(y, mo - 1, da, h, mi) / 60000; };
   const escH = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -572,7 +596,8 @@
   function questButtons(q) {
     const b = [];
     if (q.status === 'todo') b.push(`<button class="mini go" data-q="${q.id}" data-a="start">▶ Start</button>`);
-    if (q.status !== 'done') b.push(`<button class="mini" data-q="${q.id}" data-a="done">✓ Done</button>`);
+    if (q.status !== 'done') b.push(`<button class="mini" data-q="${q.id}" data-a="done">✓ ${q.ongoing ? 'Session done' : 'Done'}</button>`);
+    if (q.ongoing && q.status !== 'done') b.push(`<button class="mini" data-q="${q.id}" data-a="finish">End quest</button>`);
     if (q.status === 'doing') b.push(`<button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">+15 min</button>`);
     if (q.status === 'todo') b.push(`<button class="mini" data-q="${q.id}" data-a="snooze" data-m="60">Not now</button>`, `<button class="mini" data-q="${q.id}" data-a="skip">Skip</button>`);
     if (q.status === 'done' || q.status === 'skipped') b.push(`<button class="mini" data-q="${q.id}" data-a="reopen">Undo</button>`);
@@ -602,11 +627,11 @@
     if (cur) {
       const pct = cur.start && cur.end ? Math.max(0, Math.min(100, ((nowM - mins(cur.start)) / Math.max(1, mins(cur.end) - mins(cur.start))) * 100)) : 0;
       html += `<div class="now-card"><div class="now-kicker">${cur.status === 'doing' ? 'In progress' : 'Happening now'}</div><div class="now-title">${escH(cur.title)}</div>
-        <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${cur.minutes} min${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>
+        <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${dur(cur)}${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>
         <div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div>${questButtons(cur)}</div>`;
     } else if (st.next[0]) {
       const n = st.next[0];
-      html += `<div class="now-card"><div class="now-kicker">Up next</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${n.minutes} min${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div><div style="margin-top:10px">${questButtons(n)}</div></div>`;
+      html += `<div class="now-card"><div class="now-kicker">Up next</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div><div style="margin-top:10px">${questButtons(n)}</div></div>`;
     }
 
     if (!items.length) {
@@ -620,8 +645,8 @@
         if (it.kind === 'quest') {
           const q = it.q;
           html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
-            <div class="tl-card ${q.status}${q.atRisk ? ' risk' : ''}"><div class="tl-title">${q.atRisk ? '⚠ ' : ''}${escH(q.title)}</div>
-            <div class="tl-meta">${missionName(q.missionId) ? `<span class="chip-m">${escH(missionName(q.missionId))}</span>` : ''}<span class="prio ${q.priority}">${q.priority}</span> · ${q.minutes} min${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
+            <div class="tl-card ${q.status}${q.atRisk ? ' risk' : ''}"><div class="tl-title">${q.atRisk ? '⚠ ' : q.ongoing ? '∞ ' : ''}${escH(q.title)}</div>
+            <div class="tl-meta">${missionName(q.missionId) ? `<span class="chip-m">${escH(missionName(q.missionId))}</span>` : ''}<span class="prio ${q.priority}">${q.priority}</span> · ${dur(q)}${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
             ${q.status === 'done' ? '' : questButtons(q)}</div></div>`;
         } else if (it.kind === 'block') {
           html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card block"><div class="tl-title">Busy · ${escH(it.b.reason)}</div><div class="tl-meta">Blocked out · <button class="mini" data-unblock="${it.b.id}">Unblock</button></div></div></div>`;
@@ -646,7 +671,7 @@
       html += '</div>';
     }
     if (st.unplanned.length) {
-      html += `<div class="section-h">Needs a slot</div><div class="upcoming"><div class="up-day"><ul>${st.unplanned.map((q) => `<li>⚠ ${escH(q.title)} · ${q.minutes} min</li>`).join('')}</ul></div></div>`;
+      html += `<div class="section-h">Needs a slot</div><div class="upcoming"><div class="up-day"><ul>${st.unplanned.map((q) => `<li>⚠ ${escH(q.title)} · ${dur(q)}</li>`).join('')}</ul></div></div>`;
     }
     $('view-today').innerHTML = html;
   }
@@ -743,27 +768,44 @@
     loadPlan();
   });
 
-  // Pop-up reminders: on the page, as a system notification, with a soft chime
+  // Pop-up reminders: on the page, as a system notification, with a bright ping (a different one for each kind)
   let audio = null;
-  function chime() {
+  const PINGS = {
+    starting: [1318.5, 1975.5],
+    leave: [1174.7, 1568, 2093],
+    checkin: [1760, 1760, 2349.3, 2349.3],
+    mission: [1046.5, 1318.5, 1568, 2093, 2637],
+    moved: [1568, 1174.7],
+    briefing: [1046.5, 1568, 2093],
+    wrapup: [1568, 1318.5, 1046.5],
+  };
+  function chime(kind) {
     try {
       audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-      const t = audio.currentTime;
-      [659.25, 987.77, 1318.5].forEach((f, i) => {
-        const o = audio.createOscillator(); const g = audio.createGain();
-        o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(audio.destination);
-        g.gain.setValueAtTime(0.0001, t + i * 0.12); g.gain.exponentialRampToValueAtTime(0.05, t + i * 0.12 + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.12 + 0.9);
-        o.start(t + i * 0.12); o.stop(t + i * 0.12 + 1);
+      if (audio.state === 'suspended') audio.resume();
+      const t0 = audio.currentTime + 0.02;
+      (PINGS[kind] || PINGS.starting).forEach((f, i) => {
+        const t = t0 + i * 0.11;
+        // Each note: a bell-like strike with a shimmer an octave up
+        [[f, 0.2, 'sine'], [f * 2, 0.05, 'triangle']].forEach(([freq, loud, wave]) => {
+          const o = audio.createOscillator(); const g = audio.createGain();
+          o.type = wave; o.frequency.value = freq; o.connect(g); g.connect(audio.destination);
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(loud, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+          o.start(t); o.stop(t + 1);
+        });
       });
     } catch (e) {}
   }
+  // Browsers only allow sound after a click: wake it on the first one
+  document.addEventListener('pointerdown', () => { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) {} }, { once: true });
   function toast(n) {
     const el = document.createElement('div');
     el.className = 'toast';
     const q = n.questId ? (st && st.quests.find((x) => x.id === n.questId)) : null;
     let btns = '';
     if (q && q.status !== 'done') {
-      if (n.kind === 'checkin') btns = `<div class="row-btns"><button class="mini go" data-q="${q.id}" data-a="done">✓ Done</button><button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">+15 min</button><button class="mini" data-q="${q.id}" data-a="snooze" data-m="60">Move it</button></div>`;
+      if (n.kind === 'checkin' && q.ongoing) btns = `<div class="row-btns"><button class="mini go" data-q="${q.id}" data-a="done">✓ Session done</button><button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">+15 min</button></div>`;
+      else if (n.kind === 'checkin') btns = `<div class="row-btns"><button class="mini go" data-q="${q.id}" data-a="done">✓ Done</button><button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">+15 min</button><button class="mini" data-q="${q.id}" data-a="snooze" data-m="60">Move it</button></div>`;
       else if (n.kind === 'starting' || n.kind === 'leave') btns = `<div class="row-btns"><button class="mini go" data-q="${q.id}" data-a="start">▶ Start</button><button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">In 15 min</button></div>`;
     }
     el.innerHTML = `<button class="x" aria-label="Close">×</button><h5>${escH(n.title)}</h5><p>${escH(n.message)}</p>${btns}`;
@@ -773,9 +815,11 @@
   }
   function notice(n) {
     toast(n);
-    chime();
+    chime(n.kind);
     if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
-      try { const sys = new Notification(n.title, { body: n.message, tag: n.questId || n.kind }); sys.onclick = () => { window.focus(); sys.close(); }; } catch (e) {}
+      const opts = { body: n.message, tag: n.questId || n.kind, renotify: true, icon: '/app/icon-192.png', badge: '/app/icon-192.png', requireInteraction: n.kind === 'checkin' || n.kind === 'leave', silent: false };
+      if (swReg) swReg.showNotification(n.title, opts).catch(() => {});
+      else try { const sys = new Notification(n.title, opts); sys.onclick = () => { window.focus(); sys.close(); }; } catch (e) {}
     }
   }
   function bellState() {
@@ -787,7 +831,7 @@
     if (!('Notification' in window)) return toast({ title: 'Not available', message: 'This browser can’t show system pop-ups; reminders still appear here.' });
     const p = await Notification.requestPermission();
     bellState();
-    if (p === 'granted') { chime(); toast({ title: 'Pop-up reminders on ✦', message: 'You’ll get a pop-up before each quest and a check-in when it should be done, even with this tab in the background.' }); }
+    if (p === 'granted') { chime('mission'); toast({ title: 'Pop-up reminders on ✦', message: 'You’ll get a pop-up before each quest and a check-in when it should be done, even with this tab in the background.' }); }
   });
   bellState();
 
@@ -800,6 +844,21 @@
     new EventSource('/calendar-api/events').addEventListener('change', () => { clearTimeout(t); t = setTimeout(loadPlan, 250); });
   } catch (e) {}
   setInterval(loadPlan, 60000); // keeps the now-line and progress moving
+
+  // ---- The installable app ----
+  let swReg = null;
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').then((r) => (swReg = r)).catch(() => {});
+  let installPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; $('install').hidden = false; });
+  window.addEventListener('appinstalled', () => { $('install').hidden = true; toast({ title: 'Nova Agent installed \u2726', message: 'It\u2019s in your app launcher now.' }); });
+  $('install').addEventListener('click', async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; $('install').hidden = true; });
+  // Launcher shortcuts open a view: ?view=today | missions | calendar
+  const startView = new URLSearchParams(location.search).get('view');
+  if (['today', 'missions', 'calendar'].includes(startView)) {
+    document.querySelector(`.seg [data-view="${startView}"]`).click();
+    const planTab = document.querySelector('.tabs [data-tab="plan"]');
+    if (planTab && getComputedStyle(document.querySelector('.tabs')).display !== 'none') planTab.click();
+  }
   loadPlan();
   input.focus();
 })();
