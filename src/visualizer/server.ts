@@ -87,7 +87,7 @@ app.get("/manifest.webmanifest", appFile("manifest.webmanifest"));
 app.get("/sw.js", appFile("sw.js"));
 app.get("/app/:file", (c) => {
   const name = c.req.param("file");
-  if (!/^[\w-]+\.(png|svg)$/.test(name) || !existsSync(appRoot + name)) return c.text("Not found", 404);
+  if (!/^[\w-]+\.(png|svg|js)$/.test(name) || !existsSync(appRoot + name)) return c.text("Not found", 404);
   return appFile(name)(c);
 });
 
