@@ -1,6 +1,9 @@
-// The Nova Agent visualizer: a local web page that shows, live, every step
-// the agent takes: what it's looking for, what it remembered, what it asked
-// the AI, what the AI answered, and what the browser saw.
+// Nova Agent's local web pages, on http://localhost:4545:
+//
+//   /             the chat: talk to Nova Agent, with Nova Calendar beside it
+//   /calendar/    Nova Calendar (the ../../calendar folder), saving to Nova Agent
+//   /visualizer   every step the agent takes, live: what it's looking for, what
+//                 it remembered, what it asked the AI, what the browser saw
 //
 //   npm run visualizer      then open http://localhost:4545
 //
@@ -13,7 +16,8 @@
 // client names and the AI prompts. To view it from the VPS later, use an
 // SSH tunnel:  ssh -L 4545:localhost:4545 your-vps
 
-import { readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
+import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
@@ -26,8 +30,17 @@ import { runHealthcheck } from "../healthcheck";
 import { startCollectingJobs } from "../jobs";
 import { checkLogin, describeAppointments, listTask, readOnlyTour } from "../tasks";
 import { getRecentEvents, onTrace, trace } from "../trace";
+import { calendarEvents, normalise, readCalendar, writeCalendar } from "../calendar/store";
+import { chat, type ChatTurn } from "../chat";
 
 const pageFile = fileURLToPath(new URL("./page.html", import.meta.url));
+const chatFile = fileURLToPath(new URL("./chat.html", import.meta.url));
+const syncFile = fileURLToPath(new URL("./calendar-sync.js", import.meta.url));
+const calendarRoot = fileURLToPath(new URL("../../calendar/", import.meta.url));
+const TYPES: Record<string, string> = {
+  ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
+  ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".json": "application/json", ".webmanifest": "application/manifest+json",
+};
 
 // The tasks the page's buttons can start (the page builds a button for
 // each one). All of them are read-only.
@@ -56,8 +69,78 @@ app.use("/actions/*", async (c, next) => {
   await next();
 });
 
-// The page itself. Read from disk each time, so edits show on refresh.
-app.get("/", (c) => c.html(readFileSync(pageFile, "utf8")));
+// The pages. Read from disk each time, so edits show on refresh.
+app.get("/", (c) => c.html(readFileSync(chatFile, "utf8")));
+app.get("/visualizer", (c) => c.html(readFileSync(pageFile, "utf8")));
+
+// ---- Nova Calendar, served from the calendar folder ----
+// Its own offline helper isn't needed (or wanted) here: Nova Agent is the server.
+app.get("/calendar/sw.js", (c) => c.text("// not used inside Nova Agent", 404));
+app.get("/calendar-sync.js", (c) => c.body(readFileSync(syncFile, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }));
+app.get("/calendar", (c) => c.redirect("/calendar/"));
+app.get("/calendar/*", (c) => {
+  const rel = decodeURIComponent(c.req.path.slice("/calendar/".length)) || "index.html";
+  const file = resolve(calendarRoot, rel);
+  if (!file.startsWith(calendarRoot.replace(/[\\/]$/, "") + sep) || !existsSync(file) || !statSync(file).isFile()) {
+    if (!existsSync(calendarRoot + "index.html")) return c.text("The calendar folder is empty: run  git submodule update --init  in the Nova Agent folder.", 404);
+    return c.text("Not found", 404);
+  }
+  let body: string | Buffer = readFileSync(file);
+  if (rel === "index.html") {
+    // Save to Nova Agent instead of only the browser (see calendar-sync.js)
+    body = body.toString("utf8").replace('<script src="js/store.js"></script>', '<script src="/calendar-sync.js"></script>\n<script src="js/store.js"></script>');
+  }
+  return c.body(body as any, 200, { "Content-Type": TYPES[extname(file)] || "application/octet-stream", "Cache-Control": "no-cache" });
+});
+
+// The calendar's data: read by the calendar page and saved back from it
+app.get("/calendar-api/data", (c) => c.json(readCalendar()));
+app.put("/calendar-api/data", async (c) => {
+  if (c.req.header("X-Nova-Visualizer") !== "1") return c.json({ ok: false }, 403);
+  try {
+    writeCalendar(normalise(await c.req.json()));
+    return c.json({ ok: true });
+  } catch {
+    return c.json({ ok: false, message: "That isn't calendar data" }, 400);
+  }
+});
+// Tells an open calendar page that Nova Agent changed something, so it refreshes
+app.get("/calendar-api/events", (c) =>
+  streamSSE(c, async (stream) => {
+    const send = () => void stream.writeSSE({ event: "change", data: String(Date.now()) });
+    calendarEvents.on("change", send);
+    stream.onAbort(() => {
+      calendarEvents.off("change", send);
+    });
+    while (!stream.aborted) {
+      await stream.sleep(20_000);
+      await stream.writeSSE({ event: "ping", data: "" });
+    }
+  }),
+);
+
+// How Nova Agent is set up (for the chat page's status pill)
+app.get("/status", (c) =>
+  c.json({ live: !config.dryRun, connected: Boolean(config.agentNovaKey), model: config.novaModel || "claude-opus-5-5" }),
+);
+
+// ---- The chat ----
+app.post("/actions/chat", async (c) => {
+  let messages: ChatTurn[] = [];
+  try {
+    messages = (await c.req.json()).messages;
+  } catch {
+    return c.json({ ok: false, message: "Bad request" }, 400);
+  }
+  if (!Array.isArray(messages)) return c.json({ ok: false, message: "Bad request" }, 400);
+  try {
+    return c.json({ ok: true, ...(await chat(messages)) });
+  } catch (error) {
+    const message = (error as Error).message;
+    trace("llm", "error", `Chat failed: ${message}`);
+    return c.json({ ok: false, message: /api[_ ]?key|authentication|401/i.test(message) ? "Nova Agent can't reach Claude: check ANTHROPIC_API_KEY in .env." : "Nova Agent couldn't answer just now. Try again in a moment." }, 500);
+  }
+});
 
 // Live event stream. Sends recent history first, then each new event.
 app.get("/events", (c) =>
@@ -109,7 +192,7 @@ app.post("/actions/forget", (c) => {
 });
 
 serve({ fetch: app.fetch, hostname: "127.0.0.1", port: config.visualizerPort }, () => {
-  console.log(`Nova Agent visualizer: http://localhost:${config.visualizerPort}`);
+  console.log(`Nova Agent: http://localhost:${config.visualizerPort}  (chat)  ·  /calendar/  ·  /visualizer`);
 });
 
 // The daily healthcheck. It waits its turn in the task queue like any task.

@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nova Agent</title>
+<meta name="theme-color" content="#06040D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,500&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2306040D'/%3E%3Cpath d='M32 12 50 52h-9l-3.5-8h-11L23 52h-9zm0 13-4 10h8z' fill='%23FF5FA8'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --void: #06040D; --deep: #100816; --panel: #1C1129; --panel-2: #241640;
+    --text: #EBD3E7; --muted: #B997B5;
+    --accent: #B01D68; --accent-2: #7A1F86; --accent-3: #25194D;
+    --hi: #FF5FA8; --soft: #FFD1EA; --gold: #F2D9A0; --lilac: #C7A4FF; --on-accent: #FFFFFF;
+    --f-display: "Archivo", "Arial Black", sans-serif;
+    --f-body: "Saira", system-ui, sans-serif;
+    --f-mono: "Source Code Pro", ui-monospace, monospace;
+    --f-serif: "Cormorant Garamond", Georgia, serif;
+    color-scheme: dark;
+  }
+  :root {
+    --grad: linear-gradient(120deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 50%, var(--accent-2)) 55%, var(--accent-2) 100%);
+    --title-grad: linear-gradient(100deg, var(--soft) 0%, var(--hi) 18%, var(--lilac) 36%, #fff 50%, var(--lilac) 64%, var(--hi) 82%, var(--soft) 100%);
+    --edge: linear-gradient(135deg, color-mix(in srgb, var(--accent) 60%, transparent), color-mix(in srgb, var(--accent-2) 30%, transparent) 50%, color-mix(in srgb, var(--hi) 35%, transparent));
+    --line: color-mix(in srgb, var(--text) 14%, transparent);
+    --line-strong: color-mix(in srgb, var(--hi) 40%, transparent);
+    --glass: color-mix(in srgb, var(--panel) 70%, transparent);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; overflow: hidden; background: var(--void); color: var(--text); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+  button, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  #sky { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .nebula { position: fixed; inset: -10%; z-index: 0; pointer-events: none;
+    background: radial-gradient(40% 35% at 10% 6%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%),
+      radial-gradient(35% 40% at 94% 16%, color-mix(in srgb, var(--accent-2) 28%, transparent), transparent 70%),
+      radial-gradient(60% 45% at 50% 108%, color-mix(in srgb, var(--accent-3) 85%, transparent), transparent 70%);
+    animation: drift 60s ease-in-out infinite alternate; }
+  @keyframes drift { to { transform: translate3d(2%, -1.5%, 0) scale(1.04); } }
+
+  .shell { position: relative; z-index: 2; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom)); }
+  .glass { background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(16px) saturate(1.15); -webkit-backdrop-filter: blur(16px) saturate(1.15); }
+
+  /* Top bar */
+  .topbar { display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-radius: 22px; }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; margin-right: auto; }
+  .mark { width: 46px; height: 46px; border-radius: 13px; overflow: hidden; flex: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 10px 26px -10px var(--hi), 0 0 22px -8px var(--hi); }
+  .kicker { display: block; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
+  .wordmark { display: block; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: clamp(19px, 2.2vw, 25px); line-height: 1.05;
+    background: var(--title-grad); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 10s linear infinite; }
+  @keyframes shimmer { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+  .status { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: #5CFFC0; box-shadow: 0 0 10px #5CFFC0; }
+  .status.rehearsal .dot { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+  .links { display: flex; gap: 8px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 45%, transparent); color: var(--text);
+    font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; cursor: pointer; white-space: nowrap; transition: border-color .2s, color .2s, box-shadow .2s; }
+  .btn:hover { border-color: var(--line-strong); color: #fff; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .btn.primary { background: var(--grad); border-color: transparent; color: var(--on-accent); box-shadow: 0 8px 26px -10px var(--accent); }
+  .ico { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* Main: chat and calendar */
+  .main { display: grid; grid-template-columns: minmax(360px, 520px) minmax(0, 1fr); gap: 12px; min-height: 0; }
+  .chat, .calendar { min-height: 0; border-radius: 24px; overflow: hidden; }
+  .chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+  .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .chat-head h2, .cal-head h2 { margin: 0; font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; color: var(--muted); }
+  .icon-btn { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; }
+  .icon-btn:hover { color: #fff; border-color: var(--line-strong); }
+
+  .log { overflow-y: auto; padding: 18px 16px 8px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
+  .msg { max-width: 88%; display: flex; flex-direction: column; gap: 6px; animation: rise .25s ease-out; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  .msg .bubble { padding: 10px 14px; border-radius: 18px; overflow-wrap: anywhere; }
+  .msg.user { align-self: flex-end; }
+  .msg.user .bubble { background: var(--grad); color: var(--on-accent); border-bottom-right-radius: 6px; box-shadow: 0 8px 24px -14px var(--accent); }
+  .msg.agent { align-self: flex-start; }
+  .msg.agent .bubble { background: color-mix(in srgb, var(--panel-2) 80%, transparent); border: 1px solid var(--line); border-bottom-left-radius: 6px; }
+  .msg.agent .who { display: flex; align-items: center; gap: 7px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--hi); }
+  .msg.agent .who svg { width: 18px; height: 18px; border-radius: 5px; }
+  .bubble p { margin: 0 0 .5em; } .bubble p:last-child { margin-bottom: 0; }
+  .bubble ul, .bubble ol { margin: .2em 0 .5em; padding-left: 1.2em; }
+  .bubble li::marker { color: var(--hi); }
+  .bubble strong { color: #fff; }
+  .msg.user .bubble strong { color: inherit; }
+  .bubble code { font-family: var(--f-mono); font-size: .88em; padding: .05em .35em; border-radius: 6px; background: rgba(0, 0, 0, .3); }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .action { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong); background: color-mix(in srgb, var(--accent) 16%, transparent); font-family: var(--f-mono); font-size: 10.5px; color: var(--soft); }
+  .action.removed { border-color: color-mix(in srgb, #E5484D 50%, transparent); background: color-mix(in srgb, #E5484D 12%, transparent); }
+  .action.looked { border-color: var(--line); background: none; color: var(--muted); }
+  .typing { display: inline-flex; gap: 5px; padding: 12px 16px; }
+  .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--hi); animation: orbit 1.2s ease-in-out infinite; }
+  .typing span:nth-child(2) { animation-delay: .15s; background: var(--lilac); } .typing span:nth-child(3) { animation-delay: .3s; background: var(--soft); }
+  @keyframes orbit { 0%, 100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(-5px); opacity: 1; } }
+  .error .bubble { border-color: color-mix(in srgb, #E5484D 55%, transparent); color: #FFB1B4; }
+
+  .welcome { margin: auto 0; padding: 18px 6px; text-align: center; display: grid; justify-items: center; gap: 10px; }
+  .welcome .mark { width: 74px; height: 74px; border-radius: 20px; }
+  .welcome h3 { margin: 6px 0 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: 22px; color: #fff; }
+  .welcome p { margin: 0; color: var(--muted); max-width: 34ch; }
+  .suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+  .chip { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 55%, transparent); font-size: 13px; cursor: pointer; transition: border-color .2s, background-color .2s; }
+  .chip:hover { border-color: var(--line-strong); background: color-mix(in srgb, var(--accent) 24%, transparent); color: #fff; }
+
+  .composer { display: flex; align-items: flex-end; gap: 10px; padding: 12px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--void) 35%, transparent); }
+  .composer textarea { flex: 1; min-height: 46px; max-height: 160px; padding: 12px 14px; resize: none; border-radius: 16px 22px 26px 6px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); line-height: 1.45; }
+  .composer textarea:focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 20%, transparent); }
+  .send { height: 46px; padding: 0 18px; border: 0; border-radius: 16px 22px 26px 6px; background: var(--grad); color: var(--on-accent); font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; box-shadow: 0 8px 22px -10px var(--accent); }
+  .send:disabled { opacity: .55; cursor: progress; }
+
+  .calendar { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+  .calendar iframe { width: 100%; height: 100%; border: 0; background: var(--void); }
+
+  .tabs { display: none; }
+  @media (max-width: 980px) {
+    .main { grid-template-columns: minmax(0, 1fr); }
+    .tabs { display: flex; gap: 6px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); }
+    .tabs button { border: 0; background: none; padding: 6px 12px; border-radius: 999px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+    .tabs button[aria-selected="true"] { background: var(--grad); color: var(--on-accent); }
+    .shell[data-tab="chat"] .calendar, .shell[data-tab="calendar"] .chat { display: none; }
+    .links .btn span, .status .label { display: none; }
+    .kicker { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- The Nova Agent mark: a cosmic A with an orbit for its crossbar, in the theme's colours -->
+    <radialGradient id="mk-sky" cx="50%" cy="15%" r="95%"><stop offset="0" style="stop-color:var(--accent)"/><stop offset=".42" style="stop-color:var(--accent-3)"/><stop offset="1" style="stop-color:var(--void)"/></radialGradient>
+    <radialGradient id="mk-neb" cx="88%" cy="92%" r="55%"><stop offset="0" style="stop-color:var(--accent-2);stop-opacity:.75"/><stop offset="1" style="stop-color:var(--accent-2);stop-opacity:0"/></radialGradient>
+    <linearGradient id="mk-letter" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--soft)"/><stop offset=".5" style="stop-color:var(--hi)"/><stop offset="1" style="stop-color:var(--lilac)"/></linearGradient>
+    <filter id="mk-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="14"/></filter>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="url(#mk-sky)"/>
+      <rect width="512" height="512" fill="url(#mk-neb)"/>
+      <g fill="#fff"><circle cx="70" cy="90" r="2.6" opacity=".8"/><circle cx="440" cy="70" r="2" opacity=".6"/><circle cx="462" cy="330" r="2.4" opacity=".6"/><circle cx="80" cy="420" r="1.8" opacity=".55"/><circle cx="290" cy="470" r="1.6" opacity=".5"/></g>
+      <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" style="fill:var(--hi)" opacity=".75" filter="url(#mk-glow)"/>
+      <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" fill="url(#mk-letter)"/>
+      <ellipse cx="256" cy="296" rx="190" ry="44" fill="none" style="stroke:var(--soft)" stroke-opacity=".8" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round" transform="rotate(-14 256 296)"/>
+      <path transform="translate(256 102)" d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/>
+      <circle cx="436" cy="252" r="9" fill="#fff" opacity=".95"/>
+    </symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-clear" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  </defs>
+</svg>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="nebula" aria-hidden="true"></div>
+
+<div class="shell" id="shell" data-tab="chat">
+  <header class="topbar glass">
+    <a class="brand" href="/" aria-label="Nova Agent">
+      <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span><span class="kicker">Nova suite · Novacane</span><span class="wordmark">Nova Agent</span></span>
+    </a>
+    <div class="tabs" role="tablist" aria-label="View">
+      <button type="button" role="tab" data-tab="chat" aria-selected="true">Chat</button>
+      <button type="button" role="tab" data-tab="calendar" aria-selected="false">Calendar</button>
+    </div>
+    <span class="status" id="status" title="Nova Agent's mode"><span class="dot"></span><span class="label" id="status-text">Connecting…</span></span>
+    <nav class="links">
+      <a class="btn" href="/calendar/" target="_blank" rel="noopener"><svg class="ico"><use href="#i-cal"/></svg><span>Calendar</span></a>
+      <a class="btn" href="/visualizer" target="_blank" rel="noopener"><svg class="ico"><use href="#i-eye"/></svg><span>Visualizer</span></a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <section class="chat glass" aria-label="Chat with Nova Agent">
+      <div class="chat-head">
+        <h2>Talk to Nova Agent</h2>
+        <button type="button" class="icon-btn" id="clear" title="Start a new chat" aria-label="Start a new chat"><svg class="ico"><use href="#i-clear"/></svg></button>
+      </div>
+      <div class="log" id="log" aria-live="polite">
+        <div class="welcome" id="welcome">
+          <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
+          <h3>Hey, I'm Nova Agent</h3>
+          <p>Ask me what's on, add note cards and day cards to Nova Calendar, or check on the studio's Acuity bookings.</p>
+          <div class="suggest">
+            <button type="button" class="chip">What's on this week?</button>
+            <button type="button" class="chip">Add a note card for Friday at 2pm: mix review</button>
+            <button type="button" class="chip">Make 31 October a Halloween day card</button>
+            <button type="button" class="chip">What's booked in Acuity tomorrow?</button>
+            <button type="button" class="chip">How are you doing?</button>
+          </div>
+        </div>
+      </div>
+      <form class="composer" id="composer">
+        <textarea id="input" rows="1" placeholder="Message Nova Agent…" aria-label="Message Nova Agent" maxlength="4000"></textarea>
+        <button type="submit" class="send" id="send">Send</button>
+      </form>
+    </section>
+
+    <section class="calendar glass" aria-label="Nova Calendar">
+      <div class="cal-head">
+        <h2>Nova Calendar</h2>
+        <a class="icon-btn" href="/calendar/" target="_blank" rel="noopener" title="Open the calendar in its own tab" aria-label="Open the calendar in its own tab"><svg class="ico"><use href="#i-open"/></svg></a>
+      </div>
+      <iframe id="cal" src="/calendar/" title="Nova Calendar"></iframe>
+    </section>
+  </main>
+</div>
+
+<script src="/calendar/js/themes.js"></script>
+<script src="/calendar/js/backdrop.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const log = $('log');
+  const input = $('input');
+  const STORE = 'nova-agent/chat-v1';
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { history = []; }
+  const save = () => { try { localStorage.setItem(STORE, JSON.stringify(history.slice(-80))); } catch (e) {} };
+
+  // The calendar's theme colours the whole page, and the stars
+  fetch('/calendar-api/data').then((r) => r.json()).then((d) => {
+    const theme = (d.prefs && d.prefs.theme) || 'novacane';
+    if (window.NT && NT.themes) { NT.themes.apply(document.documentElement, theme); NT.backdrop.init(theme); }
+  }).catch(() => window.NT && NT.backdrop && NT.backdrop.init('novacane'));
+
+  fetch('/status').then((r) => r.json()).then((s) => {
+    $('status-text').textContent = s.live ? 'Live' : 'Rehearsal';
+    $('status').classList.toggle('rehearsal', !s.live);
+    $('status').title = `${s.live ? 'Live' : 'Rehearsal (DRY_RUN on)'} · ${s.connected ? 'connected to Nova Bot' : 'not connected to Nova Bot'} · ${s.model}`;
+  }).catch(() => { $('status-text').textContent = 'Offline'; });
+
+  // Small, safe Markdown: bold, italic, code, lists, paragraphs
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function inline(s) {
+    return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\s][^*]*?)\*/g, '$1<em>$2</em>');
+  }
+  function md(text) {
+    const out = [];
+    let list = null;
+    for (const raw of text.split('\n')) {
+      const line = raw.trimEnd();
+      const m = line.match(/^\s*(?:[-*•]|(\d+)[.)])\s+(.*)$/);
+      if (m) {
+        const tag = m[1] ? 'ol' : 'ul';
+        if (!list || list.tag !== tag) { if (list) out.push(`</${list.tag}>`); list = { tag }; out.push(`<${tag}>`); }
+        out.push(`<li>${inline(m[2])}</li>`);
+        continue;
+      }
+      if (list) { out.push(`</${list.tag}>`); list = null; }
+      if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+    }
+    if (list) out.push(`</${list.tag}>`);
+    return out.join('');
+  }
+
+  function bubble(role, text, actions, isError) {
+    $('welcome').hidden = true;
+    const wrap = document.createElement('div');
+    wrap.className = `msg ${role === 'user' ? 'user' : 'agent'}${isError ? ' error' : ''}`;
+    if (role !== 'user') wrap.innerHTML = '<span class="who"><svg viewBox="0 0 512 512"><use href="#i-mark"/></svg>Nova Agent</span>';
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    if (role === 'user') b.textContent = text; else b.innerHTML = md(text);
+    wrap.appendChild(b);
+    if (actions && actions.length) {
+      const row = document.createElement('div');
+      row.className = 'actions';
+      for (const a of actions) {
+        const chip = document.createElement('span');
+        chip.className = `action ${a.kind}`;
+        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : '✦'} ${a.text}`;
+        row.appendChild(chip);
+      }
+      wrap.appendChild(row);
+    }
+    log.appendChild(wrap);
+    log.scrollTop = log.scrollHeight;
+    return wrap;
+  }
+
+  for (const m of history) bubble(m.role, m.content, m.actions);
+
+  async function send(text) {
+    text = text.trim();
+    if (!text) return;
+    input.value = '';
+    fit();
+    history.push({ role: 'user', content: text });
+    save();
+    bubble('user', text);
+    const typing = document.createElement('div');
+    typing.className = 'msg agent';
+    typing.innerHTML = '<span class="who"><svg viewBox="0 0 512 512"><use href="#i-mark"/></svg>Nova Agent</span><div class="bubble typing"><span></span><span></span><span></span></div>';
+    log.appendChild(typing);
+    log.scrollTop = log.scrollHeight;
+    $('send').disabled = true;
+    try {
+      const res = await fetch('/actions/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1' },
+        body: JSON.stringify({ messages: history.map((m) => ({ role: m.role, content: m.content })) })
+      });
+      const data = await res.json();
+      typing.remove();
+      if (!data.ok) throw new Error(data.message || 'Something went wrong.');
+      history.push({ role: 'assistant', content: data.reply, actions: data.actions });
+      save();
+      bubble('assistant', data.reply, data.actions);
+    } catch (err) {
+      typing.remove();
+      history.pop();
+      save();
+      bubble('assistant', err.message || 'Nova Agent couldn’t answer just now.', null, true);
+      input.value = text;
+      fit();
+    } finally {
+      $('send').disabled = false;
+      input.focus();
+    }
+  }
+
+  function fit() { input.style.height = 'auto'; input.style.height = Math.min(160, input.scrollHeight + 2) + 'px'; }
+  input.addEventListener('input', fit);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(input.value); }
+  });
+  $('composer').addEventListener('submit', (e) => { e.preventDefault(); send(input.value); });
+  for (const c of document.querySelectorAll('.chip')) c.addEventListener('click', () => send(c.textContent));
+  $('clear').addEventListener('click', () => {
+    history = [];
+    save();
+    log.querySelectorAll('.msg').forEach((m) => m.remove());
+    $('welcome').hidden = false;
+    input.focus();
+  });
+  for (const t of document.querySelectorAll('.tabs button')) {
+    t.addEventListener('click', () => {
+      $('shell').dataset.tab = t.dataset.tab;
+      document.querySelectorAll('.tabs button').forEach((x) => x.setAttribute('aria-selected', x === t ? 'true' : 'false'));
+    });
+  }
+  input.focus();
+})();
+</script>
+</body>
+</html>

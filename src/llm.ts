@@ -16,7 +16,7 @@ const DEFAULT_MODEL = "claude-opus-5-5";
 // login check) even before an API key has been added to .env.
 let client: Anthropic | undefined;
 
-function getClient(): Anthropic {
+export function getClient(): Anthropic {
   if (!client) {
     // With no key in .env the SDK falls back to ANTHROPIC_API_KEY in the
     // environment or an `ant auth login` profile.

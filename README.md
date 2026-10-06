@@ -29,6 +29,14 @@ where the button went, the answer is checked, and the fix is remembered for next
 
 ## What it does
 
+- **A chat you can talk to** (`src/chat.ts`, `http://localhost:4545`): ask Nova Agent what's on,
+  add, change or remove Nova Calendar note cards and day cards ("add a note card for Friday at
+  2pm", "make 31 October a Halloween day card"), look at the studio's Acuity bookings, check
+  the Acuity login, or ask how it's doing. Claude answers with tools; the calendar beside the
+  chat updates as it works. Acuity is read-only from the chat for now.
+- **Nova Calendar built in** (`calendar/`, the [nova-calendar](https://github.com/tuniveza/nova-calendar)
+  repo as a git submodule): served at `/calendar/`, saving to Nova Agent (`data/calendar.json`)
+  instead of only the browser, so the chat and the calendar always agree.
 - **Logs itself in** and saves the session; logs back in when it expires (the login page is
   found through the AI element finder, so it copes with layout changes).
 - **Self-healing element finder** (`src/heal/`): every task says *what* it wants ("the
@@ -48,6 +56,8 @@ where the button went, the answer is checked, and the fix is remembered for next
   step in plain English, what the browser sees, and its memory.
 
 ## Screenshots
+
+<p align="center"><img src="docs/media/chat.jpg" width="900" alt="Nova Agent's chat beside Nova Calendar, in the Nova suite style"></p>
 
 <p align="center">
   <img src="docs/media/visualizer.gif" alt="Animated tour of the visualizer, scrolling from the anatomy panel to the selector memory" width="720">
@@ -98,15 +108,18 @@ flowchart LR
 You need Node 22 or newer and an Acuity account you're allowed to automate.
 
 ```sh
-git clone https://github.com/tuniveza/nova-agent.git
-cd nova-agent
+git clone --recurse-submodules https://github.com/tuniveza/nova-agent.git
+cd nova-agent             # (already cloned? git submodule update --init  brings in calendar/)
 npm install
 npx playwright install chromium
 cp .env.example .env      # then fill it in
 npm run login             # log in once in a visible browser window
 npm start                 # should say "Logged in to Acuity"
-npm run visualizer        # http://localhost:4545
+npm run visualizer        # http://localhost:4545  (chat · /calendar/ · /visualizer)
 ```
+
+The chat needs `ANTHROPIC_API_KEY` in `.env` (Claude also powers the self-healing element
+finder). To bring the calendar up to date with its own repo: `git submodule update --remote calendar`.
 
 `DRY_RUN=true` is the default in `.env.example`, so book, cancel and edit stop before the
 final click until you decide otherwise.
@@ -219,10 +232,14 @@ src/jobs.ts               collecting jobs from Nova Bot's Worker and reporting r
 src/healthcheck.ts        the daily read-only healthcheck
 src/alerts.ts             alerts to the console, data/alerts.log and staff phones
 src/llm.ts                the Claude client
+src/chat.ts               the chat: Claude with calendar, Acuity (read-only) and status tools
+src/calendar/store.ts     Nova Calendar's data, kept in data/calendar.json
 src/heal/                 resolve() and the selector cache
 src/acuity/               Acuity pages: login, list, book, cancel, edit, targets, types
 src/trace.ts              every step, for the console, logs and visualizer
-src/visualizer/           the local visualizer (Hono server + one HTML page)
+src/visualizer/           the local pages: chat.html (the chat), page.html (the visualizer),
+                          calendar-sync.js (makes the calendar save to Nova Agent), server.ts
+calendar/                 Nova Calendar (git submodule: tuniveza/nova-calendar)
 deploy/agent-nova.service systemd user service
 docs/acuity-ui-notes.md   what Acuity's real admin pages look like
 docs/media/               README images
