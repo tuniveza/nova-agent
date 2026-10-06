@@ -1,0 +1,36 @@
+{
+  "name": "agent-nova",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nova Agent: browser automation for Acuity Scheduling (Nova Suite, Novacane Studios)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "login": "HEADLESS=false tsx src/index.ts --manual-login",
+    "typecheck": "tsc --noEmit",
+    "visualizer": "tsx src/visualizer/server.ts",
+    "list": "tsx src/index.ts list",
+    "search": "tsx src/index.ts search",
+    "book": "tsx src/index.ts book",
+    "cancel": "tsx src/index.ts cancel",
+    "edit": "tsx src/index.ts edit",
+    "healthcheck": "tsx src/index.ts healthcheck",
+    "service": "tsx src/visualizer/server.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "@hono/node-server": "^2.1.3",
+    "hono": "^4.13.13",
+    "node-cron": "^4.6.0",
+    "playwright": "^1.63.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

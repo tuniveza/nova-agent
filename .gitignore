@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Secrets: only .env.example (empty values) is shared
+.env
+.env.*
+!.env.example
+
+# Everything Nova Agent writes at run time. This holds the saved Acuity login
+# session (works like a password), logs with client names, screenshots of
+# Acuity's admin pages, the selector cache and alerts. Never commit it.
+data/
+*.log
+*.jsonl
+
+# Browser state, traces and captures
+storageState*.json
+session*.json
+user-data/
+.chromium-profile/
+playwright-report/
+test-results/
+traces/
+*.trace.zip
+*.har
+screenshots/
+
+# Local editor workspace (points at other local folders)
+*.code-workspace
+.vscode/
+.idea/
+.DS_Store

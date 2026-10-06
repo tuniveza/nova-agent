@@ -1,0 +1,23 @@
+# Keeps Nova Agent running in the background: the visualizer (local only),
+# the daily 06:00 healthcheck, and collecting jobs from Novabot every minute.
+#
+# Install for your user (no root needed):
+#   cp deploy/agent-nova.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now agent-nova
+# Logs:     journalctl --user -u agent-nova -f
+# Restart:  systemctl --user restart agent-nova   (after changing .env or code)
+# To keep it running even when you're logged out: loginctl enable-linger $USER
+
+[Unit]
+Description=Nova Agent (Acuity browser helper for Novabot)
+After=network-online.target
+
+[Service]
+WorkingDirectory=/home/tuniveza/an/pj/ns/na
+ExecStart=/usr/bin/npx tsx src/visualizer/server.ts
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Agent Visualizer</title>
+<style>
+  :root {
+    --bg: #f6f6f4;
+    --panel: #ffffff;
+    --ink: #1c1d1f;
+    --muted: #6b6f76;
+    --line: #e2e2de;
+    --soft: #f0f0ec;
+    --input: #7c5cff;
+    --task: #2f7de1;
+    --resolve: #c98a00;
+    --cache: #0e9f8e;
+    --llm: #e2557a;
+    --browser: #3a9a3f;
+    --ok: #2f9e44;
+    --warn: #c98a00;
+    --error: #e03131;
+    --shadow: 0 1px 2px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121315;
+      --panel: #1b1c1f;
+      --ink: #ececea;
+      --muted: #9a9ea6;
+      --line: #2c2e33;
+      --soft: #24262a;
+      --input: #9b85ff;
+      --task: #5b9cf0;
+      --resolve: #e0a92e;
+      --cache: #33c2b0;
+      --llm: #f07799;
+      --browser: #5cbf61;
+      --ok: #51cf66;
+      --warn: #e0a92e;
+      --error: #ff6b6b;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+  h1 span { color: var(--muted); font-weight: 450; }
+  .status {
+    font-size: 12px; padding: 2px 9px; border-radius: 99px;
+    background: var(--soft); color: var(--muted);
+  }
+  .status.live { color: var(--ok); }
+  .status.live::before { content: "● "; }
+  .spacer { flex: 1; }
+  button {
+    font: inherit; font-size: 13px;
+    padding: 6px 12px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--muted); }
+  button:disabled { opacity: .5; cursor: wait; }
+  button.primary { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+
+  .counters { display: flex; gap: 18px; padding: 10px 20px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .counters b { color: var(--ink); font-size: 15px; margin-right: 4px; font-variant-numeric: tabular-nums; }
+
+  main {
+    display: grid;
+    grid-template-columns: 290px minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 16px; padding: 0 20px 20px;
+  }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  section {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: var(--shadow); min-width: 0;
+  }
+  section > h2 {
+    margin: 0; padding: 10px 14px; font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* Anatomy diagram */
+  .anatomy { padding: 14px; display: flex; flex-direction: column; align-items: stretch; }
+  .node {
+    border: 1px solid var(--line); border-left: 4px solid var(--c);
+    border-radius: 8px; padding: 8px 10px; background: var(--panel);
+    transition: box-shadow .25s, background .25s;
+  }
+  .node .title { font-weight: 600; font-size: 13px; display: flex; justify-content: space-between; }
+  .node .count { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .node p { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
+  .node.active {
+    background: color-mix(in srgb, var(--c) 12%, var(--panel));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent);
+  }
+  .node.error { --c: var(--error); }
+  .arrow { text-align: center; color: var(--muted); font-size: 13px; line-height: 20px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pair-arrows { display: grid; grid-template-columns: 1fr 1fr; text-align: center; color: var(--muted); line-height: 20px; }
+  .or { text-align: center; font-size: 11px; color: var(--muted); margin: 2px 0; }
+
+  /* Timeline */
+  .timeline { max-height: calc(100vh - 170px); min-height: 300px; overflow-y: auto; padding: 6px 0; }
+  .empty { padding: 30px 16px; color: var(--muted); text-align: center; }
+  .row { padding: 5px 14px; display: grid; grid-template-columns: 62px 74px 1fr; gap: 8px; align-items: baseline; }
+  .row:hover { background: var(--soft); }
+  .row .time { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .chip {
+    font-size: 11px; font-weight: 600; text-align: center;
+    padding: 1px 6px; border-radius: 5px;
+    color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent);
+  }
+  .row .msg { overflow-wrap: anywhere; white-space: pre-line; }
+  .row.level-ok .msg::before { content: "✓ "; color: var(--ok); }
+  .row.level-warn .msg { color: var(--warn); }
+  .row.level-error .msg { color: var(--error); font-weight: 600; }
+  .row.level-start .msg { font-weight: 600; }
+  .row.task-start { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 9px; }
+  .row .more { grid-column: 3; }
+  .row .link { color: var(--muted); font-size: 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; padding: 0; }
+  pre {
+    margin: 6px 0 2px; padding: 10px; border-radius: 7px; background: var(--soft);
+    font: 12px/1.45 ui-monospace, "SF Mono", Menlo, monospace;
+    white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow-y: auto;
+  }
+
+  /* Browser view + memory */
+  .right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .shot { padding: 12px; }
+  .shot img { width: 100%; border-radius: 6px; border: 1px solid var(--line); display: block; }
+  .shot .caption { margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .memory { padding: 0 0 6px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { text-align: left; padding: 6px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td code { font: 12px ui-monospace, Menlo, monospace; }
+  tr:last-child td { border-bottom: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Nova Agent <span>Visualizer</span></h1>
+  <span id="status" class="status">connecting…</span>
+  <span class="spacer"></span>
+  <span id="task-buttons" style="display: contents"></span>
+  <button id="forget" title="Delete the selector cache so you can watch the AI re-find everything">Wipe memory</button>
+  <button id="clear" title="Clears this page's list only">Clear steps</button>
+</header>
+
+<div class="counters">
+  <span><b id="n-hits">0</b>found from memory</span>
+  <span><b id="n-llm">0</b>AI calls</span>
+  <span><b id="n-heals">0</b>healed</span>
+  <span><b id="n-errors">0</b>failures</span>
+</div>
+
+<main>
+  <section>
+    <h2>Anatomy</h2>
+    <div class="anatomy">
+      <div class="node" data-part="input" style="--c: var(--input)">
+        <div class="title">Input <span class="count"></span></div>
+        <p>A request arrives: from these buttons now, from Novabot over HTTP later.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="node" data-part="task" style="--c: var(--task)">
+        <div class="title">Task <span class="count"></span></div>
+        <p>Plain step-by-step code: "open the calendar, find the 3pm booking". It says <i>what</i> it wants, never <i>how</i> to find it.</p>
+      </div>
+      <div class="arrow">↓ "where is the … ?"</div>
+      <div class="node" data-part="resolve" style="--c: var(--resolve)">
+        <div class="title">Finder · resolve() <span class="count"></span></div>
+        <p>Turns a description into one real element on the page.</p>
+      </div>
+      <div class="pair-arrows"><span>↓ 1st</span><span>↓ if memory fails</span></div>
+      <div class="pair">
+        <div class="node" data-part="cache" style="--c: var(--cache)">
+          <div class="title">Memory <span class="count"></span></div>
+          <p>selectors.json: where things were last time. Instant and free.</p>
+        </div>
+        <div class="node" data-part="llm" style="--c: var(--llm)">
+          <div class="title">AI · Claude <span class="count"></span></div>
+          <p>Reads the page's structure and points at the element. Its answer is checked, then remembered.</p>
+        </div>
+      </div>
+      <div class="pair-arrows"><span>↘</span><span>↙</span></div>
+      <div class="node" data-part="browser" style="--c: var(--browser)">
+        <div class="title">Browser · Playwright <span class="count"></span></div>
+        <p>A real Chromium that opens pages, clicks and types at a human pace, and takes the screenshots on the right.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="node" data-part="acuity" style="--c: var(--muted)">
+        <div class="title">Acuity Scheduling</div>
+        <p>The real website, logged in with your saved session.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Steps, live</h2>
+    <div id="timeline" class="timeline">
+      <div class="empty" id="empty">Nothing yet. Press <b>Check login</b> to watch the agent work.</div>
+    </div>
+  </section>
+
+  <div class="right">
+    <section>
+      <h2>What the browser sees</h2>
+      <div class="shot">
+        <img id="shot" alt="" hidden>
+        <div id="shot-caption" class="caption">Screenshots appear here as the agent works. Elements it finds get a red outline.</div>
+      </div>
+    </section>
+    <section>
+      <h2>Memory (selector cache)</h2>
+      <div class="memory" id="memory"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+  const PART_LABELS = { input: "input", task: "task", resolve: "finder", cache: "memory", llm: "AI", browser: "browser" };
+  const PART_COLORS = { input: "--input", task: "--task", resolve: "--resolve", cache: "--cache", llm: "--llm", browser: "--browser" };
+
+  const timeline = document.getElementById("timeline");
+  const counts = { hits: 0, llm: 0, heals: 0, errors: 0 };
+  const perPart = {};
+
+  // --- live connection ---
+
+  function connect() {
+    const source = new EventSource("/events");
+    const status = document.getElementById("status");
+    source.onopen = () => {
+      status.textContent = "live";
+      status.className = "status live";
+      resetView(); // the server re-sends its recent history on every connect
+    };
+    source.onerror = () => {
+      status.textContent = "disconnected, retrying…";
+      status.className = "status";
+    };
+    source.onmessage = (message) => showEvent(JSON.parse(message.data));
+  }
+
+  // --- showing one event ---
+
+  function showEvent(event) {
+    document.getElementById("empty")?.remove();
+    if (event.image) {
+      showScreenshot(event.image, event.message, event.time);
+      addRow(event, true);
+    } else {
+      addRow(event, false);
+    }
+    lightUp(event);
+    updateCounters(event);
+    if (event.part === "cache" || (event.part === "resolve" && event.level === "ok") || event.part === "input") {
+      loadMemory();
+    }
+  }
+
+  function addRow(event, isScreenshot) {
+    const nearBottom = timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < 60;
+
+    const row = document.createElement("div");
+    row.className = `row level-${event.level}`;
+    if (event.part === "task" && event.level === "start" && event.message.startsWith("Task:")) row.classList.add("task-start");
+
+    const time = document.createElement("span");
+    time.className = "time";
+    time.textContent = new Date(event.time).toLocaleTimeString();
+
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.style.setProperty("--c", `var(${PART_COLORS[event.part]})`);
+    chip.textContent = PART_LABELS[event.part] || event.part;
+
+    const msg = document.createElement("span");
+    msg.className = "msg";
+    msg.textContent = isScreenshot ? `📷 ${event.message}` : event.message;
+
+    row.append(time, chip, msg);
+
+    if (isScreenshot) {
+      const link = makeLink("show", () => showScreenshot(event.image, event.message, event.time));
+      msg.append(" ", link);
+    }
+    if (event.data !== undefined) {
+      const more = document.createElement("div");
+      more.className = "more";
+      const pre = document.createElement("pre");
+      pre.textContent = formatData(event.data);
+      pre.hidden = true;
+      const link = makeLink(event.part === "llm" ? "show what was sent / received" : "details", () => { pre.hidden = !pre.hidden; });
+      more.append(link, pre);
+      row.append(more);
+    }
+
+    timeline.append(row);
+    if (nearBottom) timeline.scrollTop = timeline.scrollHeight;
+  }
+
+  // Prompts are long strings; show them as readable text rather than escaped JSON.
+  function formatData(data) {
+    if (data && typeof data === "object" && "prompt" in data) {
+      return `SYSTEM PROMPT\n${data.system}\n\nQUESTION\n${data.prompt}`;
+    }
+    return JSON.stringify(data, null, 2);
+  }
+
+  function makeLink(text, onClick) {
+    const link = document.createElement("button");
+    link.className = "link";
+    link.textContent = text;
+    link.onclick = onClick;
+    return link;
+  }
+
+  function showScreenshot(src, caption, time) {
+    const img = document.getElementById("shot");
+    img.src = src;
+    img.hidden = false;
+    document.getElementById("shot-caption").textContent = `${new Date(time).toLocaleTimeString()} · ${caption}`;
+  }
+
+  // Briefly highlight the part of the diagram that's working.
+  const timers = {};
+  function lightUp(event) {
+    const parts = event.part === "browser" ? ["browser", "acuity"] : [event.part];
+    for (const part of parts) {
+      const node = document.querySelector(`.node[data-part="${part}"]`);
+      if (!node) continue;
+      node.classList.add("active");
+      node.classList.toggle("error", event.level === "error");
+      clearTimeout(timers[part]);
+      timers[part] = setTimeout(() => node.classList.remove("active", "error"), 1600);
+    }
+    perPart[event.part] = (perPart[event.part] || 0) + 1;
+    const count = document.querySelector(`.node[data-part="${event.part}"] .count`);
+    if (count) count.textContent = perPart[event.part];
+  }
+
+  function updateCounters(event) {
+    if (event.part === "cache" && event.level === "ok") counts.hits++;
+    if (event.part === "llm" && event.level === "start") counts.llm++;
+    if (event.part === "resolve" && event.level === "ok") counts.heals++;
+    if (event.level === "error") counts.errors++;
+    for (const [name, value] of Object.entries(counts)) {
+      document.getElementById(`n-${name}`).textContent = value;
+    }
+  }
+
+  function resetView() {
+    timeline.replaceChildren();
+    for (const key of Object.keys(counts)) counts[key] = 0;
+    for (const key of Object.keys(perPart)) delete perPart[key];
+    document.querySelectorAll(".node .count").forEach((el) => (el.textContent = ""));
+    updateCounters({});
+  }
+
+  // --- memory table ---
+
+  async function loadMemory() {
+    const cache = await fetch("/cache").then((r) => r.json()).catch(() => ({}));
+    const box = document.getElementById("memory");
+    const keys = Object.keys(cache).sort();
+    if (keys.length === 0) {
+      box.innerHTML = '<div class="empty">Empty. The AI will find elements and remember them here.</div>';
+      return;
+    }
+    const table = document.createElement("table");
+    table.innerHTML = "<tr><th>Key</th><th>How to find it</th><th>Used</th><th>Learned</th></tr>";
+    for (const key of keys) {
+      const entry = cache[key];
+      const tr = document.createElement("tr");
+      const cells = [
+        key,
+        `${entry.role} "${entry.name}"${entry.nth ? ` #${entry.nth}` : ""}`,
+        `${entry.hits}×`,
+        new Date(entry.healedAt).toLocaleString(),
+      ];
+      cells.forEach((text, i) => {
+        const td = document.createElement("td");
+        if (i < 2) { const code = document.createElement("code"); code.textContent = text; td.append(code); }
+        else td.textContent = text;
+        tr.append(td);
+      });
+      table.append(tr);
+    }
+    box.replaceChildren(table);
+  }
+
+  // --- buttons ---
+
+  async function post(path) {
+    const buttons = document.querySelectorAll("header button[data-task], #forget");
+    buttons.forEach((b) => (b.disabled = true));
+    try {
+      await fetch(path, { method: "POST", headers: { "X-Nova-Visualizer": "1" } });
+    } finally {
+      buttons.forEach((b) => (b.disabled = false));
+    }
+  }
+
+  // One button per task the server offers.
+  async function loadTaskButtons() {
+    const tasks = await fetch("/tasks").then((r) => r.json()).catch(() => []);
+    const box = document.getElementById("task-buttons");
+    tasks.forEach((task, i) => {
+      const button = document.createElement("button");
+      button.textContent = task.label;
+      button.dataset.task = task.id;
+      if (i === 0) button.className = "primary";
+      button.onclick = () => post(`/actions/run/${task.id}`);
+      box.append(button);
+    });
+  }
+  document.getElementById("forget").onclick = async () => {
+    if (confirm("Wipe the agent's memory? It will use the AI to find every element again next time.")) {
+      await post("/actions/forget");
+      loadMemory();
+    }
+  };
+  document.getElementById("clear").onclick = () => {
+    resetView();
+    timeline.innerHTML = '<div class="empty" id="empty">Cleared.</div>';
+  };
+
+  connect();
+  loadMemory();
+  loadTaskButtons();
+</script>
+</body>
+</html>
