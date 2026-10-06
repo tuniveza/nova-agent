@@ -91,6 +91,21 @@ app.get("/app/:file", (c) => {
   return appFile(name)(c);
 });
 
+// ---- Nova Observatory (the project dashboard), served from its folder next to Nova Agent ----
+// So it's always on while Nova Agent is (no need to start it by hand).
+const observatoryRoot = fileURLToPath(new URL("../../../no/", import.meta.url));
+app.get("/observatory", (c) => c.redirect("/observatory/"));
+app.get("/observatory/*", (c) => {
+  const rel = decodeURIComponent(c.req.path.slice("/observatory/".length)) || "index.html";
+  const file = resolve(observatoryRoot, rel);
+  if (!file.startsWith(observatoryRoot.replace(/[\\/]$/, "") + sep) || !existsSync(file) || !statSync(file).isFile()) {
+    if (!existsSync(observatoryRoot + "index.html")) return c.text("Nova Observatory isn't next to Nova Agent (expected it in ../no).", 404);
+    return c.text("Not found", 404);
+  }
+  const type = TYPES[extname(file)] || (extname(file) === ".mp4" ? "video/mp4" : extname(file) === ".webm" ? "video/webm" : extname(file) === ".gif" ? "image/gif" : extname(file) === ".webp" ? "image/webp" : "application/octet-stream");
+  return c.body(readFileSync(file) as any, 200, { "Content-Type": type, "Cache-Control": "no-cache" });
+});
+
 // ---- Nova Calendar, served from the calendar folder ----
 // Its own offline helper isn't needed (or wanted) here: Nova Agent is the server.
 app.get("/calendar/sw.js", (c) => c.text("// not used inside Nova Agent", 404));
