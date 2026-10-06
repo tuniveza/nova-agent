@@ -236,7 +236,7 @@ docs/media/               README images
 | [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Nova Hub |
 | **[nova-agent](https://github.com/tuniveza/nova-agent)** | This repo: the browser helper that does jobs in Acuity's admin pages |
 | [nova-club](https://github.com/tuniveza/nova-club) | Members' Android app that shows the studio's busy times |
-| [nova-task](https://github.com/tuniveza/nova-task) | A cosmic calendar of note cards and day cards |
+| [nova-calendar](https://github.com/tuniveza/nova-calendar) | A cosmic calendar of note cards and day cards |
 | [nova-notes](https://github.com/tuniveza/nova-notes) | Nova Notes (in progress) |
 | [nova-observatory](https://github.com/tuniveza/nova-observatory) | A dashboard of every project, with screenshots and video |
 
