@@ -562,7 +562,7 @@
     <div class="suite-grid">
       <a class="suite-app here" href="/"><img src="/app/icon.svg" alt=""><b>Nova Agent</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
       <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/app/" target="_blank" rel="noopener"><img src="https://novacane-worker.novacane-studio.workers.dev/app/icon.svg" alt=""><b>Nova Hub</b><small>Enquiries, chats, bookings, quests and alerts</small></a>
-      <a class="suite-app" href="https://nova-notes.novacane-studio.workers.dev" target="_blank" rel="noopener"><img src="https://nova-notes.novacane-studio.workers.dev/assets/icon.svg" alt=""><b>Nova Notes</b><small>Notes and documents, Google Docs export</small></a>
+      <a class="suite-app" href="https://nova-notes.novacane-studio.workers.dev" data-inside="/notes/" target="_blank" rel="noopener"><img src="/notes/assets/icon.svg" alt=""><b>Nova Notes</b><small>Notes and documents, Google Docs export</small></a>
       <a class="suite-app" href="/calendar/" target="_blank" rel="noopener"><img src="/calendar/assets/icon.svg" alt=""><b>Nova Calendar</b><small>The one Nova Agent plans into</small></a>
       <a class="suite-app" href="https://novacane.co.uk" target="_blank" rel="noopener"><span class="suite-glyph">N</span><b>NovaBot</b><small>The website assistant (bookings take the deposit)</small></a>
       <a class="suite-app" href="/visualizer" target="_blank" rel="noopener"><span class="suite-glyph">◎</span><b>Visualizer</b><small>Nova Agent's live steps and memory</small></a>
@@ -1116,6 +1116,7 @@
       if (tile.target) { a.target = tile.target; a.rel = 'noopener'; }
       if (tile.classList.contains('here')) a.className = 'here';
       if (tile.dataset.embed) a.dataset.embed = tile.dataset.embed;
+      if (tile.dataset.inside) a.dataset.inside = tile.dataset.inside;
       const name = tile.querySelector('b').textContent;
       a.title = `${name}: ${tile.querySelector('small').textContent}`;
       a.setAttribute('aria-label', name);
@@ -1151,7 +1152,7 @@
   document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => setOpenPref(b.dataset.open)));
   function openInside(href, name) {
     $('viewer-name').textContent = name;
-    $('viewer-out').href = href;
+    $('viewer-out').href = (document.querySelector(`#suite a.suite-app[data-inside="${href}"]`) || {}).href || href;
     $('viewer-frame').src = href;
     $('viewer').hidden = false;
     document.querySelector('.main').classList.add('viewing');
@@ -1185,7 +1186,8 @@
       return;
     }
     e.preventDefault();
-    openInside(a.getAttribute('href'), name);
+    // Some apps have a copy that Nova Agent serves itself (it opens inside in any browser)
+    openInside(a.dataset.inside || a.getAttribute('href'), name);
   });
 
   // ---- The Nova suite launcher ----
