@@ -97,6 +97,10 @@ export interface Rhythm {
   checkIns: boolean; // ask "did you finish it?" when a quest should be done
   dailyBriefing: boolean; // the morning plan and the evening wrap-up
   phonePush: boolean; // also send reminders to the Nova Hub phones
+  // The safety switch for pace: on, quests start a few minutes from now, on
+  // 5-minute marks, with buffers and breaks between them; off, they can start
+  // right now, to the second, back to back
+  paceLimits: boolean;
 }
 
 export interface QuestData {
@@ -124,6 +128,7 @@ export const DEFAULT_RHYTHM: Rhythm = {
   checkIns: true,
   dailyBriefing: true,
   phonePush: true,
+  paceLimits: true,
 };
 
 const file = `${config.paths.dataDir}quests.json`;
@@ -163,6 +168,7 @@ function cleanRhythm(r: any): Rhythm {
     checkIns: typeof r?.checkIns === "boolean" ? r.checkIns : d.checkIns,
     dailyBriefing: typeof r?.dailyBriefing === "boolean" ? r.dailyBriefing : d.dailyBriefing,
     phonePush: typeof r?.phonePush === "boolean" ? r.phonePush : d.phonePush,
+    paceLimits: typeof r?.paceLimits === "boolean" ? r.paceLimits : d.paceLimits,
   };
 }
 

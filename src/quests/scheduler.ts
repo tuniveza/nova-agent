@@ -105,9 +105,11 @@ function partOfDay(rhythm: Rhythm, day: number, part: Quest["timeOfDay"]): Inter
 
 export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Busy[]; now: number }): PlanResult {
   const { rhythm, quests, busy } = options;
-  // Planned work starts a few minutes from now; quick quests (and repeats) can start right away
+  // Planned work starts a few minutes from now; quick quests (and repeats) can start right away.
+  // With the pace limits off, everything can start right away, to the second, back to back.
+  const paced = rhythm.paceLimits !== false;
   const exactNow = options.now;
-  const now = roundUp(options.now + 5);
+  const now = paced ? roundUp(options.now + 5) : Math.ceil(options.now * 60) / 60;
   const placed = new Map<string, Placement>();
   const unplaced = new Map<string, string>();
   const byId = new Map(quests.map((q) => [q.id, q]));
@@ -171,7 +173,7 @@ export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Bus
     const notBefore = Math.max(quick ? exactNow : now, q.earliest ? toMin(q.earliest) : 0, afterDeps);
     const deadline = due(q);
     const need = q.travelMinutes + q.minutes;
-    const rest = quick ? 0 : q.minutes >= rhythm.breakAfterMinutes ? Math.max(rhythm.breakMinutes, rhythm.bufferMinutes) : rhythm.bufferMinutes;
+    const rest = !paced ? 0 : quick ? 0 : q.minutes >= rhythm.breakAfterMinutes ? Math.max(rhythm.breakMinutes, rhythm.bufferMinutes) : rhythm.bufferMinutes;
     const cap = rhythm.maxQuestHoursPerDay * 60;
 
     const tryFit = (part: Quest["timeOfDay"], by: number): number | null => {
@@ -181,7 +183,7 @@ export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Bus
         if ((load.get(w.day) ?? 0) + q.minutes > cap) continue;
         const [ps, pe] = partOfDay(rhythm, w.day, part);
         // Repeats keep their exact times (to the second); other quick quests start on the minute
-        const step = quick ? (q.ongoing && q.every === "interval" ? 1 / 60 : 1) : 5;
+        const step = !paced || (quick && q.ongoing && q.every === "interval") ? 1 / 60 : quick ? 1 : 5;
         const start = roundUp(Math.max(s, notBefore, part === "any" ? s : ps), step);
         if (start >= e || (part !== "any" && start >= pe)) continue;
         if (start + need > e) continue;

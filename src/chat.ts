@@ -419,9 +419,10 @@ function questTools(actions: ChatAction[]) {
         check_ins: z.boolean().optional(),
         daily_briefing: z.boolean().optional(),
         phone_push: z.boolean().optional().describe("Also send reminders to the Nova Hub phones"),
+        pace_limits: z.boolean().optional().describe("The pace safety switch: true = quests start a few minutes ahead, on 5-minute marks, with buffers and breaks; false = right away, to the second, back to back"),
       }),
       run: async (i) => {
-        const r = setRhythm({ wake: i.wake, sleep: i.sleep, windDownMinutes: i.wind_down_minutes, startUpMinutes: i.start_up_minutes, bufferMinutes: i.buffer_minutes, breakAfterMinutes: i.break_after_minutes, breakMinutes: i.break_minutes, maxQuestHoursPerDay: i.max_quest_hours_per_day, homeBase: i.home_base, remindMinutesBefore: i.remind_minutes_before, checkIns: i.check_ins, dailyBriefing: i.daily_briefing, phonePush: i.phone_push });
+        const r = setRhythm({ wake: i.wake, sleep: i.sleep, windDownMinutes: i.wind_down_minutes, startUpMinutes: i.start_up_minutes, bufferMinutes: i.buffer_minutes, breakAfterMinutes: i.break_after_minutes, breakMinutes: i.break_minutes, maxQuestHoursPerDay: i.max_quest_hours_per_day, homeBase: i.home_base, remindMinutesBefore: i.remind_minutes_before, checkIns: i.check_ins, dailyBriefing: i.daily_briefing, phonePush: i.phone_push, paceLimits: i.pace_limits });
         did("changed", `Rhythm: up ${r.wake}, sleep ${r.sleep}`);
         return `Rhythm now: ${JSON.stringify(r)}. Everything has been re-planned.`;
       },

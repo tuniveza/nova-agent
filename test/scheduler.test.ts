@@ -152,4 +152,14 @@ check("a repeat every 30 seconds keeps exact times, right from now", () => {
   assert.equal(describeLength(q({ minutes: 0.5, ongoing: true, every: "interval", everyMinutes: 30 })), "∞ · 30 s every 30 min");
 });
 
+check("pace limits off: right away, to the second, back to back", () => {
+  const fast = { ...rhythm, paceLimits: false };
+  const at = toMin("2026-10-07T10:00:07");
+  const r = planQuests({ rhythm: fast, quests: [q({ id: "a", minutes: 45 }), q({ id: "b", minutes: 120, dependsOn: ["a"] })], busy: [], now: at });
+  assert.equal(r.placed.get("a")!.start, "2026-10-07T10:00:07");
+  assert.equal(r.placed.get("b")!.start, r.placed.get("a")!.end); // no buffer, no break
+  // and with them on (the default), the same quest waits for the next 5-minute mark after a few minutes' lead
+  assert.equal(planQuests({ rhythm, quests: [q({ id: "a", minutes: 45 })], busy: [], now: at }).placed.get("a")!.start, "2026-10-07T10:10");
+});
+
 console.log(`\n${passed} planner checks passed`);

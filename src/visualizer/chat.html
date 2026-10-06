@@ -409,6 +409,7 @@
       <label><input type="checkbox" name="checkIns"> Check in when a quest should be finished</label>
       <label><input type="checkbox" name="dailyBriefing"> Morning plan and evening wrap-up</label>
       <label><input type="checkbox" name="phonePush"> Also send reminders to the Nova Hub phones</label>
+      <label><input type="checkbox" name="paceLimits"> <span><b>Pace limits</b> (safety): quests start a few minutes ahead, on 5-minute marks, with buffers and breaks. Off: right away, to the second, back to back.</span></label>
     </div>
     <div class="rh-foot">
       <button type="button" class="btn" id="rhythm-cancel">Cancel</button>
@@ -620,7 +621,7 @@
     const atRisk = st.quests.filter((q) => q.atRisk && q.status !== 'done' && q.status !== 'skipped').length;
     const r = st.rhythm;
 
-    let html = `<div class="day-head"><div><div class="day-sub">TODAY · up ${r.wake} · sleep ${r.sleep}</div><h3>${escH(dayLong(today)).replace(/^(\w+)/, '<span>$1</span>')}</h3></div>
+    let html = `<div class="day-head"><div><div class="day-sub">TODAY · up ${r.wake} · sleep ${r.sleep}${r.paceLimits === false ? ' · <span style="color:#FFB86B">⚡ pace limits off</span>' : ''}</div><h3>${escH(dayLong(today)).replace(/^(\w+)/, '<span>$1</span>')}</h3></div>
       <div class="stats"><div class="stat"><b>${quests.length}</b>quests</div><div class="stat"><b>${(plannedMin / 60).toFixed(1)}h</b>planned</div><div class="stat"><b>${done}</b>done</div>${atRisk ? `<div class="stat warn"><b>${atRisk}</b>at risk</div>` : ''}</div></div>`;
 
     const cur = st.current;
