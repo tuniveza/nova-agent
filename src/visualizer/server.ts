@@ -35,6 +35,7 @@ import { chat, type ChatTurn } from "../chat";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
 import { createMission } from "../quests/planner";
+import { startHubSync } from "../quests/hubsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { questEvents } from "../quests/store";
@@ -293,3 +294,4 @@ try {
 }
 startQuestReminders();
 startPulses();
+startHubSync();

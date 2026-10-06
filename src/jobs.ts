@@ -12,6 +12,7 @@
 // Nova Agent only ever calls out to the worker, so it can run on any
 // computer: nothing on the internet needs to reach it.
 
+import { applyQuestTaps } from "./quests/hubsync";
 import { z } from "zod";
 import type { ActionResult } from "./acuity/types";
 import { config } from "./config";
@@ -83,12 +84,14 @@ async function checkForJob(): Promise<"job" | "none" | "problem"> {
   if (busy) return "none";
   busy = true;
   try {
-    const { job } = (await callWorker(
+    const { job, questActions } = (await callWorker(
       "/hub/agent/next",
       { dryRun: config.dryRun, bookingsPerVisitor: config.bookingsPerVisitorPerDay, wait: WAIT_SECONDS },
       (WAIT_SECONDS + 15) * 1000,
-    )) as { job: unknown };
+    )) as { job: unknown; questActions?: unknown };
     lastProblem = "";
+    // Taps from Nova Hub's Quests tab come along with the job check
+    applyQuestTaps(questActions);
     if (!job) return "none";
     await doJob(job);
     return "job";

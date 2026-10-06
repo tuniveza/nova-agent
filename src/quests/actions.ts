@@ -26,6 +26,29 @@ function missionProgress(data: QuestData, m: Mission) {
 }
 
 // Everything the page needs, in one go
+// A tap from Nova Hub's Quests tab (passed on by Nova Bot's worker)
+export interface QuestTap {
+  kind: "quest" | "mission";
+  id: string;
+  action: string;
+  minutes?: number;
+}
+export function applyQuestTap(t: QuestTap): string {
+  if (t.kind === "mission") {
+    if (t.action === "pause") return updateMission(t.id, { status: "paused" }).title;
+    if (t.action === "resume") return updateMission(t.id, { status: "active" }).title;
+    throw new Error(`Missions can't "${t.action}"`);
+  }
+  const done = (q: Quest) => q.title;
+  if (t.action === "done") return done(setQuestStatus(t.id, "done"));
+  if (t.action === "finish") return done(setQuestStatus(t.id, "done", true));
+  if (t.action === "start") return done(setQuestStatus(t.id, "doing"));
+  if (t.action === "skip") return done(setQuestStatus(t.id, "skipped"));
+  if (t.action === "reopen") return done(setQuestStatus(t.id, "todo"));
+  if (t.action === "snooze") return done(snoozeQuest(t.id, Math.max(1, Number(t.minutes) || 15)));
+  throw new Error(`Quests can't "${t.action}"`);
+}
+
 export function questState() {
   const data = readQuests();
   const now = nowMinutes();

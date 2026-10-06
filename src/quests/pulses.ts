@@ -113,9 +113,10 @@ export function startPulses(): void {
   if (started) return;
   started = true;
   let soon: NodeJS.Timeout | undefined;
-  questEvents.on("changed", () => {
+  const later = () => {
     clearTimeout(soon);
     soon = setTimeout(schedule, 200);
-  });
+  };
+  questEvents.on("changed", later);
   schedule();
 }
