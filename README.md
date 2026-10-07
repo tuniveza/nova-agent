@@ -430,6 +430,12 @@ result, screenshots, daily logs (`logs/<date>.jsonl`, which include client names
 
 ## Tests
 
+`npm test` runs the Nova Quest reminders on a simulated clock (Vitest fake timers, a pretend
+Nova Bot worker and a throwaway data folder: `test/harness.ts`): a reminder every 30 minutes
+for 4 hours pings exactly 8 times, a ping the worker turns away is retried, Nova Agent being
+off across a session gives one late "Missed" ping, no session is moved past without a
+delivery record, Nova Hub taps count once, and the BST/GMT clock changes.
+
 `npx tsx test/scheduler.test.ts` checks the Nova Quest planner (sleep, deadlines, priorities,
 dependencies, travel, buffers, breaks, the daily cap, blocked time and at-risk flags), and
 `npx tsx test/planner.test.ts` checks mission plans (series written out with exact spacing,
@@ -471,6 +477,7 @@ src/quests/pulses.ts      repeats faster than every 5 minutes, each on its own t
 src/quests/planner.ts     turning a goal into a Mission and its Quests (Claude)
 src/quests/plan.ts        re-planning, and mirroring quests into Nova Calendar
 src/quests/reminders.ts   reminders, check-ins, the morning plan and evening wrap-up
+src/quests/deliveries.ts  every phone ping: sent once, checked, retried, logged (data/nova.db)
 src/quests/hubsync.ts     the plan to Nova Hub, and Nova Hub's taps back
 src/quests/actions.ts     everything the chat and the page can do with them
 src/calendar/store.ts     Nova Calendar's data (calendar.json)
@@ -484,6 +491,8 @@ src/llm.ts                the Claude client (JSON answers, with web research for
 src/heal/                 resolve() and the selector memory
 src/acuity/               Acuity pages: login, list, book, cancel, edit, targets, types
 src/trace.ts              every step, for the console, logs and visualizer
+test/harness.ts           the simulated clock for `npm test`
+test/*.spec.ts            reminders, deliveries, Nova Hub taps, clock changes
 test/scheduler.test.ts    planner checks
 test/planner.test.ts      mission plans: series written out, quests far ahead
 test/web.test.ts          research only cites pages it read; public webpages only

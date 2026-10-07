@@ -1,0 +1,27 @@
+# Changelog
+
+## Unreleased
+
+### P0-1: repeating reminders ping reliably
+
+- Every phone ping now goes through a delivery ledger (`src/quests/deliveries.ts`,
+  `data/nova.db`). Each one is keyed by quest + session + kind, so it's sent once. It is
+  only counted as delivered when the worker says a phone took it (`phones > 0`). Failed
+  pings are retried with backoff, and every attempt is logged with its error. A ping
+  still undelivered when it's no longer useful is given up on, and the page shows it
+  (`Didn't reach your phone: …`).
+- A repeat only moves past a session once that session's ping is delivered, given up
+  on visibly, or marked done. A session that passes with no ping (Nova Agent was off,
+  or the clocks went forward) gets one late `Missed: …` ping. Slots jumped over are
+  covered by that same ping.
+- A repeat isn't finished at its deadline while its last ping is still on its way.
+- Nova Hub taps carry a tap id and the session they were tapped on. A tap handed over
+  twice, or a late "Session done", no longer uses up the next session. This needs Nova
+  Bot's worker change on branch `fix/p0-1-quest-taps`.
+- Quest ids given in short form must match only one quest. An empty id matches
+  nothing.
+- `npm test` runs a simulated-clock harness (Vitest). It includes the BST/GMT changes
+  on 25 Oct 2026 and 28 Mar 2027.
+
+Known limitation: times are UK wall clock. On the night the clocks go back, the repeated
+hour (01:00–02:00 GMT) has no sessions of its own, which leaves a 90-minute real gap.
