@@ -1,0 +1,187 @@
+{
+  "$comment": "Example Nova Observatory catalogue. Copy it to projects.config.json (which git ignores) and point each path at a project on your disk. Relative paths are resolved from the folder you run npm run scan / npm run capture in. This example assumes the Nova suite repos are cloned side by side. Hand-written facts (goal, vision, features, how to show it) live here; scan.mjs adds the measured facts and capture.mjs adds screenshots and video. capture.mode: page | images | none. private: true keeps a project out of capture unless you pass --include-private.",
+  "root": "..",
+  "projects": [
+    {
+      "id": "nova-calendar",
+      "name": "Nova Calendar",
+      "tagline": "A cosmic calendar of note cards and day cards",
+      "path": "../nova-calendar",
+      "category": "Nova suite",
+      "theme": "pulsar",
+      "kind": "Static web app",
+      "stack": [
+        "HTML",
+        "CSS",
+        "Vanilla JS",
+        "Canvas"
+      ],
+      "status": "active",
+      "goal": "Plan days under a real sky: note cards with an author, start and finish time and their own generated space picture, collected into themed day cards for birthdays, seasonal days and studio sessions.",
+      "vision": "A calendar that feels like part of the Novacane universe: every day sits under the real moon, and every note gets its own small piece of the cosmos.",
+      "features": [
+        "Note cards with author, start and finish times, and a seeded generative space image",
+        "Day cards with presets (birthday, Halloween, Christmas, solstices, meteor showers…)",
+        "Seven title aesthetics: Nebula, Supernova, Orbit, Constellation, Eclipse, Aurora, Celestial",
+        "Six colour themes: Novacane, Solar Flare, Pulsar, Aurora, Eclipse, Quasar",
+        "Moon phases and seasons worked out to the minute (Meeus)",
+        "Works offline from a single folder; JSON backup and restore"
+      ],
+      "run": "Open index.html in a browser",
+      "capture": {
+        "mode": "page",
+        "file": "index.html",
+        "script": "novaCalendar"
+      }
+    },
+    {
+      "id": "nova-observatory",
+      "name": "Nova Observatory",
+      "tagline": "Every project in one sky",
+      "path": ".",
+      "category": "Nova suite",
+      "theme": "quasar",
+      "kind": "Static web app + Node scanners",
+      "stack": [
+        "HTML",
+        "CSS",
+        "Vanilla JS",
+        "Node",
+        "Playwright",
+        "ffmpeg"
+      ],
+      "status": "active",
+      "goal": "A dashboard of every project being worked on: where it lives in the folder tree, what it is for, how big it is, and what it looks like in screenshots and video.",
+      "vision": "One place to look up and see the whole body of work at once, kept true by scanning the disk rather than by hand.",
+      "features": [
+        "scan.mjs measures size, files, lines of code, languages, git history and last activity",
+        "capture.mjs records screenshots and demo videos in headless Chromium",
+        "Slideshow videos built with ffmpeg for projects that only have still pictures",
+        "Star map of the folder structure",
+        "Search, filter and sort; a detailed view for each project"
+      ],
+      "run": "npm run build, then open index.html",
+      "capture": {
+        "mode": "page",
+        "file": "index.html",
+        "script": "observatory"
+      },
+      "exclude": [
+        "media",
+        "data"
+      ]
+    },
+    {
+      "id": "agent-nova",
+      "name": "Nova Agent",
+      "tagline": "The hands that work Acuity's admin pages",
+      "path": "../nova-agent",
+      "category": "Nova suite",
+      "theme": "solar",
+      "kind": "Node service (systemd)",
+      "stack": [
+        "Node 22",
+        "TypeScript",
+        "Playwright",
+        "Hono",
+        "node-cron",
+        "Claude API"
+      ],
+      "status": "live",
+      "goal": "Browser automation for Acuity Scheduling. It does the booking work Acuity's API can't: changing session type, price or paid status for staff, plus booking, cancelling and editing from the command line. It picks up jobs from the Nova Bot worker within about a second.",
+      "vision": "A tireless studio assistant that can drive the booking system like a person would, while healing its own broken selectors and reporting back to staff phones.",
+      "features": [
+        "Logs itself in and saves the session; logs back in when it expires",
+        "AI element finder that heals broken selectors and caches the fix",
+        "List, search, book, cancel, edit and reschedule appointments, with a dry-run safety layer",
+        "Collects jobs from the Nova Bot worker queue and sends results as push notifications",
+        "Daily 06:00 healthcheck with alerts",
+        "Live visualizer: Anatomy, Steps and What the browser sees"
+      ],
+      "run": "Runs as the agent-nova systemd user service; visualizer on http://127.0.0.1:4545",
+      "capture": {
+        "mode": "page",
+        "url": "http://127.0.0.1:4545/",
+        "script": "lookOnly",
+        "private": true
+      }
+    },
+    {
+      "id": "nova-bot",
+      "name": "Nova Bot",
+      "tagline": "The studio's AI chat assistant, plus Nova Hub for staff",
+      "path": "../nova-bot",
+      "category": "Nova suite",
+      "theme": "novacane",
+      "kind": "Cloudflare Worker",
+      "stack": [
+        "JavaScript",
+        "Cloudflare Workers",
+        "D1",
+        "Workers AI",
+        "Claude API",
+        "Acuity",
+        "Google Calendar API",
+        "Gmail API",
+        "Stripe",
+        "Web Push",
+        "Vitest"
+      ],
+      "status": "active",
+      "goal": "The AI chat assistant for Novacane Studios, a recording studio in London. It sits on the studio's website as a chat widget, answers from Claude, finds free Acuity times and opens a booking card where the visitor pays the deposit to book. It also serves Nova Hub, the staff app. Its own booking system (Google Calendar, Gmail and Stripe) is built and waiting behind a switch.",
+      "vision": "A front desk that never closes: visitors get real answers and real bookings, and staff run enquiries, chats and bookings from their phones.",
+      "features": [
+        "Themed chat widget with optional voice; Claude answers with every link checked",
+        "Free Acuity times, booking links and an in-chat booking card (deposit first)",
+        "Nova Hub staff app: enquiries, customer chats, bookings by chat, push alerts",
+        "Enquiries, referral codes and a password-protected admin page",
+        "Behind a switch (off by default): its own booking page, Google Calendar diary, Gmail emails and Stripe deposits",
+        "352 Vitest tests, covering both booking systems and the switch"
+      ],
+      "run": "npm run sandbox (wrangler dev --env sandbox) → http://localhost:8787",
+      "capture": {
+        "mode": "page",
+        "serve": "../nova-bot",
+        "file": "src/index.html",
+        "script": "novaBot",
+        "mounts": {
+          "/app": "public/app"
+        }
+      }
+    },
+    {
+      "id": "nova-club",
+      "name": "Nova Club",
+      "tagline": "A members' app where every day is a moon",
+      "path": "../nova-club",
+      "category": "Nova suite",
+      "theme": "novacane",
+      "kind": "Android app",
+      "stack": [
+        "Kotlin",
+        "Jetpack Compose",
+        "Material 3",
+        "Android"
+      ],
+      "status": "active",
+      "goal": "A members' app for the studio with membership tiers (Base Syndicate, Pro Engineer, Elite) and a booking calendar that follows the studio's real bookings live through Nova Bot's /club/busy feed (from Acuity, or Google Calendar when the switch is on Nova).",
+      "vision": "Booking as astronomy: a full moon means the day is wide open, a new moon means it's fully booked, and each day is drawn as an orbit you drag a session along.",
+      "features": [
+        "CosmicCalendar: a month where each day is a moon",
+        "DayOrbit: 10am to 11pm as an orbit with a draggable session",
+        "Live calendar sync with a full-screen celebration when a booking lands",
+        "Flash-sale deal carousel and notifications",
+        "Membership card, tier picker and a Mixes screen",
+        "Ambient music and sound effects generated by tools/make_sounds.py"
+      ],
+      "run": "Open in Android Studio; debug APK at app/build/outputs/apk/debug/app-debug.apk",
+      "capture": {
+        "mode": "images",
+        "images": [
+          "app/src/main/res/drawable/novacane_logo.webp"
+        ],
+        "note": "Android only. Screenshots need an emulator."
+      }
+    }
+  ]
+}

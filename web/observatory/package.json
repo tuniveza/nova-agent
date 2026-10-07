@@ -1,0 +1,16 @@
+{
+  "name": "nova-observatory",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nova Observatory: every project in one sky. Scans the disk, captures screenshots and demo videos, and shows them as a static web app.",
+  "type": "module",
+  "scripts": {
+    "scan": "node scan.mjs",
+    "capture": "node capture.mjs",
+    "build": "node scan.mjs && node capture.mjs && node scan.mjs",
+    "serve": "python3 -m http.server 4610"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

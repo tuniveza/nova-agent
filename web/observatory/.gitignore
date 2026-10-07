@@ -1,0 +1,13 @@
+# Your own catalogue and everything generated from it. These describe every
+# project on your disk (names, paths, folder trees, git state, screenshots and
+# videos), so they stay local. Start from projects.config.example.json.
+projects.config.json
+/data/
+/media/
+
+# Dependencies and tooling
+node_modules/
+*.log
+.DS_Store
+.vscode/
+.idea/
