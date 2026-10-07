@@ -4,9 +4,9 @@ The staff side of the studio, as a Nova Agent panel: enquiries, website chats, b
 
 Its data and push come from Nova Bot (`/app/api/*`).
 
-Studio lives at `/app`. It's a phone-first web app that installs to the home screen,
+Studio lives at `/studio/` (online) and inside Nova Agent on the studio PC. It's a phone-first web app that installs to the home screen,
 and turns into a side-rail layout on a desktop. Staff sign in with
-[Crew](#nova-portal-one-sign-in-for-the-suite) (or, for now, the studio's shared
+Crew (or, for now, the studio's shared
 password).
 
 <table>
@@ -33,7 +33,7 @@ password).
 </table>
 
 <p align="center">
-  <img src="docs/media/gif-free-slot.gif" alt="Animated: picking Thursday in the calendar, tapping the free 14:00 to 16:00 slot, and NovaBot bookings opening with the request filled in, then answering with a booking link" width="900"><br>
+  <img src="media/gif-free-slot.gif" alt="Animated: picking Thursday in the calendar, tapping the free 14:00 to 16:00 slot, and NovaBot bookings opening with the request filled in, then answering with a booking link" width="900"><br>
   <sub>Tap a free slot, and NovaBot · bookings opens with the request already written.</sub>
 </p>
 
@@ -89,8 +89,8 @@ password).
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/media/gif-themes.gif" alt="Animated: tapping through the six themes in Options" width="100%"><br><sub>Switching themes in Options.</sub></td>
-    <td width="50%"><img src="docs/media/gif-suite.gif" alt="Animated: opening Nova Agent sheet, scrolling the apps, opening All links, What's changed and the feature list" width="100%"><br><sub>Browsing the suite sheet.</sub></td>
+    <td width="50%"><img src="media/gif-themes.gif" alt="Animated: tapping through the six themes in Options" width="100%"><br><sub>Switching themes in Options.</sub></td>
+    <td width="50%"><img src="media/gif-suite.gif" alt="Animated: opening Nova Agent sheet, scrolling the apps, opening All links, What's changed and the feature list" width="100%"><br><sub>Browsing the suite sheet.</sub></td>
   </tr>
 </table>
 

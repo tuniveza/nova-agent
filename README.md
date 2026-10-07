@@ -12,16 +12,21 @@ Talk to it, give it a goal, and it plans your days to the second. It also works 
 [![Playwright](https://img.shields.io/badge/Playwright-Chromium-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![Claude](https://img.shields.io/badge/AI-Claude-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/claude)
 [![systemd](https://img.shields.io/badge/runs%20as-systemd%20user%20service-555)](deploy/agent-nova.service)
-[![Nova Agent](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
+[![Nova Bot](https://img.shields.io/badge/back%20end-Nova%20Bot-B026FF)](https://github.com/tuniveza/nova-bot)
 
 </div>
 
 ---
 
-Nova Agent is a small Node service that runs on the studio PC. Open `http://localhost:4545`
-and you get one screen that fits without scrolling: **Nova Missions** on the left, a **chat**
-with Nova Agent in the middle, **Nova Quests** (today's plan) on the right, and the **Nova
-suite** along the bottom.
+Nova Agent is the studio's one app. Everything that used to be a separate Nova app is a
+panel of it: **Studio** (enquiries, website chats, bookings, alerts: was Nova Hub), **Crew**
+(sign-in, your planet, the team: was Nova Portal), **Nova Calendar**, **Nova Notes**,
+**Nova Index**, **Nova Observatory** and **Lossless audio**. It runs on the studio PC with
+everything, and the same panels are online at Nova Bot's address for the staff phones.
+
+On the studio PC, open `http://localhost:4545` and you get one screen that fits without
+scrolling: **Nova Missions** on the left, a **chat** with Nova Agent in the middle, **Nova
+Quests** (today's plan) on the right, and the **panels** along the bottom.
 
 Behind the chat sits a planner: tell it a goal and it becomes a **Nova Mission** of **Nova
 Quests**, fitted around your sleep, your calendar and your travel, with reminders and
@@ -39,8 +44,9 @@ All the pictures here come from a separate sample copy with made-up quests and p
 | **Nova Missions and Quests** | Goals broken into quests, planned hour by hour (to the second), re-planned on every change |
 | **Reminders** | Pop-ups, check-ins, a morning plan and evening wrap-up, chimes, system notifications and your phone |
 | **Nova Calendar** | Built in, saving to Nova Agent, so the chat and the calendar always agree |
-| **Nova Agent** | Every app one tap away, opened inside Nova Agent or in its own window |
-| **Nova Index** | Reads what the suite remembers before it replies, and learns after |
+| **Panels** | Studio, Crew, Calendar, Notes, Index, Observatory and Lossless audio, inside Nova Agent or in their own window |
+| **Online** | The same Studio, Crew, Index, Calendar and Notes at Nova Bot's address (`/studio/` and so on), for the phones |
+| **Nova Index** | Reads what Nova Agent remembers before it replies, and learns after |
 | **Acuity helper** | Changes session types, prices and paid status for Nova Bot, safely, healing itself when pages change |
 | **Visualizer** | Every step the Acuity helper takes, live |
 
@@ -55,6 +61,31 @@ All the pictures here come from a separate sample copy with made-up quests and p
   <img src="docs/media/apps-viewer.gif" alt="Opening Nova Calendar, Nova Notes and Nova Index from the rail, each inside Nova Agent's viewer, then back to the chat" width="900"><br>
   <sub>The rail opens Nova Calendar, Nova Notes and Nova Index inside Nova Agent; "← Nova Agent" brings the chat back.</sub>
 </p>
+
+## The panels
+
+| Panel | What it is | On the studio PC | Online (Nova Bot) | Code |
+|---|---|---|---|---|
+| **Chat** | Talk to Nova Agent; Missions and Quests | `/` | | `src/`, `web/agent/` |
+| **Studio** | Enquiries, website chats, bookings, alerts, Ask NovaBot, push to the phones (was Nova Hub) | `/studio/` | `/studio/` | `web/studio/` |
+| **Crew** | Sign-in, your planet, the team and invites (was Nova Portal) | `/crew/` | `/crew/` | `web/crew/` |
+| **Nova Calendar** | Note cards and day cards; Nova Agent plans into it | `/calendar/` | `/calendar/` | `web/calendar/` |
+| **Nova Notes** | Notes and documents, Google Docs export | `/notes/` | `/notes/` | `web/notes/` |
+| **Nova Index** | Everything Nova Agent remembers: browse, edit, approve | `/index/` | `/index/` | `web/index/` |
+| **Nova Observatory** | Every project on this computer, measured and mapped | `/observatory/` | | `web/observatory/`, `scripts/observatory/` |
+| **Lossless audio** | Raw PCM between two devices, anywhere | | its own address for now | `web/lossless/` |
+
+What they share (themes, sounds, the badge, the Nova Manual) is in `web/shared/`. Each
+panel's guide is in `docs/apps/<panel>/`.
+
+**Signing in on the PC.** Studio and Crew use Nova Bot's staff API. Sign in on the Crew
+panel and Nova Agent signs in to Nova Bot as you (an app sign-in; the token stays in
+`data/signin.json` and never reaches the browser); after that the panels work with your
+own permissions, and Nova Agent works for you. Only Nova Agent's own pages can use it.
+
+**Online.** Nova Bot's worker copies the panels in at build time (its
+`scripts/sync-apps.mjs`, from this repo's `web/`) and serves them for phones and anywhere
+away from the studio PC. The old addresses (`/app/`, `/portal/`, `/app/memory/`) redirect.
 
 ## What it does
 
@@ -179,8 +210,7 @@ check and are carried out within about a second.
 
 <img src="docs/media/calendar-tab.jpg" alt="The Calendar tab: Nova Calendar's month view and today's panel, fitting the plan column" width="300" align="right">
 
-[Nova Calendar](https://github.com/tuniveza/nova-calendar) lives in `calendar/` (a git
-submodule) and is served at `/calendar/`. Inside Nova Agent it saves to `data/calendar.json`
+Nova Calendar is a panel (`web/calendar/`) served at `/calendar/`. Inside Nova Agent it saves to `data/calendar.json`
 instead of only the browser, so the chat, the planner and the calendar always see the same
 note cards and day cards. Every planned quest and blocked time shows up in it as a note card
 (✦ for a quest, ∞ for a repeat, ⚠ when at risk, ✓ when done), and its theme colours the whole
@@ -224,7 +254,7 @@ suite app uses.
 
 ### Nova Index: it remembers
 
-Before each reply and each mission plan, Nova Agent asks [Nova Index](https://github.com/tuniveza/nova-index)
+Before each reply and each mission plan, Nova Agent asks Nova Index
 (the suite's shared memory, on Nova Bot's worker) for the few facts that matter: the studio's,
 and those of the person Nova Agent works for (found by itself: see below). The read is quick (a short
 timeout and a 30-second cache) and never holds a reply up for long. After each conversation,
@@ -499,24 +529,25 @@ test/*.spec.ts            reminders, deliveries, Studio taps, clock changes
 test/scheduler.test.ts    planner checks
 test/planner.test.ts      mission plans: series written out, quests far ahead
 test/web.test.ts          research only cites pages it read; public webpages only
-calendar/                 Nova Calendar (git submodule: tuniveza/nova-calendar)
+web/agent/                Nova Agent's own page (chat.html), the visualizer and the installable app
+web/studio/ web/crew/     the Studio and Crew panels (were Nova Hub and Nova Portal)
+web/calendar/ web/notes/ web/index/ web/observatory/ web/lossless/   the other panels
+web/shared/               themes, sounds, the badge and the Nova Manual (manual-data.js: npm run manual)
+src/signin.ts             signing in to Nova Bot as a person, for Studio and Crew on the PC
+scripts/                  the manual builder; scripts/observatory/ scans and captures your projects
+docs/apps/<panel>/        each panel's guide and pictures
 deploy/agent-nova.service systemd user service
 docs/acuity-ui-notes.md   what Acuity's real admin pages look like
 docs/media/               README images
 ```
 
-## Part of Nova Agent
+## Works with
 
 | Project | What it is |
 |---|---|
-| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova Agent: an overview of every project |
-| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Studio |
-| **[nova-agent](https://github.com/tuniveza/nova-agent)** | This repo: the chat and planner on the studio computer, and the Acuity helper |
-| [nova-index](https://github.com/tuniveza/nova-index) | Everything Nova Agent remembers, browsable |
+| **[nova-agent](https://github.com/tuniveza/nova-agent)** | This repo: the studio's one app, with every panel |
+| [nova-bot](https://github.com/tuniveza/nova-bot) | NovaBot on the website, and Nova Agent's back end online (sign-in, push, bookings, memory, jobs) |
 | [nova-club](https://github.com/tuniveza/nova-club) | Members' Android app that shows the studio's busy times |
-| [nova-calendar](https://github.com/tuniveza/nova-calendar) | A cosmic calendar of note cards and day cards |
-| [nova-notes](https://github.com/tuniveza/nova-notes) | A note editor that writes from the centre outwards |
-| [nova-observatory](https://github.com/tuniveza/nova-observatory) | A dashboard of every project, with screenshots and video |
 
 ## Licence
 

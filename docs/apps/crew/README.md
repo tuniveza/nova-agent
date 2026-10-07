@@ -1,12 +1,15 @@
-<p align="center"><img src="app/icon-192.png" width="96" alt="Crew"></p>
+<p align="center"><img src="../../../web/crew/icon-192.png" width="96" alt="Crew"></p>
 
 # Crew
 
-**One sign-in for the whole Nova Agent, and a planet for everyone.** Part of the [Nova Agent](https://github.com/tuniveza/nova-suite) for Novacane Studios.
+> **A Nova Agent panel.** Its code is in `web/crew/` in Nova Agent's repo, and it opens inside Nova Agent at `/crew/`. Online, Nova Bot serves it at the same address.
+
+
+**One sign-in for the whole Nova Agent, and a planet for everyone.** A panel of [Nova Agent](https://github.com/tuniveza/nova-agent), for Novacane Studios.
 
 Sign in once and you're signed in to Studio, Nova Index and the admin pages. Every member of the team gets a unique planet, drawn from their id: their badge and their identity across the suite. Each planet is the face of that person's own partition of [Nova Index](https://github.com/tuniveza/nova-index), the suite's shared memory.
 
-<p align="center"><img src="docs/media/planets.jpg" width="860" alt="48 generated planets: ringed gas giants, ocean worlds, molten worlds, ice worlds and rocky worlds, each one different"></p>
+<p align="center"><img src="media/planets.jpg" width="860" alt="48 generated planets: ringed gas giants, ocean worlds, molten worlds, ice worlds and rocky worlds, each one different"></p>
 
 ## What it does
 
@@ -25,13 +28,13 @@ Sign in once and you're signed in to Studio, Nova Index and the admin pages. Eve
   - **On Nova Notes' and Nova Calendar's own sites** you **Connect** it once in Crew, which gives that site a read-only token: your name, role and planet, nothing else.
 
 <table><tr>
-<td width="50%"><img src="docs/media/profile.jpg" alt="A profile: the animated planet, the name, an admin pill and Open my Nova Index"></td>
-<td width="50%"><img src="docs/media/crew.jpg" alt="The crew: everyone as a planet badge with their role and status"></td>
+<td width="50%"><img src="media/profile.jpg" alt="A profile: the animated planet, the name, an admin pill and Open my Nova Index"></td>
+<td width="50%"><img src="media/crew.jpg" alt="The crew: everyone as a planet badge with their role and status"></td>
 </tr></table>
 
 ## The planets
 
-<p align="center"><img src="docs/media/hero.jpg" width="420" alt="A ringed gas giant up close: bands, a storm, rings in front of and behind the sphere"></p>
+<p align="center"><img src="media/hero.jpg" width="420" alt="A ringed gas giant up close: bands, a storm, rings in front of and behind the sphere"></p>
 
 `planet/` is a pure, deterministic generator: `generatePlanet(seed, theme, overrides?)` then `renderPlanetSVG(planet, { size, animate })`. The same seed and theme always give the same planet, so nothing is stored but the seed.
 
@@ -64,32 +67,3 @@ Sign in once and you're signed in to Studio, Nova Index and the admin pages. Eve
 
 The code is in [nova-bot](https://github.com/tuniveza/nova-bot) under `src/portal/`.
 
-## Where it runs
-
-`https://novacane-worker.novacane-studio.workers.dev/portal/`
-
-This folder is the only real copy. Nova Bot copies `app/` to `public/portal/` and `planet/` to `src/portal/planet/` on every deploy and local run (`scripts/sync-apps.mjs`).
-
-## Project layout
-
-```
-app/index.html, portal.js, portal.css   the Portal: setup, sign in, invites, profile, the crew, options
-app/manifest.webmanifest, icon*         the installable app and its cosmic "P"
-app/badge.js                            the Portal badge every Nova app shows (<nova-portal-badge>)
-app/manual.js                           the Nova Manual every Nova app shows (<nova-manual>)
-app/manual-data.js                      its pages, made from every app's README and git history (don't edit)
-scripts/build-manual.mjs                makes app/manual-data.js, then shares the badge and the manual
-scripts/share-badge.mjs                 copies the badge and the manual into Nova Notes, Nova Calendar and Nova Observatory
-planet/generator.js                     the planet generator (pure; works in browsers, Workers and Node)
-planet/themes/nova.js                   the Nova theme (swap in the studio's lore later)
-planet/test.mjs                         determinism, every kind of planet, overrides, themes, well-formed SVG
-planet/gallery.html                     48 planets, the hero and badges, for looking at
-```
-
-Run `node scripts/build-manual.mjs` after changing any app's README or saving new work, so the manual stays current. Nova Agent serves it straight away; Nova Bot's worker includes it on its next deploy; Nova Notes, Calendar and Observatory get fresh copies in their `js/` folders, to deploy with them.
-
-`node --test planet/test.mjs` runs the planet tests. Open `planet/gallery.html` through a local server to see them.
-
-## Part of Nova Agent
-
-[Nova Bot](https://github.com/tuniveza/nova-bot) · [Nova Agent](https://github.com/tuniveza/nova-agent) · [Nova Calendar](https://github.com/tuniveza/nova-calendar) · [Nova Notes](https://github.com/tuniveza/nova-notes) · [Nova Club](https://github.com/tuniveza/nova-club) · [Nova Observatory](https://github.com/tuniveza/nova-observatory) · [Nova Index](https://github.com/tuniveza/nova-index) · **Crew**

@@ -2,15 +2,13 @@
 
 # Nova Observatory
 
+> **A Nova Agent panel.** Its code is in `web/observatory/` in Nova Agent's repo, and it opens inside Nova Agent at `/observatory/`.
+
+
 **Every project in one sky: a dashboard that measures your work on disk and shows it in screenshots and video.**
 
-[![Static web app](https://img.shields.io/badge/static-web%20app-E34C26?logo=html5&logoColor=white)](#run-it-locally)
-[![Node](https://img.shields.io/badge/Node-scanners-339933?logo=nodedotjs&logoColor=white)](#how-it-works)
-[![Playwright](https://img.shields.io/badge/Playwright-capture-2EAD33?logo=playwright&logoColor=white)](#capture)
-[![ffmpeg](https://img.shields.io/badge/ffmpeg-video-007808?logo=ffmpeg&logoColor=white)](#capture)
-[![Nova Agent](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
 
-<img src="docs/media/overview.jpg" alt="Nova Observatory's overview: totals for lines of code, size, files and languages, a language bar, the All links and Sound switches, and the first project decks" width="900">
+<img src="media/overview.jpg" alt="Nova Observatory's overview: totals for lines of code, size, files and languages, a language bar, the All links and Sound switches, and the first project decks" width="900">
 
 <sub>Always on inside Nova Agent at <code>/observatory/</code> · or open <code>index.html</code> anywhere</sub>
 
@@ -37,7 +35,7 @@ and experiments. They show project names, sizes and folder trees, and nothing pe
 
 ## See it in action
 
-<p align="center"><img src="docs/media/demo.gif" width="720" alt="Scrolling down the overview through the project decks, then opening Nova Index's detail view"></p>
+<p align="center"><img src="media/demo.gif" width="720" alt="Scrolling down the overview through the project decks, then opening Nova Index's detail view"></p>
 
 <p align="center"><sub>Scroll the decks, then open one for the full story.</sub></p>
 
@@ -66,15 +64,15 @@ And across all of them:
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/media/decks.jpg" alt="Project decks for Nova Observatory, Nova Agent and Nova Bot, with screenshots, stats and language bars" width="100%"><br><sub><b>Project decks.</b></sub></td>
-    <td width="50%"><img src="docs/media/project-detail.jpg" alt="Nova Calendar's detail view: its demo video, screenshots, folder tree, goal, vision and features" width="100%"><br><sub><b>A project up close.</b></sub></td>
+    <td width="50%"><img src="media/decks.jpg" alt="Project decks for Nova Observatory, Nova Agent and Nova Bot, with screenshots, stats and language bars" width="100%"><br><sub><b>Project decks.</b></sub></td>
+    <td width="50%"><img src="media/project-detail.jpg" alt="Nova Calendar's detail view: its demo video, screenshots, folder tree, goal, vision and features" width="100%"><br><sub><b>A project up close.</b></sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/media/star-map.jpg" alt="The star map: every project as a star on the folder tree it grows from" width="100%"><br><sub><b>The star map.</b> Each star sits on its folder; bigger stars have more code.</sub></td>
-    <td width="50%"><img src="docs/media/nova-index.jpg" alt="The Nova Index deck beside Nova Calendar and Nova Notes" width="100%"><br><sub><b>Nova Index</b>, the newest deck in Nova Agent row.</sub></td>
+    <td width="50%"><img src="media/star-map.jpg" alt="The star map: every project as a star on the folder tree it grows from" width="100%"><br><sub><b>The star map.</b> Each star sits on its folder; bigger stars have more code.</sub></td>
+    <td width="50%"><img src="media/nova-index.jpg" alt="The Nova Index deck beside Nova Calendar and Nova Notes" width="100%"><br><sub><b>Nova Index</b>, the newest deck in Nova Agent row.</sub></td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><img src="docs/media/folder-tree.jpg" alt="Nova Calendar's folder tree, languages and facts: location, size, lines of code, last change and git" width="70%"><br><sub><b>Folder tree, languages and facts.</b></sub></td>
+    <td colspan="2" align="center"><img src="media/folder-tree.jpg" alt="Nova Calendar's folder tree, languages and facts: location, size, lines of code, last change and git" width="70%"><br><sub><b>Folder tree, languages and facts.</b></sub></td>
   </tr>
 </table>
 
@@ -143,88 +141,3 @@ can reach a live service.
 `--include-private`. Use it for anything whose pages can show personal data (Nova Agent's
 visualizer can show client names, so it's marked private in the example).
 
-## Run it locally
-
-```sh
-git clone https://github.com/tuniveza/nova-observatory.git
-cd nova-observatory
-cp projects.config.example.json projects.config.json   # then point it at your projects
-npm run scan                                            # a few seconds
-npm run serve                                           # http://localhost:4610
-```
-
-Or open `index.html` straight from `file://`; it works without a server.
-
-To refresh it:
-
-```sh
-npm run scan      # numbers only: sizes, lines, languages, git, folder trees
-npm run capture   # screenshots + demo videos (a couple of minutes)
-npm run build     # scan, capture, scan again
-node capture.mjs nova-calendar nova-bot   # re-capture just some projects
-```
-
-Without a `projects.config.json`, both scripts fall back to the example catalogue and say so.
-The example assumes Nova Agent repos are cloned side by side (`../nova-bot`,
-`../nova-calendar` and so on); relative paths are resolved from the folder you run the scripts in.
-
-**Needs:** Node 18 or newer. For capture, also `npm install` (Playwright is an optional
-dependency), a Chromium (the system one at `/usr/bin/chromium` is used if present, otherwise run
-`npx playwright install chromium`) and `ffmpeg` on your `PATH`.
-
-## Configuration
-
-There are no secrets or API keys. Everything lives in the catalogue:
-
-| Key | What it's for |
-|---|---|
-| `root` | The top of your folder tree, for the star map |
-| `projects[].id`, `name`, `tagline`, `category`, `theme`, `kind`, `stack`, `status` | How the deck looks and where it's filed |
-| `projects[].path` | Where the project lives on disk |
-| `projects[].goal`, `vision`, `features`, `run` | The words on the deck |
-| `projects[].exclude` | Folders to leave out of the counts |
-| `projects[].capture` | `mode`, `file` / `serve` / `mounts` / `vite` / `url`, `script`, `images`, `private` |
-| `projects[].group`, `members` | A deck that gathers several small projects |
-
-**What stays private.** Your catalogue, `data/` and `media/` describe every project on your disk
-(names, paths, folder trees, git state, screenshots and videos), so `.gitignore` keeps them out
-of the repository. Only the code, the example catalogue and the README images are published.
-
-## Tests
-
-There's no automated test suite. `npm run scan` prints a line per project with its line count
-and timing, and `npm run capture` reports how many projects were captured, skipped or failed,
-which is the quickest health check.
-
-## Project layout
-
-```
-index.html                    the page
-css/observatory.css           the styling
-js/observatory.js             decks, detail view, star map, search, filter, sort and the Sound switch
-js/themes.js, cosmos.js, backdrop.js   shared with Nova Calendar
-js/sfx.js                     Nova Agent sound effects
-assets/sigil.svg              the Nova sigil
-scan.mjs                      measures every project
-capture.mjs                   screenshots and videos (Playwright + ffmpeg)
-projects.config.example.json  example catalogue (copy to projects.config.json)
-data/, media/                 generated; ignored by git
-docs/media/                   README images
-```
-
-## Part of Nova Agent
-
-| Project | What it is |
-|---|---|
-| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova Agent: an overview of every project |
-| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Studio |
-| [nova-agent](https://github.com/tuniveza/nova-agent) | The studio computer's helper; serves Nova Observatory at `/observatory/` |
-| [nova-club](https://github.com/tuniveza/nova-club) | Members' Android app that shows the studio's busy times |
-| [nova-calendar](https://github.com/tuniveza/nova-calendar) | A cosmic calendar of note cards and day cards |
-| [nova-notes](https://github.com/tuniveza/nova-notes) | A note editor that writes from the centre outwards |
-| **[nova-observatory](https://github.com/tuniveza/nova-observatory)** | This repo: a dashboard of every project, with screenshots and video |
-| [nova-index](https://github.com/tuniveza/nova-index) | The suite's shared memory |
-
----
-
-<p align="center"><sub>Made for <b>Novacane Studios</b> · All rights reserved</sub></p>

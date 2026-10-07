@@ -1,18 +1,16 @@
 <div align="center">
 
-<img src="assets/icon.svg" width="96" alt="The Nova Calendar icon: a glowing crescent-moon C with three stars">
+<img src="../../../web/calendar/assets/icon.svg" width="96" alt="The Nova Calendar icon: a glowing crescent-moon C with three stars">
 
 # Nova Calendar
 
+> **A Nova Agent panel.** Its code is in `web/calendar/` in Nova Agent's repo, and it opens inside Nova Agent at `/calendar/`. Online, Nova Bot serves it at the same address.
+
+
 **A cosmic calendar of note cards and day cards, under a sky that follows the real moon.**
 
-[![HTML](https://img.shields.io/badge/HTML-CSS-E34C26?logo=html5&logoColor=white)](#run-it-locally)
-[![Vanilla JS](https://img.shields.io/badge/Vanilla-JavaScript-F1E05A?logo=javascript&logoColor=black)](#how-it-works)
-[![No build](https://img.shields.io/badge/build%20step-none-2EA44F)](#run-it-locally)
-[![Offline](https://img.shields.io/badge/works-offline-6E40C9)](#your-data)
-[![Nova Agent](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
 
-<img src="docs/media/day-card.jpg" alt="Nova Calendar: October 2026 with the Moonlight Mixtape release day card open, showing its supernova artwork and a note card with its own generated picture" width="900">
+<img src="media/day-card.jpg" alt="Nova Calendar: October 2026 with the Moonlight Mixtape release day card open, showing its supernova artwork and a note card with its own generated picture" width="900">
 
 ### ✦ [Open Nova Calendar](https://nova-calendar.novacane-studio.workers.dev) ✦
 
@@ -39,11 +37,11 @@ step, no server and no install.
 | 🪟 **Fit to the window** | Inside Nova Agent, or with `?embed=1`, the whole month and the chosen day fit the space with no scrolling. |
 | ✦ **Built into Nova Agent** | Nova Agent serves it at `/calendar/` and it saves to Nova Agent, so the chat and the calendar always agree. |
 
-<p align="center"><img src="docs/media/top-bar.jpg" width="900" alt="The top bar: the six theme swatches, then the 🔒 Links, Sound, Note card and Day card buttons, with the month and Today on the right"></p>
+<p align="center"><img src="media/top-bar.jpg" width="900" alt="The top bar: the six theme swatches, then the 🔒 Links, Sound, Note card and Day card buttons, with the month and Today on the right"></p>
 
 ## See it in action
 
-<p align="center"><img src="docs/media/demo.gif" width="800" alt="Adding a note card: choosing 22 October, pressing Note card, typing a title and a note while the picture paints itself, then saving it into the day"></p>
+<p align="center"><img src="media/demo.gif" width="800" alt="Adding a note card: choosing 22 October, pressing Note card, typing a title and a note while the picture paints itself, then saving it into the day"></p>
 
 <p align="center"><sub>Pick a day, press <b>Note card</b>, write, save. The picture paints itself from your words.</sub></p>
 
@@ -87,12 +85,12 @@ step, no server and no install.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/media/month.jpg" alt="October 2026 with today selected: a Studio Session day card and a note card with a star-nursery picture" width="100%"><br><sub><b>The month</b>, under the real moon.</sub></td>
-    <td width="50%"><img src="docs/media/halloween.jpg" alt="Halloween selected: an eclipse day card in Solar Flare colours with a black-hole note card" width="100%"><br><sub><b>Halloween</b>, with its own theme.</sub></td>
+    <td width="50%"><img src="media/month.jpg" alt="October 2026 with today selected: a Studio Session day card and a note card with a star-nursery picture" width="100%"><br><sub><b>The month</b>, under the real moon.</sub></td>
+    <td width="50%"><img src="media/halloween.jpg" alt="Halloween selected: an eclipse day card in Solar Flare colours with a black-hole note card" width="100%"><br><sub><b>Halloween</b>, with its own theme.</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/media/note-card-editor.jpg" alt="Editing the Launch party set list note card, with its supernova picture, art style, Regenerate and Save image" width="100%"><br><sub><b>A note card</b> and the picture it painted.</sub></td>
-    <td width="50%"><img src="docs/media/day-card-editor.jpg" alt="A new day card from the Trip preset: a ringed-planet preview, the presets, title, date and aesthetics" width="100%"><br><sub><b>A day card</b> from the Trip preset.</sub></td>
+    <td width="50%"><img src="media/note-card-editor.jpg" alt="Editing the Launch party set list note card, with its supernova picture, art style, Regenerate and Save image" width="100%"><br><sub><b>A note card</b> and the picture it painted.</sub></td>
+    <td width="50%"><img src="media/day-card-editor.jpg" alt="A new day card from the Trip preset: a ringed-planet preview, the presets, title, date and aesthetics" width="100%"><br><sub><b>A day card</b> from the Trip preset.</sub></td>
   </tr>
 </table>
 
@@ -101,7 +99,7 @@ step, no server and no install.
 
 | | | |
 |---|---|---|
-| <img src="docs/media/theme-aurora.jpg" alt="Aurora theme"> | <img src="docs/media/theme-solar-flare.jpg" alt="Solar Flare theme"> | <img src="docs/media/theme-pulsar.jpg" alt="Pulsar theme, with Nova's Birthday day card keeping its own Novacane theme"> |
+| <img src="media/theme-aurora.jpg" alt="Aurora theme"> | <img src="media/theme-solar-flare.jpg" alt="Solar Flare theme"> | <img src="media/theme-pulsar.jpg" alt="Pulsar theme, with Nova's Birthday day card keeping its own Novacane theme"> |
 | Aurora | Solar Flare | Pulsar (the birthday card keeps its own theme) |
 
 </details>
@@ -119,7 +117,7 @@ with **`?embed=1`** on the end of its address, it fits the space it's given:
 
 | About 900 × 600 | About 430 × 600 |
 |---|---|
-| <img src="docs/media/embed-wide.jpg" alt="Fit-to-window mode at about 900 by 600: the whole month on the left and 16 October's day card on the right, with no page scrolling" width="560"> | <img src="docs/media/embed-narrow.jpg" alt="Fit-to-window mode at about 430 by 600: the whole month above and the chosen day below" width="260"> |
+| <img src="media/embed-wide.jpg" alt="Fit-to-window mode at about 900 by 600: the whole month on the left and 16 October's day card on the right, with no page scrolling" width="560"> | <img src="media/embed-narrow.jpg" alt="Fit-to-window mode at about 430 by 600: the whole month above and the chosen day below" width="260"> |
 
 ## Sound effects
 
@@ -131,21 +129,11 @@ Notes and Nova Observatory.
 
 ## Inside Nova Agent
 
-[Nova Agent](https://github.com/tuniveza/nova-agent) includes this repo as a git submodule and
+Nova Agent
 serves it at **`/calendar/`**. There it saves to Nova Agent (`data/calendar.json`) instead of
 only the browser, so note cards and day cards made by Nova Agent's chat appear on the calendar,
 and the page refreshes when Nova Agent changes something. It opens in fit-to-window mode in
 Nova Agent's Calendar tab.
-
-## Use it as an app
-
-Open **https://nova-calendar.novacane-studio.workers.dev** and install it from the **Install**
-button, the browser's address bar or menu (on iPhone/iPad: **Share → Add to Home Screen**).
-Installed, it gets its own window and launcher icon, works offline, and its icon's shortcut
-menu (long-press or right-click) opens straight into a **new note card** or **new day card**.
-
-To host your own copy on Cloudflare: `npx wrangler deploy` (see `wrangler.jsonc`; `_headers` sets
-the security headers and `.assetsignore` keeps the README and media off the site).
 
 ## How it works
 
@@ -165,17 +153,6 @@ flowchart LR
 - **No dependencies:** plain browser JavaScript and Canvas. The fonts load from Google Fonts;
   without a connection the page falls back to system fonts.
 
-## Run it locally
-
-Open `index.html` in a browser. That's it.
-
-To serve it instead:
-
-```sh
-python3 -m http.server 4600   # then open http://localhost:4600
-                              # or http://localhost:4600/?embed=1 to see it fit the window
-```
-
 ## Your data
 
 On the web, everything is saved in this browser's `localStorage` under the key
@@ -187,53 +164,3 @@ Use **Export** to download a JSON backup and **Import** to merge one back in. It
 id are replaced by the imported copy. Exported backups (`nova-calendar-backup-*.json`) are
 ignored by git, so your own notes don't end up in the repo.
 
-## Configuration
-
-There's nothing to configure and no keys or secrets. To change the look:
-
-| File | Job |
-|---|---|
-| `js/themes.js` | Colour themes. To add one, copy a block and change the hex codes. |
-| `js/presets.js` | Day card presets, the title aesthetics and the line icons. |
-
-## Tests
-
-There's no automated test suite yet. The sky maths in `js/sky.js` follows Meeus' published
-algorithms; the quickest check is to compare a few moon phases and solstices against a
-published almanac.
-
-## Project layout
-
-| File | Job |
-|---|---|
-| `index.html` | The page |
-| `js/app.js` | The calendar, the day panel, the editors and the Sound button |
-| `js/store.js` | Saving, loading, validating, import and export |
-| `js/sky.js` | Moon phases, seasons, Easter and the seasonal and meteor dates |
-| `js/cosmos.js` | The seeded generative space art |
-| `js/presets.js` | Day card presets, title aesthetics and line icons |
-| `js/themes.js` | Colour themes |
-| `js/backdrop.js` | The twinkling star canvas behind the page |
-| `js/sfx.js` | The Nova Agent sound effects (shared with Nova Notes and Nova Observatory) |
-| `js/embed.js` | Turns on fit-to-window mode inside another page or with `?embed=1` |
-| `css/nova.css` | All the styling, including fit-to-window mode |
-| `sw.js`, `manifest.webmanifest` | Offline support and install details |
-| `assets/` | The app icon and the Nova sigil |
-| `docs/media/` | README images |
-
-## Part of Nova Agent
-
-| Project | What it is |
-|---|---|
-| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova Agent: an overview of every project |
-| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Studio |
-| [nova-agent](https://github.com/tuniveza/nova-agent) | The studio computer's helper; Nova Calendar is built in |
-| [nova-club](https://github.com/tuniveza/nova-club) | Members' Android app that shows the studio's busy times |
-| **[nova-calendar](https://github.com/tuniveza/nova-calendar)** | This repo: a cosmic calendar of note cards and day cards |
-| [nova-notes](https://github.com/tuniveza/nova-notes) | A note editor that writes from the centre outwards |
-| [nova-observatory](https://github.com/tuniveza/nova-observatory) | A dashboard of every project, with screenshots and video |
-| [nova-index](https://github.com/tuniveza/nova-index) | The suite's shared memory |
-
----
-
-<p align="center"><sub>Made for <b>Novacane Studios</b> · All rights reserved</sub></p>
