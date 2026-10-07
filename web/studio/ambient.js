@@ -1,4 +1,4 @@
-/* Nova Ambient: a gentle, never-ending ambient soundtrack for Nova Hub.
+/* Nova Ambient: a gentle, never-ending ambient soundtrack for Studio.
    Everything is made live with the Web Audio API: no audio files, no libraries,
    no network. Slow warm pads, a soft bass, little star-like bells, a faint
    ocean of air, all washed in a big procedural reverb.

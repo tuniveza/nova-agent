@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/media/hero.jpg" alt="Nova Agent: the Nova suite down the left, the chat in the middle answering 'What should I do now?', and today's plan on the right with the quest in progress" width="900">
+<img src="docs/media/hero.jpg" alt="Nova Agent: Nova Agent down the left, the chat in the middle answering 'What should I do now?', and today's plan on the right with the quest in progress" width="900">
 
 # Nova Agent
 
@@ -12,7 +12,7 @@ Talk to it, give it a goal, and it plans your days to the second. It also works 
 [![Playwright](https://img.shields.io/badge/Playwright-Chromium-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![Claude](https://img.shields.io/badge/AI-Claude-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/claude)
 [![systemd](https://img.shields.io/badge/runs%20as-systemd%20user%20service-555)](deploy/agent-nova.service)
-[![Nova suite](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
+[![Nova Agent](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
 
 </div>
 
@@ -37,9 +37,9 @@ All the pictures here come from a separate sample copy with made-up quests and p
 |---|---|
 | **Chat** | Claude, with tools for quests, missions, Nova Calendar, Acuity (read-only) and its own status |
 | **Nova Missions and Quests** | Goals broken into quests, planned hour by hour (to the second), re-planned on every change |
-| **Reminders** | Pop-ups, check-ins, a morning plan and evening wrap-up, chimes, system notifications and Nova Hub phones |
+| **Reminders** | Pop-ups, check-ins, a morning plan and evening wrap-up, chimes, system notifications and your phone |
 | **Nova Calendar** | Built in, saving to Nova Agent, so the chat and the calendar always agree |
-| **Nova suite** | Every app one tap away, opened inside Nova Agent or in its own window |
+| **Nova Agent** | Every app one tap away, opened inside Nova Agent or in its own window |
 | **Nova Index** | Reads what the suite remembers before it replies, and learns after |
 | **Acuity helper** | Changes session types, prices and paid status for Nova Bot, safely, healing itself when pages change |
 | **Visualizer** | Every step the Acuity helper takes, live |
@@ -69,7 +69,7 @@ from), look at any public webpage (it opens it in a browser of its own, never th
 and sees a screenshot and the page's contents), or ask how Nova Agent is doing. Whatever it changes shows
 up as a little chip under its reply, and the plan beside it redraws straight away.
 
-On a wide screen the three columns sit side by side above the Nova suite, all on one screen; on
+On a wide screen the three columns sit side by side above Nova Agent, all on one screen; on
 a phone or a very short window they stack (the chat first) and the page scrolls.
 
 ### Nova Missions and Nova Quests
@@ -161,17 +161,17 @@ Checked every 10 seconds (`src/quests/reminders.ts`):
 
 Each kind has its own bright **chime**, made live in the browser. Press 🔔 for **system
 notifications**, which arrive even with Nova Agent in the background and bring it back when
-clicked. With the rhythm's phone setting on, they also go to the **Nova Hub phones**, where Nova
+clicked. With the rhythm's phone setting on, they also go to the **your phone**, where Nova
 Agent, Nova Quest and Nova Mission alerts each have their own label, check-ins stay on screen
 until they're answered, and a pulse replaces its last notification.
 
 <br clear="right">
 
-### Quests in Nova Hub
+### Quests in Studio
 
 Nova Agent sends its plan (missions, quests, pulses, and Nova Calendar's note and day cards)
 to Nova Bot's worker whenever it changes, and every minute so "now" keeps moving
-(`src/quests/hubsync.ts`). Nova Hub's Quests and Calendar tabs show it on the staff phones,
+(`src/quests/hubsync.ts`). Studio's Quests and Calendar tabs show it on the staff phones,
 and taps made there (Done, Start, Not now, Skip, pause a mission) come back with each job
 check and are carried out within about a second.
 
@@ -188,20 +188,20 @@ of Nova Agent. The **Calendar** tab fits it to the plan column with no scrolling
 
 <br clear="right">
 
-### The Nova suite, inside or in a window
+### The Nova Agent, inside or in a window
 
 <table>
   <tr>
-    <td width="42%"><img src="docs/media/suite.jpg" alt="The Nova suite launcher: a grid of every app, with the Open apps switch set to Inside Nova Agent" width="100%"></td>
+    <td width="42%"><img src="docs/media/suite.jpg" alt="The Nova Agent launcher: a grid of every app, with the Open apps switch set to Inside Nova Agent" width="100%"></td>
     <td width="58%"><img src="docs/media/viewer.jpg" alt="Nova Calendar open inside Nova Agent's viewer, with the rail on the left highlighting Nova Calendar" width="100%"></td>
   </tr>
   <tr>
-    <td><sub>The <b>✦ Nova suite</b> launcher, with the "Open apps" switch.</sub></td>
+    <td><sub>The <b>✦ Nova Agent</b> launcher, with the "Open apps" switch.</sub></td>
     <td><sub>Nova Calendar opened inside Nova Agent from the rail.</sub></td>
   </tr>
 </table>
 
-The rail down the left (and the ✦ Nova suite launcher) holds every Nova app: Nova Hub, Nova
+The rail down the left (and the ✦ Nova Agent launcher) holds every Nova app: Studio, Nova
 Notes, Nova Calendar, Nova Bot, the visualizer, Nova Index, Admin, all links and features,
 Nova Observatory and the code. One switch decides where they open:
 
@@ -211,7 +211,7 @@ Nova Observatory and the code. One switch decides where they open:
   the folders next to it, so they open inside in any browser.
 - **New window**: each app in its own tab or window.
 
-Nova Hub, Admin and the links page always get their own window: they refuse to be shown
+Studio, Admin and the links page always get their own window: they refuse to be shown
 inside other pages, which keeps their sign-in safe, and Nova Agent says so once.
 
 ### Sound effects
@@ -233,7 +233,7 @@ studio and staff memory only, never customers'.
 
 Nova Index itself opens inside Nova Agent from the rail, through Nova Agent's own key:
 you can browse and edit the studio's and staff memory there, while approvals of customers'
-facts stay behind Nova Hub's sign-in. Without `AGENT_NOVA_KEY`, memory is simply switched off.
+facts stay behind Studio's sign-in. Without `AGENT_NOVA_KEY`, memory is simply switched off.
 
 ### The Acuity helper
 
@@ -241,7 +241,7 @@ The job Nova Agent was built for. It drives Acuity's admin pages in a real Chrom
 person would, for the jobs Acuity's API can't do.
 
 - **Jobs from Nova Bot** (`src/jobs.ts`): it waits on the worker for jobs and picks each one up
-  within about a second. Today that's `change` jobs (staff asked in Nova Hub to change a
+  within about a second. Today that's `change` jobs (staff asked in Studio to change a
   booking's session type, price or paid status); it does them in Acuity, checks the result and
   reports back to staff phones. Customer bookings go through Acuity's own booking page, so the
   deposit is always paid first; `book` jobs are still understood here.
@@ -286,8 +286,8 @@ flowchart LR
     Chat --> Q[(Quests and calendar<br/>data/)]
     UI --> Q
     Chat <-->|reads before, learns after| NI[Nova Index<br/>on Nova Bot's worker]
-    Q -->|plan, reminders| Hub[Nova Hub phones]
-    S[Staff in Nova Hub] --> NB[Nova Bot Worker]
+    Q -->|plan, reminders| Hub[your phone]
+    S[Staff in Studio] --> NB[Nova Bot Worker]
     NB -->|queues jobs| J[(agent_jobs)]
     NA[Acuity helper] -->|"any jobs?" long-poll| J
     NA --> R[resolve&#40;&#41;] -->|1st| M[(Selector memory)]
@@ -321,7 +321,7 @@ npm start                 # should say "Logged in to Acuity"
 ```
 
 The chat and mission planning need `ANTHROPIC_API_KEY` in `.env` (Claude also powers the
-self-healing element finder). Jobs, phone alerts, Nova Hub sync and Nova Index memory need
+self-healing element finder). Jobs, phone alerts, Studio sync and Nova Index memory need
 `AGENT_NOVA_KEY`; without it they're simply off. To bring the calendar up to date with its own
 repo: `git submodule update --remote calendar`.
 
@@ -346,7 +346,7 @@ With `AGENT_NOVA_KEY` empty it won't collect jobs, read memory or send phone ale
 
 | Command | What it does |
 |---|---|
-| `npm run visualizer` | Nova Agent itself: the chat and plan at http://localhost:4545, reminders, Nova Hub sync, the daily healthcheck and job collection (`npm run service` is the same) |
+| `npm run visualizer` | Nova Agent itself: the chat and plan at http://localhost:4545, reminders, Studio sync, the daily healthcheck and job collection (`npm run service` is the same) |
 | `npm start` | Checks the Acuity login; logs in automatically if the session expired |
 | `npm run login` | Opens a visible browser so you can log in to Acuity by hand |
 | `npm run list` | Appointments for the next 7 days |
@@ -386,9 +386,9 @@ Names only here; never commit `.env`.
 |---|---|---|
 | `ANTHROPIC_API_KEY` | – | The chat, mission planning and the AI element finder |
 | `NOVA_MODEL` | `claude-opus-5-5` | The Claude model name |
-| `NOVA_WORKER_URL` | Novacane's worker | Nova Bot's worker: jobs, alerts, Nova Hub sync and Nova Index |
-| `AGENT_NOVA_KEY` | – | Must match the worker's `AGENT_NOVA_KEY` secret; blank = no jobs, phone alerts, Nova Hub sync or memory |
-| `NOVA_STAFF_ID` | *(found by itself)* | Only to force who Nova Agent works for. Without it, Nova Agent picks the studio's first Nova Portal admin, and anyone can switch it to themselves with **Connect as me** on the Nova Portal badge (kept in `data/staff.json`) |
+| `NOVA_WORKER_URL` | Novacane's worker | Nova Bot's worker: jobs, alerts, Studio sync and Nova Index |
+| `AGENT_NOVA_KEY` | – | Must match the worker's `AGENT_NOVA_KEY` secret; blank = no jobs, phone alerts, Studio sync or memory |
+| `NOVA_STAFF_ID` | *(found by itself)* | Only to force who Nova Agent works for. Without it, Nova Agent picks the studio's first Crew admin, and anyone can switch it to themselves with **Connect as me** on the Nova Agent badge (kept in `data/staff.json`) |
 | `NOVA_DATA_DIR` | `data/` | Where everything is kept; point a second copy somewhere else |
 | `ACUITY_EMAIL`, `ACUITY_PASSWORD` | – | Automatic re-login |
 | `ACUITY_ADMIN_URL` | Acuity's appointments page | The page used to check the login |
@@ -434,7 +434,7 @@ result, screenshots, daily logs (`logs/<date>.jsonl`, which include client names
 Nova Bot worker and a throwaway data folder: `test/harness.ts`): a reminder every 30 minutes
 for 4 hours pings exactly 8 times, a ping the worker turns away is retried, Nova Agent being
 off across a session gives one late "Missed" ping, no session is moved past without a
-delivery record, Nova Hub taps count once, and the BST/GMT clock changes. It also checks
+delivery record, Studio taps count once, and the BST/GMT clock changes. It also checks
 that edits save or say why (100 rapid edits included), that saves from Nova Calendar merge
 with changes made elsewhere, and that a mission re-plan keeps quests changed by hand.
 
@@ -464,7 +464,7 @@ work: the first run heals each element and saves it, the second comes straight f
 
 ```
 src/visualizer/server.ts  Nova Agent's server: the pages, the plan's API, the suite apps, reminders
-src/visualizer/chat.html  the main page: the Nova suite rail, the chat, Today, Missions, Calendar
+src/visualizer/chat.html  the main page: Nova Agent rail, the chat, Today, Missions, Calendar
 src/visualizer/page.html  the visualizer
 src/visualizer/app/       the installable app: manifest, service worker, icons, sfx.js (sound effects)
 src/visualizer/calendar-sync.js  makes Nova Calendar save to Nova Agent
@@ -480,7 +480,7 @@ src/quests/planner.ts     turning a goal into a Mission and its Quests (Claude)
 src/quests/plan.ts        re-planning, and mirroring quests into Nova Calendar
 src/quests/reminders.ts   reminders, check-ins, the morning plan and evening wrap-up
 src/quests/deliveries.ts  every phone ping: sent once, checked, retried, logged (data/nova.db)
-src/quests/hubsync.ts     the plan to Nova Hub, and Nova Hub's taps back
+src/quests/hubsync.ts     the plan to Studio, and Studio's taps back
 src/quests/actions.ts     everything the chat and the page can do with them
 src/calendar/store.ts     Nova Calendar's data (calendar.json, with a revision per save)
 src/calendar/page.ts      saves from the calendar page, merged with changes made elsewhere
@@ -495,7 +495,7 @@ src/heal/                 resolve() and the selector memory
 src/acuity/               Acuity pages: login, list, book, cancel, edit, targets, types
 src/trace.ts              every step, for the console, logs and visualizer
 test/harness.ts           the simulated clock for `npm test`
-test/*.spec.ts            reminders, deliveries, Nova Hub taps, clock changes
+test/*.spec.ts            reminders, deliveries, Studio taps, clock changes
 test/scheduler.test.ts    planner checks
 test/planner.test.ts      mission plans: series written out, quests far ahead
 test/web.test.ts          research only cites pages it read; public webpages only
@@ -505,14 +505,14 @@ docs/acuity-ui-notes.md   what Acuity's real admin pages look like
 docs/media/               README images
 ```
 
-## Part of the Nova suite
+## Part of Nova Agent
 
 | Project | What it is |
 |---|---|
-| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova suite: an overview of every project |
-| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Nova Hub |
+| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova Agent: an overview of every project |
+| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Studio |
 | **[nova-agent](https://github.com/tuniveza/nova-agent)** | This repo: the chat and planner on the studio computer, and the Acuity helper |
-| [nova-index](https://github.com/tuniveza/nova-index) | Everything the Nova suite remembers, browsable |
+| [nova-index](https://github.com/tuniveza/nova-index) | Everything Nova Agent remembers, browsable |
 | [nova-club](https://github.com/tuniveza/nova-club) | Members' Android app that shows the studio's busy times |
 | [nova-calendar](https://github.com/tuniveza/nova-calendar) | A cosmic calendar of note cards and day cards |
 | [nova-notes](https://github.com/tuniveza/nova-notes) | A note editor that writes from the centre outwards |

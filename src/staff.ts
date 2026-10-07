@@ -1,8 +1,8 @@
 // Who Nova Agent works for: found without anyone setting anything.
 //   1. NOVA_STAFF_ID in .env, if it's set (an override)
-//   2. whoever pressed "Connect as me" on Nova Agent's Nova Portal badge (kept in data/staff.json)
-//   3. otherwise the studio's first Nova Portal admin (Nova Bot works it out)
-//   4. "owner" while Nova Portal has nobody yet, or Nova Bot can't be reached
+//   2. whoever pressed "Connect as me" on Nova Agent's Nova Agent badge (kept in data/staff.json)
+//   3. otherwise the studio's first Crew admin (Nova Bot works it out)
+//   4. "owner" while Crew has nobody yet, or Nova Bot can't be reached
 // Nova Index's memory (src/memory.ts) and the badge both ask here, so they always agree.
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -43,7 +43,7 @@ function save(next: Saved) {
   }
 }
 
-// A stand-in from an id, for when Nova Portal doesn't know them (or can't be reached)
+// A stand-in from an id, for when Crew doesn't know them (or can't be reached)
 function standIn(id: string): Who {
   const name = id === "owner" ? "Studio" : id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   return {
@@ -102,17 +102,17 @@ export async function staffId(): Promise<string> {
   return (await whoAmI()).staff.id;
 }
 
-// "Connect as me": a read-only Nova Portal token proves who it is, then it's put away
+// "Connect as me": a read-only Crew token proves who it is, then it's put away
 export async function connectAs(token: string): Promise<Who> {
-  if (!/^nprof_[\w-]+$/.test(token)) throw new Error("That isn't a Nova Portal connect token.");
+  if (!/^nprof_[\w-]+$/.test(token)) throw new Error("That isn't a Crew connect token.");
   const auth = { Authorization: `Bearer ${token}` };
   const res = await fetch(`${config.workerUrl}/auth/me`, { headers: auth, signal: AbortSignal.timeout(8000) });
-  if (!res.ok) throw new Error("Nova Portal didn't recognise that sign-in. Try Connect again.");
+  if (!res.ok) throw new Error("Crew didn't recognise that sign-in. Try Connect again.");
   const { staff } = (await res.json()) as { staff: Staff };
   // Nova Agent only needed to know who; the token itself isn't kept
   fetch(`${config.workerUrl}/auth/logout`, { method: "POST", headers: auth, signal: AbortSignal.timeout(8000) }).catch(() => {});
   save({ ...saved(), connected: staff.id, last: staff.id });
-  trace("llm", "info", `Nova Agent now works for ${staff.display_name} (${staff.id}), connected in Nova Portal`);
+  trace("llm", "info", `Nova Agent now works for ${staff.display_name} (${staff.id}), connected in Crew`);
   return whoAmI(true);
 }
 

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- The Nova Bot mark: a cosmic B, in the Nova suite family (same sky, stars, orbit, sparkle and planet as Nova Agent's A and Nova Hub's H) -->
+  <!-- The Nova Bot mark: a cosmic B, in the Nova Agent family (same sky, stars, orbit, sparkle and planet as Nova Agent's A and Studio's mark) -->
   <defs>
     <radialGradient id="sky" cx="50%" cy="15%" r="95%"><stop offset="0" stop-color="#B01D68"/><stop offset=".42" stop-color="#25194D"/><stop offset="1" stop-color="#06040D"/></radialGradient>
     <radialGradient id="neb" cx="88%" cy="92%" r="55%"><stop offset="0" stop-color="#7A1F86" stop-opacity=".75"/><stop offset="1" stop-color="#7A1F86" stop-opacity="0"/></radialGradient>

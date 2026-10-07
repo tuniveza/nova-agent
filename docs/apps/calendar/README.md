@@ -10,7 +10,7 @@
 [![Vanilla JS](https://img.shields.io/badge/Vanilla-JavaScript-F1E05A?logo=javascript&logoColor=black)](#how-it-works)
 [![No build](https://img.shields.io/badge/build%20step-none-2EA44F)](#run-it-locally)
 [![Offline](https://img.shields.io/badge/works-offline-6E40C9)](#your-data)
-[![Nova suite](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
+[![Nova Agent](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
 
 <img src="docs/media/day-card.jpg" alt="Nova Calendar: October 2026 with the Moonlight Mixtape release day card open, showing its supernova artwork and a note card with its own generated picture" width="900">
 
@@ -22,7 +22,7 @@
 
 ---
 
-Nova Calendar is the Nova suite's calendar, in Novacane Studios' style. You plan days with
+Nova Calendar is Nova Agent's calendar, in Novacane Studios' style. You plan days with
 **note cards** and **day cards**: every note paints its own small piece of the cosmos, and every
 day sits under the real moon. It's a single folder of HTML, CSS and JavaScript with no build
 step, no server and no install.
@@ -35,7 +35,7 @@ step, no server and no install.
 | | |
 |---|---|
 | 🔔 **Sound button** | Soft cosmic sound effects on every press. The **Sound** button in the top bar switches them off and on. |
-| 🔒 **Links button** | Opens the password-protected page with every Nova suite address, live and testing. |
+| 🔒 **Links button** | Opens the password-protected page with every Nova Agent address, live and testing. |
 | 🪟 **Fit to the window** | Inside Nova Agent, or with `?embed=1`, the whole month and the chosen day fit the space with no scrolling. |
 | ✦ **Built into Nova Agent** | Nova Agent serves it at `/calendar/` and it saves to Nova Agent, so the chat and the calendar always agree. |
 
@@ -214,19 +214,19 @@ published almanac.
 | `js/presets.js` | Day card presets, title aesthetics and line icons |
 | `js/themes.js` | Colour themes |
 | `js/backdrop.js` | The twinkling star canvas behind the page |
-| `js/sfx.js` | The Nova suite sound effects (shared with Nova Notes and Nova Observatory) |
+| `js/sfx.js` | The Nova Agent sound effects (shared with Nova Notes and Nova Observatory) |
 | `js/embed.js` | Turns on fit-to-window mode inside another page or with `?embed=1` |
 | `css/nova.css` | All the styling, including fit-to-window mode |
 | `sw.js`, `manifest.webmanifest` | Offline support and install details |
 | `assets/` | The app icon and the Nova sigil |
 | `docs/media/` | README images |
 
-## Part of the Nova suite
+## Part of Nova Agent
 
 | Project | What it is |
 |---|---|
-| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova suite: an overview of every project |
-| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Nova Hub |
+| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova Agent: an overview of every project |
+| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Studio |
 | [nova-agent](https://github.com/tuniveza/nova-agent) | The studio computer's helper; Nova Calendar is built in |
 | [nova-club](https://github.com/tuniveza/nova-club) | Members' Android app that shows the studio's busy times |
 | **[nova-calendar](https://github.com/tuniveza/nova-calendar)** | This repo: a cosmic calendar of note cards and day cards |

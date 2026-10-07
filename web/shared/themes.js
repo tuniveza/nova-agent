@@ -1,4 +1,4 @@
-// Nova Hub themes: puts the chosen theme on the page, remembers it on this device, and draws
+// Studio themes: puts the chosen theme on the page, remembers it on this device, and draws
 // the theme picker (a swatch per theme) wherever the page has a <div id="theme-list">.
 // Loaded in the <head>, before the page is drawn, so the right colours show from the very first
 // frame (the site's security rules don't allow scripts written inside the page itself).
@@ -106,7 +106,7 @@
   window.NovaThemes = { list: list.map(({ id, name, preview }) => ({ id, name, preview })), current, set };
 })();
 
-// Nova Hub options: how the app looks and behaves on this device (chosen in the Options sheet,
+// Studio options: how the app looks and behaves on this device (chosen in the Options sheet,
 // options.js). Applied here too, before the page is drawn, so there's no jump when it opens.
 // window.NovaOptions = { get(), set(changes), reset(), defaults }
 (() => {

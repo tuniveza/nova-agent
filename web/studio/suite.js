@@ -1,4 +1,4 @@
-// The Nova suite sheet: tap the Nova Hub brand at the top to see every app in the family.
+// The Nova Agent sheet: tap the Studio brand at the top to see every app in the family.
 // It stands on its own (nothing from app.js), so it works whatever the rest of the page is doing.
 (() => {
   "use strict";
@@ -38,7 +38,7 @@
   });
 
   // ===== All links: every live and testing address, from /app/api/links =====
-  // Only fetched when the section is opened (Nova Hub's sign-in protects it).
+  // Only fetched when the section is opened (Studio's sign-in protects it).
 
   const toggle = document.getElementById("links-toggle");
   const body = document.getElementById("links-body");
@@ -163,10 +163,10 @@
     return card;
   }
 
-  // Everything the Nova suite can do: one section per app, after the links
+  // Everything Nova Agent can do: one section per app, after the links
   function featureBlocks(features) {
     if (!features.length) return [];
-    const head = make("p", "links-features-head", "✦ Everything the Nova suite can do");
+    const head = make("p", "links-features-head", "✦ Everything Nova Agent can do");
     return [head, ...features.map((f) => {
       const box = make("details", "links-group features");
       const summary = make("summary", "");
@@ -198,7 +198,7 @@
       const res = await fetch("/app/api/links" + (fresh ? "?recheck=1" : ""), { credentials: "same-origin", cache: "no-store" });
       if (res.status === 401) {
         checked.textContent = "";
-        return message("Sign in to Nova Hub to see the links.");
+        return message("Sign in to Studio to see the links.");
       }
       if (!res.ok) throw new Error("Couldn't load the links (" + res.status + ")");
       const data = await res.json();
@@ -207,7 +207,7 @@
       const at = data.checkedAt ? new Date(data.checkedAt) : null;
       checked.textContent = at && !isNaN(at) ? "Checked " + at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "Not checked yet";
       if (!groups.length) return message("No links yet.");
-      // The links, then everything the Nova suite can do (app by app)
+      // The links, then everything Nova Agent can do (app by app)
       groupsBox.replaceChildren(...groups.map(groupBlock), ...changelogBlocks(data.changelog || []), ...featureBlocks(data.features || []));
     } catch (err) {
       checked.textContent = "";

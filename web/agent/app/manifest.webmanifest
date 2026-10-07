@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Nova Agent",
   "short_name": "Nova Agent",
-  "description": "Nova Missions, Nova Quests, Nova Calendar and the Acuity helper, in one chat: part of the Nova suite.",
+  "description": "Nova Missions, Nova Quests, Nova Calendar and the Acuity helper, in one chat: part of Nova Agent.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

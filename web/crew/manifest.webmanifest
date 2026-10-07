@@ -1,6 +1,6 @@
 {
-  "name": "Nova Portal",
-  "short_name": "Nova Portal",
+  "name": "Crew",
+  "short_name": "Crew",
   "description": "One sign-in for every Nova app, and a planet of your own: your profile, your Nova Index memory and (for admins) the whole crew.",
   "id": "/crew/",
   "start_url": "/crew/",

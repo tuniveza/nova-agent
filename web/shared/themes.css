@@ -1,12 +1,12 @@
-/* Nova Hub themes: every colour the app uses, as custom properties.
-   :root is the default theme ("cosmic", the Nova suite's magenta and purple); each
+/* Studio themes: every colour the app uses, as custom properties.
+   :root is the default theme ("cosmic", Nova Agent's magenta and purple); each
    :root[data-theme="..."] block below swaps the colours for another theme.
    Only colours, gradients, glows and fonts live here (no layout), so other pages on the
    same site (the /admin pages) can load this file and look the same.
    Colours that are used see-through come twice: as a colour (--hi) and as plain
    "r, g, b" numbers (--hi-rgb), for rgba(var(--hi-rgb), 0.4). */
 
-/* ===== Cosmic (default): the Nova suite ===== */
+/* ===== Cosmic (default): Nova Agent ===== */
 :root {
   color-scheme: dark;
   /* Fonts */

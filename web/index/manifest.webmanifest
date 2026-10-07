@@ -1,7 +1,7 @@
 {
   "name": "Nova Index",
   "short_name": "Nova Index",
-  "description": "The Nova suite's shared memory: browse what every Nova app has learned, watch it grow, edit a line and approve new facts.",
+  "description": "The Nova Agent's shared memory: browse what every Nova app has learned, watch it grow, edit a line and approve new facts.",
   "id": "/index/",
   "start_url": "/index/",
   "scope": "/index/",

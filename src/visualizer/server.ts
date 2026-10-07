@@ -122,12 +122,12 @@ serveFolder("/notes", "notes/", "Nova Notes is missing from web/notes.");
 serveFolder("/index", "index/", "Nova Index is missing from web/index.");
 app.get("/app/memory/*", (c) => c.redirect("/index/" + c.req.path.slice("/app/memory/".length)));
 
-// ---- What every panel shares: the look (themes), sounds, the Nova Portal badge and the Nova Manual ----
+// ---- What every panel shares: the look (themes), sounds, the Nova Agent badge and the Nova Manual ----
 // The badge asks this server who Nova Agent works for (src/staff.ts), which asks Nova Bot with
 // Nova Agent's key; the planet pictures come through here too, so the panels never talk to another site.
 serveFolder("/shared", "shared/", "web/shared is missing.");
 
-// ---- Studio (was Nova Hub) and Crew (was Nova Portal), as panels ----
+// ---- Studio (was Studio) and Crew (was Crew), as panels ----
 // They use Nova Bot's staff API. Signing in on the Crew panel signs Nova Agent in to Nova Bot
 // as that person (src/signin.ts); their requests are passed on with that sign-in.
 serveFolder("/studio", "studio/", "web/studio is missing.");
@@ -152,7 +152,7 @@ app.post("/app/api/logout", async (c) => {
 
 // Who's here: the person signed in on the Crew panel, or else who Nova Agent works for (src/staff.ts)
 app.get("/auth/me", async (c) => (session() ? passOn(c.req.raw) : c.json(await whoAmI(), 200, { "Cache-Control": "no-store" })));
-// "Connect as me" (back from Nova Portal with a read-only token) and "back to automatic".
+// "Connect as me" (back from Crew with a read-only token) and "back to automatic".
 // Only from Nova Agent's own pages: the header makes other websites' requests fail.
 app.post("/auth/link", async (c) => {
   if (c.req.header("X-Nova-App") !== "portal-badge") return c.json({ error: "Forbidden" }, 403);
@@ -181,9 +181,9 @@ app.get("/staff/:id/planet.svg", async (c) => {
 });
 
 // ---- Nova Index's data, through Nova Agent's own key ----
-// The same addresses the app uses in Nova Hub (/app/api/memory/...), passed on to the
+// The same addresses the app uses in Studio (/app/api/memory/...), passed on to the
 // memory engine as Nova Agent: the studio's memory and staff memory, never customers'.
-// Approvals (customers' facts) stay behind Nova Hub's sign-in.
+// Approvals (customers' facts) stay behind Studio's sign-in.
 async function toEngine(path: string, init: RequestInit = {}) {
   const res = await fetch(`${config.workerUrl}/memory${path}`, {
     ...init,
@@ -200,7 +200,7 @@ app.all("/app/api/memory/*", async (c) => {
   const route = c.req.path.slice("/app/api/memory".length);
   const query = new URL(c.req.url).search;
   if (route === "/pending") return c.json({ pending: [], locked: true });
-  if (route.startsWith("/pending/")) return c.json({ error: "Approvals need Nova Hub's sign-in" }, 403);
+  if (route.startsWith("/pending/")) return c.json({ error: "Approvals need Studio's sign-in" }, 403);
   if (route === "/stats") {
     const { data } = await toEngine("/index");
     const by = new Map<string, { scope: string; files: number; facts: number }>();

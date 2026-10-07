@@ -60,8 +60,8 @@ export const config = {
   workerUrl: readText("NOVA_WORKER_URL", "https://novacane-worker.novacane-studio.workers.dev"),
   agentNovaKey: readText("AGENT_NOVA_KEY"),
   // Who's using this Nova Agent, for Nova Index's memory (their own staff facts) and its
-  // Nova Portal badge. Nothing to set: it's found automatically (src/staff.ts). Setting
-  // NOVA_STAFF_ID to a Nova Portal id is only an override.
+  // Nova Agent badge. Nothing to set: it's found automatically (src/staff.ts). Setting
+  // NOVA_STAFF_ID to a Crew id is only an override.
   staffId: readText("NOVA_STAFF_ID").toLowerCase(),
   // How long to wait before asking again when the worker answers straight
   // away (an older worker, or a problem). A worker that holds the call open

@@ -1,7 +1,7 @@
-// Nova Hub's Quests and Calendar tabs: Nova Agent sends its plan (missions,
+// Studio's Quests and Calendar tabs: Nova Agent sends its plan (missions,
 // quests, pulses, and Nova Calendar's note and day cards)
 // to Nova Bot's worker whenever it changes (and every minute, so "now" moves
-// on), and carries out the taps made in Nova Hub (Done, Start, Not now...).
+// on), and carries out the taps made in Studio (Done, Start, Not now...).
 // Taps also arrive with each job check (jobs.ts), so they land within a second.
 
 import { calendarEvents, readCalendar } from "../calendar/store";
@@ -51,9 +51,9 @@ export function applyQuestTaps(taps: unknown): void {
   for (const t of taps as QuestTap[]) {
     try {
       const title = applyQuestTap(t);
-      trace("input", "ok", `Nova Hub: ${t.action} “${title}”`);
+      trace("input", "ok", `Studio: ${t.action} “${title}”`);
     } catch (error) {
-      trace("input", "warn", `Nova Hub tap couldn't be done: ${(error as Error).message}`);
+      trace("input", "warn", `Studio tap couldn't be done: ${(error as Error).message}`);
     }
   }
 }
@@ -73,7 +73,7 @@ async function send(): Promise<void> {
     lastProblem = "";
   } catch (error) {
     const problem = (error as Error).message;
-    if (problem !== lastProblem) trace("task", "warn", `Couldn't send the plan to Nova Hub: ${problem}`);
+    if (problem !== lastProblem) trace("task", "warn", `Couldn't send the plan to Studio: ${problem}`);
     lastProblem = problem;
   }
 }

@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Nova Calendar",
   "short_name": "Nova Calendar",
-  "description": "A cosmic calendar from the Nova suite by Novacane Studios: note cards and day cards under the real sky.",
+  "description": "A cosmic calendar from Nova Agent by Novacane Studios: note cards and day cards under the real sky.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

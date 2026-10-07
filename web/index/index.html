@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Nova Index</title>
-<meta name="description" content="Nova Index: the Nova suite's shared memory, for the Novacane Studios team.">
+<meta name="description" content="Nova Index: Nova Agent's shared memory, for the Novacane Studios team.">
 <meta name="theme-color" content="#06040D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/shared/themes.css">
 <link rel="stylesheet" href="/index/memory.css">
-<!-- The saved theme (shared with Nova Hub) goes on before anything is drawn -->
+<!-- The saved theme (shared with Studio) goes on before anything is drawn -->
 <script src="/shared/themes.js"></script>
 </head>
 <body>
@@ -53,7 +53,7 @@
     <g transform="translate(256 100)"><circle r="14" fill="#FF5FA8" opacity=".85" filter="url(#nv-twinkle)"/><path d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/></g>
     <circle cx="410" cy="257" r="9" fill="#fff" opacity=".95"/>
   </symbol>
-  <!-- Nova Hub: a cosmic H -->
+  <!-- Studio: a cosmic H -->
   <symbol id="i-mark-h" viewBox="0 0 512 512">
     <use href="#i-sky"/>
     <path d="M146 380V132h60v96h100v-96h60v248h-60V284H206v96z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
@@ -77,18 +77,18 @@
   </symbol>
 </svg>
 
-<!-- Signing in (the same password as Nova Hub; signing in here signs in Nova Hub too) -->
+<!-- Signing in (the same password as Studio; signing in here signs in Studio too) -->
 <section id="login" class="login" hidden>
   <div class="login-mark-wrap" aria-hidden="true">
     <span class="login-halo"></span>
     <svg class="login-mark" viewBox="0 0 512 512"><use href="#i-mark-i"/></svg>
   </div>
-  <span class="kicker login-kicker">Nova suite · Novacane</span>
+  <span class="kicker login-kicker">Nova Agent · Novacane</span>
   <h1 class="wordmark">Nova Index</h1>
-  <p class="login-sub">Everything the Nova suite remembers</p>
+  <p class="login-sub">Everything Nova Agent remembers</p>
   <form id="login-form" class="login-form">
-    <!-- One sign-in for the whole suite (Nova Portal); the shared password still works for now -->
-    <a class="btn portal-btn" href="/crew/?next=/index/">✦ Sign in with Nova Portal</a>
+    <!-- One sign-in for the whole suite (Crew); the shared password still works for now -->
+    <a class="btn portal-btn" href="/crew/?next=/index/">✦ Sign in</a>
     <p class="login-or">or, for now, the studio's shared password:</p>
     <label for="password">Studio password</label>
     <input id="password" type="password" autocomplete="current-password" required>
@@ -100,17 +100,17 @@
 <!-- The app -->
 <div id="app" class="app" hidden>
   <header class="top">
-    <!-- Back to Nova Hub -->
-    <a class="icon-btn top-left" href="/studio/" aria-label="Open Nova Hub" title="Nova Hub">
+    <!-- Back to Studio -->
+    <a class="icon-btn top-left" href="/studio/" aria-label="Open Studio" title="Studio">
       <svg viewBox="0 0 512 512" aria-hidden="true" class="hub-mark"><use href="#i-mark-h"/></svg>
     </a>
     <!-- The brand: tap it to go back to the top -->
     <button id="brand" class="brand" type="button" title="Back to the top">
       <svg class="brand-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-i"/></svg>
-      <span class="brand-text"><span class="suite-kicker">Nova suite<span class="kicker-more"> · Novacane</span></span><span class="wordmark small">Nova Index</span></span>
+      <span class="brand-text"><span class="suite-kicker">Nova Agent<span class="kicker-more"> · Novacane</span></span><span class="wordmark small">Nova Index</span></span>
     </button>
     <div class="top-right top-actions">
-    <!-- Nova Portal: who's signed in (your planet, name and role) -->
+    <!-- Crew: who's signed in (your planet, name and role) -->
     <nova-manual compact></nova-manual>
     <nova-portal-badge></nova-portal-badge>
     <!-- Options: theme, sound, refresh, sign out -->
@@ -240,7 +240,7 @@
   </nav>
 </div>
 
-<!-- Options: theme (shared with Nova Hub), sound, refresh and sign out -->
+<!-- Options: theme (shared with Studio), sound, refresh and sign out -->
 <div id="options-sheet" class="sheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="options-title">
     <div class="sheet-head">
@@ -261,7 +261,7 @@
     </section>
     <section class="option-group option-actions">
       <button id="refresh" class="btn ghost" type="button">Refresh everything</button>
-      <a class="btn ghost" href="/studio/">Open Nova Hub</a>
+      <a class="btn ghost" href="/studio/">Open Studio</a>
       <button id="logout" class="btn ghost" type="button">Sign out</button>
     </section>
   </div>

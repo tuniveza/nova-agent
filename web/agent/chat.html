@@ -51,7 +51,7 @@
   .glass { background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(16px) saturate(1.15); -webkit-backdrop-filter: blur(16px) saturate(1.15); }
 
   /* Top bar */
-  /* The header: status on the left, Nova Agent in the middle, the Nova suite on the right */
+  /* The header: status on the left, Nova Agent in the middle, the panels on the right */
   .topbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 22px; }
   .top-side { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .top-side.right { justify-content: flex-end; }
@@ -63,7 +63,7 @@
   .suite-btn { border: 1px solid transparent; background: linear-gradient(var(--deep), var(--deep)) padding-box, var(--edge) border-box; }
   .suite-star { display: inline-block; color: var(--hi); text-shadow: 0 0 10px var(--hi); animation: star-spin 6s linear infinite; }
   @keyframes star-spin { to { transform: rotate(360deg); } }
-  /* The Nova suite launcher */
+  /* The panels launcher */
   dialog.rhythm.suite-dlg { width: min(860px, calc(100vw - 24px)); }
   .suite-top { position: relative; display: grid; justify-items: center; text-align: center; gap: 4px; }
   .suite-top p { margin: 0; }
@@ -95,7 +95,7 @@
   .btn.primary { background: var(--grad); border-color: transparent; color: var(--on-accent); box-shadow: 0 8px 26px -10px var(--accent); }
   .ico { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
-  /* Main: fits the screen (no scrolling). Nova Missions | Talk to Nova Agent | Nova Quests, with the Nova suite along the bottom */
+  /* Main: fits the screen (no scrolling). Nova Missions | Talk to Nova Agent | Nova Quests, with the panels along the bottom */
   .main { width: min(100%, 1800px); justify-self: center; min-height: 0; overflow: hidden; display: grid; gap: 12px;
     grid-template-columns: minmax(270px, 1fr) minmax(380px, 1.35fr) minmax(270px, 1fr); grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "missions chat quests" "suite suite suite"; }
@@ -111,7 +111,7 @@
   .side .empty { padding: 14px; }
   .strip-tools { display: flex; gap: 6px; }
   .strip-btn { justify-content: center; padding: 7px 12px; }
-  /* The Nova suite strip: its name and the open-apps switch on the left, the apps on the right */
+  /* The panels strip: its name and the open-apps switch on the left, the apps on the right */
   .strip { display: grid; grid-template-columns: 196px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); border-radius: 22px; overflow: hidden; }
   .strip-side { display: flex; flex-direction: column; justify-content: center; gap: 9px; padding: 10px 14px; border-right: 1px solid var(--line); background: color-mix(in srgb, var(--void) 25%, transparent); }
   /* Missions: compact cards, one under another */
@@ -133,7 +133,7 @@
   #view-today > .now-card { padding: 10px 14px; }
   #view-today > .now-card .now-title { font-size: 16px; }
   #view-today > .subpanel { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
-  /* An app opened inside Nova Agent takes the chat's place; the Nova suite stays below it to switch apps */
+  /* An app opened inside Nova Agent takes the chat's place; the panels stay below it to switch */
   .viewer { display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 24px; overflow: hidden; animation: quest-in .35s cubic-bezier(.2,.8,.2,1) both; }
   .viewer[hidden] { display: none; }
   .main.viewing > .chat, .main.viewing > .board { display: none; }
@@ -146,7 +146,7 @@
   .open-pref span { padding: 0 8px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
   .open-pref button { border: 0; background: none; padding: 6px 12px; border-radius: 999px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
   .open-pref button[aria-checked="true"] { background: var(--grad); color: var(--on-accent); }
-  /* The Nova suite, along the bottom in one row: the Nova apps together, then the studio's tools */
+  /* The panels, along the bottom in one row: the panels together, then services and admin */
   .suite-groups { display: grid; gap: 18px; }
   .suite-group h4 { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
   .suite-group h4::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-strong), transparent); }
@@ -171,7 +171,7 @@
   .chat, .calendar { min-height: 0; min-width: 0; border-radius: 24px; overflow: hidden; }
   .chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
   .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--line); }
-  /* Each section's title: Talk to Nova Agent, Nova Missions, Nova Quests, Nova suite */
+  /* Each section's title: Talk to Nova Agent, Nova Missions, Nova Quests, Panels */
   .sec-title { margin: 0; display: inline-flex; align-items: center; gap: 9px; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; color: #fff; white-space: nowrap; }
   .sec-title > span { color: var(--hi); text-shadow: 0 0 10px var(--hi); }
   .sec-title.gold > span { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
@@ -560,19 +560,19 @@
     </div>
     <a class="brand" href="/" aria-label="Nova Agent">
       <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
-      <span><span class="kicker">Nova suite · Novacane</span><span class="wordmark">Nova Agent</span></span>
+      <span><span class="kicker">Nova Agent · Novacane</span><span class="wordmark">Nova Agent</span></span>
     </a>
     <div class="top-side right">
-      <!-- Nova Portal: who Nova Agent works for (found by itself, or "Connect as me"): their planet, name and role -->
+      <!-- Crew: who Nova Agent works for (found by itself, or "Connect as me"): their planet, name and role -->
       <nova-manual compact></nova-manual>
       <nova-portal-badge></nova-portal-badge>
       <button type="button" class="btn primary" id="install" hidden><svg class="ico"><use href="#i-down"/></svg><span>Install app</span></button>
-      <!-- Every other Nova suite app, one tap away -->
-      <button type="button" class="btn suite-btn" id="suite-btn" aria-haspopup="dialog" aria-controls="suite"><span class="suite-star">✦</span><span>Nova suite</span></button>
+      <!-- Every other Nova Agent app, one tap away -->
+      <button type="button" class="btn suite-btn" id="suite-btn" aria-haspopup="dialog" aria-controls="suite"><span class="suite-star">✦</span><span>Panels</span></button>
     </div>
   </header>
 
-  <!-- Nova Missions | Talk to Nova Agent | Nova Quests, with the Nova suite along the bottom (all on one screen) -->
+  <!-- Nova Missions | Talk to Nova Agent | Nova Quests, with the panels along the bottom (all on one screen) -->
   <main class="main" id="main">
     <!-- An app opened inside Nova Agent (when "Open apps: Inside Nova Agent" is on) -->
     <section class="viewer glass" id="viewer" hidden aria-label="App">
@@ -636,10 +636,10 @@
       <div class="view" id="view-today"></div>
     </section>
 
-    <!-- The Nova suite (filled from the launcher's tiles, so the two never drift apart) -->
+    <!-- The panels strip (filled from the launcher's tiles, so the two never drift apart) -->
     <section class="strip suite-home glass" id="suite-home" aria-labelledby="suite-home-title">
       <div class="strip-side">
-        <h2 class="sec-title" id="suite-home-title"><span class="suite-star">✦</span> Nova suite</h2>
+        <h2 class="sec-title" id="suite-home-title"><span class="suite-star">✦</span> Panels</h2>
         <div class="open-pref" role="radiogroup" aria-label="Where apps open"><button type="button" data-open="inside" role="radio" title="Open apps inside Nova Agent">▣ Inside</button><button type="button" data-open="window" role="radio" title="Open apps in a new window">↗ Window</button></div>
       </div>
       <div class="suite-body" id="suite-body"></div>
@@ -682,31 +682,33 @@
   <div class="rh">
     <div class="suite-top">
       <span class="kicker">Novacane Studios</span>
-      <h3 id="suite-title">✦ Nova suite</h3>
-      <p>Everything in the Nova suite, from here.</p>
+      <h3 id="suite-title">✦ Panels</h3>
+      <p>Everything in Nova Agent, from here.</p>
       <div class="open-pref" role="radiogroup" aria-label="Where apps open"><span>Open apps</span><button type="button" data-open="inside" role="radio">Inside Nova Agent</button><button type="button" data-open="window" role="radio">New window</button></div>
       <button type="button" class="icon-btn suite-x" id="suite-close" aria-label="Close">✕</button>
     </div>
     <div class="suite-groups">
       <div class="suite-group">
-        <h4>Nova apps</h4>
+        <h4>Panels</h4>
         <div class="suite-grid">
-          <a class="suite-app here" href="/"><img src="/app/icon.svg" alt=""><b>Nova Agent</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
-          <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/app/" target="_blank" rel="noopener"><img src="https://novacane-worker.novacane-studio.workers.dev/app/icon.svg" alt=""><b>Nova Hub</b><small>Enquiries, chats, bookings, quests and alerts</small></a>
-          <a class="suite-app" href="https://nova-notes.novacane-studio.workers.dev" data-inside="/notes/" target="_blank" rel="noopener"><img src="/notes/assets/icon.svg" alt=""><b>Nova Notes</b><small>Notes and documents, Google Docs export</small></a>
-          <a class="suite-app" href="/calendar/" target="_blank" rel="noopener"><img src="/calendar/assets/icon.svg" alt=""><b>Nova Calendar</b><small>The one Nova Agent plans into</small></a>
-          <a class="suite-app" href="https://novacane.co.uk" target="_blank" rel="noopener"><img src="/app/novabot-icon.svg" alt=""><b>Nova Bot</b><small>The website assistant (bookings take the deposit)</small></a>
-          <a class="suite-app" href="https://novacane-worker.novacane-studio.workers.dev/index/" data-inside="/index/" target="_blank" rel="noopener"><img src="/index/icon.svg" alt=""><b>Nova Index</b><small>Everything the Nova suite remembers: browse and edit (approvals in Nova Hub)</small></a>
-          <a class="suite-app" href="/observatory/" target="_blank" rel="noopener"><img src="/observatory/assets/sigil.svg" alt=""><b>Nova Observatory</b><small>Every project, lines of code and the star map</small></a>
+          <a class="suite-app here" href="/"><img src="/app/icon.svg" alt=""><b>Chat</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
+          <a class="suite-app" href="/studio/" data-inside="/studio/" target="_blank" rel="noopener"><img src="/studio/icon.svg" alt=""><b>Studio</b><small>Enquiries, website chats, bookings, alerts and Ask NovaBot</small></a>
+          <a class="suite-app" href="/crew/" data-inside="/crew/" target="_blank" rel="noopener"><img src="/crew/icon.svg" alt=""><b>Crew</b><small>Sign in, your planet, the team and invites</small></a>
+          <a class="suite-app" href="/calendar/" data-inside="/calendar/" target="_blank" rel="noopener"><img src="/calendar/assets/icon.svg" alt=""><b>Nova Calendar</b><small>The one Nova Agent plans into</small></a>
+          <a class="suite-app" href="/notes/" data-inside="/notes/" target="_blank" rel="noopener"><img src="/notes/assets/icon.svg" alt=""><b>Nova Notes</b><small>Notes and documents, Google Docs export</small></a>
+          <a class="suite-app" href="/index/" data-inside="/index/" target="_blank" rel="noopener"><img src="/index/icon.svg" alt=""><b>Nova Index</b><small>Everything Nova Agent remembers: browse, edit, approve</small></a>
+          <a class="suite-app" href="/observatory/" data-inside="/observatory/" target="_blank" rel="noopener"><img src="/observatory/assets/sigil.svg" alt=""><b>Nova Observatory</b><small>Every project, lines of code and the star map</small></a>
+          <a class="suite-app" data-embed="no" href="https://nova-lossless-audio.novacane-studio.workers.dev/lossless/" target="_blank" rel="noopener"><span class="suite-glyph">◉</span><b>Lossless audio</b><small>Raw PCM between two devices, anywhere</small></a>
         </div>
       </div>
       <div class="suite-group tools">
-        <h4>Studio tools</h4>
+        <h4>Services and admin</h4>
         <div class="suite-grid">
+          <a class="suite-app" href="https://novacane.co.uk" target="_blank" rel="noopener"><img src="/app/novabot-icon.svg" alt=""><b>Nova Bot</b><small>The website assistant (bookings take the deposit)</small></a>
           <a class="suite-app" href="/visualizer" target="_blank" rel="noopener"><span class="suite-glyph">◎</span><b>Visualizer</b><small>Nova Agent's live steps and memory</small></a>
           <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/admin" target="_blank" rel="noopener"><span class="suite-glyph">⚙</span><b>Admin</b><small>Referrals, enquiries, conversations, booking system</small></a>
-          <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener"><span class="suite-glyph">🔒</span><b>All links and features</b><small>Every address and every feature (password)</small></a>
-          <a class="suite-app" data-embed="no" href="https://github.com/tuniveza/nova-suite" target="_blank" rel="noopener"><span class="suite-glyph">⌥</span><b>Code</b><small>The nova-suite repos on GitHub</small></a>
+          <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener"><span class="suite-glyph">🔒</span><b>All links and services</b><small>Every address, service and feature</small></a>
+          <a class="suite-app" data-embed="no" href="https://github.com/tuniveza/nova-agent" target="_blank" rel="noopener"><span class="suite-glyph">⌥</span><b>Code</b><small>Nova Agent on GitHub</small></a>
         </div>
       </div>
     </div>
@@ -732,7 +734,7 @@
     <div class="checks">
       <label><input type="checkbox" name="checkIns"> Check in when a quest should be finished</label>
       <label><input type="checkbox" name="dailyBriefing"> Morning plan and evening wrap-up</label>
-      <label><input type="checkbox" name="phonePush"> Also send reminders to the Nova Hub phones</label>
+      <label><input type="checkbox" name="phonePush"> Also send reminders to the staff phones</label>
       <label><input type="checkbox" name="paceLimits"> <span><b>Pace limits</b> (safety): quests start a few minutes ahead, on 5-minute marks, with buffers and breaks. Off: right away, to the second, back to back.</span></label>
     </div>
     <div class="field"><span>Days off (no quests at all)</span>
@@ -1285,7 +1287,7 @@
     if (ub) { await api('/actions/blocks', { remove: true, id: ub.dataset.unblock }); return loadPlan(); }
   });
 
-  // Nova Calendar opens like its Nova suite tile does (inside Nova Agent, or in a window)
+  // Nova Calendar opens like its Nova Agent tile does (inside Nova Agent, or in a window)
   const openCalendar = () => document.querySelector('#suite-body a.suite-app[href="/calendar/"]').click();
   $('btn-calendar').addEventListener('click', openCalendar);
 
@@ -1445,7 +1447,7 @@
   } catch (e) {}
   setInterval(loadPlan, 60000); // keeps the now-line and progress moving
 
-  // ---- The Nova suite section at the bottom of the page: the launcher's groups and tiles ----
+  // ---- The Nova Agent section at the bottom of the page: the launcher's groups and tiles ----
   $('suite-body').append($('suite').querySelector('.suite-groups').cloneNode(true));
   // The row only has room for names, so each tile's description shows on hover
   for (const a of document.querySelectorAll('#suite-body .suite-app')) a.title = `${a.querySelector('b').textContent}: ${a.querySelector('small').textContent}`;
@@ -1460,7 +1462,7 @@
   window.addEventListener('novasfxchange', sfxState);
   sfxState();
 
-  // ---- Opening the Nova suite's apps: inside Nova Agent, or in their own window ----
+  // ---- Opening Nova Agent's apps: inside Nova Agent, or in their own window ----
   const OPEN_KEY = 'nova-agent/open-apps';
   const openPref = () => { try { return localStorage.getItem(OPEN_KEY) || 'inside'; } catch (e) { return 'inside'; } };
   function setOpenPref(v) {
@@ -1490,7 +1492,7 @@
   $('viewer-reload').addEventListener('click', () => { const f = $('viewer-frame'); f.src = f.src; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('viewer').hidden && !document.querySelector('dialog[open]')) closeViewer(); });
   let toldNoEmbed = false;
-  // Clicks on any app in the Nova suite section or the launcher
+  // Clicks on any app in Nova Agent section or the launcher
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a.suite-app');
     if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
@@ -1508,7 +1510,7 @@
     openInside(a.dataset.inside || a.getAttribute('href'), name);
   });
 
-  // ---- The Nova suite launcher ----
+  // ---- The Nova Agent launcher ----
   $('suite-btn').addEventListener('click', () => $('suite').showModal());
   $('suite-close').addEventListener('click', () => $('suite').close());
   $('suite').addEventListener('click', (e) => { if (e.target === $('suite')) $('suite').close(); });

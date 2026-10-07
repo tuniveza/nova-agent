@@ -140,7 +140,7 @@ export interface Rhythm {
   remindMinutesBefore: number;
   checkIns: boolean; // ask "did you finish it?" when a quest should be done
   dailyBriefing: boolean; // the morning plan and the evening wrap-up
-  phonePush: boolean; // also send reminders to the Nova Hub phones
+  phonePush: boolean; // also send reminders to the staff phones
   // The safety switch for pace: on, quests start a few minutes from now, on
   // 5-minute marks, with buffers and breaks between them; off, they can start
   // right now, to the second, back to back

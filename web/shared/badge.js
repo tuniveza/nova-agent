@@ -1,4 +1,4 @@
-// Nova Portal badge: who's signed in, on every Nova suite app.
+// Nova Agent badge: who's signed in, on every Nova Agent panel.
 //
 //   <script src="/shared/badge.js" defer></script>        (on Nova Bot's worker and in Nova Agent)
 //   <script src="https://novacane-worker.novacane-studio.workers.dev/portal/badge.js" defer></script>
@@ -8,11 +8,11 @@
 // It shows your planet (turning, with a halo in its own colour), your name and your role, and opens
 // a card with the planet up close, its name, and links to your profile and your Nova Index.
 // Where it is decides how it knows you:
-//   Nova Bot's worker (Nova Hub, Nova Index, the admin pages)   your Nova Portal sign-in (the cookie)
+//   Nova Bot's worker (Studio, Nova Index, the admin pages)   your Nova Agent sign-in (the cookie)
 //   Nova Agent (localhost:4545) and the apps it serves         who Nova Agent works for (found by itself; "Connect as me" to change)
-//   Nova Notes, Nova Calendar... on their own sites            a read-only token from "Connect" in Nova Portal
-// Colours come from the page's theme: --np-* if the app sets them, else Nova Hub's names (--hi,
-// --accent...), else the Nova suite's magenta. Calm motion (reduced motion, or data-motion="calm") stills it.
+//   Nova Notes, Nova Calendar... on their own sites            a read-only token from "Connect" in Crew
+// Colours come from the page's theme: --np-* if the app sets them, else Studio's names (--hi,
+// --accent...), else Nova Agent's magenta. Calm motion (reduced motion, or data-motion="calm") stills it.
 (() => {
   "use strict";
   if (customElements.get("nova-portal-badge")) return;
@@ -42,7 +42,7 @@
     },
   };
 
-  // Back from "Connect" in Nova Portal: the token arrives in the address's #fragment (never sent to a server)
+  // Back from "Connect" in Crew: the token arrives in the address's #fragment (never sent to a server)
   if (mode === "connect") {
     const m = /(?:^#|&)nova_portal=(nprof_[A-Za-z0-9_-]+)/.exec(location.hash);
     if (m) {
@@ -52,7 +52,7 @@
     }
   }
   // In Nova Agent, "Connect as me" comes back the same way: Nova Agent checks the token with
-  // Nova Portal, remembers who you are, and puts the token away
+  // Crew, remembers who you are, and puts the token away
   let linking = null;
   if (mode === "agent") {
     const m = /(?:^#|&)nova_portal=(nprof_[A-Za-z0-9_-]+)/.exec(location.hash);
@@ -288,22 +288,22 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       else this.style.removeProperty("--planet-glow");
       let chip;
       if (d && d.loading) {
-        chip = `<button class="chip" type="button" aria-label="Nova Portal" disabled><span class="orb"><span class="ghost"></span></span></button>`;
+        chip = `<button class="chip" type="button" aria-label="Crew" disabled><span class="orb"><span class="ghost"></span></span></button>`;
       } else if (s) {
         const role = mode === "agent" && !d.linked ? "" : s.role;
-        chip = `<button class="chip" part="chip" type="button" aria-haspopup="dialog" aria-expanded="false" title="${esc(s.display_name)} · Nova Portal">
+        chip = `<button class="chip" part="chip" type="button" aria-haspopup="dialog" aria-expanded="false" title="${esc(s.display_name)} · Crew">
           <span class="orb"><img alt="" src="${planetSrc(s, 64, false)}" width="30" height="30"></span>
           <span class="words" part="words"><span class="name">${esc(first(s.display_name))}</span>${role ? `<span class="role ${role}">${role === "admin" ? "Admin" : "Staff"}</span>` : `<span class="role">Nova Agent</span>`}</span>
         </button>`;
       } else {
-        chip = `<button class="chip signin" part="chip" type="button" aria-haspopup="dialog" aria-expanded="false" title="Sign in with Nova Portal">
+        chip = `<button class="chip signin" part="chip" type="button" aria-haspopup="dialog" aria-expanded="false" title="Sign in">
           <span class="orb"><span class="ghost"></span><span class="spark"></span></span>
-          <span class="words" part="words"><span class="name">Sign in</span><span class="role">Nova Portal</span></span>
+          <span class="words" part="words"><span class="name">Sign in</span><span class="role">Crew</span></span>
         </button>`;
       }
       // The card opens in the browser's top layer (a popover), so a header with a blur or
       // clipping (like Nova Agent's glass bar) can't trap or cut it off
-      this.root.innerHTML = `${chip}<div class="card" role="dialog" aria-label="Nova Portal" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
+      this.root.innerHTML = `${chip}<div class="card" role="dialog" aria-label="Crew" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
       const btn = this.root.querySelector(".chip");
       btn.addEventListener("click", () => (this.isOpen ? this.close(true) : this.open()));
       this.dispatchEvent(new CustomEvent("change", { detail: d }));
@@ -330,26 +330,26 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
                 ? `<a class="quiet" href="${connectMe}" target="_top">${ICON.profile}<span>Not you? Connect as you</span></a>`
                 : "";
         const links = [
-          `<a class="main" href="${portalUrl}${mode === "portal" ? "" : unlinked ? "" : "?id=" + encodeURIComponent(s.id)}" target="${mode === "portal" ? "_self" : "_blank"}" rel="noopener">${ICON.profile}<span>${unlinked ? "Set up Nova Portal" : "Your profile"}</span></a>`,
+          `<a class="main" href="${portalUrl}${mode === "portal" ? "" : unlinked ? "" : "?id=" + encodeURIComponent(s.id)}" target="${mode === "portal" ? "_self" : "_blank"}" rel="noopener">${ICON.profile}<span>${unlinked ? "Set up Crew" : "Your profile"}</span></a>`,
           `<a href="${index}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.index}<span>${unlinked ? "Nova Index" : "Your Nova Index"}</span></a>`,
-          mode === "portal" && !location.pathname.startsWith("/studio/") ? `<a href="/studio/">${ICON.hub}<span>Nova Hub</span></a>` : "",
+          mode === "portal" && !location.pathname.startsWith("/studio/") ? `<a href="/studio/">${ICON.hub}<span>Studio</span></a>` : "",
           mode === "agent" ? agentMore : `<button type="button" class="quiet" data-act="out">${ICON.out}<span>${mode === "connect" ? "Disconnect" : "Sign out everywhere"}</span></button>`,
         ].join("");
         const agentNote =
           mode !== "agent"
             ? ""
             : unlinked
-              ? "Nova Portal has nobody yet (or can't be reached). Set up the first admin and Nova Agent finds them by itself."
+              ? "Crew has nobody yet (or can't be reached). Set up the first admin and Nova Agent finds them by itself."
               : d.how === "connected"
-                ? "You connected Nova Agent to you in Nova Portal. Your Nova Index memory is the one it uses."
+                ? "You connected Nova Agent to you in Crew. Your Nova Index memory is the one it uses."
                 : d.how === "set"
                   ? "Chosen by NOVA_STAFF_ID in Nova Agent's settings."
                   : "Picked automatically: the studio's first admin. Someone else using this computer? They can connect it to themselves.";
         body = `
           <div class="big"><img alt="${esc(s.display_name)}'s planet" src="${planetSrc(s, 224, !still())}" width="112" height="112"></div>
-          <div class="kicker">${mode === "agent" ? "Nova Agent works for" : "Signed in with Nova Portal"}</div>
+          <div class="kicker">${mode === "agent" ? "Nova Agent works for" : "Signed in with Crew"}</div>
           <h3>${esc(s.display_name)}</h3>
-          <div class="pills">${unlinked ? `<span class="pill">Not in Nova Portal yet</span>` : `<span class="pill role-${s.role}">${role}</span>`}${s.created_at ? `<span class="pill">Since ${esc(since(s.created_at))}</span>` : ""}</div>
+          <div class="pills">${unlinked ? `<span class="pill">Not in Crew yet</span>` : `<span class="pill role-${s.role}">${role}</span>`}${s.created_at ? `<span class="pill">Since ${esc(since(s.created_at))}</span>` : ""}</div>
           ${s.planet && s.planet.name ? `<p class="world">✦ ${esc(s.planet.name)}</p>` : ""}
           ${s.planet && s.planet.description ? `<p class="desc">${esc(s.planet.description)}</p>` : ""}
           ${agentNote ? `<p class="note">${esc(agentNote)}</p>` : ""}
@@ -359,16 +359,16 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
         const go = mode === "portal" ? `${portalUrl}?next=${encodeURIComponent(location.pathname + location.search)}` : `${portalUrl}?connect=${back}`;
         body = `
           <div class="big"><span class="orb wide"><span class="ghost"></span><span class="spark"></span></span></div>
-          <div class="kicker">Nova Portal</div>
-          <h3>${d.offline ? "Can't reach Nova Portal" : "Who's here?"}</h3>
+          <div class="kicker">Crew</div>
+          <h3>${d.offline ? "Can't reach Crew" : "Who's here?"}</h3>
           <p class="note">${
             d.offline
               ? "Check the connection; it'll try again when you come back to this page."
               : mode === "connect"
-                ? "Connect this app to Nova Portal to show your name, role and planet here. It can't see or change anything else."
-                : "Sign in once with Nova Portal and every Nova app knows who you are."
+                ? "Connect this app to Crew to show your name, role and planet here. It can't see or change anything else."
+                : "Sign in once with Crew and every Nova app knows who you are."
           }</p>
-          <div class="links"><a class="main" href="${go}">${ICON.profile}<span>${mode === "connect" ? "Connect with Nova Portal" : "Sign in with Nova Portal"}</span></a></div>
+          <div class="links"><a class="main" href="${go}">${ICON.profile}<span>${mode === "connect" ? "Connect with Crew" : "Sign in"}</span></a></div>
           <p class="foot">One sign-in for every Nova app</p>`;
       }
       card.innerHTML = `<div class="stars">${stars()}</div>${body}`;

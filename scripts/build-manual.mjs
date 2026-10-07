@@ -17,16 +17,16 @@ const WORKER = "https://novacane-worker.novacane-studio.workers.dev";
 // The apps, in the order the manual lists them
 const APPS = [
   { id: "agent", name: "Nova Agent", repo: "na", colour: "#FF5FA8", glyph: "✦", where: "On the studio computer", links: [["Open Nova Agent", "http://localhost:4545/"]] },
-  { id: "hub", name: "Nova Hub", repo: "nb/novacane-worker", sections: /Nova Hub/i, colour: "#C7A4FF", glyph: "▣", where: "On the staff phones", links: [["Open Nova Hub", `${WORKER}/app/`]] },
+  { id: "hub", name: "Studio", repo: "nb/novacane-worker", sections: /Studio/i, colour: "#C7A4FF", glyph: "▣", where: "On the staff phones", links: [["Open Studio", `${WORKER}/app/`]] },
   { id: "bot", name: "Nova Bot", repo: "nb/novacane-worker", colour: "#5CE1FF", glyph: "◎", where: "On the website and Cloudflare", links: [["Admin pages", `${WORKER}/admin`]] },
   { id: "calendar", name: "Nova Calendar", repo: "na/calendar", colour: "#F2D9A0", glyph: "◷", where: "Its own site, and inside Nova Agent", links: [["Open Nova Calendar", "https://nova-calendar.novacane-studio.workers.dev/"]] },
   { id: "notes", name: "Nova Notes", repo: "nn", colour: "#FF8CC6", glyph: "✎", where: "Its own site, and inside Nova Agent", links: [["Open Nova Notes", "https://nova-notes.novacane-studio.workers.dev/"]] },
   { id: "index", name: "Nova Index", repo: "ni", colour: "#5CFFC0", glyph: "≡", where: "On Nova Bot's worker, and inside Nova Agent", links: [["Open Nova Index", `${WORKER}/app/memory/`]] },
-  { id: "portal", name: "Nova Portal", repo: "np", colour: "#9DB4FF", glyph: "◉", where: "On Nova Bot's worker", links: [["Open Nova Portal", `${WORKER}/portal/`]] },
+  { id: "portal", name: "Crew", repo: "np", colour: "#9DB4FF", glyph: "◉", where: "On Nova Bot's worker", links: [["Open Crew", `${WORKER}/portal/`]] },
   { id: "observatory", name: "Nova Observatory", repo: "no", colour: "#FFB86B", glyph: "✧", where: "Inside Nova Agent, or any browser", links: [["Open it in Nova Agent", "http://localhost:4545/observatory/"]] },
 ];
-// Nova Bot's README covers Hub too: this section of it is Nova Hub's
-const HUB_SECTIONS = /^Nova Hub/i;
+// Nova Bot's README covers Hub too: this section of it is Studio's
+const HUB_SECTIONS = /^Studio/i;
 
 // Which README sections go where
 const SKIP = /^(contents|screenshots|see it (work|in action)|part of the nova suite|licen[cs]e)\b/i;
@@ -227,7 +227,7 @@ function build() {
     }
     if (!cache.has(app.repo)) cache.set(app.repo, { doc: readme(file), hist: history(dir) });
     const { doc, hist } = cache.get(app.repo);
-    // Nova Bot's README is shared: Nova Hub gets its own sections, Nova Bot the rest
+    // Nova Bot's README is shared: Studio gets its own sections, Nova Bot the rest
     let sections = doc.sections;
     if (app.repo === "nb/novacane-worker") sections = sections.filter((s) => (app.id === "hub" ? HUB_SECTIONS.test(s.title) : !HUB_SECTIONS.test(s.title)));
     sections = sections.filter((s) => !SKIP.test(s.title));
@@ -243,7 +243,7 @@ function build() {
       where: app.where,
       links: app.links,
       repo: app.repo,
-      shared: app.repo === "nb/novacane-worker" ? "Nova Hub and Nova Bot share one project (Nova Bot's worker), so their history is the same." : "",
+      shared: app.repo === "nb/novacane-worker" ? "Studio and Nova Bot share one project (Nova Bot's worker), so their history is the same." : "",
       tagline: app.id === "hub" ? "The staff app: quests, the smart calendar, alerts and Ask Nova, on the phones." : doc.tagline,
       intro: app.id === "hub" ? "" : doc.intro,
       guide: guide.map(chapter),

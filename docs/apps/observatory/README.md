@@ -8,7 +8,7 @@
 [![Node](https://img.shields.io/badge/Node-scanners-339933?logo=nodedotjs&logoColor=white)](#how-it-works)
 [![Playwright](https://img.shields.io/badge/Playwright-capture-2EAD33?logo=playwright&logoColor=white)](#capture)
 [![ffmpeg](https://img.shields.io/badge/ffmpeg-video-007808?logo=ffmpeg&logoColor=white)](#capture)
-[![Nova suite](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
+[![Nova Agent](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
 
 <img src="docs/media/overview.jpg" alt="Nova Observatory's overview: totals for lines of code, size, files and languages, a language bar, the All links and Sound switches, and the first project decks" width="900">
 
@@ -23,7 +23,7 @@ disk rather than by hand: one script measures every project, another opens each 
 Chromium and records screenshots and a short demo video, and a static page shows the lot as
 project decks and a star map.
 
-The screenshots here come from the studio's own catalogue: the Nova suite, plus games, tools
+The screenshots here come from the studio's own catalogue: Nova Agent, plus games, tools
 and experiments. They show project names, sizes and folder trees, and nothing personal.
 
 ## What's new
@@ -31,9 +31,9 @@ and experiments. They show project names, sizes and folder trees, and nothing pe
 | | |
 |---|---|
 | 🔔 **Sound switch** | Soft cosmic sound effects on every press. The **Sound on / Sound off** switch beside All links turns them off and on. |
-| 🔒 **All links** | A pill in the header that opens the password-protected page with every Nova suite address, live and testing. |
+| 🔒 **All links** | A pill in the header that opens the password-protected page with every Nova Agent address, live and testing. |
 | ✦ **Served by Nova Agent** | Nova Agent serves it at `/observatory/`, so it's always on while Nova Agent is. |
-| 🧠 **Nova Index** | The suite's shared memory now has its own deck. Nova Portal may join it later. |
+| 🧠 **Nova Index** | The suite's shared memory now has its own deck. Crew may join it later. |
 
 ## See it in action
 
@@ -60,7 +60,7 @@ And across all of them:
 | **A detailed view** | Each project's video, screenshots, folder tree, languages and facts |
 | **A star map** | The whole folder structure, with every project as a star sized by its lines of code |
 | **Six colour themes** | Shared with [Nova Calendar](https://github.com/tuniveza/nova-calendar) and [Nova Notes](https://github.com/tuniveza/nova-notes) |
-| **Sound effects** | The shared Nova suite sounds, with a switch in the header |
+| **Sound effects** | The shared Nova Agent sounds, with a switch in the header |
 
 ## Screenshots
 
@@ -71,7 +71,7 @@ And across all of them:
   </tr>
   <tr>
     <td width="50%"><img src="docs/media/star-map.jpg" alt="The star map: every project as a star on the folder tree it grows from" width="100%"><br><sub><b>The star map.</b> Each star sits on its folder; bigger stars have more code.</sub></td>
-    <td width="50%"><img src="docs/media/nova-index.jpg" alt="The Nova Index deck beside Nova Calendar and Nova Notes" width="100%"><br><sub><b>Nova Index</b>, the newest deck in the Nova suite row.</sub></td>
+    <td width="50%"><img src="docs/media/nova-index.jpg" alt="The Nova Index deck beside Nova Calendar and Nova Notes" width="100%"><br><sub><b>Nova Index</b>, the newest deck in Nova Agent row.</sub></td>
   </tr>
   <tr>
     <td colspan="2" align="center"><img src="docs/media/folder-tree.jpg" alt="Nova Calendar's folder tree, languages and facts: location, size, lines of code, last change and git" width="70%"><br><sub><b>Folder tree, languages and facts.</b></sub></td>
@@ -114,7 +114,7 @@ flowchart LR
 | `capture.mjs` | Drives headless Chromium (Playwright) and ffmpeg. Writes into `media/<id>/`. |
 | `index.html`, `css/`, `js/observatory.js` | The page. |
 | `js/themes.js`, `js/cosmos.js`, `js/backdrop.js` | Shared with Nova Calendar: the colour themes, the generative space covers and the star backdrop. |
-| `js/sfx.js` | The Nova suite sound effects, shared with Nova Notes and Nova Calendar. |
+| `js/sfx.js` | The Nova Agent sound effects, shared with Nova Notes and Nova Calendar. |
 
 **What counts as what in a scan:**
 
@@ -165,7 +165,7 @@ node capture.mjs nova-calendar nova-bot   # re-capture just some projects
 ```
 
 Without a `projects.config.json`, both scripts fall back to the example catalogue and say so.
-The example assumes the Nova suite repos are cloned side by side (`../nova-bot`,
+The example assumes Nova Agent repos are cloned side by side (`../nova-bot`,
 `../nova-calendar` and so on); relative paths are resolved from the folder you run the scripts in.
 
 **Needs:** Node 18 or newer. For capture, also `npm install` (Playwright is an optional
@@ -203,7 +203,7 @@ index.html                    the page
 css/observatory.css           the styling
 js/observatory.js             decks, detail view, star map, search, filter, sort and the Sound switch
 js/themes.js, cosmos.js, backdrop.js   shared with Nova Calendar
-js/sfx.js                     the Nova suite sound effects
+js/sfx.js                     Nova Agent sound effects
 assets/sigil.svg              the Nova sigil
 scan.mjs                      measures every project
 capture.mjs                   screenshots and videos (Playwright + ffmpeg)
@@ -212,12 +212,12 @@ data/, media/                 generated; ignored by git
 docs/media/                   README images
 ```
 
-## Part of the Nova suite
+## Part of Nova Agent
 
 | Project | What it is |
 |---|---|
-| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova suite: an overview of every project |
-| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Nova Hub |
+| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova Agent: an overview of every project |
+| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, booking card and Studio |
 | [nova-agent](https://github.com/tuniveza/nova-agent) | The studio computer's helper; serves Nova Observatory at `/observatory/` |
 | [nova-club](https://github.com/tuniveza/nova-club) | Members' Android app that shows the studio's busy times |
 | [nova-calendar](https://github.com/tuniveza/nova-calendar) | A cosmic calendar of note cards and day cards |

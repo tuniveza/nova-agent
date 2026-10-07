@@ -1,4 +1,4 @@
-// Nova Hub: the staff app. All data comes from /app/api/ (staff login
+// Studio: the staff app. All data comes from /app/api/ (staff login
 // needed). Everything from the server is shown as plain text, never as HTML.
 
 (function () {
@@ -6,7 +6,7 @@
 
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
-  // The tab Nova Hub opens on (chosen in Options; Enquiries unless changed)
+  // The tab Studio opens on (chosen in Options; Enquiries unless changed)
   const VIEWS = ["enquiries", "chats", "calendar", "quests", "alerts", "bot"];
   let currentView = window.NovaOptions && VIEWS.includes(window.NovaOptions.get().startTab) ? window.NovaOptions.get().startTab : "enquiries";
   let sessions = null; // session types for booking links
@@ -113,11 +113,19 @@
 
   // ===== Signing in and out =====
 
+  // Inside Nova Agent on the studio PC (not a phone)
+  const onStudioPC = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+
   function showLogin() {
     $("app").hidden = true;
     $("login").hidden = false;
     $("password").value = "";
-    setTimeout(() => $("password").focus(), 50);
+    // The shared studio password is for phones; on the studio PC it's your own sign-in
+    for (const id of ["password", "login-or", "password-label", "password-submit"]) {
+      const node = $(id);
+      if (node) node.hidden = onStudioPC;
+    }
+    if (!onStudioPC) setTimeout(() => $("password").focus(), 50);
   }
 
   function showApp() {
@@ -1429,23 +1437,22 @@
 
   // ===== Notifications =====
   // Like giving the post office your address once: the phone gets a delivery
-  // address from Apple, Nova Hub hands it to the Worker, and from then on the
-  // Worker can post notifications to it, even when Nova Hub is closed.
+  // address from Apple, Studio hands it to the Worker, and from then on the
+  // Worker can post notifications to it, even when Studio is closed.
 
   // Can this browser do notifications at all? (needs all three of these.) Not inside Nova
   // Agent on the studio PC: Nova Agent shows its own notices there, and phone pushes are for phones.
-  const onStudioPC = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   const canNotify = !onStudioPC && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   // Is this an iPhone or iPad?
   const isIPhone = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  // Was Nova Hub opened from the Home Screen icon (rather than a Safari tab)?
+  // Was Studio opened from the Home Screen icon (rather than a Safari tab)?
   const fromHomeScreen = window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 
   // Install the doorman (sw.js) as soon as the app opens, so it's ready when needed
   if (canNotify) {
     navigator.serviceWorker
       .register("/studio/sw.js", { scope: "/studio/", updateViaCache: "none" })
-      // Look for a newer doorman every time Nova Hub opens (and when it comes back to the front)
+      // Look for a newer doorman every time Studio opens (and when it comes back to the front)
       .then((reg) => {
         reg.update().catch(() => {});
         document.addEventListener("visibilitychange", () => !document.hidden && reg.update().catch(() => {}));
@@ -1454,7 +1461,7 @@
   }
 
   // ===== Pings =====
-  // When a notification arrives while Nova Hub is open, it rings out with a
+  // When a notification arrives while Studio is open, it rings out with a
   // bright ping (a different one for each kind) and drops a banner from the top.
 
   // The sound maker (made on the first tap, because phones only allow sound after a tap)
@@ -1533,7 +1540,7 @@
     // Remember what it's about
     box.dataset.tag = data.tag || "";
     // Its title and text
-    box.append(el("strong", "", data.title || "Nova Hub"), el("p", "", data.body || ""));
+    box.append(el("strong", "", data.title || "Studio"), el("p", "", data.body || ""));
     // Tapping it opens the Alerts tab
     box.addEventListener("click", () => {
       box.remove();
@@ -1564,12 +1571,12 @@
     });
   }
 
-  // Opening Nova Hub clears the dot on its Home Screen icon
+  // Opening Studio clears the dot on its Home Screen icon
   function clearIconDot() {
     // Only where the phone supports it
     if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
   }
-  // Now, and every time Nova Hub comes back to the front
+  // Now, and every time Studio comes back to the front
   clearIconDot();
   document.addEventListener("visibilitychange", () => !document.hidden && clearIconDot());
 
@@ -1601,12 +1608,12 @@
     let status = "Get a notification here for new enquiries and bookings.";
     // iPhone in a Safari tab: it has to be opened from the Home Screen first
     if (!canNotify && isIPhone && !fromHomeScreen) {
-      status = "On iPhone, notifications only work when Nova Hub is opened from its Home Screen icon. In Safari, tap Share, then Add to Home Screen, then open Nova Hub from there.";
+      status = "On iPhone, notifications only work when Studio is opened from its Home Screen icon. In Safari, tap Share, then Add to Home Screen, then open Studio from there.";
     }
     // Any other browser that can't do it
     else if (!canNotify) status = "This browser can't show notifications.";
     // He said no to the iPhone's question earlier: only Settings can change that now
-    else if (Notification.permission === "denied") status = "Notifications are blocked for Nova Hub. Turn them on in the iPhone's Settings, then Notifications, then Nova Hub.";
+    else if (Notification.permission === "denied") status = "Notifications are blocked for Studio. Turn them on in the iPhone's Settings, then Notifications, then Studio.";
     // Already on
     else if (address) status = "Notifications are on for this phone.";
     // Put the message in the panel
@@ -1706,12 +1713,12 @@
   });
 
   // ===== Voice commands =====
-  // Tap the mic, say what to do, and Nova Hub does it. Like asking someone at
+  // Tap the mic, say what to do, and Studio does it. Like asking someone at
   // the front desk: the recording goes to the Worker, which writes down the
   // words (Whisper), and the app matches them to a command below. Anything
   // that isn't a command is asked to NovaBot instead.
   //
-  // Hands-free ("Always listen"): while Nova Hub is open on screen, it keeps
+  // Hands-free ("Always listen"): while Studio is open on screen, it keeps
   // listening and acts on anything that starts with "Nova" ("Nova, show
   // alerts"), so everyday conversation is ignored. iPhones only allow the
   // microphone while the app is open, so it pauses when you leave and starts
@@ -1940,7 +1947,7 @@
     try {
       await openMic();
     } catch (err) {
-      return toast("Nova Hub can't use the microphone. Allow it in Settings.");
+      return toast("Studio can't use the microphone. Allow it in Settings.");
     }
     // The mic glows, and the panel shows
     $("voice").classList.add("on");
@@ -1973,7 +1980,7 @@
   // What was said after "Nova" (null if it didn't start with "Nova").
   // Whisper sometimes hears "Nova" as "Noah", "Nava" or "Nover".
   function afterWakeWord(text) {
-    // "Nova, show alerts", "Hey Nova show alerts", "Nova Hub, call Eric"
+    // "Nova, show alerts", "Hey Nova show alerts", "Studio, call Eric"
     const m = String(text).match(/^\W*(?:(?:hey|hi|ok|okay)\W+)?(?:nova(?:\s*hub)?|novah|noah|nava|nover|no va)\b\W*(.*)$/i);
     // The command (maybe empty), or null
     return m ? m[1].trim() : null;
@@ -1984,7 +1991,7 @@
     return new Promise((resolve) => document.addEventListener("pointerdown", resolve, { once: true }));
   }
 
-  // Hands-free: keep listening while Nova Hub is open and on screen
+  // Hands-free: keep listening while Studio is open and on screen
   async function startHandsFree() {
     // Already running, switched off, signed out, or not on screen
     if (looping || !handsFree || !canRecord || $("app").hidden || document.hidden) return;
@@ -2003,7 +2010,7 @@
         // Still no: the microphone is blocked
         listeningBar("");
         looping = false;
-        return toast("Nova Hub can't use the microphone. Allow it in Settings.");
+        return toast("Studio can't use the microphone. Allow it in Settings.");
       }
     }
     // The volume meter is paused until a tap (iPhone rule): wait for one
@@ -2033,7 +2040,7 @@
         if (err.message === "signed out") break;
         continue;
       }
-      // The command after "Nova" (null: not meant for Nova Hub, so ignore it)
+      // The command after "Nova" (null: not meant for Studio, so ignore it)
       const command = afterWakeWord(text);
       // Not for us
       if (command === null) continue;

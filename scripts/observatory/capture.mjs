@@ -255,7 +255,7 @@ const SCRIPTS = {
     if (server) {
       await page.goto(server.base + '/app/', { waitUntil: 'load' });
       await sleep(2000);
-      await shot('Nova Hub, the staff app');
+      await shot('Studio, the staff app');
     }
   },
 

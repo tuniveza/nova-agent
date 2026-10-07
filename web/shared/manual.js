@@ -1,4 +1,4 @@
-// Nova Manual: how every Nova suite app works, how it's built, its history and what's
+// Nova Manual: how every Nova Agent panel works, how it's built, its history and what's
 // changing, in one panel on every app.
 //
 //   <script src="/shared/manual.js" defer></script>        (on Nova Bot's worker and in Nova Agent)
@@ -10,7 +10,7 @@
 // The content (manual-data.js, next to this file) is made by scripts/build-manual.mjs from
 // the apps' READMEs and git history, and only loads when the manual is first opened.
 // Colours come from the page's theme: --nm-* if the app sets them, else the suite's names
-// (--hi, --accent...), else the Nova suite's magenta. A floating button sits --nm-bottom
+// (--hi, --accent...), else Nova Agent's magenta. A floating button sits --nm-bottom
 // from the bottom (16px) and --nm-side from the left. Calm motion stills it.
 (() => {
   "use strict";
@@ -347,7 +347,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
   };
 
   // Per-item colours and delays are set from here, not as style="" (pages with strict
-  // security rules, like Nova Hub's, don't allow inline styles; setting them in code is fine)
+  // security rules, like Studio's, don't allow inline styles; setting them in code is fine)
   function paint(root) {
     for (const el of root.querySelectorAll("[data-v]")) {
       for (const pair of el.getAttribute("data-v").split(";")) {
@@ -396,7 +396,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
     drawButton() {
       this.root.innerHTML = `<button class="open" part="button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Nova Manual (press ?)">
           <span class="orb">${ICON.book.replace("<svg", '<svg width="18" height="18"')}<span class="spark"></span></span>
-          <span class="label"><b>Manual</b><small>Nova suite</small></span>
+          <span class="label"><b>Manual</b><small>Nova Agent</small></span>
         </button>
         <div class="panel" role="dialog" aria-modal="true" aria-label="Nova Manual" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
       this.root.querySelector(".open").addEventListener("click", () => (this.isOpen ? this.close(true) : this.open()));
@@ -420,7 +420,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       if (!this.isOpen) {
         panel.innerHTML = `<div class="sky">${"<i></i>".repeat(18)}</div>
           <header class="top">
-            <div class="brand"><span class="book">${ICON.book}</span><div><div class="kicker">Nova suite</div><h2>Nova Manual</h2></div></div>
+            <div class="brand"><span class="book">${ICON.book}</span><div><div class="kicker">Nova Agent</div><h2>Nova Manual</h2></div></div>
             <label class="search">${ICON.search}<input type="search" placeholder="Search every app's manual" aria-label="Search the manual" autocomplete="off" spellcheck="false"><kbd>/</kbd></label>
             <button class="x" type="button" aria-label="Close the manual">${ICON.x}</button>
           </header>
@@ -453,7 +453,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         })
         .catch(() => {
           const page = this.root.querySelector(".page");
-          if (page) page.innerHTML = `<div class="empty"><div><b>The manual's pages aren't here yet.</b><br>Run <code>node scripts/build-manual.mjs</code> in Nova Portal to make them.</div></div>`;
+          if (page) page.innerHTML = `<div class="empty"><div><b>The manual's pages aren't here yet.</b><br>Run <code>node scripts/build-manual.mjs</code> in Crew to make them.</div></div>`;
         });
     }
     close(withSound) {
@@ -545,7 +545,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         })
         .join("");
       return `
-        <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">✺</span><div class="who"><div class="kicker">Nova Manual</div><h1>The Nova suite</h1><p>${esc((s && s.tagline) || "Every Nova app: how to use it, how it's built, its story so far and what's changing.")}</p>
+        <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">✺</span><div class="who"><div class="kicker">Nova Manual</div><h1>The Nova Agent</h1><p>${esc((s && s.tagline) || "Every Nova app: how to use it, how it's built, its story so far and what's changing.")}</p>
           <div class="pills"><span class="pill">${d.apps.length} apps</span><span class="pill">Updated ${esc(ago(d.built))}</span><span class="pill">Press <b>?</b> on any Nova app to open this</span></div></div></div>
         <div class="section-title">The apps</div>
         <div class="apps">${cards}</div>
@@ -645,7 +645,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         if (s > 0) hits.push({ a, tab, c, text, label, rank: score(title) * 3 + s });
       };
       const d = this.d;
-      if (d.suite) for (const c of d.suite.chapters) add(null, "", c, c.text, "The Nova suite");
+      if (d.suite) for (const c of d.suite.chapters) add(null, "", c, c.text, "The Nova Agent");
       const repos = new Set();
       for (const a of d.apps) {
         for (const c of a.guide) add(a, "guide", c, c.text, `${a.name} · Guide`);

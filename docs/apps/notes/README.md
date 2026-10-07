@@ -11,7 +11,7 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
 ![Static web app](https://img.shields.io/badge/web%20app-no%20build%20step-B01D68?style=flat-square)
 ![Vanilla JS](https://img.shields.io/badge/vanilla-JavaScript-7A1F86?style=flat-square)
 ![Google Docs](https://img.shields.io/badge/exports%20to-Google%20Docs-25194D?style=flat-square)
-![Part of the Nova suite](https://img.shields.io/badge/part%20of-nova--suite-FF5FA8?style=flat-square)
+![Part of Nova Agent](https://img.shields.io/badge/part%20of-nova--suite-FF5FA8?style=flat-square)
 
 <img src="docs/media/hero.jpg" width="900" alt="Nova Notes with the built-in welcome note open: notes list on the left, the glowing centred page in the middle, the outline on the right">
 
@@ -28,7 +28,7 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
 | | |
 |---|---|
 | 🔔 **Sound effects** | Soft cosmic sounds on every action. Switch them off or on in **View → Sound effects**. |
-| 🔒 **All Nova suite links** | **Help → 🔒 All Nova suite links** opens the password-protected page with every Nova suite address, live and testing. |
+| 🔒 **All Nova Agent links** | **Help → 🔒 All Nova Agent links** opens the password-protected page with every Nova Agent address, live and testing. |
 | ✦ **Inside Nova Agent** | Nova Agent serves its own copy at `/notes/`, so privacy-minded browsers don't block it there. Notes written there are kept on the studio computer. |
 
 ## See it in action
@@ -57,7 +57,7 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
   2. **Save to Google Drive (one click once set up):** signs in with Google, creates a real Google Doc, and updates that same Doc each time you save the note again.
 
 **Looks and sounds the part**
-- **Six themes** from the Nova suite: Novacane (magenta), Solar Flare (red-orange), Pulsar (cyan), Aurora (green and violet), Eclipse (gold) and Quasar (ultraviolet).
+- **Six themes** from Nova Agent: Novacane (magenta), Solar Flare (red-orange), Pulsar (cyan), Aurora (green and violet), Eclipse (gold) and Quasar (ultraviolet).
 - **Two page styles:** *Cosmic* (a glowing glass page among twinkling stars) and *Paper* (white, exactly how the note exports and prints).
 - **Sound effects:** gentle bells and sparkles as you work (see below).
 - **Focus mode,** a pageless view, zoom, and a layout that works on phones and tablets.
@@ -72,8 +72,8 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
 | **Checklists, lists and quotes**, all centred | **Paper page:** what Google Docs, Word and print will show |
 | <img src="docs/media/menus.jpg" alt="The Format menu open on Paragraph styles, with Heading 1 ticked"> | <img src="docs/media/google-docs.jpg" alt="The Send to Google Docs dialog: copy and paste, or save straight to Google Drive"> |
 | **Google Docs–style menus** with shortcuts | **Send to Google Docs:** copy and paste, or save straight to Drive |
-| <img src="docs/media/sound.jpg" alt="The View menu open, with Sound effects ticked at the bottom"> | <img src="docs/media/help-links.jpg" alt="The Help menu open on 🔒 All Nova suite links"> |
-| **View → Sound effects**, ticked while sounds are on | **Help → 🔒 All Nova suite links** |
+| <img src="docs/media/sound.jpg" alt="The View menu open, with Sound effects ticked at the bottom"> | <img src="docs/media/help-links.jpg" alt="The Help menu open on 🔒 All Nova Agent links"> |
+| **View → Sound effects**, ticked while sounds are on | **Help → 🔒 All Nova Agent links** |
 
 <details>
 <summary><b>Every colour theme, and a phone</b></summary>
@@ -167,8 +167,8 @@ flowchart LR
 - **`convert.js`**: cleans pasted and imported HTML down to what the editor understands, converts Markdown both ways, and builds the **styled export**: every block is inline-styled in the current theme's colours, made deep enough to read on white, so Google Docs and Word keep the look and the centring.
 - **`google.js`**: the clipboard route (rich HTML plus plain text) and the Drive route (Google Identity Services token → multipart upload that Drive converts to a Google Doc, then `PATCH` to update it).
 - **`store.js`**: notes in IndexedDB (falling back to localStorage), settings, backup and restore.
-- **`sfx.js`**: the Nova suite's sound effects. One listener works out what kind of thing was pressed and plays the matching sound; an element can choose its own with `data-sfx`.
-- **`themes.js`** and **`backdrop.js`**: the Nova suite's colour themes and the star field, shared with [Nova Calendar](https://github.com/tuniveza/nova-calendar).
+- **`sfx.js`**: Nova Agent's sound effects. One listener works out what kind of thing was pressed and plays the matching sound; an element can choose its own with `data-sfx`.
+- **`themes.js`** and **`backdrop.js`**: Nova Agent's colour themes and the star field, shared with [Nova Calendar](https://github.com/tuniveza/nova-calendar).
 
 ## Keyboard shortcuts
 
@@ -198,7 +198,7 @@ nn/
 ├── wrangler.jsonc      Cloudflare hosting (static assets only)
 ├── css/nova-notes.css  all the styling: cosmic and paper pages, themes, print, phones
 ├── js/
-│   ├── sfx.js          the Nova suite sound effects (shared with Nova Calendar and Nova Observatory)
+│   ├── sfx.js          Nova Agent sound effects (shared with Nova Calendar and Nova Observatory)
 │   ├── themes.js       colour themes (shared with Nova Calendar)
 │   ├── backdrop.js     the twinkling star field
 │   ├── store.js        IndexedDB notes, settings, backup/restore
@@ -210,7 +210,7 @@ nn/
 └── docs/media/         README screenshots and demo
 ```
 
-## Part of the Nova suite
+## Part of Nova Agent
 
 | | |
 |---|---|

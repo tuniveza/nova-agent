@@ -1,9 +1,9 @@
-// Nova Portal: one sign-in for every Nova app, and everyone's planet.
+// Crew: one sign-in for every Nova app, and everyone's planet.
 //
 // Each member of the studio gets a profile, drawn as a planet grown from their own seed (the
 // server draws it: /staff/<id>/planet.svg). This page is the front of it all:
 //   Setup     the very first time: the first admin, proven with the studio's current password
-//   Sign in   email and password; signs in Nova Hub, Nova Index and the admin pages too
+//   Sign in   email and password; signs in Studio, Nova Index and the admin pages too
 //   Invite    ?invite=<token>: someone joining picks their name and password
 //   Profile   their planet, big and turning; re-roll it, rename, open their Nova Index, sign out
 //   Crew      (admins) everyone as planet badges; invite people, change roles, switch accounts off
@@ -172,7 +172,7 @@
     try {
       res = await fetch(path, { method, credentials: "same-origin", headers, body: body === undefined ? undefined : JSON.stringify(body) });
     } catch (err) {
-      throw new Problem("Can't reach Nova Portal. Check the connection and try again.");
+      throw new Problem("Can't reach Crew. Check the connection and try again.");
     }
     let data = {};
     try {
@@ -211,7 +211,7 @@
     $("auth-sub").textContent = sub;
     replay($(id), "screen-in");
     if (first) replay($("auth"), "screen-in");
-    document.title = "Nova Portal";
+    document.title = "Crew";
     stopChecks();
   }
   function focusSoon(node) {
@@ -260,7 +260,7 @@
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("setup-error", "Enter your email address.", form), $("setup-email").focus();
     if (password.length < MIN_PASSWORD) return setError("setup-error", `Your new password needs at least ${MIN_PASSWORD} characters.`, form), $("setup-password").focus();
     if (password !== $("setup-confirm").value) return setError("setup-error", "The two new passwords don't match.", form), $("setup-confirm").focus();
-    if (!studio) return setError("setup-error", "Enter the studio's current password (the one for Nova Hub).", form), $("setup-studio").focus();
+    if (!studio) return setError("setup-error", "Enter the studio's current password (the one for Studio).", form), $("setup-studio").focus();
     setError("setup-error", "");
     const go = form.querySelector('button[type="submit"]');
     try {
@@ -268,10 +268,10 @@
       if (r.ok && r.data.staff) {
         sfx("done");
         form.reset();
-        return signedIn(r.data.staff, `Nova Portal is ready. Welcome, ${firstName(r.data.staff.display_name)}!`, true);
+        return signedIn(r.data.staff, `Crew is ready. Welcome, ${firstName(r.data.staff.display_name)}!`, true);
       }
       if (r.status === 409) {
-        showLogin("Nova Portal is already set up. Sign in instead.");
+        showLogin("Crew is already set up. Sign in instead.");
         return;
       }
       setError("setup-error", r.data.error || `That didn't work (error ${r.status}). Try again.`, form);
@@ -329,16 +329,16 @@
     const r = await api("/auth/invite?token=" + encodeURIComponent(token));
     if (!r.ok) {
       $("invite-gone-why").textContent = r.data.error || "This invite link has expired or was already used. Ask an admin for a new one.";
-      showAuthCard("invite-gone", "Your invite to the Nova suite");
+      showAuthCard("invite-gone", "Your invite to Nova Agent");
       return;
     }
     const who = r.data;
     $("invite-title").textContent = who.display_name ? `Welcome aboard, ${firstName(who.display_name)}` : "Welcome aboard";
-    $("invite-for").textContent = `You're joining Novacane's Nova suite as ${who.role === "admin" ? "an admin" : "a member of staff"}, with ${who.email}. Choose a password and your planet will be waiting.`;
+    $("invite-for").textContent = `You're joining Novacane's Nova Agent as ${who.role === "admin" ? "an admin" : "a member of staff"}, with ${who.email}. Choose a password and your planet will be waiting.`;
     $("invite-name").value = who.display_name || "";
     $("invite-email").value = who.email || "";
     state.lastEmail = who.email || "";
-    showAuthCard("invite-form", "Your invite to the Nova suite");
+    showAuthCard("invite-form", "Your invite to Nova Agent");
     focusSoon($("invite-name").value ? $("invite-password") : $("invite-name"));
   }
   $("invite-form").addEventListener("submit", async (e) => {
@@ -361,7 +361,7 @@
       }
       if (r.status === 404) {
         $("invite-gone-why").textContent = r.data.error || "This invite link has expired or was already used. Ask an admin for a new one.";
-        showAuthCard("invite-gone", "Your invite to the Nova suite");
+        showAuthCard("invite-gone", "Your invite to Nova Agent");
         sfx("error");
         return;
       }
@@ -476,7 +476,7 @@
         return renderRoute();
       }
       showView("view-crew");
-      document.title = "The crew · Nova Portal";
+      document.title = "The crew · Crew";
       return loadCrew();
     }
     if (route.view === "me") {
@@ -511,7 +511,7 @@
     const self = person.id === state.me.id;
     const changedPerson = !state.person || state.person.id !== person.id;
     state.person = person;
-    document.title = self ? "Nova Portal" : `${person.display_name} · Nova Portal`;
+    document.title = self ? "Crew" : `${person.display_name} · Crew`;
 
     $("back-to-crew").hidden = self || !isAdmin();
     $("p-kicker").textContent = self ? "Your profile" : "Crew member";
@@ -690,7 +690,7 @@
     }
   });
 
-  // ----- Signing out (everywhere: Nova Hub, Nova Index, the admin pages) -----
+  // ----- Signing out (everywhere: Studio, Nova Index, the admin pages) -----
   async function signOut() {
     closeOptions();
     try {
@@ -888,11 +888,11 @@
       } else toast("Couldn't copy. Select the link and copy it.", true);
     }, { "data-sfx": "none" });
     const until = longDate(expires);
-    const subject = "Your Nova Portal invite";
+    const subject = "Your Crew invite";
     const body = [
       `Hi ${name},`,
       "",
-      "You're invited to Nova Portal: one sign-in for every Nova app at Novacane Studios (Nova Hub, Nova Index and the rest).",
+      "You're invited to Crew: one sign-in for every Nova app at Novacane Studios (Studio, Nova Index and the rest).",
       "",
       "Open this link to choose your password and meet your very own planet:",
       link,
@@ -1107,7 +1107,7 @@
     $("connect-title").textContent = `Connect ${name}`;
     $("connect-why").textContent = name.startsWith("Nova Agent")
       ? "Nova Agent will work for you: your badge, and your own Nova Index memory."
-      : `${name} would like to show your Nova Portal badge.`;
+      : `${name} would like to show your Nova Agent badge.`;
     $("connect-planet").src = planetUrl(state.me, 192, true);
     $("connect-name").textContent = state.me.display_name;
     $("connect-role").textContent = state.me.role === "admin" ? "Admin" : "Staff";

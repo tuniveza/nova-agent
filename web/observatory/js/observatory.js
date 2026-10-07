@@ -78,7 +78,7 @@
   }
 
   // ---------- SOUND ----------
-  // The soft Nova suite sounds on every press come from js/sfx.js (shared by every Nova app).
+  // The soft Nova Agent sounds on every press come from js/sfx.js (shared by every Nova app).
   // This is just their on/off button in the header; the choice is remembered on this device.
   const sfx = () => window.NovaSfx;
   function renderSound() {
@@ -122,7 +122,7 @@
 
   // ---------- MEDIA ----------
   const mediaUrl = (p, file) => `media/${encodeURIComponent(p.id)}/${encodeURIComponent(file)}`;
-  const COVER_SUBJECT = { 'Nova suite': 'nebula', Games: 'planet', Tools: 'constellation', Experiments: 'galaxy' };
+  const COVER_SUBJECT = { 'Nova Agent': 'nebula', Games: 'planet', Tools: 'constellation', Experiments: 'galaxy' };
   function cover(p, w = 800, h = 450) {
     return NO.cosmos.render({ seed: NO.cosmos.hash(p.id), subject: p.status === 'empty' ? 'eclipse' : COVER_SUBJECT[p.category] || 'nebula', theme: p.theme || theme, w, h });
   }
@@ -152,7 +152,7 @@
 
   // ---------- DECKS ----------
   const state = { q: '', cat: 'All', sort: 'recent' };
-  const CATS = ['All', 'Nova suite', 'Games', 'Tools', 'Experiments'];
+  const CATS = ['All', 'Nova Agent', 'Games', 'Tools', 'Experiments'];
 
   function renderFilters() {
     $('#filters').innerHTML = CATS.map((c) => {
@@ -481,6 +481,6 @@
   renderDecks();
   renderStarmap();
   bind();
-  $('#foot').innerHTML = `Nova Observatory · part of the Nova suite · Novacane Studios<br>Scanned ${esc(when(D.generatedAt))} · refresh with <code>npm run build</code> (or <code>npm run scan</code> for numbers only)`;
+  $('#foot').innerHTML = `Nova Observatory · part of Nova Agent · Novacane Studios<br>Scanned ${esc(when(D.generatedAt))} · refresh with <code>npm run build</code> (or <code>npm run scan</code> for numbers only)`;
   if (location.hash.length > 1) openDetail(location.hash.slice(1), false);
 })();

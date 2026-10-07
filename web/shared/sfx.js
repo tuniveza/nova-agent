@@ -1,7 +1,7 @@
-// Nova suite sound effects: soft cosmic bells and sparkles for every tap, tab,
+// Nova Agent sound effects: soft cosmic bells and sparkles for every tap, tab,
 // switch, open, close, send, done and delete. Made live with the Web Audio API
 // (no sound files), in D major pentatonic so everything sounds like one family,
-// and kept quiet. The same file is used by every Nova suite app.
+// and kept quiet. The same file is used by every Nova Agent panel.
 //
 // Sounds play by themselves: one listener works out what kind of thing was
 // pressed (a tab, a switch, a "send", a "delete"...). An element can choose its

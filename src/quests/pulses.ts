@@ -4,7 +4,7 @@
 // They don't take slots in the plan (there would be thousands); each one runs
 // on its own exact timer instead, from when it was added (or its earliest time)
 // until its deadline, only while you're awake. Every beat pings the Nova Agent
-// page and, if the rhythm says so, the Nova Hub phones, where each beat replaces
+// page and, if the rhythm says so, the staff phones, where each beat replaces
 // the last notification instead of piling up.
 
 import { trace } from "../trace";

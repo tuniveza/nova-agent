@@ -163,7 +163,7 @@ async function attempt(key: string): Promise<void> {
     status = response.status;
     if (!response.ok) throw new Error(`the worker answered ${response.status}`);
     phones = Number(((await response.json()) as { phones?: unknown }).phones) || 0;
-    if (phones < 1) throw new Error("no phone took it (is Nova Hub subscribed on a phone?)");
+    if (phones < 1) throw new Error("no phone took it (is Nova Agent set up for notifications on a phone?)");
   } catch (e) {
     error = (e as Error).message || String(e);
   }
@@ -221,7 +221,7 @@ export function acknowledge(questId: string, session: string): void {
   if (!updated.changes) d.prepare("INSERT OR IGNORE INTO deliveries (key, quest_id, session, kind, state, created) VALUES (?, ?, ?, 'starting', 'acknowledged', ?)").run(deliveryKey(questId, session, "starting"), questId, session, now);
 }
 
-// Nova Hub taps carry an id: true the first time one is seen, false after (a tap
+// Studio taps carry an id: true the first time one is seen, false after (a tap
 // can be handed over twice; it must only count once)
 export function firstTimeForTap(id: string): boolean {
   const d = open();

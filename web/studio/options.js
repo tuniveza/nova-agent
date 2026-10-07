@@ -18,7 +18,7 @@
     sheet.querySelectorAll('input[type="range"][data-option]').forEach((range) => (range.value = o[range.dataset.option]));
   }
 
-  // Open and close (like the Nova suite sheet)
+  // Open and close (like Nova Agent sheet)
   function open() {
     show();
     sheet.hidden = false;

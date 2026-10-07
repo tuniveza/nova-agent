@@ -4,7 +4,7 @@
 //   - a quest left unanswered an hour after its end is moved to a new time
 //   - the morning plan when the day starts, and a wrap-up before winding down
 // Each one goes to the open Nova Agent page (a pop-up and a sound) and, if the
-// rhythm says so, to the Nova Hub phones through Nova Bot. Phone pings go
+// rhythm says so, to the staff phones through Nova Bot. Phone pings go
 // through deliveries.ts: sent once each, checked, retried, and logged.
 
 import { config } from "../config";
@@ -47,8 +47,8 @@ const PHONE: Record<QuestNotice["kind"], { ttl: number; urgent: boolean }> = {
 // `covers`: other sessions the same notice tells about.
 function notify(n: Omit<QuestNotice, "time">, push: boolean, session = fromMin(nowMinutes()), covers?: string[]): boolean {
   const source = n.kind === "mission" ? "mission" : "quest";
-  // To the Nova Hub phones too, labelled as Nova Quest or Nova Mission.
-  // Pulses replace each other on the phone and stay out of Nova Hub's Alerts list
+  // To the staff phones too, labelled as Nova Quest or Nova Mission.
+  // Pulses replace each other on the phone and stay out of Studio's Alerts list
   const phone = push && n.kind !== "undelivered" ? { title: n.title, message: n.message, source, kind: n.kind, tag: n.questId || n.kind, ...PHONE[n.kind], keep: n.kind !== "pulse" } as const : null;
   if (!deliver({ questId: n.questId || n.kind, session, kind: n.kind, push: phone, covers })) return false;
   if (n.kind === "pulse") {

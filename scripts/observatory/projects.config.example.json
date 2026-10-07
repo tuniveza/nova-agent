@@ -1,5 +1,5 @@
 {
-  "$comment": "Example Nova Observatory catalogue. Copy it to projects.config.json (which git ignores) and point each path at a project on your disk. Relative paths are resolved from the folder you run npm run scan / npm run capture in. This example assumes the Nova suite repos are cloned side by side. Hand-written facts (goal, vision, features, how to show it) live here; scan.mjs adds the measured facts and capture.mjs adds screenshots and video. capture.mode: page | images | none. private: true keeps a project out of capture unless you pass --include-private.",
+  "$comment": "Example Nova Observatory catalogue. Copy it to projects.config.json (which git ignores) and point each path at a project on your disk. Relative paths are resolved from the folder you run npm run scan / npm run capture in. This example assumes Nova Agent repos are cloned side by side. Hand-written facts (goal, vision, features, how to show it) live here; scan.mjs adds the measured facts and capture.mjs adds screenshots and video. capture.mode: page | images | none. private: true keeps a project out of capture unless you pass --include-private.",
   "root": "..",
   "projects": [
     {
@@ -7,7 +7,7 @@
       "name": "Nova Calendar",
       "tagline": "A cosmic calendar of note cards and day cards",
       "path": "../nova-calendar",
-      "category": "Nova suite",
+      "category": "Nova Agent",
       "theme": "pulsar",
       "kind": "Static web app",
       "stack": [
@@ -39,7 +39,7 @@
       "name": "Nova Observatory",
       "tagline": "Every project in one sky",
       "path": ".",
-      "category": "Nova suite",
+      "category": "Nova Agent",
       "theme": "quasar",
       "kind": "Static web app + Node scanners",
       "stack": [
@@ -76,7 +76,7 @@
       "name": "Nova Agent",
       "tagline": "The hands that work Acuity's admin pages",
       "path": "../nova-agent",
-      "category": "Nova suite",
+      "category": "Nova Agent",
       "theme": "solar",
       "kind": "Node service (systemd)",
       "stack": [
@@ -109,9 +109,9 @@
     {
       "id": "nova-bot",
       "name": "Nova Bot",
-      "tagline": "The studio's AI chat assistant, plus Nova Hub for staff",
+      "tagline": "The studio's AI chat assistant, plus Studio for staff",
       "path": "../nova-bot",
-      "category": "Nova suite",
+      "category": "Nova Agent",
       "theme": "novacane",
       "kind": "Cloudflare Worker",
       "stack": [
@@ -128,12 +128,12 @@
         "Vitest"
       ],
       "status": "active",
-      "goal": "The AI chat assistant for Novacane Studios, a recording studio in London. It sits on the studio's website as a chat widget, answers from Claude, finds free Acuity times and opens a booking card where the visitor pays the deposit to book. It also serves Nova Hub, the staff app. Its own booking system (Google Calendar, Gmail and Stripe) is built and waiting behind a switch.",
+      "goal": "The AI chat assistant for Novacane Studios, a recording studio in London. It sits on the studio's website as a chat widget, answers from Claude, finds free Acuity times and opens a booking card where the visitor pays the deposit to book. It also serves Studio, the staff app. Its own booking system (Google Calendar, Gmail and Stripe) is built and waiting behind a switch.",
       "vision": "A front desk that never closes: visitors get real answers and real bookings, and staff run enquiries, chats and bookings from their phones.",
       "features": [
         "Themed chat widget with optional voice; Claude answers with every link checked",
         "Free Acuity times, booking links and an in-chat booking card (deposit first)",
-        "Nova Hub staff app: enquiries, customer chats, bookings by chat, push alerts",
+        "Studio staff app: enquiries, customer chats, bookings by chat, push alerts",
         "Enquiries, referral codes and a password-protected admin page",
         "Behind a switch (off by default): its own booking page, Google Calendar diary, Gmail emails and Stripe deposits",
         "352 Vitest tests, covering both booking systems and the switch"
@@ -154,7 +154,7 @@
       "name": "Nova Club",
       "tagline": "A members' app where every day is a moon",
       "path": "../nova-club",
-      "category": "Nova suite",
+      "category": "Nova Agent",
       "theme": "novacane",
       "kind": "Android app",
       "stack": [

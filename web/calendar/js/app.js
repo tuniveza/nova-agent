@@ -529,7 +529,7 @@
   }
 
   // ---------- SOUND ----------
-  // The soft Nova suite sounds on every press come from js/sfx.js (shared by every Nova app).
+  // The soft Nova Agent sounds on every press come from js/sfx.js (shared by every Nova app).
   // This is just their on/off button in the top bar; the choice is remembered on this device.
   const sfx = () => window.NovaSfx;
   function renderSound() {

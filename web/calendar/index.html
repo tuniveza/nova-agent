@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nova Calendar</title>
-<meta name="description" content="Nova Calendar: a cosmic calendar of note cards and day cards, from the Nova suite by Novacane Studios.">
+<meta name="description" content="Nova Calendar: a cosmic calendar of note cards and day cards, from Nova Agent by Novacane Studios.">
 <meta name="theme-color" content="#06040D">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/icon-192.png" type="image/png" sizes="192x192">
@@ -47,7 +47,7 @@
 <div class="splash" id="splash" aria-hidden="true">
   <svg class="splash-mark" viewBox="0 0 512 512"><use href="#i-mark"/></svg>
   <span class="splash-name">Nova Calendar</span>
-  <span class="splash-kicker">Nova suite · Novacane</span>
+  <span class="splash-kicker">Nova Agent · Novacane</span>
 </div>
 <canvas id="sky" aria-hidden="true"></canvas>
 <div class="nebula" aria-hidden="true"></div>
@@ -58,7 +58,7 @@
     <a class="brand" href="./" aria-label="Nova Calendar home">
       <svg class="app-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
       <span class="brand-text">
-        <span class="brand-kicker">Nova suite · Novacane</span>
+        <span class="brand-kicker">Nova Agent · Novacane</span>
         <span class="wordmark">Nova Calendar</span>
       </span>
     </a>
@@ -71,13 +71,13 @@
     </nav>
 
     <div class="top-actions">
-      <!-- Nova Portal: who you are (connect it once in Nova Portal; inside Nova Agent, who Nova Agent works for) -->
+      <!-- Crew: who you are (connect it once in Crew; inside Nova Agent, who Nova Agent works for) -->
       <nova-manual compact></nova-manual>
       <nova-portal-badge></nova-portal-badge>
       <div class="themes" id="themes" role="radiogroup" aria-label="Colour theme"></div>
-      <!-- Every Nova suite address, live and testing (behind the admin password) -->
-      <a class="btn ghost sm" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener" title="Every Nova suite address, live and testing (password protected)">🔒 Links</a>
-      <!-- Sound effects on or off (the shared Nova suite sounds, js/sfx.js); it plays its own chime when switched -->
+      <!-- Every Nova Agent address, live and testing (behind the admin password) -->
+      <a class="btn ghost sm" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener" title="Every Nova Agent address, live and testing (password protected)">🔒 Links</a>
+      <!-- Sound effects on or off (the shared Nova Agent sounds, js/sfx.js); it plays its own chime when switched -->
       <button type="button" class="btn ghost sm sound-btn" id="sound" aria-pressed="true" data-sfx="none" title="Sound effects">Sound</button>
       <button type="button" class="btn ghost sm" id="install" hidden title="Install Nova Calendar as an app on this device">Install</button>
       <button type="button" class="btn primary" id="new-note" data-sfx="open"></button>
@@ -108,7 +108,7 @@
     <aside class="panel" id="panel" aria-label="Selected day" aria-live="polite"></aside>
   </main>
 
-  <footer class="foot">Nova Calendar · part of the Nova suite · Novacane Studios · saved in this browser only, so export a backup now and then</footer>
+  <footer class="foot">Nova Calendar · part of Nova Agent · Novacane Studios · saved in this browser only, so export a backup now and then</footer>
 </div>
 
 <!-- NOTE CARD EDITOR -->

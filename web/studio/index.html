@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Nova Hub</title>
-<meta name="description" content="Nova Hub: the Novacane Studios staff hub, part of the Nova suite.">
+<title>Studio · Nova Agent</title>
+<meta name="description" content="Studio: the Novacane Studios staff hub, part of Nova Agent.">
 <meta name="theme-color" content="#06040D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Nova Hub">
-<meta name="application-name" content="Nova Hub">
+<meta name="apple-mobile-web-app-title" content="Studio">
+<meta name="application-name" content="Studio">
 <link rel="manifest" href="/studio/manifest.webmanifest">
 <link rel="icon" href="/studio/icon.svg" type="image/svg+xml">
 <link rel="icon" href="/studio/icon-192.png" type="image/png" sizes="192x192">
@@ -26,7 +26,7 @@
 </head>
 <body>
 
-<!-- The pictures used around the page: the Novacane sigil (NovaBot), and the Nova suite's cosmic letter marks -->
+<!-- The pictures used around the page: the Novacane sigil (NovaBot), and Nova Agent's cosmic letter marks -->
 <svg class="sprite" aria-hidden="true">
   <symbol id="sigil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1">
     <path d="M20.19 6.26A10 10 0 0 1 6.26 20.19"/>
@@ -50,7 +50,7 @@
     <rect width="512" height="512" fill="url(#nv-neb)"/>
     <g fill="#fff"><circle cx="70" cy="90" r="2.6" opacity=".8"/><circle cx="440" cy="70" r="2" opacity=".6"/><circle cx="462" cy="330" r="2.4" opacity=".6"/><circle cx="80" cy="420" r="1.8" opacity=".55"/><circle cx="290" cy="470" r="1.6" opacity=".5"/><circle cx="150" cy="200" r="1.4" opacity=".45"/><circle cx="392" cy="150" r="1.6" opacity=".5"/></g>
   </symbol>
-  <!-- Nova Hub: a cosmic H with an orbit round it, a sparkle in its notch and a planet on the orbit -->
+  <!-- Studio: a cosmic H with an orbit round it, a sparkle in its notch and a planet on the orbit -->
   <symbol id="i-mark" viewBox="0 0 512 512">
     <use href="#i-sky"/>
     <ellipse cx="256" cy="262" rx="196" ry="50" fill="none" stroke="#FFD1EA" stroke-opacity=".35" stroke-width="3.5" stroke-dasharray="3 11" stroke-linecap="round" transform="rotate(-14 256 262)"/>
@@ -104,16 +104,16 @@
     <span class="login-halo"></span>
     <svg class="login-mark" viewBox="0 0 512 512"><use href="#i-mark"/></svg>
   </div>
-  <span class="kicker login-kicker">Nova suite · Novacane</span>
-  <h1 class="wordmark">Nova Hub</h1>
-  <p class="login-sub">Staff hub for Novacane Studios</p>
+  <span class="kicker login-kicker">Nova Agent · Novacane</span>
+  <h1 class="wordmark">Nova Agent</h1>
+  <p class="login-sub">Studio: enquiries, chats, bookings and alerts</p>
   <form id="login-form" class="login-form">
-    <!-- One sign-in for the whole suite (Nova Portal); the shared password still works for now -->
+    <!-- One sign-in for the whole suite (Crew); the shared password still works for now -->
     <a class="btn portal-btn" href="/crew/?next=/studio/">✦ Sign in</a>
-    <p class="login-or">or, for now, the studio's shared password:</p>
-    <label for="password">Studio password</label>
+    <p class="login-or" id="login-or">or, for now, the studio's shared password:</p>
+    <label for="password" id="password-label">Studio password</label>
     <input id="password" type="password" autocomplete="current-password" required>
-    <button class="btn" type="submit">Sign in</button>
+    <button class="btn" type="submit" id="password-submit">Sign in</button>
     <p id="login-error" class="error" role="alert"></p>
   </form>
 </section>
@@ -131,13 +131,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
       </button>
     </div>
-    <!-- The brand: tap it to see the other Nova suite apps (suite.js) -->
-    <button id="brand" class="brand" type="button" aria-haspopup="dialog" aria-controls="suite-sheet" title="Nova suite">
+    <!-- The brand: tap it to see the other Nova Agent apps (suite.js) -->
+    <button id="brand" class="brand" type="button" aria-haspopup="dialog" aria-controls="suite-sheet" title="Nova Agent">
       <svg class="brand-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
-      <span class="brand-text"><span class="suite-kicker">Nova suite<span class="kicker-more"> · Novacane</span></span><span class="wordmark small">Nova Hub</span></span>
+      <span class="brand-text"><span class="suite-kicker">Nova Agent<span class="kicker-more"> · Novacane</span></span><span class="wordmark small">Studio</span></span>
     </button>
     <div class="top-actions">
-      <!-- Nova Portal: who's signed in (your planet, name and role; tap for your profile) -->
+      <!-- Crew: who's signed in (your planet, name and role; tap for your profile) -->
       <nova-manual compact></nova-manual>
       <nova-portal-badge id="portal-badge"></nova-portal-badge>
       <!-- Notifications: opens the "turn on notifications" panel -->
@@ -232,7 +232,7 @@
         <h2>Alerts</h2>
         <button id="alerts-clear" class="chip" type="button">Delete all</button>
       </div>
-      <p class="hint">Every notification that went through to the Nova Hub app on a phone.</p>
+      <p class="hint">Every notification that went through to the Studio app on a phone.</p>
       <!-- The auto-delete switch: alerts delete themselves after a set time -->
       <div class="auto-delete">
         <label class="switch">
@@ -332,23 +332,23 @@
     <p id="voice-status" class="voice-status">Listening…</p>
     <p id="voice-answer" class="voice-answer" hidden></p>
     <p class="hint">Try: "show alerts", "delete all alerts", "call Eric", "new enquiries", "ask NovaBot what the prices are"</p>
-    <!-- Hands-free: always listen while Nova Hub is open (start with "Nova") -->
+    <!-- Hands-free: always listen while Studio is open (start with "Nova") -->
     <label class="switch">
       <input id="handsfree-switch" type="checkbox" role="switch">
       <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
-      <span>Always listen while Nova Hub is open (start with “Nova”)</span>
+      <span>Always listen while Studio is open (start with “Nova”)</span>
     </label>
     <button id="voice-stop" class="btn ghost" type="button">Done</button>
   </div>
 </div>
 
-<!-- The Nova suite: every app in the family (opened by tapping the brand; suite.js) -->
+<!-- The Nova Agent: every app in the family (opened by tapping the brand; suite.js) -->
 <div id="suite-sheet" class="sheet suite-sheet" hidden>
   <div class="sheet-card suite-card" role="dialog" aria-modal="true" aria-labelledby="suite-title">
     <div class="suite-head">
       <div>
         <span class="kicker">Novacane Studios</span>
-        <h3 id="suite-title">Nova suite</h3>
+        <h3 id="suite-title">Nova Agent</h3>
       </div>
       <button id="suite-close" class="icon-btn" type="button" aria-label="Close">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
@@ -358,7 +358,7 @@
       <li class="suite-app here">
         <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
         <div class="suite-words">
-          <strong class="suite-name">Nova Hub</strong>
+          <strong class="suite-name">Studio</strong>
           <p>You're here: enquiries, chats, bookings, quests and alerts.</p>
         </div>
         <span class="suite-tag here">This app</span>
@@ -448,12 +448,12 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<!-- Options: how Nova Hub looks and behaves on this device (options.js; saved on this device) -->
+<!-- Options: how Studio looks and behaves on this device (options.js; saved on this device) -->
 <div id="options-sheet" class="sheet options-sheet" hidden>
   <div class="sheet-card options-card" role="dialog" aria-modal="true" aria-labelledby="options-title">
     <div class="suite-head">
       <div>
-        <span class="kicker">Nova Hub</span>
+        <span class="kicker">Studio</span>
         <h3 id="options-title">Options</h3>
       </div>
       <button id="options-close" class="icon-btn" type="button" aria-label="Close">

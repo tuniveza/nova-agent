@@ -1,4 +1,4 @@
-// Copies the Nova Portal badge and the Nova Manual (app/badge.js, app/manual.js and
+// Copies the Nova Agent badge and the Nova Manual (app/badge.js, app/manual.js and
 // app/manual-data.js, the only real copies) into the suite apps that live on their own
 // sites, as js/portal-badge.js, js/nova-manual.js and js/nova-manual-data.js. Nova Bot's
 // worker and Nova Agent serve them straight from here (/portal/...), so they don't need a copy.

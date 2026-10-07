@@ -1,6 +1,6 @@
 # Nova planets
 
-Every Nova suite member gets a planet drawn from their id. It is their identity
+Every Nova Agent member gets a planet drawn from their id. It is their identity
 badge: the same planet on the web, in the Worker's server-rendered pages and in
 Nova Club on Android.
 

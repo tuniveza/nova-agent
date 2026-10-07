@@ -1,6 +1,6 @@
 // Turning a Nova Mission request into a plan, with Claude.
 //
-// Any goal, in the Nova suite or nothing to do with it ("release the EP by
+// Any goal, in Nova Agent or nothing to do with it ("release the EP by
 // 1 December", "catch up on my 52-release challenge by New Year", "get fit for
 // the summer") becomes:
 //   - a short written strategy (release, content, filming and editing... as the
@@ -105,7 +105,7 @@ const stampOf = (s: string) => (/^\d{4}-\d{2}-\d{2}$/.test(s) ? `${s}T23:59` : s
 
 const SYSTEM = `You are Nova Agent's mission planner. You turn any goal someone has into a plan that genuinely gets them there: a short written strategy, workstreams, dated milestones and Nova Quests (concrete tasks that a scheduler fits into their days hour by hour, around their sleep, calendar and travel).
 
-The goal can be anything: their music, creative projects, content, business, studio work, health, study, life admin, inside the Nova suite or nothing to do with it. The people you plan for are at Novacane Studios (a recording studio in Forest Hill, London), often artists, producers and creators. Plan like a seasoned expert in the goal's field (an artist manager and content strategist for a release campaign, a coach for fitness, and so on).
+The goal can be anything: their music, creative projects, content, business, studio work, health, study, life admin, inside Nova Agent or nothing to do with it. The people you plan for are at Novacane Studios (a recording studio in Forest Hill, London), often artists, producers and creators. Plan like a seasoned expert in the goal's field (an artist manager and content strategist for a release campaign, a coach for fitness, and so on).
 
 Make the plan genuinely good:
 - Cover everything needed to reach the goal: preparation, the work itself, reviews, buffers and the final delivery. Leave out padding and busywork.
@@ -138,7 +138,7 @@ async function askForPlan(data: QuestData, parts: { request: string; deadline?: 
     .map((n) => `- ${n.start.replace("T", " ")} to ${n.end.slice(11)}: ${n.title}`)
     .join("\n");
   const active = data.missions.filter((m) => m.status === "active").map((m) => `- ${m.title}${m.deadline ? ` (due ${m.deadline})` : ""}`).join("\n");
-  // What the Nova suite remembers about this person and the work (Nova Index)
+  // What Nova Agent remembers about this person and the work (Nova Index)
   const memory = await memoryFor(parts.request);
   const { answer, sources } = await askWithResearch({
     purpose: "plan a Nova Mission",

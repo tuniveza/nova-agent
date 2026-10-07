@@ -1,4 +1,4 @@
-// Nova Index from Nova Agent's side: what the Nova suite remembers, read before a reply,
+// Nova Index from Nova Agent's side: what Nova Agent remembers, read before a reply,
 // and conversations handed over afterwards so the suite keeps learning. The memory itself
 // lives in Nova Bot's worker (its /memory/ API, with the agent key); Nova Agent reads the
 // studio's facts and the staff member it works for (src/staff.ts), and never customers'.
@@ -26,7 +26,7 @@ export async function memoryFor(q: string): Promise<string> {
     if (!res.ok) return "";
     const { text } = (await res.json()) as { text?: string };
     const block = text
-      ? `WHAT THE NOVA SUITE REMEMBERS (Nova Index: facts learned earlier about the studio, its people and ${who === "owner" ? "the person you're talking to" : who}). Use them quietly to plan and answer better; don't recite them or mention this memory unless asked. If they conflict with what's said now, trust what's said now.\n${text}`
+      ? `WHAT NOVA AGENT REMEMBERS (Nova Index: facts learned earlier about the studio, its people and ${who === "owner" ? "the person you're talking to" : who}). Use them quietly to plan and answer better; don't recite them or mention this memory unless asked. If they conflict with what's said now, trust what's said now.\n${text}`
       : "";
     cache.set(key, { at: Date.now(), text: block });
     if (cache.size > 100) cache.delete(cache.keys().next().value!);

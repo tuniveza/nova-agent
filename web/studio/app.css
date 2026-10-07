@@ -1,4 +1,4 @@
-/* Nova Hub: the Nova suite look (the same cosmic skin as Nova Agent, Nova Notes and Nova Calendar),
+/* Studio: Nova Agent look (the same cosmic skin as Nova Agent, Nova Notes and Nova Calendar),
    built for phones first. Type: Archivo (wide, 900) for display, Saira for reading, Source Code Pro
    for little labels. Glass panels with a gradient hairline edge, floating among the stars.
    Every colour comes from themes.css, so the themes (Cosmic, Ember, Aurora, Ocean, Gold, Mono) restyle it all. */
@@ -397,7 +397,7 @@ main {
   .tab svg { width: 21px; height: 21px; }
 }
 
-/* ----- Sheets (booking link, notifications, Nova suite) ----- */
+/* ----- Sheets (booking link, notifications, Nova Agent) ----- */
 .sheet {
   position: fixed; inset: 0; z-index: 10;
   display: flex; align-items: flex-end; justify-content: center;
@@ -433,7 +433,7 @@ main {
 .row { display: flex; gap: 10px; }
 .row .btn { flex: 1; }
 
-/* ----- The Nova suite sheet ----- */
+/* ----- The Nova Agent sheet ----- */
 .suite-card { gap: 14px; max-width: 600px; }
 .suite-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .suite-head h3 {
@@ -506,7 +506,7 @@ main {
   box-shadow: 0 0 20px -6px var(--glow);
 }
 
-/* The banner that drops in when a notification arrives while Nova Hub is open */
+/* The banner that drops in when a notification arrives while Studio is open */
 .ping-banner {
   position: fixed; left: max(12px, var(--safe-left)); right: max(12px, var(--safe-right)); top: calc(12px + var(--safe-top)); z-index: 40;
   max-width: 560px; margin: 0 auto;
@@ -702,7 +702,7 @@ select option:checked { background: var(--accent); color: var(--on-accent); }
   .chips .chip { padding: 0 11px; }
 }
 @media (max-width: 365px) {
-  /* Only the mark (still tappable for the Nova suite) */
+  /* Only the mark (still tappable for Nova Agent) */
   .brand-text { display: none; }
 }
 
@@ -744,7 +744,7 @@ select option:checked { background: var(--accent); color: var(--on-accent); }
 .list > .card:nth-child(4) { animation-delay: 0.15s; }
 .list > .card:nth-child(n + 5) { animation-delay: 0.2s; }
 
-/* ----- Themes: the picker in the Nova suite sheet ----- */
+/* ----- Themes: the picker in Nova Agent sheet ----- */
 .theme-section { display: grid; gap: 10px; margin-top: 4px; }
 .theme-section .kicker { text-align: left; }
 .theme-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -773,7 +773,7 @@ select option:checked { background: var(--accent); color: var(--on-accent); }
 /* The tick on the chosen theme */
 .theme-swatch[aria-pressed="true"] .theme-name::after { content: " ✓"; color: var(--hi); }
 
-/* ----- All links (in the Nova suite sheet) ----- */
+/* ----- All links (in Nova Agent sheet) ----- */
 .links-section { display: grid; gap: 10px; }
 .links-toggle {
   display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 48px;
@@ -1016,7 +1016,7 @@ html[data-align="center"] .q-tags { justify-content: center; }
 @keyframes sweep { to { --sweep: 360deg; } }
 @keyframes star-spin { to { transform: rotate(360deg); } }
 
-/* Everything the Nova suite can do (in the All links section) */
+/* Everything Nova Agent can do (in the All links section) */
 .links-features-head { margin: 14px 0 2px; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 15px; color: var(--bright); text-align: center; }
 .feature-item { display: grid; gap: 2px; padding: 8px 2px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.4; }
 .feature-item b { color: var(--bright); }
@@ -1070,11 +1070,11 @@ html[data-align="center"] .q-tags { justify-content: center; }
 .cal-day.full::after { content: "FULL"; position: absolute; right: 4px; top: 3px; font-family: var(--f-mono); font-size: 7.5px; letter-spacing: 0.1em; color: var(--warn); }
 .cal-day { position: relative; }
 
-/* Signing in: Nova Portal first, the shared studio password underneath */
+/* Signing in: Crew first, the shared studio password underneath */
 .portal-btn { display: inline-flex; justify-content: center; width: 100%; text-decoration: none; }
 .login-or { margin: 10px 0 -2px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--muted); text-align: center; }
 
-/* ===================== Nova Portal badge (header) ===================== */
+/* ===================== Nova Agent badge (header) ===================== */
 /* Your planet, name and role; on a phone just the planet, so the brand stays centred */
 .top-actions nova-portal-badge { margin-right: 2px; }
 @media (max-width: 560px) {

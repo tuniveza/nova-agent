@@ -4,14 +4,14 @@
 
 # Nova Index
 
-**Everything the Nova suite remembers, in one place.**<br>
+**Everything Nova Agent remembers, in one place.**<br>
 Browse it, watch it grow, fix a line, and say yes or no to what's been learned about customers.
 
 [![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)](app/manifest.webmanifest)
 [![Vanilla JS](https://img.shields.io/badge/Vanilla-JS-F7DF1E?logo=javascript&logoColor=black)](app/memory.js)
 [![Cloudflare Workers](https://img.shields.io/badge/engine-Workers%20%2B%20D1-F38020?logo=cloudflare&logoColor=white)](https://github.com/tuniveza/nova-bot)
 [![Claude](https://img.shields.io/badge/AI-Claude-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/claude)
-[![Nova suite](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
+[![Nova Agent](https://img.shields.io/badge/part%20of-nova--suite-B026FF)](https://github.com/tuniveza/nova-suite)
 
 </div>
 
@@ -74,11 +74,11 @@ the differences lit up, and can put your edit on top of theirs in one tap, or ke
 </table>
 
 - **Live** shows what the suite has just learned, and which app learned it (NovaBot, Nova
-  Agent, Nova Hub, Nova Index). It checks every 20 seconds while it's on screen, and anything
+  Agent, Studio, Nova Index). It checks every 20 seconds while it's on screen, and anything
   new glows as it arrives. Tap a row to open the file.
 - **Approve** holds facts learned from customers. One tap approves, edits or rejects each one.
   Nothing about a customer is kept without a person saying yes.
-- **Options**: the theme (shared with Nova Hub), sound effects, refresh everything, open Nova
+- **Options**: the theme (shared with Studio), sound effects, refresh everything, open Nova
   Hub and sign out. It installs as an app, with the suite's cosmic "I".
 
 ## How the memory works
@@ -103,11 +103,11 @@ the differences lit up, and can put your edit on top of theirs in one tap, or ke
 |---|---|
 | Nova Agent (its key) | The studio's memory and staff memory; never customers' |
 | The website's NovaBot | Only that customer's own file and the public studio facts |
-| Nova Hub and Nova Index, signed in | Everything, including approvals |
-| Staff signed in with [Nova Portal](https://github.com/tuniveza/nova-portal) | Staff who aren't admins: the studio's memory and their own; admins: everything |
+| Studio and Nova Index, signed in | Everything, including approvals |
+| Staff signed in with [Crew](https://github.com/tuniveza/nova-portal) | Staff who aren't admins: the studio's memory and their own; admins: everything |
 
-Nova Index signs in with **Nova Portal**, the suite's one sign-in ("✦ Sign in with Nova
-Portal"), so each person sees what's theirs to see. The studio's shared Nova Hub password
+Nova Index signs in with **Crew**, the suite's one sign-in ("✦ Sign in with Nova
+Portal"), so each person sees what's theirs to see. The studio's shared Studio password
 still works too, and sees everything.
 
 The memory engine runs on Nova Bot's worker (`src/memory/` in
@@ -118,8 +118,8 @@ memories live in its database, never in git. The full design is in [docs/spec.md
 
 | Where | Address | What you can see |
 |---|---|---|
-| Nova Hub (signed in) | `https://novacane-worker.novacane-studio.workers.dev/app/memory/` | Everything, including approvals |
-| Nova Agent (studio computer) | `http://localhost:4545/app/memory/` (inside Nova Agent's viewer) | Studio and staff memory; approvals open in Nova Hub |
+| Studio (signed in) | `https://novacane-worker.novacane-studio.workers.dev/app/memory/` | Everything, including approvals |
+| Nova Agent (studio computer) | `http://localhost:4545/app/memory/` (inside Nova Agent's viewer) | Studio and staff memory; approvals open in Studio |
 
 This folder is the only real copy of the app. Nova Bot copies `app/` into its
 `public/app/memory/` on every deploy and local run (`scripts/sync-apps.mjs`, wrangler's build
@@ -135,18 +135,18 @@ The page talks only to `/app/api/memory/` on its own site (`index`, `file`, `pen
 ```
 app/index.html          the page (sign-in, Browse, Live, Approve, Options)
 app/memory.js           everything it does (no inline scripts: the page's security rules forbid them)
-app/memory.css          the Nova suite look (colours from Nova Hub's shared themes)
+app/memory.css          Nova Agent look (colours from Studio's shared themes)
 app/manifest.webmanifest, app/icon*  the installable app and its cosmic "I"
 docs/spec.md            the design: data model, API, extraction, retrieval, privacy
 docs/media/             README images
 ```
 
-## Part of the Nova suite
+## Part of Nova Agent
 
 | Project | What it is |
 |---|---|
-| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova suite: an overview of every project |
-| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, Nova Hub, and the memory engine |
+| [nova-suite](https://github.com/tuniveza/nova-suite) | The Nova Agent: an overview of every project |
+| [nova-bot](https://github.com/tuniveza/nova-bot) | The website chat assistant, Studio, and the memory engine |
 | [nova-agent](https://github.com/tuniveza/nova-agent) | The chat and planner on the studio computer, and the Acuity helper |
 | **[nova-index](https://github.com/tuniveza/nova-index)** | This repo: everything the suite remembers, browsable |
 | [nova-club](https://github.com/tuniveza/nova-club) | Members' Android app |

@@ -729,7 +729,7 @@
       { label: 'Focus mode', icon: 'focus', kbd: 'Ctrl+Shift+F', checked: shell.classList.contains('focus'), run: toggleFocus },
       { label: 'Full screen', icon: 'full', run: toggleFullscreen },
       { sep: true },
-      // The soft Nova suite sounds on every press (js/sfx.js); ticked while they're on
+      // The soft Nova Agent sounds on every press (js/sfx.js); ticked while they're on
       { label: 'Sound effects', icon: 'sound', checked: sfxOn(), sfx: 'none', run: toggleSfx }
     ]],
     ['Insert', () => [
@@ -792,8 +792,8 @@
     ['Help', () => [
       { label: 'Install Nova Notes as an app', icon: 'export', run: installApp },
       { label: 'Keyboard shortcuts', icon: 'keys', kbd: 'Ctrl+/', run: showKeys },
-      // Every Nova suite address, live and testing (behind the admin password, on Nova Hub's admin page)
-      { label: '🔒 All Nova suite links', icon: 'link', run: () => window.open('https://novacane-worker.novacane-studio.workers.dev/admin/links', '_blank', 'noopener') },
+      // Every Nova Agent address, live and testing (behind the admin password, on Studio's admin page)
+      { label: '🔒 All Nova Agent links', icon: 'link', run: () => window.open('https://novacane-worker.novacane-studio.workers.dev/admin/links', '_blank', 'noopener') },
       { label: 'About Nova Notes', icon: 'info', run: () => $('dlg-about').showModal() }
     ]]
   ];
@@ -1396,7 +1396,7 @@
     hideBars();
     editor.focus();
   }
-  // Sound effects: the shared Nova suite sounds (js/sfx.js), on unless switched off on this device
+  // Sound effects: the shared Nova Agent sounds (js/sfx.js), on unless switched off on this device
   function sfxOn() {
     return Boolean(window.NovaSfx && window.NovaSfx.enabled());
   }
