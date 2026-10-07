@@ -1,32 +1,35 @@
-// Builds the Nova Manual's content (app/manual-data.js) from the suite itself:
-// every app's README (how to use it, how it's built, what's new), its git
-// history, and what's changed but not saved in git yet. Then shares the manual
-// with the apps that live on their own sites (scripts/share-badge.mjs).
-//   node scripts/build-manual.mjs
-// Run it again whenever a README or the history changes; Nova Bot's worker picks
-// the new copy up on its next build, Nova Agent straight away.
+// Builds the Nova Manual's content (web/shared/manual-data.js) from Nova Agent itself:
+// its README and each panel's (docs/apps/<panel>/README.md: how to use it, how it's
+// built, what's new), their git history (each panel's history from before it joined
+// Nova Agent too), and what's changed but not saved in git yet. Nova Bot's own README
+// and history come from its repo next door (ns/nb/novacane-worker), if it's there.
+//   node scripts/build-manual.mjs   (or npm run manual)
+// Run it again whenever a README or the history changes; Nova Bot's worker picks the
+// new copy up on its next build, Nova Agent straight away.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const ns = join(here, "..", "..");
+const root = join(here, "..");
+const ns = join(root, "..");
 const WORKER = "https://novacane-worker.novacane-studio.workers.dev";
 
-// The apps, in the order the manual lists them
+// Nova Agent and its panels, in the order the manual lists them. `readme` is in this repo;
+// `paths` is what its history is about, and `joined` finds the commit that brought a panel's
+// own history in. Nova Bot is its own project (`repo`, next door).
+const PC = "http://localhost:4545";
 const APPS = [
-  { id: "agent", name: "Nova Agent", repo: "na", colour: "#FF5FA8", glyph: "✦", where: "On the studio computer", links: [["Open Nova Agent", "http://localhost:4545/"]] },
-  { id: "hub", name: "Studio", repo: "nb/novacane-worker", sections: /Studio/i, colour: "#C7A4FF", glyph: "▣", where: "On the staff phones", links: [["Open Studio", `${WORKER}/app/`]] },
-  { id: "bot", name: "Nova Bot", repo: "nb/novacane-worker", colour: "#5CE1FF", glyph: "◎", where: "On the website and Cloudflare", links: [["Admin pages", `${WORKER}/admin`]] },
-  { id: "calendar", name: "Nova Calendar", repo: "na/calendar", colour: "#F2D9A0", glyph: "◷", where: "Its own site, and inside Nova Agent", links: [["Open Nova Calendar", "https://nova-calendar.novacane-studio.workers.dev/"]] },
-  { id: "notes", name: "Nova Notes", repo: "nn", colour: "#FF8CC6", glyph: "✎", where: "Its own site, and inside Nova Agent", links: [["Open Nova Notes", "https://nova-notes.novacane-studio.workers.dev/"]] },
-  { id: "index", name: "Nova Index", repo: "ni", colour: "#5CFFC0", glyph: "≡", where: "On Nova Bot's worker, and inside Nova Agent", links: [["Open Nova Index", `${WORKER}/app/memory/`]] },
-  { id: "portal", name: "Crew", repo: "np", colour: "#9DB4FF", glyph: "◉", where: "On Nova Bot's worker", links: [["Open Crew", `${WORKER}/portal/`]] },
-  { id: "observatory", name: "Nova Observatory", repo: "no", colour: "#FFB86B", glyph: "✧", where: "Inside Nova Agent, or any browser", links: [["Open it in Nova Agent", "http://localhost:4545/observatory/"]] },
+  { id: "agent", name: "Nova Agent", readme: "README.md", paths: ["src", "web/agent", "test", "scripts", "package.json"], colour: "#FF5FA8", glyph: "✦", where: "On the studio computer, and online for phones", links: [["Open Nova Agent", `${PC}/`]] },
+  { id: "studio", name: "Studio", readme: "docs/apps/studio/README.md", paths: ["web/studio", "docs/apps/studio"], joined: "as web/hub", colour: "#C7A4FF", glyph: "▣", where: "A Nova Agent panel; online on the staff phones", links: [["Open Studio", `${PC}/studio/`], ["Online", `${WORKER}/studio/`]] },
+  { id: "crew", name: "Crew", readme: "docs/apps/crew/README.md", paths: ["web/crew", "docs/apps/crew"], joined: "as web/portal", colour: "#9DB4FF", glyph: "◉", where: "A Nova Agent panel; online too", links: [["Open Crew", `${PC}/crew/`], ["Online", `${WORKER}/crew/`]] },
+  { id: "calendar", name: "Nova Calendar", readme: "docs/apps/calendar/README.md", paths: ["web/calendar", "docs/apps/calendar"], joined: "as web/calendar", colour: "#F2D9A0", glyph: "◷", where: "A Nova Agent panel", links: [["Open Nova Calendar", `${PC}/calendar/`]] },
+  { id: "notes", name: "Nova Notes", readme: "docs/apps/notes/README.md", paths: ["web/notes", "docs/apps/notes"], joined: "as web/notes", colour: "#FF8CC6", glyph: "✎", where: "A Nova Agent panel", links: [["Open Nova Notes", `${PC}/notes/`]] },
+  { id: "index", name: "Nova Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel; online too", links: [["Open Nova Index", `${PC}/index/`]] },
+  { id: "observatory", name: "Nova Observatory", readme: "docs/apps/observatory/README.md", paths: ["web/observatory", "docs/apps/observatory", "scripts/observatory"], joined: "as web/observatory", colour: "#FFB86B", glyph: "✧", where: "A Nova Agent panel", links: [["Open it in Nova Agent", `${PC}/observatory/`]] },
+  { id: "bot", name: "Nova Bot", repo: "nb/novacane-worker", colour: "#5CE1FF", glyph: "◎", where: "On the website and Cloudflare: Nova Agent's back end", links: [["Admin pages", `${WORKER}/admin`]] },
 ];
-// Nova Bot's README covers Hub too: this section of it is Studio's
-const HUB_SECTIONS = /^Studio/i;
 
 // Which README sections go where
 const SKIP = /^(contents|screenshots|see it (work|in action)|part of the nova suite|licen[cs]e)\b/i;
@@ -187,8 +190,19 @@ function git(repo, args) {
   }
 }
 
-function history(repo) {
-  const log = git(repo, ["log", `-${MAX_COMMITS}`, "--date=iso-strict", "--pretty=format:%x1e%h%x1f%ad%x1f%s%x1f%b"]);
+// A panel's own history from before it joined Nova Agent: the second parent of the merge that brought it in
+function joinedTip(repo, joined) {
+  if (!joined) return "";
+  const merge = git(repo, ["log", "--merges", "--fixed-strings", `--grep=${joined}`, "--format=%H", "-1"]).trim();
+  return merge ? `${merge}^2` : "";
+}
+
+function history(repo, paths = [], joined = "") {
+  const FORMAT = ["--date=iso-strict", "--pretty=format:%x1e%h%x1f%ad%x1f%s%x1f%b"];
+  const tip = joinedTip(repo, joined);
+  const scope = paths.length ? ["--", ...paths] : [];
+  // Since it joined (only what touched its paths), then its own history before that
+  const log = git(repo, ["log", `-${MAX_COMMITS}`, ...FORMAT, "HEAD", ...scope]) + (tip ? git(repo, ["log", `-${MAX_COMMITS}`, ...FORMAT, tip]) : "");
   const commits = log
     .split("\x1e")
     .filter(Boolean)
@@ -197,15 +211,19 @@ function history(repo) {
       const notes = (body || "").split("\n").filter((l) => l.trim() && !/^co-authored-by:/i.test(l)).join("\n").trim();
       return { hash, date, subject: subject.trim(), body: notes.slice(0, 900) };
     });
-  const total = Number(git(repo, ["rev-list", "--count", "HEAD"]).trim()) || commits.length;
+  commits.sort((a, b) => b.date.localeCompare(a.date));
+  commits.splice(MAX_COMMITS);
+  const count = (args) => Number(git(repo, ["rev-list", "--count", ...args]).trim()) || 0;
+  const total = count(["HEAD", ...scope]) + (tip ? count([tip]) : 0) || commits.length;
   // What's changed and not committed yet: file names and how much, never the contents
-  const work = git(repo, ["status", "--porcelain=v1", "-uall"])
+  const work = git(repo, ["status", "--porcelain=v1", "-uall", ...scope])
     .split("\n")
     .filter(Boolean)
     .filter((l) => !/(^|\/)(\.env|\.dev\.vars|session\.json|manual-data\.js|nova-manual(-data)?\.js|portal-badge\.js)$/.test(l.slice(3)))
     .map((l) => ({ state: /\?\?/.test(l.slice(0, 2)) ? "new" : /D/.test(l.slice(0, 2)) ? "removed" : "changed", file: l.slice(3).replace(/^"|"$/g, "") }));
-  const stat = git(repo, ["diff", "HEAD", "--shortstat"]).trim();
-  return { total, first: git(repo, ["log", "--reverse", "--date=iso-strict", "--pretty=format:%ad"]).split("\n")[0] || "", commits, work: work.slice(0, 60), workCount: work.length, workStat: stat };
+  const stat = git(repo, ["diff", "HEAD", "--shortstat", ...scope]).trim();
+  const first = git(repo, ["log", "--reverse", "--date=iso-strict", "--pretty=format:%ad", tip || "HEAD", ...(tip ? [] : scope)]).split("\n")[0] || "";
+  return { total, first, commits, work: work.slice(0, 60), workCount: work.length, workStat: stat };
 }
 
 // ---- the manual ----
@@ -216,25 +234,19 @@ function chapter(s, i) {
 }
 
 function build() {
-  const cache = new Map();
   const apps = [];
   for (const app of APPS) {
-    const dir = join(ns, app.repo);
-    const file = join(dir, "README.md");
+    const dir = app.repo ? join(ns, app.repo) : root;
+    const file = join(dir, app.repo ? "README.md" : app.readme);
     if (!existsSync(file)) {
-      console.log(`skip ${app.name}: no README at ${app.repo}`);
+      console.log(`skip ${app.name}: no README at ${file}`);
       continue;
     }
-    if (!cache.has(app.repo)) cache.set(app.repo, { doc: readme(file), hist: history(dir) });
-    const { doc, hist } = cache.get(app.repo);
-    // Nova Bot's README is shared: Studio gets its own sections, Nova Bot the rest
-    let sections = doc.sections;
-    if (app.repo === "nb/novacane-worker") sections = sections.filter((s) => (app.id === "hub" ? HUB_SECTIONS.test(s.title) : !HUB_SECTIONS.test(s.title)));
-    sections = sections.filter((s) => !SKIP.test(s.title));
+    const doc = readme(file);
+    const hist = history(dir, app.paths, app.joined);
+    const sections = doc.sections.filter((s) => !SKIP.test(s.title));
     const news = sections.filter((s) => NEWS.test(s.title));
     const rest = sections.filter((s) => !NEWS.test(s.title));
-    const guide = rest.filter((s) => app.id === "hub" || !BUILT.test(s.title));
-    const built = app.id === "hub" ? [] : rest.filter((s) => BUILT.test(s.title));
     apps.push({
       id: app.id,
       name: app.name,
@@ -242,30 +254,22 @@ function build() {
       glyph: app.glyph,
       where: app.where,
       links: app.links,
-      repo: app.repo,
-      shared: app.repo === "nb/novacane-worker" ? "Studio and Nova Bot share one project (Nova Bot's worker), so their history is the same." : "",
-      tagline: app.id === "hub" ? "The staff app: quests, the smart calendar, alerts and Ask Nova, on the phones." : doc.tagline,
-      intro: app.id === "hub" ? "" : doc.intro,
-      guide: guide.map(chapter),
-      built: built.map(chapter),
+      repo: app.repo || "na",
+      shared: "",
+      tagline: doc.tagline,
+      intro: doc.intro,
+      guide: rest.filter((s) => !BUILT.test(s.title)).map(chapter),
+      built: rest.filter((s) => BUILT.test(s.title)).map(chapter),
       news: news.map(chapter),
       history: hist,
     });
   }
-  // The suite's own story, from the umbrella repo (if it's next door)
-  let suite = null;
-  const suiteFile = join(ns, "..", "nova-suite", "README.md");
-  if (existsSync(suiteFile)) {
-    const doc = readme(suiteFile);
-    suite = { tagline: doc.tagline, intro: doc.intro, chapters: doc.sections.filter((s) => !SKIP.test(s.title)).map(chapter) };
-  }
-  return { built: new Date().toISOString(), recentDays: RECENT_DAYS, suite, apps };
+  return { built: new Date().toISOString(), recentDays: RECENT_DAYS, suite: null, apps };
 }
 
 const data = build();
-const out = join(here, "..", "app", "manual-data.js");
+const out = join(root, "web", "shared", "manual-data.js");
 writeFileSync(out, `// The Nova Manual's content, made by scripts/build-manual.mjs from every app's README and git history.\n// Don't edit by hand: run  node scripts/build-manual.mjs  again.\nwindow.NovaManualData = ${JSON.stringify(data)};\n`);
-console.log(`Nova Manual: ${data.apps.length} apps, ${data.apps.reduce((n, a) => n + a.guide.length + a.built.length, 0)} chapters, ${(readFileSync(out).length / 1024).toFixed(0)} KB → app/manual-data.js`);
+console.log(`Nova Manual: ${data.apps.length} apps, ${data.apps.reduce((n, a) => n + a.guide.length + a.built.length, 0)} chapters, ${(readFileSync(out).length / 1024).toFixed(0)} KB → web/shared/manual-data.js`);
 
-// Share it (and the badge) with the apps on their own sites
-execFileSync(process.execPath, [join(here, "share-badge.mjs")], { stdio: "inherit" });
+

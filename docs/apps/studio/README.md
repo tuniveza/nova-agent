@@ -37,7 +37,7 @@ password).
   <sub>Tap a free slot, and NovaBot · bookings opens with the request already written.</sub>
 </p>
 
-### The tabs
+## The tabs
 
 | Tab | What it does |
 |---|---|
@@ -48,7 +48,7 @@ password).
 | **Alerts** | Every notification that reached a phone, newest first, with colour-coded labels, exact times, Call/Email buttons and an auto-delete switch. |
 | **NovaBot** | Two chats. **Ask Nova** answers questions about the studio's bookings, enquiries and alerts (Nova Bot's `src/studio-ask.js`). **NovaBot · bookings** is NovaBot with the booking tools, talking to you as staff: get a link for a client, find, move, cancel or change a booking. Every change shows a summary and waits for a yes. |
 
-### The smart calendar
+## The smart calendar
 
 - **The week at a glance**: sessions, hours booked and how full, session value, the
   busiest day, the next free hour, and any clashes.
@@ -58,7 +58,7 @@ password).
 - **One tap from a booking link**: tapping a free slot opens NovaBot · bookings with the
   request written for you. "✦ Ask Nova" buttons ask about the week or the day.
 
-### Features
+## Features
 
 - **Real-booking checks.** A booking alert asks Acuity about that booking as it comes into
   view: "✓ Real booking: confirmed in Acuity", with the deposit paid, or "Cancelled" or
