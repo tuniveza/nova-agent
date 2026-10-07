@@ -72,32 +72,58 @@ export async function boot(at: string) {
   // Quiet: the trace prints every notice
   vi.spyOn(console, "log").mockImplementation(() => {});
 
-  const store = await import("../src/quests/store");
-  const plan = await import("../src/quests/plan");
-  const reminders = await import("../src/quests/reminders");
-  const pulses = await import("../src/quests/pulses");
-  const actions = await import("../src/quests/actions");
+  const load = async () => ({
+    store: await import("../src/quests/store"),
+    plan: await import("../src/quests/plan"),
+    reminders: await import("../src/quests/reminders"),
+    pulses: await import("../src/quests/pulses"),
+    actions: await import("../src/quests/actions"),
+    deliveries: await import("../src/quests/deliveries"),
+  });
+  let m = await load();
 
   return {
-    store,
-    plan,
-    reminders,
-    pulses,
-    actions,
+    get store() {
+      return m.store;
+    },
+    get plan() {
+      return m.plan;
+    },
+    get reminders() {
+      return m.reminders;
+    },
+    get actions() {
+      return m.actions;
+    },
+    get deliveries() {
+      return m.deliveries;
+    },
     worker,
     sent,
     // Pings that reached the phones for one quest (or all), optionally of one kind
     pings: (questId?: string, kind?: string) => sent.filter((p) => (!questId || p.tag === questId) && (!kind || p.kind === kind)),
-    quest: (id: string) => store.readQuests().quests.find((q) => q.id === id)!,
+    quest: (id: string) => m.store.readQuests().quests.find((q) => q.id === id)!,
     setQuests(data: { rhythm?: Partial<import("../src/quests/store").Rhythm>; quests: any[] }) {
-      const rhythm = { ...store.DEFAULT_RHYTHM, wake: "07:00", sleep: "23:30", remindMinutesBefore: 0, dailyBriefing: false, paceLimits: false, phonePush: true, ...data.rhythm };
-      store.writeQuests(store.normaliseQuests({ rhythm, quests: data.quests.map((q) => ({ created: "2026-10-01T00:00:00Z", ...q })) }));
+      const rhythm = { ...m.store.DEFAULT_RHYTHM, wake: "07:00", sleep: "23:30", remindMinutesBefore: 0, dailyBriefing: false, paceLimits: false, phonePush: true, ...data.rhythm };
+      m.store.writeQuests(m.store.normaliseQuests({ rhythm, quests: data.quests.map((q) => ({ created: "2026-10-01T00:00:00Z", ...q })) }));
     },
     // Start up the way the service does (server.ts): plan, then reminders and pulses
     start() {
-      plan.replan();
-      reminders.startQuestReminders();
-      pulses.startPulses();
+      m.plan.replan();
+      m.reminders.startQuestReminders();
+      m.pulses.startPulses();
+    },
+    // Nova Agent stops (the PC sleeps, the service restarts) and comes back
+    // `after` later, with the same data folder
+    async restart(after: string | number) {
+      const back = Date.now() + span(after);
+      // (clearAllTimers also winds the fake clock back to where it started, hence `back`)
+      vi.clearAllTimers();
+      m.deliveries.closeDeliveries();
+      vi.setSystemTime(back);
+      vi.resetModules();
+      m = await load();
+      this.start();
     },
     // Let time pass, running every timer (and the promises they start) on the way
     async run(length: string | number) {

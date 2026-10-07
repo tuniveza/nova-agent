@@ -94,7 +94,7 @@ function fire(id: string, beat: number): void {
     if (!q || !isPulse(q) || q.status === "done" || q.status === "skipped") return;
     if (beat > (lastBeat.get(id) ?? -Infinity) + 1e-6) {
       lastBeat.set(id, beat);
-      pulseBeat(q, data.rhythm.phonePush);
+      pulseBeat(q, data.rhythm.phonePush, fromMin(beat));
     }
     // The next one (no saving: nothing in the plan changes on a beat)
     const next = nextBeat(q, data.rhythm, beat + q.everyMinutes / 2);

@@ -4,6 +4,7 @@
 
 import { randomUUID } from "node:crypto";
 import { replan, nowMinutes } from "./plan";
+import { acknowledge } from "./deliveries";
 import { nextSession, splitLong } from "./lengths";
 import { isPulse } from "./pulses";
 import { notifyMission, recentNotices } from "./reminders";
@@ -91,6 +92,8 @@ export function setQuestStatus(id: string, status: Quest["status"], finish = fal
   }
   if (q.ongoing && status === "done" && !finish) {
     const sessionStart = q.start || fromMin(nowMinutes());
+    // Marked done: that settles the session, ping or no ping
+    acknowledge(q.id, q.start);
     q.sessions += 1;
     q.completed = new Date().toISOString();
     q.status = "todo";

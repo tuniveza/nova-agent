@@ -6,8 +6,10 @@ import { readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
 import { config } from "../config";
 import { fromMin, planQuests, toMin, type Busy } from "./scheduler";
 import { nextSession } from "./lengths";
+import { sessionDelivery, sessionSettled } from "./deliveries";
 import { isPulse } from "./pulses";
-import { readQuests, writeQuests, type QuestData } from "./store";
+import { remindLate } from "./reminders";
+import { readQuests, writeQuests, type Quest, type QuestData } from "./store";
 
 const QUEST_NOTE = "quest-";
 const BLOCK_NOTE = "block-";
@@ -33,26 +35,43 @@ function calendarBusy(): Busy[] {
 // Plan everything again. Returns a short summary of what changed.
 export function replan(data: QuestData = readQuests()): { data: QuestData; atRisk: number; unplaced: { id: string; title: string; why: string }[] } {
   const now = nowMinutes();
+  // Repeats whose last session is over but whose ping hasn't got through yet: they stay put
+  const waiting = new Set<string>();
   for (const q of data.quests) {
     if (!q.ongoing || isPulse(q) || q.status === "done" || q.status === "skipped") continue;
+    // A repeat whose time has passed moves on to its next slot (it isn't piled up),
+    // but never past a session whose ping hasn't been delivered (or given up on, or marked done)
+    if (q.every === "interval" && q.status === "todo" && q.start && toMin(q.end) <= now) {
+      const record = sessionDelivery(q.id, q.start);
+      // It went by without a ping (Nova Agent was off): ping now, late, and wait for it
+      if (!record) remindLate(q, [q.start], data.rhythm.phonePush);
+      if (!sessionSettled(record ?? sessionDelivery(q.id, q.start))) {
+        waiting.add(q.id);
+        continue;
+      }
+      q.missed += 1;
+      const from = q.start;
+      q.earliest = nextSession("interval", from, q.everyMinutes, now);
+      // Slots jumped over (it was waiting, or off for a while) are told about too, in one ping
+      remindLate(q, skippedSlots(q, from), data.rhythm.phonePush);
+      q.start = q.end = q.travelStart = q.fixedStart = "";
+      q.remindedFor = q.checkedFor = "";
+      if (q.deadline && q.earliest >= q.deadline) {
+        q.status = "done";
+        q.completed = new Date().toISOString();
+        continue;
+      }
+    }
     // An ongoing quest stops by itself at its deadline
     if (q.deadline && toMin(q.deadline) <= now) {
       q.status = "done";
       q.completed = new Date().toISOString();
       continue;
     }
-    // A repeat whose time has passed moves on to its next slot (it isn't piled up)
-    if (q.every === "interval" && q.status === "todo" && q.start && toMin(q.end) <= now) {
-      q.missed += 1;
-      q.earliest = nextSession("interval", q.start, q.everyMinutes, now);
-      q.start = q.end = q.travelStart = q.fixedStart = "";
-      q.remindedFor = q.checkedFor = "";
-      if (q.deadline && q.earliest >= q.deadline) q.status = "done";
-    }
   }
-  // Anything not finished whose time has well passed goes back in the pot
+  // Anything not finished whose time has well passed goes back in the pot (repeats move on above instead)
   for (const q of data.quests) {
-    if (q.status === "todo" && q.start && !q.fixedStart && toMin(q.end) + 60 < now) {
+    if (q.status === "todo" && q.start && !q.fixedStart && !(q.ongoing && q.every === "interval") && toMin(q.end) + 60 < now) {
       q.missed += 1;
       q.start = q.end = q.travelStart = "";
     }
@@ -60,7 +79,7 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
   // Quests of paused or finished missions wait
   const paused = new Set(data.missions.filter((m) => m.status !== "active").map((m) => m.id));
   // Pulses run on their own timers (pulses.ts), not in the plan
-  const planning = data.quests.filter((q) => !paused.has(q.missionId) && !isPulse(q));
+  const planning = data.quests.filter((q) => !paused.has(q.missionId) && !isPulse(q) && !waiting.has(q.id));
   const busy: Busy[] = [...calendarBusy(), ...data.blocks.map((b) => ({ start: b.start, end: b.end, label: b.reason }))];
   const furthest = Math.max(0, ...planning.filter((q) => q.status === "todo" || q.status === "doing").map((q) => Math.max(q.deadline ? toMin(q.deadline) : 0, q.earliest ? toMin(q.earliest) + 1440 : 0)));
   const horizonDays = Math.min(MAX_HORIZON_DAYS, Math.max(data.rhythm.horizonDays, Math.ceil((furthest - now) / 1440) + 1));
@@ -78,6 +97,7 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
       if (q.status === "todo") q.start = q.end = q.travelStart = "";
       continue;
     }
+    if (waiting.has(q.id)) continue;
     const p = result.placed.get(q.id);
     if (p) {
       q.start = p.start;
@@ -93,6 +113,16 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
   writeQuests(data);
   syncCalendar(data);
   return { data, atRisk: data.quests.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length, unplaced };
+}
+
+// The slots of a repeat between the session that just ended and its next one, which never came round
+function skippedSlots(q: Quest, from: string): string[] {
+  const slots: string[] = [];
+  for (let t = toMin(from) + q.everyMinutes; fromMin(t) < q.earliest && slots.length < 500; t += q.everyMinutes) {
+    if (q.deadline && fromMin(t) >= q.deadline) break;
+    slots.push(fromMin(t));
+  }
+  return slots;
 }
 
 // Keep Nova Calendar showing the plan: one note card per planned quest and per blocked time

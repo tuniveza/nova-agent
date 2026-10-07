@@ -4,10 +4,12 @@
 //   - a quest left unanswered an hour after its end is moved to a new time
 //   - the morning plan when the day starts, and a wrap-up before winding down
 // Each one goes to the open Nova Agent page (a pop-up and a sound) and, if the
-// rhythm says so, to the Nova Hub phones through Nova Bot.
+// rhythm says so, to the Nova Hub phones through Nova Bot. Phone pings go
+// through deliveries.ts: sent once each, checked, retried, and logged.
 
 import { config } from "../config";
 import { trace } from "../trace";
+import { deliver, retryDue, whenGivenUp } from "./deliveries";
 import { replan, nowMinutes } from "./plan";
 import { describeLength } from "./lengths";
 import { isPulse } from "./pulses";
@@ -15,7 +17,8 @@ import { fromMin, toMin } from "./scheduler";
 import { questEvents, readQuests, writeQuests, type Quest } from "./store";
 
 export interface QuestNotice {
-  kind: "starting" | "leave" | "checkin" | "moved" | "briefing" | "wrapup" | "mission" | "pulse";
+  // missed: a session that passed without a ping (Nova Agent was off); undelivered: a ping the phones never got
+  kind: "starting" | "leave" | "checkin" | "moved" | "briefing" | "wrapup" | "mission" | "pulse" | "missed" | "undelivered";
   title: string;
   message: string;
   questId?: string;
@@ -35,44 +38,55 @@ const PHONE: Record<QuestNotice["kind"], { ttl: number; urgent: boolean }> = {
   wrapup: { ttl: 2 * 3600, urgent: false },
   mission: { ttl: 86400, urgent: false },
   pulse: { ttl: 60, urgent: false },
+  missed: { ttl: 3600, urgent: false },
+  undelivered: { ttl: 3600, urgent: false },
 };
 
-function notify(n: Omit<QuestNotice, "time">, push: boolean) {
+// Show a notice on the page and send it to the phones, once: `session` is what
+// it's about (a session's start, a day), so asking twice sends nothing new.
+// `covers`: other sessions the same notice tells about.
+function notify(n: Omit<QuestNotice, "time">, push: boolean, session = fromMin(nowMinutes()), covers?: string[]): boolean {
+  const source = n.kind === "mission" ? "mission" : "quest";
+  // To the Nova Hub phones too, labelled as Nova Quest or Nova Mission.
+  // Pulses replace each other on the phone and stay out of Nova Hub's Alerts list
+  const phone = push && n.kind !== "undelivered" ? { title: n.title, message: n.message, source, kind: n.kind, tag: n.questId || n.kind, ...PHONE[n.kind], keep: n.kind !== "pulse" } as const : null;
+  if (!deliver({ questId: n.questId || n.kind, session, kind: n.kind, push: phone, covers })) return false;
+  if (n.kind === "pulse") {
+    // A quick ping: not kept in the notices list or the trace
+    questEvents.emit("notice", { ...n, time: new Date().toISOString() });
+    return true;
+  }
   const notice = { ...n, time: new Date().toISOString() };
   recent.push(notice);
   if (recent.length > 50) recent.shift();
   questEvents.emit("notice", notice);
-  const source = n.kind === "mission" ? "mission" : "quest";
   trace("task", "info", `Nova ${source === "mission" ? "Mission" : "Quest"}: ${n.title}: ${n.message}`);
-  // To the Nova Hub phones too, labelled as Nova Quest or Nova Mission
-  if (push && config.agentNovaKey) {
-    fetch(`${config.workerUrl}/hub/notify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.agentNovaKey}` },
-      // Pulses replace each other on the phone and stay out of Nova Hub's Alerts list
-      body: JSON.stringify({ title: n.title, message: n.message, source, kind: n.kind, tag: n.questId || n.kind, ...PHONE[n.kind], keep: n.kind !== "pulse" }),
-      signal: AbortSignal.timeout(10_000),
-    }).catch(() => {});
-  }
+  return true;
 }
 
+// A ping the phones never got, in time to be any use: said on the page, not lost
+whenGivenUp((d, push) => {
+  const at = d.session.length >= 16 ? ` (${hm(d.session)})` : "";
+  notify({ kind: "undelivered", title: `Didn't reach your phone: ${push.title}`, message: `Tried ${d.attempts} time${d.attempts === 1 ? "" : "s"}${at}. Last problem: ${d.lastError}`, questId: d.questId }, false, d.session);
+});
+
 // One beat of a pulse (see pulses.ts): a quick ping, not kept in the notices list
-export function pulseBeat(q: Quest, push: boolean): void {
-  const n = { kind: "pulse" as const, title: q.title, message: `${describeLength(q)}${q.deadline ? ` · until ${q.deadline.slice(11, 16)}` : ""}`, questId: q.id };
-  questEvents.emit("notice", { ...n, time: new Date().toISOString() });
-  if (push && config.agentNovaKey) {
-    fetch(`${config.workerUrl}/hub/notify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.agentNovaKey}` },
-      body: JSON.stringify({ title: n.title, message: n.message, source: "quest", kind: "pulse", tag: q.id, ...PHONE.pulse, keep: false }),
-      signal: AbortSignal.timeout(10_000),
-    }).catch(() => {});
-  }
+export function pulseBeat(q: Quest, push: boolean, beat: string): void {
+  notify({ kind: "pulse", title: q.title, message: `${describeLength(q)}${q.deadline ? ` · until ${q.deadline.slice(11, 16)}` : ""}`, questId: q.id }, push, beat);
+}
+
+// Sessions of a repeat that passed without a ping (Nova Agent was off, or the PC
+// asleep): one late ping that says so, standing for all of them
+export function remindLate(q: Quest, sessions: string[], push: boolean): void {
+  if (!sessions.length) return;
+  const times = sessions.map(hm);
+  const list = times.length > 4 ? `${times.slice(0, 3).join(", ")} and ${times.length - 3} more` : times.length > 1 ? `${times.slice(0, -1).join(", ")} and ${times.at(-1)}` : times[0];
+  notify({ kind: "missed", title: `Missed: ${q.title}`, message: `${sessions.length === 1 ? "The session" : "Sessions"} due at ${list} went by without a reminder. The next one is lined up.`, questId: q.id }, push, sessions[0], sessions.slice(1));
 }
 
 // Mission news (planned, complete): on the page and, if the rhythm says so, the phones
-export function notifyMission(_what: "planned" | "complete", title: string, message: string, missionId: string): void {
-  notify({ kind: "mission", title, message, questId: `mission-${missionId}` }, readQuests().rhythm.phonePush);
+export function notifyMission(what: "planned" | "complete", title: string, message: string, missionId: string): void {
+  notify({ kind: "mission", title, message, questId: `mission-${missionId}` }, readQuests().rhythm.phonePush, `${what}@${fromMin(nowMinutes())}`);
 }
 
 export const recentNotices = () => [...recent];
@@ -85,6 +99,8 @@ export function dayPlanText(quests: Quest[], day: string): string {
 }
 
 function tick() {
+  // Pings still on their way: try again, or give up (visibly) on stale ones
+  retryDue();
   const data = readQuests();
   const r = data.rhythm;
   const now = nowMinutes();
@@ -104,9 +120,9 @@ function tick() {
       q.remindedFor = q.start;
       changed = true;
       if (q.travelMinutes && now < start) {
-        notify({ kind: "leave", title: `Time to head out: ${q.title}`, message: `Leave by ${hm(q.travelStart)} to be at ${q.location || "the next place"} for ${hm(q.start)} (${q.travelMinutes} min travel).`, questId: q.id }, r.phonePush);
+        notify({ kind: "leave", title: `Time to head out: ${q.title}`, message: `Leave by ${hm(q.travelStart)} to be at ${q.location || "the next place"} for ${hm(q.start)} (${q.travelMinutes} min travel).`, questId: q.id }, r.phonePush, q.start);
       } else {
-        notify({ kind: "starting", title: quick ? `Now: ${q.title}` : `Up next at ${hm(q.start)}: ${q.title}`, message: `${describeLength(q)}${q.ongoing && q.sessions ? ` (session ${q.sessions + 1})` : ""}${q.location ? ` at ${q.location}` : ""}. Ready when you are.`, questId: q.id }, r.phonePush);
+        notify({ kind: "starting", title: quick ? `Now: ${q.title}` : `Up next at ${hm(q.start)}: ${q.title}`, message: `${describeLength(q)}${q.ongoing && q.sessions ? ` (session ${q.sessions + 1})` : ""}${q.location ? ` at ${q.location}` : ""}. Ready when you are.`, questId: q.id }, r.phonePush, q.start);
       }
     }
     // When it should be done (repeats just move on to their next time)
@@ -115,7 +131,7 @@ function tick() {
     if (r.checkIns && !repeat && q.checkedFor !== q.end && now >= end) {
       q.checkedFor = q.end;
       changed = true;
-      notify({ kind: "checkin", title: q.ongoing ? `Session done? “${q.title}”` : `Did you finish “${q.title}”?`, message: q.ongoing ? "Mark the session done and the next one is lined up, or give it more time." : "Mark it done, give it more time, or move it.", questId: q.id }, r.phonePush);
+      notify({ kind: "checkin", title: q.ongoing ? `Session done? “${q.title}”` : `Did you finish “${q.title}”?`, message: q.ongoing ? "Mark the session done and the next one is lined up, or give it more time." : "Mark it done, give it more time, or move it.", questId: q.id }, r.phonePush, q.end);
     }
     // Unanswered an hour later: find it a new time
     if (q.status === "todo" && !q.fixedStart && now >= end + 60) needsReplan = true;
@@ -128,7 +144,7 @@ function tick() {
       data.lastBriefing = today;
       changed = true;
       const atRisk = data.quests.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length;
-      notify({ kind: "briefing", title: "Good morning ✦ Today's quests", message: `${dayPlanText(data.quests, today)}${atRisk ? ` · ${atRisk} quest${atRisk === 1 ? " is" : "s are"} at risk of missing a deadline` : ""}` }, r.phonePush);
+      notify({ kind: "briefing", title: "Good morning ✦ Today's quests", message: `${dayPlanText(data.quests, today)}${atRisk ? ` · ${atRisk} quest${atRisk === 1 ? " is" : "s are"} at risk of missing a deadline` : ""}` }, r.phonePush, today);
     }
     let sleep = toMin(`${today}T${r.sleep}`);
     if (r.sleep <= r.wake) sleep += 1440;
@@ -138,7 +154,7 @@ function tick() {
       changed = true;
       const done = data.quests.filter((q) => q.start.startsWith(today) && q.status === "done").length;
       const left = data.quests.filter((q) => q.start.startsWith(today) && q.status === "todo").length;
-      notify({ kind: "wrapup", title: "Winding down ✦ How did today go?", message: `${done} quest${done === 1 ? "" : "s"} done${left ? `, ${left} still open: tell me what happened and I'll move them` : ". Brilliant"}. Tomorrow: ${dayPlanText(data.quests, fromMin(now + 1440).slice(0, 10))}` }, r.phonePush);
+      notify({ kind: "wrapup", title: "Winding down ✦ How did today go?", message: `${done} quest${done === 1 ? "" : "s"} done${left ? `, ${left} still open: tell me what happened and I'll move them` : ". Brilliant"}. Tomorrow: ${dayPlanText(data.quests, fromMin(now + 1440).slice(0, 10))}` }, r.phonePush, today);
     }
   }
 
@@ -149,7 +165,7 @@ function tick() {
     for (const q of result.data.quests) {
       const was = before.get(q.id);
       if (was && was !== q.start && q.status === "todo" && !q.ongoing) {
-        notify({ kind: "moved", title: `Moved “${q.title}”`, message: q.start ? `It didn't get done, so it's now ${new Date(toMin(q.start) * 60000).toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" })} at ${hm(q.start)}.` : "It didn't get done and there's no free time for it yet. Shall we make room?", questId: q.id }, r.phonePush);
+        notify({ kind: "moved", title: `Moved “${q.title}”`, message: q.start ? `It didn't get done, so it's now ${new Date(toMin(q.start) * 60000).toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" })} at ${hm(q.start)}.` : "It didn't get done and there's no free time for it yet. Shall we make room?", questId: q.id }, r.phonePush, `${was}>${q.start}`);
       }
     }
   }
