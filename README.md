@@ -434,7 +434,9 @@ result, screenshots, daily logs (`logs/<date>.jsonl`, which include client names
 Nova Bot worker and a throwaway data folder: `test/harness.ts`): a reminder every 30 minutes
 for 4 hours pings exactly 8 times, a ping the worker turns away is retried, Nova Agent being
 off across a session gives one late "Missed" ping, no session is moved past without a
-delivery record, Nova Hub taps count once, and the BST/GMT clock changes.
+delivery record, Nova Hub taps count once, and the BST/GMT clock changes. It also checks
+that edits save or say why (100 rapid edits included), that saves from Nova Calendar merge
+with changes made elsewhere, and that a mission re-plan keeps quests changed by hand.
 
 `npx tsx test/scheduler.test.ts` checks the Nova Quest planner (sleep, deadlines, priorities,
 dependencies, travel, buffers, breaks, the daily cap, blocked time and at-risk flags), and
@@ -480,7 +482,8 @@ src/quests/reminders.ts   reminders, check-ins, the morning plan and evening wra
 src/quests/deliveries.ts  every phone ping: sent once, checked, retried, logged (data/nova.db)
 src/quests/hubsync.ts     the plan to Nova Hub, and Nova Hub's taps back
 src/quests/actions.ts     everything the chat and the page can do with them
-src/calendar/store.ts     Nova Calendar's data (calendar.json)
+src/calendar/store.ts     Nova Calendar's data (calendar.json, with a revision per save)
+src/calendar/page.ts      saves from the calendar page, merged with changes made elsewhere
 src/index.ts              command-line entry point for the Acuity helper
 src/browser.ts            Chromium, the saved session and the change-blocking safety layer
 src/tasks.ts              the tasks (check login, list, search, book, cancel, edit)
