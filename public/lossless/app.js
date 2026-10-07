@@ -15,23 +15,23 @@
 
 const FRAME_MS = 10;                // PCM frame length
 const JITTER_TARGET_FRAMES = 6;     // buffer 60 ms before playback starts
-const JITTER_MAX_FRAMES = 25;       // more than 250 ms queued → drop oldest
-const SEND_HIGH_WATER = 512 * 1024; // bytes queued in the data channel before we drop frames
+const JITTER_MAX_FRAMES = 25;       // low latency: more than 250 ms queued → drop oldest
+// Bytes waiting in the data channel before frames are dropped. Low latency keeps
+// it short; lossless lets a backlog build (delay) and only drops past ~40 s of
+// mono float, when the connection plainly can't carry the stream.
+const SEND_HIGH_WATER = { lowlatency: 512 * 1024, lossless: 8 * 1024 * 1024 };
 
-// Unordered, and give up on a packet after 120 ms: a retransmit that late
-// would miss its playback slot anyway. The receiver reorders by sequence number.
-const DC_OPTIONS = { ordered: false, maxPacketLifeTime: 120 };
+// Reliable but unordered: every packet is delivered (retransmitted if it has
+// to be), and one slow packet doesn't hold up the ones behind it. The receiver
+// reorders by sequence number; in low-latency mode it skips frames that come too late.
+const DC_OPTIONS = { ordered: false };
 
-const ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" },
-  // TURN plugs in here. STUN alone fails on symmetric NATs (common on mobile
-  // carriers and locked-down Wi-Fi); the Path readout then never leaves
-  // "connecting" and the status shows "failed". To fix, add a TURN relay, e.g.
-  //   { urls: "turn:turn.example.com:3478", username: "...", credential: "..." }
-  // For Cloudflare's TURN service, mint short-lived credentials in the Worker
-  // (a /lossless/ice endpoint) and fetch them here before creating the
-  // RTCPeerConnection, so the TURN key never ships in this file.
-];
+// STUN until /lossless/ice answers (it adds Cloudflare's TURN relay when set up)
+const FALLBACK_ICE = [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }];
+// "?relay" in the address forces the TURN relay: for testing the across-the-world path from one network
+const RELAY_ONLY = new URLSearchParams(location.search).has("relay");
+// How long a dropped connection is given to come back by itself before it's restarted
+const ICE_RESTART_AFTER_MS = 3000;
 
 // ---- Wire format ----------------------------------------------------------
 // 20-byte header, little-endian, then the PCM payload.
@@ -60,7 +60,8 @@ const S = {
   retryMs: 0, retryTimer: 0, wakeLock: null,
   ctx: null, micStream: null, micSource: null, captureNode: null, micSink: null, playbackNode: null,
   inputId: "", outputId: "", channels: 1, inputRate: 0,
-  micOn: true, format: FMT_F32, seq: 0, samplePos: 0,
+  micOn: true, format: FMT_F32, mode: "lossless", seq: 0, samplePos: 0,
+  ice: null, restartTimer: 0, backlogWarned: false,
   resamplers: [], remote: null, remoteMicOn: true,
   playStats: null, rtc: null,
   counters: { sent: 0, sendDropped: 0, bytesOut: 0, received: 0, bytesIn: 0 },
@@ -71,7 +72,7 @@ const $ = (id) => document.getElementById(id);
 const ui = {
   room: $("room"), invite: $("invite"), connect: $("connect"), mic: $("mic"),
   format: $("format"), input: $("input"), output: $("output"), channels: $("channels"),
-  routing: $("routing"), status: $("status"), resume: $("resume"),
+  routing: $("routing"), status: $("status"), resume: $("resume"), mode: $("mode"), catchup: $("catchup"),
   localBar: $("localBar"), localDb: $("localDb"), remoteBar: $("remoteBar"), remoteDb: $("remoteDb"),
   sPath: $("sPath"), sRtt: $("sRtt"), sOut: $("sOut"), sIn: $("sIn"), sFmt: $("sFmt"),
   sBuf: $("sBuf"), sPlayed: $("sPlayed"), sLost: $("sLost"), sUnder: $("sUnder"),
@@ -99,6 +100,7 @@ function loadPrefs() {
     S.outputId = typeof p.outputId === "string" ? p.outputId : "";
     S.channels = p.channels === 2 ? 2 : 1;
     S.format = p.format === FMT_S16 ? FMT_S16 : FMT_F32;
+    S.mode = p.mode === "lowlatency" ? "lowlatency" : "lossless";
   } catch {
     // storage unavailable (private mode etc.): defaults are fine
   }
@@ -107,7 +109,7 @@ function loadPrefs() {
 function savePrefs() {
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify({
-      inputId: S.inputId, outputId: S.outputId, channels: S.channels, format: S.format,
+      inputId: S.inputId, outputId: S.outputId, channels: S.channels, format: S.format, mode: S.mode,
     }));
   } catch {
     // storage unavailable
@@ -219,7 +221,7 @@ async function startAudio() {
   const ctx = S.ctx;
   S.playbackNode = new AudioWorkletNode(ctx, "nova-playback", {
     numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2],
-    processorOptions: { targetFrames: JITTER_TARGET_FRAMES, maxFrames: JITTER_MAX_FRAMES },
+    processorOptions: { targetFrames: JITTER_TARGET_FRAMES, maxFrames: JITTER_MAX_FRAMES, lossless: S.mode === "lossless" },
   });
   S.playbackNode.port.onmessage = (e) => {
     if (e.data.type === "stats") S.playStats = e.data;
@@ -301,6 +303,7 @@ function renderDevices() {
   }
   ui.channels.value = String(S.channels);
   ui.format.value = String(S.format);
+  ui.mode.value = S.mode;
   renderRoutingWarnings();
 }
 
@@ -377,9 +380,14 @@ function onLocalFrame(chans) {
   const dc = S.dc;
   if (!dc || dc.readyState !== "open") return;
   const seq = S.seq++;
-  // If the network can't keep up, drop rather than let latency pile up.
-  if (dc.bufferedAmount > SEND_HIGH_WATER) {
+  // If the network can't keep up: low latency drops at once; lossless lets a
+  // backlog build, and only drops when the connection plainly can't carry it.
+  if (dc.bufferedAmount > SEND_HIGH_WATER[S.mode]) {
     S.counters.sendDropped++;
+    if (S.mode === "lossless" && !S.backlogWarned) {
+      S.backlogWarned = true;
+      setStatus("The connection can't carry this much audio, so some is being dropped. Try 16-bit or mono.", "bad");
+    }
     return;
   }
   const packet = encodeFrame(seq, chans, timestamp);
@@ -476,8 +484,35 @@ function onRemoteData(data) {
 
 // ---- WebRTC ---------------------------------------------------------------
 
-function createPeer(isOfferer) {
-  const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+// STUN and TURN servers for a call, from the Worker (TURN credentials are short-lived)
+async function iceConfig() {
+  if (S.ice && (!S.ice.turn || S.ice.expires - Date.now() > 30 * 60 * 1000)) return S.ice;
+  try {
+    const res = await fetch("ice", { cache: "no-store" });
+    if (!res.ok) throw new Error(`answered ${res.status}`);
+    const j = await res.json();
+    S.ice = { iceServers: j.iceServers, turn: !!j.turn, expires: Date.now() + (j.ttl || 0) * 1000, note: j.note || "" };
+  } catch (err) {
+    console.warn("Couldn't get ICE servers, using STUN only:", err);
+    S.ice = { iceServers: FALLBACK_ICE, turn: false, expires: 0, note: "couldn't reach the relay setup" };
+  }
+  if (RELAY_ONLY && !S.ice.turn) setStatus(`?relay is on but there's no TURN relay (${S.ice.note}), so this can't connect.`, "bad");
+  return S.ice;
+}
+
+// Long calls: fresh TURN credentials for the open connection before the old ones run out
+setInterval(async () => {
+  if (!S.pc || !S.ice?.turn || S.ice.expires - Date.now() > 30 * 60 * 1000) return;
+  const ice = await iceConfig();
+  try {
+    S.pc?.setConfiguration({ ...S.pc.getConfiguration(), iceServers: ice.iceServers });
+  } catch (err) {
+    console.warn("Couldn't refresh TURN credentials:", err);
+  }
+}, 5 * 60 * 1000);
+
+function createPeer(isOfferer, ice) {
+  const pc = new RTCPeerConnection({ iceServers: ice.iceServers, iceTransportPolicy: RELAY_ONLY ? "relay" : "all" });
   S.pc = pc;
   S.isOfferer = isOfferer;
   pc.onicecandidate = (e) => {
@@ -486,9 +521,32 @@ function createPeer(isOfferer) {
   pc.onconnectionstatechange = () => {
     if (S.pc !== pc) return;
     const st = pc.connectionState;
-    if (st === "connecting") setStatus("Connecting peer to peer…", "warn");
-    if (st === "disconnected") setStatus("Connection interrupted, trying to recover…", "warn");
-    if (st === "failed") callDropped("Peer connection failed. If this keeps happening, the network may need a TURN relay (see README).");
+    if (st === "connecting") setStatus(S.ice?.turn ? "Connecting (directly if possible, otherwise through the relay)…" : "Connecting peer to peer…", "warn");
+    if (st === "connected") {
+      clearTimeout(S.restartTimer);
+      if (callUp()) setStatus("Connected: streaming lossless PCM", "good");
+    }
+    if (st === "disconnected") {
+      // The network changed or hiccuped (Wi-Fi to mobile, a tunnel…). Give it a
+      // moment, then find a new route without dropping the call.
+      setStatus("Connection interrupted, finding a new route…", "warn");
+      clearTimeout(S.restartTimer);
+      S.restartTimer = setTimeout(() => {
+        if (S.pc === pc && pc.connectionState !== "connected" && S.isOfferer) enqueue(restartRoute);
+      }, ICE_RESTART_AFTER_MS);
+    }
+    if (st === "failed") {
+      // The call's still open: the side that offered finds a new route; the other waits for it
+      if (callUp()) {
+        if (S.isOfferer) return enqueue(restartRoute);
+        clearTimeout(S.restartTimer);
+        S.restartTimer = setTimeout(() => S.pc === pc && pc.connectionState !== "connected" && callDropped("Couldn't find a new route, reconnecting…"), 20000);
+        return;
+      }
+      callDropped(S.ice?.turn
+        ? "Couldn't connect, even through the relay. Check both devices are online, then try again."
+        : "Couldn't connect directly, and the TURN relay isn't set up (see README), so different networks may not reach each other.");
+    }
   };
   if (isOfferer) setupDataChannel(pc.createDataChannel("pcm", DC_OPTIONS));
   else pc.ondatachannel = (e) => setupDataChannel(e.channel);
@@ -517,6 +575,7 @@ function callUp() {
 }
 
 function closePeer() {
+  clearTimeout(S.restartTimer);
   S.dc?.close();
   S.pc?.close();
   S.dc = S.pc = null;
@@ -539,18 +598,42 @@ function callDropped(text) {
 }
 
 async function makeOffer() {
+  const ice = await iceConfig();
   closePeer();
-  const pc = createPeer(true);
+  const pc = createPeer(true, ice);
   await pc.setLocalDescription(await pc.createOffer());
   sendSignal({ type: "offer", sdp: pc.localDescription });
 }
 
-async function handleOffer(sdp) {
+async function handleOffer(sdp, restart) {
+  // A new route for the call that's already up: keep the connection (and its audio)
+  if (restart && S.pc && !S.isOfferer && S.pc.signalingState === "stable") {
+    await S.pc.setRemoteDescription(sdp);
+    await S.pc.setLocalDescription(await S.pc.createAnswer());
+    sendSignal({ type: "answer", sdp: S.pc.localDescription });
+    return;
+  }
+  const ice = await iceConfig();
   closePeer();
-  const pc = createPeer(false);
+  const pc = createPeer(false, ice);
   await pc.setRemoteDescription(sdp);
   await pc.setLocalDescription(await pc.createAnswer());
   sendSignal({ type: "answer", sdp: pc.localDescription });
+}
+
+// ICE restart: the same call, a new network path (fresh TURN credentials too)
+async function restartRoute() {
+  const pc = S.pc;
+  if (!pc || pc.connectionState === "connected" || pc.signalingState !== "stable") return;
+  const ice = await iceConfig();
+  pc.setConfiguration({ ...pc.getConfiguration(), iceServers: ice.iceServers });
+  await pc.setLocalDescription(await pc.createOffer({ iceRestart: true }));
+  sendSignal({ type: "offer", sdp: pc.localDescription, restart: true });
+  // Still nowhere after a while: start the call over
+  clearTimeout(S.restartTimer);
+  S.restartTimer = setTimeout(() => {
+    if (S.pc === pc && pc.connectionState !== "connected") callDropped("Couldn't find a new route, reconnecting…");
+  }, 15000);
 }
 
 // ---- Signalling -----------------------------------------------------------
@@ -594,7 +677,7 @@ async function onSignal(msg) {
       break;
     case "offer":
       S.peerPresent = true;
-      await handleOffer(msg.sdp);
+      await handleOffer(msg.sdp, msg.restart === true);
       break;
     case "answer":
       await S.pc?.setRemoteDescription(msg.sdp);
@@ -748,6 +831,15 @@ ui.format.onchange = () => {
   savePrefs();
 };
 
+ui.mode.onchange = () => {
+  S.mode = ui.mode.value === "lowlatency" ? "lowlatency" : "lossless";
+  S.backlogWarned = false;
+  savePrefs();
+  S.playbackNode?.port.postMessage({ type: "mode", lossless: S.mode === "lossless" });
+};
+
+ui.catchup.onclick = () => S.playbackNode?.port.postMessage({ type: "catch-up" });
+
 ui.input.onchange = () => {
   S.inputId = ui.input.value;
   savePrefs();
@@ -847,9 +939,12 @@ setInterval(() => {
   ui.sPath.textContent = S.rtc?.path ?? "–";
   ui.sRtt.textContent = S.rtc?.rtt != null ? (S.rtc.rtt * 1000).toFixed(0) + " ms" : "–";
 
+  // Audio waiting to go out, as time: the network is slower than the stream
+  const rate = (S.ctx?.sampleRate || 48000) * S.channels * (S.format === FMT_F32 ? 4 : 2);
+  const backlogMs = connected ? (S.dc.bufferedAmount / rate) * 1000 : 0;
   ui.sOut.textContent = connected
     ? S.micOn
-      ? `${fmtKbps(c.bytesOut - lastCounters.bytesOut, secs)} · ${c.sent} frames${c.sendDropped ? ` · ${c.sendDropped} dropped` : ""}`
+      ? `${fmtKbps(c.bytesOut - lastCounters.bytesOut, secs)} · ${c.sent} frames${backlogMs > 100 ? ` · ${(backlogMs / 1000).toFixed(1)} s waiting to send` : ""}${c.sendDropped ? ` · ${c.sendDropped} dropped` : ""}`
       : "muted"
     : "–";
   ui.sIn.textContent = connected
@@ -867,8 +962,9 @@ setInterval(() => {
       : `${kind}, ${layout}, ${rate}`;
   } else ui.sFmt.textContent = "–";
 
+  ui.catchup.disabled = !(connected && p && p.bufferedMs > 150);
   if (p && S.active) {
-    ui.sBuf.textContent = `${p.bufferedMs.toFixed(0)} ms${p.playing ? "" : " (buffering)"}`;
+    ui.sBuf.textContent = `${p.bufferedMs.toFixed(0)} ms${p.lossless ? ` (aiming for ${p.targetMs.toFixed(0)} ms)` : ""}${p.playing ? "" : " (waiting for audio)"}`;
     ui.sPlayed.textContent = String(p.played);
     ui.sLost.textContent = `${p.lost} / ${p.late}`;
     ui.sUnder.textContent = `${p.underruns} / ${p.dropped}`;

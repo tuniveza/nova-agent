@@ -49,6 +49,7 @@
     #status { font-weight: 600; }
     #status.good { color: var(--good); } #status.warn { color: var(--warn); } #status.bad { color: var(--bad); }
     #resume { display: none; margin-top: 10px; width: 100%; }
+    #catchup { margin-top: 10px; width: 100%; }
     .meter { margin: 10px 0 2px; }
     .meter .head { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
     .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 4px; }
@@ -87,12 +88,20 @@
         <option value="1">Send 16-bit PCM (half the bandwidth)</option>
       </select>
     </div>
+    <div class="field" style="margin-top:12px">
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="lossless">Lossless: every sample arrives; the delay grows if the network needs it</option>
+        <option value="lowlatency">Low latency: keeps the delay short, gaps if packets are late</option>
+      </select>
+    </div>
   </section>
 
 
   <section class="card">
     <div id="status">Not connected</div>
     <button id="resume" type="button">Tap to resume audio</button>
+    <button id="catchup" type="button" disabled title="Skip the audio that's built up, to bring the delay back down">Catch up (skip the delay)</button>
     <div class="meter">
       <div class="head"><span>You (mic)</span><span id="localDb">–</span></div>
       <div class="bar"><div id="localBar"></div></div>
@@ -143,15 +152,16 @@
       <dt>Sending</dt><dd id="sOut">–</dd>
       <dt>Receiving</dt><dd id="sIn">–</dd>
       <dt>Their format</dt><dd id="sFmt">–</dd>
-      <dt>Jitter buffer</dt><dd id="sBuf">–</dd>
+      <dt>Delay buffer</dt><dd id="sBuf">–</dd>
       <dt>Frames played</dt><dd id="sPlayed">–</dd>
       <dt>Lost / late</dt><dd id="sLost">–</dd>
-      <dt>Underruns / drift drops</dt><dd id="sUnder">–</dd>
+      <dt>Pauses / skipped</dt><dd id="sUnder">–</dd>
     </dl>
   </section>
 
   <p class="note"><strong>Wear headphones on both ends</strong> (unless you're routing through BlackHole). Echo cancellation is deliberately off so the PCM is untouched, which means speakers will feed back into the mic.</p>
-  <p class="note">Every frame that arrives is bit-exact (the data channel is checksummed and encrypted end to end). Frames that arrive too late to play are counted as lost or late rather than retried indefinitely, to keep latency low.</p>
+  <p class="note">Every frame is bit-exact (the data channel is checksummed and encrypted end to end). In <strong>Lossless</strong> mode every frame is delivered and played: if the network hiccups, playback pauses and waits rather than skipping, and the delay grows to whatever the connection needs. Use <strong>Catch up</strong> to bring it back down. <strong>Low latency</strong> mode skips late frames instead.</p>
+  <p class="note"><strong>Different networks, anywhere in the world:</strong> if the two devices can't reach each other directly, the call goes through a relay (Path shows "relayed (TURN)"). To test the relay from one network, open the page with <code>?relay</code> before the <code>#</code>, e.g. <code>/lossless/?relay#my-room</code>, on one device.</p>
 </main>
 <script src="app.js"></script>
 </body>
