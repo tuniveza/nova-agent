@@ -9,7 +9,7 @@ import { nextSession, splitLong } from "./lengths";
 import { isPulse } from "./pulses";
 import { notifyMission, recentNotices } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
-import { cleanQuest, readQuests, writeQuests, type Block, type Mission, type Quest, type QuestData, type Rhythm } from "./store";
+import { cleanQuest, EVERY, PRIORITIES, readQuests, readStamp, TIMES_OF_DAY, writeQuests, type Block, type Mission, type Quest, type QuestData, type Rhythm } from "./store";
 
 const stamp = () => fromMin(nowMinutes());
 
@@ -181,14 +181,67 @@ export function addQuest(input: Partial<Quest>): Quest {
   return readQuests().quests.find((x) => x.id === q.id)!;
 }
 
+// What can be changed on a quest, and what each must be. An edit that doesn't
+// fit is refused with the reason, never quietly cut short or left out.
+const EDITABLE: Record<string, (v: any) => unknown> = {
+  title: (v) => words(v, 140, "The title", true),
+  notes: (v) => words(v, 2000, "The notes"),
+  location: (v) => words(v, 160, "The place"),
+  track: (v) => words(v, 40, "The track"),
+  minutes: (v) => amount(v, "How long it takes", 1 / 60, 1_000_000),
+  everyMinutes: (v) => amount(v, "How often it repeats", 1 / 60, 1_000_000),
+  travelMinutes: (v) => (Number.isInteger(v) && v >= 0 && v <= 300 ? v : bad("Travel time must be 0 to 300 minutes.")),
+  ongoing: (v) => (typeof v === "boolean" ? v : bad("Ongoing must be yes or no.")),
+  every: (v) => oneOf(v, EVERY, "How often"),
+  priority: (v) => oneOf(v, PRIORITIES, "The priority"),
+  timeOfDay: (v) => oneOf(v, TIMES_OF_DAY, "The time of day"),
+  deadline: (v) => readStamp(v, "23:59"),
+  earliest: (v) => readStamp(v, "00:00"),
+  fixedStart: (v) => readStamp(v, "09:00"),
+  dependsOn: (v) => (Array.isArray(v) && v.length <= 20 && v.every((x) => typeof x === "string" && x.length <= 64) ? v : bad("Depends on must be a list of up to 20 quest ids.")),
+};
+function bad(message: string): never {
+  throw new Error(message);
+}
+const words = (v: unknown, max: number, what: string, needed = false) =>
+  typeof v !== "string" ? bad(`${what} must be text.`) : v.length > max ? bad(`${what} is too long (${v.length} characters; up to ${max}).`) : needed && !v.trim() ? bad(`${what} can't be empty.`) : v;
+const amount = (v: unknown, what: string, min: number, max: number) => (typeof v === "number" && Number.isFinite(v) && v >= min && v <= max ? Math.round(v * 60) / 60 : bad(`${what} must be a number of minutes from a second up.`));
+const oneOf = (v: unknown, options: readonly string[], what: string) => (options.includes(v as string) ? v : bad(`${what} must be one of: ${options.join(", ")}.`));
+
+// The changes, checked: unknown fields, unreadable times and values that don't fit throw
+function checkedChanges(changes: Record<string, unknown>): Partial<Quest> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(changes)) {
+    if (value === undefined) continue;
+    const check = EDITABLE[key];
+    if (!check) throw new Error(`"${key}" can't be changed here.`);
+    out[key] = check(value);
+  }
+  return out as Partial<Quest>;
+}
+
 export function updateQuest(id: string, changes: Partial<Quest>): Quest {
+  const wanted = checkedChanges(changes);
   const data = readQuests();
   const q = find(data.quests, id, "quest");
-  const merged = cleanQuest({ ...q, ...Object.fromEntries(Object.entries(changes).filter(([, v]) => v !== undefined)), id: q.id, updated: new Date().toISOString() });
-  if (changes.fixedStart !== undefined || changes.minutes !== undefined) merged.remindedFor = merged.checkedFor = "";
+  const merged = cleanQuest({ ...q, ...wanted, id: q.id, updated: new Date().toISOString() });
+  if (wanted.fixedStart !== undefined || wanted.minutes !== undefined) merged.remindedFor = merged.checkedFor = "";
+  // A repeat given a new interval: its next session counts from the last one at the new spacing
+  if (wanted.everyMinutes !== undefined && wanted.everyMinutes !== q.everyMinutes && q.ongoing && q.every === "interval" && q.status === "todo" && !q.fixedStart && q.earliest && q.sessions + q.missed > 0) {
+    merged.earliest = fromMin(toMin(q.earliest) - q.everyMinutes + wanted.everyMinutes);
+    merged.start = merged.end = merged.travelStart = "";
+  }
   // Made longer than a session: it becomes sessions (the last one keeps the id)
   data.quests.splice(data.quests.indexOf(q), 1, ...splitLong(merged, data.rhythm));
   writeQuests(data);
+  // Saved as asked? Read back from the file (before re-planning moves anything on).
+  // A session split keeps the id; its length is then per session.
+  const saved = readQuests().quests.find((x) => x.id === q.id);
+  if (!saved) throw new Error(`The change to “${q.title}” didn't save: the quest is gone.`);
+  for (const [key, value] of Object.entries(wanted)) {
+    if (key === "minutes" && splitLong(merged, data.rhythm).length > 1) continue;
+    if (JSON.stringify((saved as any)[key]) !== JSON.stringify(value)) throw new Error(`The change to “${q.title}” didn't save (${key}). Try again, or tell me if it keeps happening.`);
+  }
   replan();
   return readQuests().quests.find((x) => x.id === q.id)!;
 }

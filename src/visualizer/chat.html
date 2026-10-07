@@ -965,7 +965,13 @@
 
   // ===================== NOVA MISSIONS & QUESTS =====================
   let st = null;
-  const api = (path, body) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
+  // Nova Agent not answering (restarting, stopped) is said, not swallowed
+  const api = (path, body) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1' }, body: JSON.stringify(body || {}) })
+    .then((r) => r.json())
+    .catch(() => {
+      toast({ title: 'Not saved', message: 'Nova Agent isn’t answering (it may be restarting). Try again in a moment.' });
+      return { ok: false, message: 'Nova Agent isn’t answering.', unanswered: true };
+    });
   const hhmm = (s) => (s ? s.slice(11, s.length > 16 ? 19 : 16) : '');
   // "30 s", "2 min 30 s", "1 h 30 min", "3 days 4 h"; ongoing: "∞ · 30 min a day"
   function dur(q) {

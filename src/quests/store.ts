@@ -20,7 +20,9 @@
 import { EventEmitter } from "node:events";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
+import { sendAlert } from "../alerts";
 import { config } from "../config";
+import { trace } from "../trace";
 
 export const PRIORITIES = ["critical", "high", "normal", "low"] as const;
 export type Priority = (typeof PRIORITIES)[number];
@@ -191,6 +193,25 @@ const length = (v: unknown, fallback: number) => {
 };
 const stampOrEmpty = (v: unknown) => (isStamp(v) ? v : isDay(v) ? `${v}T23:59` : "");
 
+// A time someone typed (or Claude wrote), as the planner's UK wall-clock stamp.
+// Takes "2026-10-08T17:00", "2026-10-08 17:00", seconds, a date alone (`dayTime`
+// is added), and times with a zone ("…Z", "…+01:00"), which are turned into UK
+// time. Anything else is an error, never quietly left out. "" stays "" (none).
+export function readStamp(v: unknown, dayTime = "23:59"): string {
+  if (v === "" || v === null) return "";
+  const s = typeof v === "string" ? v.trim().replace(" ", "T") : "";
+  if (isStamp(s)) return s;
+  if (isDay(s)) return `${s}T${dayTime}`;
+  const zoned = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/.test(s) ? new Date(s) : null;
+  if (zoned && !Number.isNaN(zoned.getTime())) {
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone: config.timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(zoned);
+    const get = (t: string) => parts.find((p) => p.type === t)!.value;
+    const sec = get("second") === "00" ? "" : `:${get("second")}`;
+    return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}${sec}`;
+  }
+  throw new Error(`Couldn't read the time "${String(v).slice(0, 40)}": use YYYY-MM-DDTHH:MM, in UK time.`);
+}
+
 // Tells the open Nova Agent page that the plan changed
 export const questEvents = new EventEmitter();
 
@@ -306,17 +327,36 @@ export function normaliseQuests(raw: any): QuestData {
   };
 }
 
+// A damaged quests.json is never read as empty (the next save would make that
+// for good): it's put aside, the last good copy (quests.json.bak) is used, and
+// that's said loudly. With no good copy, reading fails rather than guessing.
 export function readQuests(): QuestData {
   if (!existsSync(file)) return normaliseQuests({});
   try {
     return normaliseQuests(JSON.parse(readFileSync(file, "utf8")));
-  } catch {
-    return normaliseQuests({});
+  } catch (error) {
+    const aside = `${file}.damaged-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+    renameSync(file, aside);
+    let good: QuestData;
+    try {
+      good = normaliseQuests(JSON.parse(readFileSync(`${file}.bak`, "utf8")));
+    } catch {
+      throw new Error(`quests.json is damaged (${(error as Error).message}) and there's no good copy to go back to. It's kept as ${aside}.`);
+    }
+    writeFileSync(`${file}.tmp`, JSON.stringify(good, null, 2));
+    renameSync(`${file}.tmp`, file);
+    trace("task", "error", `quests.json was damaged: went back to the last good copy. The damaged one is kept as ${aside}.`);
+    void sendAlert("Nova Quests: quests.json was damaged", `Nova Agent went back to the last good copy; the most recent change may need doing again. The damaged file is kept as ${aside}.`);
+    return good;
   }
 }
 
 export function writeQuests(data: QuestData): void {
-  writeFileSync(`${file}.tmp`, JSON.stringify(normaliseQuests(data), null, 2));
+  const json = JSON.stringify(normaliseQuests(data), null, 2);
+  writeFileSync(`${file}.tmp`, json);
   renameSync(`${file}.tmp`, file);
+  // The last good copy, for readQuests() to go back to
+  writeFileSync(`${file}.bak.tmp`, json);
+  renameSync(`${file}.bak.tmp`, `${file}.bak`);
   questEvents.emit("changed");
 }
