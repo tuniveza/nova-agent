@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="sky" cx="72%" cy="18%" r="95%">
+      <stop offset="0" stop-color="#7A1F86"/>
+      <stop offset=".4" stop-color="#2A1452"/>
+      <stop offset=".78" stop-color="#110A22"/>
+      <stop offset="1" stop-color="#06040D"/>
+    </radialGradient>
+    <radialGradient id="nebula" cx="15%" cy="90%" r="60%">
+      <stop offset="0" stop-color="#B01D68" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#B01D68" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFE6F3"/>
+      <stop offset=".5" stop-color="#FF5FA8"/>
+      <stop offset="1" stop-color="#C7A4FF"/>
+    </linearGradient>
+    <mask id="crescent">
+      <rect width="512" height="512" fill="#000"/>
+      <circle cx="248" cy="260" r="150" fill="#fff"/>
+      <circle cx="318" cy="232" r="124" fill="#000"/>
+    </mask>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="soft" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <rect width="512" height="512" fill="url(#nebula)"/>
+  <g fill="#fff">
+    <circle cx="70" cy="80" r="2.2" opacity=".8"/><circle cx="452" cy="96" r="1.6" opacity=".6"/><circle cx="470" cy="300" r="2" opacity=".6"/>
+    <circle cx="96" cy="430" r="1.5" opacity=".55"/><circle cx="300" cy="474" r="1.6" opacity=".5"/><circle cx="196" cy="48" r="1.2" opacity=".5"/>
+    <circle cx="420" cy="440" r="1.3" opacity=".45"/><circle cx="40" cy="250" r="1.2" opacity=".5"/>
+  </g>
+  <!-- the C: a crescent moon -->
+  <rect width="512" height="512" fill="#FF5FA8" opacity=".7" mask="url(#crescent)" filter="url(#glow)"/>
+  <rect width="512" height="512" fill="url(#moon)" mask="url(#crescent)"/>
+  <!-- craters, faint -->
+  <g fill="#fff" opacity=".18" mask="url(#crescent)"><circle cx="150" cy="300" r="14"/><circle cx="190" cy="370" r="9"/><circle cx="140" cy="220" r="7"/></g>
+  <!-- three stars in the curve of the C, like dates -->
+  <g fill="#fff">
+    <g transform="translate(330 214)"><circle r="12" fill="#FF5FA8" opacity=".85" filter="url(#soft)"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z"/></g>
+    <g transform="translate(372 290) scale(.62)"><circle r="12" fill="#C7A4FF" opacity=".8" filter="url(#soft)"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z"/></g>
+    <g transform="translate(320 344) scale(.45)"><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" fill="#FFD1EA"/></g>
+  </g>
+</svg>

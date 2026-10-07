@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nova Calendar</title>
+<meta name="description" content="Nova Calendar: a cosmic calendar of note cards and day cards, from the Nova suite by Novacane Studios.">
+<meta name="theme-color" content="#06040D">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nova Calendar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="Nova Calendar">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="js/embed.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap">
+<link rel="stylesheet" href="css/nova.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- The Nova Calendar mark: a crescent-moon C with three stars, in the current theme's colours -->
+    <radialGradient id="mk-sky" cx="72%" cy="18%" r="95%"><stop offset="0" style="stop-color:var(--accent-2)"/><stop offset=".42" style="stop-color:var(--accent-3)"/><stop offset="1" style="stop-color:var(--void)"/></radialGradient>
+    <radialGradient id="mk-neb" cx="15%" cy="90%" r="60%"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.7"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></radialGradient>
+    <linearGradient id="mk-moon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--soft)"/><stop offset=".5" style="stop-color:var(--hi)"/><stop offset="1" style="stop-color:var(--lilac)"/></linearGradient>
+    <mask id="mk-crescent"><rect width="512" height="512" fill="#000"/><circle cx="248" cy="260" r="150" fill="#fff"/><circle cx="318" cy="232" r="124" fill="#000"/></mask>
+    <filter id="mk-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="mk-soft" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="url(#mk-sky)"/>
+      <rect width="512" height="512" fill="url(#mk-neb)"/>
+      <g fill="#fff"><circle cx="70" cy="80" r="2.6" opacity=".8"/><circle cx="452" cy="96" r="2" opacity=".6"/><circle cx="470" cy="300" r="2.4" opacity=".6"/><circle cx="96" cy="430" r="1.8" opacity=".55"/><circle cx="196" cy="48" r="1.6" opacity=".5"/></g>
+      <rect width="512" height="512" style="fill:var(--hi)" opacity=".7" mask="url(#mk-crescent)" filter="url(#mk-glow)"/>
+      <rect width="512" height="512" fill="url(#mk-moon)" mask="url(#mk-crescent)"/>
+      <g fill="#fff" opacity=".18" mask="url(#mk-crescent)"><circle cx="150" cy="300" r="14"/><circle cx="190" cy="370" r="9"/><circle cx="140" cy="220" r="7"/></g>
+      <g transform="translate(330 214)"><circle r="12" style="fill:var(--hi)" opacity=".85" filter="url(#mk-soft)"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" fill="#fff"/></g>
+      <g transform="translate(372 290) scale(.62)"><circle r="12" style="fill:var(--lilac)" opacity=".8" filter="url(#mk-soft)"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" fill="#fff"/></g>
+      <path transform="translate(320 344) scale(.45)" d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" style="fill:var(--soft)"/>
+    </symbol>
+  </defs>
+</svg>
+<div class="splash" id="splash" aria-hidden="true">
+  <svg class="splash-mark" viewBox="0 0 512 512"><use href="#i-mark"/></svg>
+  <span class="splash-name">Nova Calendar</span>
+  <span class="splash-kicker">Nova suite · Novacane</span>
+</div>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="nebula" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="app">
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Nova Calendar home">
+      <svg class="app-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="brand-text">
+        <span class="brand-kicker">Nova suite · Novacane</span>
+        <span class="wordmark">Nova Calendar</span>
+      </span>
+    </a>
+
+    <nav class="month-nav" aria-label="Month">
+      <button type="button" class="icon-btn" id="prev" aria-label="Previous month"></button>
+      <h1 class="month-label" id="month-label" aria-live="polite"></h1>
+      <button type="button" class="icon-btn" id="next" aria-label="Next month"></button>
+      <button type="button" class="btn ghost sm" id="today">Today</button>
+    </nav>
+
+    <div class="top-actions">
+      <!-- Nova Portal: who you are (connect it once in Nova Portal; inside Nova Agent, who Nova Agent works for) -->
+      <nova-manual compact></nova-manual>
+      <nova-portal-badge></nova-portal-badge>
+      <div class="themes" id="themes" role="radiogroup" aria-label="Colour theme"></div>
+      <!-- Every Nova suite address, live and testing (behind the admin password) -->
+      <a class="btn ghost sm" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener" title="Every Nova suite address, live and testing (password protected)">🔒 Links</a>
+      <!-- Sound effects on or off (the shared Nova suite sounds, js/sfx.js); it plays its own chime when switched -->
+      <button type="button" class="btn ghost sm sound-btn" id="sound" aria-pressed="true" data-sfx="none" title="Sound effects">Sound</button>
+      <button type="button" class="btn ghost sm" id="install" hidden title="Install Nova Calendar as an app on this device">Install</button>
+      <button type="button" class="btn primary" id="new-note" data-sfx="open"></button>
+      <button type="button" class="btn ghost" id="new-day" data-sfx="open"></button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="calendar" aria-label="Calendar">
+      <div class="weekdays" id="weekdays" aria-hidden="true"></div>
+      <div class="grid" id="grid"></div>
+      <div class="month-strip" id="month-strip" aria-label="This month"></div>
+      <div class="cal-foot">
+        <div class="legend">
+          <span><i class="lg-dot"></i> note card</span>
+          <span><i class="lg-bar"></i> day card</span>
+          <span><span id="lg-moon"></span> moon phase</span>
+          <span class="keys"><kbd>N</kbd> note <kbd>D</kbd> day <kbd>T</kbd> today <kbd>←→↑↓</kbd> move <kbd>PgUp</kbd><kbd>PgDn</kbd> month</span>
+        </div>
+        <div class="data-actions">
+          <button type="button" class="btn ghost sm" id="export"></button>
+          <button type="button" class="btn ghost sm" id="import"></button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel" id="panel" aria-label="Selected day" aria-live="polite"></aside>
+  </main>
+
+  <footer class="foot">Nova Calendar · part of the Nova suite · Novacane Studios · saved in this browser only, so export a backup now and then</footer>
+</div>
+
+<!-- NOTE CARD EDITOR -->
+<dialog id="note-dlg" class="dlg" aria-labelledby="note-dlg-title">
+  <form id="note-form" class="dlg-inner" novalidate>
+    <header class="dlg-head">
+      <div><span class="dlg-kicker">Note card</span><h2 id="note-dlg-title">New note card</h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"></button>
+    </header>
+    <div class="dlg-body note-grid">
+      <div class="art-col">
+        <figure class="art-frame">
+          <img id="note-art" alt="Generated artwork for this note">
+          <figcaption id="note-art-cap"></figcaption>
+        </figure>
+        <div class="art-tools">
+          <label class="sr-only" for="note-subject">Art style</label>
+          <select id="note-subject" name="subject"></select>
+          <button type="button" class="btn ghost sm" id="note-regen"></button>
+          <a class="btn ghost sm" id="note-download" href="#" download="nova-calendar-art.png"></a>
+        </div>
+        <p class="hint">The picture is painted from your note. Type and it changes; press Regenerate to roll a new one and keep it.</p>
+      </div>
+      <div class="field-col">
+        <label class="field"><span>Title</span><input name="title" maxlength="120" placeholder="Untitled transmission" autocomplete="off"></label>
+        <label class="field"><span>Note</span><textarea name="body" rows="6" maxlength="5000" placeholder="What's happening in this orbit?"></textarea></label>
+        <label class="field"><span>Author</span><input name="author" maxlength="60" placeholder="Who logged this" autocomplete="name"></label>
+        <div class="field-row">
+          <label class="field"><span>Start</span><input type="datetime-local" name="start" required></label>
+          <label class="field"><span>Finish</span><input type="datetime-local" name="end" required></label>
+        </div>
+        <p class="form-error" id="note-error" role="alert"></p>
+        <p class="stamp" id="note-stamp"></p>
+      </div>
+    </div>
+    <footer class="dlg-foot">
+      <button type="button" class="btn ghost danger" id="note-delete" data-sfx="tap">Delete</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="submit" class="btn primary" data-sfx="send">Save note card</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- DAY CARD EDITOR -->
+<dialog id="day-dlg" class="dlg wide" aria-labelledby="day-dlg-title">
+  <form id="day-form" class="dlg-inner" novalidate>
+    <header class="dlg-head">
+      <div><span class="dlg-kicker">Day card</span><h2 id="day-dlg-title">New day card</h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"></button>
+    </header>
+    <div class="dlg-body">
+      <div class="day-preview">
+        <div id="day-preview"></div>
+        <button type="button" class="btn ghost sm reroll" id="day-reroll"></button>
+      </div>
+      <p class="series-note" id="day-series-note" hidden>This card repeats every year, so changes apply to every year it shows.</p>
+      <fieldset class="field"><legend>Preset</legend><div class="opt-grid" id="preset-grid"></div></fieldset>
+      <div class="field-row title-row">
+        <label class="field"><span>Title</span><input name="title" maxlength="80" placeholder="Name this day" autocomplete="off"></label>
+        <label class="field"><span>Date</span><input type="date" name="date" required></label>
+      </div>
+      <label class="check"><input type="checkbox" name="repeat"> Repeats every year</label>
+      <fieldset class="field"><legend>Aesthetic</legend><div class="opt-grid" id="aes-grid"></div></fieldset>
+      <fieldset class="field"><legend>Theme</legend><div class="opt-grid" id="day-theme-grid"></div></fieldset>
+      <label class="field"><span>Day information</span><textarea name="info" rows="4" maxlength="4000" placeholder="Anything worth knowing about this day"></textarea></label>
+      <div class="field-row">
+        <label class="field"><span>Location</span><input name="location" maxlength="120" placeholder="Where"></label>
+        <label class="field"><span>Tags</span><input name="tags" maxlength="300" placeholder="comma, separated"></label>
+      </div>
+      <p class="form-error" id="day-error" role="alert"></p>
+    </div>
+    <footer class="dlg-foot">
+      <button type="button" class="btn ghost danger" id="day-delete" data-sfx="tap">Delete</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="submit" class="btn ghost" value="note" data-sfx="send">Save &amp; add note</button>
+      <button type="submit" class="btn primary" value="save" data-sfx="send">Save day card</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- CONFIRM -->
+<dialog id="confirm-dlg" class="dlg small" aria-labelledby="confirm-title">
+  <form method="dialog" class="dlg-inner">
+    <div class="dlg-body">
+      <h2 id="confirm-title" class="confirm-title"></h2>
+      <p id="confirm-msg" class="confirm-msg"></p>
+    </div>
+    <footer class="dlg-foot">
+      <span class="spacer"></span>
+      <button value="cancel" class="btn ghost">Keep it</button>
+      <button value="ok" class="btn danger solid" data-sfx="remove">Delete</button>
+    </footer>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/sfx.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/presets.js"></script>
+<script src="js/sky.js"></script>
+<script src="js/cosmos.js"></script>
+<script src="js/store.js"></script>
+<script src="js/backdrop.js"></script>
+<script src="js/app.js"></script>
+<script src="js/portal-badge.js" defer></script>
+<script src="js/nova-manual.js" defer></script>
+</body>
+</html>

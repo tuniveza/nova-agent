@@ -1,0 +1,11 @@
+# Not part of the web app
+.git
+.gitignore
+.assetsignore
+.wrangler
+node_modules
+docs
+README.md
+wrangler.jsonc
+nova-task-backup*.json
+nova-calendar-backup*.json
