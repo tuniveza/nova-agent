@@ -309,6 +309,8 @@ export async function refineMission(id: string, detail: string, hints: { deadlin
   const mine = before.quests.filter((q) => q.missionId === m.id);
   const done = mine.filter((q) => q.status === "done").map((q) => `- ${q.title}${q.completed ? ` (done ${q.completed.slice(0, 10)})` : ""}`);
   const doing = mine.filter((q) => q.status === "doing").map((q) => `- ${q.title}`);
+  // Open quests changed by hand stay as they are; the new plan works around them
+  const handMade = mine.filter((q) => q.status === "todo" && q.edited).map((q) => `- ${q.title}${q.fixedStart ? ` (set for ${q.fixedStart.replace("T", " ")})` : ""}`);
   const deadline = hints.deadline || m.deadline;
   const { plan, sources } = await askForPlan(before, {
     request: m.request,
@@ -316,13 +318,13 @@ export async function refineMission(id: string, detail: string, hints: { deadlin
     context: `This mission already has a plan, called "${m.title}". Plan again, from now, ONLY the work that's left, using everything below. Keep what was working; change what the new detail changes.
 ${m.assumptions.length ? `The last plan assumed:\n${m.assumptions.map((a) => `- ${a}`).join("\n")}\n` : ""}${m.questions.length ? `It asked:\n${m.questions.map((q) => `- ${q}`).join("\n")}\n` : ""}What they've told you since (oldest first):
 ${refinements.map((r) => `- ${r.text}`).join("\n")}
-${m.research.length ? `Research from last time (${m.researched.slice(0, 10)}; only look again if it may be out of date or the new detail needs more):\n${m.research.map((f) => `- ${f.text} (${f.url})`).join("\n")}\n` : ""}${done.length ? `Already done (don't plan these again):\n${done.slice(-80).join("\n")}\n` : ""}${doing.length ? `Under way right now (leave out):\n${doing.join("\n")}\n` : ""}`,
+${m.research.length ? `Research from last time (${m.researched.slice(0, 10)}; only look again if it may be out of date or the new detail needs more):\n${m.research.map((f) => `- ${f.text} (${f.url})`).join("\n")}\n` : ""}${done.length ? `Already done (don't plan these again):\n${done.slice(-80).join("\n")}\n` : ""}${doing.length ? `Under way right now (leave out):\n${doing.join("\n")}\n` : ""}${handMade.length ? `They changed these by hand, so they stay exactly as they are (don't plan them again; plan around them):\n${handMade.slice(0, 80).join("\n")}\n` : ""}`,
   });
   const data = readQuests();
   const current = data.missions.find((x) => x.id === m.id);
   if (!current) throw new Error("That mission was removed while it was being planned.");
-  // Out with the open quests, in with the new plan's
-  data.quests = data.quests.filter((q) => q.missionId !== m.id || q.status !== "todo");
+  // Out with the open quests (except those changed by hand), in with the new plan's
+  data.quests = data.quests.filter((q) => q.missionId !== m.id || q.status !== "todo" || q.edited);
   const { quests, milestones } = materialise(plan, current, data);
   // Milestones already ticked off stay ticked
   const ticked = new Set(current.milestones.filter((x) => x.done).map((x) => x.title));

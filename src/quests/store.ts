@@ -114,6 +114,7 @@ export interface Quest {
   checkedFor: string; // the end time a check-in was sent for
   missed: number;
   completed: string;
+  edited: string; // when it was last changed by hand ("" = never): a mission re-plan keeps it
   created: string;
   updated: string;
 }
@@ -267,6 +268,7 @@ export function cleanQuest(q: any): Quest {
     checkedFor: text(q?.checkedFor, 20),
     missed: num(q?.missed, 0, 999, 0),
     completed: text(q?.completed, 40),
+    edited: text(q?.edited, 40),
     created: text(q?.created, 40) || now(),
     updated: text(q?.updated, 40) || now(),
   };

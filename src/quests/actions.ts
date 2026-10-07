@@ -224,7 +224,8 @@ export function updateQuest(id: string, changes: Partial<Quest>): Quest {
   const wanted = checkedChanges(changes);
   const data = readQuests();
   const q = find(data.quests, id, "quest");
-  const merged = cleanQuest({ ...q, ...wanted, id: q.id, updated: new Date().toISOString() });
+  const at = new Date().toISOString();
+  const merged = cleanQuest({ ...q, ...wanted, id: q.id, updated: at, edited: at });
   if (wanted.fixedStart !== undefined || wanted.minutes !== undefined) merged.remindedFor = merged.checkedFor = "";
   // A repeat given a new interval: its next session counts from the last one at the new spacing
   if (wanted.everyMinutes !== undefined && wanted.everyMinutes !== q.everyMinutes && q.ongoing && q.every === "interval" && q.status === "todo" && !q.fixedStart && q.earliest && q.sessions + q.missed > 0) {
