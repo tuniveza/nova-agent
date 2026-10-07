@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nova Notes</title>
+<meta name="description" content="Nova Notes: a cosmic note editor from the Nova suite by Novacane Studios. Write, import, export and send to Google Docs.">
+<meta name="theme-color" content="#06040D">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nova Notes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="Nova Notes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&display=swap">
+<link rel="stylesheet" href="css/nova-notes.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-unlink" viewBox="0 0 24 24"><path d="m18.84 12.25 1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71"/><path d="M8 2v3M2 8h3M16 22v-3M22 16h-3"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></symbol>
+    <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></symbol>
+    <symbol id="i-al" viewBox="0 0 24 24"><path d="M21 6H3M15 12H3M17 18H3"/></symbol>
+    <symbol id="i-ac" viewBox="0 0 24 24"><path d="M21 6H3M17 12H7M19 18H5"/></symbol>
+    <symbol id="i-ar" viewBox="0 0 24 24"><path d="M21 6H3M21 12H9M21 18H7"/></symbol>
+    <symbol id="i-aj" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+    <symbol id="i-ul" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1.1" fill="currentColor"/><circle cx="4" cy="12" r="1.1" fill="currentColor"/><circle cx="4" cy="18" r="1.1" fill="currentColor"/></symbol>
+    <symbol id="i-ol" viewBox="0 0 24 24"><path d="M10 6h11M10 12h11M10 18h11M4 4h1v4M4 8h2"/><path d="M6 20H3.5c0-1.2 2.5-1.8 2.5-3.2 0-.7-.6-1.3-1.3-1.3-.6 0-1.1.3-1.2.9"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m3 7 2 2 4-4M13 7h8"/><rect x="3" y="14" width="6" height="6" rx="1.5"/><path d="M13 17h8"/></symbol>
+    <symbol id="i-indent" viewBox="0 0 24 24"><path d="M21 6H11M21 12H11M21 18H11M3 8l4 4-4 4"/></symbol>
+    <symbol id="i-outdent" viewBox="0 0 24 24"><path d="M21 6H11M21 12H11M21 18H11M7 8l-4 4 4 4"/></symbol>
+    <symbol id="i-clear" viewBox="0 0 24 24"><path d="M4 7V4h16v3M5 20h6M13 4 8 20M15 15l5 5M20 15l-5 5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-spacing" viewBox="0 0 24 24"><path d="m3 7 3-3 3 3M6 4v16M3 17l3 3 3-3M13 6h8M13 12h8M13 18h8"/></symbol>
+    <symbol id="i-color" viewBox="0 0 24 24"><path d="m6 17 6-13 6 13M8.3 12h7.4"/></symbol>
+    <symbol id="i-marker" viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></symbol>
+    <symbol id="i-import" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8M8 9h2"/></symbol>
+    <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
+    <symbol id="i-outline" viewBox="0 0 24 24"><path d="M4 6h16M8 12h12M12 18h8"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6z"/></symbol>
+    <symbol id="i-rule" viewBox="0 0 24 24"><path d="M3 12h7M14 12h7"/><path d="m12 9.5.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z" fill="currentColor"/></symbol>
+    <symbol id="i-break" viewBox="0 0 24 24"><path d="M5 3v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3M5 21v-5a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v5M2 12h2M7 12h2M12 12h0M15 12h2M20 12h2"/></symbol>
+    <symbol id="i-date" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0 0 20c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.7 1.7-1.7h2a5.6 5.6 0 0 0 5.5-5.5C22 6 17.5 2 12 2z"/><circle cx="7.5" cy="11.5" r="1" fill="currentColor"/><circle cx="10" cy="7" r="1" fill="currentColor"/><circle cx="15" cy="7" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-keys" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-full" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M3 12h3M18 12h3M12 3v3M12 18v3"/></symbol>
+    <symbol id="i-page" viewBox="0 0 24 24"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></symbol>
+    <symbol id="i-words" viewBox="0 0 24 24"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-tick" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-drive" viewBox="0 0 24 24"><path d="M8.2 3h7.6l6.2 10.8-3.8 6.7H5.8L2 13.8z"/><path d="M8.2 3 14 13.8H22M15.8 3 9.9 13.8 6 20.5M2 13.8h8"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5H3v7h4c0 3-1 5-4 5zM14 21c3 0 7-1 7-8V5h-7v7h4c0 3-1 5-4 5z"/></symbol>
+    <!-- The Nova Notes mark: the cosmic N, drawn in the current theme's colours -->
+    <radialGradient id="mk-sky" cx="28%" cy="20%" r="95%"><stop offset="0" style="stop-color:var(--accent)"/><stop offset=".4" style="stop-color:var(--accent-3)"/><stop offset="1" style="stop-color:var(--void)"/></radialGradient>
+    <radialGradient id="mk-neb" cx="82%" cy="88%" r="55%"><stop offset="0" style="stop-color:var(--accent-2);stop-opacity:.75"/><stop offset="1" style="stop-color:var(--accent-2);stop-opacity:0"/></radialGradient>
+    <linearGradient id="mk-letter" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--soft)"/><stop offset=".45" style="stop-color:var(--hi)"/><stop offset="1" style="stop-color:var(--lilac)"/></linearGradient>
+    <filter id="mk-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="mk-twinkle" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <symbol id="i-mark" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="url(#mk-sky)"/>
+      <rect width="512" height="512" fill="url(#mk-neb)"/>
+      <g fill="#fff"><circle cx="74" cy="96" r="2.4" opacity=".8"/><circle cx="432" cy="72" r="2" opacity=".7"/><circle cx="452" cy="318" r="2.2" opacity=".6"/><circle cx="88" cy="420" r="1.8" opacity=".6"/><circle cx="300" cy="468" r="1.6" opacity=".5"/><circle cx="210" cy="52" r="1.4" opacity=".55"/></g>
+      <ellipse cx="256" cy="258" rx="196" ry="66" fill="none" style="stroke:var(--soft)" stroke-opacity=".38" stroke-width="3" stroke-dasharray="3 11" stroke-linecap="round" transform="rotate(-22 256 258)"/>
+      <path d="M150 380V132h58l98 146V132h58v248h-58l-98-146v146z" style="fill:var(--hi)" opacity=".75" filter="url(#mk-glow)"/>
+      <path d="M150 380V132h58l98 146V132h58v248h-58l-98-146v146z" fill="url(#mk-letter)"/>
+      <path d="M150 380V132h58l98 146V132h58v248h-58l-98-146v146z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2"/>
+      <path d="M71 318 A196 66 -22 0 0 441 198" fill="none" style="stroke:var(--soft)" stroke-opacity=".8" stroke-width="3.2" stroke-dasharray="3 11" stroke-linecap="round"/>
+      <circle cx="410" cy="214" r="16" style="fill:var(--hi)" opacity=".9" filter="url(#mk-twinkle)"/>
+      <path transform="translate(410 214)" d="M0-20 3.4-3.4 20 0 3.4 3.4 0 20-3.4 3.4-20 0-3.4-3.4z" fill="#fff"/>
+      <path transform="translate(118 132) scale(.55)" d="M0-20 3.4-3.4 20 0 3.4 3.4 0 20-3.4 3.4-20 0-3.4-3.4z" style="fill:var(--soft)" opacity=".9"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="splash" id="splash" aria-hidden="true">
+  <svg class="splash-mark" viewBox="0 0 512 512"><use href="#i-mark"/></svg>
+  <span class="splash-name">Nova Notes</span>
+  <span class="splash-kicker">Nova suite · Novacane</span>
+</div>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="nebula" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="shell" id="shell">
+  <!-- ===== TOP BAR ===== -->
+  <header class="topbar glass">
+    <button type="button" class="icon-btn only-narrow" id="btn-library" aria-label="Show notes" aria-controls="library"><svg class="ico"><use href="#i-sidebar"/></svg></button>
+    <a class="brand" href="./" aria-label="Nova Notes">
+      <svg class="app-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="brand-text">
+        <span class="brand-kicker">Nova suite · Novacane</span>
+        <span class="wordmark">Nova Notes</span>
+      </span>
+    </a>
+
+    <div class="doc-head">
+      <input id="doc-title" class="doc-title" type="text" maxlength="200" spellcheck="false" aria-label="Note name" placeholder="Untitled note">
+      <span class="save-state" id="save-state" aria-live="polite"><svg class="ico"><use href="#i-cloud"/></svg><span>Saved</span></span>
+    </div>
+
+    <div class="top-actions">
+      <!-- Nova Portal: who you are (connect it once in Nova Portal; inside Nova Agent, who Nova Agent works for) -->
+      <nova-manual compact></nova-manual>
+      <nova-portal-badge></nova-portal-badge>
+      <div class="themes" id="themes" role="radiogroup" aria-label="Colour theme"></div>
+      <button type="button" class="btn ghost sm" id="btn-install" hidden title="Install Nova Notes as an app on this device"><svg class="ico"><use href="#i-export"/></svg><span>Install</span></button>
+      <button type="button" class="btn ghost sm hide-narrow" id="btn-import"><svg class="ico"><use href="#i-import"/></svg><span>Import</span></button>
+      <button type="button" class="btn ghost sm hide-narrow" id="btn-export" aria-haspopup="menu"><svg class="ico"><use href="#i-export"/></svg><span>Export</span></button>
+      <button type="button" class="btn primary sm" id="btn-gdocs" data-sfx="open"><svg class="ico"><use href="#i-doc"/></svg><span>Google Docs</span></button>
+    </div>
+
+    <nav class="menubar" id="menubar" role="menubar" aria-label="Menu"></nav>
+  </header>
+
+  <!-- ===== TOOLBAR ===== -->
+  <div class="toolbar glass" id="toolbar" role="toolbar" aria-label="Formatting">
+    <div class="tb-group">
+      <button type="button" class="tb" data-cmd="undo" aria-label="Undo (Ctrl+Z)" title="Undo (Ctrl+Z)"><svg class="ico"><use href="#i-undo"/></svg></button>
+      <button type="button" class="tb" data-cmd="redo" aria-label="Redo (Ctrl+Y)" title="Redo (Ctrl+Y)"><svg class="ico"><use href="#i-redo"/></svg></button>
+      <button type="button" class="tb" data-cmd="print" aria-label="Print (Ctrl+P)" title="Print (Ctrl+P)"><svg class="ico"><use href="#i-print"/></svg></button>
+    </div>
+    <div class="tb-group">
+      <select class="tb-select" id="tb-zoom" aria-label="Zoom" title="Zoom">
+        <option value="0.5">50%</option><option value="0.75">75%</option><option value="0.9">90%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option><option value="2">200%</option>
+      </select>
+    </div>
+    <div class="tb-group">
+      <select class="tb-select wide" id="tb-style" aria-label="Paragraph style" title="Paragraph style">
+        <option value="normal">Normal text</option>
+        <option value="title">Title</option>
+        <option value="subtitle">Subtitle</option>
+        <option value="h1">Heading 1</option>
+        <option value="h2">Heading 2</option>
+        <option value="h3">Heading 3</option>
+        <option value="quote">Quote</option>
+        <option value="code">Code</option>
+      </select>
+      <select class="tb-select wide" id="tb-font" aria-label="Font" title="Font">
+        <option value="">Theme font</option>
+        <option value="Saira">Saira</option>
+        <option value="Archivo">Archivo</option>
+        <option value="Cormorant Garamond">Cormorant Garamond</option>
+        <option value="Source Code Pro">Source Code Pro</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Arial">Arial</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Verdana">Verdana</option>
+      </select>
+    </div>
+    <div class="tb-group size">
+      <button type="button" class="tb" data-cmd="sizeDown" aria-label="Smaller text" title="Smaller text (Ctrl+Shift+,)"><svg class="ico"><use href="#i-minus"/></svg></button>
+      <input class="tb-size" id="tb-size" type="text" inputmode="decimal" aria-label="Font size" title="Font size" value="12">
+      <button type="button" class="tb" data-cmd="sizeUp" aria-label="Bigger text" title="Bigger text (Ctrl+Shift+.)"><svg class="ico"><use href="#i-plus"/></svg></button>
+    </div>
+    <div class="tb-group">
+      <button type="button" class="tb letter" data-cmd="bold" aria-label="Bold (Ctrl+B)" title="Bold (Ctrl+B)"><b>B</b></button>
+      <button type="button" class="tb letter" data-cmd="italic" aria-label="Italic (Ctrl+I)" title="Italic (Ctrl+I)"><i>I</i></button>
+      <button type="button" class="tb letter" data-cmd="underline" aria-label="Underline (Ctrl+U)" title="Underline (Ctrl+U)"><u>U</u></button>
+      <button type="button" class="tb letter" data-cmd="strikeThrough" aria-label="Strikethrough (Alt+Shift+5)" title="Strikethrough (Alt+Shift+5)"><s>S</s></button>
+      <button type="button" class="tb swatch-btn" data-pop="color" aria-label="Text colour" title="Text colour"><svg class="ico"><use href="#i-color"/></svg><span class="bar" id="bar-color"></span></button>
+      <button type="button" class="tb swatch-btn" data-pop="highlight" aria-label="Highlight colour" title="Highlight colour"><svg class="ico"><use href="#i-marker"/></svg><span class="bar" id="bar-highlight"></span></button>
+    </div>
+    <div class="tb-group">
+      <button type="button" class="tb" data-cmd="link" aria-label="Insert link (Ctrl+K)" title="Insert link (Ctrl+K)"><svg class="ico"><use href="#i-link"/></svg></button>
+      <button type="button" class="tb" data-cmd="image" aria-label="Insert image" title="Insert image"><svg class="ico"><use href="#i-image"/></svg></button>
+      <button type="button" class="tb" data-pop="table" aria-label="Insert table" title="Insert table"><svg class="ico"><use href="#i-table"/></svg></button>
+    </div>
+    <div class="tb-group">
+      <button type="button" class="tb" data-cmd="align" data-value="left" aria-label="Align left (Ctrl+Shift+L)" title="Align left (Ctrl+Shift+L)"><svg class="ico"><use href="#i-al"/></svg></button>
+      <button type="button" class="tb" data-cmd="align" data-value="center" aria-label="Centre (Ctrl+Shift+E)" title="Centre (Ctrl+Shift+E)"><svg class="ico"><use href="#i-ac"/></svg></button>
+      <button type="button" class="tb" data-cmd="align" data-value="right" aria-label="Align right (Ctrl+Shift+R)" title="Align right (Ctrl+Shift+R)"><svg class="ico"><use href="#i-ar"/></svg></button>
+      <button type="button" class="tb" data-cmd="align" data-value="justify" aria-label="Justify (Ctrl+Shift+J)" title="Justify (Ctrl+Shift+J)"><svg class="ico"><use href="#i-aj"/></svg></button>
+      <button type="button" class="tb" data-pop="spacing" aria-label="Line spacing" title="Line spacing"><svg class="ico"><use href="#i-spacing"/></svg></button>
+    </div>
+    <div class="tb-group">
+      <button type="button" class="tb" data-cmd="list" data-value="check" aria-label="Checklist (Ctrl+Shift+9)" title="Checklist (Ctrl+Shift+9)"><svg class="ico"><use href="#i-check"/></svg></button>
+      <button type="button" class="tb" data-cmd="list" data-value="ul" aria-label="Bulleted list (Ctrl+Shift+8)" title="Bulleted list (Ctrl+Shift+8)"><svg class="ico"><use href="#i-ul"/></svg></button>
+      <button type="button" class="tb" data-cmd="list" data-value="ol" aria-label="Numbered list (Ctrl+Shift+7)" title="Numbered list (Ctrl+Shift+7)"><svg class="ico"><use href="#i-ol"/></svg></button>
+      <button type="button" class="tb" data-cmd="outdent" aria-label="Decrease indent (Ctrl+[)" title="Decrease indent (Ctrl+[)"><svg class="ico"><use href="#i-outdent"/></svg></button>
+      <button type="button" class="tb" data-cmd="indent" aria-label="Increase indent (Ctrl+])" title="Increase indent (Ctrl+])"><svg class="ico"><use href="#i-indent"/></svg></button>
+    </div>
+    <div class="tb-group">
+      <button type="button" class="tb" data-cmd="clear" data-sfx="tap" aria-label="Clear formatting (Ctrl+\)" title="Clear formatting (Ctrl+\)"><svg class="ico"><use href="#i-clear"/></svg></button>
+      <button type="button" class="tb" data-cmd="find" aria-label="Find and replace (Ctrl+H)" title="Find and replace (Ctrl+H)"><svg class="ico"><use href="#i-search"/></svg></button>
+    </div>
+  </div>
+
+  <!-- ===== WORKSPACE ===== -->
+  <div class="workspace" id="workspace">
+    <aside class="library glass" id="library" aria-label="Notes">
+      <div class="lib-head">
+        <h2 class="lib-title">Your notes</h2>
+        <button type="button" class="btn primary sm" id="btn-new"><svg class="ico"><use href="#i-plus"/></svg><span>New</span></button>
+      </div>
+      <label class="lib-search">
+        <svg class="ico"><use href="#i-search"/></svg>
+        <input type="search" id="lib-search" placeholder="Search notes" aria-label="Search notes">
+      </label>
+      <ul class="lib-list" id="lib-list" role="listbox" aria-label="Notes"></ul>
+      <p class="lib-foot" id="lib-foot"></p>
+    </aside>
+
+    <main class="desk" id="desk">
+      <div class="page-wrap" id="page-wrap">
+        <article class="page" id="editor" data-placeholder="Start writing… it all lines up in the middle, among the stars." aria-label="Note"></article>
+      </div>
+
+      <!-- Find and replace -->
+      <section class="findbar glass" id="findbar" hidden aria-label="Find and replace">
+        <div class="find-row">
+          <input type="search" id="find-q" placeholder="Find in note" aria-label="Find">
+          <span class="find-count" id="find-count">0 of 0</span>
+          <button type="button" class="icon-btn sm" id="find-prev" aria-label="Previous match"><svg class="ico"><use href="#i-up"/></svg></button>
+          <button type="button" class="icon-btn sm" id="find-next" aria-label="Next match"><svg class="ico"><use href="#i-down"/></svg></button>
+          <button type="button" class="icon-btn sm" id="find-close" aria-label="Close find"><svg class="ico"><use href="#i-close"/></svg></button>
+        </div>
+        <div class="find-row">
+          <input type="text" id="find-r" placeholder="Replace with" aria-label="Replace with">
+          <button type="button" class="btn ghost sm" id="find-one">Replace</button>
+          <button type="button" class="btn ghost sm" id="find-all">All</button>
+        </div>
+        <div class="find-row opts">
+          <label class="check"><input type="checkbox" id="find-case"> Match case</label>
+          <label class="check"><input type="checkbox" id="find-word"> Whole words</label>
+        </div>
+      </section>
+    </main>
+
+    <aside class="outline glass" id="outline" aria-label="Outline">
+      <h2 class="lib-title">Outline</h2>
+      <ol class="outline-list" id="outline-list"></ol>
+      <p class="outline-empty" id="outline-empty">Headings you add appear here, so you can jump between them.</p>
+    </aside>
+  </div>
+
+  <!-- ===== STATUS BAR ===== -->
+  <footer class="statusbar">
+    <button type="button" class="status-btn" id="st-words" title="Word count (Ctrl+Shift+C)">0 words</button>
+    <span class="status-dot" aria-hidden="true">✦</span>
+    <span id="st-chars">0 characters</span>
+    <span class="spacer"></span>
+    <button type="button" class="status-btn" id="st-page" title="Page style">Cosmic page</button>
+    <button type="button" class="status-btn" id="st-outline" title="Show or hide the outline">Outline</button>
+  </footer>
+</div>
+
+<!-- ===== FLOATING TOOLS ===== -->
+<div class="pop glass" id="pop-color" hidden role="dialog" aria-label="Colour">
+  <div class="pop-tabs"><span class="pop-label" id="pop-color-label">Text colour</span></div>
+  <div class="swatches" id="color-swatches"></div>
+  <div class="pop-row">
+    <button type="button" class="btn ghost sm" id="color-reset">Default</button>
+    <label class="custom-color"><input type="color" id="color-custom" aria-label="Custom colour"><span>Custom</span></label>
+  </div>
+</div>
+
+<div class="pop glass" id="pop-table" hidden role="dialog" aria-label="Insert table">
+  <div class="grid-pick" id="grid-pick"></div>
+  <p class="pop-label center" id="grid-size">Pick a size</p>
+</div>
+
+<div class="pop glass menu" id="pop-spacing" hidden role="menu" aria-label="Line spacing">
+  <button type="button" role="menuitemradio" data-lh="1">Single</button>
+  <button type="button" role="menuitemradio" data-lh="1.15">1.15</button>
+  <button type="button" role="menuitemradio" data-lh="1.5">1.5</button>
+  <button type="button" role="menuitemradio" data-lh="">Default (1.7)</button>
+  <button type="button" role="menuitemradio" data-lh="2">Double</button>
+</div>
+
+<div class="pop glass" id="pop-link" hidden role="dialog" aria-label="Link">
+  <label class="field"><span>Text</span><input type="text" id="link-text" placeholder="Text to show"></label>
+  <label class="field"><span>Link</span><input type="url" id="link-url" placeholder="Paste a link, or type an email"></label>
+  <div class="pop-row">
+    <button type="button" class="btn ghost sm" id="link-remove" hidden><svg class="ico"><use href="#i-unlink"/></svg><span>Remove</span></button>
+    <span class="spacer"></span>
+    <button type="button" class="btn primary sm" id="link-apply">Apply</button>
+  </div>
+</div>
+
+<div class="pop glass" id="pop-linkview" hidden role="dialog" aria-label="Link">
+  <a class="link-out" id="linkview-url" href="#" target="_blank" rel="noopener noreferrer"></a>
+  <button type="button" class="icon-btn sm" id="linkview-edit" aria-label="Edit link" title="Edit link"><svg class="ico"><use href="#i-link"/></svg></button>
+  <button type="button" class="icon-btn sm" id="linkview-remove" aria-label="Remove link" title="Remove link"><svg class="ico"><use href="#i-unlink"/></svg></button>
+</div>
+
+<div class="pop glass" id="pop-symbols" hidden role="dialog" aria-label="Special characters">
+  <p class="pop-label">Special characters</p>
+  <div class="symbols" id="symbols"></div>
+</div>
+
+<div class="floatbar glass" id="imgbar" hidden role="toolbar" aria-label="Picture">
+  <button type="button" class="chip" data-img="width" data-value="25">S</button>
+  <button type="button" class="chip" data-img="width" data-value="50">M</button>
+  <button type="button" class="chip" data-img="width" data-value="75">L</button>
+  <button type="button" class="chip" data-img="width" data-value="">Full</button>
+  <span class="sep"></span>
+  <button type="button" class="icon-btn sm" data-img="align" data-value="left" aria-label="Picture left"><svg class="ico"><use href="#i-al"/></svg></button>
+  <button type="button" class="icon-btn sm" data-img="align" data-value="center" aria-label="Picture centred"><svg class="ico"><use href="#i-ac"/></svg></button>
+  <button type="button" class="icon-btn sm" data-img="align" data-value="right" aria-label="Picture right"><svg class="ico"><use href="#i-ar"/></svg></button>
+  <span class="sep"></span>
+  <button type="button" class="chip" data-img="alt">Alt text</button>
+  <button type="button" class="icon-btn sm danger" data-img="remove" aria-label="Delete picture"><svg class="ico"><use href="#i-trash"/></svg></button>
+</div>
+
+<div class="floatbar glass" id="tablebar" hidden role="toolbar" aria-label="Table">
+  <button type="button" class="chip" data-table="rowAbove">+ Row above</button>
+  <button type="button" class="chip" data-table="rowBelow">+ Row below</button>
+  <button type="button" class="chip" data-table="colLeft">+ Column left</button>
+  <button type="button" class="chip" data-table="colRight">+ Column right</button>
+  <button type="button" class="chip" data-table="header">Header row</button>
+  <span class="sep"></span>
+  <button type="button" class="chip" data-table="delRow" data-sfx="remove">− Row</button>
+  <button type="button" class="chip" data-table="delCol" data-sfx="remove">− Column</button>
+  <button type="button" class="icon-btn sm danger" data-table="delTable" aria-label="Delete table"><svg class="ico"><use href="#i-trash"/></svg></button>
+</div>
+
+<div class="menu-pop glass" id="menu-pop" hidden role="menu"></div>
+
+<!-- ===== DIALOGS ===== -->
+<dialog class="dlg" id="dlg-gdocs" aria-labelledby="gdocs-title">
+  <div class="dlg-inner">
+    <div class="dlg-head">
+      <div><span class="dlg-kicker">Send this note</span><h2 id="gdocs-title">To Google Docs</h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="dlg-body">
+      <section class="route">
+        <div class="route-head">
+          <span class="route-num">1</span>
+          <div><h3>Copy &amp; paste</h3><p>No setup. Copies the note with its Novacane styling and opens a new Google Doc. Press <kbd>Ctrl</kbd>+<kbd>V</kbd> there.</p></div>
+        </div>
+        <button type="button" class="btn primary" id="gd-copy" data-sfx="send"><svg class="ico"><use href="#i-copy"/></svg><span>Copy &amp; open Google Docs</span></button>
+      </section>
+      <section class="route">
+        <div class="route-head">
+          <span class="route-num">2</span>
+          <div><h3>Save straight to Google Drive</h3><p>One click once it's set up. Makes a real Google Doc in your Drive, and updates the same Doc each time you save this note again.</p></div>
+        </div>
+        <div class="gd-linked" id="gd-linked" hidden>
+          <svg class="ico"><use href="#i-drive"/></svg>
+          <span>Linked to a Google Doc.</span>
+          <a class="btn ghost sm" id="gd-open" href="#" target="_blank" rel="noopener noreferrer"><svg class="ico"><use href="#i-open"/></svg><span>Open it</span></a>
+        </div>
+        <div class="pop-row">
+          <button type="button" class="btn primary" id="gd-save"><svg class="ico"><use href="#i-drive"/></svg><span id="gd-save-label">Create Google Doc</span></button>
+          <button type="button" class="btn ghost sm" id="gd-unlink" hidden>Make a new Doc next time</button>
+        </div>
+        <details class="gd-setup" id="gd-setup">
+          <summary>Set up (one time)</summary>
+          <ol class="steps">
+            <li>In <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Google Cloud → Credentials</a>, create an <b>OAuth client ID</b> of type <b>Web application</b>.</li>
+            <li>Under <b>Authorised JavaScript origins</b>, add <code id="gd-origin">this page's address</code>.</li>
+            <li>Turn on the <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener noreferrer">Google Drive API</a> for the project.</li>
+            <li>Paste the client ID here. It's kept in this browser only.</li>
+          </ol>
+          <label class="field"><span>OAuth client ID</span><input type="text" id="gd-client" placeholder="1234567890-abc….apps.googleusercontent.com" spellcheck="false" autocomplete="off"></label>
+          <p class="hint" id="gd-file-warn" hidden>This page is open straight from a file. Google sign-in only works from a web address: run <code>python3 -m http.server 4610</code> in the nn folder and open <code>http://localhost:4610</code>.</p>
+        </details>
+        <p class="form-error" id="gd-error" role="alert"></p>
+      </section>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="dlg small" id="dlg-confirm" aria-labelledby="confirm-title">
+  <div class="dlg-inner">
+    <div class="dlg-body">
+      <h2 class="confirm-title" id="confirm-title"></h2>
+      <p class="confirm-msg" id="confirm-msg"></p>
+    </div>
+    <div class="dlg-foot">
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="button" class="btn danger solid" id="confirm-ok" data-sfx="remove">OK</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="dlg small" id="dlg-prompt" aria-labelledby="prompt-title">
+  <form method="dialog" class="dlg-inner" id="prompt-form">
+    <div class="dlg-body">
+      <h2 class="confirm-title" id="prompt-title"></h2>
+      <label class="field"><span id="prompt-label"></span><input type="text" id="prompt-input" autocomplete="off"></label>
+    </div>
+    <div class="dlg-foot">
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="submit" class="btn primary" id="prompt-ok">OK</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="dlg small" id="dlg-words" aria-labelledby="words-title">
+  <div class="dlg-inner">
+    <div class="dlg-head">
+      <div><span class="dlg-kicker">Tools</span><h2 id="words-title">Word count</h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="dlg-body"><dl class="stats" id="stats"></dl></div>
+  </div>
+</dialog>
+
+<dialog class="dlg wide" id="dlg-keys" aria-labelledby="keys-title">
+  <div class="dlg-inner">
+    <div class="dlg-head">
+      <div><span class="dlg-kicker">Help</span><h2 id="keys-title">Keyboard shortcuts</h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="dlg-body"><div class="keys" id="keys"></div></div>
+  </div>
+</dialog>
+
+<dialog class="dlg small" id="dlg-about" aria-labelledby="about-title">
+  <div class="dlg-inner">
+    <div class="dlg-head">
+      <svg class="app-mark lg" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
+      <div><span class="dlg-kicker">Nova suite · Novacane Studios</span><h2 id="about-title">Nova Notes</h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="dlg-body">
+      <p class="confirm-msg">A note editor that writes from the centre out. Notes are kept in this browser; nothing leaves it unless you export it or send it to Google Docs.</p>
+      <p class="confirm-msg">Import Word, HTML, Markdown and text files. Export to Google Docs, Word, HTML, Markdown, text and PDF.</p>
+    </div>
+  </div>
+</dialog>
+
+<input type="file" id="file-import" accept=".html,.htm,.md,.markdown,.txt,.docx,.json,text/html,text/markdown,text/plain,application/json,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden>
+<input type="file" id="file-image" accept="image/*" hidden>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toast-text"></span><button type="button" id="toast-action" hidden></button></div>
+<div class="dropzone" id="dropzone" hidden><div><svg class="ico"><use href="#i-import"/></svg><p>Drop to import as new notes</p></div></div>
+
+<script src="js/sfx.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/backdrop.js"></script>
+<script src="js/store.js"></script>
+<script src="js/convert.js"></script>
+<script src="js/google.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/app.js"></script>
+<script src="js/portal-badge.js" defer></script>
+<script src="js/nova-manual.js" defer></script>
+</body>
+</html>

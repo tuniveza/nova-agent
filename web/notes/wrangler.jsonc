@@ -1,0 +1,11 @@
+// Nova Notes on Cloudflare: just the static app (no server code), at
+// https://nova-notes.<your-subdomain>.workers.dev. Deploy with: npx wrangler deploy
+{
+	"$schema": "https://unpkg.com/wrangler/config-schema.json",
+	"name": "nova-notes",
+	"compatibility_date": "2025-09-01",
+	"assets": {
+		"directory": ".",
+		"not_found_handling": "single-page-application"
+	}
+}
