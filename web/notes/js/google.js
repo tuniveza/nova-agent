@@ -1,4 +1,4 @@
-/* Nova Notes — google.js
+/* Notes — google.js
    Two ways into Google Docs:
    1. copyAndOpen(): no setup. Copies the note as formatted text and opens a new Google Doc
       (docs.new); press Ctrl+V there and the styling comes with it.

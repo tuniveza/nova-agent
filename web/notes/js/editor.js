@@ -1,4 +1,4 @@
-/* Nova Notes — editor.js
+/* Notes — editor.js
    The writing surface: a contenteditable page with Google Docs-style tools.
    - Text is centred unless a block is given its own alignment (the CSS default is centre; an
      alignment chosen in the toolbar is stored on the block).

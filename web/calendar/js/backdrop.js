@@ -1,4 +1,4 @@
-/* Nova Calendar — backdrop.js
+/* Calendar — backdrop.js
    The live sky behind the app: twinkling stars and the odd shooting star, tinted by the app theme.
    Holds still when the system asks for reduced motion. */
 (function () {

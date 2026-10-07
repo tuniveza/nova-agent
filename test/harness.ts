@@ -1,4 +1,4 @@
-// The simulated clock for Nova Quests: a fake clock (Vitest's fake timers move
+// The simulated clock for Quests: a fake clock (Vitest's fake timers move
 // Date, setTimeout and setInterval together), a pretend Nova Bot worker that
 // records every /nova-agent/notify, and a fresh data folder for every test.
 //

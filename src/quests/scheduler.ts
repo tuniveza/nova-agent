@@ -1,4 +1,4 @@
-// The Nova Quest planner: places every open quest at a time, hour by hour.
+// The Quest planner: places every open quest at a time, hour by hour.
 //
 // No AI here, on purpose: the same quests and the same free time always give
 // the same plan, and it's quick enough to re-plan on every change. The AI

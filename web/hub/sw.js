@@ -1,8 +1,8 @@
-// Studio's "doorman" (service worker). It lives on the phone and wakes up
-// when Apple delivers a notification, even if Studio is closed.
+// Hub's "doorman" (service worker). It lives on the phone and wakes up
+// when Apple delivers a notification, even if Hub is closed.
 
 // A new version of the doorman takes over straight away (instead of waiting
-// until every Studio window has been closed), so fixes reach the phone at once
+// until every Hub window has been closed), so fixes reach the phone at once
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
@@ -19,16 +19,16 @@ const BUZZ = {
 // A notification has arrived from Apple
 self.addEventListener("push", (event) => {
   // Unpack the title, text and where to go when it's tapped (or use plain defaults)
-  const data = event.data ? event.data.json() : { title: "Nova Agent", body: "Something new in Studio" };
+  const data = event.data ? event.data.json() : { title: "Nova Agent", body: "Something new in Hub" };
   // The plain version: title, text, icon and where to go (what every phone shows, iPhones included)
-  const plain = { body: data.body || "", icon: "/studio/icon-192.png", data: { url: data.url || "/studio/" } };
+  const plain = { body: data.body || "", icon: "/app/icon-192.png", data: { url: data.url || "/app/" } };
   // The rich version adds a buzz pattern, a tag (a newer one replaces the older one), and
   // staying on screen for check-ins. iPhones only get the plain version, and if a phone
   // turns the rich one down, it falls back to plain, so nothing is ever lost.
   const isApple = /iPhone|iPad|iPod|Macintosh/.test(self.navigator.userAgent);
   const rich = {
     ...plain,
-    badge: "/studio/icon-192.png",
+    badge: "/app/icon-192.png",
     tag: data.tag || undefined,
     renotify: Boolean(data.tag),
     vibrate: BUZZ[data.kind] || BUZZ[data.source] || [200, 100, 200],
@@ -42,9 +42,9 @@ self.addEventListener("push", (event) => {
     Promise.all([
       // Show the notification on the phone
       show(),
-      // A dot on the Home Screen icon until Studio is opened (never allowed to stop the notification)
+      // A dot on the Home Screen icon until Hub is opened (never allowed to stop the notification)
       self.navigator.setAppBadge ? self.navigator.setAppBadge().catch(() => {}) : null,
-      // If Studio is open, tell it too, so it can ping and show a banner straight away
+      // If Hub is open, tell it too, so it can ping and show a banner straight away
       self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => windows.forEach((w) => w.postMessage({ type: "nova-push", ...data }))).catch(() => {}),
     ])
   );
@@ -54,14 +54,14 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   // Put the notification away
   event.notification.close();
-  // Where this notification should take him (Studio, or Acuity for bookings)
-  const url = event.notification.data?.url || "/studio/";
+  // Where this notification should take him (Hub, or Acuity for bookings)
+  const url = event.notification.data?.url || "/app/";
   // Keep the doorman awake until the right screen is open
   event.waitUntil(
-    // Look for Studio windows that are already open
+    // Look for Hub windows that are already open
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
-      // For a Studio link, reuse an open Studio window if there is one
-      const open = url.startsWith("/studio/") && windows.find((w) => w.url.includes("/studio/"));
+      // For a Hub link, reuse an open Hub window if there is one
+      const open = url.startsWith("/app/") && windows.find((w) => w.url.includes("/app/"));
       // Bring that window to the front, on the right tab
       if (open) {
         open.postMessage({ type: "nova-open", url });

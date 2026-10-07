@@ -1,7 +1,7 @@
-/* Nova Index: Nova Agent's shared memory, in the same cosmic skin as Studio.
+/* Index: Nova Agent's shared memory, in the same cosmic skin as Hub.
    Type: Archivo (wide, 900) for display, Saira for reading, Source Code Pro for little labels.
    Glass cards with a gradient hairline edge, floating among the stars. Every colour comes from
-   /app/themes.css, so Studio's six themes restyle this page too. Phone first; on a wide screen
+   /app/themes.css, so Hub's six themes restyle this page too. Phone first; on a wide screen
    it becomes a centred column with cards two-up. */
 :root {
   --safe-top: env(safe-area-inset-top);
@@ -595,7 +595,7 @@ main {
   .stats { gap: 12px; }
 }
 
-/* ===================== Text alignment (Studio's option; centred is the default) ===================== */
+/* ===================== Text alignment (Hub's option; centred is the default) ===================== */
 html:not([data-align="left"]) .card,
 html:not([data-align="left"]) .file-head,
 html:not([data-align="left"]) .new-form { text-align: center; }
@@ -611,7 +611,7 @@ html[data-align="left"] .group-head { justify-content: flex-start; }
 html[data-align="left"] .group-head::before { display: none; }
 html[data-align="left"] .owner-head { text-align: left; }
 
-/* ===================== Text size and motion (Studio's options) ===================== */
+/* ===================== Text size and motion (Hub's options) ===================== */
 html[data-size="small"] body { zoom: 0.92; }
 html[data-size="large"] body { zoom: 1.12; }
 html[data-motion="calm"] *, html[data-motion="calm"] *::before, html[data-motion="calm"] *::after { animation: none !important; transition: none !important; }
@@ -620,6 +620,6 @@ html[data-stars="off"] body::before { display: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* Signing in: Crew first, the shared studio password underneath */
+/* Signing in: Portal first, the shared studio password underneath */
 .portal-btn { display: inline-flex; justify-content: center; width: 100%; text-decoration: none; }
 .login-or { margin: 10px 0 -2px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--muted); text-align: center; }

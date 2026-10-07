@@ -1,4 +1,4 @@
-// Deliveries: every Nova Quest ping, from scheduled to delivered, kept in
+// Deliveries: every Quest ping, from scheduled to delivered, kept in
 // data/nova.db so it survives restarts.
 //
 //   scheduled → sent → delivered        a phone took it (the worker says phones > 0)
@@ -176,7 +176,7 @@ async function attempt(key: string): Promise<void> {
   }
   const wait = BACKOFF_MS[Math.min(r.attempts, BACKOFF_MS.length - 1)];
   d.prepare("UPDATE deliveries SET state = 'retrying', last_error = ?, next_try = ? WHERE key = ? AND state = 'sent'").run(error, at + wait, key);
-  if (r.attempts === 0) trace("task", "warn", `Nova Quest ping “${push.title}” didn't reach the phones: ${error}. Trying again.`);
+  if (r.attempts === 0) trace("task", "warn", `Quest ping “${push.title}” didn't reach the phones: ${error}. Trying again.`);
 }
 
 // Try again whatever's due (run by the reminders tick); give up on what's gone stale
@@ -188,7 +188,7 @@ export function retryDue(): void {
     const push = JSON.parse(r.push) as Push;
     if (now >= r.created + push.ttl * 1000) {
       d.prepare("UPDATE deliveries SET state = 'expired', next_try = NULL WHERE key = ?").run(r.key);
-      trace("task", "error", `Nova Quest ping “${push.title}” never reached the phones (${r.attempts} tries, last: ${r.last_error}). Given up.`);
+      trace("task", "error", `Quest ping “${push.title}” never reached the phones (${r.attempts} tries, last: ${r.last_error}). Given up.`);
       onGiveUp(row({ ...r, state: "expired" }), push);
       continue;
     }
@@ -221,7 +221,7 @@ export function acknowledge(questId: string, session: string): void {
   if (!updated.changes) d.prepare("INSERT OR IGNORE INTO deliveries (key, quest_id, session, kind, state, created) VALUES (?, ?, ?, 'starting', 'acknowledged', ?)").run(deliveryKey(questId, session, "starting"), questId, session, now);
 }
 
-// Studio taps carry an id: true the first time one is seen, false after (a tap
+// Hub taps carry an id: true the first time one is seen, false after (a tap
 // can be handed over twice; it must only count once)
 export function firstTimeForTap(id: string): boolean {
   const d = open();

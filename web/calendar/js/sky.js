@@ -1,4 +1,4 @@
-/* Nova Calendar — sky.js
+/* Calendar — sky.js
    The real sky behind the calendar: moon phases, solstices and equinoxes, plus the dates of
    seasonal days (Easter, Mothering Sunday, Bonfire Night…) and meteor-shower peaks.
    Moon phases and seasons use Jean Meeus' "Astronomical Algorithms" (ch. 27 and 49), which is

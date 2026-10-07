@@ -1,4 +1,4 @@
-/* Nova Notes — store.js
+/* Notes — store.js
    Where the notes live: this browser's IndexedDB (room for long notes with pictures), or
    localStorage if IndexedDB isn't available (e.g. some private windows). Settings are small, so they
    always go in localStorage.
@@ -103,7 +103,7 @@
         all[note.id] = note;
         return lsWrite(all);
       } catch (err) {
-        console.warn('Nova Notes: could not save', err);
+        console.warn('Notes: could not save', err);
         return false;
       }
     },
@@ -141,7 +141,7 @@
   }
   async function restore(data) {
     const list = Array.isArray(data) ? data : Array.isArray(data && data.notes) ? data.notes : null;
-    if (!list) throw new Error("That file isn't a Nova Notes backup.");
+    if (!list) throw new Error("That file isn't a Notes backup.");
     let count = 0;
     for (const n of list) {
       if (n && typeof n === 'object' && typeof n.html === 'string') {

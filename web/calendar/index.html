@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nova Calendar</title>
-<meta name="description" content="Nova Calendar: a cosmic calendar of note cards and day cards, from Nova Agent by Novacane Studios.">
+<title>Calendar</title>
+<meta name="description" content="Calendar: a cosmic calendar of note cards and day cards, from Nova Agent by Novacane Studios.">
 <meta name="theme-color" content="#06040D">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/icon-192.png" type="image/png" sizes="192x192">
@@ -12,9 +12,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Nova Calendar">
+<meta name="apple-mobile-web-app-title" content="Calendar">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="application-name" content="Nova Calendar">
+<meta name="application-name" content="Calendar">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <script src="js/embed.js"></script>
@@ -24,7 +24,7 @@
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <!-- The Nova Calendar mark: a crescent-moon C with three stars, in the current theme's colours -->
+    <!-- The Calendar mark: a crescent-moon C with three stars, in the current theme's colours -->
     <radialGradient id="mk-sky" cx="72%" cy="18%" r="95%"><stop offset="0" style="stop-color:var(--accent-2)"/><stop offset=".42" style="stop-color:var(--accent-3)"/><stop offset="1" style="stop-color:var(--void)"/></radialGradient>
     <radialGradient id="mk-neb" cx="15%" cy="90%" r="60%"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.7"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></radialGradient>
     <linearGradient id="mk-moon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--soft)"/><stop offset=".5" style="stop-color:var(--hi)"/><stop offset="1" style="stop-color:var(--lilac)"/></linearGradient>
@@ -46,7 +46,7 @@
 </svg>
 <div class="splash" id="splash" aria-hidden="true">
   <svg class="splash-mark" viewBox="0 0 512 512"><use href="#i-mark"/></svg>
-  <span class="splash-name">Nova Calendar</span>
+  <span class="splash-name">Calendar</span>
   <span class="splash-kicker">Nova Agent · Novacane</span>
 </div>
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -55,11 +55,11 @@
 
 <div class="app">
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Nova Calendar home">
+    <a class="brand" href="./" aria-label="Calendar home">
       <svg class="app-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
       <span class="brand-text">
         <span class="brand-kicker">Nova Agent · Novacane</span>
-        <span class="wordmark">Nova Calendar</span>
+        <span class="wordmark">Calendar</span>
       </span>
     </a>
 
@@ -71,7 +71,7 @@
     </nav>
 
     <div class="top-actions">
-      <!-- Crew: who you are (connect it once in Crew; inside Nova Agent, who Nova Agent works for) -->
+      <!-- Portal: who you are (connect it once in Portal; inside Nova Agent, who Nova Agent works for) -->
       <nova-manual compact></nova-manual>
       <nova-portal-badge></nova-portal-badge>
       <div class="themes" id="themes" role="radiogroup" aria-label="Colour theme"></div>
@@ -79,7 +79,7 @@
       <a class="btn ghost sm" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener" title="Every Nova Agent address, live and testing (password protected)">🔒 Links</a>
       <!-- Sound effects on or off (the shared Nova Agent sounds, js/sfx.js); it plays its own chime when switched -->
       <button type="button" class="btn ghost sm sound-btn" id="sound" aria-pressed="true" data-sfx="none" title="Sound effects">Sound</button>
-      <button type="button" class="btn ghost sm" id="install" hidden title="Install Nova Calendar as an app on this device">Install</button>
+      <button type="button" class="btn ghost sm" id="install" hidden title="Install Calendar as an app on this device">Install</button>
       <button type="button" class="btn primary" id="new-note" data-sfx="open"></button>
       <button type="button" class="btn ghost" id="new-day" data-sfx="open"></button>
     </div>
@@ -108,7 +108,7 @@
     <aside class="panel" id="panel" aria-label="Selected day" aria-live="polite"></aside>
   </main>
 
-  <footer class="foot">Nova Calendar · part of Nova Agent · Novacane Studios · saved in this browser only, so export a backup now and then</footer>
+  <footer class="foot">Calendar · part of Nova Agent · Novacane Studios · saved in this browser only, so export a backup now and then</footer>
 </div>
 
 <!-- NOTE CARD EDITOR -->

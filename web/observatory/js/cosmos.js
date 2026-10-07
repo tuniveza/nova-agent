@@ -1,4 +1,4 @@
-/* Nova Observatory — cosmos.js (shared with Nova Calendar)
+/* Observatory — cosmos.js (shared with Calendar)
    Seeded generative space art. Every note card and day card gets its own picture, painted on a canvas
    from one number (the seed) and the colours of a theme. The same seed and theme always give the
    same picture, so nothing but the seed needs saving.

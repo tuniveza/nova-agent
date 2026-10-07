@@ -1,4 +1,4 @@
-/* Nova Notes — convert.js
+/* Notes — convert.js
    Getting writing in and out:
    - clean(): makes any HTML (pasted from Google Docs or a web page, or imported) safe and tidy,
      keeping only the formatting the editor understands
@@ -336,7 +336,7 @@
   function fromMarkdown(md) {
     const lines = String(md || '').replace(/\r\n?/g, '\n').split('\n');
     // A single "# " at the very top is the note's Title, and "##" are its main headings
-    // (that's how Nova Notes writes Markdown, and how most Markdown documents are laid out)
+    // (that's how Notes writes Markdown, and how most Markdown documents are laid out)
     let fenced = false;
     const levelOnes = lines.filter((l) => {
       if (/^\s*(```|~~~)/.test(l)) fenced = !fenced;
@@ -614,7 +614,7 @@
   }
 
   // The editor's HTML → a complete, styled document. Everything is inline-styled.
-  function exportDocument(html, { title = 'Nova Notes', theme } = {}) {
+  function exportDocument(html, { title = 'Notes', theme } = {}) {
     const p = palette(theme);
     const root = document.createElement('div');
     root.innerHTML = html;
@@ -666,7 +666,7 @@
 <head>
 <meta charset="utf-8">
 <title>${esc(title)}</title>
-<meta name="generator" content="Nova Notes · Novacane Studios">
+<meta name="generator" content="Notes · Novacane Studios">
 <style>
   body { margin: 48pt auto; max-width: 640px; padding: 0 24px; font-family: 'Saira', Arial, sans-serif; color: ${p.ink}; background: #fff; }
   @import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Archivo+Black&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;600&family=Cormorant+Garamond:ital,wght@1,500&display=swap');
@@ -694,7 +694,7 @@ ${body}
   function wordDocument(html, opts) {
     const { body, palette: p } = exportDocument(html, opts);
     return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="utf-8"><title>${esc(opts.title || 'Nova Notes')}</title>
+<head><meta charset="utf-8"><title>${esc(opts.title || 'Notes')}</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>@page { size: 21cm 29.7cm; margin: 2.2cm; } body { font-family: 'Saira', Arial, sans-serif; color: ${p.ink}; }</style>
 </head><body>${body}</body></html>`;

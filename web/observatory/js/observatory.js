@@ -1,4 +1,4 @@
-/* Nova Observatory — observatory.js
+/* Observatory — observatory.js
    Renders window.OBSERVATORY (written by scan.mjs) as project decks, a detail view with screenshots and
    video, and a star map of the folder tree. Nothing here touches the disk; run "npm run build" to refresh. */
 (function () {
@@ -481,6 +481,6 @@
   renderDecks();
   renderStarmap();
   bind();
-  $('#foot').innerHTML = `Nova Observatory · part of Nova Agent · Novacane Studios<br>Scanned ${esc(when(D.generatedAt))} · refresh with <code>npm run build</code> (or <code>npm run scan</code> for numbers only)`;
+  $('#foot').innerHTML = `Observatory · part of Nova Agent · Novacane Studios<br>Scanned ${esc(when(D.generatedAt))} · refresh with <code>npm run build</code> (or <code>npm run scan</code> for numbers only)`;
   if (location.hash.length > 1) openDetail(location.hash.slice(1), false);
 })();

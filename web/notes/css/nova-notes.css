@@ -1,5 +1,5 @@
-/* Nova Notes — nova-notes.css
-   Novacane cosmic styling, shared with Nova Calendar: theme colours arrive as custom properties from
+/* Notes — nova-notes.css
+   Novacane cosmic styling, shared with Calendar: theme colours arrive as custom properties from
    js/themes.js (the values in :root are the Novacane theme, so the page looks right before the
    script runs). Type: Archivo (wide, 900) for display, Saira for reading, Source Code Pro for labels.
    The page itself has two looks: Cosmic (glass among the stars) and Paper (white, exactly how the
@@ -80,7 +80,7 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border-radius: 
   align-items: center; column-gap: 18px; row-gap: 2px; padding: 10px 16px 6px; border-radius: 22px;
 }
 .brand { grid-area: brand; display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; padding-right: 6px; }
-/* The Nova Notes mark: the cosmic N, in the theme's colours */
+/* The Notes mark: the cosmic N, in the theme's colours */
 .app-mark {
   width: 46px; height: 46px; flex: none; border-radius: 13px; overflow: hidden;
   box-shadow: 0 0 0 1px color-mix(in srgb, #fff 14%, transparent), 0 10px 26px -10px var(--hi), 0 0 22px -8px var(--hi);

@@ -1,4 +1,4 @@
-// Builds the Nova Manual's content (web/shared/manual-data.js) from Nova Agent itself:
+// Builds the Manual's content (web/shared/manual-data.js) from Nova Agent itself:
 // its README and each panel's (docs/apps/<panel>/README.md: how to use it, how it's
 // built, what's new), their git history (each panel's history from before it joined
 // Nova Agent too), and what's changed but not saved in git yet. Nova Bot's own README
@@ -22,12 +22,12 @@ const WORKER = "https://novacane-worker.novacane-studio.workers.dev";
 const PC = "http://localhost:4545";
 const APPS = [
   { id: "agent", name: "Nova Agent", readme: "README.md", paths: ["src", "web/agent", "test", "scripts", "package.json"], colour: "#FF5FA8", glyph: "✦", where: "On the studio computer, and online for phones", links: [["Open Nova Agent", `${PC}/`]] },
-  { id: "studio", name: "Studio", readme: "docs/apps/studio/README.md", paths: ["web/studio", "docs/apps/studio"], joined: "as web/hub", colour: "#C7A4FF", glyph: "▣", where: "A Nova Agent panel; online on the staff phones", links: [["Open Studio", `${PC}/studio/`], ["Online", `${WORKER}/studio/`]] },
-  { id: "crew", name: "Crew", readme: "docs/apps/crew/README.md", paths: ["web/crew", "docs/apps/crew"], joined: "as web/portal", colour: "#9DB4FF", glyph: "◉", where: "A Nova Agent panel; online too", links: [["Open Crew", `${PC}/crew/`], ["Online", `${WORKER}/crew/`]] },
-  { id: "calendar", name: "Nova Calendar", readme: "docs/apps/calendar/README.md", paths: ["web/calendar", "docs/apps/calendar"], joined: "as web/calendar", colour: "#F2D9A0", glyph: "◷", where: "A Nova Agent panel", links: [["Open Nova Calendar", `${PC}/calendar/`]] },
-  { id: "notes", name: "Nova Notes", readme: "docs/apps/notes/README.md", paths: ["web/notes", "docs/apps/notes"], joined: "as web/notes", colour: "#FF8CC6", glyph: "✎", where: "A Nova Agent panel", links: [["Open Nova Notes", `${PC}/notes/`]] },
-  { id: "index", name: "Nova Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel; online too", links: [["Open Nova Index", `${PC}/index/`]] },
-  { id: "observatory", name: "Nova Observatory", readme: "docs/apps/observatory/README.md", paths: ["web/observatory", "docs/apps/observatory", "scripts/observatory"], joined: "as web/observatory", colour: "#FFB86B", glyph: "✧", where: "A Nova Agent panel", links: [["Open it in Nova Agent", `${PC}/observatory/`]] },
+  { id: "hub", name: "Hub", readme: "docs/apps/hub/README.md", paths: ["web/hub", "docs/apps/hub"], joined: "as web/hub", colour: "#C7A4FF", glyph: "▣", where: "A Nova Agent panel; online on the staff phones", links: [["Open Hub", `${PC}/app/`], ["Online", `${WORKER}/app/`]] },
+  { id: "portal", name: "Portal", readme: "docs/apps/portal/README.md", paths: ["web/portal", "docs/apps/portal"], joined: "as web/portal", colour: "#9DB4FF", glyph: "◉", where: "A Nova Agent panel; online too", links: [["Open Portal", `${PC}/portal/`], ["Online", `${WORKER}/portal/`]] },
+  { id: "calendar", name: "Calendar", readme: "docs/apps/calendar/README.md", paths: ["web/calendar", "docs/apps/calendar"], joined: "as web/calendar", colour: "#F2D9A0", glyph: "◷", where: "A Nova Agent panel", links: [["Open Calendar", `${PC}/calendar/`]] },
+  { id: "notes", name: "Notes", readme: "docs/apps/notes/README.md", paths: ["web/notes", "docs/apps/notes"], joined: "as web/notes", colour: "#FF8CC6", glyph: "✎", where: "A Nova Agent panel", links: [["Open Notes", `${PC}/notes/`]] },
+  { id: "index", name: "Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel; online too", links: [["Open Index", `${PC}/app/memory/`]] },
+  { id: "observatory", name: "Observatory", readme: "docs/apps/observatory/README.md", paths: ["web/observatory", "docs/apps/observatory", "scripts/observatory"], joined: "as web/observatory", colour: "#FFB86B", glyph: "✧", where: "A Nova Agent panel", links: [["Open Observatory", `${PC}/observatory/`]] },
   { id: "bot", name: "Nova Bot", repo: "nb/novacane-worker", colour: "#5CE1FF", glyph: "◎", where: "On the website and Cloudflare: Nova Agent's back end", links: [["Admin pages", `${WORKER}/admin`]] },
 ];
 
@@ -269,7 +269,7 @@ function build() {
 
 const data = build();
 const out = join(root, "web", "shared", "manual-data.js");
-writeFileSync(out, `// The Nova Manual's content, made by scripts/build-manual.mjs from every app's README and git history.\n// Don't edit by hand: run  node scripts/build-manual.mjs  again.\nwindow.NovaManualData = ${JSON.stringify(data)};\n`);
-console.log(`Nova Manual: ${data.apps.length} apps, ${data.apps.reduce((n, a) => n + a.guide.length + a.built.length, 0)} chapters, ${(readFileSync(out).length / 1024).toFixed(0)} KB → web/shared/manual-data.js`);
+writeFileSync(out, `// The Manual's content, made by scripts/build-manual.mjs from every app's README and git history.\n// Don't edit by hand: run  node scripts/build-manual.mjs  again.\nwindow.NovaManualData = ${JSON.stringify(data)};\n`);
+console.log(`Manual: ${data.apps.length} apps, ${data.apps.reduce((n, a) => n + a.guide.length + a.built.length, 0)} chapters, ${(readFileSync(out).length / 1024).toFixed(0)} KB → web/shared/manual-data.js`);
 
 

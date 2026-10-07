@@ -1,7 +1,7 @@
 // Nova Agent's local web pages, on http://localhost:4545:
 //
-//   /             the chat: talk to Nova Agent, with Nova Calendar beside it
-//   /calendar/    Nova Calendar (the ../../calendar folder), saving to Nova Agent
+//   /             the chat: talk to Nova Agent, with Calendar beside it
+//   /calendar/    Calendar (the ../../calendar folder), saving to Nova Agent
 //   /visualizer   every step the agent takes, live: what it's looking for, what
 //                 it remembered, what it asked the AI, what the browser saw
 //
@@ -38,7 +38,7 @@ import { chat, type ChatTurn } from "../chat";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
 import { createMission, refineMission } from "../quests/planner";
-import { startStudioSync } from "../quests/studiosync";
+import { startHubSync } from "../quests/hubsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { questEvents } from "../quests/store";
@@ -86,27 +86,28 @@ app.get("/", (c) => c.html(readFileSync(chatFile, "utf8")));
 app.get("/visualizer", (c) => c.html(readFileSync(pageFile, "utf8")));
 
 // ---- The installable app: manifest, service worker and icons ----
-const appRoot = web("agent/app/");
+const appRoot = web("agent/assets/");
 const appFile = (name: string) => (c: any) => c.body(readFileSync(appRoot + name), 200, { "Content-Type": TYPES[extname(name)], "Cache-Control": "no-cache" });
 app.get("/manifest.webmanifest", appFile("manifest.webmanifest"));
 app.get("/sw.js", appFile("sw.js"));
-app.get("/app/:file", (c) => {
+// Nova Agent's own icons (/app/ is the Hub's)
+app.get("/agent/:file", (c) => {
   const name = c.req.param("file");
-  // Nova Index used to live at /app/memory/
-  if (name === "memory") return c.redirect("/index/");
   if (/^[\w-]+\.(png|svg|js)$/.test(name) && existsSync(appRoot + name)) return appFile(name)(c);
   return c.text("Not found", 404);
 });
 
-// ---- Nova Observatory and Nova Notes, served from their folders next to Nova Agent ----
+// ---- Observatory and Notes, served from their folders next to Nova Agent ----
 // So they're always on while Nova Agent is, and open inside it in any browser (as part of
-// Nova Agent, a privacy-minded browser doesn't block what they save). Nova Notes here keeps
+// Nova Agent, a privacy-minded browser doesn't block what they save). Notes here keeps
 // its own notes on this computer, separate from the web app's.
 const MEDIA: Record<string, string> = { ".mp4": "video/mp4", ".webm": "video/webm", ".gif": "image/gif", ".webp": "image/webp", ".ico": "image/x-icon", ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8" };
-function serveFolder(prefix: string, folder: string, missing: string) {
+// `skip`: paths under the prefix that aren't files (the Hub's API under /app/api/)
+function serveFolder(prefix: string, folder: string, missing: string, skip?: RegExp) {
   const root = web(folder);
   app.get(prefix, (c) => c.redirect(prefix + "/"));
-  app.get(prefix + "/*", (c) => {
+  app.get(prefix + "/*", async (c, next) => {
+    if (skip?.test(c.req.path)) return next();
     const rel = decodeURIComponent(c.req.path.slice(prefix.length + 1)) || "index.html";
     const file = resolve(root, rel);
     if (!file.startsWith(root.replace(/[\\/]$/, "") + sep) || !existsSync(file) || !statSync(file).isFile()) {
@@ -117,21 +118,25 @@ function serveFolder(prefix: string, folder: string, missing: string) {
     return c.body(readFileSync(file) as any, 200, { "Content-Type": type, "Cache-Control": "no-cache" });
   });
 }
-serveFolder("/observatory", "observatory/", "Nova Observatory is missing from web/observatory.");
-serveFolder("/notes", "notes/", "Nova Notes is missing from web/notes.");
-serveFolder("/index", "index/", "Nova Index is missing from web/index.");
-app.get("/app/memory/*", (c) => c.redirect("/index/" + c.req.path.slice("/app/memory/".length)));
+serveFolder("/observatory", "observatory/", "Observatory is missing from web/observatory.");
+serveFolder("/notes", "notes/", "Notes is missing from web/notes.");
+serveFolder("/app/memory", "index/", "Index is missing from web/index.");
+// Where Index was for a day
+app.get("/index/*", (c) => c.redirect("/app/memory/" + c.req.path.slice("/index/".length)));
 
-// ---- What every panel shares: the look (themes), sounds, the Nova Agent badge and the Nova Manual ----
+// ---- What every panel shares: the look (themes), sounds, the Nova Agent badge and the Manual ----
 // The badge asks this server who Nova Agent works for (src/staff.ts), which asks Nova Bot with
 // Nova Agent's key; the planet pictures come through here too, so the panels never talk to another site.
 serveFolder("/shared", "shared/", "web/shared is missing.");
 
-// ---- Studio (was Studio) and Crew (was Crew), as panels ----
-// They use Nova Bot's staff API. Signing in on the Crew panel signs Nova Agent in to Nova Bot
+// ---- Hub and Portal, as panels ----
+// They use Nova Bot's staff API. Signing in on the Portal signs Nova Agent in to Nova Bot
 // as that person (src/signin.ts); their requests are passed on with that sign-in.
-serveFolder("/studio", "studio/", "web/studio is missing.");
-serveFolder("/crew", "crew/", "web/crew is missing.");
+serveFolder("/app", "hub/", "web/hub is missing.", /^\/app\/(api|memory)(\/|$)/);
+serveFolder("/portal", "portal/", "web/portal is missing.");
+// Where they were for a day
+app.get("/studio/*", (c) => c.redirect("/app/" + c.req.path.slice("/studio/".length)));
+app.get("/crew/*", (c) => c.redirect("/portal/" + c.req.path.slice("/crew/".length)));
 for (const path of ["/auth/*", "/staff", "/staff/*", "/app/api/*"]) {
   app.use(path, async (c, next) => (fromOurPage(c.req.raw) ? next() : c.json({ error: "Only from Nova Agent's own pages" }, 403)));
 }
@@ -144,15 +149,15 @@ app.post("/auth/logout", async (c) => {
   return c.json({ ok: true });
 });
 // The shared studio password is for phones; on this computer it's your own sign-in
-app.post("/app/api/login", (c) => c.json({ error: "On the studio computer, sign in with your own account on the Crew panel." }, 400));
+app.post("/app/api/login", (c) => c.json({ error: "On the studio computer, sign in with your own account in the Portal." }, 400));
 app.post("/app/api/logout", async (c) => {
   await signOut();
   return c.json({ ok: true });
 });
 
-// Who's here: the person signed in on the Crew panel, or else who Nova Agent works for (src/staff.ts)
+// Who's here: the person signed in in the Portal, or else who Nova Agent works for (src/staff.ts)
 app.get("/auth/me", async (c) => (session() ? passOn(c.req.raw) : c.json(await whoAmI(), 200, { "Cache-Control": "no-store" })));
-// "Connect as me" (back from Crew with a read-only token) and "back to automatic".
+// "Connect as me" (back from Portal with a read-only token) and "back to automatic".
 // Only from Nova Agent's own pages: the header makes other websites' requests fail.
 app.post("/auth/link", async (c) => {
   if (c.req.header("X-Nova-App") !== "portal-badge") return c.json({ error: "Forbidden" }, 403);
@@ -180,10 +185,10 @@ app.get("/staff/:id/planet.svg", async (c) => {
   return hit ? c.body(hit.body, 200, { "Content-Type": "image/svg+xml; charset=utf-8", "Cache-Control": "public, max-age=300" }) : c.text("Not found", 404);
 });
 
-// ---- Nova Index's data, through Nova Agent's own key ----
-// The same addresses the app uses in Studio (/app/api/memory/...), passed on to the
+// ---- Index's data, through Nova Agent's own key ----
+// The same addresses the app uses in Hub (/app/api/memory/...), passed on to the
 // memory engine as Nova Agent: the studio's memory and staff memory, never customers'.
-// Approvals (customers' facts) stay behind Studio's sign-in.
+// Approvals (customers' facts) stay behind Hub's sign-in.
 async function toEngine(path: string, init: RequestInit = {}) {
   const res = await fetch(`${config.workerUrl}/memory${path}`, {
     ...init,
@@ -200,7 +205,7 @@ app.all("/app/api/memory/*", async (c) => {
   const route = c.req.path.slice("/app/api/memory".length);
   const query = new URL(c.req.url).search;
   if (route === "/pending") return c.json({ pending: [], locked: true });
-  if (route.startsWith("/pending/")) return c.json({ error: "Approvals need Studio's sign-in" }, 403);
+  if (route.startsWith("/pending/")) return c.json({ error: "Approvals need Hub's sign-in" }, 403);
   if (route === "/stats") {
     const { data } = await toEngine("/index");
     const by = new Map<string, { scope: string; files: number; facts: number }>();
@@ -220,13 +225,13 @@ app.all("/app/api/memory/*", async (c) => {
   return c.json({ error: "Not found" }, 404);
 });
 
-// The rest of Nova Bot's staff API (Studio, Crew), as the signed-in person
+// The rest of Nova Bot's staff API (Hub, Portal), as the signed-in person
 app.all("/app/api/*", (c) => passOn(c.req.raw));
 app.all("/auth/*", (c) => passOn(c.req.raw));
 app.all("/staff", (c) => passOn(c.req.raw));
 app.all("/staff/*", (c) => passOn(c.req.raw));
 
-// ---- Nova Calendar, served from the calendar folder ----
+// ---- Calendar, served from the calendar folder ----
 // Its own offline helper isn't needed (or wanted) here: Nova Agent is the server.
 app.get("/calendar/sw.js", (c) => c.text("// not used inside Nova Agent", 404));
 app.get("/calendar-sync.js", (c) => c.body(readFileSync(syncFile, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }));
@@ -260,7 +265,7 @@ app.put("/calendar-api/data", async (c) => {
   try {
     return c.json({ ok: true, ...saveFromPage(body, Number(c.req.header("X-Nova-Rev"))) });
   } catch (error) {
-    trace("task", "error", `Nova Calendar: a change from the page didn't save: ${(error as Error).message}`);
+    trace("task", "error", `Calendar: a change from the page didn't save: ${(error as Error).message}`);
     return c.json({ ok: false, message: (error as Error).message }, 500);
   }
 });
@@ -284,7 +289,7 @@ app.get("/status", (c) =>
   c.json({ live: !config.dryRun, connected: Boolean(config.agentNovaKey), model: config.novaModel || "claude-opus-5-5" }),
 );
 
-// ---- Nova Missions and Nova Quests ----
+// ---- Missions and Quests ----
 app.get("/quests/state", (c) => c.json(questState()));
 // Live: the plan changed, or a reminder / check-in is due
 app.get("/quests/events", (c) =>
@@ -438,13 +443,13 @@ console.log(`Daily healthcheck scheduled: "${config.healthcheckSchedule}" (${con
 
 startCollectingJobs();
 
-// Nova Quests: plan on start-up, then reminders and check-ins every 30 seconds
+// Quests: plan on start-up, then reminders and check-ins every 30 seconds
 try {
   tidyBlocks();
   replan();
 } catch (error) {
-  console.warn("Nova Quests couldn't plan on start-up:", (error as Error).message);
+  console.warn("Quests couldn't plan on start-up:", (error as Error).message);
 }
 startQuestReminders();
 startPulses();
-startStudioSync();
+startHubSync();

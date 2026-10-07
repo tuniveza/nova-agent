@@ -1,4 +1,4 @@
-/* Nova Calendar — store.js
+/* Calendar — store.js
    Saves everything in this browser (localStorage) and handles JSON backup / restore.
    Shapes:
      note: { id, title, body, author, start, end, art: { seed, subject }, created, updated }
@@ -9,7 +9,7 @@
   'use strict';
   const NT = (window.NT = window.NT || {});
   const KEY = 'nova-calendar/v1';
-  // Before it was renamed, Nova Calendar was called Nova Task and saved here; it's read if there's nothing new yet
+  // Before it was renamed, Calendar was called Nova Task and saved here; it's read if there's nothing new yet
   const OLD_KEY = 'nova-task/v1';
 
   const uid = () =>
@@ -65,7 +65,7 @@
       const raw = localStorage.getItem(KEY) || localStorage.getItem(OLD_KEY);
       if (raw) Object.assign(data, normalise(JSON.parse(raw)));
     } catch (e) {
-      console.warn('[Nova Calendar] could not read saved data', e);
+      console.warn('[Calendar] could not read saved data', e);
     }
     return data;
   }
@@ -75,7 +75,7 @@
       localStorage.setItem(KEY, JSON.stringify(data));
       return true;
     } catch (e) {
-      console.warn('[Nova Calendar] could not save', e);
+      console.warn('[Calendar] could not save', e);
       return false;
     }
   }
@@ -100,7 +100,7 @@
   function importJSON(text) {
     const parsed = JSON.parse(text);
     if (!parsed || (!Array.isArray(parsed.notes) && !Array.isArray(parsed.days))) {
-      throw new Error('That file is not a Nova Calendar backup.');
+      throw new Error('That file is not a Calendar backup.');
     }
     const inc = normalise(parsed);
     inc.notes.forEach((n) => upsert(data.notes, n));
@@ -116,6 +116,6 @@
     removeDay: (id) => { data.days = data.days.filter((d) => d.id !== id); },
     getNote: (id) => data.notes.find((n) => n.id === id) || null,
     getDay: (id) => data.days.find((d) => d.id === id) || null,
-    snapshot: () => ({ app: 'Nova Calendar', exported: nowISO(), ...data })
+    snapshot: () => ({ app: 'Calendar', exported: nowISO(), ...data })
   };
 })();

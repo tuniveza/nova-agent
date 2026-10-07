@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="../../../web/calendar/assets/icon.svg" width="96" alt="The Nova Calendar icon: a glowing crescent-moon C with three stars">
+<img src="../../../web/calendar/assets/icon.svg" width="96" alt="The Calendar icon: a glowing crescent-moon C with three stars">
 
-# Nova Calendar
+# Calendar
 
 > **A Nova Agent panel.** Its code is in `web/calendar/` in Nova Agent's repo, and it opens inside Nova Agent at `/calendar/`. Online, Nova Bot serves it at the same address.
 
@@ -10,9 +10,9 @@
 **A cosmic calendar of note cards and day cards, under a sky that follows the real moon.**
 
 
-<img src="media/day-card.jpg" alt="Nova Calendar: October 2026 with the Moonlight Mixtape release day card open, showing its supernova artwork and a note card with its own generated picture" width="900">
+<img src="media/day-card.jpg" alt="Calendar: October 2026 with the Moonlight Mixtape release day card open, showing its supernova artwork and a note card with its own generated picture" width="900">
 
-### ✦ [Open Nova Calendar](https://nova-calendar.novacane-studio.workers.dev) ✦
+### ✦ [Open Calendar](https://nova-calendar.novacane-studio.workers.dev) ✦
 
 <sub>Works in any modern browser · install it as an app · works offline · built into Nova Agent</sub>
 
@@ -20,12 +20,12 @@
 
 ---
 
-Nova Calendar is Nova Agent's calendar, in Novacane Studios' style. You plan days with
+Calendar is Nova Agent's calendar, in Novacane Studios' style. You plan days with
 **note cards** and **day cards**: every note paints its own small piece of the cosmos, and every
 day sits under the real moon. It's a single folder of HTML, CSS and JavaScript with no build
 step, no server and no install.
 
-> **Formerly Nova Task.** Renamed to Nova Calendar in October 2026. Anything saved by the old
+> **Formerly Nova Task.** Renamed to Calendar in October 2026. Anything saved by the old
 > version in the same browser is picked up automatically.
 
 ## What's new
@@ -85,7 +85,7 @@ step, no server and no install.
 
 <table>
   <tr>
-    <td width="50%"><img src="media/month.jpg" alt="October 2026 with today selected: a Studio Session day card and a note card with a star-nursery picture" width="100%"><br><sub><b>The month</b>, under the real moon.</sub></td>
+    <td width="50%"><img src="media/month.jpg" alt="October 2026 with today selected: a Hub Session day card and a note card with a star-nursery picture" width="100%"><br><sub><b>The month</b>, under the real moon.</sub></td>
     <td width="50%"><img src="media/halloween.jpg" alt="Halloween selected: an eclipse day card in Solar Flare colours with a black-hole note card" width="100%"><br><sub><b>Halloween</b>, with its own theme.</sub></td>
   </tr>
   <tr>
@@ -108,7 +108,7 @@ step, no server and no install.
 
 ## Fit to the window
 
-When Nova Calendar is shown inside another page (Nova Agent's Calendar tab and viewer), or opened
+When Calendar is shown inside another page (Nova Agent's Calendar tab and viewer), or opened
 with **`?embed=1`** on the end of its address, it fits the space it's given:
 
 - a slim top bar, and month rows that share the height, so the **whole month** is always in view;
@@ -125,7 +125,7 @@ Every press makes a soft cosmic sound: a tap, a dialog opening, a card saving, a
 They're made live with the Web Audio API (no sound files), tuned to one pentatonic scale and
 kept quiet. The **Sound** button in the top bar switches them off and on, plays a little chime
 when it does, and is remembered on each device. The same `js/sfx.js` makes the sounds in Nova
-Notes and Nova Observatory.
+Notes and Observatory.
 
 ## Inside Nova Agent
 

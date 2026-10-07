@@ -1,11 +1,11 @@
-// Nova Index: the browsable face of Nova Agent's shared memory.
+// Index: the browsable face of Nova Agent's shared memory.
 //
 // Every Nova app feeds conversations in; a small set of one-line, tagged facts comes out,
 // kept in little files by subject ("- [stated] prefers evening sessions"). This page lets the
 // studio team see all of it, watch it grow, fix a line, and say yes or no to facts learned
 // from customers before they're remembered.
 //
-// Everything comes from /app/api/memory/ (Studio's sign-in; the cookie is sent by itself).
+// Everything comes from /app/api/memory/ (Hub's sign-in; the cookie is sent by itself).
 // The three screens:
 //   Browse   every file, grouped by scope (studio, staff, customers) and owner; tap one to open it
 //   Live     the most recently changed files, newest first, refreshed every 20 seconds
@@ -193,7 +193,7 @@
 
   class Problem extends Error {}
 
-  // Every request: same site, JSON, and saying it's Nova Index. A 401 means signed out.
+  // Every request: same site, JSON, and saying it's Index. A 401 means signed out.
   async function api(path, { method = "GET", body } = {}) {
     const headers = { "X-Nova-App": "index", Accept: "application/json" };
     if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -201,7 +201,7 @@
     try {
       res = await fetch(path, { method, credentials: "same-origin", headers, body: body === undefined ? undefined : JSON.stringify(body) });
     } catch (err) {
-      throw new Problem("Can't reach Nova Index. Check the connection and try again.");
+      throw new Problem("Can't reach Index. Check the connection and try again.");
     }
     let data = {};
     try {
@@ -286,7 +286,7 @@
   async function loadPending() {
     const data = await must(API + "/pending");
     state.pending = Array.isArray(data.pending) ? data.pending : [];
-    // Inside Nova Agent, customers' facts and approvals stay behind Studio's sign-in
+    // Inside Nova Agent, customers' facts and approvals stay behind Hub's sign-in
     state.pendingLocked = data.locked === true;
   }
 
@@ -1169,8 +1169,8 @@
   function renderPending(animate = false) {
     const box = $("pending-list");
     if (state.pendingLocked) {
-      const note = el("div", "empty", [el("strong", "", "Approvals are in Studio"), el("span", "", "Customers' facts and the approval queue need Studio's sign-in, so they aren't shown inside Nova Agent.")]);
-      const go = el("a", "btn", "Open Nova Index in Studio ↗");
+      const note = el("div", "empty", [el("strong", "", "Approvals are in Hub"), el("span", "", "Customers' facts and the approval queue need Hub's sign-in, so they aren't shown inside Nova Agent.")]);
+      const go = el("a", "btn", "Open Index in Hub ↗");
       go.href = "https://novacane-worker.novacane-studio.workers.dev/index/";
       go.target = "_blank";
       go.rel = "noopener";
@@ -1377,15 +1377,15 @@
     setTimeout(() => dot.remove(), 600);
   });
 
-  // ===== Start: signed in already (Studio's cookie)? =====
+  // ===== Start: signed in already (Hub's cookie)? =====
   (async () => {
     try {
       const r = await api(API + "/stats");
-      if (!r.ok) throw new Problem(r.data.error || "Nova Index couldn't load.");
+      if (!r.ok) throw new Problem(r.data.error || "Index couldn't load.");
       state.stats = r.data;
       showApp();
       await loadAll();
-      // Opened from someone's Crew profile ("Open my Nova Index"): show just theirs
+      // Opened from someone's Portal profile ("Open my Index"): show just theirs
       const params = new URLSearchParams(location.search);
       if (["studio", "staff", "customer"].includes(params.get("scope"))) setScope(params.get("scope"));
       if (params.get("owner")) {

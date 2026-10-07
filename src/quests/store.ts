@@ -1,11 +1,11 @@
-// Nova Missions and Nova Quests: what they are, and where they're kept.
+// Missions and Quests: what they are, and where they're kept.
 //
-//   Nova Mission  an end goal ("Release the EP by 1 December", "finish my 52-release
+//   Mission  an end goal ("Release the EP by 1 December", "finish my 52-release
 //                 challenge by New Year", "get fit for the summer"), turned into
 //                 quests, with a written strategy, workstreams (tracks), dated
 //                 milestones, the assumptions the plan made and the questions
 //                 that would sharpen it
-//   Nova Quest    one actionable task: how long it takes (anything from a second
+//   Quest    one actionable task: how long it takes (anything from a second
 //                 up; long ones are split into sessions, and an ongoing quest
 //                 never ends: it gets a session every day, weekday or week),
 //                 how much it matters, when it's due, what it waits for, where
@@ -348,7 +348,7 @@ export function readQuests(): QuestData {
     writeFileSync(`${file}.tmp`, JSON.stringify(good, null, 2));
     renameSync(`${file}.tmp`, file);
     trace("task", "error", `quests.json was damaged: went back to the last good copy. The damaged one is kept as ${aside}.`);
-    void sendAlert("Nova Quests: quests.json was damaged", `Nova Agent went back to the last good copy; the most recent change may need doing again. The damaged file is kept as ${aside}.`);
+    void sendAlert("Quests: quests.json was damaged", `Nova Agent went back to the last good copy; the most recent change may need doing again. The damaged file is kept as ${aside}.`);
     return good;
   }
 }

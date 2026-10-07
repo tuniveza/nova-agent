@@ -2,7 +2,7 @@
   "name": "agent-nova",
   "version": "0.1.0",
   "private": true,
-  "description": "Nova Agent: the studio's one app (chat, planner, Studio, Crew, Calendar, Notes, Index, Observatory) and its Acuity helper (Novacane Studios)",
+  "description": "Nova Agent: the studio's one app (chat, planner, Hub, Portal, Calendar, Notes, Index, Observatory) and its Acuity helper (Novacane Studios)",
   "type": "module",
   "engines": {
     "node": ">=22"

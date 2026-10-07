@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Nova Notes",
-  "short_name": "Nova Notes",
+  "name": "Notes",
+  "short_name": "Notes",
   "description": "A cosmic note editor from Nova Agent by Novacane Studios. Write, import, export and send to Google Docs.",
   "start_url": "./",
   "scope": "./",
@@ -94,14 +94,14 @@
       "sizes": "1600x1000",
       "type": "image/jpeg",
       "form_factor": "wide",
-      "label": "Nova Notes with the welcome note open"
+      "label": "Notes with the welcome note open"
     },
     {
       "src": "assets/screen-phone.jpg",
       "sizes": "780x1688",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Nova Notes on a phone"
+      "label": "Notes on a phone"
     }
   ]
 }

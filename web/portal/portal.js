@@ -1,11 +1,11 @@
-// Crew: one sign-in for every Nova app, and everyone's planet.
+// Portal: one sign-in for every Nova app, and everyone's planet.
 //
 // Each member of the studio gets a profile, drawn as a planet grown from their own seed (the
 // server draws it: /staff/<id>/planet.svg). This page is the front of it all:
 //   Setup     the very first time: the first admin, proven with the studio's current password
-//   Sign in   email and password; signs in Studio, Nova Index and the admin pages too
+//   Sign in   email and password; signs in Hub, Index and the admin pages too
 //   Invite    ?invite=<token>: someone joining picks their name and password
-//   Profile   their planet, big and turning; re-roll it, rename, open their Nova Index, sign out
+//   Profile   their planet, big and turning; re-roll it, rename, open their Index, sign out
 //   Crew      (admins) everyone as planet badges; invite people, change roles, switch accounts off
 // Which one shows depends on the address (?invite=, ?view=crew, ?id=<someone>, ?next=) and on who's
 // signed in (/auth/me) or whether anyone exists yet (/auth/status).
@@ -87,7 +87,7 @@
   const longDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) : "");
   const fullDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
 
-  // Where to go after signing in: only a path on this site ("/studio/"), never another website
+  // Where to go after signing in: only a path on this site ("/app/"), never another website
   // ("//evil.example", "https://…", "/\evil") or anything odd
   function safeNext(raw) {
     const v = String(raw || "");
@@ -102,11 +102,11 @@
   }
   // The other Nova apps that may show your Portal badge (the server checks this list too)
   const SUITE_SITES = {
-    "https://nova-notes.novacane-studio.workers.dev": "Nova Notes",
-    "https://nova-calendar.novacane-studio.workers.dev": "Nova Calendar",
+    "https://nova-notes.novacane-studio.workers.dev": "Notes",
+    "https://nova-calendar.novacane-studio.workers.dev": "Calendar",
     "http://localhost:4545": "Nova Agent",
     "http://localhost:4546": "Nova Agent (preview)",
-    "http://localhost:4610": "Nova Observatory",
+    "http://localhost:4610": "Observatory",
   };
   function safeConnect(raw) {
     try {
@@ -120,8 +120,8 @@
 
   // A friendly name for where "next" goes
   function nextName(path) {
-    if (path.startsWith("/index")) return "Nova Index";
-    if (path.startsWith("/studio")) return "Studio";
+    if (path.startsWith("/app/memory")) return "Index";
+    if (path.startsWith("/app")) return "Hub";
     if (path.startsWith("/admin")) return "the admin pages";
     return "";
   }
@@ -172,7 +172,7 @@
     try {
       res = await fetch(path, { method, credentials: "same-origin", headers, body: body === undefined ? undefined : JSON.stringify(body) });
     } catch (err) {
-      throw new Problem("Can't reach Crew. Check the connection and try again.");
+      throw new Problem("Can't reach Portal. Check the connection and try again.");
     }
     let data = {};
     try {
@@ -211,7 +211,7 @@
     $("auth-sub").textContent = sub;
     replay($(id), "screen-in");
     if (first) replay($("auth"), "screen-in");
-    document.title = "Crew";
+    document.title = "Portal";
     stopChecks();
   }
   function focusSoon(node) {
@@ -260,7 +260,7 @@
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("setup-error", "Enter your email address.", form), $("setup-email").focus();
     if (password.length < MIN_PASSWORD) return setError("setup-error", `Your new password needs at least ${MIN_PASSWORD} characters.`, form), $("setup-password").focus();
     if (password !== $("setup-confirm").value) return setError("setup-error", "The two new passwords don't match.", form), $("setup-confirm").focus();
-    if (!studio) return setError("setup-error", "Enter the studio's current password (the one for Studio).", form), $("setup-studio").focus();
+    if (!studio) return setError("setup-error", "Enter the studio's current password (the one for Hub).", form), $("setup-studio").focus();
     setError("setup-error", "");
     const go = form.querySelector('button[type="submit"]');
     try {
@@ -268,10 +268,10 @@
       if (r.ok && r.data.staff) {
         sfx("done");
         form.reset();
-        return signedIn(r.data.staff, `Crew is ready. Welcome, ${firstName(r.data.staff.display_name)}!`, true);
+        return signedIn(r.data.staff, `Portal is ready. Welcome, ${firstName(r.data.staff.display_name)}!`, true);
       }
       if (r.status === 409) {
-        showLogin("Crew is already set up. Sign in instead.");
+        showLogin("Portal is already set up. Sign in instead.");
         return;
       }
       setError("setup-error", r.data.error || `That didn't work (error ${r.status}). Try again.`, form);
@@ -373,7 +373,7 @@
     }
   });
   $("invite-gone-signin").addEventListener("click", () => {
-    history.replaceState(null, "", "/crew/");
+    history.replaceState(null, "", "/portal/");
     showLogin();
   });
 
@@ -389,7 +389,7 @@
       location.assign(state.next);
       return;
     }
-    history.replaceState(null, "", "/crew/");
+    history.replaceState(null, "", "/portal/");
     enterApp({ message, fresh });
   }
 
@@ -402,7 +402,7 @@
     state.crew = null;
     $("planet").removeAttribute("src");
     delete $("planet").dataset.src;
-    history.replaceState(null, "", "/crew/");
+    history.replaceState(null, "", "/portal/");
     showLogin("Signed out. Sign in again to carry on.");
     if (message) toast(message);
   }
@@ -471,12 +471,12 @@
     closeNameForm();
     if (route.view === "crew") {
       if (!isAdmin()) {
-        history.replaceState(null, "", "/crew/");
+        history.replaceState(null, "", "/portal/");
         toast("The crew page is for admins.", true);
         return renderRoute();
       }
       showView("view-crew");
-      document.title = "The crew · Crew";
+      document.title = "The crew · Portal";
       return loadCrew();
     }
     if (route.view === "me") {
@@ -492,7 +492,7 @@
     } catch (err) {
       if (state.screen !== "app") return;
       toast(err.message, true);
-      history.replaceState(null, "", isAdmin() ? "/crew/?view=crew" : "/crew/");
+      history.replaceState(null, "", isAdmin() ? "/portal/?view=crew" : "/portal/");
       renderRoute();
     }
   }
@@ -511,7 +511,7 @@
     const self = person.id === state.me.id;
     const changedPerson = !state.person || state.person.id !== person.id;
     state.person = person;
-    document.title = self ? "Crew" : `${person.display_name} · Crew`;
+    document.title = self ? "Portal" : `${person.display_name} · Portal`;
 
     $("back-to-crew").hidden = self || !isAdmin();
     $("p-kicker").textContent = self ? "Your profile" : "Crew member";
@@ -525,11 +525,11 @@
     // The planet: blooms in when it's someone new (or the first time), otherwise stays put
     setPlanet(person, changedPerson || fresh);
 
-    // What I can do: everything on my own; an admin can open someone's Nova Index
+    // What I can do: everything on my own; an admin can open someone's Index
     $("self-actions").hidden = !(self || isAdmin());
     document.querySelector(".action-grid").hidden = !self;
-    $("open-index").href = `/index/?scope=staff&owner=${encodeURIComponent(person.id)}`;
-    $("open-index-label").textContent = self ? "Open my Nova Index" : `Open ${possessive(firstName(person.display_name))} Nova Index`;
+    $("open-index").href = `/app/memory/?scope=staff&owner=${encodeURIComponent(person.id)}`;
+    $("open-index-label").textContent = self ? "Open my Index" : `Open ${possessive(firstName(person.display_name))} Index`;
     $("reset-planet").hidden = !self || !person.planet_seed || person.planet_seed === person.id;
     evenActions();
 
@@ -690,7 +690,7 @@
     }
   });
 
-  // ----- Signing out (everywhere: Studio, Nova Index, the admin pages) -----
+  // ----- Signing out (everywhere: Hub, Index, the admin pages) -----
   async function signOut() {
     closeOptions();
     try {
@@ -720,14 +720,14 @@
     $("details").replaceChildren(...rows);
   }
 
-  // ----- Their Nova Index: their own files, and what the studio shares with everyone -----
+  // ----- Their Index: their own files, and what the studio shares with everyone -----
   async function loadMemory(person, self) {
     const list = $("memory-list");
     $("memory-title").textContent = self ? "Your memory" : `${possessive(firstName(person.display_name))} memory`;
     $("memory-hint").textContent = self
       ? "What the Nova apps remember about you, and what the whole studio knows."
       : `What the Nova apps remember about ${firstName(person.display_name)}, and what the whole studio knows.`;
-    list.replaceChildren(el("p", "loading-line", "Looking in Nova Index…"));
+    list.replaceChildren(el("p", "loading-line", "Looking in Index…"));
     let data;
     try {
       data = await must(`/staff/${encodeURIComponent(person.id)}/index`);
@@ -740,7 +740,7 @@
     const files = Array.isArray(data.files) ? data.files : [];
     const mine = files.filter((f) => f.scope === "staff");
     const studio = files.filter((f) => f.scope === "studio");
-    const ownerLink = `/index/?scope=staff&owner=${encodeURIComponent(person.id)}`;
+    const ownerLink = `/app/memory/?scope=staff&owner=${encodeURIComponent(person.id)}`;
     let i = 0;
 
     const own = el("div", "mem-group", [el("p", "mem-head", self ? "Yours" : firstName(person.display_name))]);
@@ -756,10 +756,10 @@
     const shared = el("div", "mem-group", [el("p", "mem-head", "The studio · shared")]);
     const SHOW = 4;
     if (studio.length) {
-      shared.append(...studio.slice(0, SHOW).map((f) => memFile(f, "/index/?scope=studio", i++)));
+      shared.append(...studio.slice(0, SHOW).map((f) => memFile(f, "/app/memory/?scope=studio", i++)));
       if (studio.length > SHOW) {
         const more = button("btn small ghost mem-more", `Show all ${studio.length}`, () => {
-          more.replaceWith(...studio.slice(SHOW).map((f, j) => memFile(f, "/index/?scope=studio", j)));
+          more.replaceWith(...studio.slice(SHOW).map((f, j) => memFile(f, "/app/memory/?scope=studio", j)));
         }, { "data-sfx": "open" });
         shared.append(more);
       }
@@ -888,11 +888,11 @@
       } else toast("Couldn't copy. Select the link and copy it.", true);
     }, { "data-sfx": "none" });
     const until = longDate(expires);
-    const subject = "Your Crew invite";
+    const subject = "Your Portal invite";
     const body = [
       `Hi ${name},`,
       "",
-      "You're invited to Crew: one sign-in for every Nova app at Novacane Studios (Studio, Nova Index and the rest).",
+      "You're invited to Portal: one sign-in for every Nova app at Novacane Studios (Hub, Index and the rest).",
       "",
       "Open this link to choose your password and meet your very own planet:",
       link,
@@ -940,7 +940,7 @@
   function crewCard(p, i, isNew) {
     const self = state.me && p.id === state.me.id;
     const a = el("a", `crew-card card-in ${p.status}`);
-    a.href = self ? "/crew/" : `/crew/?id=${encodeURIComponent(p.id)}`;
+    a.href = self ? "/portal/" : `/portal/?id=${encodeURIComponent(p.id)}`;
     a.dataset.nav = self ? "me" : "person";
     a.style.setProperty("--i", String(Math.min(i, 16)));
     const badge = el("img", "badge");
@@ -1016,7 +1016,7 @@
     }
   });
 
-  $("back-to-crew").addEventListener("click", () => go("/crew/?view=crew"));
+  $("back-to-crew").addEventListener("click", () => go("/portal/?view=crew"));
 
   // ===== Keeping an eye on the session (an admin may switch someone off; signing out elsewhere ends it) =====
   async function checkSession() {
@@ -1106,7 +1106,7 @@
     showAuthCard("connect-card", "One sign-in for every Nova app");
     $("connect-title").textContent = `Connect ${name}`;
     $("connect-why").textContent = name.startsWith("Nova Agent")
-      ? "Nova Agent will work for you: your badge, and your own Nova Index memory."
+      ? "Nova Agent will work for you: your badge, and your own Index memory."
       : `${name} would like to show your Nova Agent badge.`;
     $("connect-planet").src = planetUrl(state.me, 192, true);
     $("connect-name").textContent = state.me.display_name;

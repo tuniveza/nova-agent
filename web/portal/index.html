@@ -4,29 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Crew · Nova Agent</title>
-<meta name="description" content="Crew: one sign-in for every Nova app, and a planet of your own, for the Novacane Studios team.">
+<title>Portal · Nova Agent</title>
+<meta name="description" content="Portal: one sign-in for every Nova app, and a planet of your own, for the Novacane Studios team.">
 <meta name="theme-color" content="#06040D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Crew">
-<meta name="application-name" content="Crew">
-<link rel="manifest" href="/crew/manifest.webmanifest">
-<link rel="icon" href="/crew/icon.svg" type="image/svg+xml">
-<link rel="icon" href="/crew/icon-192.png" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="/crew/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Portal">
+<meta name="application-name" content="Portal">
+<link rel="manifest" href="/portal/manifest.webmanifest">
+<link rel="icon" href="/portal/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/portal/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/portal/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/shared/themes.css">
-<link rel="stylesheet" href="/crew/portal.css">
-<!-- The saved theme (shared with Studio) goes on before anything is drawn -->
+<link rel="stylesheet" href="/portal/portal.css">
+<!-- The saved theme (shared with Hub) goes on before anything is drawn -->
 <script src="/shared/themes.js"></script>
 </head>
 <body>
 
-<!-- The pictures used around the page: Crew's cosmic P, and the marks of the other apps -->
+<!-- The pictures used around the page: Portal's cosmic P, and the marks of the other apps -->
 <svg class="sprite" aria-hidden="true">
   <defs>
     <radialGradient id="nv-sky" cx="50%" cy="15%" r="95%"><stop offset="0" stop-color="#B01D68"/><stop offset=".42" stop-color="#25194D"/><stop offset="1" stop-color="#06040D"/></radialGradient>
@@ -42,7 +42,7 @@
     <rect width="512" height="512" fill="url(#nv-neb)"/>
     <g fill="#fff"><circle cx="70" cy="90" r="2.6" opacity=".8"/><circle cx="440" cy="70" r="2" opacity=".6"/><circle cx="462" cy="330" r="2.4" opacity=".6"/><circle cx="80" cy="420" r="1.8" opacity=".55"/><circle cx="290" cy="470" r="1.6" opacity=".5"/><circle cx="150" cy="200" r="1.4" opacity=".45"/><circle cx="392" cy="150" r="1.6" opacity=".5"/></g>
   </symbol>
-  <!-- Crew: a cosmic P with an orbit round it, a sparkle, and a ringed planet riding the orbit -->
+  <!-- Portal: a cosmic P with an orbit round it, a sparkle, and a ringed planet riding the orbit -->
   <symbol id="i-mark-p" viewBox="0 0 512 512">
     <use href="#i-sky"/>
     <ellipse cx="256" cy="262" rx="196" ry="50" fill="none" stroke="#FFD1EA" stroke-opacity=".35" stroke-width="3.5" stroke-dasharray="3 11" stroke-linecap="round" transform="rotate(-14 256 262)"/>
@@ -57,14 +57,14 @@
       <path d="M-25.4 9.2A27 7-20 0 0 25.4-9.2" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
     </g>
   </symbol>
-  <!-- Studio: a cosmic H -->
+  <!-- Hub: a cosmic H -->
   <symbol id="i-mark-h" viewBox="0 0 512 512">
     <use href="#i-sky"/>
     <path d="M146 380V132h60v96h100v-96h60v248h-60V284H206v96z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
     <path d="M146 380V132h60v96h100v-96h60v248h-60V284H206v96z" fill="url(#nv-letter)"/>
     <path d="M65.8 309.4A196 50-14 0 0 446.2 214.6" fill="none" stroke="#FFD1EA" stroke-opacity=".85" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round"/>
   </symbol>
-  <!-- Nova Index: a cosmic I -->
+  <!-- Index: a cosmic I -->
   <symbol id="i-mark-i" viewBox="0 0 512 512">
     <use href="#i-sky"/>
     <path d="M176 152h160v52h-50v124h50v52H176v-52h50V204h-50z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
@@ -80,7 +80,7 @@
     <span class="halo"></span>
     <svg class="big-mark" viewBox="0 0 512 512"><use href="#i-mark-p"/></svg>
   </div>
-  <p class="kicker">Opening Crew…</p>
+  <p class="kicker">Opening Portal…</p>
 </div>
 
 <!-- Signing in, setting up and joining: one card at a time -->
@@ -90,14 +90,14 @@
     <svg class="big-mark" viewBox="0 0 512 512"><use href="#i-mark-p"/></svg>
   </div>
   <span class="kicker auth-kicker">Nova Agent · Novacane</span>
-  <h1 class="wordmark">Crew</h1>
+  <h1 class="wordmark">Portal</h1>
   <p class="auth-sub" id="auth-sub">One sign-in for every Nova app</p>
 
   <!-- 1. The very first time: the first admin -->
   <form id="setup-form" class="auth-card" hidden novalidate>
     <div class="auth-card-head">
       <span class="kicker">First time here</span>
-      <h2>Set up Crew</h2>
+      <h2>Set up Portal</h2>
       <p class="hint">You'll be the first admin. Everyone else joins with an invite link from you.</p>
     </div>
     <div class="field">
@@ -120,7 +120,7 @@
     <div class="field proof">
       <label class="field-label" for="setup-studio">The studio's current password</label>
       <input id="setup-studio" type="password" autocomplete="off" required>
-      <p class="field-help">The password you use for Studio today, to prove it's you.</p>
+      <p class="field-help">The password you use for Hub today, to prove it's you.</p>
     </div>
     <p class="error" id="setup-error" role="alert"></p>
     <button class="btn" type="submit" data-sfx="send">Set up and sign in</button>
@@ -140,7 +140,7 @@
     <button class="btn" type="submit" data-sfx="send">Sign in</button>
     <p class="reassure">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
-      <span>Signed in to every Nova app: Studio, Nova Index and the admin pages.</span>
+      <span>Signed in to every Nova app: Hub, Index and the admin pages.</span>
     </p>
   </form>
 
@@ -179,11 +179,11 @@
     <button class="btn ghost" type="button" id="invite-gone-signin">Go to sign in</button>
   </div>
 
-  <!-- 5. Another Nova app (Nova Notes, Nova Calendar...) asking to show who you are -->
+  <!-- 5. Another Nova app (Notes, Calendar...) asking to show who you are -->
   <div id="connect-card" class="auth-card connect" hidden>
     <div class="auth-card-head">
       <span class="kicker">Show who you are</span>
-      <h2 id="connect-title">Connect Nova Notes</h2>
+      <h2 id="connect-title">Connect Notes</h2>
       <p class="hint" id="connect-why"></p>
     </div>
     <div class="connect-who">
@@ -203,14 +203,14 @@
 <!-- Signed in -->
 <div id="app" class="app" hidden>
   <header class="top">
-    <!-- Over to Studio -->
-    <a class="icon-btn top-left" href="/studio/" aria-label="Open Studio" title="Studio">
+    <!-- Over to Hub -->
+    <a class="icon-btn top-left" href="/app/" aria-label="Open Hub" title="Hub">
       <svg viewBox="0 0 512 512" aria-hidden="true" class="hub-mark"><use href="#i-mark-h"/></svg>
     </a>
     <!-- The brand: back to my profile -->
-    <a id="brand" class="brand" href="/crew/" data-nav="me" title="My profile">
+    <a id="brand" class="brand" href="/portal/" data-nav="me" title="My profile">
       <svg class="brand-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-p"/></svg>
-      <span class="brand-text"><span class="suite-kicker">Nova Agent<span class="kicker-more"> · Novacane</span></span><span class="wordmark small">Crew</span></span>
+      <span class="brand-text"><span class="suite-kicker">Nova Agent<span class="kicker-more"> · Novacane</span></span><span class="wordmark small">Portal</span></span>
     </a>
     <!-- Options: theme, sound, sign out -->
     <button id="options" class="icon-btn top-right" type="button" aria-label="Options" title="Options" aria-haspopup="dialog" aria-controls="options-sheet" data-sfx="open">
@@ -274,9 +274,9 @@
 
         <!-- What I can do (my own profile) -->
         <div class="hero-actions" id="self-actions">
-          <a id="open-index" class="btn wide" href="/index/">
+          <a id="open-index" class="btn wide" href="/app/memory/">
             <svg viewBox="0 0 512 512" aria-hidden="true" class="btn-mark"><use href="#i-mark-i"/></svg>
-            <span id="open-index-label">Open my Nova Index</span>
+            <span id="open-index-label">Open my Index</span>
           </a>
           <div class="action-grid">
             <button id="reroll" class="btn ghost" type="button" data-sfx="open">
@@ -327,9 +327,9 @@
           <dl class="details" id="details"></dl>
         </section>
 
-        <!-- Their Nova Index partition, and the studio's shared facts -->
+        <!-- Their Index partition, and the studio's shared facts -->
         <section id="memory-card" class="card memory-card" aria-labelledby="memory-title">
-          <span class="kicker">Nova Index</span>
+          <span class="kicker">Index</span>
           <h2 id="memory-title" class="card-title">Your memory</h2>
           <p class="hint" id="memory-hint">What the Nova apps remember about you, and what the whole studio knows.</p>
           <div id="memory-list" class="memory-list" aria-live="polite"></div>
@@ -383,19 +383,19 @@
 
   <!-- The suite bar: me, the crew, and the other Nova apps -->
   <nav class="suite-bar" aria-label="Nova Agent">
-    <a class="tab" id="nav-me" href="/crew/" data-nav="me">
+    <a class="tab" id="nav-me" href="/portal/" data-nav="me">
       <img id="nav-me-planet" class="tab-planet" alt="" width="64" height="64">
       <span>Me</span>
     </a>
-    <a class="tab" id="nav-crew" href="/crew/?view=crew" data-nav="crew" hidden>
+    <a class="tab" id="nav-crew" href="/portal/?view=crew" data-nav="crew" hidden>
       <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="3.2"/><circle cx="17" cy="10.5" r="2.4"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/><path d="M15 15c2.6-.4 4.6.8 5.5 3.5"/></svg>
       <span>Crew</span>
     </a>
-    <a class="tab" href="/index/">
+    <a class="tab" href="/app/memory/">
       <svg viewBox="0 0 512 512" aria-hidden="true" class="tab-mark"><use href="#i-mark-i"/></svg>
       <span>Index</span>
     </a>
-    <a class="tab" href="/studio/">
+    <a class="tab" href="/app/">
       <svg viewBox="0 0 512 512" aria-hidden="true" class="tab-mark"><use href="#i-mark-h"/></svg>
       <span>Hub</span>
     </a>
@@ -411,7 +411,7 @@
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="options-title">
     <div class="sheet-head">
       <div>
-        <span class="kicker">Crew</span>
+        <span class="kicker">Portal</span>
         <h3 id="options-title">Options</h3>
       </div>
       <button id="options-close" class="icon-btn" type="button" aria-label="Close" data-sfx="close">
@@ -426,7 +426,7 @@
       <label class="option-switch"><span>Sound effects</span><input type="checkbox" role="switch" id="sfx-switch" data-sfx="none"></label>
     </section>
     <section class="option-group option-actions">
-      <a class="btn ghost" href="/studio/">Open Studio</a>
+      <a class="btn ghost" href="/app/">Open Hub</a>
       <button id="options-sign-out" class="btn ghost" type="button" data-sfx="close">Sign out everywhere</button>
     </section>
   </div>
@@ -435,7 +435,7 @@
 <div id="toast" class="toast" role="status" hidden></div>
 
 <script src="/shared/sfx.js"></script>
-<script src="/crew/portal.js"></script>
+<script src="/portal/portal.js"></script>
 <script src="/shared/manual.js" defer></script>
 </body>
 </html>

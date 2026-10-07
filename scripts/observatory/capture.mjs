@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Nova Observatory — capture.mjs
+// Observatory — capture.mjs
 // Makes the screenshots and demo videos shown in the Observatory, into media/<id>/.
 //   capture.mode "page":   opens the project in headless Chromium (a file, a local static server, a Vite
 //                          dev server, or a URL), plays a short scripted demo, takes screenshots and
@@ -56,7 +56,7 @@ const MIME = {
 };
 
 // A tiny static file server on a free local port. mounts maps URL prefixes to folders inside root,
-// for apps that expect to be served from a sub-path (the Studio panel lives at /studio).
+// for apps that expect to be served from a sub-path (the Hub lives at /app).
 function serve(root, mounts = {}) {
   return new Promise((resolve) => {
     const srv = http.createServer(async (req, res) => {
@@ -255,7 +255,7 @@ const SCRIPTS = {
     if (server) {
       await page.goto(server.base + '/app/', { waitUntil: 'load' });
       await sleep(2000);
-      await shot('Studio, the staff app');
+      await shot('Hub, the staff app');
     }
   },
 

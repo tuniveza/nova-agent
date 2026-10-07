@@ -1,4 +1,4 @@
-/* Nova Calendar — app.js
+/* Calendar — app.js
    The calendar, the selected-day panel and the two editors (note card, day card).
    Everything renders from the store; after any change we save and re-render. */
 (function () {
@@ -630,7 +630,7 @@
   window.addEventListener('appinstalled', () => {
     installPrompt = null;
     $('#install').hidden = true;
-    toast('Nova Calendar is installed ✦ Open it from your apps');
+    toast('Calendar is installed ✦ Open it from your apps');
   });
   $('#install').addEventListener('click', async () => {
     if (standalone() || !installPrompt) return;
@@ -648,7 +648,7 @@
   }
   function registerOffline() {
     if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-      navigator.serviceWorker.register('sw.js').catch((err) => console.warn('[Nova Calendar] offline mode unavailable', err));
+      navigator.serviceWorker.register('sw.js').catch((err) => console.warn('[Calendar] offline mode unavailable', err));
     }
   }
 

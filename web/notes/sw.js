@@ -1,5 +1,5 @@
-/* Nova Notes — sw.js
-   Makes Nova Notes work offline once it's been opened: the app itself is kept in a cache and
+/* Notes — sw.js
+   Makes Notes work offline once it's been opened: the app itself is kept in a cache and
    refreshed in the background (so updates arrive on the next visit), fonts are kept once fetched,
    and Word import's helper library is kept after its first use. Notes themselves live in
    IndexedDB, not here. Bump VERSION when the list of app files changes. */

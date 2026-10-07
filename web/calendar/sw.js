@@ -1,5 +1,5 @@
-/* Nova Calendar — sw.js
-   Makes Nova Calendar work offline once it's been opened: the app is kept in a cache and refreshed
+/* Calendar — sw.js
+   Makes Calendar work offline once it's been opened: the app is kept in a cache and refreshed
    in the background (updates arrive on the next visit), and fonts are kept once fetched. Your notes
    and day cards live in localStorage, not here. Bump VERSION when the list of app files changes. */
 const VERSION = 'nova-calendar-v7';

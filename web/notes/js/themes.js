@@ -1,4 +1,4 @@
-/* Nova Notes — themes.js
+/* Notes — themes.js
    Every colour theme in one place. A theme is a set of CSS custom properties, so it can be put on the
    whole page (the app theme). The star backdrop and the exported documents read
    the same values, so everything matches the theme.

@@ -1,4 +1,4 @@
-/* Nova Calendar — nova.css
+/* Calendar — nova.css
    Novacane cosmic styling. Colours come in as custom properties from js/themes.js; the values in
    :root below are the Novacane theme, so the page looks right before the script runs.
    Type: Archivo (wide, 900) for display, Saira for reading, Source Code Pro for labels and buttons. */
@@ -76,7 +76,7 @@ button { font: inherit; }
   backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15);
 }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; margin-right: auto; }
-/* The Nova Calendar mark: a crescent-moon C, in the theme's colours */
+/* The Calendar mark: a crescent-moon C, in the theme's colours */
 .app-mark {
   width: 46px; height: 46px; flex: none; border-radius: 13px; overflow: hidden;
   box-shadow: 0 0 0 1px color-mix(in srgb, #fff 14%, transparent), 0 10px 26px -10px var(--hi), 0 0 22px -8px var(--hi);

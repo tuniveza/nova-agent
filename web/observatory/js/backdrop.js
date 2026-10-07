@@ -1,4 +1,4 @@
-/* Nova Observatory — backdrop.js (shared with Nova Observatory)
+/* Observatory — backdrop.js (shared with Observatory)
    The live sky behind the app: twinkling stars and the odd shooting star, tinted by the app theme.
    Holds still when the system asks for reduced motion. */
 (function () {

@@ -1,7 +1,7 @@
-// Studio's Quests and Calendar tabs: Nova Agent sends its plan (missions,
-// quests, pulses, and Nova Calendar's note and day cards)
+// Hub's Quests and Calendar tabs: Nova Agent sends its plan (missions,
+// quests, pulses, and Calendar's note and day cards)
 // to Nova Bot's worker whenever it changes (and every minute, so "now" moves
-// on), and carries out the taps made in Studio (Done, Start, Not now...).
+// on), and carries out the taps made in Hub (Done, Start, Not now...).
 // Taps also arrive with each job check (jobs.ts), so they land within a second.
 
 import { calendarEvents, readCalendar } from "../calendar/store";
@@ -22,7 +22,7 @@ function snapshot() {
     const { notes, remindedFor, checkedFor, created, updated, completed, ...rest } = q;
     return rest;
   };
-  // Nova Calendar's own cards (not the quest and blocked-time copies) from a week ago to two months ahead
+  // Calendar's own cards (not the quest and blocked-time copies) from a week ago to two months ahead
   const cal = readCalendar();
   const from = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
   const to = new Date(Date.now() + 62 * 864e5).toISOString().slice(0, 10);
@@ -51,9 +51,9 @@ export function applyQuestTaps(taps: unknown): void {
   for (const t of taps as QuestTap[]) {
     try {
       const title = applyQuestTap(t);
-      trace("input", "ok", `Studio: ${t.action} “${title}”`);
+      trace("input", "ok", `Hub: ${t.action} “${title}”`);
     } catch (error) {
-      trace("input", "warn", `Studio tap couldn't be done: ${(error as Error).message}`);
+      trace("input", "warn", `Hub tap couldn't be done: ${(error as Error).message}`);
     }
   }
 }
@@ -73,12 +73,12 @@ async function send(): Promise<void> {
     lastProblem = "";
   } catch (error) {
     const problem = (error as Error).message;
-    if (problem !== lastProblem) trace("task", "warn", `Couldn't send the plan to Studio: ${problem}`);
+    if (problem !== lastProblem) trace("task", "warn", `Couldn't send the plan to Hub: ${problem}`);
     lastProblem = problem;
   }
 }
 
-export function startStudioSync(): void {
+export function startHubSync(): void {
   const later = () => {
     clearTimeout(soon);
     soon = setTimeout(send, 1500);

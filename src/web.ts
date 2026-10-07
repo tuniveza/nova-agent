@@ -1,4 +1,4 @@
-// Nova Quest's eyes on the internet.
+// Quest's eyes on the internet.
 //
 //   - webTools(): Claude's own web search and web fetch (they run on
 //     Anthropic's servers), for the chat and the mission planner

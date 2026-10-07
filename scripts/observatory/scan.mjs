@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Nova Observatory — scan.mjs
+// Observatory — scan.mjs
 // Reads projects.config.json, measures every project on disk and writes data/projects.json
 // plus data/projects.js (the same data as a script, so index.html works straight from file://).
 // Measures: size on disk, source size, files, lines of code per language, newest change,
@@ -210,7 +210,7 @@ async function scanProject(p) {
   return base;
 }
 
-console.log('Nova Observatory: scanning', config.projects.length, 'projects');
+console.log('Observatory: scanning', config.projects.length, 'projects');
 const projects = [];
 for (const p of config.projects) projects.push(await scanProject(p));
 

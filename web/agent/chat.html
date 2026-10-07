@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,500&display=swap">
-<link rel="icon" href="/app/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/agent/icon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="/agent/apple-touch-icon.png">
 <meta name="application-name" content="Nova Agent">
 <meta name="apple-mobile-web-app-title" content="Nova Agent">
 <style>
@@ -95,7 +95,7 @@
   .btn.primary { background: var(--grad); border-color: transparent; color: var(--on-accent); box-shadow: 0 8px 26px -10px var(--accent); }
   .ico { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
-  /* Main: fits the screen (no scrolling). Nova Missions | Talk to Nova Agent | Nova Quests, with the panels along the bottom */
+  /* Main: fits the screen (no scrolling). Missions | Talk to Nova Agent | Quests, with the panels along the bottom */
   .main { width: min(100%, 1800px); justify-self: center; min-height: 0; overflow: hidden; display: grid; gap: 12px;
     grid-template-columns: minmax(270px, 1fr) minmax(380px, 1.35fr) minmax(270px, 1fr); grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "missions chat quests" "suite suite suite"; }
@@ -171,7 +171,7 @@
   .chat, .calendar { min-height: 0; min-width: 0; border-radius: 24px; overflow: hidden; }
   .chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
   .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--line); }
-  /* Each section's title: Talk to Nova Agent, Nova Missions, Nova Quests, Panels */
+  /* Each section's title: Talk to Nova Agent, Missions, Quests, Panels */
   .sec-title { margin: 0; display: inline-flex; align-items: center; gap: 9px; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; color: #fff; white-space: nowrap; }
   .sec-title > span { color: var(--hi); text-shadow: 0 0 10px var(--hi); }
   .sec-title.gold > span { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
@@ -295,7 +295,7 @@
   .suggest { gap: 6px; margin-top: 2px; }
   .suggest .chip { padding: 5px 11px; font-size: 12.5px; }
 
-  /* ===== Nova Quests and Missions: unmistakable, and alive ===== */
+  /* ===== Quests and Missions: unmistakable, and alive ===== */
   @property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
   @property --p { syntax: "<number>"; inherits: false; initial-value: 0; }
   .tl-card.quest { position: relative; overflow: hidden; padding: 12px 16px; border-left: 0;
@@ -563,7 +563,7 @@
       <span><span class="kicker">Nova Agent · Novacane</span><span class="wordmark">Nova Agent</span></span>
     </a>
     <div class="top-side right">
-      <!-- Crew: who Nova Agent works for (found by itself, or "Connect as me"): their planet, name and role -->
+      <!-- Portal: who Nova Agent works for (found by itself, or "Connect as me"): their planet, name and role -->
       <nova-manual compact></nova-manual>
       <nova-portal-badge></nova-portal-badge>
       <button type="button" class="btn primary" id="install" hidden><svg class="ico"><use href="#i-down"/></svg><span>Install app</span></button>
@@ -572,7 +572,7 @@
     </div>
   </header>
 
-  <!-- Nova Missions | Talk to Nova Agent | Nova Quests, with the panels along the bottom (all on one screen) -->
+  <!-- Missions | Talk to Nova Agent | Quests, with the panels along the bottom (all on one screen) -->
   <main class="main" id="main">
     <!-- An app opened inside Nova Agent (when "Open apps: Inside Nova Agent" is on) -->
     <section class="viewer glass" id="viewer" hidden aria-label="App">
@@ -588,7 +588,7 @@
     </section>
     <section class="board side glass" id="missions-panel" aria-labelledby="missions-title">
       <div class="side-head">
-        <h2 class="sec-title gold" id="missions-title"><span>◆</span> Nova Missions</h2>
+        <h2 class="sec-title gold" id="missions-title"><span>◆</span> Missions</h2>
         <button type="button" class="btn primary strip-btn" id="new-mission-btn" aria-haspopup="dialog" aria-controls="mission-dlg">✦ New mission</button>
       </div>
       <div class="view" id="view-missions"><div class="missions" id="missions"></div></div>
@@ -602,7 +602,7 @@
         <div class="welcome" id="welcome">
           <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
           <h3>Hey, I'm Nova Agent</h3>
-          <p>Give me a goal and I'll turn it into a Nova Mission, plan your days hour by hour, and keep you on track. I can also run Nova Calendar and check the studio's Acuity bookings.</p>
+          <p>Give me a goal and I'll turn it into a Mission, plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's Acuity bookings.</p>
           <div class="suggest">
             <button type="button" class="chip">What should I do now?</button>
             <button type="button" class="chip">Plan a mission: finish the EP by 1 December</button>
@@ -625,9 +625,9 @@
 
     <section class="board side glass" id="quests-panel" aria-labelledby="quests-title">
       <div class="side-head">
-        <h2 class="sec-title" id="quests-title"><span>✦</span> Nova Quests</h2>
+        <h2 class="sec-title" id="quests-title"><span>✦</span> Quests</h2>
         <div class="strip-tools">
-          <button type="button" class="icon-btn" id="btn-calendar" title="Open Nova Calendar" aria-label="Open Nova Calendar"><svg class="ico"><use href="#i-cal"/></svg></button>
+          <button type="button" class="icon-btn" id="btn-calendar" title="Open Calendar" aria-label="Open Calendar"><svg class="ico"><use href="#i-cal"/></svg></button>
           <button type="button" class="icon-btn" id="btn-replan" title="Re-plan everything from now" aria-label="Re-plan everything from now"><svg class="ico"><use href="#i-replan"/></svg></button>
           <button type="button" class="icon-btn" id="btn-bell" title="Turn on pop-up reminders" aria-label="Turn on pop-up reminders"><svg class="ico"><use href="#i-bell"/></svg></button>
           <button type="button" class="icon-btn" id="btn-rhythm" title="Your daily rhythm" aria-label="Your daily rhythm"><svg class="ico"><use href="#i-gear"/></svg></button>
@@ -650,7 +650,7 @@
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <dialog class="rhythm mission-dlg" id="mission-dlg" aria-labelledby="mission-dlg-title">
   <form class="rh mission-new" id="mission-form">
-    <h3 id="mission-dlg-title">✦ New Nova Mission</h3>
+    <h3 id="mission-dlg-title">✦ New Mission</h3>
     <button type="button" class="icon-btn suite-x" id="mission-close" aria-label="Close">✕</button>
     <p>Any goal, in the studio or anywhere in your life. Say what you want to achieve, where you're up to, what's in the way and by when, and what you'd like help thinking through. Nova Agent writes the strategy, splits it into tracks and milestones, and fits every quest into your days.</p>
     <textarea id="mission-text" placeholder="e.g. I'm doing a 52-release challenge on Instagram and TikTok and I've fallen behind, with two months left this year. New audio gear is coming to speed things up. I've lots of half-finished ideas, and I need a content strategy, a release strategy and the quickest way to film and edit it all." required></textarea>
@@ -691,20 +691,20 @@
       <div class="suite-group">
         <h4>Panels</h4>
         <div class="suite-grid">
-          <a class="suite-app here" href="/"><img src="/app/icon.svg" alt=""><b>Chat</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
-          <a class="suite-app" href="/studio/" data-inside="/studio/" target="_blank" rel="noopener"><img src="/studio/icon.svg" alt=""><b>Studio</b><small>Enquiries, website chats, bookings, alerts and Ask NovaBot</small></a>
-          <a class="suite-app" href="/crew/" data-inside="/crew/" target="_blank" rel="noopener"><img src="/crew/icon.svg" alt=""><b>Crew</b><small>Sign in, your planet, the team and invites</small></a>
-          <a class="suite-app" href="/calendar/" data-inside="/calendar/" target="_blank" rel="noopener"><img src="/calendar/assets/icon.svg" alt=""><b>Nova Calendar</b><small>The one Nova Agent plans into</small></a>
-          <a class="suite-app" href="/notes/" data-inside="/notes/" target="_blank" rel="noopener"><img src="/notes/assets/icon.svg" alt=""><b>Nova Notes</b><small>Notes and documents, Google Docs export</small></a>
-          <a class="suite-app" href="/index/" data-inside="/index/" target="_blank" rel="noopener"><img src="/index/icon.svg" alt=""><b>Nova Index</b><small>Everything Nova Agent remembers: browse, edit, approve</small></a>
-          <a class="suite-app" href="/observatory/" data-inside="/observatory/" target="_blank" rel="noopener"><img src="/observatory/assets/sigil.svg" alt=""><b>Nova Observatory</b><small>Every project, lines of code and the star map</small></a>
+          <a class="suite-app here" href="/"><img src="/agent/icon.svg" alt=""><b>Chat</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
+          <a class="suite-app" href="/app/" data-inside="/app/" target="_blank" rel="noopener"><img src="/app/icon.svg" alt=""><b>Hub</b><small>Enquiries, website chats, bookings, alerts and Ask NovaBot</small></a>
+          <a class="suite-app" href="/portal/" data-inside="/portal/" target="_blank" rel="noopener"><img src="/portal/icon.svg" alt=""><b>Portal</b><small>Sign in, your planet, the team and invites</small></a>
+          <a class="suite-app" href="/calendar/" data-inside="/calendar/" target="_blank" rel="noopener"><img src="/calendar/assets/icon.svg" alt=""><b>Calendar</b><small>The one Nova Agent plans into</small></a>
+          <a class="suite-app" href="/notes/" data-inside="/notes/" target="_blank" rel="noopener"><img src="/notes/assets/icon.svg" alt=""><b>Notes</b><small>Notes and documents, Google Docs export</small></a>
+          <a class="suite-app" href="/app/memory/" data-inside="/app/memory/" target="_blank" rel="noopener"><img src="/app/memory/icon.svg" alt=""><b>Index</b><small>Everything Nova Agent remembers: browse, edit, approve</small></a>
+          <a class="suite-app" href="/observatory/" data-inside="/observatory/" target="_blank" rel="noopener"><img src="/observatory/assets/sigil.svg" alt=""><b>Observatory</b><small>Every project, lines of code and the star map</small></a>
           <a class="suite-app" data-embed="no" href="https://nova-lossless-audio.novacane-studio.workers.dev/lossless/" target="_blank" rel="noopener"><span class="suite-glyph">◉</span><b>Lossless audio</b><small>Raw PCM between two devices, anywhere</small></a>
         </div>
       </div>
       <div class="suite-group tools">
         <h4>Services and admin</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="https://novacane.co.uk" target="_blank" rel="noopener"><img src="/app/novabot-icon.svg" alt=""><b>Nova Bot</b><small>The website assistant (bookings take the deposit)</small></a>
+          <a class="suite-app" href="https://novacane.co.uk" target="_blank" rel="noopener"><img src="/agent/novabot-icon.svg" alt=""><b>Nova Bot</b><small>The website assistant (bookings take the deposit)</small></a>
           <a class="suite-app" href="/visualizer" target="_blank" rel="noopener"><span class="suite-glyph">◎</span><b>Visualizer</b><small>Nova Agent's live steps and memory</small></a>
           <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/admin" target="_blank" rel="noopener"><span class="suite-glyph">⚙</span><b>Admin</b><small>Referrals, enquiries, conversations, booking system</small></a>
           <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener"><span class="suite-glyph">🔒</span><b>All links and services</b><small>Every address, service and feature</small></a>
@@ -802,14 +802,14 @@
 
   // ---- The type cue: what a message will become, worked out as it's typed (no AI, so it's instant) ----
   const KINDS = {
-    mission: { icon: '◆', label: 'Nova Mission', hint: 'Plans the lot: a strategy, tracks, milestones and every quest, fitted into your days', send: 'Plan it', colour: 'var(--gold)' },
+    mission: { icon: '◆', label: 'Mission', hint: 'Plans the lot: a strategy, tracks, milestones and every quest, fitted into your days', send: 'Plan it', colour: 'var(--gold)' },
     refine: { icon: '◇', label: 'Mission detail', hint: 'Re-plans what’s left of your mission with this', send: 'Refine', colour: 'var(--gold)' },
-    quest: { icon: '✦', label: 'Nova Quest', hint: 'One task, fitted into your day', send: 'Add quest', colour: 'var(--hi)' },
+    quest: { icon: '✦', label: 'Quest', hint: 'One task, fitted into your day', send: 'Add quest', colour: 'var(--hi)' },
     repeat: { icon: '∞', label: 'Repeating quest', hint: 'Comes back each time it’s due, until you end it', send: 'Set it up', colour: 'var(--lilac)' },
     pulse: { icon: '⚡', label: 'Pulse', hint: 'A quick repeat on its own exact timer', send: 'Start it', colour: '#5CE1FF' },
     block: { icon: '⛔', label: 'Blocked time', hint: 'Quests move out of the way', send: 'Block it', colour: '#FF8A8A' },
     update: { icon: '✓', label: 'Quest update', hint: 'Marks a quest done, started, skipped or moved', send: 'Update', colour: '#5CFFC0' },
-    calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Nova Calendar', send: 'Add it', colour: '#9DB4FF' },
+    calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Calendar', send: 'Add it', colour: '#9DB4FF' },
     studio: { icon: '♫', label: 'Studio bookings', hint: 'Looks at Acuity (read-only)', send: 'Check', colour: '#FFB86B' },
     ask: { icon: '?', label: 'Question', hint: 'Nova Agent answers, using your plan', send: 'Ask', colour: 'var(--soft)' },
     chat: { icon: '✦', label: 'Chat', hint: 'Just talking to Nova Agent', send: 'Send', colour: 'var(--muted)' },
@@ -1055,12 +1055,12 @@
     const cur = st.current;
     if (cur) {
       const pct = cur.start && cur.end ? Math.max(0, Math.min(100, ((nowM - mins(cur.start)) / Math.max(1, mins(cur.end) - mins(cur.start))) * 100)) : 0;
-      html += `<div class="now-card"><div class="now-kicker">✦ Nova Quest · ${cur.status === 'doing' ? 'In progress' : 'Happening now'}</div><div class="now-title">${escH(cur.title)}</div>
+      html += `<div class="now-card"><div class="now-kicker">✦ Quest · ${cur.status === 'doing' ? 'In progress' : 'Happening now'}</div><div class="now-title">${escH(cur.title)}</div>
         <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${dur(cur)}${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>
         <div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div>${questButtons(cur)}</div>`;
     } else if (st.next[0]) {
       const n = st.next[0];
-      html += `<div class="now-card"><div class="now-kicker">✦ Nova Quest · Up next</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div><div style="margin-top:10px">${questButtons(n)}</div></div>`;
+      html += `<div class="now-card"><div class="now-kicker">✦ Quest · Up next</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div><div style="margin-top:10px">${questButtons(n)}</div></div>`;
     }
 
     // One timeline row (a quest, blocked time or a calendar card)
@@ -1071,14 +1071,14 @@
         const q = it.q;
         html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
           <div class="tl-card quest ${q.status}${q.atRisk ? ' risk' : ''}${q.ongoing ? ' ongoing' : ''}" style="--i:${questIndex++}">
-          <div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Nova Quest · repeat' : '✦ Nova Quest'}</span>${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
+          <div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Quest · repeat' : '✦ Quest'}</span>${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
           <div class="tl-title">${escH(q.title)}</div>
           <div class="tl-meta"><span class="prio ${q.priority}">${q.priority}</span> · ${dur(q)}${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline && !q.ongoing ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
           ${q.status === 'done' ? '' : questButtons(q)}</div></div>`;
       } else if (it.kind === 'block') {
         html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card block"><div class="tl-title">Busy · ${escH(it.b.reason)}</div><div class="tl-meta">Blocked out · <button class="mini" data-unblock="${it.b.id}">Unblock</button></div></div></div>`;
       } else {
-        html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card busy"><div class="tl-title">${escH(it.n.title || 'Note card')}</div><div class="tl-meta">From Nova Calendar</div></div></div>`;
+        html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card busy"><div class="tl-title">${escH(it.n.title || 'Note card')}</div><div class="tl-meta">From Calendar</div></div></div>`;
       }
       return html;
     };
@@ -1172,7 +1172,7 @@
     // Keep anything being typed in the Refine box across redraws
     const typed = $('mv-detail') ? $('mv-detail').value : '';
     const focused = document.activeElement && document.activeElement.id === 'mv-detail';
-    $('mv-head').innerHTML = `<div class="ring" style="--p:${pct}">${pct}%</div><div style="min-width:0;flex:1"><span class="m-badge">◆ Nova Mission${m.status === 'done' ? ' · complete' : m.status === 'paused' ? ' · paused' : ''}</span><h3 id="mv-title">${escH(m.title)}</h3><p>${escH(m.summary)}</p>
+    $('mv-head').innerHTML = `<div class="ring" style="--p:${pct}">${pct}%</div><div style="min-width:0;flex:1"><span class="m-badge">◆ Mission${m.status === 'done' ? ' · complete' : m.status === 'paused' ? ' · paused' : ''}</span><h3 id="mv-title">${escH(m.title)}</h3><p>${escH(m.summary)}</p>
       <div class="badges">${m.deadline ? `<span class="badge">Due ${escH(shortDay(m.deadline))}</span>` : ''}<span class="badge">${p.done}/${p.total} quests</span><span class="badge">${(p.minutesLeft / 60).toFixed(1)}h left</span>${p.atRisk ? `<span class="badge warn">${p.atRisk} at risk</span>` : ''}${m.milestones.length ? `<span class="badge">${m.milestones.filter((x) => x.done).length}/${m.milestones.length} milestones</span>` : ''}</div></div>`;
     for (const b of $('mv-tabs').querySelectorAll('button')) {
       b.setAttribute('aria-selected', String(b.dataset.mv === mvTab));
@@ -1287,7 +1287,7 @@
     if (ub) { await api('/actions/blocks', { remove: true, id: ub.dataset.unblock }); return loadPlan(); }
   });
 
-  // Nova Calendar opens like its Nova Agent tile does (inside Nova Agent, or in a window)
+  // Calendar opens like its Nova Agent tile does (inside Nova Agent, or in a window)
   const openCalendar = () => document.querySelector('#suite-body a.suite-app[href="/calendar/"]').click();
   $('btn-calendar').addEventListener('click', openCalendar);
 
@@ -1404,7 +1404,7 @@
     el.hideTimer = setTimeout(() => el.remove(), 15000);
     chime('pulse');
     if ('Notification' in window && Notification.permission === 'granted' && document.hidden && swReg) {
-      swReg.showNotification(`\u221E ${n.title}`, { body: n.message, tag: n.questId, renotify: true, icon: '/app/icon-192.png', silent: false }).catch(() => {});
+      swReg.showNotification(`\u221E ${n.title}`, { body: n.message, tag: n.questId, renotify: true, icon: '/agent/icon-192.png', silent: false }).catch(() => {});
     }
   }
 
@@ -1412,7 +1412,7 @@
     toast(n);
     chime(n.kind);
     if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
-      const opts = { body: n.message, tag: n.questId || n.kind, renotify: true, icon: '/app/icon-192.png', badge: '/app/icon-192.png', requireInteraction: n.kind === 'checkin' || n.kind === 'leave', silent: false };
+      const opts = { body: n.message, tag: n.questId || n.kind, renotify: true, icon: '/agent/icon-192.png', badge: '/agent/icon-192.png', requireInteraction: n.kind === 'checkin' || n.kind === 'leave', silent: false };
       if (swReg) swReg.showNotification(n.title, opts).catch(() => {});
       else try { const sys = new Notification(n.title, opts); sys.onclick = () => { window.focus(); sys.close(); }; } catch (e) {}
     }
@@ -1524,7 +1524,7 @@
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; $('install').hidden = false; });
   window.addEventListener('appinstalled', () => { $('install').hidden = true; toast({ title: 'Nova Agent installed \u2726', message: 'It\u2019s in your app launcher now.' }); });
   $('install').addEventListener('click', async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; $('install').hidden = true; });
-  // Launcher shortcuts: ?view=calendar opens Nova Calendar (Today and Missions are always on screen)
+  // Launcher shortcuts: ?view=calendar opens Calendar (Today and Missions are always on screen)
   if (new URLSearchParams(location.search).get('view') === 'calendar') openCalendar();
   loadPlan();
   input.focus();

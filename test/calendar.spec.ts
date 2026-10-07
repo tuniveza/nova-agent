@@ -1,4 +1,4 @@
-// P0-2 in Nova Calendar: a save from the calendar page never wipes out a change
+// P0-2 in Calendar: a save from the calendar page never wipes out a change
 // made elsewhere, and edits to a quest's card reach the quest.  Run: npm test
 import { afterEach, describe, expect, it } from "vitest";
 import { boot, shutdown } from "./harness";
@@ -78,7 +78,7 @@ describe("saves from the calendar page", () => {
   });
 });
 
-describe("a quest's card in Nova Calendar", () => {
+describe("a quest's card in Calendar", () => {
   const mix = { id: "mix", title: "Mix the EP", minutes: 60 };
   async function withQuest() {
     const nova = await boot("2026-10-07T09:00");

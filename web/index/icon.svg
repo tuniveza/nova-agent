@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- The Nova Index mark: a cosmic I, in the Nova Agent family (same sky, stars, orbit, sparkle and planet as Studio's mark).
+  <!-- The Index mark: a cosmic I, in the Nova Agent family (same sky, stars, orbit, sparkle and planet as Hub's mark).
        The sparkle sits above the I like the dot on an i: the one bright fact memory keeps. -->
   <defs>
     <radialGradient id="sky" cx="50%" cy="15%" r="95%"><stop offset="0" stop-color="#B01D68"/><stop offset=".42" stop-color="#25194D"/><stop offset="1" stop-color="#06040D"/></radialGradient>

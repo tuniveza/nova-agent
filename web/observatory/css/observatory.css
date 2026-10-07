@@ -1,5 +1,5 @@
-/* Nova Observatory — observatory.css
-   Same Novacane cosmic language as Nova Calendar: colours arrive as custom properties from js/themes.js
+/* Observatory — observatory.css
+   Same Novacane cosmic language as Calendar: colours arrive as custom properties from js/themes.js
    (Quasar by default here), Archivo wide for display, Saira for reading, Source Code Pro for labels. */
 
 :root {

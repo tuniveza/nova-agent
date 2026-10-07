@@ -1,28 +1,28 @@
-# Studio
+# Hub
 
-The staff side of the studio, as a Nova Agent panel: enquiries, website chats, bookings, alerts, Ask NovaBot and push notifications to the staff phones. On the studio PC it opens inside Nova Agent (sign in on the Crew panel); away from it, it's online at Nova Bot's address, `/studio/`, and installs on a phone as Nova Agent.
+The staff side of the studio, as a Nova Agent panel: enquiries, website chats, bookings, alerts, Ask NovaBot and push notifications to the staff phones. On the studio PC it opens inside Nova Agent (sign in on the Portal panel); away from it, it's online at Nova Bot's address, `/app/`, and installs on a phone as Nova Agent.
 
 Its data and push come from Nova Bot (`/app/api/*`).
 
-Studio lives at `/studio/` (online) and inside Nova Agent on the studio PC. It's a phone-first web app that installs to the home screen,
+Hub lives at `/app/` (online) and inside Nova Agent on the studio PC. It's a phone-first web app that installs to the home screen,
 and turns into a side-rail layout on a desktop. Staff sign in with
-Crew (or, for now, the studio's shared
+Portal (or, for now, the studio's shared
 password).
 
 <table>
   <tr>
-    <td width="33%" valign="top"><img src="media/studio-signin.jpg" alt="Studio's sign-in screen, with a Sign in button and the studio password" width="100%"><br><sub><b>Sign in</b> with Crew, or the studio's shared password.</sub></td>
+    <td width="33%" valign="top"><img src="media/studio-signin.jpg" alt="Hub's sign-in screen, with a Sign in button and the studio password" width="100%"><br><sub><b>Sign in</b> with Portal, or the studio's shared password.</sub></td>
     <td width="33%" valign="top"><img src="media/studio-enquiries.jpg" alt="The Enquiries tab with two new enquiries and buttons to email, call, make a booking link, read the chat and mark done" width="100%"><br><sub><b>Enquiries</b>: email, call, send a booking link, read the chat, mark done.</sub></td>
     <td width="33%" valign="top"><img src="media/studio-calendar-week.jpg" alt="The smart calendar: this week's sessions, hours booked, session value, busiest day, next free hour and one clash, above a month of glowing days" width="100%"><br><sub><b>The smart calendar</b>: the week at a glance, and days that glow as they fill.</sub></td>
   </tr>
   <tr>
     <td width="33%" valign="top"><img src="media/studio-calendar-day.jpg" alt="Thursday picked: 56% full, a clash warning, a tight changeover warning, and two free slots" width="100%"><br><sub><b>A day</b>: how full it is, a clash, a tight changeover, and free slots.</sub></td>
-    <td width="33%" valign="top"><img src="media/studio-quests.jpg" alt="Nova Quests: the quest in progress, a repeating pulse, and today's plan" width="100%"><br><sub><b>Nova Quests</b> from Nova Agent: what's on now and today's plan.</sub></td>
-    <td width="33%" valign="top"><img src="media/studio-missions.jpg" alt="Nova Missions with progress rings, deadlines and an at-risk count" width="100%"><br><sub><b>Nova Missions</b>: progress, deadlines and anything at risk.</sub></td>
+    <td width="33%" valign="top"><img src="media/studio-quests.jpg" alt="Quests: the quest in progress, a repeating pulse, and today's plan" width="100%"><br><sub><b>Quests</b> from Nova Agent: what's on now and today's plan.</sub></td>
+    <td width="33%" valign="top"><img src="media/studio-missions.jpg" alt="Missions with progress rings, deadlines and an at-risk count" width="100%"><br><sub><b>Missions</b>: progress, deadlines and anything at risk.</sub></td>
   </tr>
   <tr>
     <td width="33%" valign="top"><img src="media/studio-alerts.jpg" alt="A booking alert with a green panel: Real booking, confirmed in Acuity" width="100%"><br><sub><b>Alerts</b>: every booking is checked with Acuity itself.</sub></td>
-    <td width="33%" valign="top"><img src="media/studio-suite.jpg" alt="The Nova Agent sheet listing Studio, Nova Index, Nova Notes and Nova Calendar" width="100%"><br><sub><b>The Nova Agent sheet</b>: every app, one tap away.</sub></td>
+    <td width="33%" valign="top"><img src="media/studio-suite.jpg" alt="The Nova Agent sheet listing Hub, Index, Notes and Calendar" width="100%"><br><sub><b>The Nova Agent sheet</b>: every app, one tap away.</sub></td>
     <td width="33%" valign="top"><img src="media/studio-links.jpg" alt="All links: live addresses with an up or down check for each" width="100%"><br><sub><b>🔒 All links</b>, each checked as you open it.</sub></td>
   </tr>
   <tr>
@@ -43,8 +43,8 @@ password).
 |---|---|
 | **Enquiries** | Every enquiry NovaBot took. Email, call, make a booking link with the customer's details filled in, read the chat it came from, mark it done. |
 | **Chats** | What customers asked NovaBot on the website (kept for 90 days). |
-| **Calendar** | Every booking in Acuity's diary, as a month you can swipe, with Nova Calendar's cards and planned quests alongside. See [the smart calendar](#the-smart-calendar). |
-| **Quests** | Nova Agent's plan, synced from the studio computer: the quest on now, repeating pulses, today, Nova Missions with progress rings, and every quest. Taps (Start, Done, +15 min, Not now, Skip, Pause) go straight back to Nova Agent. |
+| **Calendar** | Every booking in Acuity's diary, as a month you can swipe, with Calendar's cards and planned quests alongside. See [the smart calendar](#the-smart-calendar). |
+| **Quests** | Nova Agent's plan, synced from the studio computer: the quest on now, repeating pulses, today, Missions with progress rings, and every quest. Taps (Start, Done, +15 min, Not now, Skip, Pause) go straight back to Nova Agent. |
 | **Alerts** | Every notification that reached a phone, newest first, with colour-coded labels, exact times, Call/Email buttons and an auto-delete switch. |
 | **NovaBot** | Two chats. **Ask Nova** answers questions about the studio's bookings, enquiries and alerts (Nova Bot's `src/studio-ask.js`). **NovaBot · bookings** is NovaBot with the booking tools, talking to you as staff: get a link for a client, find, move, cancel or change a booking. Every change shows a summary and waits for a yes. |
 
@@ -65,9 +65,9 @@ password).
   "Not found". Tests are labelled as tests, so nothing fake can pass for a booking.
 - **Push notifications that work with the app closed** (`src/push.js`, `public/app/sw.js`).
   New enquiries, bookings (with every detail from Acuity's private calendar feed), and
-  alerts from Nova Agent, Nova Quest and Nova Mission. Android gets rich notifications
+  alerts from Nova Agent, Quest and Mission. Android gets rich notifications
   with their own buzz; iPhones get the plain version, so nothing is ever lost.
-- **Pings.** With Studio open, an alert rings out with a bright ping (a different one for
+- **Pings.** With Hub open, an alert rings out with a bright ping (a different one for
   each kind) and drops a banner from the top.
 - **Staff voice.** Tap the mic and say what to do ("show alerts", "call Eric", "new
   enquiries", "ask NovaBot what the prices are"); Whisper on Workers AI writes it down.
@@ -82,7 +82,7 @@ password).
 - **Options** (`public/app/options.js`): theme, text alignment and size, how times show on
   alerts, animations, the drifting starfield, sound effects, pings, music volume and the
   starting tab. Saved on the device.
-- **The suite sheet** (`public/app/suite.js`): tap the Studio brand to see every Nova app,
+- **The suite sheet** (`public/app/suite.js`): tap the Hub brand to see every Nova app,
   🔒 **All links** (every live and testing address, each checked on the spot), **What's
   changed** (every change by day and app: what, why and what's better), **everything the
   suite can do**, and the theme picker.
@@ -100,7 +100,7 @@ password).
 </p>
 
 <p align="center">
-  <img src="media/studio-desktop.jpg" alt="Studio on a desktop: tabs in a side rail, and alerts in two columns, including a booking checked in Acuity and a Nova Quest alert" width="100%"><br>
+  <img src="media/studio-desktop.jpg" alt="Hub on a desktop: tabs in a side rail, and alerts in two columns, including a booking checked in Acuity and a Quest alert" width="100%"><br>
   <sub>On a desktop, the tabs become a side rail and lists go two-up.</sub>
 </p>
 

@@ -1,5 +1,5 @@
-/* Crew: one sign-in for Nova Agent, and everyone's planet, in the same cosmic skin as
-   Studio and Nova Index.
+/* Portal: one sign-in for Nova Agent, and everyone's planet, in the same cosmic skin as
+   Hub and Index.
    Type: Archivo (wide, 900) for display, Saira for reading, Source Code Pro for little labels.
    Glass cards with a gradient hairline edge, floating among the stars; the planet is the centrepiece.
    Every colour comes from /app/themes.css, so the suite's six themes restyle this page too.
@@ -180,7 +180,7 @@ input.wrong { border-color: rgba(var(--warn-rgb), 0.8); }
 .pill.you { color: #fff; border-color: transparent; background: var(--grad); }
 .pill.you::before { display: none; }
 
-/* ----- The mark (boot and sign-in): Crew's P, floating in a breathing halo ----- */
+/* ----- The mark (boot and sign-in): Portal's P, floating in a breathing halo ----- */
 .mark-wrap { position: relative; width: 120px; height: 120px; margin: 0 auto 20px; }
 .big-mark {
   position: relative; display: block; width: 100%; height: 100%; border-radius: 32px;
@@ -479,7 +479,7 @@ html:not([data-align="left"]) .admin-card .field { text-align: center; }
 .invite-box .actions .btn { flex: 1 1 140px; }
 @media (min-width: 560px) { .link-row { grid-template-columns: minmax(0, 1fr) auto; } }
 
-/* Their memory: little file cards that open Nova Index */
+/* Their memory: little file cards that open Index */
 .memory-list { display: grid; gap: 14px; }
 .mem-group { display: grid; gap: 8px; }
 .mem-head {
@@ -672,12 +672,12 @@ body.signed-in .toast { bottom: calc(var(--bar-gap) + var(--bar-h) + 14px); }
   .action-grid .btn { font-size: 9.5px; letter-spacing: 0.05em; }
 }
 
-/* ===================== Text alignment (Studio's option; centred is the default) ===================== */
+/* ===================== Text alignment (Hub's option; centred is the default) ===================== */
 html[data-align="left"] .card, html[data-align="left"] .identity, html[data-align="left"] .details-card { text-align: left; }
 html[data-align="left"] .mem-head { justify-content: flex-start; }
 html[data-align="left"] .mem-head::before { display: none; }
 
-/* ===================== Text size and motion (Studio's options, and the device's) ===================== */
+/* ===================== Text size and motion (Hub's options, and the device's) ===================== */
 html[data-size="small"] body { zoom: 0.92; }
 html[data-size="large"] body { zoom: 1.12; }
 html[data-motion="calm"] *, html[data-motion="calm"] *::before, html[data-motion="calm"] *::after { animation: none !important; transition: none !important; }

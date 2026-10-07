@@ -1,4 +1,4 @@
-// The Nova Quest planner, on known quests and busy times.  Run: npx tsx test/scheduler.test.ts
+// The Quest planner, on known quests and busy times.  Run: npx tsx test/scheduler.test.ts
 import assert from "node:assert/strict";
 import { describeLength, nextSession, splitLong } from "../src/quests/lengths";
 import { fromMin, planQuests, toMin } from "../src/quests/scheduler";

@@ -1,4 +1,4 @@
-// Reminders and check-ins for Nova Quests, checked every 10 seconds:
+// Reminders and check-ins for Quests, checked every 10 seconds:
 //   - a few minutes before a quest starts (or before leaving, if there's travel)
 //   - a check-in when it should be finished: done? need more time? move it?
 //   - a quest left unanswered an hour after its end is moved to a new time
@@ -47,8 +47,8 @@ const PHONE: Record<QuestNotice["kind"], { ttl: number; urgent: boolean }> = {
 // `covers`: other sessions the same notice tells about.
 function notify(n: Omit<QuestNotice, "time">, push: boolean, session = fromMin(nowMinutes()), covers?: string[]): boolean {
   const source = n.kind === "mission" ? "mission" : "quest";
-  // To the staff phones too, labelled as Nova Quest or Nova Mission.
-  // Pulses replace each other on the phone and stay out of Studio's Alerts list
+  // To the staff phones too, labelled as Quest or Mission.
+  // Pulses replace each other on the phone and stay out of Hub's Alerts list
   const phone = push && n.kind !== "undelivered" ? { title: n.title, message: n.message, source, kind: n.kind, tag: n.questId || n.kind, ...PHONE[n.kind], keep: n.kind !== "pulse" } as const : null;
   if (!deliver({ questId: n.questId || n.kind, session, kind: n.kind, push: phone, covers })) return false;
   if (n.kind === "pulse") {
@@ -178,11 +178,11 @@ export function startQuestReminders(): void {
     try {
       tick();
     } catch (error) {
-      trace("task", "warn", `Nova Quest reminders: ${(error as Error).message}`);
+      trace("task", "warn", `Quest reminders: ${(error as Error).message}`);
     }
   };
   setTimeout(run, 5_000);
   // Every 10 seconds, so quests of seconds (and quick repeats) ping on time
   timer = setInterval(run, 10_000);
-  console.log("Nova Quest reminders: on");
+  console.log("Quest reminders: on");
 }

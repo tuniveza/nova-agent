@@ -1,4 +1,4 @@
-// Nova Quest reminders on a simulated clock.  Run: npm test
+// Quest reminders on a simulated clock.  Run: npm test
 import { afterEach, describe, expect, it } from "vitest";
 import { boot, shutdown } from "./harness";
 

@@ -1,4 +1,4 @@
-// Studio: the staff app. All data comes from /app/api/ (staff login
+// Hub: the staff app. All data comes from /app/api/ (staff login
 // needed). Everything from the server is shown as plain text, never as HTML.
 
 (function () {
@@ -6,7 +6,7 @@
 
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
-  // The tab Studio opens on (chosen in Options; Enquiries unless changed)
+  // The tab Hub opens on (chosen in Options; Enquiries unless changed)
   const VIEWS = ["enquiries", "chats", "calendar", "quests", "alerts", "bot"];
   let currentView = window.NovaOptions && VIEWS.includes(window.NovaOptions.get().startTab) ? window.NovaOptions.get().startTab : "enquiries";
   let sessions = null; // session types for booking links
@@ -131,7 +131,7 @@
   function showApp() {
     $("login").hidden = true;
     $("app").hidden = false;
-    // Opened from a Nova Agent, Nova Quest or Nova Mission notification: go straight to Alerts
+    // Opened from a Nova Agent, Quest or Mission notification: go straight to Alerts
     if (location.hash === "#nova") currentView = "alerts";
     show(currentView);
     // The Quests badge (quests left today), whatever tab is open
@@ -451,7 +451,7 @@
   }
 
   // The bookings on one day ("2026-10-22"), earliest first
-  // Nova Calendar's cards and Nova Quests on a day (sent by Nova Agent with its plan)
+  // Calendar's cards and Quests on a day (sent by Nova Agent with its plan)
   function suiteOn(key) {
     const st = lastQuests && lastQuests.state;
     if (!st) return [];
@@ -466,10 +466,10 @@
     return items.sort((a, b) => a.sort.localeCompare(b.sort));
   }
 
-  // One Nova Calendar card or quest, in the Calendar tab
+  // One Calendar card or quest, in the Calendar tab
   function suiteCard(item) {
     const card = el("article", "card cal-card suite-item " + item.kind);
-    card.appendChild(el("span", "alert-kind " + (item.kind === "quest" ? "quest" : "other"), item.kind === "quest" ? "Nova Quest" : item.kind === "day" ? "Nova Calendar · day" : "Nova Calendar"));
+    card.appendChild(el("span", "alert-kind " + (item.kind === "quest" ? "quest" : "other"), item.kind === "quest" ? "Quest" : item.kind === "day" ? "Calendar · day" : "Calendar"));
     if (item.time) card.appendChild(el("p", "cal-time", item.time));
     card.appendChild(el("h3", "card-title", item.title));
     if (item.sub) card.appendChild(el("p", "cal-session", item.sub));
@@ -686,7 +686,7 @@
         dots.appendChild(dot);
       });
       if (list.length > 3) dots.appendChild(el("b", "", "+" + (list.length - 3)));
-      // A lilac dot when Nova Calendar or Nova Quests have something that day
+      // A lilac dot when Calendar or Quests have something that day
       if (suiteOn(key).length) {
         const dot = el("i", "suite-dot");
         dot.style.background = "#c7a4ff";
@@ -730,10 +730,10 @@
     // The smart parts: this week, and this day
     drawSmartWeek();
     drawSmartDay();
-    // Nova Calendar's cards and Nova Quests that day, after the bookings (as the filter says)
+    // Calendar's cards and Quests that day, after the bookings (as the filter says)
     const suite = suiteOn(calPicked).filter((i) => calFilter === "all" || (calFilter === "quests" ? i.kind === "quest" : calFilter === "notes" ? i.kind !== "quest" : false));
     if (calFilter !== "all" && calFilter !== "bookings") {
-      return box.replaceChildren(...(suite.length ? suite.map(suiteCard) : [el("p", "empty", calFilter === "quests" ? "No quests this day." : "No Nova Calendar cards this day.")]));
+      return box.replaceChildren(...(suite.length ? suite.map(suiteCard) : [el("p", "empty", calFilter === "quests" ? "No quests this day." : "No Calendar cards this day.")]));
     }
     if (calFilter === "bookings" && !list.length) return box.replaceChildren(el("p", "empty", "No bookings this day."));
     if (calFilter === "bookings") return box.replaceChildren(...list.map((b, i) => calCard(b, animate ? i : -1)));
@@ -835,7 +835,7 @@
     if (Math.abs(moved) > 50) changeMonth(moved < 0 ? 1 : -1);
   });
 
-  // ===== Nova Quests =====
+  // ===== Quests =====
   // Nova Agent (on the studio computer) sends its plan here every time it
   // changes. Taps (Done, Start, Not now...) go back to it, usually within a second.
 
@@ -916,9 +916,9 @@
   function questCard(q, missions, big) {
     const card = el("article", "card quest-card " + q.status + (q.atRisk ? " risk" : "") + (big ? " now" : ""));
     const mission = missions.find((m) => m.id === q.missionId);
-    // Every quest says so: "✦ Nova Quest" (with where it's at for the big one), and its mission
+    // Every quest says so: "✦ Quest" (with where it's at for the big one), and its mission
     const tags = el("div", "q-tags");
-    tags.appendChild(el("span", "q-tag", (q.ongoing ? "∞ Nova Quest · repeat" : "✦ Nova Quest") + (big ? (q.status === "doing" ? " · in progress" : " · up next") : "")));
+    tags.appendChild(el("span", "q-tag", (q.ongoing ? "∞ Quest · repeat" : "✦ Quest") + (big ? (q.status === "doing" ? " · in progress" : " · up next") : "")));
     if (mission) tags.appendChild(el("span", "m-tag", "◆ " + mission.title));
     if (q.atRisk && q.status !== "done") tags.appendChild(el("span", "risk-tag", "⚠ At risk"));
     card.appendChild(tags);
@@ -953,7 +953,7 @@
     const left = open.filter((q) => q.start && q.start.startsWith(today)).length;
     $("quest-badge").hidden = !left;
     $("quest-badge").textContent = left;
-    // The Calendar tab shows Nova Calendar and quests too: redraw it with the latest
+    // The Calendar tab shows Calendar and quests too: redraw it with the latest
     if (currentView === "calendar" && calMonth) {
       drawMonth();
       drawDay();
@@ -997,7 +997,7 @@
         const words = el("div", "mission-words");
         words.append(el("h3", "card-title", m.title), el("p", "quest-meta", m.summary || ""));
         head.append(ring, words);
-        card.append(el("span", "m-badge", "◆ Nova Mission" + (m.status === "done" ? " · complete" : m.status === "paused" ? " · paused" : "")), head);
+        card.append(el("span", "m-badge", "◆ Mission" + (m.status === "done" ? " · complete" : m.status === "paused" ? " · paused" : "")), head);
         if (p.atRisk) card.classList.add("risk");
         card.appendChild(el("p", "quest-meta", [m.deadline ? "Due " + m.deadline.replace("T", " ") : "", `${p.done}/${p.total} quests`, (p.minutesLeft / 60).toFixed(1) + " h left", p.atRisk ? `⚠ ${p.atRisk} at risk` : ""].filter(Boolean).join(" · ")));
         const row = el("div", "actions");
@@ -1112,7 +1112,7 @@
   // Which Nova app an alert came from (from the start of its title), or null
   function novaSource(title) {
     // The three Nova apps that send alerts, and their colour names
-    const sources = [["Nova Quest: ", "quest"], ["Nova Mission: ", "mission"], ["Nova Agent: ", "agent"]];
+    const sources = [["Quest: ", "quest"], ["Mission: ", "mission"], ["Nova Agent: ", "agent"]];
     // Find the one the title starts with
     const found = sources.find(([prefix]) => String(title).startsWith(prefix));
     // Its name (without the colon) and colour, or nothing
@@ -1120,7 +1120,7 @@
   }
 
   // The label for each kind of alert
-  const KIND_LABELS = { booking: "Booking · Acuity", "nova-booking": "Booking · Nova", enquiry: "Enquiry", quest: "Nova Quest", mission: "Nova Mission", agent: "Nova Agent", health: "Acuity connection", test: "Test", other: "Alert" };
+  const KIND_LABELS = { booking: "Booking · Acuity", "nova-booking": "Booking · Nova", enquiry: "Enquiry", quest: "Quest", mission: "Mission", agent: "Nova Agent", health: "Acuity connection", test: "Test", other: "Alert" };
 
   // "Tue 6 Oct 2026 · 21:02:40" (UK time, to the second)
   function exactTime(iso) {
@@ -1184,7 +1184,7 @@
     remove.setAttribute("aria-label", "Delete this alert");
     // Delete it when tapped
     remove.addEventListener("click", () => deleteAlert(n.id));
-    // What it's about, as a coloured label ("Booking", "Nova Quest", "Test"...)
+    // What it's about, as a coloured label ("Booking", "Quest", "Test"...)
     const kind = n.kind || "other";
     card.classList.add("kind-" + kind);
     // The top: the title
@@ -1202,7 +1202,7 @@
     if (n.email) card.appendChild(emailPanel(n.email));
     // A row of buttons
     const actions = el("div", "actions");
-    // Alerts from Nova Agent, Nova Quest and Nova Mission: nothing to open
+    // Alerts from Nova Agent, Quest and Mission: nothing to open
     const nova = novaSource(n.title);
     if (nova) {
       // Mark the card with its colour
@@ -1211,9 +1211,9 @@
       return card;
     }
     // Enquiry alerts open the Enquiries tab; booking alerts open Acuity
-    const open = el(n.url.startsWith("/studio/") ? "button" : "a", "btn small", n.url.startsWith("/studio/") ? "Open enquiry" : /acuityscheduling/.test(n.url) ? "Open in Acuity" : "Open in Google Calendar");
+    const open = el(n.url.startsWith("/app/") ? "button" : "a", "btn small", n.url.startsWith("/app/") ? "Open enquiry" : /acuityscheduling/.test(n.url) ? "Open in Acuity" : "Open in Google Calendar");
     // An enquiry: switch tabs when tapped
-    if (n.url.startsWith("/studio/")) open.addEventListener("click", () => show("enquiries"));
+    if (n.url.startsWith("/app/")) open.addEventListener("click", () => show("enquiries"));
     // A booking: a link to Acuity, opened outside the app
     else Object.assign(open, { href: n.url, target: "_blank", rel: "noopener" });
     // Add it to the row
@@ -1437,22 +1437,22 @@
 
   // ===== Notifications =====
   // Like giving the post office your address once: the phone gets a delivery
-  // address from Apple, Studio hands it to the Worker, and from then on the
-  // Worker can post notifications to it, even when Studio is closed.
+  // address from Apple, Hub hands it to the Worker, and from then on the
+  // Worker can post notifications to it, even when Hub is closed.
 
   // Can this browser do notifications at all? (needs all three of these.) Not inside Nova
   // Agent on the studio PC: Nova Agent shows its own notices there, and phone pushes are for phones.
   const canNotify = !onStudioPC && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   // Is this an iPhone or iPad?
   const isIPhone = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  // Was Studio opened from the Home Screen icon (rather than a Safari tab)?
+  // Was Hub opened from the Home Screen icon (rather than a Safari tab)?
   const fromHomeScreen = window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 
   // Install the doorman (sw.js) as soon as the app opens, so it's ready when needed
   if (canNotify) {
     navigator.serviceWorker
-      .register("/studio/sw.js", { scope: "/studio/", updateViaCache: "none" })
-      // Look for a newer doorman every time Studio opens (and when it comes back to the front)
+      .register("/app/sw.js", { scope: "/app/", updateViaCache: "none" })
+      // Look for a newer doorman every time Hub opens (and when it comes back to the front)
       .then((reg) => {
         reg.update().catch(() => {});
         document.addEventListener("visibilitychange", () => !document.hidden && reg.update().catch(() => {}));
@@ -1461,7 +1461,7 @@
   }
 
   // ===== Pings =====
-  // When a notification arrives while Studio is open, it rings out with a
+  // When a notification arrives while Hub is open, it rings out with a
   // bright ping (a different one for each kind) and drops a banner from the top.
 
   // The sound maker (made on the first tap, because phones only allow sound after a tap)
@@ -1540,7 +1540,7 @@
     // Remember what it's about
     box.dataset.tag = data.tag || "";
     // Its title and text
-    box.append(el("strong", "", data.title || "Studio"), el("p", "", data.body || ""));
+    box.append(el("strong", "", data.title || "Hub"), el("p", "", data.body || ""));
     // Tapping it opens the Alerts tab
     box.addEventListener("click", () => {
       box.remove();
@@ -1571,12 +1571,12 @@
     });
   }
 
-  // Opening Studio clears the dot on its Home Screen icon
+  // Opening Hub clears the dot on its Home Screen icon
   function clearIconDot() {
     // Only where the phone supports it
     if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
   }
-  // Now, and every time Studio comes back to the front
+  // Now, and every time Hub comes back to the front
   clearIconDot();
   document.addEventListener("visibilitychange", () => !document.hidden && clearIconDot());
 
@@ -1608,12 +1608,12 @@
     let status = "Get a notification here for new enquiries and bookings.";
     // iPhone in a Safari tab: it has to be opened from the Home Screen first
     if (!canNotify && isIPhone && !fromHomeScreen) {
-      status = "On iPhone, notifications only work when Studio is opened from its Home Screen icon. In Safari, tap Share, then Add to Home Screen, then open Studio from there.";
+      status = "On iPhone, notifications only work when Hub is opened from its Home Screen icon. In Safari, tap Share, then Add to Home Screen, then open Hub from there.";
     }
     // Any other browser that can't do it
     else if (!canNotify) status = "This browser can't show notifications.";
     // He said no to the iPhone's question earlier: only Settings can change that now
-    else if (Notification.permission === "denied") status = "Notifications are blocked for Studio. Turn them on in the iPhone's Settings, then Notifications, then Studio.";
+    else if (Notification.permission === "denied") status = "Notifications are blocked for Hub. Turn them on in the iPhone's Settings, then Notifications, then Hub.";
     // Already on
     else if (address) status = "Notifications are on for this phone.";
     // Put the message in the panel
@@ -1713,12 +1713,12 @@
   });
 
   // ===== Voice commands =====
-  // Tap the mic, say what to do, and Studio does it. Like asking someone at
+  // Tap the mic, say what to do, and Hub does it. Like asking someone at
   // the front desk: the recording goes to the Worker, which writes down the
   // words (Whisper), and the app matches them to a command below. Anything
   // that isn't a command is asked to NovaBot instead.
   //
-  // Hands-free ("Always listen"): while Studio is open on screen, it keeps
+  // Hands-free ("Always listen"): while Hub is open on screen, it keeps
   // listening and acts on anything that starts with "Nova" ("Nova, show
   // alerts"), so everyday conversation is ignored. iPhones only allow the
   // microphone while the app is open, so it pauses when you leave and starts
@@ -1947,7 +1947,7 @@
     try {
       await openMic();
     } catch (err) {
-      return toast("Studio can't use the microphone. Allow it in Settings.");
+      return toast("Hub can't use the microphone. Allow it in Settings.");
     }
     // The mic glows, and the panel shows
     $("voice").classList.add("on");
@@ -1980,7 +1980,7 @@
   // What was said after "Nova" (null if it didn't start with "Nova").
   // Whisper sometimes hears "Nova" as "Noah", "Nava" or "Nover".
   function afterWakeWord(text) {
-    // "Nova, show alerts", "Hey Nova show alerts", "Studio, call Eric"
+    // "Nova, show alerts", "Hey Nova show alerts", "Hub, call Eric"
     const m = String(text).match(/^\W*(?:(?:hey|hi|ok|okay)\W+)?(?:nova(?:\s*hub)?|novah|noah|nava|nover|no va)\b\W*(.*)$/i);
     // The command (maybe empty), or null
     return m ? m[1].trim() : null;
@@ -1991,7 +1991,7 @@
     return new Promise((resolve) => document.addEventListener("pointerdown", resolve, { once: true }));
   }
 
-  // Hands-free: keep listening while Studio is open and on screen
+  // Hands-free: keep listening while Hub is open and on screen
   async function startHandsFree() {
     // Already running, switched off, signed out, or not on screen
     if (looping || !handsFree || !canRecord || $("app").hidden || document.hidden) return;
@@ -2010,7 +2010,7 @@
         // Still no: the microphone is blocked
         listeningBar("");
         looping = false;
-        return toast("Studio can't use the microphone. Allow it in Settings.");
+        return toast("Hub can't use the microphone. Allow it in Settings.");
       }
     }
     // The volume meter is paused until a tap (iPhone rule): wait for one
@@ -2040,7 +2040,7 @@
         if (err.message === "signed out") break;
         continue;
       }
-      // The command after "Nova" (null: not meant for Studio, so ignore it)
+      // The command after "Nova" (null: not meant for Hub, so ignore it)
       const command = afterWakeWord(text);
       // Not for us
       if (command === null) continue;

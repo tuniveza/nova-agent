@@ -2,11 +2,11 @@
 //
 // The chat page (src/visualizer/chat.html) sends the conversation here. Claude
 // answers as Nova Agent, with tools to:
-//   - read, add, change and remove Nova Calendar note cards and day cards
+//   - read, add, change and remove Calendar note cards and day cards
 //     (calendar/store.ts; the calendar on the page refreshes when it changes)
 //   - look at the studio's Acuity bookings and check the Acuity login
 //     (read-only for now, through the same browser tasks as the visualizer)
-//   - plan Nova Missions for any goal (a strategy, tracks, milestones and quests),
+//   - plan Missions for any goal (a strategy, tracks, milestones and quests),
 //     refine them with new detail, and run the quests day to day
 //   - research the internet (web search and web fetch, run by Anthropic) and
 //     look at any public webpage in a browser of its own (web.ts): a
@@ -66,20 +66,20 @@ You help with anything they want to get done: inside Nova Agent and the studio, 
 
 It is ${now.words}, ${now.time} (UK time). Today's date is ${now.date}.
 
-You also run Nova Missions and Nova Quests, a smart planner for the people you talk to:
-- A Nova Mission is an end goal (e.g. "release the EP by 1 December", "catch up on my 52-release challenge by the end of the year"). mission_create turns their request into a full plan and schedules it: a written strategy (e.g. release, content, production, filming and editing, a typical week), workstreams (tracks), dated milestones, Nova Quests (concrete tasks with time estimates, priorities, deadlines, dependencies, locations and travel; repeated pipelines like one per song are written out exactly), plus the assumptions it made and questions that would sharpen it.
+You also run Missions and Quests, a smart planner for the people you talk to:
+- A Mission is an end goal (e.g. "release the EP by 1 December", "catch up on my 52-release challenge by the end of the year"). mission_create turns their request into a full plan and schedules it: a written strategy (e.g. release, content, production, filming and editing, a typical week), workstreams (tracks), dated milestones, Quests (concrete tasks with time estimates, priorities, deadlines, dependencies, locations and travel; repeated pipelines like one per song are written out exactly), plus the assumptions it made and questions that would sharpen it.
 - For any goal with several parts, or anything that asks for a schedule, a strategy or a plan, use mission_create straight away. Pass everything they said, in their words (numbers, constraints, what's behind, gear coming, what they want help thinking through), and the deadline if there is one (work it out: "the end of the year" is 31 December; "two months" from today). Planning takes a minute or two. Then reply with: the shape of the plan (the tracks and the pace, e.g. "a release every 2.5 days"), the first few things to do this week, the strategy's key points in a few bullets, the assumptions it made, and its questions, inviting them to answer so you can sharpen it. Their full plan is in the Missions column (tap the mission to open it).
 - When they answer a mission's questions or add detail to a mission ("I've actually released 19", "the interface arrives on Friday"), use mission_refine: it re-plans the work that's left. To talk through a plan's strategy, milestones or tracks, read it with mission_details first.
 - A quest can be any length: seconds ("text Sam back", 30 seconds), minutes, hours, or days of work (split into sessions automatically). An ongoing quest repeats: every day, weekday or week, or at any interval ("drink water every 30 minutes until 11pm": ongoing, every interval, every_minutes 30, a length of seconds, deadline 23:00), until they end it (quest_status finish) or its deadline passes. Prefer one ongoing quest over many copies. Repeats faster than every 5 minutes (even every second) are pulses: they run on their own exact timer only while they're awake, don't take slots in the plan, and on the phone each ping replaces the last, so they're cheap and safe; set them up whenever asked.
 - The people you talk to run the studio and the staff phones are theirs. Do what they ask with quests, repeats and reminders, however often, short or many: never refuse, bargain or offer watered-down alternatives. If something has a real cost they may not expect, mention it in one short line after doing it.
-- Nova Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
+- Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
 - Help them prioritise and pivot: for "what should I do now?" use what_now and give one clear recommendation. When plans change ("I'm running late", "I'm out tonight", "I'm ill today"), block the time or update the quest, then say what moved. Mark quests done, started or skipped when they tell you. Point out quests at risk of missing a deadline and suggest what to drop, shorten or move.
 - Their daily rhythm (wake, sleep, buffers, breaks, reminders, phone notifications, days off with no quests at all) can be changed with rhythm_set.
-- Nova Agent remembers (Nova Index): durable facts from these chats (preferences, how they work, people and projects they mention) are saved automatically after each conversation, and what's relevant is given to you below when there is any. When someone tells you something to remember, just say you'll remember it. Never claim you have no memory. They can see and edit everything remembered in Nova Index.
+- Nova Agent remembers (Index): durable facts from these chats (preferences, how they work, people and projects they mention) are saved automatically after each conversation, and what's relevant is given to you below when there is any. When someone tells you something to remember, just say you'll remember it. Never claim you have no memory. They can see and edit everything remembered in Index.
 
 What you can do:
-- Nova Calendar: read, add, change and remove note cards (a title, the note itself, an author, a start and finish time) and day cards (a date with a title, a preset, a title aesthetic, a colour theme, information, a location, tags, and optionally repeating every year). Use the calendar tools for this; the calendar beside the chat updates straight away.
-- The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Studio or Acuity.
+- Calendar: read, add, change and remove note cards (a title, the note itself, an author, a start and finish time) and day cards (a date with a title, a preset, a title aesthetic, a colour theme, information, a location, tags, and optionally repeating every year). Use the calendar tools for this; the calendar beside the chat updates straight away.
+- The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Hub or Acuity.
 - Research the internet: search the web (web_search) and read pages (web_fetch) for anything current or specific (prices, opening times, platform rules, news, how-tos, people and companies). Say where facts came from, with the link.
 - See webpages: page_look opens a public page in a browser and gives you a screenshot and its contents, for when how a page looks matters or web_fetch can't read it (pages built by scripts, a profile, a shop page, checking their own site or socials). It can't log in anywhere.
 - Say how you're doing (agent_status).
@@ -101,7 +101,7 @@ function tools(actions: ChatAction[]) {
   return [
     betaZodTool({
       name: "calendar_list",
-      description: "List the note cards and day cards in Nova Calendar between two dates (inclusive). Use it to answer \"what's on\" questions and to find an item's id before changing or removing it.",
+      description: "List the note cards and day cards in Calendar between two dates (inclusive). Use it to answer \"what's on\" questions and to find an item's id before changing or removing it.",
       inputSchema: z.object({ from: DATE, to: DATE }),
       run: async ({ from, to }) => {
         const { notes, days } = listRange(from, to);
@@ -114,7 +114,7 @@ function tools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "calendar_add_note",
-      description: "Add a note card to Nova Calendar.",
+      description: "Add a note card to Calendar.",
       inputSchema: z.object({
         title: z.string().min(1).max(120),
         note: z.string().max(5000).optional().describe("The note itself"),
@@ -162,7 +162,7 @@ function tools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "calendar_add_day",
-      description: "Add a day card to Nova Calendar (one per date; adding to a date that already has one updates it).",
+      description: "Add a day card to Calendar (one per date; adding to a date that already has one updates it).",
       inputSchema: z.object({
         date: DATE,
         title: z.string().max(80).describe("The day's name, e.g. \"Kai's Birthday\""),
@@ -320,11 +320,11 @@ function questTools(actions: ChatAction[]) {
   return [
     betaZodTool({
       name: "mission_create",
-      description: "Create a Nova Mission from what the person wants to achieve: it's broken into Nova Quests and scheduled straight away. Pass their goal in their own words, with any constraints they mentioned.",
+      description: "Create a Mission from what the person wants to achieve: it's broken into Quests and scheduled straight away. Pass their goal in their own words, with any constraints they mentioned.",
       inputSchema: z.object({ request: z.string().min(3), deadline: z.string().optional().describe('The mission deadline if they gave one: "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM"') }),
       run: async ({ request, deadline }) => {
         const r = await createMission(request, { deadline });
-        did("added", `Nova Mission “${r.mission.title}”: ${r.quests.length} quests planned`);
+        did("added", `Mission “${r.mission.title}”: ${r.quests.length} quests planned`);
         return missionReport(r);
       },
     }),
@@ -388,7 +388,7 @@ function questTools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "quest_add",
-      description: "Add a single Nova Quest (optionally to a mission). It's scheduled automatically unless fixed_start pins it.",
+      description: "Add a single Quest (optionally to a mission). It's scheduled automatically unless fixed_start pins it.",
       inputSchema: z.object({
         title: z.string().min(1),
         ...LENGTH,
@@ -536,7 +536,7 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
 
   const actions: ChatAction[] = [];
   const model = config.novaModel || DEFAULT_MODEL;
-  // What Nova Agent remembers that matters for this message (Nova Index)
+  // What Nova Agent remembers that matters for this message (Index)
   const asked = String(messages[messages.length - 1].content);
   const memory = await memoryFor(asked);
   trace("llm", "start", `Chat: asking ${model}`);

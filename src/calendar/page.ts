@@ -1,4 +1,4 @@
-// Saves from the Nova Calendar page (PUT /calendar-api/data).
+// Saves from the Calendar page (PUT /calendar-api/data).
 //
 // The page sends the whole calendar, as it was when it loaded plus its own
 // changes. Written straight over the file, a tab left open would wipe out what
@@ -78,7 +78,7 @@ export function saveFromPage(raw: unknown, baseRev: number): { rev: number; mess
     const after = mine.get(card.id);
     if (!before) continue;
     if (!after) {
-      messages.push(`“${card.title.replace(MARK, "")}” is a Nova Quest, so its card stays. To drop it, skip or remove the quest in Nova Agent.`);
+      messages.push(`“${card.title.replace(MARK, "")}” is a Quest, so its card stays. To drop it, skip or remove the quest in Nova Agent.`);
       continue;
     }
     const edit: (typeof edits)[number] = { id: card.id.slice("quest-".length) };

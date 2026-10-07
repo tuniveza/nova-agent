@@ -1,11 +1,11 @@
-// Turning a Nova Mission request into a plan, with Claude.
+// Turning a Mission request into a plan, with Claude.
 //
 // Any goal, in Nova Agent or nothing to do with it ("release the EP by
 // 1 December", "catch up on my 52-release challenge by New Year", "get fit for
 // the summer") becomes:
 //   - a short written strategy (release, content, filming and editing... as the
 //     goal needs), workstreams (tracks) and dated milestones
-//   - Nova Quests: concrete tasks, each with a realistic length, a priority, a
+//   - Quests: concrete tasks, each with a realistic length, a priority, a
 //     deadline worked back from the mission's, what it waits for, where it
 //     happens and the travel to get there
 //   - series: the same steps repeated for many items (each song in a release
@@ -103,7 +103,7 @@ type Plan = z.infer<typeof PlanSchema>;
 const dayName = (m: number) => new Date(m * 60000).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const stampOf = (s: string) => (/^\d{4}-\d{2}-\d{2}$/.test(s) ? `${s}T23:59` : s);
 
-const SYSTEM = `You are Nova Agent's mission planner. You turn any goal someone has into a plan that genuinely gets them there: a short written strategy, workstreams, dated milestones and Nova Quests (concrete tasks that a scheduler fits into their days hour by hour, around their sleep, calendar and travel).
+const SYSTEM = `You are Nova Agent's mission planner. You turn any goal someone has into a plan that genuinely gets them there: a short written strategy, workstreams, dated milestones and Quests (concrete tasks that a scheduler fits into their days hour by hour, around their sleep, calendar and travel).
 
 The goal can be anything: their music, creative projects, content, business, studio work, health, study, life admin, inside Nova Agent or nothing to do with it. The people you plan for are at Novacane Studios (a recording studio in Forest Hill, London), often artists, producers and creators. Plan like a seasoned expert in the goal's field (an artist manager and content strategist for a release campaign, a coach for fitness, and so on).
 
@@ -138,10 +138,10 @@ async function askForPlan(data: QuestData, parts: { request: string; deadline?: 
     .map((n) => `- ${n.start.replace("T", " ")} to ${n.end.slice(11)}: ${n.title}`)
     .join("\n");
   const active = data.missions.filter((m) => m.status === "active").map((m) => `- ${m.title}${m.deadline ? ` (due ${m.deadline})` : ""}`).join("\n");
-  // What Nova Agent remembers about this person and the work (Nova Index)
+  // What Nova Agent remembers about this person and the work (Index)
   const memory = await memoryFor(parts.request);
   const { answer, sources } = await askWithResearch({
-    purpose: "plan a Nova Mission",
+    purpose: "plan a Mission",
     schema: PlanSchema,
     long: { effort: "high" },
     web: RESEARCH,

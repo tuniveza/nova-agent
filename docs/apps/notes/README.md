@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="../../../web/notes/assets/icon.svg" width="96" alt="The Nova Notes icon: a glowing N with an orbit, among the stars">
+<img src="../../../web/notes/assets/icon.svg" width="96" alt="The Notes icon: a glowing N with an orbit, among the stars">
 
-# Nova Notes
+# Notes
 
 > **A Nova Agent panel.** Its code is in `web/notes/` in Nova Agent's repo, and it opens inside Nova Agent at `/notes/`. Online, Nova Bot serves it at the same address.
 
@@ -16,9 +16,9 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
 ![Google Docs](https://img.shields.io/badge/exports%20to-Google%20Docs-25194D?style=flat-square)
 ![Part of Nova Agent](https://img.shields.io/badge/part%20of-nova--suite-FF5FA8?style=flat-square)
 
-<img src="media/hero.jpg" width="900" alt="Nova Notes with the built-in welcome note open: notes list on the left, the glowing centred page in the middle, the outline on the right">
+<img src="media/hero.jpg" width="900" alt="Notes with the built-in welcome note open: notes list on the left, the glowing centred page in the middle, the outline on the right">
 
-### ✦ [Open Nova Notes](https://nova-notes.novacane-studio.workers.dev) ✦
+### ✦ [Open Notes](https://nova-notes.novacane-studio.workers.dev) ✦
 
 <sub>Works in any modern browser · install it as an app · works offline · also built into Nova Agent</sub>
 
@@ -87,7 +87,7 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
 | Aurora | Solar Flare |
 | <img src="media/theme-pulsar.jpg" alt="Pulsar theme"> | <img src="media/theme-eclipse.jpg" alt="Eclipse theme"> |
 | Pulsar | Eclipse |
-| <img src="media/theme-quasar.jpg" alt="Quasar theme"> | <img src="media/phone.jpg" width="260" alt="Nova Notes on a phone, showing the welcome note"> |
+| <img src="media/theme-quasar.jpg" alt="Quasar theme"> | <img src="media/phone.jpg" width="260" alt="Notes on a phone, showing the welcome note"> |
 | Quasar | On a phone |
 
 </details>
@@ -100,11 +100,11 @@ Every press makes a soft cosmic sound: a tap, a menu opening, a dialog closing, 
 
 - **On or off:** *View → Sound effects*. It's ticked while they're on, and plays a little chime when you switch.
 - **Remembered** on each device.
-- **Shared:** the same `js/sfx.js` makes the sounds in Nova Calendar and Nova Observatory too.
+- **Shared:** the same `js/sfx.js` makes the sounds in Calendar and Observatory too.
 
 ## Inside Nova Agent
 
-[Nova Agent](https://github.com/tuniveza/nova-agent), the studio computer's helper, serves its own copy of Nova Notes at **`/notes/`** (for example `http://localhost:4545/notes/`) whenever it's running.
+[Nova Agent](https://github.com/tuniveza/nova-agent), the studio computer's helper, serves its own copy of Notes at **`/notes/`** (for example `http://localhost:4545/notes/`) whenever it's running.
 
 | | On the web | Inside Nova Agent |
 |---|---|---|
@@ -133,7 +133,7 @@ flowchart LR
 - **`google.js`**: the clipboard route (rich HTML plus plain text) and the Drive route (Google Identity Services token → multipart upload that Drive converts to a Google Doc, then `PATCH` to update it).
 - **`store.js`**: notes in IndexedDB (falling back to localStorage), settings, backup and restore.
 - **`sfx.js`**: Nova Agent's sound effects. One listener works out what kind of thing was pressed and plays the matching sound; an element can choose its own with `data-sfx`.
-- **`themes.js`** and **`backdrop.js`**: Nova Agent's colour themes and the star field, shared with [Nova Calendar](https://github.com/tuniveza/nova-calendar).
+- **`themes.js`** and **`backdrop.js`**: Nova Agent's colour themes and the star field, shared with [Calendar](https://github.com/tuniveza/nova-calendar).
 
 ## Keyboard shortcuts
 

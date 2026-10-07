@@ -1,4 +1,4 @@
-/* Nova Calendar — themes.js
+/* Calendar — themes.js
    Every colour theme in one place. A theme is a set of CSS custom properties, so it can be put on the
    whole page (the app theme) or on a single day card (that card's own theme). The generative art reads
    the same values, so pictures always match the colours around them.

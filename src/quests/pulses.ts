@@ -104,7 +104,7 @@ function fire(id: string, beat: number): void {
     }
     timers.set(id, setTimeout(() => fire(id, next), Math.max(0, (next - exactNow()) * 60000)));
   } catch (error) {
-    trace("task", "warn", `Nova Quest pulse: ${(error as Error).message}`);
+    trace("task", "warn", `Quest pulse: ${(error as Error).message}`);
   }
 }
 

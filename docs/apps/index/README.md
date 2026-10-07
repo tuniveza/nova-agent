@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="media/browse.jpg" alt="Nova Index's Browse screen: the counts for studio, staff, customers and facts waiting, the scope chips, and studio files as cards" width="860">
+<img src="media/browse.jpg" alt="Index's Browse screen: the counts for studio, staff, customers and facts waiting, the scope chips, and studio files as cards" width="860">
 
-# Nova Index
+# Index
 
-> **A Nova Agent panel.** Its code is in `web/index/` in Nova Agent's repo, and it opens inside Nova Agent at `/index/`. Online, Nova Bot serves it at the same address.
+> **A Nova Agent panel.** Its code is in `web/index/` in Nova Agent's repo, and it opens inside Nova Agent at `/app/memory/`. Online, Nova Bot serves it at the same address.
 
 
 **Everything Nova Agent remembers, in one place.**<br>
@@ -17,7 +17,7 @@ Browse it, watch it grow, fix a line, and say yes or no to what's been learned a
 
 Every Nova app hands its conversations to one shared memory. A tiny set of tagged, one-line
 facts comes out, kept in small files by subject. Before replying, each app reads back only the
-few files that matter for that turn. Nova Index is the window onto that memory.
+few files that matter for that turn. Index is the window onto that memory.
 
 > The test for every fact: **"Would this still be true and useful in three months?"** If not, it isn't kept.
 
@@ -72,11 +72,11 @@ the differences lit up, and can put your edit on top of theirs in one tap, or ke
 </table>
 
 - **Live** shows what the suite has just learned, and which app learned it (NovaBot, Nova
-  Agent, Studio, Nova Index). It checks every 20 seconds while it's on screen, and anything
+  Agent, Hub, Index). It checks every 20 seconds while it's on screen, and anything
   new glows as it arrives. Tap a row to open the file.
 - **Approve** holds facts learned from customers. One tap approves, edits or rejects each one.
   Nothing about a customer is kept without a person saying yes.
-- **Options**: the theme (shared with Studio), sound effects, refresh everything, open Nova
+- **Options**: the theme (shared with Hub), sound effects, refresh everything, open Nova
   Hub and sign out. It installs as an app, with the suite's cosmic "I".
 
 ## How the memory works
@@ -101,11 +101,11 @@ the differences lit up, and can put your edit on top of theirs in one tap, or ke
 |---|---|
 | Nova Agent (its key) | The studio's memory and staff memory; never customers' |
 | The website's NovaBot | Only that customer's own file and the public studio facts |
-| Studio and Nova Index, signed in | Everything, including approvals |
-| Staff signed in with [Crew](https://github.com/tuniveza/nova-portal) | Staff who aren't admins: the studio's memory and their own; admins: everything |
+| Hub and Index, signed in | Everything, including approvals |
+| Staff signed in with [Portal](https://github.com/tuniveza/nova-portal) | Staff who aren't admins: the studio's memory and their own; admins: everything |
 
-Nova Index signs in with **Crew**, the suite's one sign-in ("✦ Sign in with Nova
-Portal"), so each person sees what's theirs to see. The studio's shared Studio password
+Index signs in with **Portal**, the suite's one sign-in ("✦ Sign in with Nova
+Portal"), so each person sees what's theirs to see. The studio's shared Hub password
 still works too, and sees everything.
 
 The memory engine runs on Nova Bot's worker (`src/memory/` in

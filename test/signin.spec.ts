@@ -33,7 +33,7 @@ const load = () => import("../src/signin");
 const page = (path: string, init: RequestInit & { origin?: string; host?: string } = {}) =>
   new Request(`http://localhost:4545${path}`, { ...init, headers: { host: init.host ?? "localhost:4545", ...(init.origin !== undefined ? { origin: init.origin } : {}), "content-type": "application/json" } });
 
-describe("signing in on the Crew panel", () => {
+describe("signing in in the Portal", () => {
   it("logs in to Nova Bot as an app, keeps the token on this computer only, and never gives it to the page", async () => {
     const s = await load();
     const res = await s.signIn({ email: "d@novacane.co.uk", password: "right" });

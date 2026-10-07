@@ -1,8 +1,8 @@
-// Nova Manual: how every Nova Agent panel works, how it's built, its history and what's
+// Manual: how every Nova Agent panel works, how it's built, its history and what's
 // changing, in one panel on every app.
 //
 //   <script src="/shared/manual.js" defer></script>        (on Nova Bot's worker and in Nova Agent)
-//   <script src="/shared/manual.js" defer></script>         (Nova Notes, Calendar, Observatory: a copy)
+//   <script src="/shared/manual.js" defer></script>         (Notes, Calendar, Observatory: a copy)
 //   <nova-manual></nova-manual>                              (optional: put the button somewhere yourself;
 //                                                            without one, a floating button appears)
 // It opens with the button, the ? key, or #nova-manual in the address, on the page for the
@@ -65,9 +65,9 @@
     if (/nova-notes/.test(h) || p.startsWith("/notes")) return "notes";
     if (/nova-calendar/.test(h) || p.startsWith("/calendar")) return "calendar";
     if (p.startsWith("/observatory") || location.port === "4610" || (location.protocol === "file:" && /observatory|\/no\//i.test(p))) return "observatory";
-    if (p.startsWith("/index")) return "index";
-    if (p.startsWith("/studio")) return "studio";
-    if (p.startsWith("/crew")) return "crew";
+    if (p.startsWith("/app/memory")) return "index";
+    if (p.startsWith("/app")) return "hub";
+    if (p.startsWith("/portal")) return "portal";
     if (p.startsWith("/admin")) return "bot";
     if (/^454\d$/.test(location.port)) return "agent";
     return "";
@@ -347,7 +347,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
   };
 
   // Per-item colours and delays are set from here, not as style="" (pages with strict
-  // security rules, like Studio's, don't allow inline styles; setting them in code is fine)
+  // security rules, like Hub's, don't allow inline styles; setting them in code is fine)
   function paint(root) {
     for (const el of root.querySelectorAll("[data-v]")) {
       for (const pair of el.getAttribute("data-v").split(";")) {
@@ -394,11 +394,11 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
     }
 
     drawButton() {
-      this.root.innerHTML = `<button class="open" part="button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Nova Manual (press ?)">
+      this.root.innerHTML = `<button class="open" part="button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Manual (press ?)">
           <span class="orb">${ICON.book.replace("<svg", '<svg width="18" height="18"')}<span class="spark"></span></span>
           <span class="label"><b>Manual</b><small>Nova Agent</small></span>
         </button>
-        <div class="panel" role="dialog" aria-modal="true" aria-label="Nova Manual" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
+        <div class="panel" role="dialog" aria-modal="true" aria-label="Manual" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
       this.root.querySelector(".open").addEventListener("click", () => (this.isOpen ? this.close(true) : this.open()));
     }
     markNew(d) {
@@ -409,7 +409,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       const dot = btn.querySelector(".dot");
       if (newest > seen && Date.now() - newest < 3 * DAY) {
         if (!dot) btn.insertAdjacentHTML("beforeend", '<span class="dot" aria-hidden="true"></span>');
-        btn.title = "Nova Manual: something's new (press ?)";
+        btn.title = "Manual: something's new (press ?)";
       } else if (dot) dot.remove();
     }
 
@@ -420,7 +420,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       if (!this.isOpen) {
         panel.innerHTML = `<div class="sky">${"<i></i>".repeat(18)}</div>
           <header class="top">
-            <div class="brand"><span class="book">${ICON.book}</span><div><div class="kicker">Nova Agent</div><h2>Nova Manual</h2></div></div>
+            <div class="brand"><span class="book">${ICON.book}</span><div><div class="kicker">Nova Agent</div><h2>Manual</h2></div></div>
             <label class="search">${ICON.search}<input type="search" placeholder="Search every app's manual" aria-label="Search the manual" autocomplete="off" spellcheck="false"><kbd>/</kbd></label>
             <button class="x" type="button" aria-label="Close the manual">${ICON.x}</button>
           </header>
@@ -453,7 +453,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         })
         .catch(() => {
           const page = this.root.querySelector(".page");
-          if (page) page.innerHTML = `<div class="empty"><div><b>The manual's pages aren't here yet.</b><br>Run <code>node scripts/build-manual.mjs</code> in Crew to make them.</div></div>`;
+          if (page) page.innerHTML = `<div class="empty"><div><b>The manual's pages aren't here yet.</b><br>Run <code>node scripts/build-manual.mjs</code> in Portal to make them.</div></div>`;
         });
     }
     close(withSound) {
@@ -545,7 +545,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         })
         .join("");
       return `
-        <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">✺</span><div class="who"><div class="kicker">Nova Manual</div><h1>The Nova Agent</h1><p>${esc((s && s.tagline) || "Every Nova app: how to use it, how it's built, its story so far and what's changing.")}</p>
+        <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">✺</span><div class="who"><div class="kicker">Manual</div><h1>The Nova Agent</h1><p>${esc((s && s.tagline) || "Every Nova app: how to use it, how it's built, its story so far and what's changing.")}</p>
           <div class="pills"><span class="pill">${d.apps.length} apps</span><span class="pill">Updated ${esc(ago(d.built))}</span><span class="pill">Press <b>?</b> on any Nova app to open this</span></div></div></div>
         <div class="section-title">The apps</div>
         <div class="apps">${cards}</div>

@@ -1,4 +1,4 @@
-/* Nova Calendar — presets.js
+/* Calendar — presets.js
    Day card presets (birthday, Halloween, Christmas…), the title aesthetics, and the line icons.
    A preset only fills in starting values: title, theme, aesthetic, repeat and an info template.
    Everything stays editable after you pick one. */

@@ -1,5 +1,5 @@
 // Re-planning: run the planner over everything open, save the times, and show
-// the plan in Nova Calendar (each planned quest, each blocked time and each
+// the plan in Calendar (each planned quest, each blocked time and each
 // mission milestone becomes a note card there, kept in step automatically).
 
 import { readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
@@ -132,7 +132,7 @@ function tellMissed(q: Quest, slots: string[], push: boolean): void {
   remindLate(q, slots.filter((s) => !sessionDelivery(q.id, s)), push);
 }
 
-// Keep Nova Calendar showing the plan: one note card per planned quest and per blocked time
+// Keep Calendar showing the plan: one note card per planned quest and per blocked time
 export function syncCalendar(data: QuestData): void {
   const cal = readCalendar();
   const missions = new Map(data.missions.map((m) => [m.id, m]));
@@ -147,8 +147,8 @@ export function syncCalendar(data: QuestData): void {
     ours.push({
       id: `${QUEST_NOTE}${q.id}`,
       title: `${q.status === "done" ? "✓" : q.atRisk ? "⚠" : q.ongoing ? "∞" : "✦"} ${q.title}`.slice(0, 120),
-      body: [mission ? `Nova Mission: ${mission.title}` : "Nova Quest", q.location ? `At ${q.location}${q.travelMinutes ? ` (${q.travelMinutes} min travel first)` : ""}` : "", q.notes].filter(Boolean).join("\n"),
-      author: "Nova Quest",
+      body: [mission ? `Mission: ${mission.title}` : "Quest", q.location ? `At ${q.location}${q.travelMinutes ? ` (${q.travelMinutes} min travel first)` : ""}` : "", q.notes].filter(Boolean).join("\n"),
+      author: "Quest",
       start,
       end,
       art: { seed: seed(q.id), subject: "auto" },
@@ -159,7 +159,7 @@ export function syncCalendar(data: QuestData): void {
   // Each mission's milestones, as short cards at their time (they don't count as busy)
   for (const m of data.missions) {
     for (const ms of m.milestones) {
-      ours.push({ id: `${MILESTONE_NOTE}${ms.id}`, title: `${ms.done ? "✓" : "◆"} ${ms.title}`.slice(0, 120), body: [`Nova Mission milestone: ${m.title}`, ms.track ? `Track: ${ms.track}` : ""].filter(Boolean).join("\n"), author: "Nova Mission", start: ms.at.slice(0, 16), end: fromMin(toMin(ms.at) + 15), art: { seed: seed(ms.id), subject: "auto" }, created: m.created, updated: m.updated });
+      ours.push({ id: `${MILESTONE_NOTE}${ms.id}`, title: `${ms.done ? "✓" : "◆"} ${ms.title}`.slice(0, 120), body: [`Mission milestone: ${m.title}`, ms.track ? `Track: ${ms.track}` : ""].filter(Boolean).join("\n"), author: "Mission", start: ms.at.slice(0, 16), end: fromMin(toMin(ms.at) + 15), art: { seed: seed(ms.id), subject: "auto" }, created: m.created, updated: m.updated });
     }
   }
   for (const b of data.blocks) {

@@ -1,4 +1,4 @@
-/* Nova Calendar inside Nova Agent.
+/* Calendar inside Nova Agent.
    The calendar app saves in the browser (localStorage). This small script runs
    just before the app's store.js and makes it use Nova Agent's copy instead:
    - before the app loads, it fills the browser's copy from Nova Agent
