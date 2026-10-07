@@ -42,20 +42,23 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
     // A repeat whose time has passed moves on to its next slot (it isn't piled up),
     // but never past a session whose ping hasn't been delivered (or given up on, or marked done)
     if (q.every === "interval" && q.status === "todo" && q.start && toMin(q.end) <= now) {
-      const record = sessionDelivery(q.id, q.start);
-      // It went by without a ping (Nova Agent was off): ping now, late, and wait for it
-      if (!record) remindLate(q, [q.start], data.rhythm.phonePush);
-      if (!sessionSettled(record ?? sessionDelivery(q.id, q.start))) {
+      // It went by without a ping (Nova Agent was off, the clocks went forward): one late
+      // ping for it and any later slots already over, then wait for that to get through
+      if (!sessionDelivery(q.id, q.start)) tellMissed(q, slotsFrom(q, q.start, (t) => t + q.minutes <= now), data.rhythm.phonePush);
+      if (!sessionSettled(sessionDelivery(q.id, q.start))) {
         waiting.add(q.id);
         continue;
       }
       q.missed += 1;
       const from = q.start;
-      q.earliest = nextSession("interval", from, q.everyMinutes, now);
-      // Slots jumped over (it was waiting, or off for a while) are told about too, in one ping
-      remindLate(q, skippedSlots(q, from), data.rhythm.phonePush);
+      // The next slot not yet over: one already under way (it was waiting) is kept, pinned where it falls
+      const due = nextSession("interval", from, q.everyMinutes, now - q.minutes);
+      q.earliest = due;
+      // Slots jumped over are told about too, in one ping
+      tellMissed(q, slotsFrom(q, fromMin(toMin(from) + q.everyMinutes), (t) => fromMin(t) < due), data.rhythm.phonePush);
       q.start = q.end = q.travelStart = q.fixedStart = "";
       q.remindedFor = q.checkedFor = "";
+      if (toMin(due) < now && !(q.deadline && due >= q.deadline)) q.fixedStart = due;
       if (q.deadline && q.earliest >= q.deadline) {
         q.status = "done";
         q.completed = new Date().toISOString();
@@ -115,14 +118,18 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
   return { data, atRisk: data.quests.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length, unplaced };
 }
 
-// The slots of a repeat between the session that just ended and its next one, which never came round
-function skippedSlots(q: Quest, from: string): string[] {
+// A repeat's slots from `first`, while `keep` says so (and before its deadline)
+function slotsFrom(q: Quest, first: string, keep: (t: number) => boolean): string[] {
   const slots: string[] = [];
-  for (let t = toMin(from) + q.everyMinutes; fromMin(t) < q.earliest && slots.length < 500; t += q.everyMinutes) {
+  for (let t = toMin(first); keep(t) && slots.length < 500; t += q.everyMinutes) {
     if (q.deadline && fromMin(t) >= q.deadline) break;
     slots.push(fromMin(t));
   }
   return slots;
+}
+// One "missed" ping for the slots that don't have a ping of their own yet
+function tellMissed(q: Quest, slots: string[], push: boolean): void {
+  remindLate(q, slots.filter((s) => !sessionDelivery(q.id, s)), push);
 }
 
 // Keep Nova Calendar showing the plan: one note card per planned quest and per blocked time
