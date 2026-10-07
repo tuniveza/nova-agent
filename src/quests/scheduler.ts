@@ -8,8 +8,9 @@
 //   1. Free time = each day from wake (+ a start-up) to sleep (- a wind-down),
 //      minus everything already taken: calendar entries, blocked time, quests
 //      pinned to a time, and the quest in progress.
-//   2. Quests go in most-urgent first: deadline pressure weighted by priority,
-//      and never before the quests they depend on.
+//   2. Quests go in most-urgent first: the least slack (time from when it may
+//      start to its deadline, less its length) weighted by priority, and never
+//      before the quests they depend on.
 //   3. Each one takes the earliest slot that fits its travel + its work, in the
 //      part of the day it suits if it has one, on a day that isn't already full,
 //      before its deadline if at all possible (otherwise it's flagged at risk).
@@ -86,6 +87,8 @@ function dayWindows(rhythm: Rhythm, now: number): { day: number; from: number; t
   // Start a day early, in case it's after midnight and yesterday's evening is still going
   for (let d = -1; d < rhythm.horizonDays; d++) {
     const day = today + d * DAY;
+    // Days off have no quest time at all
+    if (rhythm.daysOff?.includes(new Date(day * 60000).getUTCDay())) continue;
     const from = day + wake + rhythm.startUpMinutes;
     const to = day + sleep - rhythm.windDownMinutes;
     if (to > from && to > now) out.push({ day, from, to });
@@ -143,9 +146,13 @@ export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Bus
     const own = q.deadline ? toMin(q.deadline) : Infinity;
     return q.ongoing ? Math.min(own, sessionDue(q, Math.max(now, q.earliest ? toMin(q.earliest) : 0))) : own;
   };
+  // Urgency is the slack a quest has: the time between when it may start and its
+  // deadline, less its own length (so a quest that can only happen on one day
+  // isn't crowded out by work due weeks later), divided by how much it matters
   const urgency = (q: Quest) => {
     const d = due(q);
-    const hours = Number.isFinite(d) ? Math.max(1 / 60, (d - now) / 60) : (horizonEnd - now) / 60 + 24;
+    const from = Math.max(now, q.earliest ? toMin(q.earliest) : 0);
+    const hours = Number.isFinite(d) ? Math.max(1 / 60, (d - from - q.minutes) / 60) : (horizonEnd - now) / 60 + 24;
     return hours / WEIGHT[q.priority];
   };
   const isDone = (id: string) => {

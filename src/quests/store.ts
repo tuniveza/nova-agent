@@ -1,6 +1,10 @@
 // Nova Missions and Nova Quests: what they are, and where they're kept.
 //
-//   Nova Mission  an end goal ("Release the EP by 1 December"), turned into quests
+//   Nova Mission  an end goal ("Release the EP by 1 December", "finish my 52-release
+//                 challenge by New Year", "get fit for the summer"), turned into
+//                 quests, with a written strategy, workstreams (tracks), dated
+//                 milestones, the assumptions the plan made and the questions
+//                 that would sharpen it
 //   Nova Quest    one actionable task: how long it takes (anything from a second
 //                 up; long ones are split into sessions, and an ongoing quest
 //                 never ends: it gets a session every day, weekday or week),
@@ -25,10 +29,38 @@ export type TimeOfDay = (typeof TIMES_OF_DAY)[number];
 export type QuestStatus = "todo" | "doing" | "done" | "skipped";
 export const EVERY = ["day", "weekday", "week", "interval"] as const; // interval: every `everyMinutes`
 export type Every = (typeof EVERY)[number];
+export const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 
 // The shortest quest is a second; the longest single session the planner places
 export const MIN_MINUTES = 1 / 60;
 export const MAX_SESSION_MINUTES = 180;
+
+export interface StrategySection {
+  heading: string; // "Release strategy", "Content strategy", "Filming and editing workflow"...
+  body: string; // simple Markdown
+}
+export interface Track {
+  name: string; // a workstream: "Music", "Content", "Release", "Gear"...
+  colour: string; // "#RRGGBB"
+}
+export interface Milestone {
+  id: string;
+  title: string; // "Release 31: Midnight Drive"
+  at: string; // "2026-11-14T18:00"
+  track: string;
+  done: boolean;
+}
+export interface Refinement {
+  at: string;
+  text: string; // what the person added ("I've released 19 so far")
+}
+
+// Something the planner found out on the web, and the page it came from
+export interface Finding {
+  text: string;
+  title: string;
+  url: string;
+}
 
 export interface Mission {
   id: string;
@@ -37,6 +69,14 @@ export interface Mission {
   summary: string;
   deadline: string; // "2026-12-01" or "2026-12-01T18:00", or ""
   status: "active" | "paused" | "done";
+  strategy: StrategySection[];
+  tracks: Track[];
+  milestones: Milestone[];
+  assumptions: string[]; // what the plan took for granted
+  questions: string[]; // what would make the plan better, if answered
+  refinements: Refinement[]; // answers and extra detail given since, oldest first
+  research: Finding[]; // what the plan is based on from the web (only pages it really read)
+  researched: string; // when that research was done ("" = never)
   created: string;
   updated: string;
 }
@@ -44,6 +84,7 @@ export interface Mission {
 export interface Quest {
   id: string;
   missionId: string; // "" for a quest on its own
+  track: string; // the mission's workstream it belongs to ("" = none)
   title: string;
   notes: string;
   minutes: number; // how long the work takes (can be a fraction: 0.5 = 30 seconds); for an ongoing quest, each session
@@ -101,6 +142,7 @@ export interface Rhythm {
   // 5-minute marks, with buffers and breaks between them; off, they can start
   // right now, to the second, back to back
   paceLimits: boolean;
+  daysOff: number[]; // days of the week with no quests at all (0 = Sunday ... 6 = Saturday)
 }
 
 export interface QuestData {
@@ -129,6 +171,7 @@ export const DEFAULT_RHYTHM: Rhythm = {
   dailyBriefing: true,
   phonePush: true,
   paceLimits: true,
+  daysOff: [],
 };
 
 const file = `${config.paths.dataDir}quests.json`;
@@ -169,6 +212,8 @@ function cleanRhythm(r: any): Rhythm {
     dailyBriefing: typeof r?.dailyBriefing === "boolean" ? r.dailyBriefing : d.dailyBriefing,
     phonePush: typeof r?.phonePush === "boolean" ? r.phonePush : d.phonePush,
     paceLimits: typeof r?.paceLimits === "boolean" ? r.paceLimits : d.paceLimits,
+    // Never every day of the week (there'd be nowhere to plan anything)
+    daysOff: Array.isArray(r?.daysOff) ? [...new Set<number>(r.daysOff.map(Number).filter((n: number) => Number.isInteger(n) && n >= 0 && n <= 6))].sort().slice(0, 6) : d.daysOff,
   };
 }
 
@@ -176,6 +221,7 @@ export function cleanQuest(q: any): Quest {
   return {
     id: text(q?.id, 64) || randomUUID(),
     missionId: text(q?.missionId, 64),
+    track: text(q?.track, 40),
     title: text(q?.title, 140) || "Untitled quest",
     notes: text(q?.notes, 2000),
     minutes: length(q?.minutes, 60),
@@ -205,7 +251,15 @@ export function cleanQuest(q: any): Quest {
   };
 }
 
+const isColour = (s: unknown): s is string => typeof s === "string" && /^#[0-9a-fA-F]{6}$/.test(s);
+const TRACK_COLOURS = ["#FF5FA8", "#C7A4FF", "#5CE1FF", "#F2D9A0", "#5CFFC0", "#FFB86B", "#FF8A8A", "#9DB4FF"];
+const list = (v: unknown, max: number, len: number) => (Array.isArray(v) ? v.map((x) => text(x, len)).filter(Boolean).slice(0, max) : []);
+
 export function cleanMission(m: any): Mission {
+  const tracks: Track[] = (Array.isArray(m?.tracks) ? m.tracks : [])
+    .map((t: any, i: number) => ({ name: text(t?.name, 40), colour: isColour(t?.colour) ? t.colour : TRACK_COLOURS[i % TRACK_COLOURS.length] }))
+    .filter((t: Track) => t.name)
+    .slice(0, 8);
   return {
     id: text(m?.id, 64) || randomUUID(),
     title: text(m?.title, 140) || "Untitled mission",
@@ -213,6 +267,23 @@ export function cleanMission(m: any): Mission {
     summary: text(m?.summary, 2000),
     deadline: isStamp(m?.deadline) || isDay(m?.deadline) ? m.deadline : "",
     status: ["active", "paused", "done"].includes(m?.status) ? m.status : "active",
+    strategy: (Array.isArray(m?.strategy) ? m.strategy : [])
+      .map((x: any) => ({ heading: text(x?.heading, 80), body: text(x?.body, 6000) }))
+      .filter((x: StrategySection) => x.heading && x.body)
+      .slice(0, 10),
+    tracks,
+    milestones: (Array.isArray(m?.milestones) ? m.milestones : [])
+      .map((x: any) => (isStamp(x?.at) || isDay(x?.at) ? { id: text(x?.id, 64) || randomUUID(), title: text(x?.title, 140) || "Milestone", at: isDay(x.at) ? `${x.at}T12:00` : x.at, track: text(x?.track, 40), done: x?.done === true } : null))
+      .filter(Boolean)
+      .slice(0, 200) as Milestone[],
+    assumptions: list(m?.assumptions, 12, 300),
+    questions: list(m?.questions, 8, 300),
+    refinements: (Array.isArray(m?.refinements) ? m.refinements : []).map((x: any) => ({ at: text(x?.at, 40), text: text(x?.text, 4000) })).filter((x: Refinement) => x.text).slice(-20),
+    research: (Array.isArray(m?.research) ? m.research : [])
+      .map((x: any) => ({ text: text(x?.text, 600), title: text(x?.title, 200), url: /^https?:\/\//.test(x?.url) ? text(x.url, 600) : "" }))
+      .filter((x: Finding) => x.text && x.url)
+      .slice(0, 20),
+    researched: text(m?.researched, 40),
     created: text(m?.created, 40) || now(),
     updated: text(m?.updated, 40) || now(),
   };

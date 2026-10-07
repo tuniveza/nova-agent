@@ -1,6 +1,6 @@
 // Re-planning: run the planner over everything open, save the times, and show
-// the plan in Nova Calendar (each planned quest and each blocked time becomes a
-// note card there, kept in step automatically).
+// the plan in Nova Calendar (each planned quest, each blocked time and each
+// mission milestone becomes a note card there, kept in step automatically).
 
 import { readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
 import { config } from "../config";
@@ -11,6 +11,10 @@ import { readQuests, writeQuests, type QuestData } from "./store";
 
 const QUEST_NOTE = "quest-";
 const BLOCK_NOTE = "block-";
+const MILESTONE_NOTE = "mile-";
+const isOurNote = (id: string) => id.startsWith(QUEST_NOTE) || id.startsWith(BLOCK_NOTE) || id.startsWith(MILESTONE_NOTE);
+// However far ahead the rhythm says to plan, a mission's work is planned as far as its deadlines (up to a year)
+const MAX_HORIZON_DAYS = 370;
 
 // "Now" as UK wall-clock minutes (the planner's time), to the second
 export function nowMinutes(at: Date = new Date()): number {
@@ -22,7 +26,7 @@ export function nowMinutes(at: Date = new Date()): number {
 // Calendar entries the person made themselves count as taken time
 function calendarBusy(): Busy[] {
   return readCalendar()
-    .notes.filter((n) => !n.id.startsWith(QUEST_NOTE) && !n.id.startsWith(BLOCK_NOTE) && n.end > n.start)
+    .notes.filter((n) => !isOurNote(n.id) && n.end > n.start)
     .map((n) => ({ start: n.start, end: n.end, label: n.title }));
 }
 
@@ -58,7 +62,9 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
   // Pulses run on their own timers (pulses.ts), not in the plan
   const planning = data.quests.filter((q) => !paused.has(q.missionId) && !isPulse(q));
   const busy: Busy[] = [...calendarBusy(), ...data.blocks.map((b) => ({ start: b.start, end: b.end, label: b.reason }))];
-  const result = planQuests({ rhythm: data.rhythm, quests: planning, busy, now });
+  const furthest = Math.max(0, ...planning.filter((q) => q.status === "todo" || q.status === "doing").map((q) => Math.max(q.deadline ? toMin(q.deadline) : 0, q.earliest ? toMin(q.earliest) + 1440 : 0)));
+  const horizonDays = Math.min(MAX_HORIZON_DAYS, Math.max(data.rhythm.horizonDays, Math.ceil((furthest - now) / 1440) + 1));
+  const result = planQuests({ rhythm: { ...data.rhythm, horizonDays }, quests: planning, busy, now });
 
   const unplaced: { id: string; title: string; why: string }[] = [];
   for (const q of data.quests) {
@@ -113,11 +119,17 @@ export function syncCalendar(data: QuestData): void {
       updated: q.updated,
     });
   }
+  // Each mission's milestones, as short cards at their time (they don't count as busy)
+  for (const m of data.missions) {
+    for (const ms of m.milestones) {
+      ours.push({ id: `${MILESTONE_NOTE}${ms.id}`, title: `${ms.done ? "✓" : "◆"} ${ms.title}`.slice(0, 120), body: [`Nova Mission milestone: ${m.title}`, ms.track ? `Track: ${ms.track}` : ""].filter(Boolean).join("\n"), author: "Nova Mission", start: ms.at.slice(0, 16), end: fromMin(toMin(ms.at) + 15), art: { seed: seed(ms.id), subject: "auto" }, created: m.created, updated: m.updated });
+    }
+  }
   for (const b of data.blocks) {
     ours.push({ id: `${BLOCK_NOTE}${b.id}`, title: `Busy · ${b.reason}`.slice(0, 120), body: "Blocked out in Nova Agent", author: "Nova Agent", start: b.start, end: b.end, art: { seed: seed(b.id), subject: "auto" }, created: b.start, updated: b.start });
   }
-  const others = cal.notes.filter((n) => !n.id.startsWith(QUEST_NOTE) && !n.id.startsWith(BLOCK_NOTE));
-  const before = JSON.stringify(cal.notes.filter((n) => n.id.startsWith(QUEST_NOTE) || n.id.startsWith(BLOCK_NOTE)).map((n) => [n.id, n.title, n.start, n.end, n.body]).sort());
+  const others = cal.notes.filter((n) => !isOurNote(n.id));
+  const before = JSON.stringify(cal.notes.filter((n) => isOurNote(n.id)).map((n) => [n.id, n.title, n.start, n.end, n.body]).sort());
   const after = JSON.stringify(ours.map((n) => [n.id, n.title, n.start, n.end, n.body]).sort());
   if (before === after) return; // nothing to change, so the calendar doesn't flicker
   cal.notes = [...others, ...ours];

@@ -33,9 +33,9 @@ import { checkLogin, describeAppointments, listTask, readOnlyTour } from "../tas
 import { getRecentEvents, onTrace, trace } from "../trace";
 import { calendarEvents, normalise, readCalendar, writeCalendar } from "../calendar/store";
 import { chat, type ChatTurn } from "../chat";
-import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
+import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
-import { createMission } from "../quests/planner";
+import { createMission, refineMission } from "../quests/planner";
 import { startHubSync } from "../quests/hubsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
@@ -135,10 +135,13 @@ serveFolder("/app/memory", "../../../ni/app/", "Nova Index isn't next to Nova Ag
 // On Nova Agent's own page and every app it serves (Nova Index, Notes, Calendar, Observatory),
 // the badge asks this server, which asks Nova Bot with Nova Agent's key. The planet pictures
 // come through here too, so the apps never talk to another site.
-const badgeFile = fileURLToPath(new URL("../../../np/app/badge.js", import.meta.url));
-app.get("/portal/badge.js", (c) =>
-  existsSync(badgeFile) ? c.body(readFileSync(badgeFile, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }) : c.text("// Nova Portal isn't next to Nova Agent (expected it in ../np)", 404, { "Content-Type": TYPES[".js"] })
-);
+// The Nova Manual (np/app/manual.js and its content, manual-data.js) is served the same way.
+for (const name of ["badge.js", "manual.js", "manual-data.js"]) {
+  const file = fileURLToPath(new URL(`../../../np/app/${name}`, import.meta.url));
+  app.get(`/portal/${name}`, (c) =>
+    existsSync(file) ? c.body(readFileSync(file, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }) : c.text("// Nova Portal isn't next to Nova Agent (expected it in ../np)", 404, { "Content-Type": TYPES[".js"] })
+  );
+}
 app.get("/auth/me", async (c) => c.json(await whoAmI(), 200, { "Cache-Control": "no-store" }));
 // "Connect as me" (back from Nova Portal with a read-only token) and "back to automatic".
 // Only from Nova Agent's own pages: the header makes other websites' requests fail.
@@ -291,7 +294,18 @@ app.post("/actions/missions", async (c) => {
 });
 app.post("/actions/missions/:id", async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  return questAction(c, () => (body.remove ? removeMission(c.req.param("id")) : updateMission(c.req.param("id"), body)));
+  const id = c.req.param("id");
+  return questAction(c, () => {
+    if (body.remove) return removeMission(id);
+    if (typeof body.milestone === "string") return setMilestone(id, body.milestone, body.done === true);
+    return updateMission(id, { title: body.title, status: body.status, deadline: body.deadline });
+  });
+});
+// Answers to the plan's questions, or any new detail: the work that's left is planned again
+app.post("/actions/missions/:id/refine", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  if (typeof body.detail !== "string" || !body.detail.trim()) return c.json({ ok: false, message: "Say what's new first." }, 400);
+  return questAction(c, () => refineMission(c.req.param("id"), body.detail, { deadline: body.deadline }));
 });
 app.post("/actions/quests", async (c) => questAction(c, async () => addQuest(await c.req.json())));
 app.post("/actions/quests/:id", async (c) => {

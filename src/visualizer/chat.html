@@ -60,7 +60,6 @@
   .sfx-btn[aria-pressed="false"] { opacity: .6; }
   .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; justify-self: center; text-align: center; }
   .brand > span { display: grid; justify-items: center; }
-  .topbar > .tabs { grid-column: 1 / -1; justify-self: center; }
   .suite-btn { border: 1px solid transparent; background: linear-gradient(var(--deep), var(--deep)) padding-box, var(--edge) border-box; }
   .suite-star { display: inline-block; color: var(--hi); text-shadow: 0 0 10px var(--hi); animation: star-spin 6s linear infinite; }
   @keyframes star-spin { to { transform: rotate(360deg); } }
@@ -69,7 +68,8 @@
   .suite-top { position: relative; display: grid; justify-items: center; text-align: center; gap: 4px; }
   .suite-top p { margin: 0; }
   .suite-x { position: absolute; right: 0; top: 0; }
-  .suite-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; max-height: min(64vh, 640px); overflow-y: auto; padding: 4px; }
+  .suite-dlg .suite-groups { max-height: min(64vh, 640px); overflow-y: auto; padding: 4px; }
+  .suite-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
   .suite-app { display: grid; justify-items: center; align-content: start; text-align: center; gap: 6px; padding: 16px 12px; border-radius: 18px; text-decoration: none; color: var(--text);
     border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 50%, transparent); transition: transform .2s, border-color .2s, box-shadow .2s; animation: app-in .45s cubic-bezier(.2,.8,.2,1) both; }
   .suite-app:nth-child(2) { animation-delay: .04s; } .suite-app:nth-child(3) { animation-delay: .08s; } .suite-app:nth-child(4) { animation-delay: .12s; } .suite-app:nth-child(n+5) { animation-delay: .16s; }
@@ -95,15 +95,46 @@
   .btn.primary { background: var(--grad); border-color: transparent; color: var(--on-accent); box-shadow: 0 8px 26px -10px var(--accent); }
   .ico { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
-  /* Main: chat and calendar */
-  /* The chat sits in the middle: the Nova suite on its left, your plan on its right */
-  .main { display: grid; grid-template-columns: 76px minmax(380px, 1fr) minmax(400px, 1fr); gap: 12px; min-height: 0; }
-  /* Wide screens: the two sides are exactly equal, so the chat sits dead centre */
-  @media (min-width: 1200px) { .main { grid-template-columns: minmax(0, 1fr) minmax(420px, 1fr) minmax(0, 1fr); } .board-head { flex-wrap: wrap; justify-content: center; } }
-  @media (min-width: 1500px) { .main { grid-template-columns: minmax(0, 1fr) minmax(460px, 1.25fr) minmax(0, 1fr); } .board-head { flex-wrap: nowrap; justify-content: flex-start; } }
+  /* Main: fits the screen (no scrolling). Nova Missions | Talk to Nova Agent | Nova Quests, with the Nova suite along the bottom */
+  .main { width: min(100%, 1800px); justify-self: center; min-height: 0; overflow: hidden; display: grid; gap: 12px;
+    grid-template-columns: minmax(270px, 1fr) minmax(380px, 1.35fr) minmax(270px, 1fr); grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "missions chat quests" "suite suite suite"; }
+  .main > * { min-height: 0; min-width: 0; }
+  .main > #missions-panel { grid-area: missions; } .main > .chat { grid-area: chat; } .main > #quests-panel { grid-area: quests; }
+  .main > .suite-home { grid-area: suite; min-height: min-content; }
+  .main > .viewer { grid-area: 1 / 1 / 2 / -1; }
   .board { min-width: 0; } .board > * { min-width: 0; }
-  /* The app viewer covers the chat and plan columns; the rail stays beside it */
-  .viewer { grid-column: 2 / -1; grid-row: 1; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 24px; overflow: hidden; animation: quest-in .35s cubic-bezier(.2,.8,.2,1) both; }
+  /* The side columns: the name and buttons on top, the contents below (scrolling inside if there's a lot) */
+  .side { display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 22px; overflow: hidden; }
+  .side-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--void) 25%, transparent); }
+  .side > .view { min-height: 0; overflow-y: auto; padding: 12px 14px; }
+  .side .empty { padding: 14px; }
+  .strip-tools { display: flex; gap: 6px; }
+  .strip-btn { justify-content: center; padding: 7px 12px; }
+  /* The Nova suite strip: its name and the open-apps switch on the left, the apps on the right */
+  .strip { display: grid; grid-template-columns: 196px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); border-radius: 22px; overflow: hidden; }
+  .strip-side { display: flex; flex-direction: column; justify-content: center; gap: 9px; padding: 10px 14px; border-right: 1px solid var(--line); background: color-mix(in srgb, var(--void) 25%, transparent); }
+  /* Missions: compact cards, one under another */
+  #missions .mission { padding: 10px 14px; border-radius: 16px; }
+  #missions .m-badge { display: none; }
+  #missions .mission .sum { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12.5px; }
+  #missions .mission h4 { font-size: 15px !important; padding-right: 18px; }
+  #missions .mission-top { gap: 12px; }
+  #missions .ring { width: 42px; height: 42px; font-size: 10.5px; }
+  #missions .badges { margin-top: 6px; }
+  #missions .mission::after { top: 8px; right: 12px; font-size: 12px; }
+  .missions { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  /* Quests: the day, what's on now or next, then the day's list (which scrolls inside if long) */
+  #view-today { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  #view-today > * { flex: none; margin: 0; }
+  #view-today > .day-head { flex-wrap: wrap; gap: 8px; }
+  #view-today > .day-head > div:first-child { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
+  #view-today > .day-head h3 { order: -1; font-size: 18px; }
+  #view-today > .now-card { padding: 10px 14px; }
+  #view-today > .now-card .now-title { font-size: 16px; }
+  #view-today > .subpanel { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
+  /* An app opened inside Nova Agent takes the chat's place; the Nova suite stays below it to switch apps */
+  .viewer { display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 24px; overflow: hidden; animation: quest-in .35s cubic-bezier(.2,.8,.2,1) both; }
   .viewer[hidden] { display: none; }
   .main.viewing > .chat, .main.viewing > .board { display: none; }
   .viewer-bar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
@@ -115,31 +146,35 @@
   .open-pref span { padding: 0 8px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
   .open-pref button { border: 0; background: none; padding: 6px 12px; border-radius: 999px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
   .open-pref button[aria-checked="true"] { background: var(--grad); color: var(--on-accent); }
-  .rail-pref { display: flex; justify-content: center; padding: 2px 0 6px; }
-  .rail-pref button { border: 1px solid var(--line); background: none; color: var(--muted); border-radius: 999px; padding: 4px 10px; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
-  @media (max-width: 1199px) { .rail-pref button { padding: 4px 6px; font-size: 13px; letter-spacing: 0; } .rail-pref .pref-words { display: none; } }
-  @media (max-width: 980px) { .viewer { grid-column: 1 / -1; } .main.viewing { grid-template-rows: minmax(0, 1fr); } }
-  .rail { min-height: 0; overflow-y: auto; border-radius: 24px; padding: 10px 8px; display: flex; flex-direction: column; gap: 6px; scrollbar-width: none; }
-  .rail-head { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--muted); text-align: center; padding: 6px 0 8px; }
-  .rail a { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 14px; text-decoration: none; color: var(--text); transition: background-color .2s, transform .2s; }
-  .rail a:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); transform: translateX(2px); }
-  .rail a.open { background: color-mix(in srgb, var(--hi) 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi) 45%, transparent), 0 0 24px -12px var(--hi); }
-  .rail a.here.away { background: none; box-shadow: none; }
-  .rail a.here { background: color-mix(in srgb, var(--hi) 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi) 45%, transparent); }
-  .rail img, .rail .suite-glyph { width: 40px; height: 40px; flex: none; border-radius: 12px; font-size: 19px; box-shadow: 0 8px 20px -10px var(--hi); }
-  .rail b { font-family: var(--f-display); font-stretch: 110%; font-weight: 800; font-size: 13px; line-height: 1.15; }
-  .rail small { display: block; font-size: 11px; color: var(--muted); line-height: 1.3; margin-top: 2px; }
-  @media (max-width: 1199px) { .rail a { justify-content: center; padding: 6px; } .rail a > span:not(.suite-glyph), .rail-head { display: none; } }
-  @media (min-width: 1200px) { .rail { padding: 12px; } .rail a { padding: 10px; } }
+  /* The Nova suite, along the bottom in one row: the Nova apps together, then the studio's tools */
+  .suite-groups { display: grid; gap: 18px; }
+  .suite-group h4 { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
+  .suite-group h4::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-strong), transparent); }
+  .suite-home .open-pref { margin-top: 0; align-self: flex-start; padding: 3px; }
+  .suite-home .open-pref button { padding: 5px 9px; font-size: 10px; letter-spacing: .08em; }
+  .suite-body { min-width: 0; padding: 8px 14px 10px; }
+  .suite-home .suite-groups { display: flex; gap: 16px; }
+  .suite-home .suite-group { flex: 7; min-width: 0; } .suite-home .suite-group.tools { flex: 4; }
+  .suite-home .suite-group h4 { margin: 0 0 6px; font-size: 9px; letter-spacing: .26em; }
+  .suite-home .suite-grid { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+  .suite-home .suite-app { gap: 5px; padding: 8px 4px 7px; border-radius: 14px; }
+  .suite-home .suite-app > img, .suite-home .suite-app > .suite-glyph { width: 34px; height: 34px; border-radius: 10px; font-size: 16px; }
+  .suite-home .suite-app b { font-size: 11px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .suite-home .suite-app small { display: none; }
+  .suite-group.tools .suite-app { background: color-mix(in srgb, var(--void) 35%, transparent); }
+  .suite-group.tools .suite-app > .suite-glyph { background: color-mix(in srgb, var(--panel-2) 80%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
+  .suite-groups .suite-app.open { border-color: color-mix(in srgb, var(--hi) 55%, transparent); background: color-mix(in srgb, var(--hi) 14%, transparent); box-shadow: 0 0 30px -14px var(--hi); }
+  .suite-app.here.away { border-color: var(--line); box-shadow: none; }
   /* The conversation and the prompt sit centred in the chat column */
   .chat > .log { padding-inline: max(16px, calc((100% - 780px) / 2)); }
   .chat > .composer { padding-inline: max(12px, calc((100% - 780px) / 2)); justify-content: center; }
   .chat, .calendar { min-height: 0; min-width: 0; border-radius: 24px; overflow: hidden; }
-  .chat { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
-  /* Each part keeps its own row, even while the Now strip is hidden (so the box never covers the messages) */
-  .chat > .chat-head { grid-row: 1; } .chat > .nowstrip { grid-row: 2; } .chat > .log { grid-row: 3; min-height: 0; } .chat > .composer { grid-row: 4; }
-  .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
-  .chat-head h2, .cal-head h2 { margin: 0; font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; color: var(--muted); }
+  .chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+  .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--line); }
+  /* Each section's title: Talk to Nova Agent, Nova Missions, Nova Quests, Nova suite */
+  .sec-title { margin: 0; display: inline-flex; align-items: center; gap: 9px; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; color: #fff; white-space: nowrap; }
+  .sec-title > span { color: var(--hi); text-shadow: 0 0 10px var(--hi); }
+  .sec-title.gold > span { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
   .icon-btn { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; }
   .icon-btn:hover { color: #fff; border-color: var(--line-strong); }
 
@@ -252,10 +287,6 @@
   .subpanel { animation: quest-in .3s ease both; }
   .tl-card.quest { padding: 10px 14px; }
   .q-tags { margin-bottom: 4px; }
-  .new-mission-btn { display: block; width: 100%; margin: 0 0 12px; padding: 12px; border-radius: 18px; cursor: pointer; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: #fff;
-    border: 1px dashed color-mix(in srgb, var(--hi) 55%, transparent); background: color-mix(in srgb, var(--hi) 8%, transparent); transition: all .2s; }
-  .new-mission-btn:hover { background: color-mix(in srgb, var(--hi) 16%, transparent); box-shadow: 0 0 24px -10px var(--hi); }
-  .new-mission-btn[aria-expanded="true"] { border-style: solid; color: var(--muted); font-size: 12px; padding: 8px; }
   /* The chat's welcome, smaller, so the suggestions and the box fit */
   .welcome { padding: 10px 6px; gap: 8px; }
   .welcome .mark { width: 58px; height: 58px; border-radius: 16px; }
@@ -263,8 +294,6 @@
   .welcome p { font-size: 14px; }
   .suggest { gap: 6px; margin-top: 2px; }
   .suggest .chip { padding: 5px 11px; font-size: 12.5px; }
-  /* Shorter screens: the app rail drops its descriptions */
-  @media (max-height: 880px) { .rail small { display: none; } .rail a { padding: 7px 8px; } .rail img, .rail .suite-glyph { width: 34px; height: 34px; border-radius: 10px; } }
 
   /* ===== Nova Quests and Missions: unmistakable, and alive ===== */
   @property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
@@ -359,12 +388,6 @@
   .q-list .done-t { color: var(--muted); text-decoration: line-through; }
   .q-list .risk-t { color: #FFB86B; }
 
-  /* Now / next strip above the chat */
-  .nowstrip { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 13px; }
-  .nowstrip b { color: #fff; }
-  .nowstrip .k { font-family: var(--f-mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--hi); white-space: nowrap; }
-  .nowstrip .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
   /* Pop-ups */
   .toasts { position: fixed; right: 18px; bottom: 18px; z-index: 50; display: grid; gap: 10px; width: min(380px, calc(100vw - 36px)); }
   .toast { padding: 14px 16px; border-radius: 18px; border: 1px solid transparent; animation: toast-in .35s cubic-bezier(.2, .8, .2, 1);
@@ -389,15 +412,91 @@
   .rh-foot { display: flex; justify-content: flex-end; gap: 8px; }
   .busy-dots { display: inline-flex; gap: 4px; } .busy-dots span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: orbit 1.2s ease-in-out infinite; }
   .busy-dots span:nth-child(2) { animation-delay: .15s; } .busy-dots span:nth-child(3) { animation-delay: .3s; }
-  .tabs { display: none; }
+  .mission-dlg .mission-new { position: relative; margin: 0; }
+  .days-off { display: flex; flex-wrap: wrap; gap: 6px; }
+  .days-off label { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; cursor: pointer; }
+  .days-off label:has(input:checked) { border-color: #FF8A8A; background: color-mix(in srgb, #FF8A8A 14%, transparent); }
+  .days-off input { accent-color: #FF8A8A; }
+  .mission-dlg .suite-x { position: absolute; right: 16px; top: 16px; }
+  /* ===== The type cue: what you're typing will become, live, with what was picked out of it ===== */
+  .composer { flex-wrap: wrap; }
+  .cue { --cue: var(--hi); flex: 1 0 100%; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; animation: cue-in .2s ease-out both; }
+  @keyframes cue-in { from { opacity: 0; transform: translateY(4px); } }
+  .cue-type { display: inline-flex; align-items: center; gap: 7px; padding: 3px 11px 3px 4px; border-radius: 999px; font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--cue);
+    border: 1px solid color-mix(in srgb, var(--cue) 55%, transparent); background: color-mix(in srgb, var(--cue) 12%, transparent); box-shadow: 0 0 18px -8px var(--cue); transition: color .2s, border-color .2s, background-color .2s; }
+  .cue-type i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-style: normal; font-size: 11px; letter-spacing: 0; color: var(--void); background: var(--cue); }
+  .cue-hint { font-size: 12px; color: var(--muted); min-width: 0; }
+  .cue-bits { display: flex; flex-wrap: wrap; gap: 5px; }
+  .cue-bits span { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 10px; color: var(--soft); background: color-mix(in srgb, var(--panel-2) 60%, transparent); }
+  .composer[data-kind] textarea { border-color: color-mix(in srgb, var(--cue) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cue) 12%, transparent); }
+  .composer[data-kind] .send { background: linear-gradient(120deg, color-mix(in srgb, var(--cue) 70%, var(--accent)), var(--accent-2)); }
+  .mission-dlg .cue { margin-top: -4px; }
+
+  /* ===== Mission cards: tracks, the next milestone, questions waiting ===== */
+  #missions .mission { cursor: pointer; transition: transform .2s, box-shadow .2s; }
+  #missions .mission:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -24px var(--gold); }
+  #missions .mission:focus-visible { outline: 2px solid var(--gold); }
+  .m-tracks { display: grid; gap: 4px; margin-top: 8px; }
+  .m-track { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 10px; color: var(--muted); }
+  .m-track b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--c); }
+  .m-track .tbar { height: 4px; border-radius: 4px; background: color-mix(in srgb, var(--void) 60%, transparent); overflow: hidden; }
+  .m-track .tbar i { display: block; height: 100%; background: var(--c); box-shadow: 0 0 8px var(--c); border-radius: 4px; }
+  .m-next, .m-ask { margin-top: 7px; font-size: 12px; color: var(--soft); }
+  .m-next b { color: var(--gold); font-weight: 600; }
+  .m-ask { color: var(--lilac); }
+  .t-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .06em; color: var(--c, var(--soft)); border: 1px solid color-mix(in srgb, var(--c, var(--soft)) 50%, transparent); background: color-mix(in srgb, var(--c, var(--soft)) 10%, transparent); }
+  .t-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--soft)); }
+
+  /* ===== The mission view: the whole plan ===== */
+  dialog.rhythm.mission-view { width: min(1000px, calc(100vw - 24px)); }
+  .mv { position: relative; max-height: min(88vh, 900px); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 12px; padding: 18px 20px; }
+  .mv-head { display: flex; gap: 16px; align-items: center; padding-right: 40px; }
+  .mv-head .ring { width: 64px; height: 64px; font-size: 13px; }
+  .mv-head h3 { font-size: 21px; background: linear-gradient(100deg, #fff, var(--gold), #fff); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: quest-flow 6s linear infinite; }
+  .mv-head p { margin-top: 3px; }
+  .mv-tabs { justify-self: start; }
+  .mv-body { min-height: 0; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
+  .mv-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .mv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+  .mv-card { padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 70%, transparent); animation: quest-in .4s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 50ms); }
+  .mv-card h4 { margin: 0 0 6px; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 15px; color: #fff; }
+  .mv-card h5 { margin: 10px 0 4px; font-family: var(--f-display); font-weight: 800; font-size: 13px; color: var(--soft); }
+  .mv-card p, .mv-card li { font-size: 13.5px; }
+  .mv-card p { margin: 0 0 .5em; } .mv-card ul, .mv-card ol { margin: .2em 0 .5em; padding-left: 1.2em; } .mv-card li::marker { color: var(--gold); }
+  .mv-card strong { color: #fff; }
+  .mv-card.wide { grid-column: 1 / -1; }
+  .mv-sub { margin: 16px 0 8px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: var(--muted); }
+  .mv-sub:first-child { margin-top: 0; }
+  .mv-rows { display: grid; gap: 6px; }
+  .mv-row { display: grid; grid-template-columns: 22px 118px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 60%, transparent); font-size: 13.5px; }
+  .mv-row.done { opacity: .55; } .mv-row.done .t { text-decoration: line-through; text-decoration-color: var(--gold); }
+  .mv-row.risk .t { color: #FFB86B; }
+  .mv-row time { font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
+  .mv-row .t { min-width: 0; color: #fff; }
+  .mv-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .mv-filter button { cursor: pointer; } .mv-filter button[aria-pressed="true"] { background: color-mix(in srgb, var(--c, var(--hi)) 26%, transparent); color: #fff; }
+  .mv-q { display: grid; gap: 8px; }
+  .mv-q li { cursor: pointer; padding: 8px 12px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--lilac) 45%, transparent); color: var(--text); font-size: 13.5px; list-style: none; transition: background-color .2s; }
+  .mv-q li:hover { background: color-mix(in srgb, var(--lilac) 12%, transparent); }
+  .mv-q ul { margin: 0; padding: 0; display: grid; gap: 6px; }
+  .mv textarea { width: 100%; min-height: 96px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text); font: inherit; resize: vertical; }
+  .mv textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 18%, transparent); }
+  @media (max-width: 640px) { .mv-row { grid-template-columns: 22px minmax(0, 1fr); } .mv-row time { grid-column: 2; } .mv-row > :last-child:not(.t) { grid-column: 2; justify-self: start; } }
+
+  /* Shorter screens: the chat's welcome drops its big mark so the suggestions fit */
+  @media (max-height: 940px) { .welcome .mark { display: none; } .welcome h3 { font-size: 17px; } }
   html, body { overflow-x: clip; }
+  /* Phones and very short windows can't fit it all: there it stacks and scrolls (the chat first) */
+  @media (max-width: 980px), (max-height: 600px) {
+    .main { overflow-y: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: max-content; grid-template-areas: "chat" "missions" "quests" "suite"; }
+    .chat { height: 72dvh; } .viewer { height: 80dvh; }
+    .side > .view, #view-today, #view-today > .subpanel { overflow: visible; }
+    .strip { grid-template-columns: minmax(0, 1fr); }
+    .strip-side { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; border-right: 0; border-bottom: 1px solid var(--line); }
+    .suite-home .suite-groups { flex-direction: column; }
+    .suite-home .suite-grid { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+  }
   @media (max-width: 980px) {
-    .main { grid-template-columns: minmax(0, 1fr); }
-    .rail { display: none; }
-    .tabs { display: flex; gap: 6px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); }
-    .tabs button { border: 0; background: none; padding: 6px 12px; border-radius: 999px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
-    .tabs button[aria-selected="true"] { background: var(--grad); color: var(--on-accent); }
-    .shell[data-tab="chat"] .board, .shell[data-tab="plan"] .chat { display: none; }
     .top-side .btn span:not(.suite-star), .status .label { display: none; }
     .top-side nova-portal-badge::part(words) { display: none; }
     .top-side nova-portal-badge::part(chip) { padding: 0 3px; gap: 0; }
@@ -452,7 +551,7 @@
 <canvas id="sky" aria-hidden="true"></canvas>
 <div class="nebula" aria-hidden="true"></div>
 
-<div class="shell" id="shell" data-tab="chat">
+<div class="shell" id="shell">
   <header class="topbar glass">
     <div class="top-side left">
       <!-- Sound effects on or off (sfx.js; remembered on this computer) -->
@@ -465,20 +564,16 @@
     </a>
     <div class="top-side right">
       <!-- Nova Portal: who Nova Agent works for (found by itself, or "Connect as me"): their planet, name and role -->
+      <nova-manual compact></nova-manual>
       <nova-portal-badge></nova-portal-badge>
       <button type="button" class="btn primary" id="install" hidden><svg class="ico"><use href="#i-down"/></svg><span>Install app</span></button>
       <!-- Every other Nova suite app, one tap away -->
       <button type="button" class="btn suite-btn" id="suite-btn" aria-haspopup="dialog" aria-controls="suite"><span class="suite-star">✦</span><span>Nova suite</span></button>
     </div>
-    <div class="tabs" role="tablist" aria-label="View">
-      <button type="button" role="tab" data-tab="chat" aria-selected="true">Chat</button>
-      <button type="button" role="tab" data-tab="plan" aria-selected="false">Plan</button>
-    </div>
   </header>
 
-  <main class="main">
-    <!-- The Nova suite, always beside the chat (filled from the launcher's tiles) -->
-    <nav class="rail glass" id="rail" aria-label="Nova suite"></nav>
+  <!-- Nova Missions | Talk to Nova Agent | Nova Quests, with the Nova suite along the bottom (all on one screen) -->
+  <main class="main" id="main">
     <!-- An app opened inside Nova Agent (when "Open apps: Inside Nova Agent" is on) -->
     <section class="viewer glass" id="viewer" hidden aria-label="App">
       <div class="viewer-bar">
@@ -491,12 +586,18 @@
       </div>
       <iframe id="viewer-frame" title="App" allow="clipboard-read; clipboard-write; fullscreen; microphone"></iframe>
     </section>
+    <section class="board side glass" id="missions-panel" aria-labelledby="missions-title">
+      <div class="side-head">
+        <h2 class="sec-title gold" id="missions-title"><span>◆</span> Nova Missions</h2>
+        <button type="button" class="btn primary strip-btn" id="new-mission-btn" aria-haspopup="dialog" aria-controls="mission-dlg">✦ New mission</button>
+      </div>
+      <div class="view" id="view-missions"><div class="missions" id="missions"></div></div>
+    </section>
     <section class="chat glass" aria-label="Chat with Nova Agent">
       <div class="chat-head">
-        <h2>Talk to Nova Agent</h2>
+        <h2 class="sec-title"><span>✦</span> Talk to Nova Agent</h2>
         <button type="button" class="icon-btn" id="clear" title="Start a new chat" aria-label="Start a new chat"><svg class="ico"><use href="#i-clear"/></svg></button>
       </div>
-      <div class="nowstrip" id="nowstrip" hidden></div>
       <div class="log" id="log" aria-live="polite">
         <div class="welcome" id="welcome">
           <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
@@ -515,45 +616,68 @@
         </div>
       </div>
       <form class="composer" id="composer">
+        <!-- What this message will become, as you type it -->
+        <div class="cue" id="cue" aria-live="polite" hidden></div>
         <textarea id="input" rows="1" placeholder="Message Nova Agent…" aria-label="Message Nova Agent" maxlength="4000"></textarea>
         <button type="submit" class="send" id="send">Send</button>
       </form>
     </section>
 
-    <section class="board glass" aria-label="Your plan">
-      <div class="board-head">
-        <div class="seg" role="tablist" aria-label="Plan view">
-          <button type="button" role="tab" data-view="today" aria-selected="true">Today</button>
-          <button type="button" role="tab" data-view="missions" aria-selected="false">Missions</button>
-          <button type="button" role="tab" data-view="calendar" aria-selected="false">Calendar</button>
+    <section class="board side glass" id="quests-panel" aria-labelledby="quests-title">
+      <div class="side-head">
+        <h2 class="sec-title" id="quests-title"><span>✦</span> Nova Quests</h2>
+        <div class="strip-tools">
+          <button type="button" class="icon-btn" id="btn-calendar" title="Open Nova Calendar" aria-label="Open Nova Calendar"><svg class="ico"><use href="#i-cal"/></svg></button>
+          <button type="button" class="icon-btn" id="btn-replan" title="Re-plan everything from now" aria-label="Re-plan everything from now"><svg class="ico"><use href="#i-replan"/></svg></button>
+          <button type="button" class="icon-btn" id="btn-bell" title="Turn on pop-up reminders" aria-label="Turn on pop-up reminders"><svg class="ico"><use href="#i-bell"/></svg></button>
+          <button type="button" class="icon-btn" id="btn-rhythm" title="Your daily rhythm" aria-label="Your daily rhythm"><svg class="ico"><use href="#i-gear"/></svg></button>
         </div>
-        <span class="spacer"></span>
-        <button type="button" class="icon-btn" id="btn-replan" title="Re-plan everything from now" aria-label="Re-plan everything from now"><svg class="ico"><use href="#i-replan"/></svg></button>
-        <button type="button" class="icon-btn" id="btn-bell" title="Turn on pop-up reminders" aria-label="Turn on pop-up reminders"><svg class="ico"><use href="#i-bell"/></svg></button>
-        <button type="button" class="icon-btn" id="btn-rhythm" title="Your daily rhythm" aria-label="Your daily rhythm"><svg class="ico"><use href="#i-gear"/></svg></button>
       </div>
       <div class="view" id="view-today"></div>
-      <div class="view" id="view-missions" hidden>
-        <button type="button" class="new-mission-btn" id="new-mission-btn" aria-expanded="false" aria-controls="mission-form">✦ New Nova Mission</button>
-        <form class="mission-new" id="mission-form" hidden>
-          <h3>✦ New Nova Mission</h3>
-          <p>Say what you want to achieve, and by when. Nova Agent turns it into quests and fits them into your days.</p>
-          <textarea id="mission-text" placeholder="e.g. Finish and release the 4-track EP by 1 December: two songs still need vocals, then mixing, mastering, artwork and a launch post." required></textarea>
-          <div class="mission-row">
-            <label>Deadline <input type="date" id="mission-deadline"></label>
-            <span class="spacer"></span>
-            <button type="submit" class="btn primary" id="mission-go">Plan the mission</button>
-          </div>
-          <p id="mission-msg" role="status"></p>
-        </form>
-        <div class="missions" id="missions"></div>
+    </section>
+
+    <!-- The Nova suite (filled from the launcher's tiles, so the two never drift apart) -->
+    <section class="strip suite-home glass" id="suite-home" aria-labelledby="suite-home-title">
+      <div class="strip-side">
+        <h2 class="sec-title" id="suite-home-title"><span class="suite-star">✦</span> Nova suite</h2>
+        <div class="open-pref" role="radiogroup" aria-label="Where apps open"><button type="button" data-open="inside" role="radio" title="Open apps inside Nova Agent">▣ Inside</button><button type="button" data-open="window" role="radio" title="Open apps in a new window">↗ Window</button></div>
       </div>
-      <div class="view cal" id="view-calendar" hidden><iframe id="cal" src="/calendar/" title="Nova Calendar"></iframe></div>
+      <div class="suite-body" id="suite-body"></div>
     </section>
   </main>
 </div>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<dialog class="rhythm mission-dlg" id="mission-dlg" aria-labelledby="mission-dlg-title">
+  <form class="rh mission-new" id="mission-form">
+    <h3 id="mission-dlg-title">✦ New Nova Mission</h3>
+    <button type="button" class="icon-btn suite-x" id="mission-close" aria-label="Close">✕</button>
+    <p>Any goal, in the studio or anywhere in your life. Say what you want to achieve, where you're up to, what's in the way and by when, and what you'd like help thinking through. Nova Agent writes the strategy, splits it into tracks and milestones, and fits every quest into your days.</p>
+    <textarea id="mission-text" placeholder="e.g. I'm doing a 52-release challenge on Instagram and TikTok and I've fallen behind, with two months left this year. New audio gear is coming to speed things up. I've lots of half-finished ideas, and I need a content strategy, a release strategy and the quickest way to film and edit it all." required></textarea>
+    <div class="cue" id="mission-cue" aria-live="polite" hidden></div>
+    <div class="mission-row">
+      <label>Deadline <input type="date" id="mission-deadline"></label>
+      <span class="spacer"></span>
+      <button type="submit" class="btn primary" id="mission-go">Plan the mission</button>
+    </div>
+    <p id="mission-msg" role="status"></p>
+  </form>
+</dialog>
+<!-- A mission's whole plan: its strategy, roadmap, quests by track, and answering its questions -->
+<dialog class="rhythm mission-view" id="mv" aria-labelledby="mv-title">
+  <div class="rh mv">
+    <button type="button" class="icon-btn suite-x" id="mv-close" aria-label="Close" style="position:absolute;right:16px;top:16px">✕</button>
+    <div class="mv-head" id="mv-head"></div>
+    <div class="seg mv-tabs" role="tablist" aria-label="Mission view" id="mv-tabs">
+      <button type="button" role="tab" data-mv="plan" aria-selected="true">Plan</button>
+      <button type="button" role="tab" data-mv="roadmap" aria-selected="false">Roadmap</button>
+      <button type="button" role="tab" data-mv="quests" aria-selected="false">Quests</button>
+      <button type="button" role="tab" data-mv="refine" aria-selected="false">Refine</button>
+    </div>
+    <div class="mv-body" id="mv-body"></div>
+    <div class="mv-foot" id="mv-foot"></div>
+  </div>
+</dialog>
 <dialog class="rhythm suite-dlg" id="suite" aria-labelledby="suite-title">
   <div class="rh">
     <div class="suite-top">
@@ -563,18 +687,28 @@
       <div class="open-pref" role="radiogroup" aria-label="Where apps open"><span>Open apps</span><button type="button" data-open="inside" role="radio">Inside Nova Agent</button><button type="button" data-open="window" role="radio">New window</button></div>
       <button type="button" class="icon-btn suite-x" id="suite-close" aria-label="Close">✕</button>
     </div>
-    <div class="suite-grid">
-      <a class="suite-app here" href="/"><img src="/app/icon.svg" alt=""><b>Nova Agent</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
-      <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/app/" target="_blank" rel="noopener"><img src="https://novacane-worker.novacane-studio.workers.dev/app/icon.svg" alt=""><b>Nova Hub</b><small>Enquiries, chats, bookings, quests and alerts</small></a>
-      <a class="suite-app" href="https://nova-notes.novacane-studio.workers.dev" data-inside="/notes/" target="_blank" rel="noopener"><img src="/notes/assets/icon.svg" alt=""><b>Nova Notes</b><small>Notes and documents, Google Docs export</small></a>
-      <a class="suite-app" href="/calendar/" target="_blank" rel="noopener"><img src="/calendar/assets/icon.svg" alt=""><b>Nova Calendar</b><small>The one Nova Agent plans into</small></a>
-      <a class="suite-app" href="https://novacane.co.uk" target="_blank" rel="noopener"><span class="suite-glyph">N</span><b>NovaBot</b><small>The website assistant (bookings take the deposit)</small></a>
-      <a class="suite-app" href="/visualizer" target="_blank" rel="noopener"><span class="suite-glyph">◎</span><b>Visualizer</b><small>Nova Agent's live steps and memory</small></a>
-      <a class="suite-app" href="https://novacane-worker.novacane-studio.workers.dev/app/memory/" data-inside="/app/memory/" target="_blank" rel="noopener"><img src="/app/memory/icon.svg" alt=""><b>Nova Index</b><small>Everything the Nova suite remembers: browse and edit (approvals in Nova Hub)</small></a>
-      <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/admin" target="_blank" rel="noopener"><span class="suite-glyph">⚙</span><b>Admin</b><small>Referrals, enquiries, conversations, booking system</small></a>
-      <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener"><span class="suite-glyph">🔒</span><b>All links and features</b><small>Every address and every feature (password)</small></a>
-      <a class="suite-app" href="/observatory/" target="_blank" rel="noopener"><span class="suite-glyph">✧</span><b>Nova Observatory</b><small>Every project, lines of code and the star map</small></a>
-      <a class="suite-app" data-embed="no" href="https://github.com/tuniveza/nova-suite" target="_blank" rel="noopener"><span class="suite-glyph">⌥</span><b>Code</b><small>The nova-suite repos on GitHub</small></a>
+    <div class="suite-groups">
+      <div class="suite-group">
+        <h4>Nova apps</h4>
+        <div class="suite-grid">
+          <a class="suite-app here" href="/"><img src="/app/icon.svg" alt=""><b>Nova Agent</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
+          <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/app/" target="_blank" rel="noopener"><img src="https://novacane-worker.novacane-studio.workers.dev/app/icon.svg" alt=""><b>Nova Hub</b><small>Enquiries, chats, bookings, quests and alerts</small></a>
+          <a class="suite-app" href="https://nova-notes.novacane-studio.workers.dev" data-inside="/notes/" target="_blank" rel="noopener"><img src="/notes/assets/icon.svg" alt=""><b>Nova Notes</b><small>Notes and documents, Google Docs export</small></a>
+          <a class="suite-app" href="/calendar/" target="_blank" rel="noopener"><img src="/calendar/assets/icon.svg" alt=""><b>Nova Calendar</b><small>The one Nova Agent plans into</small></a>
+          <a class="suite-app" href="https://novacane.co.uk" target="_blank" rel="noopener"><img src="/app/novabot-icon.svg" alt=""><b>Nova Bot</b><small>The website assistant (bookings take the deposit)</small></a>
+          <a class="suite-app" href="https://novacane-worker.novacane-studio.workers.dev/app/memory/" data-inside="/app/memory/" target="_blank" rel="noopener"><img src="/app/memory/icon.svg" alt=""><b>Nova Index</b><small>Everything the Nova suite remembers: browse and edit (approvals in Nova Hub)</small></a>
+          <a class="suite-app" href="/observatory/" target="_blank" rel="noopener"><img src="/observatory/assets/sigil.svg" alt=""><b>Nova Observatory</b><small>Every project, lines of code and the star map</small></a>
+        </div>
+      </div>
+      <div class="suite-group tools">
+        <h4>Studio tools</h4>
+        <div class="suite-grid">
+          <a class="suite-app" href="/visualizer" target="_blank" rel="noopener"><span class="suite-glyph">◎</span><b>Visualizer</b><small>Nova Agent's live steps and memory</small></a>
+          <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/admin" target="_blank" rel="noopener"><span class="suite-glyph">⚙</span><b>Admin</b><small>Referrals, enquiries, conversations, booking system</small></a>
+          <a class="suite-app" data-embed="no" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener"><span class="suite-glyph">🔒</span><b>All links and features</b><small>Every address and every feature (password)</small></a>
+          <a class="suite-app" data-embed="no" href="https://github.com/tuniveza/nova-suite" target="_blank" rel="noopener"><span class="suite-glyph">⌥</span><b>Code</b><small>The nova-suite repos on GitHub</small></a>
+        </div>
+      </div>
     </div>
   </div>
 </dialog>
@@ -601,6 +735,9 @@
       <label><input type="checkbox" name="phonePush"> Also send reminders to the Nova Hub phones</label>
       <label><input type="checkbox" name="paceLimits"> <span><b>Pace limits</b> (safety): quests start a few minutes ahead, on 5-minute marks, with buffers and breaks. Off: right away, to the second, back to back.</span></label>
     </div>
+    <div class="field"><span>Days off (no quests at all)</span>
+      <div class="days-off" id="days-off"><label><input type="checkbox" data-dayoff="1"> Mon</label><label><input type="checkbox" data-dayoff="2"> Tue</label><label><input type="checkbox" data-dayoff="3"> Wed</label><label><input type="checkbox" data-dayoff="4"> Thu</label><label><input type="checkbox" data-dayoff="5"> Fri</label><label><input type="checkbox" data-dayoff="6"> Sat</label><label><input type="checkbox" data-dayoff="0"> Sun</label></div>
+    </div>
     <div class="rh-foot">
       <button type="button" class="btn" id="rhythm-cancel">Cancel</button>
       <button type="submit" class="btn primary">Save &amp; re-plan</button>
@@ -609,6 +746,7 @@
 </dialog>
 <script src="/app/sfx.js"></script>
 <script src="/portal/badge.js" defer></script>
+<script src="/portal/manual.js" defer></script>
 <script src="/calendar/js/themes.js"></script>
 <script src="/calendar/js/backdrop.js"></script>
 <script>
@@ -652,10 +790,91 @@
         continue;
       }
       if (list) { out.push(`</${list.tag}>`); list = null; }
+      const h = line.match(/^\s*#{1,4}\s+(.*)$/);
+      if (h) { out.push(`<h5>${inline(h[1])}</h5>`); continue; }
       if (line.trim()) out.push(`<p>${inline(line)}</p>`);
     }
     if (list) out.push(`</${list.tag}>`);
     return out.join('');
+  }
+
+  // ---- The type cue: what a message will become, worked out as it's typed (no AI, so it's instant) ----
+  const KINDS = {
+    mission: { icon: '◆', label: 'Nova Mission', hint: 'Plans the lot: a strategy, tracks, milestones and every quest, fitted into your days', send: 'Plan it', colour: 'var(--gold)' },
+    refine: { icon: '◇', label: 'Mission detail', hint: 'Re-plans what’s left of your mission with this', send: 'Refine', colour: 'var(--gold)' },
+    quest: { icon: '✦', label: 'Nova Quest', hint: 'One task, fitted into your day', send: 'Add quest', colour: 'var(--hi)' },
+    repeat: { icon: '∞', label: 'Repeating quest', hint: 'Comes back each time it’s due, until you end it', send: 'Set it up', colour: 'var(--lilac)' },
+    pulse: { icon: '⚡', label: 'Pulse', hint: 'A quick repeat on its own exact timer', send: 'Start it', colour: '#5CE1FF' },
+    block: { icon: '⛔', label: 'Blocked time', hint: 'Quests move out of the way', send: 'Block it', colour: '#FF8A8A' },
+    update: { icon: '✓', label: 'Quest update', hint: 'Marks a quest done, started, skipped or moved', send: 'Update', colour: '#5CFFC0' },
+    calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Nova Calendar', send: 'Add it', colour: '#9DB4FF' },
+    studio: { icon: '♫', label: 'Studio bookings', hint: 'Looks at Acuity (read-only)', send: 'Check', colour: '#FFB86B' },
+    ask: { icon: '?', label: 'Question', hint: 'Nova Agent answers, using your plan', send: 'Ask', colour: 'var(--soft)' },
+    chat: { icon: '✦', label: 'Chat', hint: 'Just talking to Nova Agent', send: 'Send', colour: 'var(--muted)' },
+  };
+  const DAYS = '(?:mon|tues|wednes|thurs|fri|satur|sun)day';
+  const RX = {
+    pulse: /\bevery\s+(?:(\d+(?:\.\d+)?)\s*(?:s|secs?|seconds?)\b|second\b|minute\b|([1-4](?:\.\d+)?)\s*(?:m|mins?|minutes?)\b)/,
+    repeat: new RegExp(`\\b(?:every|each)\\s+(?:other\\s+)?(?:day|morning|afternoon|evening|night|week|weekday|weekend|month|${DAYS}|\\d+\\s*(?:mins?|minutes?|hours?|hrs?|h|days?))\\b|\\b(?:daily|weekly|nightly|habit|routine)\\b`),
+    block: /\b(?:i'?m|i am|we'?re|i'?ll be)\s+(?:out|away|busy|off|ill|sick|at a|at the|travell?ing|on holiday)\b|\bblock(?:ing)?\s+(?:out|off)\b|\bcan'?t\s+(?:do|make)\b|\brunning late\b|\boff sick\b|\bday off\b|\bunavailable\b/,
+    update: /^(?:done|finished|completed|started|starting|skip|skipped|snooze)\b|\bi(?:'ve| have)?\s+(?:just\s+)?(?:done|finished|completed|started)\s+(?:the|my|it|that)\b|\bmark\b.*\b(?:done|complete|finished)\b|\bnot now\b|\bpush (?:it|that) back\b/,
+    calendar: /\b(?:note card|day card|calendar|birthday|anniversary)\b/,
+    studio: /\b(?:acuity|bookings?|booked|appointments?|who'?s in)\b/,
+    refine: /\b(?:i'?ve (?:actually |already )?(?:released|put out|done|finished) \d+|actually i|update (?:the|my) (?:plan|mission)|change (?:the|my) (?:plan|mission)|refine|(?:gear|interface|mic|hardware|kit) (?:arrives|is coming|came|arrived))\b/,
+    goal: /\b(?:schedule|strategy|strategies|plan(?:ned|ning)? out|roadmap|campaign|challenge|launch|release|releases|goal|mission|project|deadline|catch up|fallen behind|behind on|by (?:the )?end of|months?|content|following|grow|course|exam|marathon|business|album|ep|tour)\b/g,
+    ask: /^(?:what|when|where|why|how|should|can|could|would|is|are|do|does|did|which|who|any)\b/,
+    quest: /\b(?:remind me to|i need to|i have to|i'?ve got to|i must|add (?:a )?(?:quest|task)|to-?do|task)\b|^(?:call|text|email|ring|buy|book|send|write|record|mix|master|finish|clean|go|pick up|collect|pay|post|film|edit|practi[cs]e|upload|bounce|tidy|cook|read|study|revise|train|run)\b/,
+  };
+  function classify(text) {
+    const t = String(text || '').trim().toLowerCase();
+    if (t.length < 3) return null;
+    const words = t.split(/\s+/).length;
+    const goals = (t.match(RX.goal) || []).length;
+    const sentences = t.split(/[.!?;\n]+/).filter((x) => x.trim().length > 3).length;
+    const big = (words >= 25 && goals >= 2) || goals >= 4 || (sentences >= 3 && goals >= 2) || /\b(?:plan|schedule|strategy)\b.*\b(?:for|to|so)\b/.test(t) && words >= 10;
+    let kind = 'chat';
+    if (big) kind = 'mission';
+    else if (RX.pulse.test(t)) kind = 'pulse';
+    else if (RX.refine.test(t) && st && st.missions && st.missions.some((m) => m.status !== 'done')) kind = 'refine';
+    else if (RX.repeat.test(t)) kind = 'repeat';
+    else if (RX.block.test(t)) kind = 'block';
+    else if (RX.update.test(t)) kind = 'update';
+    else if (RX.calendar.test(t)) kind = 'calendar';
+    else if (RX.studio.test(t)) kind = 'studio';
+    else if (/\?\s*$/.test(t) || RX.ask.test(t)) kind = 'ask';
+    else if (goals >= 2 && words >= 12) kind = 'mission';
+    else if (RX.quest.test(t) || words <= 12) kind = 'quest';
+    return { kind, ...KINDS[kind], bits: pickOut(t) };
+  }
+  // The details worth showing: when, how long, how often, how many, where it's going
+  function pickOut(t) {
+    const bits = [];
+    const add = (icon, m) => { if (m) bits.push(`${icon} ${m.replace(/\s+/g, ' ').trim()}`); };
+    add('⏳', (t.match(new RegExp(`\\b(?:by|before|until)\\s+(?:the\\s+)?(?:end of (?:the )?(?:year|month|week|day)|tomorrow|tonight|${DAYS}|christmas|new year(?:'?s)?|\\d{1,2}(?:st|nd|rd|th)?\\s+[a-z]{3,9}|[a-z]{3,9}\\s+\\d{1,2}(?:st|nd|rd|th)?)`)) || [])[0]
+      || (t.match(/\b(?:\d+|one|two|three|four|five|six|a few|a couple of)\s+(?:months?|weeks?|days?)\s+(?:until|left|to go|to (?:finish|complete|do))\b/) || [])[0]);
+    add('🕑', (t.match(new RegExp(`\\b(?:today|tonight|tomorrow(?: morning| afternoon| evening| night)?|this (?:morning|afternoon|evening|weekend)|next ${DAYS}|next week|on ${DAYS}|at \\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?|from \\d{1,2}(?::\\d{2})?\\s*(?:am|pm)? to \\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)\\b`)) || [])[0]);
+    const every = t.match(RX.pulse) || t.match(RX.repeat);
+    add('∞', every && every[0]);
+    if (!every) add('⏱', (t.match(/\b(?:\d+(?:\.\d+)?|an?|half an?)\s*(?:hours?|hrs?|minutes?|mins?|seconds?|secs?)\b/) || [])[0]);
+    const count = t.match(/\b(\d+)[- ](release|week|day|song|post|video)s? (schedule|challenge|plan)\b/);
+    add('#', count ? `${count[1]}-${count[2]} ${count[3]}` : (t.match(/\b\d+[- ]?(?:releases?|songs?|tracks?|posts?|videos?|episodes?|reels?|tiktoks?|beats?)\b/) || [])[0]);
+    const PLACES = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', spotify: 'Spotify', soundcloud: 'SoundCloud', twitter: 'Twitter', facebook: 'Facebook', bandcamp: 'Bandcamp', twitch: 'Twitch' };
+    const places = Object.keys(PLACES).filter((p) => t.includes(p));
+    if (places.length) bits.push(`📱 ${places.map((p) => PLACES[p]).join(' · ')}`);
+    const parts = [['release', 'release'], ['content', 'content'], ['film', 'filming'], ['edit', 'editing'], ['gear|hardware|interface|mic\\b', 'gear'], ['mix|master', 'mixing'], ['promo|market', 'promo']].filter(([rx]) => new RegExp(`\\b(?:${rx})`).test(t)).map(([, n]) => n);
+    if (parts.length >= 2) bits.push(`🧭 ${parts.join(' · ')}`);
+    add('📍', (t.match(/\b(?:at|to) the (?:gym|studio|shop|shops|park|office|venue|station|airport|bank|doctor'?s|dentist|post office|library)\b/) || [])[0]);
+    return bits.slice(0, 6);
+  }
+  function showCue(el, box, text, fixedKind) {
+    const c = classify(text);
+    if (!c) { el.hidden = true; if (box) delete box.dataset.kind; if (box === $('composer')) $('send').textContent = 'Send'; return; }
+    const k = fixedKind ? { ...c, ...KINDS[fixedKind], kind: fixedKind } : c;
+    el.hidden = false;
+    el.style.setProperty('--cue', k.colour);
+    if (box) { box.dataset.kind = k.kind; box.style.setProperty('--cue', k.colour); }
+    el.innerHTML = `<span class="cue-type"><i>${k.icon}</i>${k.label}</span><span class="cue-hint">${k.hint}</span>${k.bits.length ? `<span class="cue-bits">${k.bits.map((b) => `<span>${esc(b)}</span>`).join('')}</span>` : ''}`;
+    if (box === $('composer')) $('send').textContent = k.send;
   }
 
   function bubble(role, text, actions, isError) {
@@ -696,6 +915,9 @@
     const typing = document.createElement('div');
     typing.className = 'msg agent';
     typing.innerHTML = '<span class="who"><svg viewBox="0 0 512 512"><use href="#i-mark"/></svg>Nova Agent</span><div class="bubble typing"><span></span><span></span><span></span></div>';
+    // A whole plan takes a minute or two: say so
+    const kind = (classify(text) || {}).kind;
+    if (kind === 'mission' || kind === 'refine') typing.insertAdjacentHTML('beforeend', `<small style="color:var(--muted);font-size:12px">${kind === 'mission' ? 'Planning your mission: the strategy, tracks, milestones and every quest. This can take a minute or two…' : 'Re-planning what’s left with that. This can take a minute or two…'}</small>`);
     log.appendChild(typing);
     log.scrollTop = log.scrollHeight;
     $('send').disabled = true;
@@ -726,7 +948,7 @@
     }
   }
 
-  function fit() { input.style.height = 'auto'; input.style.height = Math.min(160, input.scrollHeight + 2) + 'px'; }
+  function fit() { input.style.height = 'auto'; input.style.height = Math.min(160, input.scrollHeight + 2) + 'px'; showCue($('cue'), $('composer'), input.value); }
   input.addEventListener('input', fit);
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(input.value); }
@@ -740,12 +962,6 @@
     $('welcome').hidden = false;
     input.focus();
   });
-  for (const t of document.querySelectorAll('.tabs button')) {
-    t.addEventListener('click', () => {
-      $('shell').dataset.tab = t.dataset.tab;
-      document.querySelectorAll('.tabs button').forEach((x) => x.setAttribute('aria-selected', x === t ? 'true' : 'false'));
-    });
-  }
 
   // ===================== NOVA MISSIONS & QUESTS =====================
   let st = null;
@@ -778,10 +994,10 @@
     try {
       const [state, cal] = await Promise.all([fetch('/quests/state').then((r) => r.json()), fetch('/calendar-api/data').then((r) => r.json())]);
       st = state;
-      calNotes = (cal.notes || []).filter((n) => !n.id.startsWith('quest-') && !n.id.startsWith('block-'));
+      calNotes = (cal.notes || []).filter((n) => !/^(quest|block|mile)-/.test(n.id));
       renderToday();
       renderMissions();
-      renderStrip();
+      if ($('mv').open) renderMissionView();
     } catch (e) {
       $('view-today').innerHTML = '<div class="empty">Couldn’t load the plan.</div>';
     }
@@ -799,6 +1015,9 @@
   }
 
   function missionName(id) { const m = st.missions.find((x) => x.id === id); return m ? m.title : ''; }
+  // A quest's workstream, in its mission's colour for it
+  function trackColour(missionId, name) { const m = st.missions.find((x) => x.id === missionId); const t = m && m.tracks.find((x) => x.name === name); return t ? t.colour : 'var(--soft)'; }
+  const trackTag = (q) => (q.track ? `<span class="t-tag" style="--c:${trackColour(q.missionId, q.track)}">${escH(q.track)}</span>` : '');
 
   let todayTab = 'ahead';
   document.addEventListener('click', (e) => {
@@ -844,7 +1063,7 @@
         const q = it.q;
         html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
           <div class="tl-card quest ${q.status}${q.atRisk ? ' risk' : ''}${q.ongoing ? ' ongoing' : ''}" style="--i:${questIndex++}">
-          <div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Nova Quest · repeat' : '✦ Nova Quest'}</span>${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
+          <div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Nova Quest · repeat' : '✦ Nova Quest'}</span>${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
           <div class="tl-title">${escH(q.title)}</div>
           <div class="tl-meta"><span class="prio ${q.priority}">${q.priority}</span> · ${dur(q)}${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline && !q.ongoing ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
           ${q.status === 'done' ? '' : questButtons(q)}</div></div>`;
@@ -896,39 +1115,149 @@
     $('view-today').innerHTML = html;
   }
 
-  // The new-mission form opens with one click (and by itself when there are no missions yet)
+  // The new-mission form opens in a pop-up, so the page never has to grow
   function showMissionForm(open) {
-    $('mission-form').hidden = !open;
-    $('new-mission-btn').setAttribute('aria-expanded', String(open));
-    $('new-mission-btn').textContent = open ? '✕ Close' : '✦ New Nova Mission';
-    if (open) setTimeout(() => $('mission-text').focus(), 30);
+    if (!open) return $('mission-dlg').close();
+    $('mission-msg').textContent = '';
+    $('mission-dlg').showModal();
+    setTimeout(() => $('mission-text').focus(), 30);
   }
-  $('new-mission-btn').addEventListener('click', () => showMissionForm($('mission-form').hidden));
-  let missionFormShownOnce = false;
+  $('new-mission-btn').addEventListener('click', () => showMissionForm(true));
+  // The cue in the mission form: it's always a mission, so it just shows what was picked out
+  $('mission-text').addEventListener('input', () => showCue($('mission-cue'), null, $('mission-text').value, 'mission'));
+  $('mission-close').addEventListener('click', () => showMissionForm(false));
+  $('mission-dlg').addEventListener('click', (e) => { if (e.target === $('mission-dlg')) showMissionForm(false); });
   function renderMissions() {
     const box = $('missions');
-    if (!st.missions.length && !missionFormShownOnce) { missionFormShownOnce = true; showMissionForm(true); }
-    if (!st.missions.length) { box.innerHTML = '<div class="empty">No missions yet. Describe one above, or ask in the chat.</div>'; return; }
+    if (!st.missions.length) { box.innerHTML = '<div class="empty">No missions yet. Tap <b>✦ New mission</b>, or ask in the chat.</div>'; return; }
     const order = { active: 0, paused: 1, done: 2 };
     box.innerHTML = [...st.missions].sort((a, b) => order[a.status] - order[b.status] || b.created.localeCompare(a.created)).map((m) => {
       const p = m.progress;
       const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
-      const qs = st.quests.filter((q) => q.missionId === m.id).sort((a, b) => (a.start || 'z').localeCompare(b.start || 'z'));
-      return `<article class="mission ${m.status}${p.atRisk ? ' risk' : ''}"><span class="m-badge">◆ Nova Mission${m.status === 'done' ? ' · complete' : m.status === 'paused' ? ' · paused' : ''}</span><div class="mission-top"><div class="ring" style="--p:${pct}">${pct}%</div><div style="min-width:0;flex:1"><h4>${escH(m.title)}</h4><p class="sum">${escH(m.summary)}</p></div></div>
-        <div class="badges">${m.deadline ? `<span class="badge">Due ${escH(m.deadline.replace('T', ' '))}</span>` : ''}<span class="badge">${p.done}/${p.total} quests</span><span class="badge">${(p.minutesLeft / 60).toFixed(1)}h left</span>${p.atRisk ? `<span class="badge warn">${p.atRisk} at risk</span>` : ''}${m.status === 'done' ? '<span class="badge ok">Mission complete</span>' : ''}${m.status === 'paused' ? '<span class="badge">Paused</span>' : ''}</div>
-        <details><summary>Quests</summary><ul class="q-list">${qs.map((q) => `<li><button class="tick${q.status === 'done' ? ' on' : ''}" data-q="${q.id}" data-a="${q.status === 'done' ? 'reopen' : 'done'}" aria-label="Done">✓</button><span class="${q.status === 'done' ? 'done-t' : q.atRisk ? 'risk-t' : ''}">${escH(q.title)}</span><span class="when">${q.start ? `${new Date(q.start.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })} ${hhmm(q.start)}` : q.status === 'skipped' ? 'skipped' : 'unplanned'}</span></li>`).join('')}</ul>
-        <div class="row-btns" style="margin-top:10px">${m.status === 'active' ? `<button class="mini" data-m="${m.id}" data-ma="paused">Pause</button>` : m.status === 'paused' ? `<button class="mini" data-m="${m.id}" data-ma="active">Resume</button>` : ''}<button class="mini" data-m="${m.id}" data-ma="remove">Remove</button></div></details></article>`;
+      const nx = p.nextMilestone;
+      return `<article class="mission ${m.status}${p.atRisk ? ' risk' : ''}" data-mission="${m.id}" tabindex="0" role="button" aria-label="Open the plan for ${escH(m.title)}"><div class="mission-top"><div class="ring" style="--p:${pct}">${pct}%</div><div style="min-width:0;flex:1"><h4>${escH(m.title)}</h4><p class="sum">${escH(m.summary)}</p></div></div>
+        ${trackBars(p.tracks)}
+        <div class="badges">${m.deadline ? `<span class="badge">Due ${escH(shortDay(m.deadline))}</span>` : ''}<span class="badge">${p.done}/${p.total} quests</span><span class="badge">${(p.minutesLeft / 60).toFixed(1)}h left</span>${p.atRisk ? `<span class="badge warn">${p.atRisk} at risk</span>` : ''}${m.status === 'done' ? '<span class="badge ok">Mission complete</span>' : ''}${m.status === 'paused' ? '<span class="badge">Paused</span>' : ''}</div>
+        ${nx ? `<div class="m-next">◆ Next: <b>${escH(nx.title)}</b> · ${escH(shortDay(nx.at))} ${hhmm(nx.at)}</div>` : ''}
+        ${m.questions.length && m.status !== 'done' ? `<div class="m-ask">? ${m.questions.length} question${m.questions.length === 1 ? '' : 's'} would sharpen this plan</div>` : ''}</article>`;
     }).join('');
   }
+  const shortDay = (s) => new Date(s.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const trackBars = (tracks) => (tracks && tracks.length ? `<div class="m-tracks">${tracks.map((t) => `<div class="m-track" style="--c:${t.colour}"><b>${escH(t.name)}</b><span class="tbar"><i style="width:${t.total ? Math.round((t.done / t.total) * 100) : 0}%"></i></span><span>${t.done}/${t.total}</span></div>`).join('')}</div>` : '');
+  // Tap (or Enter on) a mission card: its whole plan
+  $('missions').addEventListener('click', (e) => { const a = e.target.closest('[data-mission]'); if (a) openMission(a.dataset.mission); });
+  $('missions').addEventListener('keydown', (e) => { const a = e.target.closest('[data-mission]'); if (a && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openMission(a.dataset.mission); } });
 
-  function renderStrip() {
-    const strip = $('nowstrip');
-    const q = st.current || st.next[0];
-    if (!q) { strip.hidden = true; return; }
-    strip.hidden = false;
-    const isNow = st.current && st.current.id === q.id;
-    strip.innerHTML = `<span class="k">${isNow ? 'Now' : 'Next'}</span><span class="t"><b>${escH(q.title)}</b> · ${q.start.startsWith(st.now.slice(0, 10)) ? '' : escH(dayLong(q.start.slice(0, 10))) + ' '}${hhmm(q.start)}–${hhmm(q.end)}</span>${isNow ? `<button class="mini" data-q="${q.id}" data-a="done">✓ Done</button>` : `<button class="mini go" data-q="${q.id}" data-a="start">▶ Start</button>`}`;
+  // ---- The mission view: Plan (strategy), Roadmap (milestones), Quests (by track and week), Refine ----
+  let mvId = null, mvTab = 'plan', mvTrack = '', mvBusy = false, mvRemoving = false;
+  function openMission(id, tab) {
+    mvId = id; mvTab = tab || 'plan'; mvTrack = ''; mvRemoving = false;
+    renderMissionView();
+    if (!$('mv').open) $('mv').showModal();
   }
+  function renderMissionView() {
+    if (!mvId || !st || !$('mv').open && !mvId) return;
+    const m = st.missions.find((x) => x.id === mvId);
+    if (!m) { if ($('mv').open) $('mv').close(); return; }
+    const p = m.progress;
+    const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
+    // Keep anything being typed in the Refine box across redraws
+    const typed = $('mv-detail') ? $('mv-detail').value : '';
+    const focused = document.activeElement && document.activeElement.id === 'mv-detail';
+    $('mv-head').innerHTML = `<div class="ring" style="--p:${pct}">${pct}%</div><div style="min-width:0;flex:1"><span class="m-badge">◆ Nova Mission${m.status === 'done' ? ' · complete' : m.status === 'paused' ? ' · paused' : ''}</span><h3 id="mv-title">${escH(m.title)}</h3><p>${escH(m.summary)}</p>
+      <div class="badges">${m.deadline ? `<span class="badge">Due ${escH(shortDay(m.deadline))}</span>` : ''}<span class="badge">${p.done}/${p.total} quests</span><span class="badge">${(p.minutesLeft / 60).toFixed(1)}h left</span>${p.atRisk ? `<span class="badge warn">${p.atRisk} at risk</span>` : ''}${m.milestones.length ? `<span class="badge">${m.milestones.filter((x) => x.done).length}/${m.milestones.length} milestones</span>` : ''}</div></div>`;
+    for (const b of $('mv-tabs').querySelectorAll('button')) {
+      b.setAttribute('aria-selected', String(b.dataset.mv === mvTab));
+      if (b.dataset.mv === 'refine') b.textContent = m.questions.length && m.status !== 'done' ? `Refine · ${m.questions.length}` : 'Refine';
+    }
+    let html = '';
+    if (mvTab === 'plan') {
+      html += p.tracks.length ? `<div class="mv-card wide"><h4>Tracks</h4>${trackBars(p.tracks)}</div>` : '';
+      html += `<div class="mv-sub">Strategy</div>`;
+      html += m.strategy.length
+        ? `<div class="mv-grid">${m.strategy.map((x, i) => `<div class="mv-card" style="--i:${i}"><h4>${escH(x.heading)}</h4>${md(x.body)}</div>`).join('')}</div>`
+        : `<div class="empty">This plan is small enough not to need a written strategy. Ask Nova Agent for one in the Refine tab if you'd like.</div>`;
+      if (m.research && m.research.length) html += `<div class="mv-sub">Researched on the web${m.researched ? ` · ${escH(shortDay(m.researched.slice(0, 10)))}` : ''}</div><div class="mv-card wide"><ul>${m.research.map((f) => `<li>${escH(f.text)} <a href="${escH(f.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">${escH(f.title || new URL(f.url).hostname)} ↗</a></li>`).join('')}</ul></div>`;
+      if (m.assumptions.length) html += `<div class="mv-sub">What the plan assumed</div><div class="mv-card wide"><ul>${m.assumptions.map((a) => `<li>${escH(a)}</li>`).join('')}</ul><p style="margin-top:8px;color:var(--muted)">Not right? Say so in <b>Refine</b> and the plan adjusts.</p></div>`;
+    } else if (mvTab === 'roadmap') {
+      if (!m.milestones.length) html = '<div class="empty">No milestones in this plan.</div>';
+      const months = {};
+      for (const x of m.milestones) (months[x.at.slice(0, 7)] = months[x.at.slice(0, 7)] || []).push(x);
+      for (const [ym, list] of Object.entries(months)) {
+        html += `<div class="mv-sub">${new Date(ym + '-15T12:00:00Z').toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</div><div class="mv-rows">${list.map((x) => `<div class="mv-row${x.done ? ' done' : ''}"><button class="tick${x.done ? ' on' : ''}" data-ms="${x.id}" data-done="${x.done}" aria-label="${x.done ? 'Not reached yet' : 'Reached'}">✓</button><time>${escH(shortDay(x.at))} ${hhmm(x.at)}</time><span class="t">◆ ${escH(x.title)}</span>${x.track ? `<span class="t-tag" style="--c:${trackColour(m.id, x.track)}">${escH(x.track)}</span>` : '<span></span>'}</div>`).join('')}</div>`;
+      }
+    } else if (mvTab === 'quests') {
+      const all = st.quests.filter((q) => q.missionId === m.id && (!mvTrack || q.track === mvTrack));
+      html += m.tracks.length ? `<div class="mv-filter"><button class="t-tag" data-mvtrack="" aria-pressed="${!mvTrack}">All</button>${m.tracks.map((t) => `<button class="t-tag" style="--c:${t.colour}" data-mvtrack="${escH(t.name)}" aria-pressed="${mvTrack === t.name}">${escH(t.name)}</button>`).join('')}</div>` : '';
+      const open = all.filter((q) => q.status !== 'done' && q.status !== 'skipped').sort((a, b) => (a.start || 'z').localeCompare(b.start || 'z'));
+      const done = all.filter((q) => q.status === 'done');
+      const monday = (s) => { const d = new Date(s.slice(0, 10) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+      const thisWeek = monday(st.now);
+      const weeks = {};
+      for (const q of open) (weeks[q.start ? monday(q.start) : 'zz'] = weeks[q.start ? monday(q.start) : 'zz'] || []).push(q);
+      const row = (q) => `<div class="mv-row${q.status === 'done' ? ' done' : ''}${q.atRisk ? ' risk' : ''}"><button class="tick${q.status === 'done' ? ' on' : ''}" data-q="${q.id}" data-a="${q.status === 'done' ? 'reopen' : 'done'}" aria-label="Done">✓</button><time>${q.start ? `${escH(shortDay(q.start))} ${hhmm(q.start)}` : 'Not planned yet'}</time><span class="t">${q.atRisk ? '⚠ ' : ''}${escH(q.title)}</span>${trackTag(q) || '<span></span>'}</div>`;
+      for (const [wk, list] of Object.entries(weeks).sort()) {
+        const label = wk === 'zz' ? 'Needs a slot' : wk === thisWeek ? 'This week' : wk < thisWeek ? 'Earlier' : `Week of ${shortDay(wk)}`;
+        html += `<div class="mv-sub">${label} · ${list.length}</div><div class="mv-rows">${list.map(row).join('')}</div>`;
+      }
+      if (!open.length) html += '<div class="empty">Nothing left to do here ✦</div>';
+      if (done.length) html += `<details style="margin-top:14px"><summary class="mv-sub" style="cursor:pointer">Done · ${done.length}</summary><div class="mv-rows">${done.map(row).join('')}</div></details>`;
+    } else {
+      html += m.questions.length && m.status !== 'done'
+        ? `<div class="mv-sub">Questions that would sharpen the plan</div><div class="mv-q"><ul>${m.questions.map((q) => `<li data-ask="${escH(q)}">? ${escH(q)}</li>`).join('')}</ul></div>`
+        : '<div class="mv-sub">Anything new?</div>';
+      html += `<div class="mv-sub">Tell Nova Agent (tap a question to answer it)</div>
+        <textarea id="mv-detail" placeholder="e.g. I've released 19 so far, I release on Fridays at 6pm, the interface arrives next Tuesday, and I'd rather film on Sundays."></textarea>
+        <div class="mission-row" style="margin-top:8px"><label>New deadline <input type="date" id="mv-deadline"></label><span class="spacer"></span><button type="button" class="btn primary" id="mv-refine"${mvBusy ? ' disabled' : ''}>✦ Re-plan what's left</button></div>
+        <p id="mv-msg" role="status" style="font-size:13px;color:var(--muted)">${mvBusy ? 'Re-planning <span class="busy-dots"><span></span><span></span><span></span></span> this can take a minute or two.' : 'Done quests stay done; everything still to do is planned again with what you add.'}</p>`;
+      if (m.refinements.length) html += `<div class="mv-sub">Added so far</div><div class="mv-rows">${[...m.refinements].reverse().map((r) => `<div class="mv-row" style="grid-template-columns:118px minmax(0,1fr)"><time>${escH(shortDay(r.at))}</time><span class="t" style="white-space:pre-wrap">${escH(r.text)}</span></div>`).join('')}</div>`;
+    }
+    $('mv-body').innerHTML = html;
+    if ($('mv-detail')) { $('mv-detail').value = typed; if (focused) $('mv-detail').focus(); }
+    $('mv-foot').innerHTML = `${m.status === 'active' ? `<button class="mini" data-m="${m.id}" data-ma="paused">Pause</button>` : m.status === 'paused' ? `<button class="mini" data-m="${m.id}" data-ma="active">Resume</button>` : ''}<button class="mini" id="mv-remove">${mvRemoving ? 'Tap again to remove it and its quests' : 'Remove'}</button><span class="spacer"></span><button class="mini go" id="mv-ask">Talk about it in the chat</button>`;
+  }
+  $('mv').addEventListener('click', async (e) => {
+    if (e.target === $('mv') || e.target.closest('#mv-close')) return $('mv').close();
+    const tab = e.target.closest('[data-mv]');
+    if (tab) { mvTab = tab.dataset.mv; return renderMissionView(); }
+    const tr = e.target.closest('[data-mvtrack]');
+    if (tr) { mvTrack = tr.dataset.mvtrack; return renderMissionView(); }
+    const ms = e.target.closest('[data-ms]');
+    if (ms) { ms.disabled = true; await api(`/actions/missions/${mvId}`, { milestone: ms.dataset.ms, done: ms.dataset.done !== 'true' }); return loadPlan(); }
+    const ask = e.target.closest('[data-ask]');
+    if (ask) { const t = $('mv-detail'); t.value = `${t.value ? t.value.replace(/\s*$/, '\n\n') : ''}${ask.dataset.ask}\n→ `; t.focus(); t.setSelectionRange(t.value.length, t.value.length); return; }
+    if (e.target.closest('#mv-ask')) {
+      const m = st.missions.find((x) => x.id === mvId);
+      $('mv').close();
+      input.value = `About my mission “${m ? m.title : ''}”: `;
+      fit(); input.focus();
+      return;
+    }
+    if (e.target.closest('#mv-remove')) {
+      if (!mvRemoving) { mvRemoving = true; return renderMissionView(); }
+      await api(`/actions/missions/${mvId}`, { remove: true });
+      $('mv').close(); mvId = null;
+      return loadPlan();
+    }
+    if (e.target.closest('#mv-refine')) {
+      const detail = $('mv-detail').value.trim();
+      if (!detail) { $('mv-msg').textContent = 'Write what’s new first (or tap a question).'; return $('mv-detail').focus(); }
+      mvBusy = true; renderMissionView();
+      const id = mvId;
+      const res = await api(`/actions/missions/${id}/refine`, { detail, deadline: $('mv-deadline').value || undefined });
+      mvBusy = false;
+      if (res.ok) {
+        if ($('mv-detail')) $('mv-detail').value = '';
+        toast({ title: 'Plan sharpened ✦', message: `“${res.result.mission.title}”: ${res.result.quests.length} quests to go${res.result.atRisk ? `, ${res.result.atRisk} at risk` : ''}.` });
+        mvTab = 'plan';
+        await loadPlan();
+      } else {
+        renderMissionView();
+        $('mv-msg').textContent = res.message || 'Couldn’t re-plan that just now.';
+      }
+    }
+  });
+  $('mv').addEventListener('close', () => { mvRemoving = false; });
 
   // Buttons anywhere on the page
   document.addEventListener('click', async (e) => {
@@ -950,25 +1279,26 @@
     if (ub) { await api('/actions/blocks', { remove: true, id: ub.dataset.unblock }); return loadPlan(); }
   });
 
-  for (const b of document.querySelectorAll('.seg button')) {
-    b.addEventListener('click', () => {
-      document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
-      for (const v of ['today', 'missions', 'calendar']) $(`view-${v}`).hidden = v !== b.dataset.view;
-    });
-  }
+  // Nova Calendar opens like its Nova suite tile does (inside Nova Agent, or in a window)
+  const openCalendar = () => document.querySelector('#suite-body a.suite-app[href="/calendar/"]').click();
+  $('btn-calendar').addEventListener('click', openCalendar);
 
   $('mission-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = $('mission-text').value.trim();
     if (!text) return;
     $('mission-go').disabled = true;
-    $('mission-msg').innerHTML = 'Planning your mission <span class="busy-dots"><span></span><span></span><span></span></span>';
+    $('mission-msg').innerHTML = 'Planning your mission: the strategy, tracks, milestones and every quest <span class="busy-dots"><span></span><span></span><span></span></span> this can take a minute or two.';
     const res = await api('/actions/missions', { request: text, deadline: $('mission-deadline').value || undefined });
     $('mission-go').disabled = false;
     if (res.ok) {
       $('mission-text').value = '';
-      $('mission-msg').textContent = `✦ “${res.result.mission.title}”: ${res.result.quests.length} quests planned${res.result.atRisk ? `, ${res.result.atRisk} at risk` : ''}.`;
-      loadPlan();
+      $('mission-cue').hidden = true;
+      showMissionForm(false);
+      toast({ title: 'Mission planned ✦', message: `“${res.result.mission.title}”: ${res.result.quests.length} quests planned${res.result.atRisk ? `, ${res.result.atRisk} at risk` : ''}.` });
+      // Straight into the new plan
+      await loadPlan();
+      openMission(res.result.mission.id);
     } else {
       $('mission-msg').textContent = /api[_ ]?key|authentication/i.test(res.message || '') ? 'Nova Agent can’t reach Claude yet: add ANTHROPIC_API_KEY to its .env.' : res.message || 'Couldn’t plan that just now.';
     }
@@ -985,6 +1315,7 @@
   $('btn-rhythm').addEventListener('click', () => {
     if (!st) return;
     for (const [k, v] of Object.entries(st.rhythm)) { const f = rf.elements[k]; if (!f) continue; if (f.type === 'checkbox') f.checked = v; else f.value = v; }
+    for (const b of document.querySelectorAll('[data-dayoff]')) b.checked = (st.rhythm.daysOff || []).includes(Number(b.dataset.dayoff));
     $('rhythm').showModal();
   });
   $('rhythm-cancel').addEventListener('click', () => $('rhythm').close());
@@ -992,6 +1323,7 @@
     e.preventDefault();
     const body = {};
     for (const f of rf.elements) { if (!f.name) continue; body[f.name] = f.type === 'checkbox' ? f.checked : f.type === 'number' ? Number(f.value) : f.value; }
+    body.daysOff = [...document.querySelectorAll('[data-dayoff]')].filter((b) => b.checked).map((b) => Number(b.dataset.dayoff));
     const res = await api('/actions/rhythm', body);
     $('rhythm').close();
     toast({ title: res.ok ? 'Rhythm saved ✦' : 'Couldn’t save', message: res.ok ? 'Everything has been re-planned around it.' : res.message });
@@ -1107,34 +1439,10 @@
   } catch (e) {}
   setInterval(loadPlan, 60000); // keeps the now-line and progress moving
 
-  // ---- The Nova suite rail: the launcher's apps, always beside the chat ----
-  (() => {
-    const rail = $('rail');
-    rail.append(Object.assign(document.createElement('div'), { className: 'rail-head', textContent: 'Nova suite' }));
-    // Where apps open, switched with one tap
-    const pref = Object.assign(document.createElement('div'), { className: 'rail-pref' });
-    pref.innerHTML = '<button type="button" id="rail-pref-btn" data-sfx="tab" title="Where apps open: inside Nova Agent or in a new window"></button>';
-    pref.firstChild.addEventListener('click', () => setOpenPref(openPref() === 'inside' ? 'window' : 'inside'));
-    rail.append(pref);
-    for (const tile of document.querySelectorAll('#suite .suite-app')) {
-      const a = document.createElement('a');
-      a.href = tile.getAttribute('href');
-      if (tile.target) { a.target = tile.target; a.rel = 'noopener'; }
-      if (tile.classList.contains('here')) a.className = 'here';
-      if (tile.dataset.embed) a.dataset.embed = tile.dataset.embed;
-      if (tile.dataset.inside) a.dataset.inside = tile.dataset.inside;
-      const name = tile.querySelector('b').textContent;
-      a.title = `${name}: ${tile.querySelector('small').textContent}`;
-      a.setAttribute('aria-label', name);
-      const icon = tile.querySelector('img, .suite-glyph').cloneNode(true);
-      const words = document.createElement('span');
-      words.innerHTML = `<b></b><small></small>`;
-      words.querySelector('b').textContent = name;
-      words.querySelector('small').textContent = tile.querySelector('small').textContent;
-      a.append(icon, words);
-      rail.append(a);
-    }
-  })();
+  // ---- The Nova suite section at the bottom of the page: the launcher's groups and tiles ----
+  $('suite-body').append($('suite').querySelector('.suite-groups').cloneNode(true));
+  // The row only has room for names, so each tile's description shows on hover
+  for (const a of document.querySelectorAll('#suite-body .suite-app')) a.title = `${a.querySelector('b').textContent}: ${a.querySelector('small').textContent}`;
 
   // ---- Sound effects: the switch in the header, and a chime when Nova Agent answers ----
   function sfxState() {
@@ -1152,8 +1460,6 @@
   function setOpenPref(v) {
     try { localStorage.setItem(OPEN_KEY, v); } catch (e) {}
     document.querySelectorAll('[data-open]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.open === v)));
-    const railBtn = document.getElementById('rail-pref-btn');
-    if (railBtn) railBtn.innerHTML = v === 'inside' ? '▣ <span class="pref-words">Opens inside</span>' : '↗ <span class="pref-words">Opens in a window</span>';
   }
   document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => setOpenPref(b.dataset.open)));
   function openInside(href, name) {
@@ -1161,30 +1467,30 @@
     $('viewer-out').href = (document.querySelector(`#suite a.suite-app[data-inside="${href}"]`) || {}).href || href;
     $('viewer-frame').src = href;
     $('viewer').hidden = false;
-    document.querySelector('.main').classList.add('viewing');
-    // The rail lights up the app that's open (and Nova Agent stops being "here")
-    document.querySelectorAll('#rail a').forEach((a) => a.classList.toggle('open', a.getAttribute('aria-label') === name));
-    document.querySelector('#rail a.here')?.classList.add('away');
-    // On a phone the viewer replaces both tabs' panels
+    $('main').classList.add('viewing');
+    $('main').scrollTo({ top: 0 });
+    // The suite's tiles light up the app that's open (and Nova Agent stops being "here")
+    document.querySelectorAll('.suite-app').forEach((a) => a.classList.toggle('open', a.querySelector('b').textContent === name));
+    document.querySelectorAll('.suite-app.here').forEach((a) => a.classList.add('away'));
     if ($('suite').open) $('suite').close();
   }
   function closeViewer() {
     $('viewer').hidden = true;
     $('viewer-frame').src = 'about:blank';
-    document.querySelector('.main').classList.remove('viewing');
-    document.querySelectorAll('#rail a.open, #rail a.away').forEach((a) => a.classList.remove('open', 'away'));
+    $('main').classList.remove('viewing');
+    document.querySelectorAll('.suite-app.open, .suite-app.away').forEach((a) => a.classList.remove('open', 'away'));
   }
   $('viewer-close').addEventListener('click', closeViewer);
   $('viewer-reload').addEventListener('click', () => { const f = $('viewer-frame'); f.src = f.src; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('viewer').hidden && !document.querySelector('dialog[open]')) closeViewer(); });
   let toldNoEmbed = false;
-  // Clicks on any app in the rail or the launcher
+  // Clicks on any app in the Nova suite section or the launcher
   document.addEventListener('click', (e) => {
-    const a = e.target.closest('#rail a, #suite a.suite-app');
+    const a = e.target.closest('a.suite-app');
     if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
-    const name = a.getAttribute('aria-label') || a.querySelector('b')?.textContent || 'App';
-    // Nova Agent itself: back to the chat
-    if (a.classList.contains('here')) { e.preventDefault(); closeViewer(); if ($('suite').open) $('suite').close(); return; }
+    const name = a.querySelector('b')?.textContent || 'App';
+    // Nova Agent itself: back to the chat, at the top of the page
+    if (a.classList.contains('here')) { e.preventDefault(); closeViewer(); if ($('suite').open) $('suite').close(); $('main').scrollTo({ top: 0 }); return; }
     if (openPref() !== 'inside') return; // a new window, as the link says
     if (a.dataset.embed === 'no') {
       // These refuse to be shown inside other pages (to keep their login safe), so they get a window
@@ -1210,13 +1516,8 @@
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; $('install').hidden = false; });
   window.addEventListener('appinstalled', () => { $('install').hidden = true; toast({ title: 'Nova Agent installed \u2726', message: 'It\u2019s in your app launcher now.' }); });
   $('install').addEventListener('click', async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; $('install').hidden = true; });
-  // Launcher shortcuts open a view: ?view=today | missions | calendar
-  const startView = new URLSearchParams(location.search).get('view');
-  if (['today', 'missions', 'calendar'].includes(startView)) {
-    document.querySelector(`.seg [data-view="${startView}"]`).click();
-    const planTab = document.querySelector('.tabs [data-tab="plan"]');
-    if (planTab && getComputedStyle(document.querySelector('.tabs')).display !== 'none') planTab.click();
-  }
+  // Launcher shortcuts: ?view=calendar opens Nova Calendar (Today and Missions are always on screen)
+  if (new URLSearchParams(location.search).get('view') === 'calendar') openCalendar();
   loadPlan();
   input.focus();
 })();

@@ -6,6 +6,11 @@
 //     (calendar/store.ts; the calendar on the page refreshes when it changes)
 //   - look at the studio's Acuity bookings and check the Acuity login
 //     (read-only for now, through the same browser tasks as the visualizer)
+//   - plan Nova Missions for any goal (a strategy, tracks, milestones and quests),
+//     refine them with new detail, and run the quests day to day
+//   - research the internet (web search and web fetch, run by Anthropic) and
+//     look at any public webpage in a browser of its own (web.ts): a
+//     screenshot and the page's text, so it sees the page as a person would
 //   - say how Nova Agent itself is doing
 // The SDK's tool runner does the back-and-forth with Claude.
 
@@ -18,15 +23,17 @@ import { getClient } from "./llm";
 import { learnFrom, memoryFor } from "./memory";
 import { checkLogin, describeAppointments, listTask } from "./tasks";
 import { getRecentEvents, trace } from "./trace";
+import { lookAt, lookResult, webTools } from "./web";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
-import { createMission } from "./quests/planner";
+import { createMission, refineMission } from "./quests/planner";
 import { describeLength } from "./quests/lengths";
 import { isPulse } from "./quests/pulses";
-import { EVERY, PRIORITIES, readQuests, TIMES_OF_DAY, type Quest } from "./quests/store";
+import { EVERY, PRIORITIES, readQuests, TIMES_OF_DAY, WEEKDAYS, type Mission, type Quest } from "./quests/store";
 
 const DEFAULT_MODEL = "claude-opus-5-5";
 const MAX_HISTORY = 40;
+const MAX_CONTINUATIONS = 5;
 
 export interface ChatTurn {
   role: "user" | "assistant";
@@ -55,20 +62,26 @@ function systemPrompt(): string {
   const now = nowInUk();
   return `You are Nova Agent, part of the Nova suite for Novacane Studios (a recording studio in Forest Hill, London). You run on the studio computer. People from the studio chat with you here.
 
+You help with anything they want to get done: inside the Nova suite and the studio, and just as much outside it, in their music careers, releases, content and socials, business, health, study and everyday life. Think and advise like an expert in whatever they bring you, and turn it into a plan they can follow.
+
 It is ${now.words}, ${now.time} (UK time). Today's date is ${now.date}.
 
 You also run Nova Missions and Nova Quests, a smart planner for the people you talk to:
-- A Nova Mission is an end goal (e.g. "release the EP by 1 December"). mission_create turns their request into Nova Quests (concrete tasks with time estimates, priorities, deadlines, dependencies, locations and travel) and schedules them.
+- A Nova Mission is an end goal (e.g. "release the EP by 1 December", "catch up on my 52-release challenge by the end of the year"). mission_create turns their request into a full plan and schedules it: a written strategy (e.g. release, content, production, filming and editing, a typical week), workstreams (tracks), dated milestones, Nova Quests (concrete tasks with time estimates, priorities, deadlines, dependencies, locations and travel; repeated pipelines like one per song are written out exactly), plus the assumptions it made and questions that would sharpen it.
+- For any goal with several parts, or anything that asks for a schedule, a strategy or a plan, use mission_create straight away. Pass everything they said, in their words (numbers, constraints, what's behind, gear coming, what they want help thinking through), and the deadline if there is one (work it out: "the end of the year" is 31 December; "two months" from today). Planning takes a minute or two. Then reply with: the shape of the plan (the tracks and the pace, e.g. "a release every 2.5 days"), the first few things to do this week, the strategy's key points in a few bullets, the assumptions it made, and its questions, inviting them to answer so you can sharpen it. Their full plan is in the Missions column (tap the mission to open it).
+- When they answer a mission's questions or add detail to a mission ("I've actually released 19", "the interface arrives on Friday"), use mission_refine: it re-plans the work that's left. To talk through a plan's strategy, milestones or tracks, read it with mission_details first.
 - A quest can be any length: seconds ("text Sam back", 30 seconds), minutes, hours, or days of work (split into sessions automatically). An ongoing quest repeats: every day, weekday or week, or at any interval ("drink water every 30 minutes until 11pm": ongoing, every interval, every_minutes 30, a length of seconds, deadline 23:00), until they end it (quest_status finish) or its deadline passes. Prefer one ongoing quest over many copies. Repeats faster than every 5 minutes (even every second) are pulses: they run on their own exact timer only while they're awake, don't take slots in the plan, and on the phone each ping replaces the last, so they're cheap and safe; set them up whenever asked.
 - The people you talk to run the studio and the Nova Hub phones are theirs. Do what they ask with quests, repeats and reminders, however often, short or many: never refuse, bargain or offer watered-down alternatives. If something has a real cost they may not expect, mention it in one short line after doing it.
 - Nova Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
 - Help them prioritise and pivot: for "what should I do now?" use what_now and give one clear recommendation. When plans change ("I'm running late", "I'm out tonight", "I'm ill today"), block the time or update the quest, then say what moved. Mark quests done, started or skipped when they tell you. Point out quests at risk of missing a deadline and suggest what to drop, shorten or move.
-- Their daily rhythm (wake, sleep, buffers, breaks, reminders, phone notifications) can be changed with rhythm_set.
+- Their daily rhythm (wake, sleep, buffers, breaks, reminders, phone notifications, days off with no quests at all) can be changed with rhythm_set.
 - The Nova suite remembers (Nova Index): durable facts from these chats (preferences, how they work, people and projects they mention) are saved automatically after each conversation, and what's relevant is given to you below when there is any. When someone tells you something to remember, just say you'll remember it. Never claim you have no memory. They can see and edit everything remembered in Nova Index.
 
 What you can do:
 - Nova Calendar: read, add, change and remove note cards (a title, the note itself, an author, a start and finish time) and day cards (a date with a title, a preset, a title aesthetic, a colour theme, information, a location, tags, and optionally repeating every year). Use the calendar tools for this; the calendar beside the chat updates straight away.
 - The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Nova Hub or Acuity.
+- Research the internet: search the web (web_search) and read pages (web_fetch) for anything current or specific (prices, opening times, platform rules, news, how-tos, people and companies). Say where facts came from, with the link.
+- See webpages: page_look opens a public page in a browser and gives you a screenshot and its contents, for when how a page looks matters or web_fetch can't read it (pages built by scripts, a profile, a shop page, checking their own site or socials). It can't log in anywhere.
 - Say how you're doing (agent_status).
 
 How to work:
@@ -225,6 +238,20 @@ function tools(actions: ChatAction[]) {
       },
     }),
     betaZodTool({
+      name: "page_look",
+      description: "Open a public webpage in a browser and see it: returns a screenshot of the top of the page and the page's contents (headings, links, buttons, text). Use it when how a page looks matters, or web_fetch can't read a page. Can't log in or open local addresses.",
+      inputSchema: z.object({ url: z.string().url().describe("The full address, https://…") }),
+      run: async ({ url }) => {
+        try {
+          const look = await lookAt(url);
+          did("looked", `Looked at ${look.title || look.url}`);
+          return lookResult(look);
+        } catch (error) {
+          return `Couldn't open that page: ${(error as Error).message}`;
+        }
+      },
+    }),
+    betaZodTool({
       name: "agent_status",
       description: "How Nova Agent is doing: its mode, whether it's connected to Nova Bot, and what it did recently.",
       inputSchema: z.object({}),
@@ -249,7 +276,26 @@ function tools(actions: ChatAction[]) {
 
 const hm = (stamp: string) => (stamp.length > 16 ? stamp.slice(11, 19) : stamp.slice(11, 16));
 const questLine = (q: Quest) =>
-  `${q.id.slice(0, 8)} · ${q.title} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : isPulse(q) ? `pulse (own timer${q.deadline ? `, until ${hm(q.deadline)}` : ""})` : "not scheduled"} · ${describeLength(q)}${q.ongoing ? ` · ${q.sessions} sessions done` : ""} · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status}${q.atRisk ? " · AT RISK" : ""}`;
+  `${q.id.slice(0, 8)} · ${q.title}${q.track ? ` [${q.track}]` : ""} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : isPulse(q) ? `pulse (own timer${q.deadline ? `, until ${hm(q.deadline)}` : ""})` : "not scheduled"} · ${describeLength(q)}${q.ongoing ? ` · ${q.sessions} sessions done` : ""} · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status}${q.atRisk ? " · AT RISK" : ""}`;
+
+// What a new or re-planned mission looks like, for Claude to explain (the first stretch of quests in full)
+function missionReport(r: { mission: Mission; quests: Quest[]; atRisk: number; unplaced: string[] }): string {
+  const m = r.mission;
+  const planned = [...r.quests].sort((a, b) => (a.start || "z").localeCompare(b.start || "z"));
+  const shown = planned.slice(0, 25);
+  return [
+    `Mission ${m.id.slice(0, 8)} “${m.title}”${m.deadline ? `, due ${m.deadline}` : ""}: ${m.summary}`,
+    m.tracks.length ? `Tracks: ${m.tracks.map((t) => `${t.name} (${r.quests.filter((q) => q.track === t.name).length} quests)`).join(", ")}` : "",
+    m.strategy.length ? `Strategy:\n${m.strategy.map((x) => `## ${x.heading}\n${x.body}`).join("\n\n")}` : "",
+    m.milestones.length ? `Milestones (${m.milestones.length}): ${m.milestones.slice(0, 12).map((x) => `${x.at.replace("T", " ")} ${x.title}`).join("; ")}${m.milestones.length > 12 ? "; …" : ""}` : "",
+    m.assumptions.length ? `Assumed: ${m.assumptions.join(" | ")}` : "",
+    m.questions.length ? `Questions to ask them: ${m.questions.join(" | ")}` : "",
+    `${r.quests.length} quests to go, ${r.atRisk} at risk. The first ${shown.length}:\n${shown.map(questLine).join("\n")}`,
+    r.unplaced.length ? `Couldn't place: ${r.unplaced.slice(0, 10).join("; ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
 
 function questTools(actions: ChatAction[]) {
   const did = (kind: ChatAction["kind"], text: string) => {
@@ -279,7 +325,40 @@ function questTools(actions: ChatAction[]) {
       run: async ({ request, deadline }) => {
         const r = await createMission(request, { deadline });
         did("added", `Nova Mission “${r.mission.title}”: ${r.quests.length} quests planned`);
-        return `Created mission ${r.mission.id.slice(0, 8)} “${r.mission.title}” (${r.mission.summary}). ${r.quests.length} quests, ${r.atRisk} at risk:\n${r.quests.sort((a, b) => (a.start || "z").localeCompare(b.start || "z")).map(questLine).join("\n")}${r.unplaced.length ? `\nCouldn't place: ${r.unplaced.join("; ")}` : ""}`;
+        return missionReport(r);
+      },
+    }),
+    betaZodTool({
+      name: "mission_refine",
+      description: "Give a mission new detail or answers to its questions: the work that's left is planned again with it (done quests stay). Takes a minute or two.",
+      inputSchema: z.object({ id: z.string(), detail: z.string().min(2).describe("What's new, in their words"), deadline: z.string().optional().describe('A new deadline if they changed it: "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM"') }),
+      run: async ({ id, detail, deadline }) => {
+        const r = await refineMission(id, detail, { deadline });
+        did("changed", `Re-planned “${r.mission.title}”: ${r.quests.length} quests to go`);
+        return missionReport(r);
+      },
+    }),
+    betaZodTool({
+      name: "mission_details",
+      description: "A mission's full plan: its strategy, tracks and their progress, milestones, assumptions, open questions and what they've added since.",
+      inputSchema: z.object({ id: z.string() }),
+      run: async ({ id }) => {
+        const m = questState().missions.find((x) => x.id === id || x.id.startsWith(id));
+        if (!m) return `No mission with id ${id}.`;
+        return JSON.stringify({
+          id: m.id.slice(0, 8),
+          title: m.title,
+          summary: m.summary,
+          status: m.status,
+          deadline: m.deadline,
+          progress: `${m.progress.done}/${m.progress.total} quests done, ${m.progress.atRisk} at risk, ${Math.round(m.progress.minutesLeft / 60)} h left`,
+          tracks: m.progress.tracks.map((t) => `${t.name}: ${t.done}/${t.total}`),
+          strategy: m.strategy,
+          milestones: m.milestones.map((x) => `${x.done ? "✓" : "·"} ${x.at.replace("T", " ")} ${x.title}`),
+          assumptions: m.assumptions,
+          questions: m.questions,
+          added_since: m.refinements.map((x) => x.text),
+        });
       },
     }),
     betaZodTool({
@@ -424,9 +503,10 @@ function questTools(actions: ChatAction[]) {
         daily_briefing: z.boolean().optional(),
         phone_push: z.boolean().optional().describe("Also send reminders to the Nova Hub phones"),
         pace_limits: z.boolean().optional().describe("The pace safety switch: true = quests start a few minutes ahead, on 5-minute marks, with buffers and breaks; false = right away, to the second, back to back"),
+        days_off: z.array(z.enum(WEEKDAYS)).optional().describe("The whole set of days of the week with no quests at all (replaces the current set; [] for none)"),
       }),
       run: async (i) => {
-        const r = setRhythm({ wake: i.wake, sleep: i.sleep, windDownMinutes: i.wind_down_minutes, startUpMinutes: i.start_up_minutes, bufferMinutes: i.buffer_minutes, breakAfterMinutes: i.break_after_minutes, breakMinutes: i.break_minutes, maxQuestHoursPerDay: i.max_quest_hours_per_day, homeBase: i.home_base, remindMinutesBefore: i.remind_minutes_before, checkIns: i.check_ins, dailyBriefing: i.daily_briefing, phonePush: i.phone_push, paceLimits: i.pace_limits });
+        const r = setRhythm({ wake: i.wake, sleep: i.sleep, windDownMinutes: i.wind_down_minutes, startUpMinutes: i.start_up_minutes, bufferMinutes: i.buffer_minutes, breakAfterMinutes: i.break_after_minutes, breakMinutes: i.break_minutes, maxQuestHoursPerDay: i.max_quest_hours_per_day, homeBase: i.home_base, remindMinutesBefore: i.remind_minutes_before, checkIns: i.check_ins, dailyBriefing: i.daily_briefing, phonePush: i.phone_push, paceLimits: i.pace_limits, daysOff: i.days_off?.map((d) => WEEKDAYS.indexOf(d)) });
         did("changed", `Rhythm: up ${r.wake}, sleep ${r.sleep}`);
         return `Rhythm now: ${JSON.stringify(r)}. Everything has been re-planned.`;
       },
@@ -460,18 +540,24 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
   const asked = String(messages[messages.length - 1].content);
   const memory = await memoryFor(asked);
   trace("llm", "start", `Chat: asking ${model}`);
-  const final = await getClient().beta.messages.toolRunner({
+  const runner = getClient().beta.messages.toolRunner({
     model,
     max_tokens: 16000,
     system: memory ? `${systemPrompt()}\n\n${memory}` : systemPrompt(),
-    tools: [...tools(actions), ...questTools(actions)],
+    tools: [...tools(actions), ...questTools(actions), ...webTools({ search: 5, fetch: 5 })],
     messages,
     output_config: { effort: "low" },
-    max_iterations: 16,
+    max_iterations: 16 + MAX_CONTINUATIONS,
     // If this model declines a request, the API retries it on a suitable fallback model inside the same call
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
   });
+  // Web research can pause part-way (the server's own step limit): carry on where it stopped
+  let continued = 0;
+  for await (const message of runner) {
+    if (message.stop_reason === "pause_turn" && continued++ < MAX_CONTINUATIONS) runner.pushMessages({ role: "assistant", content: message.content });
+  }
+  const final = await runner.done();
 
   if (final.stop_reason === "refusal") {
     return { reply: "Sorry, I can't help with that one.", actions };

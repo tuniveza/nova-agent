@@ -19,8 +19,9 @@ Talk to it, give it a goal, and it plans your days to the second. It also works 
 ---
 
 Nova Agent is a small Node service that runs on the studio PC. Open `http://localhost:4545`
-and you get one screen in three parts: the **Nova suite** down the left, a **chat** with Nova
-Agent dead centre, and **your plan** on the right (Today, Missions and Nova Calendar).
+and you get one screen that fits without scrolling: **Nova Missions** on the left, a **chat**
+with Nova Agent in the middle, **Nova Quests** (today's plan) on the right, and the **Nova
+suite** along the bottom.
 
 Behind the chat sits a planner: tell it a goal and it becomes a **Nova Mission** of **Nova
 Quests**, fitted around your sleep, your calendar and your travel, with reminders and
@@ -63,12 +64,13 @@ Nova Agent's chat (`src/chat.ts`) is Claude with tools. Ask it what to do next (
 do now?" gives one clear recommendation), plan a mission, block out an evening ("I'm out tonight
 from 7 to 11"), push your day back ("I'm running late"), add or change Nova Calendar note
 cards and day cards ("make 31 October a Halloween day card"), look at the studio's Acuity
-bookings, check the Acuity login, or ask how Nova Agent is doing. Whatever it changes shows
+bookings, check the Acuity login, research anything on the web (with links to where it came
+from), look at any public webpage (it opens it in a browser of its own, never the Acuity one,
+and sees a screenshot and the page's contents), or ask how Nova Agent is doing. Whatever it changes shows
 up as a little chip under its reply, and the plan beside it redraws straight away.
 
-On a wide screen the three columns sit side by side; on a narrow one (a phone, a small
-window) **Chat** and **Plan** become two tabs. The "Now" strip above the chat always shows the
-quest in progress or the next one, with its Done or Start button.
+On a wide screen the three columns sit side by side above the Nova suite, all on one screen; on
+a phone or a very short window they stack (the chat first) and the page scrolls.
 
 ### Nova Missions and Nova Quests
 
@@ -85,16 +87,44 @@ quest in progress or the next one, with its Done or Start button.
   </tr>
 </table>
 
-Tell Nova Agent a goal ("release the EP by 1 December") and it becomes a **Mission**: Claude
-breaks it into **Quests** (`src/quests/planner.ts`), each with a length, a priority, a deadline,
-what it waits for, where it happens and the travel to get there. Then a planner with no AI in
-it (`src/quests/scheduler.ts`) fits every quest into your days:
+Tell Nova Agent any goal, in the studio or anywhere in your life ("release the EP by 1
+December", "I've fallen behind on my 52-release challenge and have two months left: I need a
+content strategy, a release strategy and the quickest way to film and edit it all") and it
+becomes a **Mission**. Claude (`src/quests/planner.ts`) writes:
+
+- a **strategy**, in the sections the goal needs (release, content, production, filming and
+  editing, a typical week, how to catch up), with the maths done;
+- **tracks** (workstreams such as Music, Content, Release, Gear), each with its own colour and
+  progress bar;
+- dated **milestones**, which also appear in Nova Calendar as ◆ cards;
+- **Quests**, each with a length, a priority, a deadline, what it waits for, where it happens and
+  the travel to get there. Work that repeats per item (every song's finish → mix → film → edit →
+  post) is described once as a **series** and written out here with exact spacing;
+- the **assumptions** it made and the **questions** that would sharpen it. Answer them in the
+  mission's **Refine** tab (or just tell the chat) and the work that's left is planned again;
+- **research**: when current facts would make the plan better (how a platform works now,
+  distributor lead times, prices, opening hours), it searches the web and reads pages while it
+  plans. What it used is listed under "Researched on the web" in the mission's Plan tab, each
+  with a link, and only pages it really read are kept.
+
+Tap a mission to open its plan: **Plan** (tracks and strategy), **Roadmap** (milestones by
+month, tick them off), **Quests** (by week, filtered by track) and **Refine**.
+
+As you type in the chat, a **cue** above the box shows what the message will become (Nova
+Mission, Nova Quest, repeating quest, pulse, blocked time, quest update, mission detail,
+calendar card, studio bookings or a question) and what it picked out (deadline, time, length,
+how often, how many, platforms).
+
+Then a planner with no AI in it (`src/quests/scheduler.ts`) fits every quest into your days:
 
 - around your **rhythm**: get up, a start-up time, wind-down and bedtime, a buffer between
-  quests, a proper break after long ones, and a cap on quest hours per day (the ⚙ button);
+  quests, a proper break after long ones, a cap on quest hours per day, and **days off** with
+  no quests at all (the ⚙ button; say "I can't work Sundays" and the planner sets it);
 - around Nova Calendar entries and any **blocked time**;
-- most urgent first (deadline pressure weighted by priority), never before the quests it
-  depends on, in the part of the day it suits;
+- most urgent first (the least slack between when it may start and its deadline, weighted by
+  priority), never before the quests it depends on, in the part of the day it suits;
+- as far ahead as the furthest deadline needs (up to a year), not just the rhythm's
+  "plan ahead" days;
 - with **travel time** in front of anything somewhere else, and a "leave by" reminder;
 - flagging anything that can't make its deadline as **at risk**, and anything that can't be
   placed at all under **Needs a slot**, with the reason.
@@ -172,7 +202,7 @@ of Nova Agent. The **Calendar** tab fits it to the plan column with no scrolling
 </table>
 
 The rail down the left (and the ✦ Nova suite launcher) holds every Nova app: Nova Hub, Nova
-Notes, Nova Calendar, NovaBot, the visualizer, Nova Index, Admin, all links and features,
+Notes, Nova Calendar, Nova Bot, the visualizer, Nova Index, Admin, all links and features,
 Nova Observatory and the code. One switch decides where they open:
 
 - **Inside Nova Agent**: the app takes the middle of the screen, with "← Nova Agent", reload
@@ -401,7 +431,9 @@ result, screenshots, daily logs (`logs/<date>.jsonl`, which include client names
 ## Tests
 
 `npx tsx test/scheduler.test.ts` checks the Nova Quest planner (sleep, deadlines, priorities,
-dependencies, travel, buffers, breaks, the daily cap, blocked time and at-risk flags).
+dependencies, travel, buffers, breaks, the daily cap, blocked time and at-risk flags), and
+`npx tsx test/planner.test.ts` checks mission plans (series written out with exact spacing,
+quests months ahead, one-day windows not being crowded out, and days off).
 `npm run typecheck` checks the types, and `npm run healthcheck` is a read-only check against
 the real Acuity pages. The worker side of the job queue is covered by Nova Bot's tests
 (`test/agent-nova.spec.js`).
@@ -428,7 +460,8 @@ src/visualizer/chat.html  the main page: the Nova suite rail, the chat, Today, M
 src/visualizer/page.html  the visualizer
 src/visualizer/app/       the installable app: manifest, service worker, icons, sfx.js (sound effects)
 src/visualizer/calendar-sync.js  makes Nova Calendar save to Nova Agent
-src/chat.ts               the chat: Claude with quest, calendar, Acuity (read-only) and status tools
+src/chat.ts               the chat: Claude with quest, calendar, Acuity (read-only), web and status tools
+src/web.ts                web research and seeing webpages (public pages only, in a browser of its own)
 src/memory.ts             Nova Index: what the suite remembers, read before replies, learned after
 src/config.ts             every setting, read once from .env
 src/quests/store.ts       Missions, Quests, blocked time and your rhythm (quests.json)
@@ -447,11 +480,13 @@ src/tasks.ts              the tasks (check login, list, search, book, cancel, ed
 src/jobs.ts               collecting jobs from Nova Bot's worker and reporting results
 src/healthcheck.ts        the daily read-only healthcheck
 src/alerts.ts             alerts to the console, alerts.log and staff phones
-src/llm.ts                the Claude client
+src/llm.ts                the Claude client (JSON answers, with web research for mission plans)
 src/heal/                 resolve() and the selector memory
 src/acuity/               Acuity pages: login, list, book, cancel, edit, targets, types
 src/trace.ts              every step, for the console, logs and visualizer
 test/scheduler.test.ts    planner checks
+test/planner.test.ts      mission plans: series written out, quests far ahead
+test/web.test.ts          research only cites pages it read; public webpages only
 calendar/                 Nova Calendar (git submodule: tuniveza/nova-calendar)
 deploy/agent-nova.service systemd user service
 docs/acuity-ui-notes.md   what Acuity's real admin pages look like

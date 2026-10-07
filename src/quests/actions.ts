@@ -22,7 +22,13 @@ function missionProgress(data: QuestData, m: Mission) {
   const qs = data.quests.filter((q) => q.missionId === m.id);
   const done = qs.filter((q) => q.status === "done").length;
   const counted = qs.filter((q) => q.status !== "skipped").length;
-  return { total: counted, done, atRisk: qs.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length, minutesLeft: qs.filter((q) => q.status === "todo" || q.status === "doing").reduce((n, q) => n + q.minutes, 0) };
+  // Each workstream's share, and the next milestone still to reach
+  const tracks = m.tracks.map((t) => {
+    const mine = qs.filter((q) => q.track === t.name && q.status !== "skipped");
+    return { ...t, done: mine.filter((q) => q.status === "done").length, total: mine.length };
+  });
+  const nextMilestone = m.milestones.find((x) => !x.done) ?? null;
+  return { total: counted, done, atRisk: qs.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length, minutesLeft: qs.filter((q) => q.status === "todo" || q.status === "doing").reduce((n, q) => n + q.minutes, 0), tracks, nextMilestone };
 }
 
 // Everything the page needs, in one go
@@ -184,6 +190,18 @@ export function updateMission(id: string, changes: Partial<Pick<Mission, "title"
   const data = readQuests();
   const m = find(data.missions, id, "mission");
   Object.assign(m, Object.fromEntries(Object.entries(changes).filter(([, v]) => v !== undefined)), { updated: new Date().toISOString() });
+  writeQuests(data);
+  replan();
+  return m;
+}
+
+// Tick a milestone off (or untick it)
+export function setMilestone(missionId: string, milestoneId: string, done: boolean): Mission {
+  const data = readQuests();
+  const m = find(data.missions, missionId, "mission");
+  const ms = find(m.milestones, milestoneId, "milestone");
+  ms.done = done;
+  m.updated = new Date().toISOString();
   writeQuests(data);
   replan();
   return m;
