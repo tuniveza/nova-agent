@@ -1,6 +1,6 @@
 // The simulated clock for Nova Quests: a fake clock (Vitest's fake timers move
 // Date, setTimeout and setInterval together), a pretend Nova Bot worker that
-// records every /hub/notify, and a fresh data folder for every test.
+// records every /nova-agent/notify, and a fresh data folder for every test.
 //
 //   const nova = await boot("2026-10-07T09:00");      // UK wall-clock time
 //   nova.setQuests({ quests: [...] });
@@ -61,7 +61,7 @@ export async function boot(at: string) {
     calls: 0,
   };
   vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
-    if (!String(url).endsWith("/hub/notify")) return new Response("{}", { status: 404 });
+    if (!String(url).endsWith("/nova-agent/notify")) return new Response("{}", { status: 404 });
     worker.calls++;
     if (!worker.up) throw new TypeError("fetch failed");
     if (worker.status !== 200) return new Response("Service Unavailable", { status: worker.status });

@@ -4,7 +4,7 @@
 //   - shown in the trace (console, logs, visualizer),
 //   - appended to data/alerts.log,
 //   - and, if AGENT_NOVA_KEY is set, sent to staff phones through Novabot's
-//     worker (POST /hub/notify).
+//     worker (POST /nova-agent/notify).
 //
 // Repeated identical alerts are held back for a few hours, so a problem that
 // lasts all day doesn't send a notification every few minutes.
@@ -33,7 +33,7 @@ export async function sendAlert(title: string, message: string): Promise<void> {
 
   if (!config.agentNovaKey) return;
   try {
-    const response = await fetch(`${config.workerUrl}/hub/notify`, {
+    const response = await fetch(`${config.workerUrl}/nova-agent/notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.agentNovaKey}` },
       body: JSON.stringify({ title, message, source: "agent", kind: "agent", urgent: true }),

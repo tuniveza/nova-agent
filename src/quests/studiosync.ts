@@ -61,7 +61,7 @@ export function applyQuestTaps(taps: unknown): void {
 async function send(): Promise<void> {
   if (!config.agentNovaKey) return;
   try {
-    const response = await fetch(`${config.workerUrl}/hub/agent/quests`, {
+    const response = await fetch(`${config.workerUrl}/nova-agent/quests`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.agentNovaKey}` },
       body: JSON.stringify({ state: snapshot() }),
@@ -78,7 +78,7 @@ async function send(): Promise<void> {
   }
 }
 
-export function startHubSync(): void {
+export function startStudioSync(): void {
   const later = () => {
     clearTimeout(soon);
     soon = setTimeout(send, 1500);

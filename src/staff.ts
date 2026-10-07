@@ -60,7 +60,7 @@ async function ask(): Promise<Who> {
   const how: How = config.staffId ? "set" : keep.connected ? "connected" : "auto";
   if (!config.agentNovaKey) return standIn(chosen || keep.last || "owner");
   try {
-    const res = await fetch(`${config.workerUrl}/hub/agent/me`, {
+    const res = await fetch(`${config.workerUrl}/nova-agent/me`, {
       method: "POST",
       headers: { Authorization: `Bearer ${config.agentNovaKey}`, "Content-Type": "application/json" },
       // No id: Nova Bot picks the studio's first admin

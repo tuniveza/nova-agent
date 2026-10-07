@@ -12,7 +12,7 @@
 // Nova Agent only ever calls out to the worker, so it can run on any
 // computer: nothing on the internet needs to reach it.
 
-import { applyQuestTaps } from "./quests/hubsync";
+import { applyQuestTaps } from "./quests/studiosync";
 import { z } from "zod";
 import type { ActionResult } from "./acuity/types";
 import { config } from "./config";
@@ -85,7 +85,7 @@ async function checkForJob(): Promise<"job" | "none" | "problem"> {
   busy = true;
   try {
     const { job, questActions } = (await callWorker(
-      "/hub/agent/next",
+      "/nova-agent/next",
       { dryRun: config.dryRun, bookingsPerVisitor: config.bookingsPerVisitorPerDay, wait: WAIT_SECONDS },
       (WAIT_SECONDS + 15) * 1000,
     )) as { job: unknown; questActions?: unknown };
@@ -138,7 +138,7 @@ async function doJob(raw: unknown): Promise<void> {
 async function report(id: number, result: ActionResult): Promise<void> {
   const message = result.dryRun ? `Rehearsal only (Nova Agent's DRY_RUN is on), so nothing was changed. ${result.message}` : result.message;
   try {
-    await callWorker("/hub/agent/result", { id, ok: result.ok && !result.dryRun, message });
+    await callWorker("/nova-agent/result", { id, ok: result.ok && !result.dryRun, message });
     trace("input", result.ok && !result.dryRun ? "ok" : "warn", `Reported job #${id} back to Novabot: ${message}`);
   } catch (error) {
     trace("input", "error", `Couldn't report job #${id} back to Novabot: ${(error as Error).message}`);

@@ -45,7 +45,7 @@ export interface Attempt {
   error: string;
 }
 
-// What's sent to the worker's /hub/notify
+// What's sent to the worker's /nova-agent/notify
 export interface Push {
   title: string;
   message: string;
@@ -154,7 +154,7 @@ async function attempt(key: string): Promise<void> {
   let error = "";
   try {
     if (!config.agentNovaKey) throw new Error("AGENT_NOVA_KEY isn't set");
-    const response = await fetch(`${config.workerUrl}/hub/notify`, {
+    const response = await fetch(`${config.workerUrl}/nova-agent/notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.agentNovaKey}` },
       body: JSON.stringify(push),
