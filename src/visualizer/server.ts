@@ -130,6 +130,51 @@ serveFolder("/observatory", "../../../no/", "Nova Observatory isn't next to Nova
 serveFolder("/notes", "../../../nn/", "Nova Notes isn't next to Nova Agent (expected it in ../nn).");
 serveFolder("/app/memory", "../../../ni/app/", "Nova Index isn't next to Nova Agent (expected it in ../ni).");
 
+// ---- Nova Portal's badge: who Nova Agent works for (NOVA_STAFF_ID) ----
+// On Nova Agent's own page and every app it serves (Nova Index, Notes, Calendar, Observatory),
+// the badge asks this server, which asks Nova Bot with Nova Agent's key. The planet pictures
+// come through here too, so the apps never talk to another site.
+const badgeFile = fileURLToPath(new URL("../../../np/app/badge.js", import.meta.url));
+app.get("/portal/badge.js", (c) =>
+  existsSync(badgeFile) ? c.body(readFileSync(badgeFile, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }) : c.text("// Nova Portal isn't next to Nova Agent (expected it in ../np)", 404, { "Content-Type": TYPES[".js"] })
+);
+let whoCache: { at: number; data: unknown } | null = null;
+app.get("/auth/me", async (c) => {
+  if (!whoCache || Date.now() - whoCache.at > 60_000) {
+    try {
+      if (!config.agentNovaKey) throw new Error("no key");
+      const res = await fetch(`${config.workerUrl}/hub/agent/me`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${config.agentNovaKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ staff_id: config.staffId }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) whoCache = { at: Date.now(), data: await res.json() };
+    } catch {}
+  }
+  if (whoCache) return c.json(whoCache.data, 200, { "Cache-Control": "no-store" });
+  // Nova Bot can't be reached: a stand-in from the id, so the badge still shows someone
+  const id = config.staffId;
+  const name = id === "owner" ? "Studio" : id.replace(/-/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+  return c.json({ staff: { id, display_name: name, role: "staff", status: "local", planet_seed: id, planet_overrides: null, index_partition: `staff:${id}`, created_at: null }, via: "nova-agent", linked: false });
+});
+const planetCache = new Map<string, { at: number; body: string }>();
+app.get("/staff/:id/planet.svg", async (c) => {
+  const url = `${config.workerUrl}/staff/${encodeURIComponent(c.req.param("id"))}/planet.svg${new URL(c.req.url).search}`;
+  let hit = planetCache.get(url);
+  if (!hit || Date.now() - hit.at > 10 * 60_000) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (res.ok) {
+        hit = { at: Date.now(), body: await res.text() };
+        if (planetCache.size > 200) planetCache.clear();
+        planetCache.set(url, hit);
+      }
+    } catch {}
+  }
+  return hit ? c.body(hit.body, 200, { "Content-Type": "image/svg+xml; charset=utf-8", "Cache-Control": "public, max-age=300" }) : c.text("Not found", 404);
+});
+
 // ---- Nova Index's data, through Nova Agent's own key ----
 // The same addresses the app uses in Nova Hub (/app/api/memory/...), passed on to the
 // memory engine as Nova Agent: the studio's memory and staff memory, never customers'.

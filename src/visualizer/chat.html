@@ -399,6 +399,8 @@
     .tabs button[aria-selected="true"] { background: var(--grad); color: var(--on-accent); }
     .shell[data-tab="chat"] .board, .shell[data-tab="plan"] .chat { display: none; }
     .top-side .btn span:not(.suite-star), .status .label { display: none; }
+    .top-side nova-portal-badge::part(words) { display: none; }
+    .top-side nova-portal-badge::part(chip) { padding: 0 3px; gap: 0; }
     .kicker { display: none; }
     .board-head { padding: 8px; gap: 4px; }
     .seg button { padding: 6px 10px; letter-spacing: .08em; }
@@ -462,6 +464,8 @@
       <span><span class="kicker">Nova suite · Novacane</span><span class="wordmark">Nova Agent</span></span>
     </a>
     <div class="top-side right">
+      <!-- Nova Portal: who Nova Agent works for (NOVA_STAFF_ID): their planet, name and role -->
+      <nova-portal-badge></nova-portal-badge>
       <button type="button" class="btn primary" id="install" hidden><svg class="ico"><use href="#i-down"/></svg><span>Install app</span></button>
       <!-- Every other Nova suite app, one tap away -->
       <button type="button" class="btn suite-btn" id="suite-btn" aria-haspopup="dialog" aria-controls="suite"><span class="suite-star">✦</span><span>Nova suite</span></button>
@@ -604,6 +608,7 @@
   </form>
 </dialog>
 <script src="/app/sfx.js"></script>
+<script src="/portal/badge.js" defer></script>
 <script src="/calendar/js/themes.js"></script>
 <script src="/calendar/js/backdrop.js"></script>
 <script>
