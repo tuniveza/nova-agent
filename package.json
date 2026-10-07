@@ -18,7 +18,8 @@
     "cancel": "tsx src/index.ts cancel",
     "edit": "tsx src/index.ts edit",
     "healthcheck": "tsx src/index.ts healthcheck",
-    "service": "tsx src/visualizer/server.ts"
+    "service": "tsx src/visualizer/server.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@types/node": "^26.6.4",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
   }
 }
