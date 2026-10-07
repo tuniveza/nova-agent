@@ -19,7 +19,10 @@
     "edit": "tsx src/index.ts edit",
     "healthcheck": "tsx src/index.ts healthcheck",
     "service": "tsx src/visualizer/server.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "observatory:scan": "node scripts/observatory/scan.mjs",
+    "observatory:capture": "node scripts/observatory/capture.mjs",
+    "observatory:build": "node scripts/observatory/scan.mjs && node scripts/observatory/capture.mjs && node scripts/observatory/scan.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

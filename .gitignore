@@ -30,3 +30,8 @@ screenshots/
 .vscode/
 .idea/
 .DS_Store
+
+# The Observatory panel's own catalogue of your projects, and what's made from it
+# (names, paths, folder trees, screenshots): local only
+scripts/observatory/projects.config.json
+web/observatory/media/

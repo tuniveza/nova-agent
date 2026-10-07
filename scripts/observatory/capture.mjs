@@ -23,7 +23,9 @@ import { createRequire } from 'node:module';
 
 const run = promisify(execFile);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const MEDIA = path.join(HERE, 'media');
+// The Observatory panel itself: what it shows (data/ and media/) is written there
+const SITE = path.join(HERE, '../../web/observatory');
+const MEDIA = path.join(SITE, 'media');
 // Your own catalogue is projects.config.json (git ignores it). Without one, the example catalogue is used.
 const CONFIG_FILE = ['projects.config.json', 'projects.config.example.json'].map((f) => path.join(HERE, f)).find((f) => fss.existsSync(f));
 if (!CONFIG_FILE.endsWith('projects.config.json')) console.log('No projects.config.json yet, so using projects.config.example.json. Copy it to projects.config.json to make it yours.');
@@ -38,7 +40,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function loadPlaywright() {
   const req = createRequire(import.meta.url);
-  for (const c of ['playwright', path.join(HERE, '../na/node_modules/playwright')]) {
+  for (const c of ['playwright', path.join(HERE, '../../node_modules/playwright')]) {
     try { return req(c); } catch { /* try the next one */ }
   }
   throw new Error('Playwright not found. Run "npm install" in this folder.');
@@ -54,7 +56,7 @@ const MIME = {
 };
 
 // A tiny static file server on a free local port. mounts maps URL prefixes to folders inside root,
-// for apps that expect to be served from a sub-path (Nova Hub lives at /app).
+// for apps that expect to be served from a sub-path (the Studio panel lives at /studio).
 function serve(root, mounts = {}) {
   return new Promise((resolve) => {
     const srv = http.createServer(async (req, res) => {
