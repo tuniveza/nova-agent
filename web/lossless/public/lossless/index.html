@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nova Lossless Audio</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --bg: #f4f4f6; --card: #ffffff; --text: #16161a; --muted: #6b6b76;
+      --line: #e2e2e8; --accent: #5b4cf0; --accent-text: #ffffff;
+      --good: #138a52; --warn: #b26a00; --bad: #c62f3a; --meter: #22b573;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f0f13; --card: #1a1a21; --text: #ececf1; --muted: #9a9aa8;
+        --line: #2c2c36; --accent: #8a7dff; --accent-text: #0f0f13;
+        --good: #3ccf8e; --warn: #f0a83a; --bad: #ff6b76; --meter: #3ccf8e;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      padding: 24px 16px 48px;
+    }
+    main { max-width: 520px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 20px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .row { display: flex; gap: 8px; }
+    input, select, button { font: inherit; border-radius: 10px; }
+    input, select {
+      flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--line);
+      background: var(--bg); color: var(--text);
+    }
+    button {
+      padding: 10px 16px; border: 1px solid var(--line); background: var(--bg);
+      color: var(--text); cursor: pointer; white-space: nowrap;
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+    button:disabled { opacity: .45; cursor: default; }
+    button.on { border-color: var(--good); color: var(--good); font-weight: 600; }
+    button.off { border-color: var(--bad); color: var(--bad); font-weight: 600; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .controls select { grid-column: 1 / -1; }
+    #status { font-weight: 600; }
+    #status.good { color: var(--good); } #status.warn { color: var(--warn); } #status.bad { color: var(--bad); }
+    #resume { display: none; margin-top: 10px; width: 100%; }
+    #catchup { margin-top: 10px; width: 100%; }
+    .meter { margin: 10px 0 2px; }
+    .meter .head { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+    .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .bar > div { height: 100%; width: 0; background: var(--meter); transition: width 60ms linear; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font-size: 14px; }
+    dt { color: var(--muted); }
+    dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+    .note { font-size: 13px; color: var(--muted); }
+    .note strong { color: var(--text); }
+    .field { margin-bottom: 12px; }
+    .field select { width: 100%; }
+    .warnbox { color: var(--warn); margin: 0 0 12px; }
+    details { font-size: 14px; }
+    summary { cursor: pointer; font-weight: 600; }
+    details ol { padding-left: 20px; margin: 10px 0 0; }
+    details li { margin-bottom: 8px; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Nova Lossless Audio</h1>
+  <p class="sub">Raw PCM between two devices over a WebRTC data channel. No Opus, no codec.</p>
+
+  <section class="card">
+    <label for="room">Room code</label>
+    <div class="row">
+      <input id="room" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64">
+      <button id="invite" type="button">Copy link</button>
+    </div>
+    <div class="controls">
+      <button id="connect" class="primary" type="button">Connect</button>
+      <button id="mic" type="button" disabled>Mic on</button>
+      <select id="format" aria-label="Send format">
+        <option value="0">Send 32-bit float (bit-exact)</option>
+        <option value="1">Send 16-bit PCM (half the bandwidth)</option>
+      </select>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="lossless">Lossless: every sample arrives; the delay grows if the network needs it</option>
+        <option value="lowlatency">Low latency: keeps the delay short, gaps if packets are late</option>
+      </select>
+    </div>
+  </section>
+
+
+  <section class="card">
+    <div id="status">Not connected</div>
+    <button id="resume" type="button">Tap to resume audio</button>
+    <button id="catchup" type="button" disabled title="Skip the audio that's built up, to bring the delay back down">Catch up (skip the delay)</button>
+    <div class="meter">
+      <div class="head"><span>You (mic)</span><span id="localDb">–</span></div>
+      <div class="bar"><div id="localBar"></div></div>
+    </div>
+    <div class="meter">
+      <div class="head"><span>Them</span><span id="remoteDb">–</span></div>
+      <div class="bar"><div id="remoteBar"></div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="field">
+      <label for="input">Input (what you send)</label>
+      <select id="input"><option value="">Default microphone</option></select>
+    </div>
+    <div class="field">
+      <label for="output">Output (where their audio plays)</label>
+      <select id="output"><option value="">Default output</option></select>
+    </div>
+    <div class="field">
+      <label for="channels">Channels</label>
+      <select id="channels">
+        <option value="1">Mono (~1.5 Mbps as float)</option>
+        <option value="2">Stereo (~3 Mbps as float)</option>
+      </select>
+    </div>
+    <p id="routing" class="note warnbox" hidden></p>
+    <details>
+      <summary>Using this with Logic Pro (or any DAW) via BlackHole</summary>
+      <ol>
+        <li>Use <strong>Chrome or Edge</strong> on the Mac. Safari can't choose an output device.</li>
+        <li>Install two free BlackHole drivers from <a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">existential.audio</a>: <strong>BlackHole 2ch</strong> and <strong>BlackHole 16ch</strong>. You need one for each direction, otherwise their audio loops straight back to them.</li>
+        <li>In <strong>Audio MIDI Setup</strong>, set both BlackHole devices to <strong>48,000 Hz</strong>, and use 48 kHz for your Logic project. Matching rates means nothing gets resampled.</li>
+        <li>Still in Audio MIDI Setup, click <strong>+</strong> → <strong>Create Multi-Output Device</strong> and tick your headphones and <strong>BlackHole 16ch</strong>. You'll hear Logic, and so will they.</li>
+        <li>On this page, set <strong>Input: BlackHole 16ch</strong>, <strong>Output: BlackHole 2ch</strong> and <strong>Channels: Stereo</strong>, then Connect.</li>
+        <li>In Logic, go to <strong>Settings → Audio → Devices</strong>. Set <strong>Input Device: BlackHole 2ch</strong> and <strong>Output Device: Multi-Output Device</strong>.</li>
+        <li><strong>To record them:</strong> make a stereo audio track with input 1–2, arm it and hit record.<br>
+            <strong>To send to them:</strong> anything Logic plays through its main output goes to them.</li>
+        <li>Watch out: if you monitor their track in Logic, it plays through the main output and they'll hear themselves delayed. Turn input monitoring off on that track. You'll still hear them on the Multi-Output Device.</li>
+      </ol>
+    </details>
+  </section>
+
+  <section class="card">
+    <dl>
+      <dt>Path</dt><dd id="sPath">–</dd>
+      <dt>Round trip</dt><dd id="sRtt">–</dd>
+      <dt>Sending</dt><dd id="sOut">–</dd>
+      <dt>Receiving</dt><dd id="sIn">–</dd>
+      <dt>Their format</dt><dd id="sFmt">–</dd>
+      <dt>Delay buffer</dt><dd id="sBuf">–</dd>
+      <dt>Frames played</dt><dd id="sPlayed">–</dd>
+      <dt>Lost / late</dt><dd id="sLost">–</dd>
+      <dt>Pauses / skipped</dt><dd id="sUnder">–</dd>
+    </dl>
+  </section>
+
+  <p class="note"><strong>Wear headphones on both ends</strong> (unless you're routing through BlackHole). Echo cancellation is deliberately off so the PCM is untouched, which means speakers will feed back into the mic.</p>
+  <p class="note">Every frame is bit-exact (the data channel is checksummed and encrypted end to end). In <strong>Lossless</strong> mode every frame is delivered and played: if the network hiccups, playback pauses and waits rather than skipping, and the delay grows to whatever the connection needs. Use <strong>Catch up</strong> to bring it back down. <strong>Low latency</strong> mode skips late frames instead.</p>
+  <p class="note"><strong>Different networks, anywhere in the world:</strong> if the two devices can't reach each other directly, the call goes through a relay (Path shows "relayed (TURN)"). To test the relay from one network, open the page with <code>?relay</code> before the <code>#</code>, e.g. <code>/lossless/?relay#my-room</code>, on one device.</p>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

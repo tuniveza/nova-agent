@@ -1,0 +1,21 @@
+name = "nova-lossless-audio"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+
+# Static page + worklets. Anything under public/ is served directly;
+# requests that don't match a file (e.g. /lossless/ws) fall through to the Worker.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Signalling: one Durable Object instance per room code.
+[[durable_objects.bindings]]
+name = "LOSSLESS_ROOMS"
+class_name = "LosslessRoom"
+
+# SQLite-backed DOs work on the Workers free plan. If you merge this into the
+# existing Nova Worker, append this as a NEW migration with a unique tag
+# after any migrations that Worker already has.
+[[migrations]]
+tag = "lossless-v1"
+new_sqlite_classes = ["LosslessRoom"]
