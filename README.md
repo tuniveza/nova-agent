@@ -19,6 +19,7 @@ Sign in once and you're signed in to Nova Hub, Nova Index and the admin pages. E
   - **Staff** see the studio's memory and their own partition.
 - **Nova Club and other native apps** can sign in through the same API and get an app token instead of a cookie.
 - **The badge, on every Nova app:** `<nova-portal-badge>` shows your planet (turning, with a halo in its colour blended with the app's theme), your name and your role in the top bar of Nova Hub, Nova Index, the admin pages, Nova Agent, Nova Notes, Nova Calendar and Nova Observatory. Tap it for your planet up close, its name, and links to your profile and your Nova Index.
+- **The Nova Manual, on every Nova app:** `<nova-manual>` sits beside the badge (or floats in the corner where there's no top bar yet, like a sign-in screen). It opens a panel for every app in the suite: a **Guide** to using it, **How it's built**, its **History** as a timeline, and **What's new** (the last week's changes and what's being worked on but not saved yet), with search across all of it. It opens on the app you're in; press **?** on any Nova app, or add `#nova-manual` to the address.
   - **On Nova Bot's worker** it uses your Portal sign-in.
   - **In Nova Agent and the apps it serves** it shows who Nova Agent works for, found by itself: the studio's first admin, or whoever pressed **Connect as me** on it.
   - **On Nova Notes' and Nova Calendar's own sites** you **Connect** it once in Nova Portal, which gives that site a read-only token: your name, role and planet, nothing else.
@@ -75,12 +76,17 @@ This folder is the only real copy. Nova Bot copies `app/` to `public/portal/` an
 app/index.html, portal.js, portal.css   the Portal: setup, sign in, invites, profile, the crew, options
 app/manifest.webmanifest, icon*         the installable app and its cosmic "P"
 app/badge.js                            the Portal badge every Nova app shows (<nova-portal-badge>)
-scripts/share-badge.mjs                 copies the badge into Nova Notes, Nova Calendar and Nova Observatory
+app/manual.js                           the Nova Manual every Nova app shows (<nova-manual>)
+app/manual-data.js                      its pages, made from every app's README and git history (don't edit)
+scripts/build-manual.mjs                makes app/manual-data.js, then shares the badge and the manual
+scripts/share-badge.mjs                 copies the badge and the manual into Nova Notes, Nova Calendar and Nova Observatory
 planet/generator.js                     the planet generator (pure; works in browsers, Workers and Node)
 planet/themes/nova.js                   the Nova theme (swap in the studio's lore later)
 planet/test.mjs                         determinism, every kind of planet, overrides, themes, well-formed SVG
 planet/gallery.html                     48 planets, the hero and badges, for looking at
 ```
+
+Run `node scripts/build-manual.mjs` after changing any app's README or saving new work, so the manual stays current. Nova Agent serves it straight away; Nova Bot's worker includes it on its next deploy; Nova Notes, Calendar and Observatory get fresh copies in their `js/` folders, to deploy with them.
 
 `node --test planet/test.mjs` runs the planet tests. Open `planet/gallery.html` through a local server to see them.
 
