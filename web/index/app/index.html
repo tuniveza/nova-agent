@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Nova Index</title>
+<meta name="description" content="Nova Index: the Nova suite's shared memory, for the Novacane Studios team.">
+<meta name="theme-color" content="#06040D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nova Index">
+<meta name="application-name" content="Nova Index">
+<link rel="manifest" href="/app/memory/manifest.webmanifest">
+<link rel="icon" href="/app/memory/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/app/memory/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/app/memory/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/app/themes.css">
+<link rel="stylesheet" href="/app/memory/memory.css">
+<!-- The saved theme (shared with Nova Hub) goes on before anything is drawn -->
+<script src="/app/themes.js"></script>
+</head>
+<body>
+
+<!-- The pictures used around the page: Nova Index's cosmic I, and the marks of the apps that feed memory -->
+<svg class="sprite" aria-hidden="true">
+  <defs>
+    <radialGradient id="nv-sky" cx="50%" cy="15%" r="95%"><stop offset="0" stop-color="#B01D68"/><stop offset=".42" stop-color="#25194D"/><stop offset="1" stop-color="#06040D"/></radialGradient>
+    <radialGradient id="nv-neb" cx="88%" cy="92%" r="55%"><stop offset="0" stop-color="#7A1F86" stop-opacity=".75"/><stop offset="1" stop-color="#7A1F86" stop-opacity="0"/></radialGradient>
+    <linearGradient id="nv-letter" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD1EA"/><stop offset=".5" stop-color="#FF5FA8"/><stop offset="1" stop-color="#C7A4FF"/></linearGradient>
+    <linearGradient id="nv-letter-24" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="24"><stop offset="0" stop-color="#FFD1EA"/><stop offset=".5" stop-color="#FF5FA8"/><stop offset="1" stop-color="#C7A4FF"/></linearGradient>
+    <filter id="nv-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="nv-glow-24" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation=".9"/></filter>
+    <filter id="nv-twinkle" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <!-- The cosmic sky every mark sits in -->
+  <symbol id="i-sky" viewBox="0 0 512 512">
+    <rect width="512" height="512" fill="url(#nv-sky)"/>
+    <rect width="512" height="512" fill="url(#nv-neb)"/>
+    <g fill="#fff"><circle cx="70" cy="90" r="2.6" opacity=".8"/><circle cx="440" cy="70" r="2" opacity=".6"/><circle cx="462" cy="330" r="2.4" opacity=".6"/><circle cx="80" cy="420" r="1.8" opacity=".55"/><circle cx="290" cy="470" r="1.6" opacity=".5"/><circle cx="150" cy="200" r="1.4" opacity=".45"/><circle cx="392" cy="150" r="1.6" opacity=".5"/></g>
+  </symbol>
+  <!-- Nova Index: a cosmic I with an orbit round it, a sparkle for its dot and a planet on the orbit -->
+  <symbol id="i-mark-i" viewBox="0 0 512 512">
+    <use href="#i-sky"/>
+    <ellipse cx="256" cy="262" rx="196" ry="50" fill="none" stroke="#FFD1EA" stroke-opacity=".35" stroke-width="3.5" stroke-dasharray="3 11" stroke-linecap="round" transform="rotate(-14 256 262)"/>
+    <path d="M176 152h160v52h-50v124h50v52H176v-52h50V204h-50z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
+    <path d="M176 152h160v52h-50v124h50v52H176v-52h50V204h-50z" fill="url(#nv-letter)"/>
+    <path d="M65.8 309.4A196 50-14 0 0 446.2 214.6" fill="none" stroke="#FFD1EA" stroke-opacity=".85" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round"/>
+    <g transform="translate(256 100)"><circle r="14" fill="#FF5FA8" opacity=".85" filter="url(#nv-twinkle)"/><path d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/></g>
+    <circle cx="410" cy="257" r="9" fill="#fff" opacity=".95"/>
+  </symbol>
+  <!-- Nova Hub: a cosmic H -->
+  <symbol id="i-mark-h" viewBox="0 0 512 512">
+    <use href="#i-sky"/>
+    <path d="M146 380V132h60v96h100v-96h60v248h-60V284H206v96z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
+    <path d="M146 380V132h60v96h100v-96h60v248h-60V284H206v96z" fill="url(#nv-letter)"/>
+    <path d="M65.8 309.4A196 50-14 0 0 446.2 214.6" fill="none" stroke="#FFD1EA" stroke-opacity=".85" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round"/>
+  </symbol>
+  <!-- Nova Agent: a cosmic A -->
+  <symbol id="i-mark-a" viewBox="0 0 512 512">
+    <use href="#i-sky"/>
+    <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
+    <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" fill="url(#nv-letter)"/>
+    <ellipse cx="256" cy="296" rx="190" ry="44" fill="none" stroke="#FFD1EA" stroke-opacity=".8" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round" transform="rotate(-14 256 296)"/>
+  </symbol>
+  <!-- NovaBot (the website): the Novacane sigil -->
+  <symbol id="i-mark-bot" viewBox="0 0 512 512">
+    <use href="#i-sky"/>
+    <g transform="translate(100 100) scale(13)" fill="none" stroke-width="2.3" stroke-linecap="round">
+      <path d="M20.19 6.26A10 10 0 0 1 6.26 20.19M3.81 17.74A10 10 0 0 1 17.74 3.81M3.9 20.1 11.3 7.5M12.5 8.3 13.5 16M14.7 16.5 20.1 3.9" stroke="#FF5FA8" opacity=".8" filter="url(#nv-glow-24)"/>
+      <path d="M20.19 6.26A10 10 0 0 1 6.26 20.19M3.81 17.74A10 10 0 0 1 17.74 3.81M3.9 20.1 11.3 7.5M12.5 8.3 13.5 16M14.7 16.5 20.1 3.9" stroke="url(#nv-letter-24)"/>
+    </g>
+  </symbol>
+</svg>
+
+<!-- Signing in (the same password as Nova Hub; signing in here signs in Nova Hub too) -->
+<section id="login" class="login" hidden>
+  <div class="login-mark-wrap" aria-hidden="true">
+    <span class="login-halo"></span>
+    <svg class="login-mark" viewBox="0 0 512 512"><use href="#i-mark-i"/></svg>
+  </div>
+  <span class="kicker login-kicker">Nova suite · Novacane</span>
+  <h1 class="wordmark">Nova Index</h1>
+  <p class="login-sub">Everything the Nova suite remembers</p>
+  <form id="login-form" class="login-form">
+    <!-- One sign-in for the whole suite (Nova Portal); the shared password still works for now -->
+    <a class="btn portal-btn" href="/portal/?next=/app/memory/">✦ Sign in with Nova Portal</a>
+    <p class="login-or">or, for now, the studio's shared password:</p>
+    <label for="password">Studio password</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit">Sign in</button>
+    <p id="login-error" class="error" role="alert"></p>
+  </form>
+</section>
+
+<!-- The app -->
+<div id="app" class="app" hidden>
+  <header class="top">
+    <!-- Back to Nova Hub -->
+    <a class="icon-btn top-left" href="/app/" aria-label="Open Nova Hub" title="Nova Hub">
+      <svg viewBox="0 0 512 512" aria-hidden="true" class="hub-mark"><use href="#i-mark-h"/></svg>
+    </a>
+    <!-- The brand: tap it to go back to the top -->
+    <button id="brand" class="brand" type="button" title="Back to the top">
+      <svg class="brand-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-i"/></svg>
+      <span class="brand-text"><span class="suite-kicker">Nova suite<span class="kicker-more"> · Novacane</span></span><span class="wordmark small">Nova Index</span></span>
+    </button>
+    <div class="top-right top-actions">
+    <!-- Nova Portal: who's signed in (your planet, name and role) -->
+    <nova-manual compact></nova-manual>
+    <nova-portal-badge></nova-portal-badge>
+    <!-- Options: theme, sound, refresh, sign out -->
+    <button id="options" class="icon-btn" type="button" aria-label="Options" title="Options" aria-haspopup="dialog" aria-controls="options-sheet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- How much the suite knows: files per scope (with their facts) and what's waiting -->
+    <section class="stats" aria-label="Memory at a glance">
+      <button class="stat" type="button" data-stat="studio" data-sfx="tab"><span class="stat-num" id="stat-studio">–</span><span class="stat-label">Studio</span><span class="stat-sub" id="stat-studio-facts"></span></button>
+      <button class="stat" type="button" data-stat="staff" data-sfx="tab"><span class="stat-num" id="stat-staff">–</span><span class="stat-label">Staff</span><span class="stat-sub" id="stat-staff-facts"></span></button>
+      <button class="stat" type="button" data-stat="customer" data-sfx="tab"><span class="stat-num" id="stat-customer">–</span><span class="stat-label">Customers</span><span class="stat-sub" id="stat-customer-facts"></span></button>
+      <button class="stat stat-wait" type="button" data-stat="pending" data-sfx="tab"><span class="stat-num" id="stat-pending">–</span><span class="stat-label">Waiting</span><span class="stat-sub">to approve</span></button>
+    </section>
+
+    <!-- 1. Browse: every file, grouped by scope and owner; tap one to read and edit it -->
+    <section id="view-browse" class="view" aria-labelledby="browse-title">
+      <div class="view-head">
+        <h2 id="browse-title">Browse</h2>
+        <button id="new-file" class="btn small" type="button" data-sfx="open">+ New file</button>
+      </div>
+      <div class="browse-tools">
+        <div class="chips" id="scope-chips" role="group" aria-label="Which memory">
+          <button class="chip active" type="button" data-scope="all" aria-pressed="true">All</button>
+          <button class="chip" type="button" data-scope="studio" aria-pressed="false">Studio</button>
+          <button class="chip" type="button" data-scope="staff" aria-pressed="false">Staff</button>
+          <button class="chip" type="button" data-scope="customer" aria-pressed="false">Customers</button>
+        </div>
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <span class="visually-hidden">Search memory</span>
+          <input id="search" type="search" placeholder="Search names, owners and facts" autocomplete="off" enterkeyhint="search">
+        </label>
+      </div>
+
+      <!-- A new file: which memory, whose, what kind, and one line saying what's in it -->
+      <form id="new-form" class="card new-form" hidden>
+        <p class="kicker">New file</p>
+        <div class="field">
+          <span class="field-label">Memory</span>
+          <div class="chips" id="new-scope" role="group" aria-label="Which memory">
+            <button class="chip active" type="button" data-value="studio" aria-pressed="true">Studio</button>
+            <button class="chip" type="button" data-value="staff" aria-pressed="false">Staff</button>
+            <button class="chip" type="button" data-value="customer" aria-pressed="false">Customer</button>
+          </div>
+        </div>
+        <div class="field" id="new-owner-field" hidden>
+          <label class="field-label" for="new-owner" id="new-owner-label">Whose</label>
+          <input id="new-owner" type="text" list="owner-list" autocomplete="off" spellcheck="false">
+          <datalist id="owner-list"></datalist>
+        </div>
+        <div class="field">
+          <span class="field-label">Kind</span>
+          <div class="chips wrap" id="new-kind" role="group" aria-label="What kind of file"></div>
+          <p class="field-help" id="new-kind-help"></p>
+        </div>
+        <div class="field" id="new-name-field" hidden>
+          <label class="field-label" for="new-name">Name</label>
+          <input id="new-name" type="text" autocomplete="off" placeholder="e.g. Kai">
+        </div>
+        <div class="field">
+          <label class="field-label" for="new-desc">What's in it (one line)</label>
+          <input id="new-desc" type="text" autocomplete="off" maxlength="200" placeholder="e.g. Kai: producer, books evening sessions">
+        </div>
+        <div class="field">
+          <label class="field-label" for="new-fact">First fact (optional)</label>
+          <div class="fact-add">
+            <select id="new-tag" aria-label="How we know it"><option value="stated">stated</option><option value="observed">observed</option><option value="inferred">inferred</option></select>
+            <input id="new-fact" type="text" autocomplete="off" maxlength="240" placeholder="e.g. prefers evening sessions">
+          </div>
+        </div>
+        <p class="error" id="new-error" role="alert"></p>
+        <div class="actions">
+          <button class="btn" type="submit" data-sfx="send">Create file</button>
+          <button class="btn ghost" type="button" id="new-cancel" data-sfx="close">Cancel</button>
+        </div>
+      </form>
+
+      <div id="browse-list" class="groups" aria-live="polite"></div>
+    </section>
+
+    <!-- 2. Live: memory as it grows, newest first -->
+    <section id="view-live" class="view" aria-labelledby="live-title" hidden>
+      <div class="view-head">
+        <h2 id="live-title">Live</h2>
+        <span class="listening" id="live-status"><span class="listening-dot" aria-hidden="true"></span><span id="live-checked">Listening</span></span>
+      </div>
+      <div class="live-hero card">
+        <div class="orb" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="live-count">
+          <span class="live-num" id="live-total">–</span>
+          <span class="kicker">facts the suite knows</span>
+          <span class="live-since" id="live-since"></span>
+        </div>
+      </div>
+      <ol id="live-feed" class="feed" aria-live="polite"></ol>
+    </section>
+
+    <!-- 3. Approve: facts learned from customers wait here for a person to say yes -->
+    <section id="view-approve" class="view" aria-labelledby="approve-title" hidden>
+      <div class="view-head">
+        <h2 id="approve-title">Approve</h2>
+        <p class="hint">Facts learned from customer chats wait here. Nothing is remembered until someone says yes.</p>
+      </div>
+      <div id="pending-list" class="list two-up"></div>
+    </section>
+  </main>
+
+  <!-- The tab bar -->
+  <nav class="tabs" aria-label="Nova Index">
+    <button class="tab active" type="button" data-tab="browse" aria-current="page">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h6l2 2h8v12H4z"/><path d="M8 12h8M8 15.5h5"/></svg>
+      <span>Browse</span>
+    </button>
+    <button class="tab" type="button" data-tab="live">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+      <span>Live</span>
+    </button>
+    <button class="tab" type="button" data-tab="approve">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+      <span>Approve</span>
+      <span class="badge" id="pending-badge" hidden></span>
+    </button>
+  </nav>
+</div>
+
+<!-- Options: theme (shared with Nova Hub), sound, refresh and sign out -->
+<div id="options-sheet" class="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="options-title">
+    <div class="sheet-head">
+      <div>
+        <span class="kicker">Nova Index</span>
+        <h3 id="options-title">Options</h3>
+      </div>
+      <button id="options-close" class="icon-btn" type="button" aria-label="Close" data-sfx="close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <section class="option-group">
+      <p class="kicker">Theme</p>
+      <div class="theme-list" data-theme-list></div>
+    </section>
+    <section class="option-group">
+      <label class="option-switch"><span>Sound effects</span><input type="checkbox" role="switch" id="sfx-switch" data-sfx="none"></label>
+    </section>
+    <section class="option-group option-actions">
+      <button id="refresh" class="btn ghost" type="button">Refresh everything</button>
+      <a class="btn ghost" href="/app/">Open Nova Hub</a>
+      <button id="logout" class="btn ghost" type="button">Sign out</button>
+    </section>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="/app/sfx.js"></script>
+<script src="/app/memory/memory.js"></script>
+<script src="/portal/badge.js" defer></script>
+<script src="/portal/manual.js" defer></script>
+</body>
+</html>

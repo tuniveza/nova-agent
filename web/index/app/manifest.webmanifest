@@ -1,0 +1,17 @@
+{
+  "name": "Nova Index",
+  "short_name": "Nova Index",
+  "description": "The Nova suite's shared memory: browse what every Nova app has learned, watch it grow, edit a line and approve new facts.",
+  "id": "/app/memory/",
+  "start_url": "/app/memory/",
+  "scope": "/app/memory/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#06040D",
+  "theme_color": "#06040D",
+  "icons": [
+    { "src": "/app/memory/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/app/memory/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app/memory/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
