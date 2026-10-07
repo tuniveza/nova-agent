@@ -42,10 +42,12 @@ import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { questEvents } from "../quests/store";
 
-const pageFile = fileURLToPath(new URL("./page.html", import.meta.url));
-const chatFile = fileURLToPath(new URL("./chat.html", import.meta.url));
-const syncFile = fileURLToPath(new URL("./calendar-sync.js", import.meta.url));
-const calendarRoot = fileURLToPath(new URL("../../calendar/", import.meta.url));
+// Everything Nova Agent shows lives in web/: its own page (web/agent) and each panel
+const web = (path: string) => fileURLToPath(new URL(`../../web/${path}`, import.meta.url));
+const pageFile = web("agent/page.html");
+const chatFile = web("agent/chat.html");
+const syncFile = web("agent/calendar-sync.js");
+const calendarRoot = web("calendar/");
 const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".json": "application/json", ".webmanifest": "application/manifest+json",
@@ -83,7 +85,7 @@ app.get("/", (c) => c.html(readFileSync(chatFile, "utf8")));
 app.get("/visualizer", (c) => c.html(readFileSync(pageFile, "utf8")));
 
 // ---- The installable app: manifest, service worker and icons ----
-const appRoot = fileURLToPath(new URL("./app/", import.meta.url));
+const appRoot = web("agent/app/");
 const appFile = (name: string) => (c: any) => c.body(readFileSync(appRoot + name), 200, { "Content-Type": TYPES[extname(name)], "Cache-Control": "no-cache" });
 app.get("/manifest.webmanifest", appFile("manifest.webmanifest"));
 app.get("/sw.js", appFile("sw.js"));
@@ -115,7 +117,7 @@ async function shared(c: any, name: string) {
 // its own notes on this computer, separate from the web app's.
 const MEDIA: Record<string, string> = { ".mp4": "video/mp4", ".webm": "video/webm", ".gif": "image/gif", ".webp": "image/webp", ".ico": "image/x-icon", ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8" };
 function serveFolder(prefix: string, folder: string, missing: string) {
-  const root = fileURLToPath(new URL(folder, import.meta.url));
+  const root = web(folder);
   app.get(prefix, (c) => c.redirect(prefix + "/"));
   app.get(prefix + "/*", (c) => {
     const rel = decodeURIComponent(c.req.path.slice(prefix.length + 1)) || "index.html";
@@ -128,9 +130,9 @@ function serveFolder(prefix: string, folder: string, missing: string) {
     return c.body(readFileSync(file) as any, 200, { "Content-Type": type, "Cache-Control": "no-cache" });
   });
 }
-serveFolder("/observatory", "../../../no/", "Nova Observatory isn't next to Nova Agent (expected it in ../no).");
-serveFolder("/notes", "../../../nn/", "Nova Notes isn't next to Nova Agent (expected it in ../nn).");
-serveFolder("/app/memory", "../../../ni/app/", "Nova Index isn't next to Nova Agent (expected it in ../ni).");
+serveFolder("/observatory", "observatory/", "Nova Observatory is missing from web/observatory.");
+serveFolder("/notes", "notes/", "Nova Notes is missing from web/notes.");
+serveFolder("/app/memory", "index/app/", "Nova Index is missing from web/index.");
 
 // ---- Nova Portal's badge: who Nova Agent works for (found automatically: src/staff.ts) ----
 // On Nova Agent's own page and every app it serves (Nova Index, Notes, Calendar, Observatory),
@@ -138,9 +140,9 @@ serveFolder("/app/memory", "../../../ni/app/", "Nova Index isn't next to Nova Ag
 // come through here too, so the apps never talk to another site.
 // The Nova Manual (np/app/manual.js and its content, manual-data.js) is served the same way.
 for (const name of ["badge.js", "manual.js", "manual-data.js"]) {
-  const file = fileURLToPath(new URL(`../../../np/app/${name}`, import.meta.url));
+  const file = web(`portal/app/${name}`);
   app.get(`/portal/${name}`, (c) =>
-    existsSync(file) ? c.body(readFileSync(file, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }) : c.text("// Nova Portal isn't next to Nova Agent (expected it in ../np)", 404, { "Content-Type": TYPES[".js"] })
+    existsSync(file) ? c.body(readFileSync(file, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }) : c.text("// Missing from web/portal/app", 404, { "Content-Type": TYPES[".js"] })
   );
 }
 app.get("/auth/me", async (c) => c.json(await whoAmI(), 200, { "Cache-Control": "no-store" }));
