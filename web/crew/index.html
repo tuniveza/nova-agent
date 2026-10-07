@@ -12,17 +12,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nova Portal">
 <meta name="application-name" content="Nova Portal">
-<link rel="manifest" href="/portal/manifest.webmanifest">
-<link rel="icon" href="/portal/icon.svg" type="image/svg+xml">
-<link rel="icon" href="/portal/icon-192.png" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="/portal/apple-touch-icon.png">
+<link rel="manifest" href="/crew/manifest.webmanifest">
+<link rel="icon" href="/crew/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/crew/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/crew/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="/app/themes.css">
-<link rel="stylesheet" href="/portal/portal.css">
+<link rel="stylesheet" href="/shared/themes.css">
+<link rel="stylesheet" href="/crew/portal.css">
 <!-- The saved theme (shared with Nova Hub) goes on before anything is drawn -->
-<script src="/app/themes.js"></script>
+<script src="/shared/themes.js"></script>
 </head>
 <body>
 
@@ -204,11 +204,11 @@
 <div id="app" class="app" hidden>
   <header class="top">
     <!-- Over to Nova Hub -->
-    <a class="icon-btn top-left" href="/app/" aria-label="Open Nova Hub" title="Nova Hub">
+    <a class="icon-btn top-left" href="/studio/" aria-label="Open Nova Hub" title="Nova Hub">
       <svg viewBox="0 0 512 512" aria-hidden="true" class="hub-mark"><use href="#i-mark-h"/></svg>
     </a>
     <!-- The brand: back to my profile -->
-    <a id="brand" class="brand" href="/portal/" data-nav="me" title="My profile">
+    <a id="brand" class="brand" href="/crew/" data-nav="me" title="My profile">
       <svg class="brand-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-p"/></svg>
       <span class="brand-text"><span class="suite-kicker">Nova suite<span class="kicker-more"> · Novacane</span></span><span class="wordmark small">Nova Portal</span></span>
     </a>
@@ -274,7 +274,7 @@
 
         <!-- What I can do (my own profile) -->
         <div class="hero-actions" id="self-actions">
-          <a id="open-index" class="btn wide" href="/app/memory/">
+          <a id="open-index" class="btn wide" href="/index/">
             <svg viewBox="0 0 512 512" aria-hidden="true" class="btn-mark"><use href="#i-mark-i"/></svg>
             <span id="open-index-label">Open my Nova Index</span>
           </a>
@@ -383,19 +383,19 @@
 
   <!-- The suite bar: me, the crew, and the other Nova apps -->
   <nav class="suite-bar" aria-label="Nova suite">
-    <a class="tab" id="nav-me" href="/portal/" data-nav="me">
+    <a class="tab" id="nav-me" href="/crew/" data-nav="me">
       <img id="nav-me-planet" class="tab-planet" alt="" width="64" height="64">
       <span>Me</span>
     </a>
-    <a class="tab" id="nav-crew" href="/portal/?view=crew" data-nav="crew" hidden>
+    <a class="tab" id="nav-crew" href="/crew/?view=crew" data-nav="crew" hidden>
       <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="3.2"/><circle cx="17" cy="10.5" r="2.4"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/><path d="M15 15c2.6-.4 4.6.8 5.5 3.5"/></svg>
       <span>Crew</span>
     </a>
-    <a class="tab" href="/app/memory/">
+    <a class="tab" href="/index/">
       <svg viewBox="0 0 512 512" aria-hidden="true" class="tab-mark"><use href="#i-mark-i"/></svg>
       <span>Index</span>
     </a>
-    <a class="tab" href="/app/">
+    <a class="tab" href="/studio/">
       <svg viewBox="0 0 512 512" aria-hidden="true" class="tab-mark"><use href="#i-mark-h"/></svg>
       <span>Hub</span>
     </a>
@@ -426,7 +426,7 @@
       <label class="option-switch"><span>Sound effects</span><input type="checkbox" role="switch" id="sfx-switch" data-sfx="none"></label>
     </section>
     <section class="option-group option-actions">
-      <a class="btn ghost" href="/app/">Open Nova Hub</a>
+      <a class="btn ghost" href="/studio/">Open Nova Hub</a>
       <button id="options-sign-out" class="btn ghost" type="button" data-sfx="close">Sign out everywhere</button>
     </section>
   </div>
@@ -434,8 +434,8 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="/app/sfx.js"></script>
-<script src="/portal/portal.js"></script>
-<script src="/portal/manual.js" defer></script>
+<script src="/shared/sfx.js"></script>
+<script src="/crew/portal.js"></script>
+<script src="/shared/manual.js" defer></script>
 </body>
 </html>

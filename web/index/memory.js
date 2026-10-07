@@ -1171,7 +1171,7 @@
     if (state.pendingLocked) {
       const note = el("div", "empty", [el("strong", "", "Approvals are in Nova Hub"), el("span", "", "Customers' facts and the approval queue need Nova Hub's sign-in, so they aren't shown inside Nova Agent.")]);
       const go = el("a", "btn", "Open Nova Index in Nova Hub ↗");
-      go.href = "https://novacane-worker.novacane-studio.workers.dev/app/memory/";
+      go.href = "https://novacane-worker.novacane-studio.workers.dev/index/";
       go.target = "_blank";
       go.rel = "noopener";
       note.appendChild(go);

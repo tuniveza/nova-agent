@@ -91,25 +91,11 @@ app.get("/manifest.webmanifest", appFile("manifest.webmanifest"));
 app.get("/sw.js", appFile("sw.js"));
 app.get("/app/:file", (c) => {
   const name = c.req.param("file");
-  if (name === "memory") return c.redirect("/app/memory/");
+  // Nova Index used to live at /app/memory/
+  if (name === "memory") return c.redirect("/index/");
   if (/^[\w-]+\.(png|svg|js)$/.test(name) && existsSync(appRoot + name)) return appFile(name)(c);
-  // Nova Hub's shared look (themes) for Nova Index, fetched once from Nova Bot's worker
-  if (SHARED.includes(name)) return shared(c, name);
   return c.text("Not found", 404);
 });
-const SHARED = ["themes.css", "themes.js"];
-const sharedCache = new Map<string, { at: number; body: string; type: string }>();
-async function shared(c: any, name: string) {
-  const hit = sharedCache.get(name);
-  if (!hit || Date.now() - hit.at > 10 * 60_000) {
-    try {
-      const res = await fetch(`${config.workerUrl}/app/${name}`, { signal: AbortSignal.timeout(8000) });
-      if (res.ok) sharedCache.set(name, { at: Date.now(), body: await res.text(), type: res.headers.get("content-type") || TYPES[extname(name)] });
-    } catch {}
-  }
-  const got = sharedCache.get(name);
-  return got ? c.body(got.body, 200, { "Content-Type": got.type, "Cache-Control": "no-cache" }) : c.text("Not found", 404);
-}
 
 // ---- Nova Observatory and Nova Notes, served from their folders next to Nova Agent ----
 // So they're always on while Nova Agent is, and open inside it in any browser (as part of
@@ -132,19 +118,14 @@ function serveFolder(prefix: string, folder: string, missing: string) {
 }
 serveFolder("/observatory", "observatory/", "Nova Observatory is missing from web/observatory.");
 serveFolder("/notes", "notes/", "Nova Notes is missing from web/notes.");
-serveFolder("/app/memory", "index/app/", "Nova Index is missing from web/index.");
+serveFolder("/index", "index/", "Nova Index is missing from web/index.");
+app.get("/app/memory/*", (c) => c.redirect("/index/" + c.req.path.slice("/app/memory/".length)));
 
-// ---- Nova Portal's badge: who Nova Agent works for (found automatically: src/staff.ts) ----
-// On Nova Agent's own page and every app it serves (Nova Index, Notes, Calendar, Observatory),
-// the badge asks this server, which asks Nova Bot with Nova Agent's key. The planet pictures
-// come through here too, so the apps never talk to another site.
-// The Nova Manual (np/app/manual.js and its content, manual-data.js) is served the same way.
-for (const name of ["badge.js", "manual.js", "manual-data.js"]) {
-  const file = web(`portal/app/${name}`);
-  app.get(`/portal/${name}`, (c) =>
-    existsSync(file) ? c.body(readFileSync(file, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }) : c.text("// Missing from web/portal/app", 404, { "Content-Type": TYPES[".js"] })
-  );
-}
+// ---- What every panel shares: the look (themes), sounds, the Nova Portal badge and the Nova Manual ----
+// The badge asks this server who Nova Agent works for (src/staff.ts), which asks Nova Bot with
+// Nova Agent's key; the planet pictures come through here too, so the panels never talk to another site.
+serveFolder("/shared", "shared/", "web/shared is missing.");
+
 app.get("/auth/me", async (c) => c.json(await whoAmI(), 200, { "Cache-Control": "no-store" }));
 // "Connect as me" (back from Nova Portal with a read-only token) and "back to automatic".
 // Only from Nova Agent's own pages: the header makes other websites' requests fail.

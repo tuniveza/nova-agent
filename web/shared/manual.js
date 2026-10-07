@@ -1,8 +1,8 @@
 // Nova Manual: how every Nova suite app works, how it's built, its history and what's
 // changing, in one panel on every app.
 //
-//   <script src="/portal/manual.js" defer></script>        (on Nova Bot's worker and in Nova Agent)
-//   <script src="js/nova-manual.js" defer></script>         (Nova Notes, Calendar, Observatory: a copy)
+//   <script src="/shared/manual.js" defer></script>        (on Nova Bot's worker and in Nova Agent)
+//   <script src="/shared/manual.js" defer></script>         (Nova Notes, Calendar, Observatory: a copy)
 //   <nova-manual></nova-manual>                              (optional: put the button somewhere yourself;
 //                                                            without one, a floating button appears)
 // It opens with the button, the ? key, or #nova-manual in the address, on the page for the
@@ -65,9 +65,9 @@
     if (/nova-notes/.test(h) || p.startsWith("/notes")) return "notes";
     if (/nova-calendar/.test(h) || p.startsWith("/calendar")) return "calendar";
     if (p.startsWith("/observatory") || location.port === "4610" || (location.protocol === "file:" && /observatory|\/no\//i.test(p))) return "observatory";
-    if (p.startsWith("/app/memory")) return "index";
-    if (p.startsWith("/app")) return "hub";
-    if (p.startsWith("/portal")) return "portal";
+    if (p.startsWith("/index")) return "index";
+    if (p.startsWith("/studio")) return "studio";
+    if (p.startsWith("/crew")) return "crew";
     if (p.startsWith("/admin")) return "bot";
     if (/^454\d$/.test(location.port)) return "agent";
     return "";

@@ -12,17 +12,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nova Index">
 <meta name="application-name" content="Nova Index">
-<link rel="manifest" href="/app/memory/manifest.webmanifest">
-<link rel="icon" href="/app/memory/icon.svg" type="image/svg+xml">
-<link rel="icon" href="/app/memory/icon-192.png" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="/app/memory/apple-touch-icon.png">
+<link rel="manifest" href="/index/manifest.webmanifest">
+<link rel="icon" href="/index/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/index/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/index/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="/app/themes.css">
-<link rel="stylesheet" href="/app/memory/memory.css">
+<link rel="stylesheet" href="/shared/themes.css">
+<link rel="stylesheet" href="/index/memory.css">
 <!-- The saved theme (shared with Nova Hub) goes on before anything is drawn -->
-<script src="/app/themes.js"></script>
+<script src="/shared/themes.js"></script>
 </head>
 <body>
 
@@ -88,7 +88,7 @@
   <p class="login-sub">Everything the Nova suite remembers</p>
   <form id="login-form" class="login-form">
     <!-- One sign-in for the whole suite (Nova Portal); the shared password still works for now -->
-    <a class="btn portal-btn" href="/portal/?next=/app/memory/">✦ Sign in with Nova Portal</a>
+    <a class="btn portal-btn" href="/crew/?next=/index/">✦ Sign in with Nova Portal</a>
     <p class="login-or">or, for now, the studio's shared password:</p>
     <label for="password">Studio password</label>
     <input id="password" type="password" autocomplete="current-password" required>
@@ -101,7 +101,7 @@
 <div id="app" class="app" hidden>
   <header class="top">
     <!-- Back to Nova Hub -->
-    <a class="icon-btn top-left" href="/app/" aria-label="Open Nova Hub" title="Nova Hub">
+    <a class="icon-btn top-left" href="/studio/" aria-label="Open Nova Hub" title="Nova Hub">
       <svg viewBox="0 0 512 512" aria-hidden="true" class="hub-mark"><use href="#i-mark-h"/></svg>
     </a>
     <!-- The brand: tap it to go back to the top -->
@@ -261,7 +261,7 @@
     </section>
     <section class="option-group option-actions">
       <button id="refresh" class="btn ghost" type="button">Refresh everything</button>
-      <a class="btn ghost" href="/app/">Open Nova Hub</a>
+      <a class="btn ghost" href="/studio/">Open Nova Hub</a>
       <button id="logout" class="btn ghost" type="button">Sign out</button>
     </section>
   </div>
@@ -269,9 +269,9 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="/app/sfx.js"></script>
-<script src="/app/memory/memory.js"></script>
-<script src="/portal/badge.js" defer></script>
-<script src="/portal/manual.js" defer></script>
+<script src="/shared/sfx.js"></script>
+<script src="/index/memory.js"></script>
+<script src="/shared/badge.js" defer></script>
+<script src="/shared/manual.js" defer></script>
 </body>
 </html>

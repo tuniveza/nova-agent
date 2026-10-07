@@ -87,7 +87,7 @@
   const longDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) : "");
   const fullDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
 
-  // Where to go after signing in: only a path on this site ("/app/"), never another website
+  // Where to go after signing in: only a path on this site ("/studio/"), never another website
   // ("//evil.example", "https://…", "/\evil") or anything odd
   function safeNext(raw) {
     const v = String(raw || "");
@@ -120,8 +120,8 @@
 
   // A friendly name for where "next" goes
   function nextName(path) {
-    if (path.startsWith("/app/memory")) return "Nova Index";
-    if (path.startsWith("/app")) return "Nova Hub";
+    if (path.startsWith("/index")) return "Nova Index";
+    if (path.startsWith("/studio")) return "Studio";
     if (path.startsWith("/admin")) return "the admin pages";
     return "";
   }
@@ -373,7 +373,7 @@
     }
   });
   $("invite-gone-signin").addEventListener("click", () => {
-    history.replaceState(null, "", "/portal/");
+    history.replaceState(null, "", "/crew/");
     showLogin();
   });
 
@@ -389,7 +389,7 @@
       location.assign(state.next);
       return;
     }
-    history.replaceState(null, "", "/portal/");
+    history.replaceState(null, "", "/crew/");
     enterApp({ message, fresh });
   }
 
@@ -402,7 +402,7 @@
     state.crew = null;
     $("planet").removeAttribute("src");
     delete $("planet").dataset.src;
-    history.replaceState(null, "", "/portal/");
+    history.replaceState(null, "", "/crew/");
     showLogin("Signed out. Sign in again to carry on.");
     if (message) toast(message);
   }
@@ -471,7 +471,7 @@
     closeNameForm();
     if (route.view === "crew") {
       if (!isAdmin()) {
-        history.replaceState(null, "", "/portal/");
+        history.replaceState(null, "", "/crew/");
         toast("The crew page is for admins.", true);
         return renderRoute();
       }
@@ -492,7 +492,7 @@
     } catch (err) {
       if (state.screen !== "app") return;
       toast(err.message, true);
-      history.replaceState(null, "", isAdmin() ? "/portal/?view=crew" : "/portal/");
+      history.replaceState(null, "", isAdmin() ? "/crew/?view=crew" : "/crew/");
       renderRoute();
     }
   }
@@ -528,7 +528,7 @@
     // What I can do: everything on my own; an admin can open someone's Nova Index
     $("self-actions").hidden = !(self || isAdmin());
     document.querySelector(".action-grid").hidden = !self;
-    $("open-index").href = `/app/memory/?scope=staff&owner=${encodeURIComponent(person.id)}`;
+    $("open-index").href = `/index/?scope=staff&owner=${encodeURIComponent(person.id)}`;
     $("open-index-label").textContent = self ? "Open my Nova Index" : `Open ${possessive(firstName(person.display_name))} Nova Index`;
     $("reset-planet").hidden = !self || !person.planet_seed || person.planet_seed === person.id;
     evenActions();
@@ -740,7 +740,7 @@
     const files = Array.isArray(data.files) ? data.files : [];
     const mine = files.filter((f) => f.scope === "staff");
     const studio = files.filter((f) => f.scope === "studio");
-    const ownerLink = `/app/memory/?scope=staff&owner=${encodeURIComponent(person.id)}`;
+    const ownerLink = `/index/?scope=staff&owner=${encodeURIComponent(person.id)}`;
     let i = 0;
 
     const own = el("div", "mem-group", [el("p", "mem-head", self ? "Yours" : firstName(person.display_name))]);
@@ -756,10 +756,10 @@
     const shared = el("div", "mem-group", [el("p", "mem-head", "The studio · shared")]);
     const SHOW = 4;
     if (studio.length) {
-      shared.append(...studio.slice(0, SHOW).map((f) => memFile(f, "/app/memory/?scope=studio", i++)));
+      shared.append(...studio.slice(0, SHOW).map((f) => memFile(f, "/index/?scope=studio", i++)));
       if (studio.length > SHOW) {
         const more = button("btn small ghost mem-more", `Show all ${studio.length}`, () => {
-          more.replaceWith(...studio.slice(SHOW).map((f, j) => memFile(f, "/app/memory/?scope=studio", j)));
+          more.replaceWith(...studio.slice(SHOW).map((f, j) => memFile(f, "/index/?scope=studio", j)));
         }, { "data-sfx": "open" });
         shared.append(more);
       }
@@ -940,7 +940,7 @@
   function crewCard(p, i, isNew) {
     const self = state.me && p.id === state.me.id;
     const a = el("a", `crew-card card-in ${p.status}`);
-    a.href = self ? "/portal/" : `/portal/?id=${encodeURIComponent(p.id)}`;
+    a.href = self ? "/crew/" : `/crew/?id=${encodeURIComponent(p.id)}`;
     a.dataset.nav = self ? "me" : "person";
     a.style.setProperty("--i", String(Math.min(i, 16)));
     const badge = el("img", "badge");
@@ -1016,7 +1016,7 @@
     }
   });
 
-  $("back-to-crew").addEventListener("click", () => go("/portal/?view=crew"));
+  $("back-to-crew").addEventListener("click", () => go("/crew/?view=crew"));
 
   // ===== Keeping an eye on the session (an admin may switch someone off; signing out elsewhere ends it) =====
   async function checkSession() {

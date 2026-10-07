@@ -1203,9 +1203,9 @@
       return card;
     }
     // Enquiry alerts open the Enquiries tab; booking alerts open Acuity
-    const open = el(n.url.startsWith("/app/") ? "button" : "a", "btn small", n.url.startsWith("/app/") ? "Open enquiry" : /acuityscheduling/.test(n.url) ? "Open in Acuity" : "Open in Google Calendar");
+    const open = el(n.url.startsWith("/studio/") ? "button" : "a", "btn small", n.url.startsWith("/studio/") ? "Open enquiry" : /acuityscheduling/.test(n.url) ? "Open in Acuity" : "Open in Google Calendar");
     // An enquiry: switch tabs when tapped
-    if (n.url.startsWith("/app/")) open.addEventListener("click", () => show("enquiries"));
+    if (n.url.startsWith("/studio/")) open.addEventListener("click", () => show("enquiries"));
     // A booking: a link to Acuity, opened outside the app
     else Object.assign(open, { href: n.url, target: "_blank", rel: "noopener" });
     // Add it to the row
@@ -1442,7 +1442,7 @@
   // Install the doorman (sw.js) as soon as the app opens, so it's ready when needed
   if (canNotify) {
     navigator.serviceWorker
-      .register("/app/sw.js", { scope: "/app/", updateViaCache: "none" })
+      .register("/studio/sw.js", { scope: "/studio/", updateViaCache: "none" })
       // Look for a newer doorman every time Nova Hub opens (and when it comes back to the front)
       .then((reg) => {
         reg.update().catch(() => {});

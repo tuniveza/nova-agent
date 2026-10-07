@@ -21,14 +21,14 @@ self.addEventListener("push", (event) => {
   // Unpack the title, text and where to go when it's tapped (or use plain defaults)
   const data = event.data ? event.data.json() : { title: "Nova Hub", body: "Something new in Nova Hub" };
   // The plain version: title, text, icon and where to go (what every phone shows, iPhones included)
-  const plain = { body: data.body || "", icon: "/app/icon-192.png", data: { url: data.url || "/app/" } };
+  const plain = { body: data.body || "", icon: "/studio/icon-192.png", data: { url: data.url || "/studio/" } };
   // The rich version adds a buzz pattern, a tag (a newer one replaces the older one), and
   // staying on screen for check-ins. iPhones only get the plain version, and if a phone
   // turns the rich one down, it falls back to plain, so nothing is ever lost.
   const isApple = /iPhone|iPad|iPod|Macintosh/.test(self.navigator.userAgent);
   const rich = {
     ...plain,
-    badge: "/app/icon-192.png",
+    badge: "/studio/icon-192.png",
     tag: data.tag || undefined,
     renotify: Boolean(data.tag),
     vibrate: BUZZ[data.kind] || BUZZ[data.source] || [200, 100, 200],
@@ -55,13 +55,13 @@ self.addEventListener("notificationclick", (event) => {
   // Put the notification away
   event.notification.close();
   // Where this notification should take him (Nova Hub, or Acuity for bookings)
-  const url = event.notification.data?.url || "/app/";
+  const url = event.notification.data?.url || "/studio/";
   // Keep the doorman awake until the right screen is open
   event.waitUntil(
     // Look for Nova Hub windows that are already open
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
       // For a Nova Hub link, reuse an open Nova Hub window if there is one
-      const open = url.startsWith("/app/") && windows.find((w) => w.url.includes("/app/"));
+      const open = url.startsWith("/studio/") && windows.find((w) => w.url.includes("/studio/"));
       // Bring that window to the front, on the right tab
       if (open) {
         open.postMessage({ type: "nova-open", url });

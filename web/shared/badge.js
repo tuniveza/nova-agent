@@ -1,6 +1,6 @@
 // Nova Portal badge: who's signed in, on every Nova suite app.
 //
-//   <script src="/portal/badge.js" defer></script>        (on Nova Bot's worker and in Nova Agent)
+//   <script src="/shared/badge.js" defer></script>        (on Nova Bot's worker and in Nova Agent)
 //   <script src="https://novacane-worker.novacane-studio.workers.dev/portal/badge.js" defer></script>
 //   <nova-portal-badge></nova-portal-badge>                 (compact: planet only; align="start" opens its card to the right)
 // Pages can style ::part(chip) and ::part(words) (e.g. hide the words on a phone).
@@ -24,7 +24,7 @@
   const inAgent = /^http:\/\/(localhost|127\.0\.0\.1):454[5-9]$/.test(here);
   const mode = onWorker ? "portal" : inAgent ? "agent" : "connect";
   const api = mode === "connect" ? WORKER : "";
-  const portalUrl = (mode === "portal" ? "" : WORKER) + "/portal/";
+  const portalUrl = (mode === "portal" ? "" : WORKER) + "/crew/";
 
   const store = {
     get() {
@@ -318,7 +318,7 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       if (s) {
         const role = s.role === "admin" ? "Admin" : "Staff";
         const unlinked = mode === "agent" && !d.linked;
-        const index = (mode === "connect" ? WORKER : "") + "/app/memory/";
+        const index = (mode === "connect" ? WORKER : "") + "/index/";
         // Nova Agent: "Connect as me" makes it work for you (back to its main page afterwards)
         const connectMe = `${portalUrl}?connect=${encodeURIComponent(location.origin + "/")}`;
         const agentMore =
@@ -332,7 +332,7 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
         const links = [
           `<a class="main" href="${portalUrl}${mode === "portal" ? "" : unlinked ? "" : "?id=" + encodeURIComponent(s.id)}" target="${mode === "portal" ? "_self" : "_blank"}" rel="noopener">${ICON.profile}<span>${unlinked ? "Set up Nova Portal" : "Your profile"}</span></a>`,
           `<a href="${index}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.index}<span>${unlinked ? "Nova Index" : "Your Nova Index"}</span></a>`,
-          mode === "portal" && !location.pathname.startsWith("/app/") ? `<a href="/app/">${ICON.hub}<span>Nova Hub</span></a>` : "",
+          mode === "portal" && !location.pathname.startsWith("/studio/") ? `<a href="/studio/">${ICON.hub}<span>Nova Hub</span></a>` : "",
           mode === "agent" ? agentMore : `<button type="button" class="quiet" data-act="out">${ICON.out}<span>${mode === "connect" ? "Disconnect" : "Sign out everywhere"}</span></button>`,
         ].join("");
         const agentNote =
