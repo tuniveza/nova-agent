@@ -30,6 +30,7 @@
     inviteToken: "",
     inviteRole: "staff",
     next: "", // where to go after signing in (a same-site path), if anywhere
+    connect: "", // another Nova app's address asking to show who you are (?connect=)
     rolling: false,
     checkTimer: 0,
     lastEmail: "",
@@ -99,6 +100,24 @@
       return "";
     }
   }
+  // The other Nova apps that may show your Portal badge (the server checks this list too)
+  const SUITE_SITES = {
+    "https://nova-notes.novacane-studio.workers.dev": "Nova Notes",
+    "https://nova-calendar.novacane-studio.workers.dev": "Nova Calendar",
+    "http://localhost:4545": "Nova Agent",
+    "http://localhost:4546": "Nova Agent (preview)",
+    "http://localhost:4610": "Nova Observatory",
+  };
+  function safeConnect(raw) {
+    try {
+      const url = new URL(String(raw || ""));
+      return SUITE_SITES[url.origin] ? url.origin + url.pathname + url.search : "";
+    } catch (err) {
+      return "";
+    }
+  }
+  const connectName = () => (state.connect ? SUITE_SITES[new URL(state.connect).origin] : "");
+
   // A friendly name for where "next" goes
   function nextName(path) {
     if (path.startsWith("/app/memory")) return "Nova Index";
@@ -188,7 +207,7 @@
   function showAuthCard(id, sub) {
     const first = state.screen !== "auth";
     showScreen("auth");
-    for (const card of ["setup-form", "login-form", "invite-form", "invite-gone"]) $(card).hidden = card !== id;
+    for (const card of ["setup-form", "login-form", "invite-form", "invite-gone", "connect-card"]) $(card).hidden = card !== id;
     $("auth-sub").textContent = sub;
     replay($(id), "screen-in");
     if (first) replay($("auth"), "screen-in");
@@ -269,7 +288,7 @@
 
   // ----- 2. Signing in -----
   function showLogin(sub) {
-    const where = nextName(state.next);
+    const where = connectName() || nextName(state.next);
     showAuthCard("login-form", sub || (where ? `Sign in to carry on to ${where}` : "One sign-in for every Nova app"));
     setError("login-error", "");
     $("login-password").value = "";
@@ -363,6 +382,8 @@
     // (the reply is read just before this sign-in is recorded, so "last signed in" is now)
     state.me = { ...staff, last_login_at: staff.last_login_at || new Date().toISOString() };
     state.lastEmail = staff.email || state.lastEmail;
+    // Another Nova app asked to show who you are: ask first
+    if (state.connect) return showConnect();
     // Came from another Nova app? Back there now.
     if (state.next) {
       location.assign(state.next);
@@ -1078,10 +1099,44 @@
   matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", settleMotion);
   window.addEventListener("novaoptionschange", settleMotion);
 
+  // ----- 5. Another Nova app asking to show who you are -----
+  // It gets a read-only token (name, role and planet only), handed back in the address's #fragment
+  function showConnect() {
+    const name = connectName();
+    showAuthCard("connect-card", "One sign-in for every Nova app");
+    $("connect-title").textContent = `Connect ${name}`;
+    $("connect-why").textContent = `${name} would like to show your Nova Portal badge.`;
+    $("connect-planet").src = planetUrl(state.me, 192, true);
+    $("connect-name").textContent = state.me.display_name;
+    $("connect-role").textContent = state.me.role === "admin" ? "Admin" : "Staff";
+    setError("connect-error", "");
+    focusSoon($("connect-yes"));
+  }
+  $("connect-yes").addEventListener("click", async () => {
+    try {
+      const r = await busy($("connect-yes"), "Connecting…", () => api("/auth/connect", { method: "POST", body: { return_to: state.connect } }));
+      if (r.ok && r.data.redirect) {
+        sfx("done");
+        location.replace(r.data.redirect);
+        return;
+      }
+      setError("connect-error", r.data.error || `That didn't work (error ${r.status}).`, $("connect-card"));
+      sfx("error");
+    } catch (err) {
+      setError("connect-error", err.message, $("connect-card"));
+    }
+  });
+  $("connect-no").addEventListener("click", () => {
+    const back = state.connect;
+    state.connect = "";
+    location.replace(back);
+  });
+
   // ===== Start: who's here? =====
   async function start() {
     const params = new URLSearchParams(location.search);
     state.next = safeNext(params.get("next"));
+    state.connect = safeConnect(params.get("connect"));
     settleMotion();
     try {
       // An invite link wins: whoever's signed in on this device, the link is for someone joining
@@ -1090,6 +1145,7 @@
       const me = await api("/auth/me");
       if (me.ok && me.data.staff) {
         state.me = me.data.staff;
+        if (state.connect) return showConnect();
         // Sent here by another Nova app, but already signed in: straight back
         if (state.next) {
           location.replace(state.next);

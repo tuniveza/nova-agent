@@ -18,6 +18,10 @@ Sign in once and you're signed in to Nova Hub, Nova Index and the admin pages. E
   - **Admins** see and manage everything, including customers' facts and approvals in Nova Index.
   - **Staff** see the studio's memory and their own partition.
 - **Nova Club and other native apps** can sign in through the same API and get an app token instead of a cookie.
+- **The badge, on every Nova app:** `<nova-portal-badge>` shows your planet (turning, with a halo in its colour blended with the app's theme), your name and your role in the top bar of Nova Hub, Nova Index, the admin pages, Nova Agent, Nova Notes, Nova Calendar and Nova Observatory. Tap it for your planet up close, its name, and links to your profile and your Nova Index.
+  - **On Nova Bot's worker** it uses your Portal sign-in.
+  - **In Nova Agent and the apps it serves** it shows who Nova Agent works for (`NOVA_STAFF_ID`).
+  - **On Nova Notes' and Nova Calendar's own sites** you **Connect** it once in Nova Portal, which gives that site a read-only token: your name, role and planet, nothing else.
 
 <table><tr>
 <td width="50%"><img src="docs/media/profile.jpg" alt="A profile: the animated planet, the name, an admin pill and Open my Nova Index"></td>
@@ -50,6 +54,7 @@ Sign in once and you're signed in to Nova Hub, Nova Index and the admin pages. E
 | `GET /staff/:id` · `PATCH /staff/:id` | a profile; changing name, planet, role or status |
 | `GET /staff/:id/planet.svg` | the planet badge (`?size=`, `?animate=1`) |
 | `GET /staff/:id/index` | that person's Nova Index partition and the studio's shared facts |
+| `POST /auth/connect` | `{ return_to }` → a read-only badge token for another Nova suite site |
 
 - **Passwords:** PBKDF2-SHA256, salted, 100,000 rounds.
 - **Sessions:** a random token in an httpOnly, Secure cookie. Only its hash is stored, and signing out deletes it.
@@ -69,6 +74,8 @@ This folder is the only real copy. Nova Bot copies `app/` to `public/portal/` an
 ```
 app/index.html, portal.js, portal.css   the Portal: setup, sign in, invites, profile, the crew, options
 app/manifest.webmanifest, icon*         the installable app and its cosmic "P"
+app/badge.js                            the Portal badge every Nova app shows (<nova-portal-badge>)
+scripts/share-badge.mjs                 copies the badge into Nova Notes, Nova Calendar and Nova Observatory
 planet/generator.js                     the planet generator (pure; works in browsers, Workers and Node)
 planet/themes/nova.js                   the Nova theme (swap in the studio's lore later)
 planet/test.mjs                         determinism, every kind of planet, overrides, themes, well-formed SVG

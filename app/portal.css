@@ -685,3 +685,12 @@ html[data-stars="off"] body::before, html[data-stars="off"] body::after { displa
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ----- Connecting another Nova app (it shows your Portal badge) ----- */
+.connect-who { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 6px 0 2px; }
+.connect-who > div { display: grid; gap: 4px; text-align: left; }
+.connect-who strong { font-family: var(--f-display); font-size: 18px; color: var(--bright); }
+.connect-planet { width: 96px; height: 96px; border-radius: 50%; filter: drop-shadow(0 0 18px rgba(var(--glow-rgb), 0.45)); animation: connect-float 5s ease-in-out infinite; }
+.connect-role { justify-self: start; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; color: var(--on-accent); background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+@keyframes connect-float { 50% { transform: translateY(-5px) rotate(-3deg); } }
+:root[data-motion="calm"] .connect-planet { animation: none; }

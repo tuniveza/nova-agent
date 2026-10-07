@@ -178,6 +178,26 @@
     </div>
     <button class="btn ghost" type="button" id="invite-gone-signin">Go to sign in</button>
   </div>
+
+  <!-- 5. Another Nova app (Nova Notes, Nova Calendar...) asking to show who you are -->
+  <div id="connect-card" class="auth-card connect" hidden>
+    <div class="auth-card-head">
+      <span class="kicker">Show who you are</span>
+      <h2 id="connect-title">Connect Nova Notes</h2>
+      <p class="hint" id="connect-why"></p>
+    </div>
+    <div class="connect-who">
+      <img id="connect-planet" class="connect-planet" alt="" width="96" height="96">
+      <div><strong id="connect-name"></strong><span id="connect-role" class="connect-role"></span></div>
+    </div>
+    <p class="error" id="connect-error" role="alert"></p>
+    <button class="btn" type="button" id="connect-yes" data-sfx="send">Connect</button>
+    <button class="btn ghost" type="button" id="connect-no">Not now</button>
+    <p class="reassure">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+      <span>It can only show your name, role and planet. It can't see your email, open anything or change anything. Sign out there to disconnect.</span>
+    </p>
+  </div>
 </section>
 
 <!-- Signed in -->
