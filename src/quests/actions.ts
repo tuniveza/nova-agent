@@ -4,7 +4,7 @@
 
 import { randomUUID } from "node:crypto";
 import { replan, nowMinutes } from "./plan";
-import { acknowledge } from "./deliveries";
+import { acknowledge, firstTimeForTap } from "./deliveries";
 import { nextSession, splitLong } from "./lengths";
 import { isPulse } from "./pulses";
 import { notifyMission, recentNotices } from "./reminders";
@@ -13,10 +13,15 @@ import { cleanQuest, readQuests, writeQuests, type Block, type Mission, type Que
 
 const stamp = () => fromMin(nowMinutes());
 
+// By id, or by the start of one if only one id starts that way (Claude often shortens them)
 function find<T extends { id: string }>(list: T[], id: string, what: string): T {
-  const item = list.find((x) => x.id === id || x.id.startsWith(id));
-  if (!item) throw new Error(`No ${what} with id ${id}.`);
-  return item;
+  if (!id) throw new Error(`Which ${what}? No id was given.`);
+  const exact = list.find((x) => x.id === id);
+  if (exact) return exact;
+  const starts = list.filter((x) => x.id.startsWith(id));
+  if (starts.length > 1) throw new Error(`More than one ${what} has an id starting ${id}: ${starts.map((x) => x.id).join(", ")}.`);
+  if (!starts.length) throw new Error(`No ${what} with id ${id}.`);
+  return starts[0];
 }
 
 function missionProgress(data: QuestData, m: Mission) {
@@ -39,15 +44,21 @@ export interface QuestTap {
   id: string;
   action: string;
   minutes?: number;
+  tapId?: string; // the same tap handed over twice counts once
+  session?: string; // the session (start) it was tapped on
 }
 export function applyQuestTap(t: QuestTap): string {
+  if (t.tapId && !firstTimeForTap(t.tapId)) {
+    const item = t.kind === "mission" ? readQuests().missions.find((m) => m.id === t.id) : readQuests().quests.find((q) => q.id === t.id);
+    return `${item?.title ?? t.id} (already counted)`;
+  }
   if (t.kind === "mission") {
     if (t.action === "pause") return updateMission(t.id, { status: "paused" }).title;
     if (t.action === "resume") return updateMission(t.id, { status: "active" }).title;
     throw new Error(`Missions can't "${t.action}"`);
   }
   const done = (q: Quest) => q.title;
-  if (t.action === "done") return done(setQuestStatus(t.id, "done"));
+  if (t.action === "done") return done(setQuestStatus(t.id, "done", false, t.session));
   if (t.action === "finish") return done(setQuestStatus(t.id, "done", true));
   if (t.action === "start") return done(setQuestStatus(t.id, "doing"));
   if (t.action === "skip") return done(setQuestStatus(t.id, "skipped"));
@@ -79,10 +90,12 @@ export function questState() {
 }
 
 // For an ongoing quest, "done" finishes this session and lines up the next one;
-// `finish` ends the quest for good.
-export function setQuestStatus(id: string, status: Quest["status"], finish = false): Quest {
+// `finish` ends the quest for good. `forSession` (from a Nova Hub tap): the
+// session it was tapped on; if that one's already done, nothing changes.
+export function setQuestStatus(id: string, status: Quest["status"], finish = false, forSession?: string): Quest {
   const data = readQuests();
   const q = find(data.quests, id, "quest");
+  if (forSession !== undefined && q.ongoing && status === "done" && !finish && !isPulse(q) && q.start !== forSession) return q;
   // A pulse just counts it (it keeps its own beat)
   if (isPulse(q) && status === "done" && !finish) {
     q.sessions += 1;

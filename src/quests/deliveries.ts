@@ -100,6 +100,10 @@ function open(): DatabaseSync {
       error TEXT NOT NULL DEFAULT ''
     );
     CREATE INDEX IF NOT EXISTS attempts_key ON attempts (key);
+    CREATE TABLE IF NOT EXISTS applied_taps (
+      id TEXT PRIMARY KEY,
+      at INTEGER NOT NULL
+    );
   `);
   // Anything left mid-send when the process stopped goes back in the queue
   db.prepare("UPDATE deliveries SET state = 'retrying', next_try = ? WHERE state IN ('scheduled', 'sent')").run(Date.now());
@@ -215,6 +219,14 @@ export function acknowledge(questId: string, session: string): void {
   const now = Date.now();
   const updated = d.prepare("UPDATE deliveries SET state = 'acknowledged', next_try = NULL, covered_by = NULL WHERE quest_id = ? AND session = ? AND kind IN ('starting', 'leave', 'missed')").run(questId, session);
   if (!updated.changes) d.prepare("INSERT OR IGNORE INTO deliveries (key, quest_id, session, kind, state, created) VALUES (?, ?, ?, 'starting', 'acknowledged', ?)").run(deliveryKey(questId, session, "starting"), questId, session, now);
+}
+
+// Nova Hub taps carry an id: true the first time one is seen, false after (a tap
+// can be handed over twice; it must only count once)
+export function firstTimeForTap(id: string): boolean {
+  const d = open();
+  d.prepare("DELETE FROM applied_taps WHERE at < ?").run(Date.now() - KEEP_MS);
+  return d.prepare("INSERT OR IGNORE INTO applied_taps (id, at) VALUES (?, ?)").run(id, Date.now()).changes > 0;
 }
 
 // The log of tries, oldest first (for one quest, or all)
