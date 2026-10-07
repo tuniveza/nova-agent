@@ -3,7 +3,7 @@
    refreshed in the background (so updates arrive on the next visit), fonts are kept once fetched,
    and Word import's helper library is kept after its first use. Notes themselves live in
    IndexedDB, not here. Bump VERSION when the list of app files changes. */
-const VERSION = 'nova-notes-v6';
+const VERSION = 'nova-notes-v7';
 const APP = [
   './',
   './manifest.webmanifest',
@@ -41,7 +41,7 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // The app's own files: answer from the cache straight away, refresh it in the background
+  // The app's own files: the newest from the network, the cached copy only when offline
   if (url.origin === self.location.origin) {
     // Launches like ./?new or ./?share=… are the app page itself
     const key = req.mode === 'navigate' ? './' : req;
@@ -54,7 +54,8 @@ self.addEventListener('fetch', (event) => {
             return res;
           })
           .catch(() => cached);
-        return cached || fresh;
+        // Network first, so an update shows straight away; the cache only when offline
+        return fresh.then((res) => res || cached);
       })
     );
     return;

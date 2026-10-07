@@ -118,6 +118,20 @@ function serveFolder(prefix: string, folder: string, missing: string, skip?: Reg
     return c.body(readFileSync(file) as any, 200, { "Content-Type": type, "Cache-Control": "no-cache" });
   });
 }
+// Notes and Calendar keep an offline copy of themselves on their own; inside Nova Agent that
+// only meant seeing the previous version after an update. Here their offline helper clears
+// what it kept, steps aside and reloads the page with the current version.
+const RETIRE_OFFLINE = `// Inside Nova Agent nothing is kept offline: clear the old copy, step aside, reload.
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil((async () => {
+  for (const key of await caches.keys()) await caches.delete(key);
+  await self.registration.unregister();
+  for (const client of await self.clients.matchAll({ type: "window" })) client.navigate(client.url);
+})()));
+`;
+for (const path of ["/notes/sw.js", "/calendar/sw.js"]) {
+  app.get(path, (c) => c.body(RETIRE_OFFLINE, 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }));
+}
 serveFolder("/observatory", "observatory/", "Observatory is missing from web/observatory.");
 serveFolder("/notes", "notes/", "Notes is missing from web/notes.");
 serveFolder("/app/memory", "index/", "Index is missing from web/index.");
@@ -233,7 +247,6 @@ app.all("/staff/*", (c) => passOn(c.req.raw));
 
 // ---- Calendar, served from the calendar folder ----
 // Its own offline helper isn't needed (or wanted) here: Nova Agent is the server.
-app.get("/calendar/sw.js", (c) => c.text("// not used inside Nova Agent", 404));
 app.get("/calendar-sync.js", (c) => c.body(readFileSync(syncFile, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }));
 app.get("/calendar", (c) => c.redirect("/calendar/"));
 app.get("/calendar/*", (c) => {
