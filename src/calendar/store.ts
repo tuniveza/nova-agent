@@ -137,7 +137,13 @@ export function readCalendar(): CalendarData {
 // The last few saved versions, by revision, so a save from a page that loaded an
 // older one can be merged with what changed since (page.ts)
 const recentRevs = new Map<number, CalendarData>();
-export const calendarAtRev = (rev: number): CalendarData | undefined => structuredClone(recentRevs.get(rev));
+export function calendarAtRev(rev: number): CalendarData | undefined {
+  const known = recentRevs.get(rev);
+  if (known) return structuredClone(known);
+  // Nothing saved since it was loaded (e.g. just after a restart): that's the file as it is
+  const current = readCalendar();
+  return current.rev === rev ? current : undefined;
+}
 
 // Save safely (write a copy, then swap it in), as the next revision. `fromAgent`
 // refreshes the open calendar page; changes made on the page itself don't need that.
