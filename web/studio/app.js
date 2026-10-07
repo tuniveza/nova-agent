@@ -1432,8 +1432,10 @@
   // address from Apple, Nova Hub hands it to the Worker, and from then on the
   // Worker can post notifications to it, even when Nova Hub is closed.
 
-  // Can this browser do notifications at all? (needs all three of these)
-  const canNotify = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  // Can this browser do notifications at all? (needs all three of these.) Not inside Nova
+  // Agent on the studio PC: Nova Agent shows its own notices there, and phone pushes are for phones.
+  const onStudioPC = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  const canNotify = !onStudioPC && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   // Is this an iPhone or iPad?
   const isIPhone = /iPhone|iPad|iPod/.test(navigator.userAgent);
   // Was Nova Hub opened from the Home Screen icon (rather than a Safari tab)?

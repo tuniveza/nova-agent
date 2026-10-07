@@ -116,6 +116,13 @@ export async function connectAs(token: string): Promise<Who> {
   return whoAmI(true);
 }
 
+// Signed in on the Crew panel (src/signin.ts): Nova Agent works for that person
+export async function connectId(staff: Pick<Staff, "id" | "display_name">): Promise<Who> {
+  save({ ...saved(), connected: staff.id, last: staff.id });
+  trace("llm", "info", `Nova Agent now works for ${staff.display_name} (${staff.id}), signed in on the Crew panel`);
+  return whoAmI(true);
+}
+
 // Back to automatic (the studio's first admin)
 export async function forgetConnected(): Promise<Who> {
   const { last } = saved();

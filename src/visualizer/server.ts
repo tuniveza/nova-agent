@@ -17,6 +17,7 @@
 // SSH tunnel:  ssh -L 4545:localhost:4545 your-vps
 
 import { connectAs, forgetConnected, whoAmI } from "../staff";
+import { fromOurPage, passOn, session, signIn, signOut } from "../signin";
 import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -126,7 +127,31 @@ app.get("/app/memory/*", (c) => c.redirect("/index/" + c.req.path.slice("/app/me
 // Nova Agent's key; the planet pictures come through here too, so the panels never talk to another site.
 serveFolder("/shared", "shared/", "web/shared is missing.");
 
-app.get("/auth/me", async (c) => c.json(await whoAmI(), 200, { "Cache-Control": "no-store" }));
+// ---- Studio (was Nova Hub) and Crew (was Nova Portal), as panels ----
+// They use Nova Bot's staff API. Signing in on the Crew panel signs Nova Agent in to Nova Bot
+// as that person (src/signin.ts); their requests are passed on with that sign-in.
+serveFolder("/studio", "studio/", "web/studio is missing.");
+serveFolder("/crew", "crew/", "web/crew is missing.");
+for (const path of ["/auth/*", "/staff", "/staff/*", "/app/api/*"]) {
+  app.use(path, async (c, next) => (fromOurPage(c.req.raw) ? next() : c.json({ error: "Only from Nova Agent's own pages" }, 403)));
+}
+app.post("/auth/login", async (c) => {
+  const { status, data } = await signIn((await c.req.json().catch(() => ({}))) as Record<string, unknown>);
+  return c.json(data as any, status as any);
+});
+app.post("/auth/logout", async (c) => {
+  await signOut();
+  return c.json({ ok: true });
+});
+// The shared studio password is for phones; on this computer it's your own sign-in
+app.post("/app/api/login", (c) => c.json({ error: "On the studio computer, sign in with your own account on the Crew panel." }, 400));
+app.post("/app/api/logout", async (c) => {
+  await signOut();
+  return c.json({ ok: true });
+});
+
+// Who's here: the person signed in on the Crew panel, or else who Nova Agent works for (src/staff.ts)
+app.get("/auth/me", async (c) => (session() ? passOn(c.req.raw) : c.json(await whoAmI(), 200, { "Cache-Control": "no-store" })));
 // "Connect as me" (back from Nova Portal with a read-only token) and "back to automatic".
 // Only from Nova Agent's own pages: the header makes other websites' requests fail.
 app.post("/auth/link", async (c) => {
@@ -168,6 +193,7 @@ async function toEngine(path: string, init: RequestInit = {}) {
   return { status: res.status, data: await res.json().catch(() => ({})) };
 }
 app.all("/app/api/memory/*", async (c) => {
+  if (session()) return passOn(c.req.raw);
   if (!config.agentNovaKey) return c.json({ error: "Nova Agent isn't connected to Nova Bot (AGENT_NOVA_KEY)" }, 503);
   // Changes only from the page itself (the header makes other websites' requests fail)
   if (c.req.method !== "GET" && c.req.header("X-Nova-App") !== "index") return c.json({ error: "Forbidden" }, 403);
@@ -193,6 +219,12 @@ app.all("/app/api/memory/*", async (c) => {
   }
   return c.json({ error: "Not found" }, 404);
 });
+
+// The rest of Nova Bot's staff API (Studio, Crew), as the signed-in person
+app.all("/app/api/*", (c) => passOn(c.req.raw));
+app.all("/auth/*", (c) => passOn(c.req.raw));
+app.all("/staff", (c) => passOn(c.req.raw));
+app.all("/staff/*", (c) => passOn(c.req.raw));
 
 // ---- Nova Calendar, served from the calendar folder ----
 // Its own offline helper isn't needed (or wanted) here: Nova Agent is the server.
