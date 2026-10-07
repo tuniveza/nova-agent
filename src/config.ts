@@ -7,7 +7,9 @@ import { fileURLToPath } from "node:url";
 // Paths are worked out from this file's location, so the program behaves the
 // same no matter which folder you start it from.
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
-const dataDir = fileURLToPath(new URL("../data/", import.meta.url));
+// Where Nova Agent keeps its data. NOVA_DATA_DIR points a second copy (a preview,
+// or screenshots with sample data) somewhere else, so it never touches the real data.
+const dataDir = process.env.NOVA_DATA_DIR ? process.env.NOVA_DATA_DIR.replace(/\/?$/, "/") : fileURLToPath(new URL("../data/", import.meta.url));
 
 // Node can read .env files by itself (no extra package needed).
 // Variables already set in the shell win over the file, which is what lets
