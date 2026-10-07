@@ -79,6 +79,8 @@ export async function boot(at: string) {
     pulses: await import("../src/quests/pulses"),
     actions: await import("../src/quests/actions"),
     deliveries: await import("../src/quests/deliveries"),
+    calendar: await import("../src/calendar/store"),
+    calendarPage: await import("../src/calendar/page"),
   });
   let m = await load();
 
@@ -97,6 +99,12 @@ export async function boot(at: string) {
     },
     get deliveries() {
       return m.deliveries;
+    },
+    get calendar() {
+      return m.calendar;
+    },
+    get calendarPage() {
+      return m.calendarPage;
     },
     worker,
     sent,

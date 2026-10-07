@@ -31,7 +31,8 @@ import { runHealthcheck } from "../healthcheck";
 import { startCollectingJobs } from "../jobs";
 import { checkLogin, describeAppointments, listTask, readOnlyTour } from "../tasks";
 import { getRecentEvents, onTrace, trace } from "../trace";
-import { calendarEvents, normalise, readCalendar, writeCalendar } from "../calendar/store";
+import { calendarEvents, readCalendar } from "../calendar/store";
+import { saveFromPage } from "../calendar/page";
 import { chat, type ChatTurn } from "../chat";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
@@ -232,13 +233,20 @@ app.get("/calendar/*", (c) => {
 
 // The calendar's data: read by the calendar page and saved back from it
 app.get("/calendar-api/data", (c) => c.json(readCalendar()));
+// (merged with changes made elsewhere since the page loaded revision X-Nova-Rev: see calendar/page.ts)
 app.put("/calendar-api/data", async (c) => {
   if (c.req.header("X-Nova-Visualizer") !== "1") return c.json({ ok: false }, 403);
+  let body: unknown;
   try {
-    writeCalendar(normalise(await c.req.json()));
-    return c.json({ ok: true });
+    body = await c.req.json();
   } catch {
     return c.json({ ok: false, message: "That isn't calendar data" }, 400);
+  }
+  try {
+    return c.json({ ok: true, ...saveFromPage(body, Number(c.req.header("X-Nova-Rev"))) });
+  } catch (error) {
+    trace("task", "error", `Nova Calendar: a change from the page didn't save: ${(error as Error).message}`);
+    return c.json({ ok: false, message: (error as Error).message }, 500);
   }
 });
 // Tells an open calendar page that Nova Agent changed something, so it refreshes

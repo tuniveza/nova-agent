@@ -6,12 +6,15 @@
 // calendar page always see the same note cards and day cards.
 //
 // The data has exactly the shape the calendar app uses, so the app needs no
-// changes: { version, notes: [...], days: [...], prefs: { theme, author } }.
+// changes: { version, notes: [...], days: [...], prefs: { theme, author } },
+// plus `rev`, which goes up by one with every save (see page.ts).
 
 import { EventEmitter } from "node:events";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
+import { sendAlert } from "../alerts";
 import { config } from "../config";
+import { trace } from "../trace";
 
 export interface NoteCard {
   id: string;
@@ -43,6 +46,7 @@ export interface DayCard {
 
 export interface CalendarData {
   version: 1;
+  rev: number; // goes up with every save
   notes: NoteCard[];
   days: DayCard[];
   prefs: { theme: string; author: string };
@@ -100,28 +104,56 @@ function cleanDay(d: any): DayCard | null {
 export function normalise(raw: any): CalendarData {
   return {
     version: 1,
+    rev: Number.isInteger(raw?.rev) && raw.rev >= 0 ? raw.rev : 0,
     notes: (Array.isArray(raw?.notes) ? raw.notes : []).map(cleanNote).filter(Boolean) as NoteCard[],
     days: (Array.isArray(raw?.days) ? raw.days : []).map(cleanDay).filter(Boolean) as DayCard[],
     prefs: { theme: text(raw?.prefs?.theme, 30) || "novacane", author: text(raw?.prefs?.author, 60) },
   };
 }
 
+// A damaged calendar.json is never read as empty (the next save would make that
+// for good): it's put aside and the last good copy (calendar.json.bak) is used.
 export function readCalendar(): CalendarData {
   if (!existsSync(file)) return normalise({});
   try {
     return normalise(JSON.parse(readFileSync(file, "utf8")));
-  } catch {
-    return normalise({});
+  } catch (error) {
+    const aside = `${file}.damaged-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+    renameSync(file, aside);
+    let good: CalendarData;
+    try {
+      good = normalise(JSON.parse(readFileSync(`${file}.bak`, "utf8")));
+    } catch {
+      throw new Error(`calendar.json is damaged (${(error as Error).message}) and there's no good copy to go back to. It's kept as ${aside}.`);
+    }
+    writeFileSync(`${file}.tmp`, JSON.stringify(good, null, 2));
+    renameSync(`${file}.tmp`, file);
+    trace("task", "error", `calendar.json was damaged: went back to the last good copy. The damaged one is kept as ${aside}.`);
+    void sendAlert("Nova Calendar: calendar.json was damaged", `Nova Agent went back to the last good copy; the most recent change may need doing again. The damaged file is kept as ${aside}.`);
+    return good;
   }
 }
 
-// Save safely (write a copy, then swap it in). `fromAgent` refreshes the open
-// calendar page; changes made on the page itself don't need that.
-export function writeCalendar(data: CalendarData, fromAgent = false): void {
-  const clean = normalise(data);
-  writeFileSync(`${file}.tmp`, JSON.stringify(clean, null, 2));
+// The last few saved versions, by revision, so a save from a page that loaded an
+// older one can be merged with what changed since (page.ts)
+const recentRevs = new Map<number, CalendarData>();
+export const calendarAtRev = (rev: number): CalendarData | undefined => structuredClone(recentRevs.get(rev));
+
+// Save safely (write a copy, then swap it in), as the next revision. `fromAgent`
+// refreshes the open calendar page; changes made on the page itself don't need that.
+export function writeCalendar(data: CalendarData, fromAgent = false): number {
+  const before = readCalendar();
+  if (!recentRevs.has(before.rev)) recentRevs.set(before.rev, before);
+  const clean = { ...normalise(data), rev: before.rev + 1 };
+  const json = JSON.stringify(clean, null, 2);
+  writeFileSync(`${file}.tmp`, json);
   renameSync(`${file}.tmp`, file);
+  writeFileSync(`${file}.bak.tmp`, json);
+  renameSync(`${file}.bak.tmp`, `${file}.bak`);
+  recentRevs.set(clean.rev, structuredClone(clean));
+  for (const rev of recentRevs.keys()) if (rev < clean.rev - 50) recentRevs.delete(rev);
   if (fromAgent) calendarEvents.emit("change");
+  return clean.rev;
 }
 
 function change<T>(fn: (data: CalendarData) => T): T {
