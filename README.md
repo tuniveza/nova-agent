@@ -20,7 +20,7 @@ Sign in once and you're signed in to Nova Hub, Nova Index and the admin pages. E
 - **Nova Club and other native apps** can sign in through the same API and get an app token instead of a cookie.
 - **The badge, on every Nova app:** `<nova-portal-badge>` shows your planet (turning, with a halo in its colour blended with the app's theme), your name and your role in the top bar of Nova Hub, Nova Index, the admin pages, Nova Agent, Nova Notes, Nova Calendar and Nova Observatory. Tap it for your planet up close, its name, and links to your profile and your Nova Index.
   - **On Nova Bot's worker** it uses your Portal sign-in.
-  - **In Nova Agent and the apps it serves** it shows who Nova Agent works for (`NOVA_STAFF_ID`).
+  - **In Nova Agent and the apps it serves** it shows who Nova Agent works for, found by itself: the studio's first admin, or whoever pressed **Connect as me** on it.
   - **On Nova Notes' and Nova Calendar's own sites** you **Connect** it once in Nova Portal, which gives that site a read-only token: your name, role and planet, nothing else.
 
 <table><tr>

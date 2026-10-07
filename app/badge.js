@@ -9,7 +9,7 @@
 // a card with the planet up close, its name, and links to your profile and your Nova Index.
 // Where it is decides how it knows you:
 //   Nova Bot's worker (Nova Hub, Nova Index, the admin pages)   your Nova Portal sign-in (the cookie)
-//   Nova Agent (localhost:4545) and the apps it serves         who Nova Agent works for (NOVA_STAFF_ID)
+//   Nova Agent (localhost:4545) and the apps it serves         who Nova Agent works for (found by itself; "Connect as me" to change)
 //   Nova Notes, Nova Calendar... on their own sites            a read-only token from "Connect" in Nova Portal
 // Colours come from the page's theme: --np-* if the app sets them, else Nova Hub's names (--hi,
 // --accent...), else the Nova suite's magenta. Calm motion (reduced motion, or data-motion="calm") stills it.
@@ -51,6 +51,22 @@
       history.replaceState(history.state, "", location.pathname + location.search + rest);
     }
   }
+  // In Nova Agent, "Connect as me" comes back the same way: Nova Agent checks the token with
+  // Nova Portal, remembers who you are, and puts the token away
+  let linking = null;
+  if (mode === "agent") {
+    const m = /(?:^#|&)nova_portal=(nprof_[A-Za-z0-9_-]+)/.exec(location.hash);
+    if (m) {
+      const rest = location.hash.replace(/(^#|&)nova_portal=[^&]*/, "$1").replace(/^#&?$/, "");
+      history.replaceState(history.state, "", location.pathname + location.search + rest);
+      linking = agentLink({ token: m[1] }).then((ok) => ok && setTimeout(() => sfx("done"), 400));
+    }
+  }
+  function agentLink(body) {
+    return fetch("/auth/link", { method: "POST", headers: { "Content-Type": "application/json", "X-Nova-App": "portal-badge" }, body: JSON.stringify(body) })
+      .then((r) => r.ok)
+      .catch(() => false);
+  }
 
   const POPOVER = typeof HTMLElement.prototype.showPopover === "function";
   const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.getAttribute("data-motion") === "calm";
@@ -69,6 +85,15 @@
   function whoAmI(force) {
     if (!force && last.data && Date.now() - last.at < 60_000) return Promise.resolve(last.data);
     if (pending) return pending;
+    if (linking) {
+      const wait = linking;
+      linking = null;
+      pending = wait.then(() => {
+        pending = null;
+        return whoAmI(true);
+      });
+      return pending;
+    }
     const headers = { Accept: "application/json", "X-Nova-App": "portal-badge" };
     const token = mode === "connect" ? store.get() : "";
     if (mode === "connect" && !token) return Promise.resolve({ signedIn: false });
@@ -81,7 +106,7 @@
         }
         if (!res.ok) throw new Error(String(res.status));
         const data = await res.json();
-        return { signedIn: true, staff: data.staff, via: data.via || mode, linked: data.linked !== false };
+        return { signedIn: true, staff: data.staff, via: data.via || mode, linked: data.linked !== false, how: data.how || "" };
       })
       .catch(() => ({ signedIn: false, offline: true }))
       .then((data) => {
@@ -294,12 +319,32 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
         const role = s.role === "admin" ? "Admin" : "Staff";
         const unlinked = mode === "agent" && !d.linked;
         const index = (mode === "connect" ? WORKER : "") + "/app/memory/";
+        // Nova Agent: "Connect as me" makes it work for you (back to its main page afterwards)
+        const connectMe = `${portalUrl}?connect=${encodeURIComponent(location.origin + "/")}`;
+        const agentMore =
+          mode !== "agent" || d.how === "set"
+            ? ""
+            : d.how === "connected"
+              ? `<button type="button" class="quiet" data-act="auto">${ICON.out}<span>Back to automatic</span></button>`
+              : d.linked
+                ? `<a class="quiet" href="${connectMe}" target="_top">${ICON.profile}<span>Not you? Connect as you</span></a>`
+                : "";
         const links = [
-          `<a class="main" href="${portalUrl}${mode === "portal" ? "" : "?id=" + encodeURIComponent(s.id)}" target="${mode === "portal" ? "_self" : "_blank"}" rel="noopener">${ICON.profile}<span>${unlinked ? "Set up in Nova Portal" : "Your profile"}</span></a>`,
+          `<a class="main" href="${portalUrl}${mode === "portal" ? "" : unlinked ? "" : "?id=" + encodeURIComponent(s.id)}" target="${mode === "portal" ? "_self" : "_blank"}" rel="noopener">${ICON.profile}<span>${unlinked ? "Set up Nova Portal" : "Your profile"}</span></a>`,
           `<a href="${index}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.index}<span>${unlinked ? "Nova Index" : "Your Nova Index"}</span></a>`,
           mode === "portal" && !location.pathname.startsWith("/app/") ? `<a href="/app/">${ICON.hub}<span>Nova Hub</span></a>` : "",
-          mode === "agent" ? "" : `<button type="button" class="quiet" data-act="out">${ICON.out}<span>${mode === "connect" ? "Disconnect" : "Sign out everywhere"}</span></button>`,
+          mode === "agent" ? agentMore : `<button type="button" class="quiet" data-act="out">${ICON.out}<span>${mode === "connect" ? "Disconnect" : "Sign out everywhere"}</span></button>`,
         ].join("");
+        const agentNote =
+          mode !== "agent"
+            ? ""
+            : unlinked
+              ? "Nova Portal has nobody yet (or can't be reached). Set up the first admin and Nova Agent finds them by itself."
+              : d.how === "connected"
+                ? "You connected Nova Agent to you in Nova Portal. Your Nova Index memory is the one it uses."
+                : d.how === "set"
+                  ? "Chosen by NOVA_STAFF_ID in Nova Agent's settings."
+                  : "Picked automatically: the studio's first admin. Someone else using this computer? They can connect it to themselves.";
         body = `
           <div class="big"><img alt="${esc(s.display_name)}'s planet" src="${planetSrc(s, 224, !still())}" width="112" height="112"></div>
           <div class="kicker">${mode === "agent" ? "Nova Agent works for" : "Signed in with Nova Portal"}</div>
@@ -307,7 +352,7 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
           <div class="pills">${unlinked ? `<span class="pill">Not in Nova Portal yet</span>` : `<span class="pill role-${s.role}">${role}</span>`}${s.created_at ? `<span class="pill">Since ${esc(since(s.created_at))}</span>` : ""}</div>
           ${s.planet && s.planet.name ? `<p class="world">✦ ${esc(s.planet.name)}</p>` : ""}
           ${s.planet && s.planet.description ? `<p class="desc">${esc(s.planet.description)}</p>` : ""}
-          ${unlinked ? `<p class="note">Nova Agent's NOVA_STAFF_ID is “${esc(s.id)}”. Set it to your Nova Portal id to show your own planet.</p>` : ""}
+          ${agentNote ? `<p class="note">${esc(agentNote)}</p>` : ""}
           <div class="links">${links}</div>
           <p class="foot">${mode === "connect" ? "Connected: name, role and planet only" : "One sign-in for every Nova app"}</p>`;
       } else {
@@ -336,6 +381,14 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       sfx("open");
       const out = card.querySelector('[data-act="out"]');
       if (out) out.addEventListener("click", () => this.signOut());
+      const auto = card.querySelector('[data-act="auto"]');
+      if (auto)
+        auto.addEventListener("click", async () => {
+          await agentLink({ forget: true });
+          sfx("off");
+          this.close();
+          whoAmI(true);
+        });
       setTimeout(() => {
         document.addEventListener("pointerdown", this.onAway, true);
         document.addEventListener("keydown", this.onKey);

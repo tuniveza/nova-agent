@@ -1105,7 +1105,9 @@
     const name = connectName();
     showAuthCard("connect-card", "One sign-in for every Nova app");
     $("connect-title").textContent = `Connect ${name}`;
-    $("connect-why").textContent = `${name} would like to show your Nova Portal badge.`;
+    $("connect-why").textContent = name.startsWith("Nova Agent")
+      ? "Nova Agent will work for you: your badge, and your own Nova Index memory."
+      : `${name} would like to show your Nova Portal badge.`;
     $("connect-planet").src = planetUrl(state.me, 192, true);
     $("connect-name").textContent = state.me.display_name;
     $("connect-role").textContent = state.me.role === "admin" ? "Admin" : "Staff";
