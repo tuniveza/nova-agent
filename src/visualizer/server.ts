@@ -16,6 +16,7 @@
 // client names and the AI prompts. To view it from the VPS later, use an
 // SSH tunnel:  ssh -L 4545:localhost:4545 your-vps
 
+import { connectAs, forgetConnected, whoAmI } from "../staff";
 import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -130,7 +131,7 @@ serveFolder("/observatory", "../../../no/", "Nova Observatory isn't next to Nova
 serveFolder("/notes", "../../../nn/", "Nova Notes isn't next to Nova Agent (expected it in ../nn).");
 serveFolder("/app/memory", "../../../ni/app/", "Nova Index isn't next to Nova Agent (expected it in ../ni).");
 
-// ---- Nova Portal's badge: who Nova Agent works for (NOVA_STAFF_ID) ----
+// ---- Nova Portal's badge: who Nova Agent works for (found automatically: src/staff.ts) ----
 // On Nova Agent's own page and every app it serves (Nova Index, Notes, Calendar, Observatory),
 // the badge asks this server, which asks Nova Bot with Nova Agent's key. The planet pictures
 // come through here too, so the apps never talk to another site.
@@ -138,25 +139,17 @@ const badgeFile = fileURLToPath(new URL("../../../np/app/badge.js", import.meta.
 app.get("/portal/badge.js", (c) =>
   existsSync(badgeFile) ? c.body(readFileSync(badgeFile, "utf8"), 200, { "Content-Type": TYPES[".js"], "Cache-Control": "no-cache" }) : c.text("// Nova Portal isn't next to Nova Agent (expected it in ../np)", 404, { "Content-Type": TYPES[".js"] })
 );
-let whoCache: { at: number; data: unknown } | null = null;
-app.get("/auth/me", async (c) => {
-  if (!whoCache || Date.now() - whoCache.at > 60_000) {
-    try {
-      if (!config.agentNovaKey) throw new Error("no key");
-      const res = await fetch(`${config.workerUrl}/hub/agent/me`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${config.agentNovaKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ staff_id: config.staffId }),
-        signal: AbortSignal.timeout(8000),
-      });
-      if (res.ok) whoCache = { at: Date.now(), data: await res.json() };
-    } catch {}
+app.get("/auth/me", async (c) => c.json(await whoAmI(), 200, { "Cache-Control": "no-store" }));
+// "Connect as me" (back from Nova Portal with a read-only token) and "back to automatic".
+// Only from Nova Agent's own pages: the header makes other websites' requests fail.
+app.post("/auth/link", async (c) => {
+  if (c.req.header("X-Nova-App") !== "portal-badge") return c.json({ error: "Forbidden" }, 403);
+  const body = (await c.req.json().catch(() => ({}))) as { token?: string; forget?: boolean };
+  try {
+    return c.json(body.forget ? await forgetConnected() : await connectAs(String(body.token || "")));
+  } catch (err) {
+    return c.json({ error: (err as Error).message }, 400);
   }
-  if (whoCache) return c.json(whoCache.data, 200, { "Cache-Control": "no-store" });
-  // Nova Bot can't be reached: a stand-in from the id, so the badge still shows someone
-  const id = config.staffId;
-  const name = id === "owner" ? "Studio" : id.replace(/-/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
-  return c.json({ staff: { id, display_name: name, role: "staff", status: "local", planet_seed: id, planet_overrides: null, index_partition: `staff:${id}`, created_at: null }, via: "nova-agent", linked: false });
 });
 const planetCache = new Map<string, { at: number; body: string }>();
 app.get("/staff/:id/planet.svg", async (c) => {

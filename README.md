@@ -196,7 +196,7 @@ suite app uses.
 
 Before each reply and each mission plan, Nova Agent asks [Nova Index](https://github.com/tuniveza/nova-index)
 (the suite's shared memory, on Nova Bot's worker) for the few facts that matter: the studio's,
-and those of the person using this Nova Agent (`NOVA_STAFF_ID`). The read is quick (a short
+and those of the person Nova Agent works for (found by itself: see below). The read is quick (a short
 timeout and a 30-second cache) and never holds a reply up for long. After each conversation,
 the exchange is handed back to be learned from, in the background (`src/memory.ts`). It reads
 studio and staff memory only, never customers'.
@@ -358,7 +358,7 @@ Names only here; never commit `.env`.
 | `NOVA_MODEL` | `claude-opus-5-5` | The Claude model name |
 | `NOVA_WORKER_URL` | Novacane's worker | Nova Bot's worker: jobs, alerts, Nova Hub sync and Nova Index |
 | `AGENT_NOVA_KEY` | – | Must match the worker's `AGENT_NOVA_KEY` secret; blank = no jobs, phone alerts, Nova Hub sync or memory |
-| `NOVA_STAFF_ID` | `owner` | Who uses this Nova Agent, for their own Nova Index memory; one id per person |
+| `NOVA_STAFF_ID` | *(found by itself)* | Only to force who Nova Agent works for. Without it, Nova Agent picks the studio's first Nova Portal admin, and anyone can switch it to themselves with **Connect as me** on the Nova Portal badge (kept in `data/staff.json`) |
 | `NOVA_DATA_DIR` | `data/` | Where everything is kept; point a second copy somewhere else |
 | `ACUITY_EMAIL`, `ACUITY_PASSWORD` | – | Automatic re-login |
 | `ACUITY_ADMIN_URL` | Acuity's appointments page | The page used to check the login |
