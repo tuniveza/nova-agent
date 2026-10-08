@@ -286,7 +286,26 @@
     $("login-password").value = "";
     if (state.lastEmail && !$("login-email").value) $("login-email").value = state.lastEmail;
     focusSoon($("login-email").value ? $("login-password") : $("login-email"));
+    showGoogle();
   }
+  // "Sign in with Google", once an admin has set Google up (Admin → Google). The planet's
+  // badge (/shared/badge.js) does the signing in; this page starts again when it's done.
+  let googleOk = null;
+  function showGoogle() {
+    if (!googleOk)
+      googleOk = fetch("/auth/google/available", { headers: { Accept: "application/json" } })
+        .then((r) => (r.ok ? r.json() : {}))
+        .then((d) => Boolean(d.available))
+        .catch(() => false);
+    googleOk.then((ok) => {
+      $("login-google").hidden = !ok;
+      $("login-or").hidden = !ok;
+    });
+  }
+  $("login-google").addEventListener("click", () => {
+    if (window.NovaPortal && window.NovaPortal.google) return window.NovaPortal.google.signIn();
+    window.open("/auth/google/start?popup=1&return=" + encodeURIComponent("/agent/"), "nova-google", "width=480,height=640");
+  });
   $("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = $("login-form");

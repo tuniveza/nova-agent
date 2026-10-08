@@ -375,6 +375,9 @@
         </div>
         <details class="gd-setup" id="gd-setup">
           <summary>Set up (one time)</summary>
+          <p class="hint">Easiest: an admin sets Google up once in Nova Agent (Admin → Google). Then this button just works, for everyone.</p>
+          <p><button type="button" class="btn ghost sm" id="gd-admin">Open Admin → Google</button></p>
+          <p class="hint">Or set up your own, just for this browser:</p>
           <ol class="steps">
             <li>In <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Google Cloud → Credentials</a>, create an <b>OAuth client ID</b> of type <b>Web application</b>.</li>
             <li>Under <b>Authorised JavaScript origins</b>, add <code id="gd-origin">this page's address</code>.</li>

@@ -62,6 +62,23 @@ export async function signIn(body: Record<string, unknown>): Promise<{ status: n
   } catch (err) {
     return { status: 502, data: { error: "Can't reach Portal just now. Check the connection and try again." } };
   }
+  return keepFrom(res);
+}
+
+// "Sign in with Google": Nova Bot hands back a one-time code (to /auth/google/done); swapping it,
+// with the verifier only this computer has, signs Nova Agent in the same way as a password does
+export async function signInWithGoogle(code: string, verifier: string): Promise<{ status: number; data: unknown }> {
+  let res: Response;
+  try {
+    res = await worker("/auth/google/exchange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, verifier, client: "app" }) });
+  } catch (err) {
+    return { status: 502, data: { error: "Can't reach Portal just now. Check the connection and try again." } };
+  }
+  return keepFrom(res);
+}
+
+// Nova Bot's answer to a sign-in: keep the app token here, hand the rest back
+async function keepFrom(res: Response): Promise<{ status: number; data: unknown }> {
   const data = (await res.json().catch(() => ({}))) as { ok?: boolean; token?: string; staff?: Session["staff"] };
   if (res.ok && data.token && data.staff) {
     keep({ token: data.token, staff: { id: data.staff.id, display_name: data.staff.display_name, role: data.staff.role }, at: new Date().toISOString() });

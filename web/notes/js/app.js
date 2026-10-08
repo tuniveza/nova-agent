@@ -1112,7 +1112,7 @@
     if (linked) $('gd-open').href = current.gdocUrl || `https://docs.google.com/document/d/${current.gdocId}/edit`;
     $('gd-unlink').hidden = !linked;
     $('gd-save-label').textContent = linked ? 'Update the Google Doc' : 'Create Google Doc';
-    $('gd-setup').open = setup === true || !settings.googleClientId;
+    $('gd-setup').open = setup === true || !(settings.googleClientId || NN.google.studioClientId);
     $('gd-error').textContent = '';
     $('dlg-gdocs').showModal();
   }
@@ -1135,9 +1135,10 @@
     settings.googleClientId = $('gd-client').value.trim();
     saveSettings();
     $('gd-error').textContent = '';
-    if (!settings.googleClientId) {
+    const clientId = settings.googleClientId || NN.google.studioClientId;
+    if (!clientId) {
       $('gd-setup').open = true;
-      $('gd-error').textContent = 'Add your Google OAuth client ID first (one-time set-up below).';
+      $('gd-error').textContent = 'Google isn\'t set up yet. Ask an admin: Admin → Google.';
       $('gd-client').focus();
       return;
     }
@@ -1146,7 +1147,7 @@
     btn.disabled = true;
     $('gd-save-label').textContent = 'Saving to Google Drive…';
     try {
-      const res = await NN.google.saveToDrive({ clientId: settings.googleClientId, title: current.title, html: exported().html, fileId: current.gdocId });
+      const res = await NN.google.saveToDrive({ clientId, title: current.title, html: exported().html, fileId: current.gdocId });
       current.gdocId = res.id;
       current.gdocUrl = res.url;
       await S.notes.put(current);
