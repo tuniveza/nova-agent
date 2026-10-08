@@ -641,3 +641,17 @@ html.embed .pv .hero { --stage: min(86vw, 400px, 40vh); }
 html.embed nova-manual { display: none; }
 /* Inputs at 16px, so a phone doesn't zoom in when typing */
 @media (pointer: coarse) { input, select, textarea { font-size: max(16px, 1em); } }
+
+/* Admin (admins only): the studio's admin pages, inside Portal */
+.tabs .tab[hidden] { display: none !important; }
+.pv .admin-switch { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 0 10px; }
+.pv .admin-switch::-webkit-scrollbar { display: none; }
+.pv .admin-switch .chip {
+  flex: none; min-height: 40px; padding: 0 16px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  color: var(--text); border: 1px solid var(--line, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--panel, #1C1129) 70%, transparent);
+}
+.pv .admin-switch .chip.active { color: #fff; border-color: transparent; background: linear-gradient(90deg, var(--accent, #B01D68), var(--accent-2, #7A1F86)); }
+.pv.admin-view { display: flex; flex-direction: column; min-height: 0; }
+.pv.admin-view[hidden] { display: none; }
+.pv .admin-frame { flex: 1; width: 100%; min-height: calc(100dvh - 210px); border: 0; border-radius: 16px; background: var(--deep, #100816); }
+html.embed .pv .admin-frame { min-height: calc(100dvh - 120px); }

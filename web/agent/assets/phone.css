@@ -1,6 +1,6 @@
 /* Nova Agent on a phone (or a small window): one screen, no long scroll.
    The same header at the top and one bar along the bottom, always there, with every place in Nova
-   Agent on it (swipe it sideways for the rest). The home shows one thing at a time (Chat, Quests or
+   Agent on it, all at once (two rows when they don't fit in one; never a scroll). The home shows one thing at a time (Chat, Quests or
    Missions, picked on the bar); a panel opens between the header and the bar, so it feels like one
    app (panels with sections of their own show them as a row at their top, never a second bar).
    Sized to the visible part of the screen (--vv-h, set by phone.js from the visual viewport), so the
@@ -73,18 +73,16 @@
   .composer textarea { font-size: 16px; min-height: 44px; padding: 10px 12px; border-radius: 14px 18px 20px 6px; }
   .send { height: 44px; padding: 0 14px; border-radius: 14px 18px 20px 6px; }
 
-  /* The bar along the bottom: every place, one tap; swipe it for the rest (its edges fade where it goes on) */
-  .tabbar { display: flex; gap: 2px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  /* The bar along the bottom: every place, one tap, all of them in view at once. It's a grid: two
+     rows on a phone held upright (--cols is half the places, set by phone.js), one row on its side. */
+  .tabbar { display: grid; grid-template-columns: repeat(var(--cols, 6), minmax(min-content, 1fr)); gap: 2px 2px;
     margin-inline: calc(-1 * max(8px, env(safe-area-inset-left))) calc(-1 * max(8px, env(safe-area-inset-right)));
-    padding: 4px max(6px, env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+    padding: 4px max(4px, env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
     border-top: 1px solid var(--line); background: color-mix(in srgb, var(--void) 90%, var(--panel)); }
-  .tabbar::-webkit-scrollbar { display: none; }
-  .tabbar.fade-end { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
-  .tabbar.fade-start { -webkit-mask-image: linear-gradient(90deg, transparent, #000 28px); mask-image: linear-gradient(90deg, transparent, #000 28px); }
-  .tabbar.fade-start.fade-end { -webkit-mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
-  .tabbar button { position: relative; flex: 0 0 auto; min-width: 64px; display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 52px; padding: 5px 6px 4px; border: 0; border-radius: 14px;
-    background: none; color: var(--muted); font-family: var(--f-body); font-size: 11.5px; font-weight: 600; line-height: 1.1; white-space: nowrap; cursor: pointer; scroll-snap-align: center;
+  .tabbar button { position: relative; min-width: 0; display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 48px; padding: 4px 1px 5px; border: 0; border-radius: 12px;
+    background: none; color: var(--muted); font-family: var(--f-body); font-size: clamp(9px, 2.6vw, 11px); font-weight: 600; line-height: 1.1; white-space: nowrap; cursor: pointer;
     -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: color .2s, background-color .2s, transform .12s; }
+  .tabbar button > span:last-child { letter-spacing: -.01em; }
   .tabbar button:active { transform: scale(.93); }
   .tabbar button[aria-current="page"] { color: #fff; background: color-mix(in srgb, var(--hi) 16%, transparent); }
   .tabbar button[aria-current="page"]::after { content: ""; position: absolute; left: 50%; bottom: 2px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--hi); box-shadow: 0 0 8px var(--hi); }
@@ -97,7 +95,7 @@
   html.kb .tabbar, html.kb .topbar, html.kb .shell:has(> .main.viewing) > .topbar { display: none; }
 
   /* Pop-ups sit above the bar, and the dialogs fit the screen */
-  .toasts { left: 10px; right: 10px; bottom: calc(68px + env(safe-area-inset-bottom)); width: auto; }
+  .toasts { left: 10px; right: 10px; bottom: calc(var(--bar-h, 112px) + 8px); width: auto; }
   dialog.rhythm, dialog.rhythm.mission-view, dialog.rhythm.suite-dlg { width: calc(100vw - 16px); max-height: calc(var(--vv-h, 100dvh) - 24px); overflow-y: auto; }
   .rh { padding: 16px 14px; border-radius: 20px; }
   .rh input, .rh select, .rh textarea, .mv textarea { font-size: 16px; }
@@ -110,7 +108,8 @@
   .topbar .mark { width: 28px; height: 28px; border-radius: 8px; }
   .brand .wordmark, .brand .kicker { display: none; }
   .main { gap: 6px; }
-  .tabbar button { min-height: 38px; grid-auto-flow: column; align-items: center; gap: 6px; padding: 3px 8px; }
+  .tabbar { grid-template-columns: repeat(var(--n, 12), minmax(min-content, 1fr)); }
+  .tabbar button { min-height: 44px; gap: 2px; padding: 3px 1px; font-size: 10px; }
   .tabbar .t-ico { width: 20px; height: 20px; }
   .welcome h3 { display: none; }
 }

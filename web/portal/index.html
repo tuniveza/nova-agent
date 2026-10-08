@@ -462,7 +462,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="3.2"/><circle cx="17" cy="10.5" r="2.4"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/><path d="M15 15c2.6-.4 4.6.8 5.5 3.5"/></svg>
               <span>The crew</span>
             </a>
-            <a id="open-admin" class="btn ghost" href="/admin" hidden>
+            <a id="open-admin" class="btn ghost" href="/portal/?view=admin" data-nav="admin" hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="M9.5 12h5M12 9.5v5"/></svg>
               <span>Admin pages</span>
             </a>
@@ -543,14 +543,31 @@
     </section>
 
 
+    <!-- Admin (admins only): the admin pages, shown here inside Portal, and the crew -->
+    <section id="view-admin" class="view pv admin-view" aria-label="Admin" hidden>
+      <div class="admin-switch" role="tablist" aria-label="Admin">
+        <button type="button" class="chip" data-admin="/admin">Studio</button>
+        <button type="button" class="chip" data-admin="crew">Crew</button>
+        <button type="button" class="chip" data-admin="/admin/google/setup">Google</button>
+        <button type="button" class="chip" data-admin="/admin/links">Links</button>
+      </div>
+      <iframe id="admin-frame" class="admin-frame" title="Admin"></iframe>
+    </section>
+
     <!-- The crew (admins only) -->
     <section id="view-crew" class="view pv" aria-labelledby="crew-title" hidden>
+      <div class="admin-switch" role="tablist" aria-label="Admin">
+        <button type="button" class="chip" data-admin="/admin">Studio</button>
+        <button type="button" class="chip" data-admin="crew">Crew</button>
+        <button type="button" class="chip" data-admin="/admin/google/setup">Google</button>
+        <button type="button" class="chip" data-admin="/admin/links">Links</button>
+      </div>
       <div class="view-head">
         <div>
           <span class="kicker" id="crew-count"></span>
           <h2 id="crew-title">The crew</h2>
         </div>
-        <button id="invite-toggle" class="btn small" type="button" data-sfx="open" aria-expanded="false" aria-controls="invite-form-card">+ Invite someone</button>
+        <button id="invite-toggle" class="btn small" type="button" data-sfx="open" aria-expanded="false" aria-controls="invite-form-card" hidden>+ Invite someone</button>
       </div>
 
       <!-- Inviting someone: who, and what they can do -->
@@ -620,6 +637,11 @@
     <button class="tab tab-more" id="nav-me" data-view="you" type="button">
       <img id="nav-me-planet" class="tab-planet" alt="" width="64" height="64">
       <span>You</span>
+    </button>
+    <!-- Admin (admins only): the studio's admin pages and the crew, all inside Portal -->
+    <button class="tab tab-more" id="nav-admin" data-view="admin" type="button" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="M9.5 12h5M12 9.5v5"/></svg>
+      <span>Admin</span>
     </button>
     <!-- Phones: Quests, Alerts, NovaBot and You live here, so the bar fits -->
     <button class="tab" id="tab-more" type="button" aria-haspopup="dialog" aria-controls="more-sheet">

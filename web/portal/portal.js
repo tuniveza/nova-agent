@@ -430,12 +430,14 @@
     if (badge.getAttribute("src") !== url) badge.src = url;
     $("open-crew").hidden = !isAdmin();
     $("open-admin").hidden = !isAdmin();
+    $("nav-admin").hidden = !isAdmin();
   }
   // The You tab lights up for my profile, the crew and someone's profile
   function markNav() {
     for (const tab of document.querySelectorAll(".tabs .tab")) {
       // (on a phone the You tab is under More, so More lights up)
-      const on = tab.dataset.view === "you" || tab.id === "tab-more";
+      const admin = currentRoute().view === "admin" || currentRoute().view === "crew";
+      const on = admin ? tab.dataset.view === "admin" : tab.dataset.view === "you" || tab.id === "tab-more";
       tab.classList.toggle("active", on);
       if (on) tab.setAttribute("aria-current", "page");
       else tab.removeAttribute("aria-current");
@@ -447,6 +449,7 @@
     const p = new URLSearchParams(location.search);
     const view = p.get("view") || "";
     if (view === "crew") return { view: "crew" };
+    if (view === "admin") return { view: "admin", page: safeAdminPage(p.get("page")) };
     const id = p.get("id");
     if (id && (!state.me || id !== state.me.id)) return { view: "person", id };
     if (view === "me" || view === "you" || id) return { view: "me" };
@@ -488,6 +491,16 @@
       return hub() && hub().show(route.tab);
     }
     markNav();
+    if (route.view === "admin") {
+      if (!isAdmin()) {
+        history.replaceState(null, "", "/portal/");
+        toast("Admin is for admins.", true);
+        return renderRoute();
+      }
+      showView("view-admin");
+      document.title = "Admin · Portal";
+      return showAdminPage(route.page);
+    }
     if (route.view === "crew") {
       if (!isAdmin()) {
         history.replaceState(null, "", "/portal/");
@@ -495,6 +508,7 @@
         return renderRoute();
       }
       showView("view-crew");
+      showAdminPage("crew");
       document.title = "The crew · Portal";
       return loadCrew();
     }
@@ -515,6 +529,33 @@
       renderRoute();
     }
   }
+  // ===== Admin: the studio's admin pages, inside Portal =====
+  // Only Nova Bot's own /admin pages (never another site); "crew" is Portal's own crew page
+  function safeAdminPage(page) {
+    const p = String(page || "");
+    return p === "crew" || /^\/admin(\/[\w\/-]*)?$/.test(p) ? p : "/admin";
+  }
+  function showAdminPage(page) {
+    for (const chip of document.querySelectorAll("[data-admin]")) {
+      const on = chip.dataset.admin === "/admin" ? page === "/admin" || (page.startsWith("/admin/") && !page.startsWith("/admin/google") && page !== "/admin/links") : page.startsWith(chip.dataset.admin);
+      chip.classList.toggle("active", on);
+      chip.setAttribute("aria-selected", on ? "true" : "false");
+    }
+    if (page === "crew") return;
+    const frame = $("admin-frame");
+    if (frame.dataset.page !== page) {
+      frame.dataset.page = page;
+      frame.src = page;
+    }
+  }
+  for (const chip of document.querySelectorAll("[data-admin]")) {
+    chip.addEventListener("click", () => {
+      sfx("tab");
+      const page = chip.dataset.admin;
+      go(page === "crew" ? "/portal/?view=crew" : "/portal/?view=admin&page=" + encodeURIComponent(page), { replace: true });
+    });
+  }
+
   // One view at a time (the work tabs' views too)
   function showView(id) {
     for (const v of document.querySelectorAll("#main > .view")) {
