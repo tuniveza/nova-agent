@@ -68,15 +68,15 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(
     // Look for Hub windows that are already open
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
-      // For a Portal link, reuse an open Portal window if there is one
-      const open = url.startsWith("/portal/") && windows.find((w) => new URL(w.url).pathname.startsWith("/portal/"));
-      // Bring that window to the front, on the right tab
+      // Panels open inside Nova Agent now: bring Nova Agent to the front on that panel
+      const local = url.startsWith("/") && !url.startsWith("//");
+      const open = local && windows.find((w) => new URL(w.url).pathname === "/");
       if (open) {
         open.postMessage({ type: "nova-open", url });
         return open.focus();
       }
-      // Otherwise open the link
-      return self.clients.openWindow(url);
+      // Otherwise open Nova Agent there (another site, like Acuity, opens as it is)
+      return self.clients.openWindow(local ? "/?open=" + encodeURIComponent(url) : url);
     })
   );
 });

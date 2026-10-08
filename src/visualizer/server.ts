@@ -80,6 +80,22 @@ app.use("/actions/*", async (c, next) => {
   await next();
 });
 
+// ---- Panels have no pages of their own ----
+// Opened on its own (a bookmark, a typed address, an old link), a panel opens inside Nova Agent
+// instead: /?open=<its address>. Inside Nova Agent's viewer (a frame) it loads as itself. The
+// browser says which (Sec-Fetch-Dest); web/shared/inside.js catches browsers that don't.
+const PANELS = ["/portal", "/calendar", "/notes", "/app/memory", "/observatory", "/lossless", "/visualizer", "/admin"];
+app.use("*", async (c, next) => {
+  const path = c.req.path;
+  const page = (c.req.method === "GET" || c.req.method === "HEAD") && c.req.header("Sec-Fetch-Dest") === "document";
+  const last = path.slice(path.lastIndexOf("/") + 1);
+  // (Connecting Google leaves Nova Agent: Google won't show its sign-in inside a frame)
+  if (page && (!last.includes(".") || last.endsWith(".html")) && PANELS.some((p) => path === p || path.startsWith(p + "/")) && !/^\/admin\/google(\/|$)/.test(path)) {
+    return c.redirect("/?open=" + encodeURIComponent(path + new URL(c.req.url).search));
+  }
+  await next();
+});
+
 // The pages. Read from disk each time, so edits show on refresh.
 app.get("/", (c) => c.html(readFileSync(chatFile, "utf8")));
 app.get("/visualizer", (c) => c.html(readFileSync(pageFile, "utf8")));
@@ -256,6 +272,23 @@ app.all("/app/api/*", (c) => passOn(c.req.raw));
 app.all("/auth/*", (c) => passOn(c.req.raw));
 app.all("/staff", (c) => passOn(c.req.raw));
 app.all("/staff/*", (c) => passOn(c.req.raw));
+
+// ---- Admin, as a panel: Nova Bot's admin pages, as the person signed in on this computer ----
+// (Online they're Nova Bot's own, at the same address.) Signed out: Portal, then back here.
+async function admin(c: any) {
+  if (!fromOurPage(c.req.raw)) return c.text("Only from Nova Agent's own pages", 403);
+  const here = c.req.path + new URL(c.req.url).search;
+  if (!session()) return c.req.method === "GET" ? c.redirect("/portal/?next=" + encodeURIComponent(here)) : c.text("Sign in with Portal first.", 401);
+  const res = await passOn(c.req.raw);
+  // Nova Bot's links back to itself (signing in, Portal) stay inside Nova Agent
+  const where = res.headers.get("location");
+  if (!where || !where.startsWith(config.workerUrl)) return res;
+  const headers = new Headers(res.headers);
+  headers.set("location", where.slice(config.workerUrl.replace(/\/$/, "").length) || "/");
+  return new Response(res.body, { status: res.status, headers });
+}
+app.all("/admin", admin);
+app.all("/admin/*", admin);
 
 // ---- Calendar, served from the calendar folder ----
 // Its own offline helper isn't needed (or wanted) here: Nova Agent is the server.

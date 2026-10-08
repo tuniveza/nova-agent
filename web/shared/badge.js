@@ -8,7 +8,7 @@
 // It shows your planet (turning, with a halo in its own colour), your name and your role, and opens
 // a card with the planet up close, its name, and links to your profile and your Index.
 // Where it is decides how it knows you:
-//   Nova Bot's worker (Hub, Index, the admin pages)   your Nova Agent sign-in (the cookie)
+//   Nova Agent online (Nova Bot's main address) and its panels   Portal's sign-in (the cookie)
 //   Nova Agent (localhost:4545) and the panels it serves  who's signed in on this computer (sign in and out right here, in the card)
 //   Notes, Calendar... on their own sites            a read-only token from "Connect" in Portal
 // Colours come from the page's theme: --np-* if the app sets them, else Hub's names (--hi,
@@ -63,15 +63,15 @@
     last = { at: 0, data: null };
     whoAmI(true).then(followSignIn);
   };
-  // A panel signs in and out with the page: it starts again when that changes. Nova Agent's own
-  // page (the chat) keeps going, and its badge just redraws.
+  // A panel signs in and out with Nova Agent: it starts again when that changes. Nova Agent's own
+  // page (/) keeps going, and its badge just redraws.
   let wasIn = null;
   function followSignIn(d) {
     if (!d || d.offline) return d;
     const now = !!d.signedIn;
     const flipped = wasIn !== null && wasIn !== now;
     wasIn = now;
-    if (flipped && mode === "agent" && location.pathname !== "/") location.reload();
+    if (flipped && mode !== "connect" && location.pathname !== "/") location.reload();
     return d;
   }
 
@@ -328,7 +328,7 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
         const index = (mode === "connect" ? WORKER : "") + "/app/memory/";
         const profile = portalUrl + (mode === "connect" ? "?id=" + encodeURIComponent(s.id) : "?view=me");
         const links = [
-          `<a class="main" data-open="/portal/" href="${profile}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.profile}<span>Your profile</span></a>`,
+          `<a class="main" data-open="/portal/?view=me" href="${profile}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.profile}<span>Your profile</span></a>`,
           `<a data-open="/app/memory/" href="${index}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.index}<span>Your Index</span></a>`,
           `<button type="button" class="quiet" data-act="out">${ICON.out}<span>${mode === "connect" ? "Disconnect" : mode === "agent" ? "Sign out" : "Sign out everywhere"}</span></button>`,
         ].join("");
@@ -342,13 +342,13 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
           ${mode === "agent" ? `<p class="note">${d.offline ? "Nova Bot can't be reached just now; you're still signed in on this computer." : "Every panel in Nova Agent uses this sign-in. It stays until you sign out."}</p>` : ""}
           <div class="links">${links}</div>
           <p class="foot">${mode === "connect" ? "Connected: name, role and planet only" : "One sign-in for every Nova app"}</p>`;
-      } else if (mode === "agent" && !d.offline) {
-        // Nova Agent: sign in right here, once, for every panel
+      } else if (mode !== "connect" && !d.offline) {
+        // Nova Agent (on the studio PC, or online): sign in right here, once, for every panel
         body = `
           <div class="big"><span class="orb wide"><span class="ghost"></span><span class="spark"></span></span></div>
           <div class="kicker">Portal</div>
           <h3>Sign in</h3>
-          <p class="note">Once, for every panel in Nova Agent. You stay signed in on this computer until you sign out.</p>
+          <p class="note">${mode === "agent" ? "Once, for every panel in Nova Agent. You stay signed in on this computer until you sign out." : "Once, for every panel in Nova Agent."}</p>
           <form class="signin-form" novalidate>
             <input name="email" type="email" autocomplete="username" placeholder="Email" aria-label="Email" required>
             <input name="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" required>
@@ -387,11 +387,11 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       // On Nova Agent's own page, Portal and Index open in its viewer, like the panels below
       for (const a of card.querySelectorAll("a[data-open]")) {
         a.addEventListener("click", (e) => {
-          const tile = mode === "agent" && document.querySelector(`a.suite-app[data-inside="${a.dataset.open}"]`);
-          if (!tile) return;
+          // Nova Agent's own page opens it in its viewer; inside a panel, the link just opens there
+          if (mode === "connect" || !window.NovaAgent || !window.NovaAgent.open) return;
           e.preventDefault();
           this.close();
-          tile.click();
+          window.NovaAgent.open(a.dataset.open);
         });
       }
       setTimeout(() => {
@@ -457,10 +457,11 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       store.set("");
       sfx("off");
       this.close();
-      if (mode === "portal") location.reload();
+      if (mode === "connect") whoAmI(true);
       else changed();
     }
-    // Nova Agent: sign in from the card (Nova Agent keeps the sign-in, src/signin.ts)
+    // Sign in from the card: on the studio PC Nova Agent keeps the sign-in (src/signin.ts);
+    // online, Nova Bot sets its cookie
     async signIn(e, form) {
       e.preventDefault();
       const email = form.email.value.trim();
