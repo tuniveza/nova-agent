@@ -26,6 +26,11 @@ const SEND_HIGH_WATER = { lowlatency: 512 * 1024, lossless: 8 * 1024 * 1024 };
 // reorders by sequence number; in low-latency mode it skips frames that come too late.
 const DC_OPTIONS = { ordered: false };
 
+// Where the signalling and relay setup live: next to this page online. Inside Nova Agent on the
+// studio PC the page is served locally, so it uses Nova Bot's, and the other device can be anywhere.
+const ONLINE = "https://novacane-worker.novacane-studio.workers.dev/lossless/";
+const SERVER = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? ONLINE : new URL(".", location.href).href;
+
 // STUN until /lossless/ice answers (it adds Cloudflare's TURN relay when set up)
 const FALLBACK_ICE = [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }];
 // "?relay" in the address forces the TURN relay: for testing the across-the-world path from one network
@@ -488,7 +493,7 @@ function onRemoteData(data) {
 async function iceConfig() {
   if (S.ice && (!S.ice.turn || S.ice.expires - Date.now() > 30 * 60 * 1000)) return S.ice;
   try {
-    const res = await fetch("ice", { cache: "no-store" });
+    const res = await fetch(new URL("ice", SERVER), { cache: "no-store" });
     if (!res.ok) throw new Error(`answered ${res.status}`);
     const j = await res.json();
     S.ice = { iceServers: j.iceServers, turn: !!j.turn, expires: Date.now() + (j.ttl || 0) * 1000, note: j.note || "" };
@@ -693,7 +698,7 @@ async function onSignal(msg) {
 }
 
 function openSignalling() {
-  const url = new URL("ws", location.href); // /lossless/ws next to this page
+  const url = new URL("ws", SERVER); // /lossless/ws, next to this page online
   url.protocol = location.protocol === "https:" ? "wss:" : "ws:";
   url.search = `?room=${encodeURIComponent(S.room)}&client=${S.clientId}`;
 
@@ -866,7 +871,7 @@ ui.resume.onclick = () => S.ctx?.resume();
 ui.invite.onclick = async () => {
   const room = normalizeRoom(ui.room.value);
   if (!room) return;
-  const link = location.origin + location.pathname + "#" + room;
+  const link = (SERVER === ONLINE ? ONLINE : location.origin + location.pathname) + "#" + room;
   try {
     if (navigator.share && matchMedia("(pointer: coarse)").matches) await navigator.share({ url: link });
     else await navigator.clipboard.writeText(link);

@@ -12,7 +12,7 @@
 
 <img src="media/day-card.jpg" alt="Calendar: October 2026 with the Moonlight Mixtape release day card open, showing its supernova artwork and a note card with its own generated picture" width="900">
 
-### ✦ [Open Calendar](https://nova-calendar.novacane-studio.workers.dev) ✦
+### ✦ [Open Calendar](https://novacane-worker.novacane-studio.workers.dev/calendar/) ✦
 
 <sub>Works in any modern browser · install it as an app · works offline · built into Nova Agent</sub>
 

@@ -472,6 +472,11 @@
   NO.backdrop.init(theme);
   renderThemes();
   bindSound();
+  // Online, the projects are for the studio's staff: Nova Bot sends this instead until you sign in
+  if (window.OBSERVATORY_LOCKED) {
+    $('#decks').innerHTML = `<div class="empty-data"><p>The projects are for the studio's staff.</p><p><a href="/portal/?next=${encodeURIComponent(location.pathname)}">Sign in with Portal</a> to see them.</p></div>`;
+    return;
+  }
   if (!D || !Array.isArray(D.projects)) {
     $('#decks').innerHTML = '<div class="empty-data"><p>No scan data yet.</p><p>Run <code>npm run scan</code> in this folder (or <code>npm run build</code> for screenshots and video too), then reload.</p></div>';
     return;

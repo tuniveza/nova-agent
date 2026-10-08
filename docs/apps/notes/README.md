@@ -18,7 +18,7 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
 
 <img src="media/hero.jpg" width="900" alt="Notes with the built-in welcome note open: notes list on the left, the glowing centred page in the middle, the outline on the right">
 
-### ✦ [Open Notes](https://nova-notes.novacane-studio.workers.dev) ✦
+### ✦ [Open Notes](https://novacane-worker.novacane-studio.workers.dev/notes/) ✦
 
 <sub>Works in any modern browser · install it as an app · works offline · also built into Nova Agent</sub>
 
@@ -108,7 +108,7 @@ Every press makes a soft cosmic sound: a tap, a menu opening, a dialog closing, 
 
 | | On the web | Inside Nova Agent |
 |---|---|---|
-| Address | nova-notes.novacane-studio.workers.dev | `/notes/` on Nova Agent |
+| Address | novacane-worker.novacane-studio.workers.dev/notes/ | `/notes/` on Nova Agent |
 | Where notes are kept | In that browser | On the studio computer, separate from the web app's |
 | Privacy-minded browsers | May limit what a website saves | Fine: it's part of Nova Agent |
 
