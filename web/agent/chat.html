@@ -166,6 +166,24 @@
     .main.viewing > .suite-home .suite-group.tools .suite-app { grid-template-columns: auto; padding: 5px; }
     .main.viewing > .suite-home .suite-group.tools .suite-app b { display: none; }
   }
+  /* A phone (or a short window) with a panel open: the panel gets the whole screen. Nova Agent's
+     header and the panels strip step aside; the slim bar above the panel goes back (← Nova Agent),
+     and its name opens the panels to switch. Edge to edge, with room kept for the notch and the
+     home bar, and no frosted glass or drifting clouds behind it. */
+  @media (max-width: 980px), (max-height: 600px) {
+    .shell:has(> .main.viewing) { height: 100dvh; grid-template-rows: minmax(0, 1fr); gap: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    .shell:has(> .main.viewing) > .topbar { display: none; }
+    .main.viewing { display: block; height: 100%; overflow: hidden; }
+    .main.viewing > :not(.viewer) { display: none; }
+    .main.viewing > .viewer { height: 100%; border-radius: 0; border: 0; background: var(--void); backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; }
+    .main.viewing .viewer-bar { min-height: 42px; padding: 3px 8px; }
+    .main.viewing .viewer-bar .icon-btn { width: 34px; height: 34px; }
+    .viewer-name { cursor: pointer; }
+    .viewer-name::after { content: " ▾"; font-size: 11px; color: var(--muted); }
+    body:has(.main.viewing) .nebula { animation: none; }
+    /* The Manual's floating button would sit on the panel's own tab bar */
+    body:has(.main.viewing) nova-manual[floating] { display: none; }
+  }
   /* The panels, along the bottom in one row: the panels together, then services and admin */
   .suite-groups { display: grid; gap: 18px; }
   .suite-group h4 { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
@@ -599,7 +617,7 @@
     <section class="viewer glass" id="viewer" hidden aria-label="App">
       <div class="viewer-bar">
         <button type="button" class="mini" id="viewer-close" data-sfx="close" title="Back to Nova Agent">← Nova Agent</button>
-        <span class="viewer-name" id="viewer-name"></span>
+        <span class="viewer-name" id="viewer-name" role="button" tabindex="0" title="Switch panel"></span>
         <span class="viewer-tools">
           <button type="button" class="icon-btn" id="viewer-reload" title="Reload" aria-label="Reload"><svg class="ico"><use href="#i-replan"/></svg></button>
         </span>
@@ -1530,6 +1548,9 @@
 
   // ---- The Nova Agent launcher ----
   $('suite-btn').addEventListener('click', () => $('suite').showModal());
+  // The open panel's name (above it) switches panels too: handy on a phone, where the strip steps aside
+  $('viewer-name').addEventListener('click', () => $('suite').showModal());
+  $('viewer-name').addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), $('suite').showModal()));
   $('suite-close').addEventListener('click', () => $('suite').close());
   $('suite').addEventListener('click', (e) => { if (e.target === $('suite')) $('suite').close(); });
 

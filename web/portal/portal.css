@@ -546,3 +546,98 @@ html.embed .pv .hero { --stage: min(86vw, 400px, 40vh); }
 /* Change password (You page) */
 .pv .password-card form { display: grid; gap: 12px; margin-top: 8px; }
 .pv .password-card .btn { justify-self: start; }
+
+/* ===================== Today: what matters at a glance ===================== */
+.today-date { margin: 0; color: var(--muted); font-size: 13.5px; }
+.today-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; }
+.t-tile {
+  display: grid; gap: 4px; justify-items: center; align-content: center; min-height: 82px; padding: 10px 6px;
+  border-radius: 16px; border: 1px solid var(--line); background: rgba(var(--panel-2-rgb), 0.55);
+  color: var(--text); cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.t-tile:active { transform: scale(0.97); }
+.t-num { font-family: var(--f-display); font-stretch: 112%; font-weight: 900; font-size: 26px; line-height: 1; color: #fff; }
+.t-icon { color: var(--hi); }
+.t-label { font-size: 12px; line-height: 1.2; color: var(--muted); }
+.today-sub { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; }
+.today-sub h3 { margin: 0; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+.today-sub .chip { min-height: 34px; padding: 0 12px; }
+@media (min-width: 761px) { .today-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+
+/* ===================== More (phones): the sections that don't fit on the bar ===================== */
+#tab-more { display: none; }
+.more-list { display: grid; gap: 6px; }
+.more-item {
+  position: relative; display: flex; align-items: center; gap: 12px; min-height: 54px; padding: 0 16px;
+  border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--panel-2-rgb), 0.55);
+  color: var(--text); font-size: 16px; text-align: left; cursor: pointer; touch-action: manipulation;
+}
+.more-item svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
+.more-item img { width: 26px; height: 26px; flex: none; border-radius: 50%; }
+.more-item .more-name { flex: 1; }
+.more-item .badge { position: static; }
+.more-item.active { border-color: var(--hi); color: #fff; }
+
+/* ===================== Phones: everything in reach, little scrolling ===================== */
+@media (max-width: 760px) {
+  .tabs .tab-more { display: none; }
+  #tab-more { display: flex; }
+  .tab > span:not(.badge) { font-size: 11px; }
+
+  /* Headings: small, on one line with their buttons, left-aligned rows */
+  .view-head { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .view-head h2 { font-size: 19px; }
+  .view-head .chips .chip { min-height: 34px; padding: 0 12px; }
+  main { padding-top: 12px; padding-left: max(10px, var(--safe-left)); padding-right: max(10px, var(--safe-right)); }
+  html[data-align] main { text-align: left; }
+  .list { gap: 8px; }
+  html[data-align] .card { text-align: left; padding: 12px 14px; border-radius: 16px; box-shadow: none; }
+  html[data-align] .card-top { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .card-title { font-size: 15.5px; min-width: 0; }
+  html[data-align] .actions { justify-content: flex-start; margin-top: 10px; }
+  .actions .btn.small { min-height: 40px; }
+  /* An enquiry is one line (what, who, when) until tapped */
+  .card.fold { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .card.fold:not(.open) > :not(.card-top):not(.card-who) { display: none; }
+  .card.fold:not(.open) .card-who { margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13.5px; }
+  .card.fold:not(.open) .card-meta { font-size: 10px; }
+  .hint { font-size: 13px; margin-bottom: 10px; }
+
+  /* Lighter on a phone: no frosted glass or ever-moving titles (they cost battery and smoothness) */
+  .top, .tabs, .sheet, .bot-form { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .top { background: rgba(var(--deep-rgb), 0.96); }
+  .tabs { background: linear-gradient(rgba(var(--deep-rgb), 0.97), rgba(var(--deep-rgb), 0.97)) padding-box, var(--edge) border-box; }
+  .view-head h2, .brand .wordmark, .cal-month, .voice-status, .cal-time { animation: none; }
+  body { background-attachment: scroll; }
+
+  /* Alerts: compact rows (the kind and delivery details are for the full view on a computer) */
+  #view-alerts > .hint { display: none; }
+  .auto-delete { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 13.5px; }
+  .auto-delete select { min-height: 36px; padding: 4px 10px; }
+  #alert-list .alert-kind, #alert-list .card-foot { display: none; }
+  html[data-align] #alert-list .card { padding: 10px 46px 10px 14px; }
+  html[data-align] #alert-list .card.has-delete .card-top, html[data-align] #alert-list .card.has-delete > .alert-when { padding-left: 0; }
+  #alert-list .details { margin: 4px 0 0; font-size: 14px; }
+  #alert-list .actions { margin-top: 8px; }
+
+  /* Chats: two lines of the question at most */
+  #chat-list .card-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  html[data-align] #view-chats .hint { text-align: left; }
+
+  /* You: a smaller planet, so the buttons are on the first screen */
+  html .pv .hero, html.embed .pv .hero { --stage: min(52vw, 200px, 26vh); }
+}
+
+/* ===================== Inside Nova Agent on a phone ===================== */
+/* Nova Agent's bar above already says "Portal" and switches panels: Portal's own header is one slim row */
+@media (max-width: 760px) {
+  html.embed .top { min-height: 48px; padding-top: 4px; padding-bottom: 4px; }
+  html.embed .brand { display: none; }
+  html.embed .top .icon-btn { width: 38px; height: 38px; }
+  html.embed { --tabs-h: 58px; --tabs-gap: 6px; }
+  html.embed .tabs { left: 6px; right: 6px; border-radius: 20px; }
+}
+/* Nova Agent has its own Manual: none inside the panel */
+html.embed nova-manual { display: none; }
+/* Inputs at 16px, so a phone doesn't zoom in when typing */
+@media (pointer: coarse) { input, select, textarea { font-size: max(16px, 1em); } }

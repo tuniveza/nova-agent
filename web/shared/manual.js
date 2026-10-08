@@ -383,9 +383,15 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       this.onCalm();
       window.addEventListener("novaoptionschange", this.onCalm);
       this.drawButton();
-      // A small green dot when something in the suite changed since you last looked
+      // A small green dot when something in the suite changed since you last looked. It needs the
+      // whole manual (the biggest download on the page), so a phone, or a button nobody can see,
+      // skips it: the manual still loads the moment it's opened.
       const idle = window.requestIdleCallback || ((f) => setTimeout(f, 1500));
-      idle(() => data().then((d) => this.markNew(d)).catch(() => {}));
+      idle(() => {
+        const seen = this.checkVisibility ? this.checkVisibility() : this.getClientRects().length > 0;
+        if (!seen || matchMedia("(max-width: 760px)").matches) return;
+        data().then((d) => this.markNew(d)).catch(() => {});
+      });
     }
     disconnectedCallback() {
       all.delete(this);

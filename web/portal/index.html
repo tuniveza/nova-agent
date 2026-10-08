@@ -265,6 +265,24 @@
   </div>
 
   <main id="main">
+    <!-- Today: what matters at a glance; each tile opens its section -->
+    <section id="view-today" class="view" hidden>
+      <div class="view-head today-head">
+        <h2>Today</h2>
+        <p class="today-date" id="today-date"></p>
+      </div>
+      <div id="today-summary" class="today-grid">
+        <button class="t-tile" type="button" data-go="enquiries"><span class="t-num" id="t-enquiries">–</span><span class="t-label">New enquiries</span></button>
+        <button class="t-tile" type="button" data-go="chats"><span class="t-num" id="t-chats">–</span><span class="t-label">Chats today</span></button>
+        <button class="t-tile" type="button" data-go="calendar"><span class="t-num" id="t-bookings">–</span><span class="t-label">Bookings today</span></button>
+        <button class="t-tile" type="button" data-go="alerts"><span class="t-num" id="t-alerts">–</span><span class="t-label">New alerts</span></button>
+        <button class="t-tile" type="button" data-go="quests"><span class="t-num" id="t-quests">–</span><span class="t-label">Quests left</span></button>
+        <button class="t-tile" type="button" data-go="bot"><span class="t-num t-icon" aria-hidden="true">✦</span><span class="t-label">Ask NovaBot</span></button>
+      </div>
+      <div class="today-sub"><h3>New enquiries</h3><button class="chip" type="button" data-go="enquiries">See all</button></div>
+      <div id="today-list" class="list"></div>
+    </section>
+
     <!-- Enquiries -->
     <section id="view-enquiries" class="view">
       <div class="view-head">
@@ -570,7 +588,11 @@
   </main>
 
   <nav class="tabs" aria-label="Sections">
-    <button class="tab active" data-view="enquiries" type="button">
+    <button class="tab active" data-view="today" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>
+      <span>Today</span>
+    </button>
+    <button class="tab" data-view="enquiries" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
       <span>Enquiries</span><span id="new-badge" class="badge" hidden></span>
     </button>
@@ -582,24 +604,38 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       <span>Calendar</span>
     </button>
-    <button class="tab" data-view="quests" type="button">
+    <button class="tab tab-more" data-view="quests" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 6.6L21 9.5l-5 4.6 1.4 6.9L12 17.6 6.6 21l1.4-6.9-5-4.6 6.6-.9z"/></svg>
       <span>Quests</span><span id="quest-badge" class="badge" hidden></span>
     </button>
-    <button class="tab" data-view="alerts" type="button">
+    <button class="tab tab-more" data-view="alerts" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
       <span>Alerts</span><span id="alert-badge" class="badge" hidden></span>
     </button>
-    <button class="tab" data-view="bot" type="button">
+    <button class="tab tab-more" data-view="bot" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#sigil"/></svg>
       <span>NovaBot</span>
     </button>
     <!-- You: your own planet (your profile; admins reach the crew from there) -->
-    <button class="tab" id="nav-me" data-view="you" type="button">
+    <button class="tab tab-more" id="nav-me" data-view="you" type="button">
       <img id="nav-me-planet" class="tab-planet" alt="" width="64" height="64">
       <span>You</span>
     </button>
+    <!-- Phones: Quests, Alerts, NovaBot and You live here, so the bar fits -->
+    <button class="tab" id="tab-more" type="button" aria-haspopup="dialog" aria-controls="more-sheet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      <span>More</span><span id="more-badge" class="badge" hidden></span>
+    </button>
   </nav>
+</div>
+
+<!-- More (phones): the sections that don't fit on the bar -->
+<div id="more-sheet" class="sheet" hidden>
+  <div class="sheet-card more-card" role="dialog" aria-modal="true" aria-labelledby="more-title">
+    <h3 id="more-title">More</h3>
+    <div id="more-list" class="more-list"></div>
+    <button id="more-close" class="btn ghost" type="button">Close</button>
+  </div>
 </div>
 
 <!-- Booking link sheet -->
@@ -798,7 +834,7 @@
 
     <section class="option-group">
       <p class="kicker">Starting tab</p>
-      <div class="chips wrap" data-option="startTab"><button class="chip" type="button" data-value="enquiries">Enquiries</button><button class="chip" type="button" data-value="chats">Chats</button><button class="chip" type="button" data-value="calendar">Calendar</button><button class="chip" type="button" data-value="quests">Quests</button><button class="chip" type="button" data-value="alerts">Alerts</button><button class="chip" type="button" data-value="bot">NovaBot</button><button class="chip" type="button" data-value="you">You</button></div>
+      <div class="chips wrap" data-option="startTab"><button class="chip" type="button" data-value="today">Today</button><button class="chip" type="button" data-value="enquiries">Enquiries</button><button class="chip" type="button" data-value="chats">Chats</button><button class="chip" type="button" data-value="calendar">Calendar</button><button class="chip" type="button" data-value="quests">Quests</button><button class="chip" type="button" data-value="alerts">Alerts</button><button class="chip" type="button" data-value="bot">NovaBot</button><button class="chip" type="button" data-value="you">You</button></div>
     </section>
 
     <section class="option-group option-actions">
@@ -814,12 +850,10 @@
 </div>
 
 <script src="/shared/sfx.js"></script>
-<script src="/portal/ambient.js"></script>
 <script src="/portal/options.js"></script>
 <script src="/portal/suite.js"></script>
 <script src="/portal/app.js"></script>
 <script src="/portal/portal.js"></script>
 <script src="/shared/badge.js" defer></script>
-<script src="/shared/manual.js" defer></script>
 </body>
 </html>

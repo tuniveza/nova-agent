@@ -112,7 +112,7 @@
 (() => {
   "use strict";
   const KEY = "novahub-options";
-  const defaults = { align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "enquiries" };
+  const defaults = { align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "today" };
   const root = document.documentElement;
 
   // The saved options, with anything missing filled in

@@ -10,8 +10,10 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["enquiries", "chats", "calendar", "quests", "alerts", "bot"];
-  let currentView = "enquiries";
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "quests", "alerts", "bot"];
+  // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
+  const MORE = ["quests", "alerts", "bot"];
+  let currentView = "today";
   let running = false;
   let sessions = null; // session types for booking links
   let sheetEnquiry = null;
@@ -152,15 +154,16 @@
 
   // Show one of the work tabs (portal.js decides which from the address, and calls this)
   function show(view) {
-    if (!VIEWS.includes(view)) view = "enquiries";
+    if (!VIEWS.includes(view)) view = "today";
     currentView = view;
     document.querySelectorAll(".tabs .tab").forEach((t) => {
-      const on = t.dataset.view === view;
+      const on = t.dataset.view === view || (t.id === "tab-more" && MORE.includes(view));
       t.classList.toggle("active", on);
       if (on) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
     });
     document.querySelectorAll("#main > .view").forEach((v) => (v.hidden = v.id !== "view-" + view));
+    if (view === "today") loadToday();
     if (view === "quests") loadQuests();
     if (view === "enquiries") loadEnquiries();
     if (view === "chats") loadChats();
@@ -171,9 +174,65 @@
   }
 
   // A tab: the address follows (so a reload stays put), and portal.js shows it
-  document.querySelectorAll(".tabs .tab").forEach((tab) =>
-    tab.addEventListener("click", () => window.PortalPage && window.PortalPage.go("/portal/?view=" + tab.dataset.view, { replace: VIEWS.includes(tab.dataset.view) }))
-  );
+  const goView = (view) => window.PortalPage && window.PortalPage.go("/portal/?view=" + view, { replace: VIEWS.includes(view) });
+  document.querySelectorAll(".tabs .tab[data-view]").forEach((tab) => tab.addEventListener("click", () => goView(tab.dataset.view)));
+
+  // ===== More (phones): Quests, Alerts, NovaBot and You, with their counts =====
+  function openMore() {
+    const list = $("more-list");
+    list.replaceChildren(
+      ...[...document.querySelectorAll(".tabs .tab-more")].map((tab) => {
+        const item = el("button", "more-item" + (tab.classList.contains("active") ? " active" : ""));
+        item.type = "button";
+        const icon = tab.querySelector("svg, img").cloneNode(true);
+        icon.removeAttribute("id");
+        item.append(icon, el("span", "more-name", tab.querySelector("span:not(.badge)").textContent));
+        const badge = tab.querySelector(".badge");
+        if (badge && !badge.hidden) item.appendChild(el("span", "badge", badge.textContent));
+        item.addEventListener("click", () => {
+          $("more-sheet").hidden = true;
+          goView(tab.dataset.view);
+        });
+        return item;
+      })
+    );
+    $("more-sheet").hidden = false;
+  }
+  $("tab-more").addEventListener("click", openMore);
+  $("more-close").addEventListener("click", () => ($("more-sheet").hidden = true));
+  $("more-sheet").addEventListener("click", (e) => e.target === $("more-sheet") && ($("more-sheet").hidden = true));
+
+  // The counts behind More (and Today's tiles) follow the Quests and Alerts badges
+  function syncCounts() {
+    const n = (id) => ($(id).hidden ? 0 : Number($(id).textContent) || 0);
+    const more = n("quest-badge") + n("alert-badge");
+    $("more-badge").hidden = !more;
+    $("more-badge").textContent = more;
+    $("t-alerts").textContent = n("alert-badge");
+    $("t-quests").textContent = n("quest-badge");
+  }
+
+  // ===== Today: what matters at a glance (each tile opens its section) =====
+  document.querySelectorAll("#view-today [data-go]").forEach((b) => b.addEventListener("click", () => goView(b.dataset.go)));
+  async function loadToday() {
+    $("today-date").textContent = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" });
+    const today = dayKey(new Date());
+    const set = (id, value) => ($(id).textContent = value);
+    const [enq, chats, cal] = await Promise.allSettled([api("enquiries"), api("conversations"), api("calendar")]);
+    const list = $("today-list");
+    if (enq.status === "fulfilled") {
+      set("t-enquiries", enq.value.newCount || 0);
+      $("new-badge").hidden = !enq.value.newCount;
+      $("new-badge").textContent = enq.value.newCount;
+      lastEnquiries = enq.value.enquiries;
+      const newest = enq.value.enquiries.slice(0, 3);
+      if (newest.length) list.replaceChildren(...newest.map(enquiryCard));
+      else emptyState(list, "Nothing new. All caught up ✦");
+    } else if (enq.reason && enq.reason.message !== "signed out") emptyState(list, enq.reason.message);
+    if (chats.status === "fulfilled") set("t-chats", chats.value.conversations.filter((c) => c.started && dayKey(new Date(c.started)) === today).length);
+    if (cal.status === "fulfilled") set("t-bookings", cal.value.setUp ? cal.value.bookings.filter((b) => { const d = feedDate(b.start); return d && dayKey(d) === today; }).length : "–");
+    syncCounts();
+  }
   const onWorkTab = () => running && !$("view-" + currentView).hidden;
   $("refresh").addEventListener("click", () => {
     if (onWorkTab()) show(currentView);
@@ -212,7 +271,12 @@
   }
 
   function enquiryCard(q) {
-    const card = el("article", "card" + (q.status === "done" ? " done" : ""));
+    const card = el("article", "card fold" + (q.status === "done" ? " done" : ""));
+    // On a phone an enquiry is one line (what, who, when) until it's tapped
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("a, button")) return;
+      card.classList.toggle("open");
+    });
     const top = el("div", "card-top");
     const title = el("h3", "card-title", q.subject || "Enquiry");
     if (q.status === "new") title.appendChild(el("span", "pill-new", "New"));
@@ -949,6 +1013,7 @@
     const left = open.filter((q) => q.start && q.start.startsWith(today)).length;
     $("quest-badge").hidden = !left;
     $("quest-badge").textContent = left;
+    syncCounts();
     // The Calendar tab shows Calendar and quests too: redraw it with the latest
     if (currentView === "calendar" && calMonth) {
       drawMonth();
@@ -1030,21 +1095,42 @@
     music.classList.toggle("on", on);
     try { localStorage.setItem("novahub-music", on ? "1" : "0"); } catch (err) {}
   }
-  if (window.NovaAmbient) {
-    window.NovaAmbient.onchange = musicState;
-    music.addEventListener("click", async () => {
-      const on = await window.NovaAmbient.toggle();
+  let ambient = null;
+  function loadAmbient() {
+    if (!ambient)
+      ambient = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "/portal/ambient.js";
+        script.onload = () => {
+          const engine = window.NovaAmbient;
+          if (!engine) return reject(new Error("No music here"));
+          engine.onchange = musicState;
+          if (window.NovaOptions) engine.setVolume(window.NovaOptions.get().volume / 100);
+          resolve(engine);
+        };
+        script.onerror = () => reject(new Error("Couldn't load the music"));
+        document.head.appendChild(script);
+      });
+    return ambient;
+  }
+  // Ready a moment after the first screen, so a tap starts it straight away
+  setTimeout(() => loadAmbient().catch(() => {}), 2500);
+  music.addEventListener("click", async () => {
+    try {
+      const on = await (await loadAmbient()).toggle();
       toast(on ? "Ambient music on ✦" : "Ambient music off");
-    });
-    // It was on last time: start again on the first tap (phones only allow sound after a tap)
-    let wanted = false;
-    try { wanted = localStorage.getItem("novahub-music") === "1"; } catch (err) {}
-    if (wanted) document.addEventListener("pointerdown", function again(e) {
-      if (e.target.closest("#music")) return;
-      document.removeEventListener("pointerdown", again);
-      window.NovaAmbient.start().catch(() => {});
-    });
-  } else music.hidden = true;
+    } catch (err) {
+      toast(err.message);
+    }
+  });
+  // It was on last time: start again on the first tap (phones only allow sound after a tap)
+  let wanted = false;
+  try { wanted = localStorage.getItem("novahub-music") === "1"; } catch (err) {}
+  if (wanted) document.addEventListener("pointerdown", function again(e) {
+    if (e.target.closest("#music")) return;
+    document.removeEventListener("pointerdown", again);
+    loadAmbient().then((engine) => engine.start()).catch(() => {});
+  });
 
   // ===== Alerts =====
   // A copy of every notification that went through to a phone, newest first.
@@ -1093,6 +1179,7 @@
       $("alert-badge").hidden = !unseen;
       // The number itself
       $("alert-badge").textContent = unseen;
+      syncCounts();
       // Not on the Alerts tab: the badge is all we needed
       if (!looking) return;
       // Nothing yet: say so

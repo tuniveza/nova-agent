@@ -8,7 +8,7 @@
 //   Setup     the very first time: the first admin, proven with the studio's current password
 //   Sign in   email and password; signs in Index and the admin pages too
 //   Invite    ?invite=<token>: someone joining picks their name and password
-//   Work tabs ?view=enquiries|chats|calendar|quests|alerts|bot (no ?view: the starting tab from Options)
+//   Work tabs ?view=today|enquiries|chats|calendar|quests|alerts|bot (no ?view: the starting tab from Options)
 //   You       ?view=me: their planet, big and turning; re-roll it, rename, open their Index, sign out
 //   Crew      ?view=crew (admins): everyone as planets; invite people, change roles, switch accounts off
 // Which one shows depends on the address (?invite=, ?view=, ?id=<someone>, ?next=) and on who's
@@ -22,6 +22,12 @@
   const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches || root.getAttribute("data-motion") === "calm";
   const sfx = (name) => window.NovaSfx && window.NovaSfx.play(name);
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+  if (!document.documentElement.classList.contains("embed")) {
+    const manual = document.createElement("script");
+    manual.src = "/shared/manual.js";
+    manual.defer = true;
+    document.head.appendChild(manual);
+  }
   const MIN_PASSWORD = 1;
   const SESSION_CHECK_EVERY = 45_000;
 
@@ -41,7 +47,7 @@
   const isAdmin = () => Boolean(state.me && state.me.role === "admin");
   // The work tabs (app.js)
   const hub = () => window.NovaHub;
-  const WORK = ["enquiries", "chats", "calendar", "quests", "alerts", "bot"];
+  const WORK = ["today", "enquiries", "chats", "calendar", "quests", "alerts", "bot"];
   // Tell the top-right badge (and other panels) that who's signed in has changed
   const changed = () => window.NovaPortal && window.NovaPortal.changed && window.NovaPortal.changed();
 
@@ -428,7 +434,8 @@
   // The You tab lights up for my profile, the crew and someone's profile
   function markNav() {
     for (const tab of document.querySelectorAll(".tabs .tab")) {
-      const on = tab.dataset.view === "you";
+      // (on a phone the You tab is under More, so More lights up)
+      const on = tab.dataset.view === "you" || tab.id === "tab-more";
       tab.classList.toggle("active", on);
       if (on) tab.setAttribute("aria-current", "page");
       else tab.removeAttribute("aria-current");
@@ -448,7 +455,7 @@
     if (location.hash === "#nova") return { view: "work", tab: "alerts" };
     const start = window.NovaOptions ? window.NovaOptions.get().startTab : "";
     if (start === "you") return { view: "me" };
-    return { view: "work", tab: WORK.includes(start) ? start : "enquiries" };
+    return { view: "work", tab: WORK.includes(start) ? start : "today" };
   }
   // Move to another screen inside the app (the address changes, so back and forward work;
   // switching work tabs replaces it instead, so Back leaves the page rather than stepping through tabs)
