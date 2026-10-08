@@ -51,9 +51,9 @@ export function applyQuestTaps(taps: unknown): void {
   for (const t of taps as QuestTap[]) {
     try {
       const title = applyQuestTap(t);
-      trace("input", "ok", `Hub: ${t.action} “${title}”`);
+      trace("input", "ok", `Portal: ${t.action} “${title}”`);
     } catch (error) {
-      trace("input", "warn", `Hub tap couldn't be done: ${(error as Error).message}`);
+      trace("input", "warn", `Portal tap couldn't be done: ${(error as Error).message}`);
     }
   }
 }
@@ -73,7 +73,7 @@ async function send(): Promise<void> {
     lastProblem = "";
   } catch (error) {
     const problem = (error as Error).message;
-    if (problem !== lastProblem) trace("task", "warn", `Couldn't send the plan to Hub: ${problem}`);
+    if (problem !== lastProblem) trace("task", "warn", `Couldn't send the plan to Portal: ${problem}`);
     lastProblem = problem;
   }
 }

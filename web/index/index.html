@@ -22,7 +22,7 @@
 <link rel="stylesheet" href="/shared/themes.css">
 <script src="/shared/inside.js"></script>
 <link rel="stylesheet" href="/app/memory/memory.css">
-<!-- The saved theme (shared with Hub) goes on before anything is drawn -->
+<!-- The saved theme (shared with Portal) goes on before anything is drawn -->
 <script src="/shared/themes.js"></script>
 </head>
 <body>
@@ -54,11 +54,11 @@
     <g transform="translate(256 100)"><circle r="14" fill="#FF5FA8" opacity=".85" filter="url(#nv-twinkle)"/><path d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/></g>
     <circle cx="410" cy="257" r="9" fill="#fff" opacity=".95"/>
   </symbol>
-  <!-- Hub: a cosmic H -->
-  <symbol id="i-mark-h" viewBox="0 0 512 512">
+  <!-- Portal: a cosmic P -->
+  <symbol id="i-mark-p" viewBox="0 0 512 512">
     <use href="#i-sky"/>
-    <path d="M146 380V132h60v96h100v-96h60v248h-60V284H206v96z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
-    <path d="M146 380V132h60v96h100v-96h60v248h-60V284H206v96z" fill="url(#nv-letter)"/>
+    <path d="M156 380V132h112c56 0 92 34 92 84s-36 84-92 84h-52v80zm60-136h48c22 0 36-11 36-28s-14-28-36-28h-48z" fill-rule="evenodd" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
+    <path d="M156 380V132h112c56 0 92 34 92 84s-36 84-92 84h-52v80zm60-136h48c22 0 36-11 36-28s-14-28-36-28h-48z" fill-rule="evenodd" fill="url(#nv-letter)"/>
     <path d="M65.8 309.4A196 50-14 0 0 446.2 214.6" fill="none" stroke="#FFD1EA" stroke-opacity=".85" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round"/>
   </symbol>
   <!-- Nova Agent: a cosmic A -->
@@ -78,7 +78,7 @@
   </symbol>
 </svg>
 
-<!-- Signing in (the same password as Hub; signing in here signs in Hub too) -->
+<!-- Signing in (with Portal: one sign-in for every Nova app) -->
 <section id="login" class="login" hidden>
   <div class="login-mark-wrap" aria-hidden="true">
     <span class="login-halo"></span>
@@ -97,9 +97,9 @@
 <!-- The app -->
 <div id="app" class="app" hidden>
   <header class="top">
-    <!-- Back to Hub -->
-    <a class="icon-btn top-left" href="/app/" aria-label="Open Hub" title="Hub">
-      <svg viewBox="0 0 512 512" aria-hidden="true" class="hub-mark"><use href="#i-mark-h"/></svg>
+    <!-- Over to Portal -->
+    <a class="icon-btn top-left" href="/portal/" aria-label="Open Portal" title="Portal">
+      <svg viewBox="0 0 512 512" aria-hidden="true" class="hub-mark"><use href="#i-mark-p"/></svg>
     </a>
     <!-- The brand: tap it to go back to the top -->
     <button id="brand" class="brand" type="button" title="Back to the top">
@@ -237,7 +237,7 @@
   </nav>
 </div>
 
-<!-- Options: theme (shared with Hub), sound, refresh and sign out -->
+<!-- Options: theme (shared with Portal), sound, refresh and sign out -->
 <div id="options-sheet" class="sheet" hidden>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="options-title">
     <div class="sheet-head">
@@ -258,7 +258,7 @@
     </section>
     <section class="option-group option-actions">
       <button id="refresh" class="btn ghost" type="button">Refresh everything</button>
-      <a class="btn ghost" href="/app/">Open Hub</a>
+      <a class="btn ghost" href="/portal/">Open Portal</a>
       <button id="logout" class="btn ghost" type="button">Sign out</button>
     </section>
   </div>

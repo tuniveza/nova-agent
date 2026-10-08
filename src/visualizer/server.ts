@@ -89,7 +89,7 @@ const appRoot = web("agent/assets/");
 const appFile = (name: string) => (c: any) => c.body(readFileSync(appRoot + name), 200, { "Content-Type": TYPES[extname(name)], "Cache-Control": "no-cache" });
 app.get("/manifest.webmanifest", appFile("manifest.webmanifest"));
 app.get("/sw.js", appFile("sw.js"));
-// Nova Agent's own icons (/app/ is the Hub's)
+// Nova Agent's own icons (/app/ was Hub's address; Hub is part of Portal now)
 app.get("/agent/:file", (c) => {
   const name = c.req.param("file");
   if (/^[\w-]+\.(png|svg|js)$/.test(name) && existsSync(appRoot + name)) return appFile(name)(c);
@@ -101,7 +101,7 @@ app.get("/agent/:file", (c) => {
 // Nova Agent, a privacy-minded browser doesn't block what they save). Notes here keeps
 // its own notes on this computer, separate from the web app's.
 const MEDIA: Record<string, string> = { ".mp4": "video/mp4", ".webm": "video/webm", ".gif": "image/gif", ".webp": "image/webp", ".ico": "image/x-icon", ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8" };
-// `skip`: paths under the prefix that aren't files (the Hub's API under /app/api/)
+// `skip`: paths under the prefix that aren't files (the staff API under /app/api/)
 function serveFolder(prefix: string, folder: string, missing: string, skip?: RegExp) {
   const root = web(folder);
   app.get(prefix, (c) => c.redirect(prefix + "/"));
@@ -144,14 +144,28 @@ app.get("/index/*", (c) => c.redirect("/app/memory/" + c.req.path.slice("/index/
 // Nova Agent's key; the planet pictures come through here too, so the panels never talk to another site.
 serveFolder("/shared", "shared/", "web/shared is missing.");
 
-// ---- Hub and Portal, as panels ----
-// They use Nova Bot's staff API. Signing in on the Portal signs Nova Agent in to Nova Bot
+// ---- Portal, as a panel (Hub is part of it now) ----
+// It uses Nova Bot's staff API. Signing in on the Portal signs Nova Agent in to Nova Bot
 // as that person (src/signin.ts); their requests are passed on with that sign-in.
-serveFolder("/app", "hub/", "web/hub is missing.", /^\/app\/(api|memory)(\/|$)/);
 serveFolder("/portal", "portal/", "web/portal is missing.");
+// Hub's old address: its pages go to Portal (/app/#nova stays #nova; the browser keeps it).
+// The API (/app/api/) and Index (/app/memory/) keep theirs, and so do the files phones that
+// installed Hub still use (its push helper, manifest and icons).
+const oldHubFiles = web("portal/old-app-address/");
+const OLD_HUB_FILES = new Set(["sw.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"]);
+app.get("/app", (c) => c.redirect("/portal/" + new URL(c.req.url).search));
+app.get("/app/*", async (c, next) => {
+  const rest = c.req.path.slice("/app/".length);
+  if (/^(api|memory)(\/|$)/.test(rest)) return next();
+  if (OLD_HUB_FILES.has(rest)) {
+    const type = TYPES[extname(rest)] || MEDIA[extname(rest)] || (rest.endsWith(".webmanifest") ? "application/manifest+json" : "application/octet-stream");
+    return c.body(readFileSync(oldHubFiles + rest) as any, 200, { "Content-Type": type, "Cache-Control": "no-cache" });
+  }
+  return c.redirect("/portal/" + new URL(c.req.url).search);
+});
 // Where they were for a day
-app.get("/studio/*", (c) => c.redirect("/app/" + c.req.path.slice("/studio/".length)));
-app.get("/crew/*", (c) => c.redirect("/portal/" + c.req.path.slice("/crew/".length)));
+app.get("/studio/*", (c) => c.redirect("/portal/" + new URL(c.req.url).search));
+app.get("/crew/*", (c) => c.redirect("/portal/" + c.req.path.slice("/crew/".length) + new URL(c.req.url).search));
 for (const path of ["/auth/*", "/staff", "/staff/*", "/app/api/*"]) {
   app.use(path, async (c, next) => (fromOurPage(c.req.raw) ? next() : c.json({ error: "Only from Nova Agent's own pages" }, 403)));
 }
@@ -198,9 +212,9 @@ app.get("/staff/:id/planet.svg", async (c) => {
 });
 
 // ---- Index's data, through Nova Agent's own key ----
-// The same addresses the app uses in Hub (/app/api/memory/...), passed on to the
+// The same addresses Index uses online (/app/api/memory/...), passed on to the
 // memory engine as Nova Agent: the studio's memory and staff memory, never customers'.
-// Approvals (customers' facts) stay behind Hub's sign-in.
+// Approvals (customers' facts) need a Portal sign-in.
 async function toEngine(path: string, init: RequestInit = {}) {
   const res = await fetch(`${config.workerUrl}/memory${path}`, {
     ...init,
@@ -217,7 +231,7 @@ app.all("/app/api/memory/*", async (c) => {
   const route = c.req.path.slice("/app/api/memory".length);
   const query = new URL(c.req.url).search;
   if (route === "/pending") return c.json({ pending: [], locked: true });
-  if (route.startsWith("/pending/")) return c.json({ error: "Approvals need Hub's sign-in" }, 403);
+  if (route.startsWith("/pending/")) return c.json({ error: "Approvals need a Portal sign-in" }, 403);
   if (route === "/stats") {
     const { data } = await toEngine("/index");
     const by = new Map<string, { scope: string; files: number; facts: number }>();
@@ -237,7 +251,7 @@ app.all("/app/api/memory/*", async (c) => {
   return c.json({ error: "Not found" }, 404);
 });
 
-// The rest of Nova Bot's staff API (Hub, Portal), as the signed-in person
+// The rest of Nova Bot's staff API (Portal), as the signed-in person
 app.all("/app/api/*", (c) => passOn(c.req.raw));
 app.all("/auth/*", (c) => passOn(c.req.raw));
 app.all("/staff", (c) => passOn(c.req.raw));

@@ -5,7 +5,7 @@
 // studio team see all of it, watch it grow, fix a line, and say yes or no to facts learned
 // from customers before they're remembered.
 //
-// Everything comes from /app/api/memory/ (Hub's sign-in; the cookie is sent by itself).
+// Everything comes from /app/api/memory/ (Portal's sign-in; the cookie is sent by itself).
 // The three screens:
 //   Browse   every file, grouped by scope (studio, staff, customers) and owner; tap one to open it
 //   Live     the most recently changed files, newest first, refreshed every 20 seconds
@@ -261,7 +261,7 @@
   async function loadPending() {
     const data = await must(API + "/pending");
     state.pending = Array.isArray(data.pending) ? data.pending : [];
-    // Inside Nova Agent, customers' facts and approvals stay behind Hub's sign-in
+    // Inside Nova Agent, customers' facts and approvals stay behind Portal's sign-in
     state.pendingLocked = data.locked === true;
   }
 
@@ -1144,9 +1144,9 @@
   function renderPending(animate = false) {
     const box = $("pending-list");
     if (state.pendingLocked) {
-      const note = el("div", "empty", [el("strong", "", "Approvals are in Hub"), el("span", "", "Customers' facts and the approval queue need Hub's sign-in, so they aren't shown inside Nova Agent.")]);
-      const go = el("a", "btn", "Open Index in Hub ↗");
-      go.href = "https://novacane-worker.novacane-studio.workers.dev/index/";
+      const note = el("div", "empty", [el("strong", "", "Approvals need a sign-in"), el("span", "", "Customers' facts and the approval queue need a Portal sign-in, so they aren't shown until you sign in. You can also approve them in Index online.")]);
+      const go = el("a", "btn", "Open Index online ↗");
+      go.href = "https://novacane-worker.novacane-studio.workers.dev/app/memory/";
       go.target = "_blank";
       go.rel = "noopener";
       note.appendChild(go);
@@ -1352,7 +1352,7 @@
     setTimeout(() => dot.remove(), 600);
   });
 
-  // ===== Start: signed in already (Hub's cookie)? =====
+  // ===== Start: signed in already (Portal's cookie)? =====
   (async () => {
     try {
       const r = await api(API + "/stats");

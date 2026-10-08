@@ -1,7 +1,7 @@
-/* Index: Nova Agent's shared memory, in the same cosmic skin as Hub.
+/* Index: Nova Agent's shared memory, in the same cosmic skin as Portal.
    Type: Archivo (wide, 900) for display, Saira for reading, Source Code Pro for little labels.
    Glass cards with a gradient hairline edge, floating among the stars. Every colour comes from
-   /app/themes.css, so Hub's six themes restyle this page too. Phone first; on a wide screen
+   /shared/themes.css, so the six themes restyle this page too. Phone first; on a wide screen
    it becomes a centred column with cards two-up. */
 :root {
   --safe-top: env(safe-area-inset-top);
@@ -595,7 +595,7 @@ main {
   .stats { gap: 12px; }
 }
 
-/* ===================== Text alignment (Hub's option; centred is the default) ===================== */
+/* ===================== Text alignment (an Option; centred is the default) ===================== */
 html:not([data-align="left"]) .card,
 html:not([data-align="left"]) .file-head,
 html:not([data-align="left"]) .new-form { text-align: center; }
@@ -611,7 +611,7 @@ html[data-align="left"] .group-head { justify-content: flex-start; }
 html[data-align="left"] .group-head::before { display: none; }
 html[data-align="left"] .owner-head { text-align: left; }
 
-/* ===================== Text size and motion (Hub's options) ===================== */
+/* ===================== Text size and motion (Options) ===================== */
 html[data-size="small"] body { zoom: 0.92; }
 html[data-size="large"] body { zoom: 1.12; }
 html[data-motion="calm"] *, html[data-motion="calm"] *::before, html[data-motion="calm"] *::after { animation: none !important; transition: none !important; }

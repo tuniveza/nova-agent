@@ -124,7 +124,7 @@ async function doJob(raw: unknown): Promise<void> {
       trace("input", "start", `Job #${job.id} from Novabot: book ${job.details.type} for ${job.clientName} on ${job.details.date} at ${job.details.time}`, job.details);
       result = await bookTask(job.details);
     } else {
-      trace("input", "start", `Job #${job.id} from Hub: change ${job.clientName}'s booking #${job.appointmentId}`, job.changes);
+      trace("input", "start", `Job #${job.id} from Portal: change ${job.clientName}'s booking #${job.appointmentId}`, job.changes);
       result = await extrasTask(String(job.appointmentId), job.clientName, job.changes);
     }
   } catch (error) {

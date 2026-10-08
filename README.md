@@ -19,8 +19,8 @@ Talk to it, give it a goal, and it plans your days to the second. It also works 
 ---
 
 Nova Agent is the studio's one app. Everything that used to be a separate Nova app is a
-panel of it: **Hub** (enquiries, website chats, bookings, alerts: was Hub), **Portal**
-(sign-in, your planet, the team: was Portal), **Calendar**, **Notes**,
+panel of it: **Portal** (the staff app: enquiries, website chats, bookings, alerts, Ask
+NovaBot, sign-in, your planet and the team; Hub is part of it now), **Calendar**, **Notes**,
 **Index**, **Observatory** and **Lossless audio**. It runs on the studio PC with
 everything, and the same panels are online at Nova Bot's address for the staff phones.
 
@@ -44,8 +44,8 @@ All the pictures here come from a separate sample copy with made-up quests and p
 | **Missions and Quests** | Goals broken into quests, planned hour by hour (to the second), re-planned on every change |
 | **Reminders** | Pop-ups, check-ins, a morning plan and evening wrap-up, chimes, system notifications and your phone |
 | **Calendar** | Built in, saving to Nova Agent, so the chat and the calendar always agree |
-| **Panels** | Hub, Portal, Calendar, Notes, Index, Observatory and Lossless audio, inside Nova Agent or in their own window |
-| **Online** | The same Hub, Portal, Index, Calendar and Notes at Nova Bot's address (`/app/` and so on), for the phones |
+| **Panels** | Portal, Calendar, Notes, Index, Observatory and Lossless audio, inside Nova Agent or in their own window |
+| **Online** | The same Portal, Index, Calendar and Notes at Nova Bot's address (`/portal/` and so on), for the phones |
 | **Index** | Reads what Nova Agent remembers before it replies, and learns after |
 | **Acuity helper** | Changes session types, prices and paid status for Nova Bot, safely, healing itself when pages change |
 | **Visualizer** | Every step the Acuity helper takes, live |
@@ -67,8 +67,7 @@ All the pictures here come from a separate sample copy with made-up quests and p
 | Panel | What it is | On the studio PC | Online (Nova Bot) | Code |
 |---|---|---|---|---|
 | **Chat** | Talk to Nova Agent; Missions and Quests | `/` | | `src/`, `web/agent/` |
-| **Hub** | Enquiries, website chats, bookings, alerts, Ask NovaBot, push to the phones (was Hub) | `/app/` | `/app/` | `web/studio/` |
-| **Portal** | Sign-in, your planet, the team and invites (was Portal) | `/portal/` | `/portal/` | `web/crew/` |
+| **Portal** | The staff app: enquiries, website chats, bookings, quests, alerts, Ask NovaBot, push to the phones (what was Hub), and sign-in, your planet, the team and invites | `/portal/` | `/portal/` | `web/portal/` |
 | **Calendar** | Note cards and day cards; Nova Agent plans into it | `/calendar/` | `/calendar/` | `web/calendar/` |
 | **Notes** | Notes and documents, Google Docs export | `/notes/` | `/notes/` | `web/notes/` |
 | **Index** | Everything Nova Agent remembers: browse, edit, approve | `/app/memory/` | `/app/memory/` | `web/index/` |
@@ -78,14 +77,16 @@ All the pictures here come from a separate sample copy with made-up quests and p
 What they share (themes, sounds, the badge, the Manual) is in `web/shared/`. Each
 panel's guide is in `docs/apps/<panel>/`.
 
-**Signing in on the PC.** Hub and Portal use Nova Bot's staff API. Sign in on the Portal
+**Signing in on the PC.** Portal uses Nova Bot's staff API. Sign in on the Portal
 panel and Nova Agent signs in to Nova Bot as you (an app sign-in; the token stays in
 `data/signin.json` and never reaches the browser); after that the panels work with your
 own permissions, and Nova Agent works for you. Only Nova Agent's own pages can use it.
 
 **Online.** Nova Bot's worker copies the panels in at build time (its
 `scripts/sync-apps.mjs`, from this repo's `web/`) and serves them for phones and anywhere
-away from the studio PC. The old addresses (`/app/`, `/portal/`, `/app/memory/`) redirect.
+away from the studio PC. Hub's old address (`/app/`) opens Portal; its API (`/app/api/`),
+Index (`/app/memory/`) and the push helper that phones which installed Hub still use
+(`/app/sw.js`) keep their addresses.
 
 ## What it does
 
@@ -198,11 +199,11 @@ until they're answered, and a pulse replaces its last notification.
 
 <br clear="right">
 
-### Quests in Hub
+### Quests on the phones
 
 Nova Agent sends its plan (missions, quests, pulses, and Calendar's note and day cards)
 to Nova Bot's worker whenever it changes, and every minute so "now" keeps moving
-(`src/quests/hubsync.ts`). Hub's Quests and Calendar tabs show it on the staff phones,
+(`src/quests/hubsync.ts`). Portal's Quests and Calendar tabs show it on the staff phones,
 and taps made there (Done, Start, Not now, Skip, pause a mission) come back with each job
 check and are carried out within about a second.
 
@@ -231,7 +232,7 @@ of Nova Agent. The **Calendar** tab fits it to the plan column with no scrolling
   </tr>
 </table>
 
-The rail down the left (and the ✦ Nova Agent launcher) holds every Nova app: Hub, Nova
+The rail down the left (and the ✦ Nova Agent launcher) holds every Nova app: Portal,
 Notes, Calendar, Nova Bot, the visualizer, Index, Admin, all links and features,
 Observatory and the code. One switch decides where they open:
 
@@ -241,7 +242,7 @@ Observatory and the code. One switch decides where they open:
   the folders next to it, so they open inside in any browser.
 - **New window**: each app in its own tab or window.
 
-Hub, Admin and the links page always get their own window: they refuse to be shown
+Admin and the links page always get their own window: they refuse to be shown
 inside other pages, which keeps their sign-in safe, and Nova Agent says so once.
 
 ### Sound effects
@@ -263,7 +264,7 @@ studio and staff memory only, never customers'.
 
 Index itself opens inside Nova Agent from the rail, through Nova Agent's own key:
 you can browse and edit the studio's and staff memory there, while approvals of customers'
-facts stay behind Hub's sign-in. Without `AGENT_NOVA_KEY`, memory is simply switched off.
+facts stay behind a Portal sign-in. Without `AGENT_NOVA_KEY`, memory is simply switched off.
 
 ### The Acuity helper
 
@@ -271,7 +272,7 @@ The job Nova Agent was built for. It drives Acuity's admin pages in a real Chrom
 person would, for the jobs Acuity's API can't do.
 
 - **Jobs from Nova Bot** (`src/jobs.ts`): it waits on the worker for jobs and picks each one up
-  within about a second. Today that's `change` jobs (staff asked in Hub to change a
+  within about a second. Today that's `change` jobs (staff asked in Portal to change a
   booking's session type, price or paid status); it does them in Acuity, checks the result and
   reports back to staff phones. Customer bookings go through Acuity's own booking page, so the
   deposit is always paid first; `book` jobs are still understood here.
@@ -316,8 +317,8 @@ flowchart LR
     Chat --> Q[(Quests and calendar<br/>data/)]
     UI --> Q
     Chat <-->|reads before, learns after| NI[Index<br/>on Nova Bot's worker]
-    Q -->|plan, reminders| Hub[your phone]
-    S[Staff in Hub] --> NB[Nova Bot Worker]
+    Q -->|plan, reminders| Phone[your phone]
+    S[Staff in Portal] --> NB[Nova Bot Worker]
     NB -->|queues jobs| J[(agent_jobs)]
     NA[Acuity helper] -->|"any jobs?" long-poll| J
     NA --> R[resolve&#40;&#41;] -->|1st| M[(Selector memory)]
@@ -351,7 +352,7 @@ npm start                 # should say "Logged in to Acuity"
 ```
 
 The chat and mission planning need `ANTHROPIC_API_KEY` in `.env` (Claude also powers the
-self-healing element finder). Jobs, phone alerts, Hub sync and Index memory need
+self-healing element finder). Jobs, phone alerts, the phones' Quests sync and Index memory need
 `AGENT_NOVA_KEY`; without it they're simply off. To bring the calendar up to date with its own
 repo: `git submodule update --remote calendar`.
 
@@ -376,7 +377,7 @@ With `AGENT_NOVA_KEY` empty it won't collect jobs, read memory or send phone ale
 
 | Command | What it does |
 |---|---|
-| `npm run visualizer` | Nova Agent itself: the chat and plan at http://localhost:4545, reminders, Hub sync, the daily healthcheck and job collection (`npm run service` is the same) |
+| `npm run visualizer` | Nova Agent itself: the chat and plan at http://localhost:4545, reminders, the phones' Quests sync, the daily healthcheck and job collection (`npm run service` is the same) |
 | `npm start` | Checks the Acuity login; logs in automatically if the session expired |
 | `npm run login` | Opens a visible browser so you can log in to Acuity by hand |
 | `npm run list` | Appointments for the next 7 days |
@@ -416,8 +417,8 @@ Names only here; never commit `.env`.
 |---|---|---|
 | `ANTHROPIC_API_KEY` | – | The chat, mission planning and the AI element finder |
 | `NOVA_MODEL` | `claude-opus-5-5` | The Claude model name |
-| `NOVA_WORKER_URL` | Novacane's worker | Nova Bot's worker: jobs, alerts, Hub sync and Index |
-| `AGENT_NOVA_KEY` | – | Must match the worker's `AGENT_NOVA_KEY` secret; blank = no jobs, phone alerts, Hub sync or memory |
+| `NOVA_WORKER_URL` | Novacane's worker | Nova Bot's worker: jobs, alerts, the phones' Quests sync and Index |
+| `AGENT_NOVA_KEY` | – | Must match the worker's `AGENT_NOVA_KEY` secret; blank = no jobs, phone alerts, Quests sync or memory |
 | `NOVA_STAFF_ID` | *(found by itself)* | Only to force who Nova Agent works for. Without it, Nova Agent picks the studio's first Portal admin, and anyone can switch it to themselves with **Connect as me** on the Nova Agent badge (kept in `data/staff.json`) |
 | `NOVA_DATA_DIR` | `data/` | Where everything is kept; point a second copy somewhere else |
 | `ACUITY_EMAIL`, `ACUITY_PASSWORD` | – | Automatic re-login |
@@ -464,7 +465,7 @@ result, screenshots, daily logs (`logs/<date>.jsonl`, which include client names
 Nova Bot worker and a throwaway data folder: `test/harness.ts`): a reminder every 30 minutes
 for 4 hours pings exactly 8 times, a ping the worker turns away is retried, Nova Agent being
 off across a session gives one late "Missed" ping, no session is moved past without a
-delivery record, Hub taps count once, and the BST/GMT clock changes. It also checks
+delivery record, taps from the phones count once, and the BST/GMT clock changes. It also checks
 that edits save or say why (100 rapid edits included), that saves from Calendar merge
 with changes made elsewhere, and that a mission re-plan keeps quests changed by hand.
 
@@ -510,7 +511,7 @@ src/quests/planner.ts     turning a goal into a Mission and its Quests (Claude)
 src/quests/plan.ts        re-planning, and mirroring quests into Calendar
 src/quests/reminders.ts   reminders, check-ins, the morning plan and evening wrap-up
 src/quests/deliveries.ts  every phone ping: sent once, checked, retried, logged (data/nova.db)
-src/quests/hubsync.ts     the plan to Hub, and Hub's taps back
+src/quests/hubsync.ts     the plan to the phones (Portal), and their taps back
 src/quests/actions.ts     everything the chat and the page can do with them
 src/calendar/store.ts     Calendar's data (calendar.json, with a revision per save)
 src/calendar/page.ts      saves from the calendar page, merged with changes made elsewhere
@@ -525,15 +526,16 @@ src/heal/                 resolve() and the selector memory
 src/acuity/               Acuity pages: login, list, book, cancel, edit, targets, types
 src/trace.ts              every step, for the console, logs and visualizer
 test/harness.ts           the simulated clock for `npm test`
-test/*.spec.ts            reminders, deliveries, Hub taps, clock changes
+test/*.spec.ts            reminders, deliveries, taps from the phones, clock changes
 test/scheduler.test.ts    planner checks
 test/planner.test.ts      mission plans: series written out, quests far ahead
 test/web.test.ts          research only cites pages it read; public webpages only
 web/agent/                Nova Agent's own page (chat.html), the visualizer and the installable app
-web/studio/ web/crew/     the Hub and Portal panels (were Hub and Portal)
+web/portal/               the Portal panel (Hub is part of it; old-app-address/ is what
+                          phones that installed Hub from /app/ still use)
 web/calendar/ web/notes/ web/index/ web/observatory/ web/lossless/   the other panels
 web/shared/               themes, sounds, the badge and the Manual (manual-data.js: npm run manual)
-src/signin.ts             signing in to Nova Bot as a person, for Hub and Portal on the PC
+src/signin.ts             signing in to Nova Bot as a person, for Portal on the PC
 scripts/                  the manual builder; scripts/observatory/ scans and captures your projects
 docs/apps/<panel>/        each panel's guide and pictures
 deploy/agent-nova.service systemd user service

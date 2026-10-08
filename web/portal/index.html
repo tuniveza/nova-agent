@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Portal · Nova Agent</title>
-<meta name="description" content="Portal: one sign-in for every Nova app, and a planet of your own, for the Novacane Studios team.">
+<meta name="description" content="Portal: the Novacane Studios staff app (enquiries, chats, bookings, quests, alerts, your planet and the crew), part of Nova Agent.">
 <meta name="theme-color" content="#06040D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -19,22 +19,34 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&display=swap">
+<!-- Inside a frame (Nova Agent's viewer) or ?embed=1: html.embed, for a tighter fit -->
+<script src="/shared/inside.js"></script>
 <link rel="stylesheet" href="/shared/themes.css">
+<link rel="stylesheet" href="/portal/app.css">
 <link rel="stylesheet" href="/portal/portal.css">
-<!-- The saved theme (shared with Hub) goes on before anything is drawn -->
+<!-- The saved theme goes on before anything is drawn (no flash of the wrong colours) -->
 <script src="/shared/themes.js"></script>
 </head>
 <body>
 
-<!-- The pictures used around the page: Portal's cosmic P, and the marks of the other apps -->
+<!-- The pictures used around the page: the Novacane sigil (NovaBot), Portal's cosmic P and the other Nova Agent marks -->
 <svg class="sprite" aria-hidden="true">
+  <symbol id="sigil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1">
+    <path d="M20.19 6.26A10 10 0 0 1 6.26 20.19"/>
+    <path d="M3.81 17.74A10 10 0 0 1 17.74 3.81"/>
+    <path d="M3.9 20.1 11.3 7.5M12.5 8.3 13.5 16M14.7 16.5 20.1 3.9"/>
+  </symbol>
   <defs>
+    <!-- Shared by every cosmic mark: the sky, the nebula in the corner, the pink-to-lilac letter and its glow -->
     <radialGradient id="nv-sky" cx="50%" cy="15%" r="95%"><stop offset="0" stop-color="#B01D68"/><stop offset=".42" stop-color="#25194D"/><stop offset="1" stop-color="#06040D"/></radialGradient>
     <radialGradient id="nv-neb" cx="88%" cy="92%" r="55%"><stop offset="0" stop-color="#7A1F86" stop-opacity=".75"/><stop offset="1" stop-color="#7A1F86" stop-opacity="0"/></radialGradient>
     <linearGradient id="nv-letter" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD1EA"/><stop offset=".5" stop-color="#FF5FA8"/><stop offset="1" stop-color="#C7A4FF"/></linearGradient>
-    <radialGradient id="nv-world" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#FFD1EA"/><stop offset="1" stop-color="#C7A4FF"/></radialGradient>
+    <linearGradient id="nv-letter-24" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="24"><stop offset="0" stop-color="#FFD1EA"/><stop offset=".5" stop-color="#FF5FA8"/><stop offset="1" stop-color="#C7A4FF"/></linearGradient>
     <filter id="nv-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="nv-glow-24" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation=".9"/></filter>
     <filter id="nv-twinkle" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
+    <radialGradient id="nv-world" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#FFD1EA"/><stop offset="1" stop-color="#C7A4FF"/></radialGradient>
+    <mask id="nv-crescent"><rect width="512" height="512" fill="#000"/><circle cx="248" cy="260" r="150" fill="#fff"/><circle cx="318" cy="232" r="124" fill="#000"/></mask>
   </defs>
   <!-- The cosmic sky every mark sits in -->
   <symbol id="i-sky" viewBox="0 0 512 512">
@@ -57,13 +69,6 @@
       <path d="M-25.4 9.2A27 7-20 0 0 25.4-9.2" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
     </g>
   </symbol>
-  <!-- Hub: a cosmic H -->
-  <symbol id="i-mark-h" viewBox="0 0 512 512">
-    <use href="#i-sky"/>
-    <path d="M146 380V132h60v96h100v-96h60v248h-60V284H206v96z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
-    <path d="M146 380V132h60v96h100v-96h60v248h-60V284H206v96z" fill="url(#nv-letter)"/>
-    <path d="M65.8 309.4A196 50-14 0 0 446.2 214.6" fill="none" stroke="#FFD1EA" stroke-opacity=".85" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round"/>
-  </symbol>
   <!-- Index: a cosmic I -->
   <symbol id="i-mark-i" viewBox="0 0 512 512">
     <use href="#i-sky"/>
@@ -72,8 +77,45 @@
     <path d="M65.8 309.4A196 50-14 0 0 446.2 214.6" fill="none" stroke="#FFD1EA" stroke-opacity=".85" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round"/>
     <g transform="translate(256 100)"><circle r="14" fill="#FF5FA8" opacity=".85" filter="url(#nv-twinkle)"/><path d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/></g>
   </symbol>
+  <!-- Notes: a cosmic N -->
+  <symbol id="i-mark-n" viewBox="0 0 512 512">
+    <use href="#i-sky"/>
+    <path d="M150 380V132h58l98 146V132h58v248h-58l-98-146v146z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
+    <path d="M150 380V132h58l98 146V132h58v248h-58l-98-146v146z" fill="url(#nv-letter)"/>
+    <path d="M71 318A196 66-22 0 0 441 198" fill="none" stroke="#FFD1EA" stroke-opacity=".8" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round"/>
+    <path transform="translate(410 214)" d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/>
+  </symbol>
+  <!-- Calendar: a crescent-moon C with stars in its curve -->
+  <symbol id="i-mark-c" viewBox="0 0 512 512">
+    <use href="#i-sky"/>
+    <rect width="512" height="512" fill="#FF5FA8" opacity=".7" mask="url(#nv-crescent)" filter="url(#nv-glow)"/>
+    <rect width="512" height="512" fill="url(#nv-letter)" mask="url(#nv-crescent)"/>
+    <path transform="translate(330 214)" d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/>
+    <circle cx="372" cy="290" r="8" fill="#C7A4FF"/>
+    <circle cx="322" cy="344" r="6" fill="#FFD1EA"/>
+  </symbol>
+  <!-- Nova Agent: a cosmic A with an orbit for its crossbar -->
+  <symbol id="i-mark-a" viewBox="0 0 512 512">
+    <use href="#i-sky"/>
+    <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/>
+    <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" fill="url(#nv-letter)"/>
+    <ellipse cx="256" cy="296" rx="190" ry="44" fill="none" stroke="#FFD1EA" stroke-opacity=".8" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round" transform="rotate(-14 256 296)"/>
+    <path transform="translate(256 102)" d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/>
+    <circle cx="436" cy="252" r="9" fill="#fff" opacity=".95"/>
+  </symbol>
+  <!-- NovaBot: the Novacane sigil, lit up in the cosmic sky -->
+  <symbol id="i-mark-bot" viewBox="0 0 512 512">
+    <use href="#i-sky"/>
+    <g transform="translate(100 100) scale(13)" fill="none" stroke-width="2.3" stroke-linecap="round">
+      <path d="M20.19 6.26A10 10 0 0 1 6.26 20.19M3.81 17.74A10 10 0 0 1 17.74 3.81M3.9 20.1 11.3 7.5M12.5 8.3 13.5 16M14.7 16.5 20.1 3.9" stroke="#FF5FA8" opacity=".8" filter="url(#nv-glow-24)"/>
+      <path d="M20.19 6.26A10 10 0 0 1 6.26 20.19M3.81 17.74A10 10 0 0 1 17.74 3.81M3.9 20.1 11.3 7.5M12.5 8.3 13.5 16M14.7 16.5 20.1 3.9" stroke="url(#nv-letter-24)"/>
+    </g>
+    <path transform="translate(410 120)" d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/>
+  </symbol>
 </svg>
 
+<!-- Portal's own parts (portal.css, scoped to .pv): loading, then signing in, setting up or joining -->
+<div class="pv">
 <!-- While the page finds out who's here -->
 <div id="boot" class="boot" aria-live="polite">
   <div class="mark-wrap" aria-hidden="true">
@@ -120,7 +162,7 @@
     <div class="field proof">
       <label class="field-label" for="setup-studio">The studio's current password</label>
       <input id="setup-studio" type="password" autocomplete="off" required>
-      <p class="field-help">The password you use for Hub today, to prove it's you.</p>
+      <p class="field-help">The studio's shared password (from before Portal), to prove it's you.</p>
     </div>
     <p class="error" id="setup-error" role="alert"></p>
     <button class="btn" type="submit" data-sfx="send">Set up and sign in</button>
@@ -140,7 +182,7 @@
     <button class="btn" type="submit" data-sfx="send">Sign in</button>
     <p class="reassure">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
-      <span>Signed in to every Nova app: Hub, Index and the admin pages.</span>
+      <span>Signed in to every Nova app: Portal, Index and the admin pages.</span>
     </p>
   </form>
 
@@ -179,48 +221,157 @@
     <button class="btn ghost" type="button" id="invite-gone-signin">Go to sign in</button>
   </div>
 
-  <!-- 5. Another Nova app (Notes, Calendar...) asking to show who you are -->
-  <div id="connect-card" class="auth-card connect" hidden>
-    <div class="auth-card-head">
-      <span class="kicker">Show who you are</span>
-      <h2 id="connect-title">Connect Notes</h2>
-      <p class="hint" id="connect-why"></p>
-    </div>
-    <div class="connect-who">
-      <img id="connect-planet" class="connect-planet" alt="" width="96" height="96">
-      <div><strong id="connect-name"></strong><span id="connect-role" class="connect-role"></span></div>
-    </div>
-    <p class="error" id="connect-error" role="alert"></p>
-    <button class="btn" type="button" id="connect-yes" data-sfx="send">Connect</button>
-    <button class="btn ghost" type="button" id="connect-no">Not now</button>
-    <p class="reassure">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
-      <span>It can only show your name, role and planet. It can't see your email, open anything or change anything. Sign out there to disconnect.</span>
-    </p>
-  </div>
 </section>
+</div>
 
-<!-- Signed in -->
+<!-- The app -->
 <div id="app" class="app" hidden>
   <header class="top">
-    <!-- Over to Hub -->
-    <a class="icon-btn top-left" href="/app/" aria-label="Open Hub" title="Hub">
-      <svg viewBox="0 0 512 512" aria-hidden="true" class="hub-mark"><use href="#i-mark-h"/></svg>
-    </a>
-    <!-- The brand: back to my profile -->
-    <a id="brand" class="brand" href="/portal/" data-nav="me" title="My profile">
+    <!-- Voice commands: tap, say what to do ("show alerts", "call Eric") -->
+    <div class="top-left">
+      <button id="voice" class="icon-btn" type="button" aria-label="Voice command" title="Voice command">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+      </button>
+      <!-- Ambient music: soft, slowly changing electronic ambient, made on the phone -->
+      <button id="music" class="icon-btn" type="button" aria-label="Ambient music" aria-pressed="false" title="Ambient music">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+      </button>
+    </div>
+    <!-- The brand: tap it to see the other Nova Agent panels (suite.js) -->
+    <button id="brand" class="brand" type="button" aria-haspopup="dialog" aria-controls="suite-sheet" title="Nova Agent">
       <svg class="brand-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-p"/></svg>
       <span class="brand-text"><span class="suite-kicker">Nova Agent<span class="kicker-more"> · Novacane</span></span><span class="wordmark small">Portal</span></span>
-    </a>
-    <!-- Options: theme, sound, sign out -->
-    <button id="options" class="icon-btn top-right" type="button" aria-label="Options" title="Options" aria-haspopup="dialog" aria-controls="options-sheet" data-sfx="open">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     </button>
+    <div class="top-actions">
+      <!-- Portal: who's signed in (your planet, name and role; tap for your profile) -->
+      <nova-manual compact></nova-manual>
+      <nova-portal-badge id="portal-badge"></nova-portal-badge>
+      <!-- Notifications: opens the "turn on notifications" panel -->
+      <button id="bell" class="icon-btn" type="button" aria-label="Notifications" title="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+      </button>
+      <!-- Options: theme, text, motion, sounds, starting tab, refresh and sign out (options.js) -->
+      <button id="options-btn" class="icon-btn" type="button" aria-haspopup="dialog" aria-controls="options-sheet" aria-label="Options" title="Options">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+
+
+    </div>
   </header>
 
-  <main>
+  <!-- Shown while hands-free listening is on -->
+  <div id="listening-bar" class="listening-bar" role="status" hidden>
+    <span class="listening-dot" aria-hidden="true"></span>
+    <span id="listening-text">Listening…</span>
+    <button id="listening-off" class="chip" type="button">Stop</button>
+  </div>
+
+  <main id="main">
+    <!-- Enquiries -->
+    <section id="view-enquiries" class="view">
+      <div class="view-head">
+        <h2>Enquiries</h2>
+        <div class="chips" role="tablist">
+          <button class="chip active" data-show="all" type="button">All</button>
+          <button class="chip" data-show="new" type="button">New</button>
+        </div>
+      </div>
+      <div id="enquiry-list" class="list"></div>
+    </section>
+
+    <!-- Conversations -->
+    <section id="view-chats" class="view" hidden>
+      <div class="view-head">
+        <h2 id="chats-title">Conversations</h2>
+        <button id="chats-back" class="chip" type="button" hidden>&larr; All chats</button>
+      </div>
+      <p class="hint" id="chats-hint">What customers asked NovaBot. Kept for 90 days.</p>
+      <div id="chat-list" class="list"></div>
+    </section>
+
+    <!-- Calendar: every booking in Acuity's diary -->
+    <section id="view-calendar" class="view" hidden>
+      <div class="view-head">
+        <h2>Calendar</h2>
+      </div>
+      <!-- The smart part: this week at a glance (drawn by app.js) -->
+      <div id="cal-smart" class="cal-smart"></div>
+      <div class="cal">
+        <div class="cal-head">
+          <button id="cal-prev" class="icon-btn" type="button" aria-label="Previous month">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="cal-title">
+            <span id="cal-month" class="cal-month"></span>
+            <button id="cal-today" class="chip" type="button">Today</button>
+          </div>
+          <button id="cal-next" class="icon-btn" type="button" aria-label="Next month">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div class="cal-weekdays" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+        <div id="cal-grid" class="cal-grid" role="grid" aria-label="Bookings this month"></div>
+      </div>
+      <h3 id="cal-day-title" class="cal-day-title"></h3>
+      <!-- The picked day: how full it is, warnings, free slots, filters and Ask Nova -->
+      <div id="cal-day-smart" class="cal-day-smart"></div>
+      <div id="cal-day-list" class="list"></div>
+    </section>
+
+    <!-- Quests: Nova Agent's plan (missions, today's quests, pulses), synced from the studio computer -->
+    <section id="view-quests" class="view" hidden>
+      <div class="view-head">
+        <h2>Quests</h2>
+        <div class="chips" role="tablist">
+          <button class="chip active" data-quests="today" type="button">Today</button>
+          <button class="chip" data-quests="missions" type="button">Missions</button>
+          <button class="chip" data-quests="all" type="button">All quests</button>
+        </div>
+      </div>
+      <p class="hint" id="quests-sync">Synced from Nova Agent on the studio computer.</p>
+      <div id="quests-body" class="list"></div>
+    </section>
+
+    <!-- Alerts: the notifications that reached a phone -->
+    <section id="view-alerts" class="view" hidden>
+      <div class="view-head">
+        <h2>Alerts</h2>
+        <button id="alerts-clear" class="chip" type="button">Delete all</button>
+      </div>
+      <p class="hint">Every notification that went through to Portal on a phone.</p>
+      <!-- The auto-delete switch: alerts delete themselves after a set time -->
+      <div class="auto-delete">
+        <label class="switch">
+          <input id="auto-delete" type="checkbox" role="switch">
+          <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+          <span>Delete alerts automatically after</span>
+        </label>
+        <select id="auto-delete-days" aria-label="How long to keep alerts"></select>
+      </div>
+      <div id="alert-list" class="list"></div>
+    </section>
+
+    <!-- Chat with NovaBot -->
+    <section id="view-bot" class="view view-bot" hidden>
+      <div class="view-head">
+        <h2>Ask NovaBot</h2>
+        <div class="chips" role="tablist">
+          <button class="chip active" data-mode="nova" type="button">Ask Nova</button>
+          <button class="chip" data-mode="customer" type="button">NovaBot · bookings</button>
+          <button id="bot-clear" class="chip" type="button">New chat</button>
+        </div>
+      </div>
+      <p class="hint" id="bot-hint">Ask about your bookings, enquiries and alerts: "What time is Eric's session?", "Any new enquiries?". These chats aren't saved.</p>
+      <div id="bot-messages" class="bot-messages" aria-live="polite"></div>
+      <form id="bot-form" class="bot-form">
+        <textarea id="bot-input" rows="1" placeholder="Ask NovaBot…" aria-label="Message NovaBot"></textarea>
+        <button class="btn" type="submit">Send</button>
+      </form>
+    </section>
+
+    <!-- You: your planet and profile (portal.js) -->
     <!-- A profile: mine, or (from the crew) someone else's -->
-    <section id="view-profile" class="view" aria-labelledby="p-name">
+    <section id="view-profile" class="view pv" aria-labelledby="p-name" hidden>
       <button id="back-to-crew" class="btn small ghost back" type="button" data-sfx="close" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
         The crew
@@ -291,6 +442,14 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
               <span>Edit my name</span>
             </button>
+            <a id="open-crew" class="btn ghost" href="/portal/?view=crew" data-nav="crew" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="3.2"/><circle cx="17" cy="10.5" r="2.4"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/><path d="M15 15c2.6-.4 4.6.8 5.5 3.5"/></svg>
+              <span>The crew</span>
+            </a>
+            <a id="open-admin" class="btn ghost" href="/admin" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="M9.5 12h5M12 9.5v5"/></svg>
+              <span>Admin pages</span>
+            </a>
             <button id="sign-out" class="btn ghost" type="button" data-sfx="close">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
               <span>Sign out</span>
@@ -324,7 +483,7 @@
         <section class="card details-card" aria-labelledby="details-title">
           <span class="kicker">Details</span>
           <h2 id="details-title" class="card-title">About</h2>
-          <dl class="details" id="details"></dl>
+          <dl class="about-list" id="details"></dl>
         </section>
 
         <!-- Their Index partition, and the studio's shared facts -->
@@ -337,8 +496,9 @@
       </div>
     </section>
 
+
     <!-- The crew (admins only) -->
-    <section id="view-crew" class="view" aria-labelledby="crew-title" hidden>
+    <section id="view-crew" class="view pv" aria-labelledby="crew-title" hidden>
       <div class="view-head">
         <div>
           <span class="kicker" id="crew-count"></span>
@@ -381,61 +541,257 @@
     </section>
   </main>
 
-  <!-- The suite bar: me, the crew, and the other Nova apps -->
-  <nav class="suite-bar" aria-label="Nova Agent">
-    <a class="tab" id="nav-me" href="/portal/" data-nav="me">
+  <nav class="tabs" aria-label="Sections">
+    <button class="tab active" data-view="enquiries" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+      <span>Enquiries</span><span id="new-badge" class="badge" hidden></span>
+    </button>
+    <button class="tab" data-view="chats" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>
+      <span>Chats</span>
+    </button>
+    <button class="tab" data-view="calendar" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span>Calendar</span>
+    </button>
+    <button class="tab" data-view="quests" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 6.6L21 9.5l-5 4.6 1.4 6.9L12 17.6 6.6 21l1.4-6.9-5-4.6 6.6-.9z"/></svg>
+      <span>Quests</span><span id="quest-badge" class="badge" hidden></span>
+    </button>
+    <button class="tab" data-view="alerts" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+      <span>Alerts</span><span id="alert-badge" class="badge" hidden></span>
+    </button>
+    <button class="tab" data-view="bot" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#sigil"/></svg>
+      <span>NovaBot</span>
+    </button>
+    <!-- You: your own planet (your profile; admins reach the crew from there) -->
+    <button class="tab" id="nav-me" data-view="you" type="button">
       <img id="nav-me-planet" class="tab-planet" alt="" width="64" height="64">
-      <span>Me</span>
-    </a>
-    <a class="tab" id="nav-crew" href="/portal/?view=crew" data-nav="crew" hidden>
-      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="3.2"/><circle cx="17" cy="10.5" r="2.4"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/><path d="M15 15c2.6-.4 4.6.8 5.5 3.5"/></svg>
-      <span>Crew</span>
-    </a>
-    <a class="tab" href="/app/memory/">
-      <svg viewBox="0 0 512 512" aria-hidden="true" class="tab-mark"><use href="#i-mark-i"/></svg>
-      <span>Index</span>
-    </a>
-    <a class="tab" href="/app/">
-      <svg viewBox="0 0 512 512" aria-hidden="true" class="tab-mark"><use href="#i-mark-h"/></svg>
-      <span>Hub</span>
-    </a>
-    <a class="tab" id="nav-admin" href="/admin" hidden>
-      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="M9.5 12h5M12 9.5v5"/></svg>
-      <span>Admin</span>
-    </a>
+      <span>You</span>
+    </button>
   </nav>
 </div>
 
-<!-- Options: theme (shared with every Nova app), sound, and signing out -->
-<div id="options-sheet" class="sheet" hidden>
-  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="options-title">
-    <div class="sheet-head">
-      <div>
-        <span class="kicker">Portal</span>
-        <h3 id="options-title">Options</h3>
+<!-- Booking link sheet -->
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <h3 id="sheet-title">Booking link</h3>
+    <p class="hint" id="sheet-for"></p>
+    <label for="sheet-session">Session</label>
+    <select id="sheet-session"></select>
+    <button id="sheet-make" class="btn" type="button">Make link</button>
+    <div id="sheet-result" hidden>
+      <input id="sheet-link" type="text" readonly aria-label="Booking link">
+      <div class="row">
+        <button id="sheet-copy" class="btn ghost" type="button">Copy</button>
+        <a id="sheet-email" class="btn" href="#">Email it to them</a>
       </div>
-      <button id="options-close" class="icon-btn" type="button" aria-label="Close" data-sfx="close">
+      <p class="hint">Opens the booking calendar on that session with their name and phone filled in. They pick a time and pay, and it goes into Acuity.</p>
+    </div>
+    <p id="sheet-error" class="error" role="alert"></p>
+    <button id="sheet-close" class="btn ghost" type="button">Close</button>
+  </div>
+</div>
+
+<!-- Notifications panel -->
+<div id="notify-sheet" class="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="notify-title">
+    <h3 id="notify-title">Notifications</h3>
+    <p class="hint" id="notify-status"></p>
+    <button id="notify-on" class="btn" type="button">Turn on notifications</button>
+    <button id="notify-test" class="btn ghost" type="button" hidden>Send a test</button>
+    <button id="notify-off" class="btn ghost" type="button" hidden>Turn off on this phone</button>
+    <button id="notify-close" class="btn ghost" type="button">Close</button>
+  </div>
+</div>
+
+<!-- Shown while listening for a voice command -->
+<div id="voice-sheet" class="voice-sheet" hidden>
+  <div class="voice-card" role="dialog" aria-modal="true" aria-labelledby="voice-status">
+    <div class="voice-rings" aria-hidden="true"><span></span><span></span><svg><use href="#sigil"/></svg></div>
+    <p id="voice-status" class="voice-status">Listening…</p>
+    <p id="voice-answer" class="voice-answer" hidden></p>
+    <p class="hint">Try: "show alerts", "delete all alerts", "call Eric", "new enquiries", "ask NovaBot what the prices are"</p>
+    <!-- Hands-free: always listen while Portal is open (start with "Nova") -->
+    <label class="switch">
+      <input id="handsfree-switch" type="checkbox" role="switch">
+      <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      <span>Always listen while Portal is open (start with “Nova”)</span>
+    </label>
+    <button id="voice-stop" class="btn ghost" type="button">Done</button>
+  </div>
+</div>
+
+<!-- The Nova Agent: every app in the family (opened by tapping the brand; suite.js) -->
+<div id="suite-sheet" class="sheet suite-sheet" hidden>
+  <div class="sheet-card suite-card" role="dialog" aria-modal="true" aria-labelledby="suite-title">
+    <div class="suite-head">
+      <div>
+        <span class="kicker">Novacane Studios</span>
+        <h3 id="suite-title">Nova Agent</h3>
+      </div>
+      <button id="suite-close" class="icon-btn" type="button" aria-label="Close">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
     </div>
-    <section class="option-group">
-      <p class="kicker">Theme</p>
-      <div class="theme-list" data-theme-list></div>
+    <ul class="suite-list">
+      <li class="suite-app here">
+        <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-p"/></svg>
+        <div class="suite-words">
+          <strong class="suite-name">Portal</strong>
+          <p>You're here: enquiries, chats, bookings, quests, alerts, your planet and the crew.</p>
+        </div>
+        <span class="suite-tag here">This app</span>
+      </li>
+      <li class="suite-app">
+        <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-sky"/><path d="M176 152h160v52h-50v124h50v52H176v-52h50V204h-50z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/><path d="M176 152h160v52h-50v124h50v52H176v-52h50V204h-50z" fill="url(#nv-letter)"/><path d="M65.8 309.4A196 50-14 0 0 446.2 214.6" fill="none" stroke="#FFD1EA" stroke-opacity=".85" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round"/><path transform="translate(256 100)" d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/></svg>
+        <div class="suite-words">
+          <strong class="suite-name">Index</strong>
+          <p>Nova Agent's shared memory: browse what it has learned, watch it grow, fix a line and approve new facts.</p>
+        </div>
+        <a class="btn small ghost suite-open" href="/app/memory/" target="_blank" rel="noopener" aria-label="Open Index">Open</a>
+      </li>
+      <li class="suite-app">
+        <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-n"/></svg>
+        <div class="suite-words">
+          <strong class="suite-name">Notes</strong>
+          <p>Notes and documents, with Google Docs export.</p>
+        </div>
+        <a class="btn small ghost suite-open" href="/notes/" target="_blank" rel="noopener" aria-label="Open Notes">Open</a>
+      </li>
+      <li class="suite-app">
+        <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-c"/></svg>
+        <div class="suite-words">
+          <strong class="suite-name">Calendar</strong>
+          <p>Note cards and day cards. The web app keeps its own copy on each device; Nova Agent's copy (the one your quests go into) is on the studio computer.</p>
+        </div>
+        <div class="suite-opens">
+          <a class="btn small ghost suite-open" href="/calendar/" target="_blank" rel="noopener" aria-label="Open the Calendar web app">Web app</a>
+          <a class="btn small ghost suite-open" href="http://localhost:4545/calendar/" target="_blank" rel="noopener" aria-label="Open Nova Agent's Calendar (studio computer)">Studio computer</a>
+        </div>
+      </li>
+      <li class="suite-app">
+        <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-a"/></svg>
+        <div class="suite-words">
+          <strong class="suite-name">Nova Agent</strong>
+          <p>Chat, Missions and Quests, Acuity helper. It runs on the studio computer, so it opens there; from anywhere else, its quests are in the Quests tab.</p>
+        </div>
+        <a class="btn small ghost suite-open" href="http://localhost:4545/" target="_blank" rel="noopener" aria-label="Open Nova Agent (on the studio computer)">Studio computer</a>
+      </li>
+      <li class="suite-app">
+        <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-bot"/></svg>
+        <div class="suite-words">
+          <strong class="suite-name">NovaBot</strong>
+          <p>The studio's website assistant: answers questions and takes bookings (with deposit).</p>
+        </div>
+        <a class="btn small ghost suite-open" href="https://novacane.co.uk" target="_blank" rel="noopener" aria-label="Open NovaBot on novacane.co.uk">Open</a>
+      </li>
+      <li class="suite-app">
+        <span class="suite-badge suite-glyph" aria-hidden="true">✧</span>
+        <div class="suite-words">
+          <strong class="suite-name">Observatory</strong>
+          <p>Every project, its lines of code and the star map. Served by Nova Agent, on the studio computer.</p>
+        </div>
+        <a class="btn small ghost suite-open" href="http://localhost:4545/observatory/" target="_blank" rel="noopener" aria-label="Open Observatory (on the studio computer)">Studio computer</a>
+      </li>
+      <li class="suite-app">
+        <span class="suite-badge suite-glyph" aria-hidden="true">⚙</span>
+        <div class="suite-words">
+          <strong class="suite-name">Admin</strong>
+          <p>Referrals, enquiries, conversations, feedback, the booking system, links and features.</p>
+        </div>
+        <a class="btn small ghost suite-open" href="/admin" target="_blank" rel="noopener" aria-label="Open the admin pages">Open</a>
+      </li>
+    </ul>
+    <!-- Every live and testing address, fetched from /app/api/links when opened (suite.js) -->
+    <section class="links-section">
+      <button id="links-toggle" class="links-toggle" type="button" aria-expanded="false" aria-controls="links-body">
+        <span class="links-toggle-text"><span aria-hidden="true">🔒</span> All links</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div id="links-body" class="links-body" hidden>
+        <div class="links-head">
+          <span id="links-checked" class="links-checked" role="status"></span>
+          <button id="links-recheck" class="chip" type="button">Re-check</button>
+        </div>
+        <div id="links-groups" class="links-groups"></div>
+        <a class="links-admin" href="/admin/links" target="_blank" rel="noopener">Edit the list on the admin page &rarr;</a>
+      </div>
     </section>
-    <section class="option-group">
-      <label class="option-switch"><span>Sound effects</span><input type="checkbox" role="switch" id="sfx-switch" data-sfx="none"></label>
-    </section>
-    <section class="option-group option-actions">
-      <a class="btn ghost" href="/app/">Open Hub</a>
-      <button id="options-sign-out" class="btn ghost" type="button" data-sfx="close">Sign out everywhere</button>
+    <!-- Themes: a swatch per theme, drawn by themes.js -->
+    <section class="theme-section" aria-labelledby="theme-title">
+      <span class="kicker" id="theme-title">Theme</span>
+      <div id="theme-list" class="theme-list"></div>
     </section>
   </div>
 </div>
 
 <div id="toast" class="toast" role="status" hidden></div>
 
+<!-- Options: how Portal looks and behaves on this device (options.js; saved on this device) -->
+<div id="options-sheet" class="sheet options-sheet" hidden>
+  <div class="sheet-card options-card" role="dialog" aria-modal="true" aria-labelledby="options-title">
+    <div class="suite-head">
+      <div>
+        <span class="kicker">Portal</span>
+        <h3 id="options-title">Options</h3>
+      </div>
+      <button id="options-close" class="icon-btn" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+
+    <section class="option-group">
+      <p class="kicker">Theme</p>
+      <div class="theme-list" data-theme-list></div>
+    </section>
+
+    <section class="option-group">
+      <p class="kicker">Text</p>
+      <div class="option-row"><span>Alignment</span><div class="chips" data-option="align"><button class="chip" type="button" data-value="center">Centred</button><button class="chip" type="button" data-value="left">Left</button></div></div>
+      <div class="option-row"><span>Size</span><div class="chips" data-option="size"><button class="chip" type="button" data-value="small">Small</button><button class="chip" type="button" data-value="normal">Normal</button><button class="chip" type="button" data-value="large">Large</button></div></div>
+      <div class="option-row"><span>Times on alerts</span><div class="chips" data-option="times"><button class="chip" type="button" data-value="both">Exact + ago</button><button class="chip" type="button" data-value="ago">Just "ago"</button></div></div>
+    </section>
+
+    <section class="option-group">
+      <p class="kicker">Look and feel</p>
+      <label class="option-switch"><span>Animations</span><input type="checkbox" role="switch" data-option="motion"></label>
+      <label class="option-switch"><span>Drifting starfield</span><input type="checkbox" role="switch" data-option="stars"></label>
+    </section>
+
+    <section class="option-group">
+      <p class="kicker">Sound</p>
+      <label class="option-switch"><span>Sound effects on taps, tabs and switches</span><input type="checkbox" role="switch" id="sfx-switch" data-sfx="none"></label>
+      <label class="option-switch"><span>Ping and banner when an alert arrives (app open)</span><input type="checkbox" role="switch" data-option="pings"></label>
+      <div class="option-row"><span>Ambient music volume</span><input type="range" min="0" max="100" step="1" data-option="volume" aria-label="Ambient music volume"></div>
+    </section>
+
+    <section class="option-group">
+      <p class="kicker">Starting tab</p>
+      <div class="chips wrap" data-option="startTab"><button class="chip" type="button" data-value="enquiries">Enquiries</button><button class="chip" type="button" data-value="chats">Chats</button><button class="chip" type="button" data-value="calendar">Calendar</button><button class="chip" type="button" data-value="quests">Quests</button><button class="chip" type="button" data-value="alerts">Alerts</button><button class="chip" type="button" data-value="bot">NovaBot</button><button class="chip" type="button" data-value="you">You</button></div>
+    </section>
+
+    <section class="option-group option-actions">
+      <button id="refresh" class="btn ghost option-action" type="button" aria-label="Refresh" title="Refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+      <span>Refresh everything</span></button>
+      <button id="logout" class="btn ghost option-action" type="button" aria-label="Sign out" title="Sign out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/></svg>
+      <span>Sign out everywhere</span></button>
+      <button id="options-reset" class="btn ghost option-action" type="button"><span>Reset options</span></button>
+    </section>
+  </div>
+</div>
+
 <script src="/shared/sfx.js"></script>
+<script src="/portal/ambient.js"></script>
+<script src="/portal/options.js"></script>
+<script src="/portal/suite.js"></script>
+<script src="/portal/app.js"></script>
 <script src="/portal/portal.js"></script>
+<script src="/shared/badge.js" defer></script>
 <script src="/shared/manual.js" defer></script>
 </body>
 </html>
