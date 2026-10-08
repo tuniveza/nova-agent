@@ -85,6 +85,13 @@
     gap: 16px; padding: 0 20px 20px;
   }
   @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  /* Phones: snug padding, the steps table scrolls inside its own box rather than the page */
+  @media (max-width: 640px) {
+    main { gap: 10px; padding: 0 8px 12px; }
+    .pair { grid-template-columns: 1fr; }
+    section:has(table) { overflow-x: auto; }
+    .row { grid-template-columns: 54px 64px 1fr; padding: 5px 10px; }
+  }
   section {
     background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
     box-shadow: var(--shadow); min-width: 0;
@@ -422,7 +429,9 @@
 
   // One button per task the server offers.
   async function loadTaskButtons() {
-    const tasks = await fetch("/tasks").then((r) => r.json()).catch(() => []);
+    // (Online, with the studio PC off, there's no list: then no buttons)
+    const list = await fetch("/tasks").then((r) => r.json()).catch(() => []);
+    const tasks = Array.isArray(list) ? list : [];
     const box = document.getElementById("task-buttons");
     tasks.forEach((task, i) => {
       const button = document.createElement("button");

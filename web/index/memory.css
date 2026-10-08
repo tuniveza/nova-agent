@@ -625,3 +625,11 @@ html[data-stars="off"] body::before { display: none; }
 
 /* Inside Nova Agent (see /shared/inside.js): a slimmer tab bar, so more of the list shows in a short frame */
 html.embed { --tabs-h: 54px; }
+
+/* ---------- PHONES: lighter ----------
+   No glass blur and no endless decorative motion (drifting stars, floating marks, shimmering
+   titles); the listening dot and loading pulse still move, as they tell you something. */
+@media (max-width: 640px) {
+  *, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  body::before, .login-mark, .login-halo, .brand .wordmark, .view-head h2, .stat-wait.has .stat-num, .live-num, .sheet-card h3, .login .wordmark { animation: none !important; }
+}

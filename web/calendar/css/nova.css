@@ -508,3 +508,11 @@ html.embed .panel { position: static; max-height: none; min-height: 0; overflow-
   html.embed .topbar { flex-wrap: wrap; }
 }
 html.embed .app > .foot { display: none; }
+
+/* ---------- PHONES: lighter ----------
+   No glass blur and no endless background motion (the sky and shimmering titles hold still);
+   the calendar itself is unchanged. */
+@media (max-width: 640px) {
+  .glass, .topbar, .panel, dialog::backdrop, .reroll { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .nebula, .splash-name, .wordmark, .shimmer, .aes-nebula .dc-title, .aes-aurora .dc-title { animation: none !important; }
+}

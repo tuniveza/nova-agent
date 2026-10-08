@@ -315,3 +315,44 @@ html.embed .hero .sigil { width: 40px; height: 40px; }
 html.embed .wordmark { font-size: clamp(22px, 3vw, 34px); }
 html.embed .hero-lede { margin-top: 10px; font-size: 14.5px; }
 html.embed .stats { margin-top: 14px; }
+
+/* ---------- PHONES ----------
+   The projects first: a slim title, the numbers as a compact strip, each project as one short row
+   (picture, name, tagline, when it last changed); tap it for everything else. No star map, no
+   glass blur, no moving sky. Search and sort at 16px so phones don't zoom in. */
+@media (max-width: 640px) {
+  .hero { backdrop-filter: none; -webkit-backdrop-filter: none; background: color-mix(in srgb, var(--panel) 92%, transparent); padding: 12px 14px; }
+  .themes, .hero-lede { display: none; }
+  .hero-links .btn, .hero-links button { padding: 6px 10px; font-size: 12px; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+  .stat { padding: 8px 8px; border-radius: 12px; }
+  .stat b { font-size: 15px !important; white-space: nowrap; overflow-wrap: normal; }
+  .stat span { font-size: 9px; letter-spacing: .12em; }
+  .stat.lead b { animation: none; }
+  .lang-key { display: none; }
+  .search { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .search input, .controls select, #q, #sort { font-size: 16px; }
+  .decks { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .deck { flex-direction: row; align-items: stretch; border-radius: 16px; box-shadow: none; }
+  .deck:hover, .deck:focus-visible { transform: none; }
+  .deck-media { flex: none; width: 92px; aspect-ratio: auto; min-height: 92px; }
+  .deck-media::after, .cover-title, .play-hint, .deck-media video, .pills .pill:not(:first-child) { display: none; }
+  .pills { top: 6px; left: 6px; right: 6px; }
+  .pill { padding: 2px 6px; font-size: 8px; letter-spacing: .1em; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .deck-body { padding: 10px 12px; min-width: 0; gap: 2px; }
+  .deck-goal, .deck .chips, .deck .path, .deck .figures, .deck .lang-bar { display: none; }
+  .deck-name { font-size: 16px; margin: 0; }
+  .deck-tag { margin: 2px 0 6px; font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .deck-foot { font-size: 11px; padding-top: 4px; border-top: 0; }
+  .starmap-wrap { display: none; }
+  .pill.s-live i { animation: none; }
+  html.embed .wordmark, .wordmark { font-size: 20px; }
+  .sigil, html.embed .hero .sigil { width: 30px; height: 30px; }
+  .hero-top { gap: 8px; }
+  .sort > span { display: none; }
+  .controls { gap: 8px; }
+  .controls .sort select { letter-spacing: 0; padding-block: 6px; }
+  .deck-foot > span:last-child { display: none; }
+  .filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .filter { flex: none; padding: 6px 12px; font-size: 11px; letter-spacing: .1em; }
+}
