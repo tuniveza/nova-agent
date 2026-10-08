@@ -2,7 +2,10 @@
    Where the notes live: this browser's IndexedDB (room for long notes with pictures), or
    localStorage if IndexedDB isn't available (e.g. some private windows). Settings are small, so they
    always go in localStorage.
-   A note: { id, title, html, created, updated, pinned, named, gdocId, gdocUrl } */
+   A note: { id, title, html, created, updated, pinned, named, gdocId, gdocUrl, shared }
+   Two kinds of note: Local (only here, in this browser) and Shared (the whole team's, kept by
+   Nova Bot and synced by js/shared.js, which keeps its own copy here for speed and offline).
+   Everything below works on both: a note with shared: true goes to the team, any other stays here. */
 (function () {
   'use strict';
   const NN = (window.NN = window.NN || {});
@@ -75,48 +78,83 @@
       // true once someone has typed a name; until then the name follows the note's first line
       named: n.named === true,
       gdocId: typeof n.gdocId === 'string' ? n.gdocId : '',
-      gdocUrl: typeof n.gdocUrl === 'string' && n.gdocUrl.startsWith('https://') ? n.gdocUrl : ''
+      gdocUrl: typeof n.gdocUrl === 'string' && n.gdocUrl.startsWith('https://') ? n.gdocUrl : '',
+      // Shared or Local (not decided yet for a brand-new note: js/shared.js picks)
+      shared: n.shared === true ? true : n.shared === false ? false : undefined,
+      // Shared notes only: the version the team last had, and who changed it last
+      rev: Number.isInteger(n.rev) ? n.rev : undefined,
+      by: typeof n.by === 'string' ? n.by.slice(0, 80) : ''
     };
   }
+  const local = (n) => Object.assign(clean(n), { shared: false });
+  const sh = () => NN.shared;
 
   const notes = {
     async all() {
       const d = await db();
       const list = d ? await run('readonly', (s) => s.getAll()) : Object.values(lsRead());
-      return (list || []).map(clean);
+      const shared = sh() ? await sh().list() : [];
+      const ids = new Set(shared.map((n) => n.id));
+      return [...(list || []).filter((n) => !ids.has(n.id)).map(local), ...shared];
     },
     async get(noteId) {
+      if (sh() && sh().has(noteId)) return sh().get(noteId);
       const d = await db();
       const n = d ? await run('readonly', (s) => s.get(noteId)) : lsRead()[noteId];
-      return n ? clean(n) : null;
+      return n ? local(n) : null;
     },
     // Save a note; returns false if the browser refused (e.g. out of space)
     async put(n) {
-      const note = clean(n);
-      try {
-        const d = await db();
-        if (d) {
-          await run('readwrite', (s) => s.put(note));
-          return true;
-        }
-        const all = lsRead();
-        all[note.id] = note;
-        return lsWrite(all);
-      } catch (err) {
-        console.warn('Notes: could not save', err);
-        return false;
+      const S = sh();
+      // A brand-new note: Shared or Local, as js/shared.js says (Local unless chosen)
+      if (n.shared === undefined) n.shared = Boolean(S && !S.has(n.id) && !(await localHas(n.id)) && S.preferShared());
+      if (n.shared === true && S && S.canShare()) {
+        const ok = await S.put(clean(n));
+        if (ok && (await localHas(n.id))) await localRemove(n.id); // moved here from Local
+        return ok;
       }
+      n.shared = false;
+      const ok = await localPut(n);
+      if (ok && S && S.has(n.id)) await S.remove(n.id, { moved: true }); // moved to Local
+      return ok;
     },
     async remove(noteId) {
-      const d = await db();
-      if (d) return run('readwrite', (s) => s.delete(noteId));
-      const all = lsRead();
-      delete all[noteId];
-      lsWrite(all);
+      if (sh() && sh().has(noteId)) return sh().remove(noteId);
+      return localRemove(noteId);
     },
     newId: id,
     clean
   };
+
+  // This browser's own notes (Local)
+  async function localHas(noteId) {
+    const d = await db();
+    return Boolean(d ? await run('readonly', (s) => s.count(noteId)) : lsRead()[noteId]);
+  }
+  async function localRemove(noteId) {
+    const d = await db();
+    if (d) return run('readwrite', (s) => s.delete(noteId));
+    const all = lsRead();
+    delete all[noteId];
+    lsWrite(all);
+  }
+  async function localPut(n) {
+    const note = local(n);
+    delete note.rev;
+    try {
+      const d = await db();
+      if (d) {
+        await run('readwrite', (s) => s.put(note));
+        return true;
+      }
+      const all = lsRead();
+      all[note.id] = note;
+      return lsWrite(all);
+    } catch (err) {
+      console.warn('Notes: could not save', err);
+      return false;
+    }
+  }
 
   const settings = {
     read() {
@@ -145,7 +183,8 @@
     let count = 0;
     for (const n of list) {
       if (n && typeof n === 'object' && typeof n.html === 'string') {
-        await notes.put(n);
+        // Old backups have no "shared": those notes come back Local
+        await notes.put({ ...n, shared: n.shared === true });
         count++;
       }
     }
