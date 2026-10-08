@@ -135,7 +135,7 @@ app.get("/sw.js", appFile("sw.js"));
 // Nova Agent's own icons (/app/ was Hub's address; Hub is part of Portal now)
 app.get("/agent/:file", (c) => {
   const name = c.req.param("file");
-  if (/^[\w-]+\.(png|svg|js)$/.test(name) && existsSync(appRoot + name)) return appFile(name)(c);
+  if (/^[\w-]+\.(png|svg|js|css)$/.test(name) && existsSync(appRoot + name)) return appFile(name)(c);
   return c.text("Not found", 404);
 });
 

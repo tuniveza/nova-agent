@@ -7,7 +7,9 @@
 <meta name="theme-color" content="#06040D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,500&display=swap">
+<!-- Only the weights the page uses, and fetched without holding up the first paint -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110..125,700..900&family=Saira:wght@400..700&family=Source+Code+Pro:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110..125,700..900&family=Saira:wght@400..700&family=Source+Code+Pro:wght@400;600&display=optional"></noscript>
 <link rel="icon" href="/agent/icon.svg" type="image/svg+xml">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/agent/apple-touch-icon.png">
@@ -557,6 +559,8 @@
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
+<!-- On a phone: the bar along the bottom, one thing at a time, sized to the visible screen -->
+<link rel="stylesheet" href="/agent/phone.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -784,6 +788,7 @@
 <script src="/shared/manual.js" defer></script>
 <script src="/calendar/js/themes.js"></script>
 <script src="/calendar/js/backdrop.js"></script>
+<script src="/agent/phone.js"></script>
 <script>
 (function () {
   'use strict';
