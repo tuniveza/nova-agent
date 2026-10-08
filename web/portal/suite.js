@@ -1,4 +1,4 @@
-// The Nova Agent sheet: tap the Hub brand at the top to see every app in the family.
+// The Nova Agent sheet: tap the Portal brand at the top to see every Nova Agent panel.
 // It stands on its own (nothing from app.js), so it works whatever the rest of the page is doing.
 (() => {
   "use strict";
@@ -38,7 +38,7 @@
   });
 
   // ===== All links: every live and testing address, from /app/api/links =====
-  // Only fetched when the section is opened (Hub's sign-in protects it).
+  // Only fetched when the section is opened (Portal's sign-in protects it).
 
   const toggle = document.getElementById("links-toggle");
   const body = document.getElementById("links-body");
@@ -198,7 +198,7 @@
       const res = await fetch("/app/api/links" + (fresh ? "?recheck=1" : ""), { credentials: "same-origin", cache: "no-store" });
       if (res.status === 401) {
         checked.textContent = "";
-        return message("Sign in to Hub to see the links.");
+        return message("Sign in to Portal to see the links.");
       }
       if (!res.ok) throw new Error("Couldn't load the links (" + res.status + ")");
       const data = await res.json();

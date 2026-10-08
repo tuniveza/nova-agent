@@ -72,12 +72,12 @@ the differences lit up, and can put your edit on top of theirs in one tap, or ke
 </table>
 
 - **Live** shows what the suite has just learned, and which app learned it (NovaBot, Nova
-  Agent, Hub, Index). It checks every 20 seconds while it's on screen, and anything
+  Agent, Portal, Index). It checks every 20 seconds while it's on screen, and anything
   new glows as it arrives. Tap a row to open the file.
 - **Approve** holds facts learned from customers. One tap approves, edits or rejects each one.
   Nothing about a customer is kept without a person saying yes.
-- **Options**: the theme (shared with Hub), sound effects, refresh everything, open Nova
-  Hub and sign out. It installs as an app, with the suite's cosmic "I".
+- **Options**: the theme (shared with Portal), sound effects, refresh everything, open
+  Portal and sign out. It installs as an app, with the suite's cosmic "I".
 
 ## How the memory works
 
@@ -101,7 +101,7 @@ the differences lit up, and can put your edit on top of theirs in one tap, or ke
 |---|---|
 | Nova Agent (its key) | The studio's memory and staff memory; never customers' |
 | The website's NovaBot | Only that customer's own file and the public studio facts |
-| Hub and Index, signed in | Everything, including approvals |
+| Portal and Index, signed in | Everything, including approvals |
 | Staff signed in with [Portal](https://github.com/tuniveza/nova-portal) | Staff who aren't admins: the studio's memory and their own; admins: everything |
 
 Index signs in with **Portal**, the suite's one sign-in ("✦ Sign in with Nova

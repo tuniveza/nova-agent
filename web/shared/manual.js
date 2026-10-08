@@ -66,7 +66,7 @@
     if (/nova-calendar/.test(h) || p.startsWith("/calendar")) return "calendar";
     if (p.startsWith("/observatory") || location.port === "4610" || (location.protocol === "file:" && /observatory|\/no\//i.test(p))) return "observatory";
     if (p.startsWith("/app/memory")) return "index";
-    if (p.startsWith("/app")) return "hub";
+    if (p.startsWith("/app")) return "portal";
     if (p.startsWith("/portal")) return "portal";
     if (p.startsWith("/admin")) return "bot";
     if (/^454\d$/.test(location.port)) return "agent";

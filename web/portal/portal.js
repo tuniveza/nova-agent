@@ -1,13 +1,17 @@
-// Portal: one sign-in for every Nova app, and everyone's planet.
+// Portal: the studio's staff app, one sign-in for every Nova app, and everyone's planet.
 //
+// This runs the page: who's signed in, which tab shows, and Portal's own parts. The work tabs
+// (Enquiries, Chats, Calendar, Quests, Alerts, NovaBot: what was Hub) are app.js, started here
+// with window.NovaHub once someone's signed in.
 // Each member of the studio gets a profile, drawn as a planet grown from their own seed (the
-// server draws it: /staff/<id>/planet.svg). This page is the front of it all:
+// server draws it: /staff/<id>/planet.svg).
 //   Setup     the very first time: the first admin, proven with the studio's current password
-//   Sign in   email and password; signs in Hub, Index and the admin pages too
+//   Sign in   email and password; signs in Index and the admin pages too
 //   Invite    ?invite=<token>: someone joining picks their name and password
-//   Profile   their planet, big and turning; re-roll it, rename, open their Index, sign out
-//   Crew      (admins) everyone as planet badges; invite people, change roles, switch accounts off
-// Which one shows depends on the address (?invite=, ?view=crew, ?id=<someone>, ?next=) and on who's
+//   Work tabs ?view=enquiries|chats|calendar|quests|alerts|bot (no ?view: the starting tab from Options)
+//   You       ?view=me: their planet, big and turning; re-roll it, rename, open their Index, sign out
+//   Crew      ?view=crew (admins): everyone as planets; invite people, change roles, switch accounts off
+// Which one shows depends on the address (?invite=, ?view=, ?id=<someone>, ?next=) and on who's
 // signed in (/auth/me) or whether anyone exists yet (/auth/status).
 // The site's security rules allow no scripts or styles written inside the page, so it's all here.
 (() => {
@@ -30,12 +34,16 @@
     inviteToken: "",
     inviteRole: "staff",
     next: "", // where to go after signing in (a same-site path), if anywhere
-    connect: "", // another Nova app's address asking to show who you are (?connect=)
     rolling: false,
     checkTimer: 0,
     lastEmail: "",
   };
   const isAdmin = () => Boolean(state.me && state.me.role === "admin");
+  // The work tabs (app.js)
+  const hub = () => window.NovaHub;
+  const WORK = ["enquiries", "chats", "calendar", "quests", "alerts", "bot"];
+  // Tell the top-right badge (and other panels) that who's signed in has changed
+  const changed = () => window.NovaPortal && window.NovaPortal.changed && window.NovaPortal.changed();
 
   // ===== Little helpers =====
 
@@ -87,41 +95,25 @@
   const longDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) : "");
   const fullDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
 
-  // Where to go after signing in: only a path on this site ("/app/"), never another website
-  // ("//evil.example", "https://…", "/\evil") or anything odd
+  // Where to go after signing in: only a path on this site ("/admin"), never another website
+  // ("//evil.example", "https://…", "/\evil") or anything odd. Portal itself (or Hub's old
+  // address, which is Portal now) means staying here.
   function safeNext(raw) {
     const v = String(raw || "");
     if (!v.startsWith("/") || v.startsWith("//") || v.startsWith("/\\") || /[\u0000-\u001f\\]/.test(v)) return "";
     try {
       const url = new URL(v, location.origin);
       if (url.origin !== location.origin) return "";
+      if (/^\/(portal|app)(\/|$)/.test(url.pathname) && !url.pathname.startsWith("/app/memory")) return "";
       return url.pathname + url.search + url.hash;
     } catch (err) {
       return "";
     }
   }
-  // The other Nova apps that may show your Portal badge (the server checks this list too)
-  const SUITE_SITES = {
-    "https://nova-notes.novacane-studio.workers.dev": "Notes",
-    "https://nova-calendar.novacane-studio.workers.dev": "Calendar",
-    "http://localhost:4545": "Nova Agent",
-    "http://localhost:4546": "Nova Agent (preview)",
-    "http://localhost:4610": "Observatory",
-  };
-  function safeConnect(raw) {
-    try {
-      const url = new URL(String(raw || ""));
-      return SUITE_SITES[url.origin] ? url.origin + url.pathname + url.search : "";
-    } catch (err) {
-      return "";
-    }
-  }
-  const connectName = () => (state.connect ? SUITE_SITES[new URL(state.connect).origin] : "");
 
   // A friendly name for where "next" goes
   function nextName(path) {
     if (path.startsWith("/app/memory")) return "Index";
-    if (path.startsWith("/app")) return "Hub";
     if (path.startsWith("/admin")) return "the admin pages";
     return "";
   }
@@ -207,7 +199,7 @@
   function showAuthCard(id, sub) {
     const first = state.screen !== "auth";
     showScreen("auth");
-    for (const card of ["setup-form", "login-form", "invite-form", "invite-gone", "connect-card"]) $(card).hidden = card !== id;
+    for (const card of ["setup-form", "login-form", "invite-form", "invite-gone"]) $(card).hidden = card !== id;
     $("auth-sub").textContent = sub;
     replay($(id), "screen-in");
     if (first) replay($("auth"), "screen-in");
@@ -260,7 +252,7 @@
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("setup-error", "Enter your email address.", form), $("setup-email").focus();
     if (password.length < MIN_PASSWORD) return setError("setup-error", `Your new password needs at least ${MIN_PASSWORD} characters.`, form), $("setup-password").focus();
     if (password !== $("setup-confirm").value) return setError("setup-error", "The two new passwords don't match.", form), $("setup-confirm").focus();
-    if (!studio) return setError("setup-error", "Enter the studio's current password (the one for Hub).", form), $("setup-studio").focus();
+    if (!studio) return setError("setup-error", "Enter the studio's shared password (from before Portal).", form), $("setup-studio").focus();
     setError("setup-error", "");
     const go = form.querySelector('button[type="submit"]');
     try {
@@ -288,7 +280,7 @@
 
   // ----- 2. Signing in -----
   function showLogin(sub) {
-    const where = connectName() || nextName(state.next);
+    const where = nextName(state.next);
     showAuthCard("login-form", sub || (where ? `Sign in to carry on to ${where}` : "One sign-in for every Nova app"));
     setError("login-error", "");
     $("login-password").value = "";
@@ -382,20 +374,29 @@
     // (the reply is read just before this sign-in is recorded, so "last signed in" is now)
     state.me = { ...staff, last_login_at: staff.last_login_at || new Date().toISOString() };
     state.lastEmail = staff.email || state.lastEmail;
-    // Another Nova app asked to show who you are: ask first
-    if (state.connect) return showConnect();
+    changed();
     // Came from another Nova app? Back there now.
     if (state.next) {
       location.assign(state.next);
       return;
     }
-    history.replaceState(null, "", "/portal/");
+    // Stay on the tab the address asked for; someone new lands on their planet
+    history.replaceState(null, "", fresh ? "/portal/?view=me" : "/portal/" + keptSearch() + location.hash);
     enterApp({ message, fresh });
+  }
+  // The address's ?view= / ?id= (not the sign-in ones: invite, next; connect is from before)
+  function keptSearch() {
+    const p = new URLSearchParams(location.search);
+    for (const k of ["invite", "next", "connect"]) p.delete(k);
+    const q = p.toString();
+    return q ? "?" + q : "";
   }
 
   // Signed out (by choice, by an admin, or the session ran out): back to the sign-in card
   function signedOut(message) {
     if (state.screen !== "app") return;
+    if (hub()) hub().stop();
+    changed();
     state.lastEmail = (state.me && state.me.email) || state.lastEmail;
     state.me = null;
     state.person = null;
@@ -414,40 +415,52 @@
     window.scrollTo(0, 0); // (a long sign-in form may have been scrolled)
     replay($("app"), "screen-in");
     drawNav();
+    if (hub()) hub().start();
     renderRoute({ fresh });
     startChecks();
     if (message) setTimeout(() => toast(message), fresh ? 900 : 200);
   }
 
-  // The suite bar: my own planet as the "Me" tab, and the admin-only links
+  // The tab bar: my own planet as the You tab; the crew and the admin pages (admins) are on it
   function drawNav() {
     const me = state.me;
     const badge = $("nav-me-planet");
     const url = planetUrl(me, 64, false);
     if (badge.getAttribute("src") !== url) badge.src = url;
-    $("nav-crew").hidden = !isAdmin();
-    $("nav-admin").hidden = !isAdmin();
+    $("open-crew").hidden = !isAdmin();
+    $("open-admin").hidden = !isAdmin();
   }
-  function markNav(view) {
-    for (const [id, name] of [["nav-me", "me"], ["nav-crew", "crew"]]) {
-      const on = view === name || (name === "crew" && view === "person");
-      $(id).classList.toggle("active", on);
-      if (on) $(id).setAttribute("aria-current", "page");
-      else $(id).removeAttribute("aria-current");
+  // The You tab lights up for my profile, the crew and someone's profile
+  function markNav() {
+    for (const tab of document.querySelectorAll(".tabs .tab")) {
+      const on = tab.dataset.view === "you";
+      tab.classList.toggle("active", on);
+      if (on) tab.setAttribute("aria-current", "page");
+      else tab.removeAttribute("aria-current");
     }
   }
 
   // Which screen the address asks for
   function currentRoute() {
     const p = new URLSearchParams(location.search);
-    if (p.get("view") === "crew") return { view: "crew" };
+    const view = p.get("view") || "";
+    if (view === "crew") return { view: "crew" };
     const id = p.get("id");
     if (id && (!state.me || id !== state.me.id)) return { view: "person", id };
-    return { view: "me" };
+    if (view === "me" || view === "you" || id) return { view: "me" };
+    if (WORK.includes(view)) return { view: "work", tab: view };
+    // Nothing asked for: Alerts from a Nova Agent notification, else the starting tab (Options)
+    if (location.hash === "#nova") return { view: "work", tab: "alerts" };
+    const start = window.NovaOptions ? window.NovaOptions.get().startTab : "";
+    if (start === "you") return { view: "me" };
+    return { view: "work", tab: WORK.includes(start) ? start : "enquiries" };
   }
-  // Move to another screen inside the app (the address changes, so back and forward work)
-  function go(url) {
-    if (url !== location.pathname + location.search) history.pushState(null, "", url);
+  // Move to another screen inside the app (the address changes, so back and forward work;
+  // switching work tabs replaces it instead, so Back leaves the page rather than stepping through tabs)
+  function go(url, { replace = false } = {}) {
+    if (url === "/portal/?view=you") url = "/portal/?view=me";
+    if (url !== location.pathname + location.search) history[replace ? "replaceState" : "pushState"](null, "", url);
+    if (state.screen !== "app") return;
     renderRoute();
     window.scrollTo({ top: 0, behavior: "auto" });
   }
@@ -467,8 +480,12 @@
 
   async function renderRoute({ fresh } = {}) {
     const route = currentRoute();
-    markNav(route.view);
     closeNameForm();
+    if (route.view === "work") {
+      document.title = "Portal";
+      return hub() && hub().show(route.tab);
+    }
+    markNav();
     if (route.view === "crew") {
       if (!isAdmin()) {
         history.replaceState(null, "", "/portal/");
@@ -496,12 +513,13 @@
       renderRoute();
     }
   }
+  // One view at a time (the work tabs' views too)
   function showView(id) {
-    for (const v of ["view-profile", "view-crew"]) {
-      const on = v === id;
-      if ($(v).hidden === !on) continue;
-      $(v).hidden = !on;
-      if (on) replay($(v), "view-in");
+    for (const v of document.querySelectorAll("#main > .view")) {
+      const on = v.id === id;
+      if (v.hidden === !on) continue;
+      v.hidden = !on;
+      if (on) replay(v, "view-in");
     }
   }
 
@@ -690,16 +708,15 @@
     }
   });
 
-  // ----- Signing out (everywhere: Hub, Index, the admin pages) -----
+  // ----- Signing out (everywhere: Portal, Index, the admin pages) -----
   async function signOut() {
-    closeOptions();
+    $("options-sheet").hidden = true;
     try {
       await api("/auth/logout", { method: "POST", body: {} });
     } catch (err) {}
     signedOut("Signed out of every Nova app.");
   }
   $("sign-out").addEventListener("click", signOut);
-  $("options-sign-out").addEventListener("click", signOut);
 
   // ----- Details -----
   function renderDetails(person, self) {
@@ -892,7 +909,7 @@
     const body = [
       `Hi ${name},`,
       "",
-      "You're invited to Portal: one sign-in for every Nova app at Novacane Studios (Hub, Index and the rest).",
+      "You're invited to Portal: the staff app and one sign-in for every Nova app at Novacane Studios.",
       "",
       "Open this link to choose your password and meet your very own planet:",
       link,
@@ -940,10 +957,10 @@
   function crewCard(p, i, isNew) {
     const self = state.me && p.id === state.me.id;
     const a = el("a", `crew-card card-in ${p.status}`);
-    a.href = self ? "/portal/" : `/portal/?id=${encodeURIComponent(p.id)}`;
+    a.href = self ? "/portal/?view=me" : `/portal/?id=${encodeURIComponent(p.id)}`;
     a.dataset.nav = self ? "me" : "person";
     a.style.setProperty("--i", String(Math.min(i, 16)));
-    const badge = el("img", "badge");
+    const badge = el("img", "crew-planet");
     badge.src = planetUrl(p, 96, false);
     badge.alt = "";
     badge.width = 96;
@@ -1050,42 +1067,9 @@
   document.addEventListener("visibilitychange", () => !document.hidden && checkSession());
   window.addEventListener("focus", checkSession);
 
-  // ===== Options =====
-  const sheet = $("options-sheet");
-  const sfxSwitch = $("sfx-switch");
-  function openOptions() {
-    sfxSwitch.checked = window.NovaSfx ? window.NovaSfx.enabled() : false;
-    sfxSwitch.disabled = !window.NovaSfx;
-    sheet.hidden = false;
-    $("options-close").focus();
-  }
-  function closeOptions() {
-    if (sheet.hidden) return;
-    sheet.hidden = true;
-    $("options").focus();
-  }
-  $("options").addEventListener("click", openOptions);
-  $("options-close").addEventListener("click", closeOptions);
-  sheet.addEventListener("click", (e) => e.target === sheet && closeOptions());
+  // (Options, the sound switch and the button ripples are app.js and options.js, for the whole page)
   document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    closeOptions();
-    if (!$("name-form").hidden) closeNameForm();
-  });
-  sfxSwitch.addEventListener("change", () => window.NovaSfx && window.NovaSfx.setEnabled(sfxSwitch.checked));
-
-  // ===== A soft ripple where buttons are pressed =====
-  document.addEventListener("pointerdown", (e) => {
-    const b = e.target.closest(".btn, .chip, .tab, .icon-btn");
-    if (!b || b.disabled || still()) return;
-    const r = b.getBoundingClientRect();
-    const size = Math.max(r.width, r.height) * 2;
-    const dot = el("span", "ripple");
-    dot.style.width = dot.style.height = size + "px";
-    dot.style.left = e.clientX - r.left - size / 2 + "px";
-    dot.style.top = e.clientY - r.top - size / 2 + "px";
-    b.append(dot);
-    setTimeout(() => dot.remove(), 600);
+    if (e.key === "Escape" && !$("name-form").hidden) closeNameForm();
   });
 
   // The orbit's moon is a little SVG animation, which CSS can't pause: stop it for calm motion
@@ -1099,46 +1083,18 @@
   matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", settleMotion);
   window.addEventListener("novaoptionschange", settleMotion);
 
-  // ----- 5. Another Nova app asking to show who you are -----
-  // It gets a read-only token (name, role and planet only), handed back in the address's #fragment
-  function showConnect() {
-    const name = connectName();
-    showAuthCard("connect-card", "One sign-in for every Nova app");
-    $("connect-title").textContent = `Connect ${name}`;
-    $("connect-why").textContent = name.startsWith("Nova Agent")
-      ? "Nova Agent will work for you: your badge, and your own Index memory."
-      : `${name} would like to show your Nova Agent badge.`;
-    $("connect-planet").src = planetUrl(state.me, 192, true);
-    $("connect-name").textContent = state.me.display_name;
-    $("connect-role").textContent = state.me.role === "admin" ? "Admin" : "Staff";
-    setError("connect-error", "");
-    focusSoon($("connect-yes"));
-  }
-  $("connect-yes").addEventListener("click", async () => {
-    try {
-      const r = await busy($("connect-yes"), "Connecting…", () => api("/auth/connect", { method: "POST", body: { return_to: state.connect } }));
-      if (r.ok && r.data.redirect) {
-        sfx("done");
-        location.replace(r.data.redirect);
-        return;
-      }
-      setError("connect-error", r.data.error || `That didn't work (error ${r.status}).`, $("connect-card"));
-      sfx("error");
-    } catch (err) {
-      setError("connect-error", err.message, $("connect-card"));
-    }
-  });
-  $("connect-no").addEventListener("click", () => {
-    const back = state.connect;
-    state.connect = "";
-    location.replace(back);
-  });
+  // ===== What app.js uses: moving between tabs, signing out, a session that ended =====
+  window.PortalPage = {
+    go,
+    signOut,
+    signedOut,
+    refresh: () => state.screen === "app" && renderRoute(),
+  };
 
   // ===== Start: who's here? =====
   async function start() {
     const params = new URLSearchParams(location.search);
     state.next = safeNext(params.get("next"));
-    state.connect = safeConnect(params.get("connect"));
     settleMotion();
     try {
       // An invite link wins: whoever's signed in on this device, the link is for someone joining
@@ -1147,7 +1103,6 @@
       const me = await api("/auth/me");
       if (me.ok && me.data.staff) {
         state.me = me.data.staff;
-        if (state.connect) return showConnect();
         // Sent here by another Nova app, but already signed in: straight back
         if (state.next) {
           location.replace(state.next);

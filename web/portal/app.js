@@ -1,14 +1,18 @@
-// Hub: the staff app. All data comes from /app/api/ (staff login
-// needed). Everything from the server is shown as plain text, never as HTML.
+// Portal's work tabs (what was Hub): enquiries, chats, the calendar, quests, alerts, NovaBot,
+// push and voice. All data comes from /app/api/ (a Portal sign-in is needed). Everything from
+// the server is shown as plain text, never as HTML.
+// portal.js runs the page (signing in, the address, the You tab); it starts these tabs with
+// window.NovaHub.start() once someone's signed in, and they hand a sign-out back to it.
 
 (function () {
   "use strict";
 
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
-  // The tab Hub opens on (chosen in Options; Enquiries unless changed)
+  // The work tabs (the You tab and the crew are portal.js's)
   const VIEWS = ["enquiries", "chats", "calendar", "quests", "alerts", "bot"];
-  let currentView = window.NovaOptions && VIEWS.includes(window.NovaOptions.get().startTab) ? window.NovaOptions.get().startTab : "enquiries";
+  let currentView = "enquiries";
+  let running = false;
   let sessions = null; // session types for booking links
   let sheetEnquiry = null;
   const botHistory = [];
@@ -116,40 +120,47 @@
   // Inside Nova Agent on the studio PC (not a phone)
   const onStudioPC = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
 
-  // Signed out: the one way in is Portal
+  // The session ended (signed out elsewhere, or it ran out): portal.js shows the sign-in card
   function showLogin() {
-    $("app").hidden = true;
-    $("login").hidden = false;
+    if (!running) return;
+    running = false;
+    stopHandsFree();
+    if (window.PortalPage) window.PortalPage.signedOut("You've been signed out. Sign in again to carry on.");
   }
 
-  function showApp() {
-    $("login").hidden = true;
-    $("app").hidden = false;
-    // Opened from a Nova Agent, Quest or Mission notification: go straight to Alerts
-    if (location.hash === "#nova") currentView = "alerts";
-    show(currentView);
+  // Signed in (portal.js calls this): the badges, the bell and hands-free voice start up
+  function start() {
+    running = true;
     // The Quests badge (quests left today), whatever tab is open
     loadQuests();
+    loadAlerts();
     // Light the bell up if this phone already gets notifications
     updateNotifyPanel();
     // Hands-free voice: the mic glows, and listening starts
     $("voice").classList.toggle("on", handsFree);
     startHandsFree();
   }
+  // Signed out on purpose (portal.js): stop listening
+  function stop() {
+    running = false;
+    stopHandsFree();
+  }
 
-  $("logout").addEventListener("click", async () => {
-    try {
-      await api("logout", { body: {} });
-    } catch (err) {}
-    showLogin();
-  });
+  $("logout").addEventListener("click", () => window.PortalPage && window.PortalPage.signOut());
 
   // ===== Switching sections =====
 
+  // Show one of the work tabs (portal.js decides which from the address, and calls this)
   function show(view) {
+    if (!VIEWS.includes(view)) view = "enquiries";
     currentView = view;
-    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.view === view));
-    ["enquiries", "chats", "calendar", "quests", "alerts", "bot"].forEach((v) => ($("view-" + v).hidden = v !== view));
+    document.querySelectorAll(".tabs .tab").forEach((t) => {
+      const on = t.dataset.view === view;
+      t.classList.toggle("active", on);
+      if (on) t.setAttribute("aria-current", "page");
+      else t.removeAttribute("aria-current");
+    });
+    document.querySelectorAll("#main > .view").forEach((v) => (v.hidden = v.id !== "view-" + view));
     if (view === "quests") loadQuests();
     if (view === "enquiries") loadEnquiries();
     if (view === "chats") loadChats();
@@ -159,14 +170,19 @@
     if (view === "bot") setTimeout(() => $("bot-input").focus(), 50);
   }
 
-  document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => show(tab.dataset.view)));
+  // A tab: the address follows (so a reload stays put), and portal.js shows it
+  document.querySelectorAll(".tabs .tab").forEach((tab) =>
+    tab.addEventListener("click", () => window.PortalPage && window.PortalPage.go("/portal/?view=" + tab.dataset.view, { replace: VIEWS.includes(tab.dataset.view) }))
+  );
+  const onWorkTab = () => running && !$("view-" + currentView).hidden;
   $("refresh").addEventListener("click", () => {
-    show(currentView);
+    if (onWorkTab()) show(currentView);
+    else window.PortalPage && window.PortalPage.refresh();
     toast("Refreshed");
   });
   // Coming back to the app: get the latest
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && !$("app").hidden && currentView !== "bot") show(currentView);
+    if (!document.hidden && onWorkTab() && currentView !== "bot") show(currentView);
   });
 
   // ===== Enquiries =====
@@ -1191,9 +1207,10 @@
       return card;
     }
     // Enquiry alerts open the Enquiries tab; booking alerts open Acuity
-    const open = el(n.url.startsWith("/app/") ? "button" : "a", "btn small", n.url.startsWith("/app/") ? "Open enquiry" : /acuityscheduling/.test(n.url) ? "Open in Acuity" : "Open in Google Calendar");
+    const inHere = /^\/(app|portal)\//.test(n.url);
+    const open = el(inHere ? "button" : "a", "btn small", inHere ? "Open enquiry" : /acuityscheduling/.test(n.url) ? "Open in Acuity" : "Open in Google Calendar");
     // An enquiry: switch tabs when tapped
-    if (n.url.startsWith("/app/")) open.addEventListener("click", () => show("enquiries"));
+    if (inHere) open.addEventListener("click", () => window.PortalPage.go("/portal/?view=enquiries", { replace: true }));
     // A booking: a link to Acuity, opened outside the app
     else Object.assign(open, { href: n.url, target: "_blank", rel: "noopener" });
     // Add it to the row
@@ -1431,8 +1448,8 @@
   // Install the doorman (sw.js) as soon as the app opens, so it's ready when needed
   if (canNotify) {
     navigator.serviceWorker
-      .register("/app/sw.js", { scope: "/app/", updateViaCache: "none" })
-      // Look for a newer doorman every time Hub opens (and when it comes back to the front)
+      .register("/portal/sw.js", { scope: "/portal/", updateViaCache: "none" })
+      // Look for a newer doorman every time Portal opens (and when it comes back to the front)
       .then((reg) => {
         reg.update().catch(() => {});
         document.addEventListener("visibilitychange", () => !document.hidden && reg.update().catch(() => {}));
@@ -1520,7 +1537,7 @@
     // Remember what it's about
     box.dataset.tag = data.tag || "";
     // Its title and text
-    box.append(el("strong", "", data.title || "Hub"), el("p", "", data.body || ""));
+    box.append(el("strong", "", data.title || "Portal"), el("p", "", data.body || ""));
     // Tapping it opens the Alerts tab
     box.addEventListener("click", () => {
       box.remove();
@@ -1547,7 +1564,7 @@
         if (event.data.source === "quest" || event.data.source === "mission") loadQuests();
       }
       // A notification was tapped: show the Alerts tab
-      if (event.data?.type === "nova-open") show(String(event.data.url).includes("#nova") ? "alerts" : currentView);
+      if (event.data?.type === "nova-open" && String(event.data.url).includes("#nova")) window.PortalPage.go("/portal/?view=alerts", { replace: true });
     });
   }
 
@@ -1568,12 +1585,21 @@
     return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   }
 
+  // Phones that installed Hub from /app/ got their address through the old doorman
+  // (/app/sw.js). It's kept: one address per phone, so nothing arrives twice. Everyone
+  // else uses Portal's (/portal/sw.js).
+  async function pushDoorman() {
+    const old = await navigator.serviceWorker.getRegistration("/app/").catch(() => null);
+    if (old && old.scope.endsWith("/app/") && (await old.pushManager.getSubscription().catch(() => null))) return old;
+    return navigator.serviceWorker.ready;
+  }
+
   // This phone's current notification address, if it has one
   async function currentAddress() {
     // No notifications on this browser: no address
     if (!canNotify) return null;
-    // Wait until the doorman is installed
-    const reg = await navigator.serviceWorker.ready;
+    // The doorman that has (or will get) this phone's address
+    const reg = await pushDoorman();
     // Ask for the address the phone already has (or nothing)
     return reg.pushManager.getSubscription();
   }
@@ -1588,12 +1614,12 @@
     let status = "Get a notification here for new enquiries and bookings.";
     // iPhone in a Safari tab: it has to be opened from the Home Screen first
     if (!canNotify && isIPhone && !fromHomeScreen) {
-      status = "On iPhone, notifications only work when Hub is opened from its Home Screen icon. In Safari, tap Share, then Add to Home Screen, then open Hub from there.";
+      status = "On iPhone, notifications only work when Portal is opened from its Home Screen icon. In Safari, tap Share, then Add to Home Screen, then open Portal from there.";
     }
     // Any other browser that can't do it
     else if (!canNotify) status = "This browser can't show notifications.";
     // He said no to the iPhone's question earlier: only Settings can change that now
-    else if (Notification.permission === "denied") status = "Notifications are blocked for Hub. Turn them on in the iPhone's Settings, then Notifications, then Hub.";
+    else if (Notification.permission === "denied") status = "Notifications are blocked for this app. Turn them on in the iPhone's Settings, then Notifications, then Portal (or Nova Agent, if you added Hub to the Home Screen before).";
     // Already on
     else if (address) status = "Notifications are on for this phone.";
     // Put the message in the panel
@@ -1635,7 +1661,7 @@
       // The server hasn't been given its keys yet
       if (!publicKey) throw new Error("Notifications aren't set up on the server yet.");
       // Wait until the doorman is installed
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await pushDoorman();
       // Ask Apple for this phone's delivery address
       const address = await reg.pushManager.subscribe({
         // iPhone rule: every notification must be shown to him
@@ -1773,6 +1799,13 @@
     $("listening-bar").hidden = !text;
     // The message
     if (text) $("listening-text").textContent = text;
+  }
+
+  // Signed out: any listening stops (the setting is kept for next time)
+  function stopHandsFree() {
+    cancelRecording();
+    listeningBar("");
+    closeMic();
   }
 
   // Turn hands-free on or off (and remember it on this phone)
@@ -1927,7 +1960,7 @@
     try {
       await openMic();
     } catch (err) {
-      return toast("Hub can't use the microphone. Allow it in Settings.");
+      return toast("Portal can't use the microphone. Allow it in Settings.");
     }
     // The mic glows, and the panel shows
     $("voice").classList.add("on");
@@ -1971,7 +2004,7 @@
     return new Promise((resolve) => document.addEventListener("pointerdown", resolve, { once: true }));
   }
 
-  // Hands-free: keep listening while Hub is open and on screen
+  // Hands-free: keep listening while Portal is open and on screen
   async function startHandsFree() {
     // Already running, switched off, signed out, or not on screen
     if (looping || !handsFree || !canRecord || $("app").hidden || document.hidden) return;
@@ -1990,7 +2023,7 @@
         // Still no: the microphone is blocked
         listeningBar("");
         looping = false;
-        return toast("Hub can't use the microphone. Allow it in Settings.");
+        return toast("Portal can't use the microphone. Allow it in Settings.");
       }
     }
     // The volume meter is paused until a tap (iPhone rule): wait for one
@@ -2305,9 +2338,6 @@
 
   // ===== Start =====
 
-  api("me")
-    .then(showApp)
-    .catch((err) => {
-      if (err.message !== "signed out") showLogin();
-    });
+  // ===== Start: portal.js starts the tabs once someone's signed in =====
+  window.NovaHub = { VIEWS, start, stop, show, get view() { return currentView; } };
 })();
