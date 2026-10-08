@@ -494,6 +494,29 @@
           <button class="btn ghost" type="button" id="google-setup" hidden>Set up Google</button>
         </section>
 
+        <!-- A new password (admins needn't know the old one) -->
+        <section id="password-card" class="card password-card" aria-labelledby="password-title" hidden>
+          <span class="kicker">Password</span>
+          <h2 id="password-title" class="card-title">Change password</h2>
+          <form id="password-form" novalidate>
+            <div class="field" id="password-current-field" hidden>
+              <label class="field-label" for="password-current">Current password</label>
+              <input id="password-current" type="password" autocomplete="current-password">
+            </div>
+            <div class="field">
+              <label class="field-label" for="password-new">New password</label>
+              <input id="password-new" type="password" autocomplete="new-password" minlength="10">
+              <p class="field-help len-check" data-for="password-new"><span class="len-dot" aria-hidden="true"></span>At least 10 characters</p>
+            </div>
+            <div class="field">
+              <label class="field-label" for="password-again">Type it again</label>
+              <input id="password-again" type="password" autocomplete="new-password">
+            </div>
+            <p class="error" id="password-error" role="alert"></p>
+            <button class="btn" type="submit" id="password-save">Save new password</button>
+          </form>
+        </section>
+
         <!-- Their Index partition, and the studio's shared facts -->
         <section id="memory-card" class="card memory-card" aria-labelledby="memory-title">
           <span class="kicker">Index</span>

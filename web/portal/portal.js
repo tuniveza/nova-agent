@@ -559,6 +559,10 @@
     $("google-card").hidden = !self;
     if (self) loadGoogle();
 
+    $("password-card").hidden = !self;
+    // Admins choose a new password without the old one; everyone else confirms it
+    $("password-current-field").hidden = isAdmin();
+
     // Their memory (only for themselves and admins)
     const canSeeMemory = self || isAdmin();
     $("memory-card").hidden = !canSeeMemory;
@@ -588,6 +592,25 @@
     button.hidden = !admin;
     button.textContent = d.account ? "Google settings" : d.setUp ? "Connect Google" : "Set up Google";
   }
+  $("password-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = $("password-form");
+    const password = $("password-new").value;
+    if (password.length < MIN_PASSWORD) return setError("password-error", "Use at least 10 characters.", form), $("password-new").focus();
+    if (password !== $("password-again").value) return setError("password-error", "The two don't match. Type it again.", form), $("password-again").focus();
+    setError("password-error", "");
+    try {
+      const r = await busy($("password-save"), "Saving…", () => api("/auth/password", { method: "POST", body: { password, current: $("password-current").value } }));
+      if (!r.ok) return setError("password-error", r.data.error || `That didn't work (error ${r.status}).`, form);
+      form.reset();
+      for (const c of form.querySelectorAll(".len-check")) c.classList.remove("good");
+      sfx("done");
+      toast("New password saved. Use it next time you sign in.");
+    } catch (err) {
+      setError("password-error", err.message, form);
+    }
+  });
+
   $("google-setup").addEventListener("click", () => {
     // Inside Nova Agent: Admin → Google in its viewer. On its own: the admin page itself.
     for (const w of [window.top, window]) {

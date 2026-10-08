@@ -542,3 +542,7 @@ html.embed .pv .hero { --stage: min(86vw, 400px, 40vh); }
 @media (max-width: 430px) {
   .top .brand-text { display: none; }
 }
+
+/* Change password (You page) */
+.pv .password-card form { display: grid; gap: 12px; margin-top: 8px; }
+.pv .password-card .btn { justify-self: start; }
