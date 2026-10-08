@@ -1553,5 +1553,82 @@
   input.focus();
 })();
 </script>
+<script>
+// Online (not on the studio PC): chat, Missions and Quests come from the studio computer through
+// Nova Bot (its src/agent-relay.js). When it's off, or nobody's signed in, say so here; the panels
+// below still work. When it's back, the page starts again (or offers to, if a panel is open).
+(function () {
+  'use strict';
+  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+  const $ = (id) => document.getElementById(id);
+  const input = $('input'), send = $('send');
+  const hint = input.placeholder;
+  let state = 'ok';
+  const words = {
+    off: 'Chat needs the studio computer — it’s off right now',
+    out: 'Sign in with Portal (top right) to use chat',
+  };
+  const css = document.createElement('style');
+  css.textContent = '.pc-note{margin:10px;padding:12px 14px;border-radius:16px;border:1px dashed var(--line,#5a3d6e);color:var(--muted,#b997b5);font-size:13.5px;line-height:1.45;text-align:center}.pc-note button{margin-top:8px}';
+  document.head.appendChild(css);
+  function notes(text) {
+    for (const id of ['missions-panel', 'quests-panel']) {
+      const panel = $(id);
+      if (!panel) continue;
+      let note = panel.querySelector('.pc-note');
+      if (!text) { if (note) note.remove(); continue; }
+      if (!note) { note = document.createElement('div'); note.className = 'pc-note'; note.setAttribute('role', 'status'); panel.insertBefore(note, panel.children[1] || null); }
+      note.textContent = text;
+    }
+  }
+  function show(next) {
+    if (next === state) return;
+    const was = state;
+    state = next;
+    if (next !== 'ok') {
+      input.disabled = true;
+      send.disabled = true;
+      input.placeholder = words[next];
+      notes(next === 'off' ? 'Missions and Quests live on the studio computer, which is off right now. They’ll be back when it is.' : words.out + '.');
+      $('status-text').textContent = next === 'off' ? 'PC off' : 'Signed out';
+      $('status').title = next === 'off' ? 'The studio computer is off or offline' : 'Not signed in';
+      return;
+    }
+    // Back: start again, so the live feeds reconnect (unless a panel is open: then offer it)
+    if (was === 'unknown') return;
+    if ($('viewer') && !$('viewer').hidden) {
+      input.disabled = false;
+      send.disabled = false;
+      input.placeholder = hint;
+      notes('The studio computer is back.');
+      for (const n of document.querySelectorAll('.pc-note')) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'mini';
+        b.textContent = 'Refresh';
+        b.addEventListener('click', () => location.reload());
+        n.appendChild(b);
+      }
+      return;
+    }
+    location.reload();
+  }
+  async function check() {
+    try {
+      const res = await fetch('/status', { cache: 'no-store' });
+      if (res.ok) return show('ok');
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) return show('out');
+      if (res.status === 503 && data.pcOffline) return show('off');
+    } catch (e) {}
+  }
+  state = 'unknown';
+  check().then(() => { if (state === 'unknown') state = 'ok'; });
+  setInterval(() => { if (state !== 'ok' || document.visibilityState === 'visible') check(); }, 20000);
+  // Signed in or out with the planet at the top: look again straight away
+  window.addEventListener('novaportal', () => check());
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+})();
+</script>
 </body>
 </html>

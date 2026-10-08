@@ -81,7 +81,7 @@
     fetch('/calendar-api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1', 'X-Nova-Rev': String(rev) }, body: value })
       .then(function (r) { return r.json().then(function (res) { return { status: r.status, res: res }; }); })
       .then(function (out) {
-        if (!out.res.ok) throw new Error(out.res.message || 'Nova Agent said no (' + out.status + ')');
+        if (!out.res.ok) throw new Error(out.res.pcOffline ? 'the studio computer is off' : out.res.message || out.res.error || 'Nova Agent said no (' + out.status + ')');
         rev = out.res.rev;
         if (waiting === null) removeItem.call(localStorage, UNSAVED);
         if (out.res.messages && out.res.messages.length) sayFor(out.res.messages.join(' '), 9000);

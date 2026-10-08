@@ -41,6 +41,7 @@ import { startHubSync } from "../quests/hubsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { questEvents } from "../quests/store";
+import { startRelay } from "../relay";
 
 // Everything Nova Agent shows lives in web/: its own page (web/agent) and each panel
 const web = (path: string) => fileURLToPath(new URL(`../../web/${path}`, import.meta.url));
@@ -478,3 +479,5 @@ try {
 startQuestReminders();
 startPulses();
 startHubSync();
+// Online: Nova Bot passes staff members' requests to this server over a link the PC opens (src/relay.ts)
+startRelay(app.fetch);
