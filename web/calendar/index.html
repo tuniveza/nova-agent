@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Calendar</title>
-<meta name="description" content="Calendar: the studio's events, day cards, Quests and bookings, inside Nova Agent.">
+<meta name="description" content="Calendar: the studio's note cards and day cards, with Quests, bookings and the real sky, inside Nova Agent.">
 <meta name="theme-color" content="#06040D">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -35,14 +35,14 @@
       </div>
       <button class="icon-btn" id="search-btn" type="button" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
       <button class="icon-btn" id="layers-btn" type="button" aria-label="What to show" aria-haspopup="true"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
-      <button class="add-btn" id="add" type="button" aria-label="Add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add</span></button>
+      <button class="add-btn" id="add" type="button" aria-label="New note card"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Note card</span></button>
     </div>
   </header>
 
   <div class="status" id="status" hidden></div>
   <div class="search" id="search" hidden>
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
-    <input type="search" id="search-input" placeholder="Search events" autocomplete="off" aria-label="Search events">
+    <input type="search" id="search-input" placeholder="Search note cards and day cards" autocomplete="off" aria-label="Search note cards and day cards">
     <button class="icon-btn" id="search-close" type="button" aria-label="Close search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
 
@@ -50,11 +50,17 @@
 </div>
 
 <!-- What to show -->
-<div class="pop" id="layers" hidden role="dialog" aria-label="What to show">
-  <label><input type="checkbox" data-layer="events" checked><span class="sw ev"></span>Your events</label>
+<div class="pop" id="layers" hidden role="dialog" aria-label="What to show, and backups">
+  <p class="pop-h">Show</p>
+  <label><input type="checkbox" data-layer="events" checked><span class="sw ev"></span>Note cards</label>
   <label><input type="checkbox" data-layer="days" checked><span class="sw day"></span>Day cards</label>
+  <label><input type="checkbox" data-layer="sky" checked><span class="sw sky"></span>Moon and special days</label>
   <label><input type="checkbox" data-layer="quests" checked><span class="sw quest"></span>Quests (Nova Agent's plan)</label>
   <label><input type="checkbox" data-layer="bookings" checked><span class="sw book"></span>Studio bookings</label>
+  <p class="pop-h">Backup</p>
+  <button type="button" class="pop-btn" id="export"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>Export: download a backup</button>
+  <label class="pop-btn" for="import-file"><svg viewBox="0 0 24 24"><path d="M12 20V9M7 13.5l5-5 5 5M5 4h14"/></svg>Import a backup…</label>
+  <input type="file" id="import-file" accept=".json,application/json" hidden>
 </div>
 
 <!-- Add or change an event or a day card -->
@@ -63,17 +69,26 @@
   <form id="form" novalidate>
     <div class="sheet-head">
       <button class="icon-btn" type="button" id="sheet-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      <h2 id="sheet-title">New event</h2>
+      <h2 id="sheet-title">New note card</h2>
       <button class="save" type="submit" id="save">Save</button>
     </div>
     <div class="sheet-body">
       <div class="kinds" id="kinds" role="tablist">
-        <button type="button" data-kind="event" class="on">Event</button>
+        <button type="button" data-kind="event" class="on">Note card</button>
         <button type="button" data-kind="day">Day card</button>
       </div>
       <div class="quick" id="quick">
         <input id="quick-input" type="text" placeholder="Type it: Mix review Friday 2pm 1h" autocomplete="off" aria-label="Quick add">
         <p class="quick-hint" id="quick-hint"></p>
+      </div>
+      <!-- Its artwork: a note card's picture, a day card's header (painted by cosmos.js) -->
+      <div class="art-head" id="art-head">
+        <b class="dc-title" id="art-title"></b>
+        <div class="art-tools">
+          <select id="note-subject" aria-label="Artwork"></select>
+          <button type="button" id="art-new"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="9" cy="9" r="1.1" fill="currentColor"/><circle cx="15" cy="15" r="1.1" fill="currentColor"/><circle cx="15" cy="9" r="1.1" fill="currentColor"/><circle cx="9" cy="15" r="1.1" fill="currentColor"/></svg>New artwork</button>
+          <a id="art-save" href="#" download="card.png"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>Save image</a>
+        </div>
       </div>
       <input class="big" id="f-title" type="text" placeholder="Title" maxlength="120" aria-label="Title">
 
@@ -107,6 +122,8 @@
       <div class="group" data-for="day" hidden>
         <div class="row"><span>Date</span><input type="date" id="d-date" aria-label="Date"></div>
         <div class="row"><span>Kind</span><select id="d-preset" aria-label="Kind of day"></select></div>
+        <div class="row stack"><span>Title style</span><div class="aes-grid" id="aes-grid"></div></div>
+        <div class="row stack"><span>Theme</span><div class="theme-grid" id="theme-grid"></div></div>
         <label class="row toggle"><span>Every year</span><input type="checkbox" id="d-yearly"><span class="switch"></span></label>
         <input id="d-location" type="text" placeholder="Where" maxlength="120" aria-label="Where">
       </div>
@@ -135,6 +152,7 @@
 <div class="toast" id="toast" hidden role="status" aria-live="polite"><span id="toast-text"></span><button type="button" id="toast-undo" hidden>Undo</button></div>
 
 <script src="/shared/sfx.js"></script>
+<script src="js/themes.js"></script>
 <script src="js/presets.js"></script>
 <script type="module" src="js/cal.js"></script>
 <script src="/shared/badge.js" defer></script>

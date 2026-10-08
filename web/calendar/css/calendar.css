@@ -1,5 +1,6 @@
-/* Calendar: month, week, day and list, events and day cards. Colours come from
-   /shared/themes.css (the Nova Agent theme the person picked). Phone first. */
+/* Calendar: month, week, day and list, note cards and day cards under the real sky. Colours
+   come from /shared/themes.css (the Nova Agent theme the person picked); a day card can wear
+   its own (js/themes.js). Phone first; the starry sky is CSS only (nothing moves on phones). */
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -235,11 +236,11 @@ html.embed .bar { padding-top: 8px; }
   .grid { grid-auto-rows: minmax(58px, auto); flex: 0 0 auto; }
   .cell { padding: 3px 2px; }
   .num { font-size: 12.5px; height: 22px; min-width: 22px; }
-  .pill { padding: 0; height: 5px; border-left: 0; border-radius: 3px; background: rgb(var(--c)); }
-  .pill > * { display: none; }
-  .daycard { padding: 0 3px; font-size: 0; }
-  .daycard span { display: none; }
-  .more { font-size: 10px; }
+  .pill { padding: 0 3px; min-height: 15px; font-size: 9.5px; line-height: 15px; border-radius: 5px; gap: 0; }
+  .pill b { display: none; }
+  .daycard, .skychip { padding: 0 3px; min-height: 15px; font-size: 9px; gap: 2px; }
+  .daycard .ico, .skychip .ico { width: 10px; height: 10px; }
+  .more { font-size: 9px; padding-left: 2px; }
   .tg { grid-template-columns: 38px repeat(var(--cols), minmax(0, 1fr)); }
   .ev { padding: 1px 3px; font-size: 11px; }
   .ev small { display: none; }
@@ -259,8 +260,155 @@ html.embed .bar { padding-top: 8px; }
 @media (max-width: 719px) { .dayplan h3 button { display: none; } }
 /* Wide screens: the chosen day sits beside the month */
 @media (min-width: 1100px) {
-  .month { display: grid; grid-template-columns: minmax(0, 1fr) 320px; grid-template-rows: auto 1fr; min-height: 100%; }
-  .month .wk-head { grid-column: 1; }
-  .month .grid { grid-column: 1; }
-  .month .dayplan { grid-column: 2; grid-row: 1 / span 2; border-top: 0; border-left: 1px solid rgba(var(--hi-rgb), .12); padding-bottom: 16px; overflow: auto; }
+  .month { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto auto 1fr; min-height: 100%; }
+  .month .strip, .month .wk-head, .month .grid { grid-column: 1; }
+  .month .grid { grid-row: 3; }
+  .month:not(:has(.strip)) .grid { grid-row: 2 / span 2; }
+  /* The chosen day scrolls in its own column: however much is on it, it never stretches the month */
+  .month .dayplan { grid-column: 2; grid-row: 1 / span 3; border-top: 0; border-left: 1px solid rgba(var(--hi-rgb), .12); padding-bottom: 16px; overflow: auto; contain: size; }
+  .month { height: 100%; }
 }
+
+
+/* ================= The Nova look ================= */
+/* The sky behind everything: a soft nebula and still stars (CSS only, so it costs nothing) */
+body {
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(1px 1px at 72% 9%, rgba(255,255,255,.45), transparent 60%),
+    radial-gradient(1.4px 1.4px at 38% 64%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(1px 1px at 88% 52%, rgba(255,255,255,.5), transparent 60%),
+    radial-gradient(1.2px 1.2px at 22% 86%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(1px 1px at 58% 33%, rgba(255,255,255,.3), transparent 60%),
+    radial-gradient(1px 1px at 93% 88%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(1px 1px at 5% 46%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(120% 70% at 85% -10%, rgba(var(--hi-rgb), .16), transparent 60%),
+    radial-gradient(90% 60% at -10% 110%, rgba(var(--accent-rgb, 176, 29, 104), .14), transparent 65%),
+    var(--void);
+  background-attachment: fixed;
+}
+.bar { background: linear-gradient(180deg, rgba(var(--deep-rgb), .96), rgba(var(--deep-rgb), .86)); border-bottom-color: rgba(var(--hi-rgb), .18); }
+.title { font-stretch: 112%; letter-spacing: .015em; }
+.title span { background: linear-gradient(90deg, var(--bright), var(--soft)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.chip.today { color: var(--bright); background: linear-gradient(90deg, rgba(var(--hi-rgb), .22), rgba(var(--hi-rgb), .08)); }
+.wk-head { background: rgba(var(--deep-rgb), .92); }
+.wk-head span { color: var(--soft); opacity: .8; }
+/* Line icons from presets.js */
+.ico { width: 14px; height: 14px; flex: none; }
+/* ---- Month: cells, the moon, today ---- */
+.grid { background: rgba(var(--void-rgb), .35); }
+.cell { transition: background .18s; }
+.cell:hover { background: rgba(var(--hi-rgb), .045); }
+.cell.out { background: rgba(var(--void-rgb), .6); }
+.cell.has-day { background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%); }
+.cell > .moonmark { position: absolute; top: 6px; right: 5px; }
+.num { font-family: var(--f-display); font-stretch: 112%; font-weight: 800; color: var(--bright); }
+.cell.out .num { color: var(--muted); }
+.cell.today .num {
+  background: radial-gradient(circle at 35% 30%, #fff 0, var(--hi) 55%, var(--accent) 100%); color: #fff;
+  box-shadow: 0 0 0 3px rgba(var(--hi-rgb), .22), 0 0 18px 2px rgba(var(--hi-rgb), .55);
+}
+.cell.sel:not(.today) .num { box-shadow: inset 0 0 0 1.5px rgba(var(--hi-rgb), .7); }
+.moonmark { display: inline-grid; place-items: center; opacity: .9; }
+.moonmark.full .moon-lit { fill: var(--gold); }
+.moonmark.full { filter: drop-shadow(0 0 4px rgba(var(--gold-rgb), .7)); }
+.moon { display: block; flex: none; }
+.moon-dark { fill: rgba(255, 255, 255, .1); stroke: rgba(255, 255, 255, .22); stroke-width: .8; }
+.moon-lit { fill: #EDE6FF; }
+/* Note cards in a cell: little cards tinted by their colour, with their title */
+.pill {
+  border-left: 0; border-radius: 7px; padding: 1px 6px; gap: 5px;
+  background: linear-gradient(135deg, rgba(var(--c), .42), rgba(var(--c), .16));
+  box-shadow: inset 0 0 0 1px rgba(var(--c), .45), 0 2px 8px -4px rgba(var(--c), .9);
+  color: #fff; font-weight: 600;
+}
+.pill b { color: #fff; opacity: .85; filter: none; font-weight: 700; }
+.pill.ro { background: repeating-linear-gradient(135deg, rgba(var(--c), .28) 0 5px, rgba(var(--c), .14) 5px 10px); box-shadow: inset 0 0 0 1px rgba(var(--c), .35); font-weight: 500; }/* Day cards: wear their theme, with their icon */
+.daycard {
+  color: #fff; padding: 2px 6px; border-radius: 7px; font-weight: 800; letter-spacing: .01em;
+  background: linear-gradient(110deg, var(--accent), var(--accent-2)); box-shadow: 0 3px 12px -5px var(--hi);
+}
+.daycard .ico { color: var(--gold); }/* Seasonal and cosmic days (Bonfire Night, a meteor shower, a solstice…) */
+.skychip { display: flex; align-items: center; gap: 3px; min-width: 0; padding: 1px 5px; border-radius: 6px; font-size: 10.5px; font-style: italic; color: var(--gold); background: rgba(var(--gold-rgb), .08); border: 1px dashed rgba(var(--gold-rgb), .3); }
+.skychip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.more { color: var(--soft); font-weight: 600; }
+/* This month at a glance */
+.strip { display: flex; gap: 6px; overflow-x: auto; padding: 8px 10px; scrollbar-width: none; background: rgba(var(--deep-rgb), .7); border-bottom: 1px solid rgba(var(--hi-rgb), .1); }
+.strip::-webkit-scrollbar { display: none; }
+.strip-item {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 8px; border-radius: 999px;
+  border: 1px solid rgba(var(--hi-rgb), .2); background: rgba(var(--panel-rgb), .75); color: var(--text); font-size: 12.5px; font-weight: 600;
+}
+.strip-item b { font: 800 12px var(--f-display); color: var(--bright); min-width: 16px; text-align: center; }
+.strip-item.themed { border: 0; color: #fff; background: linear-gradient(110deg, var(--accent), var(--accent-2)); box-shadow: 0 4px 14px -6px var(--hi); }
+.strip-item.themed .ico { color: var(--gold); }
+.strip-item.moon { color: var(--gold); }
+.strip-item.moon .moon-lit { fill: var(--gold); }
+.strip-item.sky { color: var(--gold); font-style: italic; border-style: dashed; border-color: rgba(var(--gold-rgb), .35); }
+/* ---- The chosen day ---- */
+.dayplan { background: linear-gradient(180deg, rgba(var(--deep-rgb), .92), rgba(var(--void-rgb), .92)); }
+.dayplan > * + * { margin-top: 10px; }
+.dp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.dp-kicker { display: block; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--hi); }
+.dayplan h3 { margin: 2px 0 0; font: 900 20px/1.1 var(--f-display); font-stretch: 112%; color: var(--bright); display: block; }
+.dp-moon { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; font-size: 13px; color: var(--soft); }
+.dp-add { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.dp-add button { height: 34px; padding: 0 12px; border-radius: 11px; border: 1px solid rgba(var(--hi-rgb), .3); background: rgba(var(--hi-rgb), .12); color: var(--bright); font: 600 13px var(--f-body); }
+.dp-add button + button { background: rgba(var(--gold-rgb), .1); border-color: rgba(var(--gold-rgb), .35); color: var(--gold); }
+/* ---- Rows: note cards as cards, with their picture ---- */
+.row-item.note {
+  grid-template-columns: 54px 1fr; border: 0; border-radius: 16px; overflow: hidden; position: relative;
+  background: linear-gradient(120deg, rgba(var(--c), .3), rgba(var(--c), .08) 70%), rgba(var(--panel-rgb), .85);
+  box-shadow: inset 0 0 0 1px rgba(var(--c), .38), 0 10px 24px -18px rgba(var(--c), .9);
+}
+.row-item.note.has-art { grid-template-columns: 76px 54px 1fr; padding-left: 0; padding-top: 0; padding-bottom: 0; min-height: 64px; }
+.row-item .art { width: 76px; height: 100%; min-height: 64px; object-fit: cover; align-self: stretch; -webkit-mask: linear-gradient(90deg, #000 70%, transparent); mask: linear-gradient(90deg, #000 70%, transparent); }
+.row-item.note time { color: #fff; opacity: .85; }
+.row-item.ro { background: repeating-linear-gradient(135deg, rgba(var(--c), .14) 0 8px, rgba(var(--c), .07) 8px 16px), rgba(var(--panel-rgb), .8); }
+.row-item.day { border: 0; color: #fff; background: linear-gradient(110deg, color-mix(in srgb, var(--accent) 85%, transparent), color-mix(in srgb, var(--accent-2) 85%, transparent)); box-shadow: 0 10px 24px -16px var(--hi); }
+.row-item.day strong, .row-item.day small { color: #fff; }
+.row-item .ico-time { display: grid; place-items: center; color: var(--gold); }
+.row-item .ico-time .ico { width: 22px; height: 22px; }
+.list h4 { background: rgba(var(--void-rgb), .92); }
+/* ---- Week and day: note cards on the time grid ---- */
+.tg-head, .tg-day { background: rgba(var(--deep-rgb), .92); }
+.tg-day .moonmark { display: inline-grid; margin-top: 2px; }
+.tg-day.today b { color: #fff; text-shadow: 0 0 12px var(--hi); }
+.ev {
+  border: 0; border-radius: 10px; padding: 3px 7px; color: #fff;
+  background: linear-gradient(135deg, rgba(var(--c), .62), rgba(var(--c), .28));
+  box-shadow: inset 0 0 0 1px rgba(var(--c), .7), 0 8px 20px -12px rgba(var(--c), 1);
+}
+.ev strong { font-weight: 700; }
+.ev.ro { box-shadow: inset 0 0 0 1px rgba(var(--c), .45); }
+.now-line { box-shadow: 0 0 8px var(--hi); }
+/* ---- Phones: still sky, lighter shadows ---- */
+@media (max-width: 719px) {
+  /* Phones: the same sky as one small repeating tile of stars (cheaper to paint than many gradients) */
+  body {
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='18' cy='26' r='.7' opacity='.55'/%3E%3Ccircle cx='116' cy='14' r='.6' opacity='.45'/%3E%3Ccircle cx='62' cy='98' r='.8' opacity='.4'/%3E%3Ccircle cx='140' cy='82' r='.6' opacity='.5'/%3E%3Ccircle cx='34' cy='140' r='.7' opacity='.35'/%3E%3Ccircle cx='94' cy='52' r='.5' opacity='.3'/%3E%3Ccircle cx='150' cy='146' r='.6' opacity='.4'/%3E%3C/g%3E%3C/svg%3E"),
+      radial-gradient(120% 70% at 85% -10%, rgba(var(--hi-rgb), .14), transparent 60%),
+      var(--void);
+    background-attachment: scroll;
+  }
+  .pill { box-shadow: inset 0 0 0 1px rgba(var(--c), .45); }
+  .daycard { box-shadow: none; }
+  .ev { box-shadow: inset 0 0 0 1px rgba(var(--c), .7); }
+  .dp-add button { height: 32px; padding: 0 10px; font-size: 12.5px; }
+  .strip { padding: 6px 8px; }
+  .strip-item { height: 30px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .view[data-anim] > * { animation: none !important; } }
+html[data-motion="calm"] .view[data-anim] > * { animation: none !important; }/* The chosen day never runs wider than its column */
+.dayplan, .dayplan > *, .rows, .rows li, .row-item > span { min-width: 0; }
+.dayplan { overflow-x: hidden; }
+.dp-head > div:first-child { min-width: 0; }
+@media (min-width: 1100px) { .dp-head { flex-direction: column; } .dp-add { justify-content: flex-start; } }/* Sticky headers stay solid, so nothing shows through as it scrolls under them */
+.tg-head, .tg-day, .wk-head { background: var(--deep); }
+.list h4 { background: var(--void); }
+.tg-day { position: relative; }
+.tg-day .moonmark { position: absolute; top: 4px; right: 4px; margin: 0; }/* Speed: the chosen day (below the month on a phone) is only laid out once it's on screen */
+@media (max-width: 1099px) { .dayplan { content-visibility: auto; contain-intrinsic-size: auto 420px; } }/* The strip keeps its room (while the sky is still to come, and when space is tight) */
+.strip { min-height: 48px; box-sizing: border-box; }
+@media (max-width: 719px) { .strip { min-height: 42px; } }

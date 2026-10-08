@@ -1,16 +1,30 @@
-// Calendar: month, week, day and list views of the studio's events and day cards, with
-// Nova Agent's plan (Quests) and studio bookings alongside. Add, change, move, repeat,
-// remind and delete (with Undo). Everything saves through data.js (Nova Bot), works offline,
-// and is the same on every device. Times are UK time.
+// Calendar: month, week, day and list views of the studio's note cards and day cards, with
+// Nova Agent's plan (Quests), studio bookings and the real sky (moon phases, seasonal days)
+// alongside. Add, change, move, repeat, remind and delete (with Undo); every note card and
+// day card has its own painted artwork (cosmos.js, loaded when first needed). Everything
+// saves through data.js (Nova Bot), works offline, and is the same on every device.
+// (A note card is stored as kind "event".) Times are UK time.
 
 import * as data from "./data.js";
 import { addDays, addMinutes, cleanRepeat, dayNumber, describeRepeat, endSeriesBefore, minutesBetween, occurrences, weekday } from "./recur.js";
 import { parseQuick } from "./quickadd.js";
 
 const $ = (id) => document.getElementById(id);
+// The look's second half (sheet, banners, title styles, menus): added now, so it never holds up the first screen
+{
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "css/extras.css";
+  document.head.appendChild(link);
+}
 const view = $("view");
 const sfx = (n) => window.NovaSfx && window.NovaSfx.play && window.NovaSfx.play(n);
-const presets = () => (window.NT && window.NT.presets) || { list: () => [], get: () => ({ icon: "sparkle", label: "Day" }), icon: () => "" };
+const presets = () => (window.NT && window.NT.presets) || { list: () => [], get: () => ({ icon: "sparkle", label: "Day" }), icon: () => "", aesthetics: () => [] };
+const THEMES = () => window.NT && window.NT.themes;
+const SKY = () => window.NT && window.NT.sky;
+const COS = () => window.NT && window.NT.cosmos;
+// A line icon from presets.js, as markup
+const iconOf = (name) => (window.NT && window.NT.presets ? window.NT.presets.icon(name) : "");
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -18,6 +32,7 @@ const WD_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday
 const COLORS = ["violet", "rose", "blue", "teal", "green", "amber", "orange", "red", "grey"];
 const REMINDERS = [[0, "At start"], [10, "10 min"], [30, "30 min"], [60, "1 hour"], [1440, "1 day"]];
 const PREFS = "nova-calendar/prefs";
+const SUBJECTS = ["planet", "galaxy", "nebula", "binary", "comet", "blackhole", "constellation", "eclipse", "supernova", "orbit", "aurora", "crescent"];
 const isAgent = (id) => /^(quest|block|mile)-/.test(String(id || ""));
 const pad = (n) => String(n).padStart(2, "0");
 const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -36,7 +51,7 @@ const dayLabel = (d) => `${WD[weekday(d)]} ${Number(d.slice(8))} ${MONTHS[Number
 const fmtTime = (s) => s.slice(11, 16);
 
 // ---- What's shown ----
-let prefs = { view: "month", layers: { events: true, days: true, quests: true, bookings: true } };
+let prefs = { view: "month", layers: { events: true, days: true, quests: true, bookings: true, sky: true } };
 try {
   const p = JSON.parse(localStorage.getItem(PREFS) || "null");
   if (p) prefs = { view: ["month", "week", "day", "list"].includes(p.view) ? p.view : "month", layers: { ...prefs.layers, ...(p.layers || {}) } };
@@ -50,6 +65,134 @@ let cursor = today();
 let query = "";
 let bookings = [];
 let scrolledFor = "";
+
+// ---- Themes, the sky and artwork ----
+// The app theme is Nova Agent's (Options); a day card can wear its own
+function appTheme() {
+  const id = window.NovaThemes && window.NovaThemes.current ? window.NovaThemes.current() : "";
+  const t = THEMES();
+  return t && t.list().some((x) => x.id === id) ? id : "novacane";
+}
+const dayTheme = (day) => (!day.theme || day.theme === "app" ? appTheme() : day.theme);
+const themeStyle = (id) => (THEMES() ? THEMES().style(id) : "");
+// The day card on a date (yearly ones every year), if any
+function dayCardOn(date) {
+  return data.items().find((it) => it.kind === "day" && (it.date === date || (it.repeat === "yearly" && it.date.slice(5) === date.slice(5) && it.date <= date)));
+}
+// A note card's art takes the theme of the day card on its day, else the app's
+const noteTheme = (date) => {
+  const day = date && dayCardOn(date);
+  return day ? dayTheme(day) : appTheme();
+};
+// A steady number from a string (FNV-1a), so a note card without saved art still gets the same picture everywhere
+function hash32(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+const randomSeed = () => (crypto.getRandomValues(new Uint32Array(1))[0] >>> 0);
+// The painter (28 KB) loads when there's art to show, after the first screen
+let cosmosLoading = null;
+function needCosmos() {
+  if (COS() || cosmosLoading) return;
+  cosmosLoading = new Promise((done) => {
+    const go = () => {
+      // Never ahead of the calendar itself: first its data and its first screen
+      if (!data.status().loaded) return setTimeout(go, 300);
+      const tag = document.createElement("script");
+      tag.src = "js/cosmos.js";
+      tag.onload = () => {
+        done();
+        render();
+        refreshSheetArt();
+      };
+      tag.onerror = done;
+      document.head.appendChild(tag);
+    };
+    (window.requestIdleCallback || ((f) => setTimeout(f, 200)))(go);
+  });
+}
+function noteArt(it, date, w, h, type) {
+  const c = COS();
+  if (!c) return needCosmos(), "";
+  const art = it.art || { seed: hash32(String(it.id || "")), subject: "auto" };
+  return c.render({ seed: art.seed >>> 0, subject: art.subject || "auto", theme: noteTheme(date), w, h, type });
+}
+function dayArt(day, w, h, type) {
+  const c = COS();
+  if (!c) return needCosmos(), "";
+  return c.render({ seed: c.hash(`${day.id}|${day.artSalt || ""}`), subject: c.aestheticSubject(day.aesthetic || "nebula"), theme: dayTheme(day), w, h, type });
+}
+// Pictures are painted after the screen is drawn, one at a time when the page is idle, so they
+// never hold anything up (a painted one is kept, so drawing again is instant)
+let painting = 0;
+function paintArt() {
+  if (!view.querySelector("[data-art-note]:not([data-painted]), [data-art-day]:not([data-painted])")) return;
+  if (!COS()) return needCosmos();
+  const run = ++painting;
+  const next = () => {
+    if (run !== painting) return;
+    const el = view.querySelector("[data-art-note]:not([data-painted]), [data-art-day]:not([data-painted])");
+    if (!el) return;
+    el.dataset.painted = "1";
+    if (el.dataset.artDay) {
+      const day = data.get(el.dataset.artDay);
+      const url = day && dayArt(day, phone() ? 640 : 960, phone() ? 214 : 320);
+      if (url) el.style.setProperty("--art", `url('${url}')`);
+    } else {
+      const it = data.get(el.dataset.artNote);
+      const url = it && noteArt(it, el.dataset.date, 192, 108);
+      if (url) {
+        el.style.backgroundImage = `url('${url}')`;
+        el.classList.add("on");
+      }
+    }
+    (window.requestIdleCallback || ((f) => setTimeout(f, 16)))(next);
+  };
+  (window.requestIdleCallback || ((f) => setTimeout(f, 16)))(next);
+}
+
+// The sky (moon, special days, the month's strip) is drawn a moment after the first screen,
+// so the calendar itself shows as fast as before; its room is kept so nothing jumps
+let skyDrawn = false;
+const pageStart = Date.now();
+function drawSkySoon() {
+  if (skyDrawn || drawSkySoon.asked) return;
+  drawSkySoon.asked = true;
+  const go = () => {
+    // After the calendar's own data (or a moment, if it's offline or signed out)
+    if (!data.status().loaded && Date.now() - pageStart < 1500) return setTimeout(go, 150);
+    (window.requestIdleCallback || ((f) => setTimeout(f, 50)))(() => {
+      // sky.js (moon phases and special days) loads now, not with the first screen
+      const done = () => {
+        skyDrawn = true;
+        render();
+      };
+      if (SKY()) return done();
+      const tag = document.createElement("script");
+      tag.src = "js/sky.js";
+      tag.onload = done;
+      tag.onerror = done;
+      document.head.appendChild(tag);
+    }, { timeout: 600 });
+  };
+  go();
+}
+// The moon on a day: a small mark on the four principal phases (full moons in gold)
+function moonMark(d, size = 13) {
+  const s = SKY();
+  if (!s || !prefs.layers.sky || !skyDrawn) return "";
+  const m = s.moon(d);
+  if (!m.principal) return "";
+  return `<span class="moonmark${m.fullName ? " full" : ""}" title="${esc(m.fullName ? `${m.principal} · ${m.fullName}` : m.principal)}">${s.moonSVG(m.fraction, size)}</span>`;
+}
+// Seasonal and cosmic days (Easter, Bonfire Night, solstices, meteor showers…), unless a day card already is that day
+function skyDays(d) {
+  const s = SKY();
+  if (!s || !prefs.layers.sky || !skyDrawn) return [];
+  const card = dayCardOn(d);
+  return s.seasonalOn(d).filter((x) => !(card && (card.preset === x.preset || card.title === x.title)));
+}
 
 // Everything that happens between two dates, as entries to draw
 function entries(from, to) {
@@ -88,6 +231,8 @@ function render() {
   else if (prefs.view === "list") drawList();
   else drawTimeGrid(prefs.view === "week" ? 7 : 1);
   drawStatus();
+  paintArt();
+  drawSkySoon();
 }
 function titleText() {
   const [y, m] = [cursor.slice(0, 4), Number(cursor.slice(5, 7))];
@@ -106,9 +251,12 @@ function titleText() {
 function pillHtml(e) {
   if (e.type === "day") {
     const p = presets().get(e.item.preset);
-    return `<div class="daycard" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day">${presets().icon(p.icon) ? `<svg viewBox="0 0 24 24">${presets().icon(p.icon)}</svg>` : ""}<span>${esc(titleOf(e))}</span></div>`;
+    return `<div class="daycard themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day">${iconOf(p.icon)}<span>${esc(titleOf(e))}</span></div>`;
   }
-  return `<div class="pill" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span></div>`;
+  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span></div>`;
+}
+function skyChip(x) {
+  return `<div class="skychip" title="${esc(x.title)}">${iconOf(presets().get(x.preset).icon)}<span>${esc(x.title)}</span></div>`;
 }
 
 function drawMonth() {
@@ -128,24 +276,79 @@ function drawMonth() {
     const days = list.filter((e) => e.type === "day");
     const rest = list.filter((e) => e.type !== "day");
     const shown = rest.slice(0, max);
-    cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}" data-date="${d}" aria-label="${dayLabel(d)}${list.length ? `, ${list.length} item${list.length > 1 ? "s" : ""}` : ""}">
-      <span class="num">${Number(d.slice(8))}</span>${days.slice(0, 1).map(pillHtml).join("")}${shown.map(pillHtml).join("")}${rest.length > max ? `<span class="more">+${rest.length - max}</span>` : ""}</button>`;
+    const sky = days.length ? [] : skyDays(d).slice(0, 1);
+    const room = Math.max(1, max - sky.length);
+    const fits = rest.slice(0, room);
+    cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${days.length ? ` style="${themeStyle(dayTheme(days[0].item))}"` : ""} aria-label="${dayLabel(d)}${list.length ? `, ${list.length} item${list.length > 1 ? "s" : ""}` : ""}">
+      <span class="num">${Number(d.slice(8))}</span>${moonMark(d)}${days.slice(0, 1).map(pillHtml).join("")}${sky.map(skyChip).join("")}${fits.map(pillHtml).join("")}${rest.length - fits.length + Math.max(0, days.length - 1) > 0 ? `<span class="more">+${rest.length - fits.length + Math.max(0, days.length - 1)} more</span>` : ""}</button>`;
   }
   const heads = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => `<span>${phone() ? w[0] : w}</span>`).join("");
-  view.innerHTML = `<div class="month"><div class="wk-head">${heads}</div><div class="grid">${cells}</div>${dayPlanHtml(cursor)}</div>`;
+  view.innerHTML = `<div class="month">${stripHtml()}<div class="wk-head">${heads}</div><div class="grid">${cells}</div>${dayPlanHtml(cursor)}</div>`;
+}
+// This month at a glance: day cards, full moons and special days, each a tap away
+function stripHtml() {
+  if (!skyDrawn) return prefs.layers.sky || prefs.layers.days ? `<div class="strip" aria-hidden="true"></div>` : "";
+  const first = `${cursor.slice(0, 7)}-01`;
+  const last = addDays(Number(cursor.slice(5, 7)) === 12 ? `${Number(cursor.slice(0, 4)) + 1}-01-01` : `${cursor.slice(0, 4)}-${pad(Number(cursor.slice(5, 7)) + 1)}-01`, -1);
+  const items = [];
+  for (const e of entries(first, last)) if (e.type === "day") items.push({ d: e.date, html: `<button type="button" class="strip-item themed" style="${themeStyle(dayTheme(e.item))}" data-pick="${e.date}"><b>${Number(e.date.slice(8))}</b>${iconOf(presets().get(e.item.preset).icon)}<span>${esc(titleOf(e))}</span></button>` });
+  if (SKY() && prefs.layers.sky) {
+    for (let d = first; d <= last; d = addDays(d, 1)) {
+      const m = SKY().moon(d);
+      if (m.fullName) items.push({ d, html: `<button type="button" class="strip-item moon" data-pick="${d}"><b>${Number(d.slice(8))}</b>${SKY().moonSVG(0.5, 14)}<span>${esc(m.fullName)}</span></button>` });
+      for (const x of skyDays(d)) items.push({ d, html: `<button type="button" class="strip-item sky" data-pick="${d}"><b>${Number(d.slice(8))}</b>${iconOf(presets().get(x.preset).icon)}<span>${esc(x.title)}</span></button>` });
+    }
+  }
+  if (!items.length) return "";
+  return `<div class="strip" aria-label="This month">${items.sort((a, b) => a.d.localeCompare(b.d)).map((x) => x.html).join("")}</div>`;
 }
 
 function rowHtml(e) {
   const where = e.type === "booking" ? e.item.phone || e.item.email || "" : e.item.location || "";
-  const sub = [e.type === "event" && e.item.repeat ? describeRepeat(e.item.repeat) : "", e.ro && e.type === "event" ? "Nova Agent's plan" : "", e.type === "booking" ? "Studio booking" : "", where].filter(Boolean).join(" · ");
+  const sub = [
+    e.type === "event" && e.item.repeat ? describeRepeat(e.item.repeat) : "",
+    e.ro && e.type === "event" ? "Nova Agent's plan" : "",
+    e.type === "booking" ? "Studio booking" : "",
+    e.type === "day" ? presets().get(e.item.preset).label : "",
+    where,
+    e.type === "event" && !e.ro && e.item.author ? `by ${e.item.author}` : "",
+  ].filter(Boolean).join(" · ");
+  if (e.type === "day") {
+    const p = presets().get(e.item.preset);
+    return `<li><button type="button" class="row-item day themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><time class="ico-time">${iconOf(p.icon)}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
+  }
   const when = e.allDay ? "All day" : `${fmtTime(e.start)}<br>${fmtTime(e.end)}`;
-  return `<li><button type="button" class="row-item${e.type === "day" ? " day" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}"><time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
+  const art = e.type === "event" && !e.ro;
+  return `<li><button type="button" class="row-item note${e.ro ? " ro" : ""}${art ? " has-art" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${art ? `<span class="art" data-art-note="${esc(e.item.id)}" data-date="${e.date}"></span>` : ""}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
 }
 function dayPlanHtml(d) {
+  // On a phone the chosen day sits below the month: it's drawn with the sky, a moment after the month
+  if (!skyDrawn && phone()) return `<section class="dayplan" aria-label="${dayLabel(d)}"></section>`;
   const list = onDay(entries(d, d), d);
-  return `<section class="dayplan" aria-label="${dayLabel(d)}"><h3><span>${d === today() ? "Today · " : ""}${dayLabel(d)}</span><button type="button" data-add="${d}">+ Add</button></h3>${
-    list.length ? `<ul class="rows">${list.map(rowHtml).join("")}</ul>` : `<p class="empty">Nothing on. Tap + Add, or a time in Day view.</p>`
-  }</section>`;
+  const days = list.filter((e) => e.type === "day");
+  const rest = list.filter((e) => e.type !== "day");
+  const sky = skyDays(d);
+  let moon = "";
+  if (SKY() && prefs.layers.sky && skyDrawn) {
+    const m = SKY().moon(d);
+    const line = m.principal ? `${m.principal}${m.fullName ? ` · ${m.fullName}` : ""}` : `${m.name} · ${Math.round(m.illumination * 100)}% lit`;
+    moon = `<p class="dp-moon">${SKY().moonSVG(m.fraction, 22)}<span>${esc(line)}</span></p>`;
+  }
+  const banners = days
+    .map((e) => {
+      const p = presets().get(e.item.preset);
+      return `<button type="button" class="dc-banner themed aes-${esc(e.item.aesthetic || "nebula")}" style="${themeStyle(dayTheme(e.item))}" data-art-day="${esc(e.item.id)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><span class="dc-kicker">${iconOf(p.icon)}${esc(p.label)}${e.item.repeat === "yearly" ? " · every year" : ""}</span><b class="dc-title">${esc(titleOf(e))}</b>${e.item.info ? `<small>${esc(e.item.info.split("\n")[0])}</small>` : ""}</button>`;
+    })
+    .join("");
+  const specials = sky
+    .map((x) => `<div class="sky-row">${iconOf(presets().get(x.preset).icon)}<span>${esc(x.title)}</span><button type="button" data-make-day="${esc(JSON.stringify({ date: d, ...x }))}">Make it a day card</button></div>`)
+    .join("");
+  return `<section class="dayplan" aria-label="${dayLabel(d)}">
+    <div class="dp-head"><div><span class="dp-kicker">${d === today() ? "Today" : WD_LONG[weekday(d)]}</span><h3>${dayLabel(d)}</h3>${moon}</div>
+      <div class="dp-add"><button type="button" data-add="${d}">+ Note card</button><button type="button" data-add-day="${d}">+ Day card</button></div></div>
+    ${banners}${specials}${
+      rest.length ? `<ul class="rows">${rest.map(rowHtml).join("")}</ul>` : `<p class="empty">No note cards. Tap + Note card, or a time in Day view.</p>`
+    }</section>`;
 }
 
 function drawList() {
@@ -164,7 +367,7 @@ function drawList() {
     html = list.length ? groupRows(list) : `<p class="empty">Nothing matches “${esc(query)}”.</p>`;
   } else {
     const list = entries(cursor, addDays(cursor, 59));
-    html = list.length ? groupRows(list.filter((e) => e.date >= cursor || e.end.slice(0, 10) >= cursor)) : `<p class="empty">Nothing in the next 60 days. Tap Add to put something in.</p>`;
+    html = list.length ? groupRows(list.filter((e) => e.date >= cursor || e.end.slice(0, 10) >= cursor)) : `<p class="empty">Nothing in the next 60 days. Tap + to add a note card.</p>`;
   }
   view.innerHTML = `<div class="list">${html}</div>`;
 }
@@ -216,7 +419,7 @@ function drawTimeGrid(n) {
   const t = today();
   const now = localStamp();
   const head = days
-    .map((d) => `<button type="button" class="tg-day${d === t ? " today" : ""}" data-goto="${d}"><small>${WD[weekday(d)]}</small><b>${Number(d.slice(8))}</b></button>`)
+    .map((d) => `<button type="button" class="tg-day${d === t ? " today" : ""}" data-goto="${d}"><small>${WD[weekday(d)]}</small><b>${Number(d.slice(8))}</b>${moonMark(d, 12)}</button>`)
     .join("");
   const alldayCols = days.map((d) => `<div>${onDay(all, d).filter((e) => e.allDay).map(pillHtml).join("")}</div>`).join("");
   const hours = Array.from({ length: 24 }, (_, h) => `<div class="hour">${h ? `${pad(h)}:00` : ""}</div>`).join("");
@@ -264,7 +467,14 @@ function drawStatus() {
 }
 
 // ---- Moving around ----
+// Moving on slides the new view in from that side; switching views fades (calm motion: neither)
+function animate(how) {
+  view.dataset.anim = how;
+  clearTimeout(animate.t);
+  animate.t = setTimeout(() => delete view.dataset.anim, 320);
+}
 function step(dir) {
+  animate(dir > 0 ? "next" : "prev");
   if (prefs.view === "month") {
     let y = Number(cursor.slice(0, 4));
     let m = Number(cursor.slice(5, 7)) + dir;
@@ -276,6 +486,7 @@ function step(dir) {
   render();
 }
 function setView(v) {
+  if (prefs.view !== v) animate("fade");
   prefs.view = v;
   savePrefs();
   render();
@@ -283,6 +494,7 @@ function setView(v) {
 $("prev").addEventListener("click", () => step(-1));
 $("next").addEventListener("click", () => step(1));
 $("today").addEventListener("click", () => {
+  if (cursor.slice(0, 7) !== today().slice(0, 7)) animate(cursor < today() ? "next" : "prev");
   cursor = today();
   scrolledFor = "";
   render();
@@ -360,6 +572,18 @@ view.addEventListener("click", (e) => {
   if (justDragged) return;
   const add = e.target.closest("[data-add]");
   if (add) return openNew({ date: add.dataset.add });
+  const addDay = e.target.closest("[data-add-day]");
+  if (addDay) return openNew({ date: addDay.dataset.addDay, kind: "day" });
+  const make = e.target.closest("[data-make-day]");
+  if (make) {
+    const x = JSON.parse(make.dataset.makeDay);
+    return openNew({ date: x.date, kind: "day", special: x });
+  }
+  const pick = e.target.closest("[data-pick]");
+  if (pick) {
+    cursor = pick.dataset.pick;
+    return render();
+  }
   const go = e.target.closest("[data-goto]");
   if (go) {
     cursor = go.dataset.goto;
@@ -548,13 +772,83 @@ async function changeOccurrence(it, date, was, changes, word = "Saved") {
 // ---- The editor ----
 const form = $("form");
 let editing = null; // { mode: "new" | "edit", kind, item?, date?, was?, ro? }
-let picked = { reminders: [], color: "violet", days: [] };
+let picked = { reminders: [], color: "violet", days: [], aesthetic: "nebula", theme: "app" };
+// The artwork being edited: a note card's seed and subject, a day card's salt
+let art = { seed: 0, subject: "auto", salt: "", tempId: "" };
 
 function fillChips() {
   $("f-reminders").innerHTML = REMINDERS.map(([m, l]) => `<button type="button" data-min="${m}" aria-pressed="${picked.reminders.includes(m)}">${l}</button>`).join("");
   $("f-colors").innerHTML = COLORS.map((c) => `<button type="button" data-color="${c}" data-pick="${c}" aria-pressed="${picked.color === c}" aria-label="${c}"></button>`).join("");
   $("f-days").innerHTML = [1, 2, 3, 4, 5, 6, 0].map((d) => `<button type="button" data-day="${d}" aria-pressed="${picked.days.includes(d)}">${WD[d].slice(0, 2)}</button>`).join("");
+  $("aes-grid").innerHTML = presets()
+    .aesthetics()
+    .map((a) => `<button type="button" class="aes-opt aes-${a.id}" data-aes="${a.id}" aria-pressed="${picked.aesthetic === a.id}" title="${esc(a.hint)}"><b class="dc-title">${esc(a.label)}</b></button>`)
+    .join("");
+  const themes = THEMES() ? THEMES().list() : [];
+  $("theme-grid").innerHTML =
+    `<button type="button" class="theme-opt" data-theme-pick="app" aria-pressed="${picked.theme === "app"}"><i style="${themeStyle(appTheme())}"></i>App theme</button>` +
+    themes.map((t) => `<button type="button" class="theme-opt" data-theme-pick="${t.id}" aria-pressed="${picked.theme === t.id}" title="${esc(t.tag)}"><i style="${themeStyle(t.id)}"></i>${esc(t.name)}</button>`).join("");
 }
+$("aes-grid").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-aes]");
+  if (!b) return;
+  picked.aesthetic = b.dataset.aes;
+  fillChips();
+  refreshSheetArt();
+});
+$("theme-grid").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-theme-pick]");
+  if (!b) return;
+  picked.theme = b.dataset.themePick;
+  fillChips();
+  refreshSheetArt();
+});
+// The artwork at the top of the sheet: a note card's picture, or a day card's header
+function sheetDay() {
+  return { id: (editing && editing.item && editing.item.id) || art.tempId, artSalt: art.salt, aesthetic: picked.aesthetic, theme: picked.theme };
+}
+function refreshSheetArt() {
+  if (!editing) return;
+  const head = $("art-head");
+  const show = !editing.ro || (editing.item && editing.item.kind === "day");
+  head.hidden = !show;
+  if (!show) return;
+  const isDay = editing.kind === "day";
+  $("note-subject").hidden = isDay;
+  $("note-subject").value = art.subject;
+  const src = isDay ? dayArt(sheetDay(), 960, 320) : noteArt({ id: art.tempId, art: { seed: art.seed, subject: art.subject } }, $("f-sdate").value || cursor, 640, 360);
+  // A day card's header wears its theme and title style; a note card's picture just shows
+  head.setAttribute("style", `${isDay ? `${themeStyle(dayTheme(sheetDay()))};` : ""}--art:${src ? `url('${src}')` : "none"}`);
+  head.className = `art-head${isDay ? ` is-day aes-${picked.aesthetic}` : ""}${src ? "" : " loading"}`;
+  $("art-title").textContent = $("f-title").value || (isDay ? presets().get($("d-preset").value).label : "");
+}
+$("note-subject").innerHTML = `<option value="auto">Art: surprise me</option>${SUBJECTS.map((x) => `<option value="${x}">Art: ${x === "blackhole" ? "Black hole" : x[0].toUpperCase() + x.slice(1)}</option>`).join("")}`;
+$("note-subject").addEventListener("change", () => {
+  art.subject = $("note-subject").value;
+  refreshSheetArt();
+});
+$("art-new").addEventListener("click", () => {
+  if (editing && editing.kind === "day") art.salt = Math.random().toString(36).slice(2, 10);
+  else art.seed = randomSeed();
+  sfx("tap");
+  refreshSheetArt();
+});
+// Save the picture big (a note card 1920×1080, a day card's header 1920×640)
+$("art-save").addEventListener("click", (e) => {
+  const c = COS();
+  if (!c || !editing) {
+    e.preventDefault();
+    return needCosmos();
+  }
+  const isDay = editing.kind === "day";
+  const name = ($("f-title").value || (isDay ? "day card" : "note card")).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "card";
+  e.currentTarget.download = `${name}.png`;
+  e.currentTarget.href = isDay ? dayArt(sheetDay(), 1920, 640, "image/png") : noteArt({ id: art.tempId, art: { seed: art.seed, subject: art.subject } }, $("f-sdate").value || cursor, 1920, 1080, "image/png");
+});
+$("f-title").addEventListener("input", () => {
+  $("art-title").textContent = $("f-title").value || (editing && editing.kind === "day" ? presets().get($("d-preset").value).label : "");
+});
+$("f-sdate").addEventListener("change", () => refreshSheetArt());
 $("f-reminders").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-min]");
   if (!b) return;
@@ -609,8 +903,9 @@ function setKind(kind) {
   document.querySelectorAll("#kinds button").forEach((b) => b.classList.toggle("on", b.dataset.kind === kind));
   document.querySelectorAll(".group").forEach((g) => (g.hidden = g.dataset.for !== kind));
   $("quick").hidden = !(editing.mode === "new" && kind === "event");
-  $("f-notes").placeholder = kind === "day" ? "About this day" : "Notes";
-  $("sheet-title").textContent = `${editing.mode === "new" ? "New" : editing.ro ? "" : "Change"} ${kind === "day" ? "day card" : "event"}`.trim().replace(/^./, (c) => c.toUpperCase());
+  $("f-notes").placeholder = kind === "day" ? "About this day" : "What's it about?";
+  $("sheet-title").textContent = `${editing.mode === "new" ? "New" : editing.ro ? "" : "Change"} ${kind === "day" ? "day card" : "note card"}`.trim().replace(/^./, (c) => c.toUpperCase());
+  refreshSheetArt();
 }
 $("kinds").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-kind]");
@@ -625,6 +920,11 @@ $("d-preset").addEventListener("change", () => {
   const p = presets().get($("d-preset").value);
   if (!$("f-title").value && p.title) $("f-title").value = p.title;
   if (p.repeat !== undefined) $("d-yearly").checked = !!p.repeat;
+  if (p.aesthetic) picked.aesthetic = p.aesthetic;
+  if (p.theme) picked.theme = p.theme;
+  if (p.info && !$("f-notes").value) $("f-notes").value = p.info;
+  fillChips();
+  refreshSheetArt();
 });
 
 // Quick add: fill the form as you type
@@ -717,16 +1017,27 @@ function resetForm() {
   $("kinds").hidden = false;
 }
 
-function openNew({ date = cursor, time, kind = "event" } = {}) {
+function openNew({ date = cursor, time, kind = "event", special } = {}) {
   resetForm();
   editing = { mode: "new", kind };
-  picked = { reminders: [], color: "violet", days: [] };
+  picked = { reminders: [], color: "violet", days: [], aesthetic: "nebula", theme: "app" };
+  art = { seed: randomSeed(), subject: "auto", salt: Math.random().toString(36).slice(2, 10), tempId: data.uid() };
   const start = `${date}T${time || (date === today() ? nextHalfHour() : "09:00")}`;
   fillWhen(start, addMinutes(start, 60), false);
   fillRepeat(null);
   $("d-date").value = date;
   $("d-preset").value = "custom";
   $("d-yearly").checked = false;
+  if (special) {
+    // A seasonal or cosmic day made into a day card: its kind, name, look and theme
+    const p = presets().get(special.preset);
+    $("d-preset").value = p.id;
+    $("f-title").value = special.title;
+    $("d-yearly").checked = !!p.repeat;
+    picked.aesthetic = special.aesthetic || p.aesthetic || "nebula";
+    picked.theme = special.theme || p.theme || "app";
+    if (p.info) $("f-notes").value = p.info;
+  }
   fillChips();
   $("actions").hidden = true;
   setKind(kind);
@@ -747,7 +1058,8 @@ function openExisting(type, id, date) {
   resetForm();
   const ro = isAgent(id);
   editing = { mode: "edit", kind: it.kind === "day" ? "day" : "event", item: it, date, ro };
-  picked = { reminders: [...(it.reminders || [])], color: it.color || "violet", days: [] };
+  picked = { reminders: [...(it.reminders || [])], color: it.color || "violet", days: [], aesthetic: it.aesthetic || "nebula", theme: it.theme || "app" };
+  art = it.art ? { seed: it.art.seed >>> 0, subject: it.art.subject || "auto", salt: it.artSalt || "", tempId: it.id } : { seed: hash32(String(it.id)), subject: "auto", salt: it.artSalt || "", tempId: it.id };
   $("f-title").value = it.title || "";
   $("f-notes").value = it.kind === "day" ? it.info || "" : it.body || "";
   if (it.kind === "day") {
@@ -780,8 +1092,8 @@ function openBooking(id) {
   const b = bookings.find((x) => String(x.id) === String(id));
   if (!b) return;
   resetForm();
-  editing = { mode: "edit", kind: "event", ro: true };
-  picked = { reminders: [], color: "violet", days: [] };
+  editing = { mode: "edit", kind: "event", ro: true, booking: true };
+  picked = { reminders: [], color: "violet", days: [], aesthetic: "nebula", theme: "app" };
   $("f-title").value = [b.session, b.name].filter(Boolean).join(" · ");
   const s = fromFeed(b.start);
   const e = fromFeed(b.end) || s;
@@ -811,7 +1123,7 @@ form.addEventListener("submit", async (e) => {
     const p = presets().get($("d-preset").value);
     const dateKept = editing.item && editing.item.repeat === "yearly" && $("d-yearly").checked ? `${editing.item.date.slice(0, 4)}${date.slice(4)}` : date;
     const before = editing.item ? { ...editing.item } : null;
-    const saved = data.save({ ...base, kind: "day", title: title || p.title || p.label, date: dateKept, preset: $("d-preset").value, repeat: $("d-yearly").checked ? "yearly" : "none", info: $("f-notes").value, location: $("d-location").value.trim() });
+    const saved = data.save({ ...base, kind: "day", title: title || p.title || p.label, date: dateKept, preset: $("d-preset").value, repeat: $("d-yearly").checked ? "yearly" : "none", info: $("f-notes").value, location: $("d-location").value.trim(), aesthetic: picked.aesthetic, theme: picked.theme, artSalt: art.salt });
     closeSheet();
     sfx("done");
     toast(before ? "Saved" : "Day card added", () => (before ? data.save(before) : data.remove(saved.id)));
@@ -834,13 +1146,14 @@ form.addEventListener("submit", async (e) => {
     color: picked.color,
     reminders: picked.reminders,
     repeat: readRepeat(start),
+    art: { seed: art.seed >>> 0, subject: art.subject || "auto" },
   };
   if (!fields.repeat) fields.exdates = [];
   if (editing.mode === "new") {
     const saved = data.save(fields);
     closeSheet();
     sfx("done");
-    toast("Added", () => data.remove(saved.id));
+    toast("Note card added", () => data.remove(saved.id));
     cursor = start.slice(0, 10);
     return render();
   }
@@ -891,10 +1204,67 @@ $("duplicate").addEventListener("click", () => {
     picked = { reminders: [...(it.reminders || [])], color: it.color || "violet", days: [] };
     fillRepeat(it.repeat);
     fillChips();
+    art.subject = (it.art && it.art.subject) || "auto";
+    refreshSheetArt();
   } else {
     $("d-preset").value = it.preset || "custom";
     $("d-yearly").checked = it.repeat === "yearly";
+    picked.aesthetic = it.aesthetic || "nebula";
+    picked.theme = it.theme || "app";
+    fillChips();
+    refreshSheetArt();
   }
+});
+
+// ---- Backup: download everything, or bring a backup in (this Calendar's or the old one's) ----
+$("export").addEventListener("click", () => {
+  const all = data.items();
+  const notes = all.filter((it) => it.kind === "event" && !isAgent(it.id));
+  const days = all.filter((it) => it.kind === "day");
+  const blob = new Blob([JSON.stringify({ app: "Calendar", version: 2, exported: new Date().toISOString(), notes, days }, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `calendar-backup-${today()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  $("layers").hidden = true;
+  toast(`Backup saved: ${notes.length} note card${notes.length === 1 ? "" : "s"}, ${days.length} day card${days.length === 1 ? "" : "s"}`);
+});
+$("import-file").addEventListener("change", async () => {
+  const file = $("import-file").files[0];
+  $("import-file").value = "";
+  if (!file) return;
+  let parsed;
+  try {
+    parsed = JSON.parse(await file.text());
+  } catch {
+    return toast("That file isn't a Calendar backup.");
+  }
+  const notes = Array.isArray(parsed && parsed.notes) ? parsed.notes : Array.isArray(parsed && parsed.items) ? parsed.items.filter((x) => x && x.kind !== "day") : [];
+  const days = Array.isArray(parsed && parsed.days) ? parsed.days : Array.isArray(parsed && parsed.items) ? parsed.items.filter((x) => x && x.kind === "day") : [];
+  if (!notes.length && !days.length) return toast("That file isn't a Calendar backup.");
+  let n = 0;
+  let d = 0;
+  for (const it of notes) {
+    if (!it || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(it.start || "") || isAgent(it.id)) continue;
+    const had = it.id && data.get(it.id);
+    if (had && (had.updated || "") >= (it.updated || "")) continue;
+    data.save({ ...it, kind: "event" });
+    n++;
+  }
+  for (const it of days) {
+    if (!it || !/^\d{4}-\d{2}-\d{2}$/.test(it.date || "")) continue;
+    const had = it.id && data.get(it.id);
+    if (had && (had.updated || "") >= (it.updated || "")) continue;
+    data.save({ ...it, kind: "day" });
+    d++;
+  }
+  $("layers").hidden = true;
+  sfx("done");
+  toast(n || d ? `Brought in ${n} note card${n === 1 ? "" : "s"} and ${d} day card${d === 1 ? "" : "s"}` : "Everything in that backup is already here.");
+  render();
 });
 
 // ---- Toast (with Undo) ----
@@ -943,6 +1313,13 @@ async function loadBookings() {
 data.start();
 render();
 void loadBookings();
+// The day cards' title styles (Celestial, Constellation, the widest Archivo) after the first screen
+(window.requestIdleCallback || ((f) => setTimeout(f, 300)))(() => {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900&family=Cormorant+Garamond:ital,wght@1,600&family=Source+Code+Pro:wght@600&display=swap";
+  document.head.appendChild(link);
+});
 setInterval(() => document.visibilityState === "visible" && void loadBookings(), 5 * 60000);
 // The current-time line and "today" move on
 setInterval(() => !drag && $("sheet").hidden && render(), 60000);

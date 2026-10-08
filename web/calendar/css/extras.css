@@ -1,0 +1,76 @@
+/* Calendar: the parts of the Nova look not needed for the first screen (day card banners and
+   title styles, the add/change sheet, the layers and backup menu, moving between months).
+   cal.js adds this as it starts, so it never holds up the first screen. */
+/* A day card's banner: its painted header, its theme and its title style */
+.dc-banner {
+  position: relative; display: grid; gap: 4px; justify-items: start; width: 100%; min-height: 104px; padding: 14px 16px; border-radius: 18px; text-align: left; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--hi) 40%, transparent); color: #fff;
+  background: linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.05)), var(--art, none) center / cover, linear-gradient(120deg, var(--accent), var(--accent-2));
+  box-shadow: 0 14px 34px -18px var(--hi);
+}
+.dc-kicker { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); text-shadow: 0 1px 6px #000; }
+.dc-banner small { color: rgba(255,255,255,.85); font-size: 12.5px; text-shadow: 0 1px 6px #000; }
+.sky-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 14px; border: 1px dashed rgba(var(--gold-rgb), .35); background: rgba(var(--gold-rgb), .06); color: var(--gold); font-style: italic; }
+.sky-row span { flex: 1; min-width: 0; }
+.sky-row button { flex: none; height: 32px; padding: 0 10px; border-radius: 10px; border: 1px solid rgba(var(--gold-rgb), .4); background: none; color: var(--gold); font: 600 12.5px var(--f-body); font-style: normal; }
+/* Title styles (old Calendar's aesthetics), for day cards */
+.dc-title { margin: 0; color: #fff; overflow-wrap: anywhere; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: 22px; line-height: 1.05; letter-spacing: .01em; }
+.aes-nebula .dc-title { background: linear-gradient(90deg, #fff, var(--soft), var(--hi), #fff); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.aes-supernova .dc-title { text-shadow: 0 0 10px var(--hi), 0 0 28px var(--accent), 0 0 50px var(--accent-2); }
+.aes-orbit .dc-title { position: relative; display: inline-block; letter-spacing: .16em; font-size: 19px; padding: 4px 6px; }
+.aes-orbit .dc-title::after { content: ""; position: absolute; inset: -40% -10%; pointer-events: none; border: 1.5px solid color-mix(in srgb, var(--hi) 70%, transparent); border-radius: 50%; transform: rotate(-7deg) scaleY(.42); }
+.aes-constellation .dc-title { font-family: "Source Code Pro", var(--f-mono, monospace); font-stretch: normal; font-weight: 600; letter-spacing: .28em; font-size: 16px; color: var(--soft); padding-bottom: 6px; border-bottom: 1px dashed color-mix(in srgb, var(--soft) 45%, transparent); }
+.aes-eclipse .dc-title { color: var(--gold); text-shadow: 0 0 18px color-mix(in srgb, var(--gold) 55%, transparent), 0 0 2px #000; }
+.aes-aurora .dc-title { background: linear-gradient(90deg, var(--hi), var(--lilac, #C7A4FF), var(--accent), var(--soft)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.aes-celestial .dc-title { font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 600; font-stretch: normal; text-transform: none; font-size: 28px; letter-spacing: 0; color: var(--soft); text-shadow: 0 0 22px color-mix(in srgb, var(--lilac, #C7A4FF) 55%, transparent); }
+/* ---- The sheet: its artwork, title styles and themes ---- */
+.sheet { background: linear-gradient(180deg, rgba(var(--panel-2-rgb), .98), rgba(var(--panel-rgb), .99)); }
+.sheet-head h2 { font-stretch: 112%; }
+.art-head {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; min-height: 150px; padding: 12px; border-radius: 18px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), var(--art, none) center / cover, linear-gradient(120deg, rgba(var(--hi-rgb), .35), rgba(var(--accent-rgb, 176, 29, 104), .3));
+  border: 1px solid rgba(var(--hi-rgb), .25);
+}
+.art-head.is-day { min-height: 120px; background: linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.05)), var(--art, none) center / cover, linear-gradient(120deg, var(--accent), var(--accent-2)); }
+.art-head:not(.is-day) .dc-title { font-size: 18px; text-transform: none; font-stretch: 112%; text-shadow: 0 2px 10px #000; }
+.art-head.loading::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.08) 50%, transparent 70%); background-size: 200% 100%; animation: shine 1.2s linear infinite; }
+@keyframes shine { to { background-position: -200% 0; } }
+.art-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.art-tools select, .art-tools button, .art-tools a {
+  height: 36px !important; padding: 0 12px !important; border-radius: 999px !important; display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid rgba(255,255,255,.28) !important; background: rgba(0,0,0,.45) !important; color: #fff !important; font-size: 13px !important; font-weight: 600; text-decoration: none;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.art-tools svg { width: 16px; height: 16px; }
+.aes-grid, .theme-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.aes-opt { height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid rgba(var(--hi-rgb), .2); background: var(--deep); display: inline-grid; place-items: center; overflow: hidden; }
+.aes-opt .dc-title { font-size: 13px; padding: 0; border: 0; letter-spacing: .06em; }
+.aes-opt.aes-celestial .dc-title { font-size: 17px; }
+.aes-opt.aes-orbit .dc-title::after { inset: -55% -18%; }
+.aes-opt[aria-pressed="true"], .theme-opt[aria-pressed="true"] { border-color: var(--hi); box-shadow: 0 0 0 2px rgba(var(--hi-rgb), .35); }
+.theme-opt { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px 0 8px; border-radius: 999px; border: 1px solid rgba(var(--hi-rgb), .2); background: var(--deep); color: var(--text); font-size: 13px; font-weight: 600; }
+.theme-opt i { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--hi), var(--accent), var(--void)); box-shadow: 0 0 8px -2px var(--hi); }
+.kinds button.on { background: linear-gradient(90deg, rgba(var(--hi-rgb), .28), rgba(var(--hi-rgb), .12)); }
+/* ---- The popover: layers and backup ---- */
+.pop-h { margin: 6px 8px 2px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.pop-btn { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 8px; border: 0; border-radius: 10px; background: none; color: var(--text); font-size: 14px; cursor: pointer; text-align: left; }
+.pop-btn:hover { background: rgba(var(--hi-rgb), .08); }
+.sw.sky { background: radial-gradient(circle at 60% 40%, #EDE6FF 0 45%, transparent 47%), rgba(var(--gold-rgb), .5); border-radius: 50%; }
+/* ---- Moving between months, weeks and views ---- */
+.view[data-anim="next"] > * { animation: slide-l .24s cubic-bezier(.2, .8, .2, 1); }
+.view[data-anim="prev"] > * { animation: slide-r .24s cubic-bezier(.2, .8, .2, 1); }
+.view[data-anim="fade"] > * { animation: fade-in .2s ease-out; }
+@keyframes slide-l { from { opacity: 0; transform: translateX(24px); } }
+@keyframes slide-r { from { opacity: 0; transform: translateX(-24px); } }
+@keyframes fade-in { from { opacity: 0; transform: translateY(6px); } }
+/* A note card's picture fades in once painted */
+.row-item .art { display: block; background: center / cover no-repeat; opacity: 0; transition: opacity .3s; }
+.row-item .art.on { opacity: 1; }
+
+/* Phones: smaller titles, no blur behind the artwork's buttons */
+@media (max-width: 719px) {
+  .dc-title { font-size: 19px; }
+  .aes-celestial .dc-title { font-size: 24px; }
+  .art-head { min-height: 128px; }
+  .art-tools select, .art-tools button, .art-tools a { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,.6) !important; }
+}
