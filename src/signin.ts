@@ -56,7 +56,12 @@ async function worker(path: string, init: RequestInit & { headers?: Record<strin
 
 // POST /auth/login from the Portal: log in as an app, keep the token here
 export async function signIn(body: Record<string, unknown>): Promise<{ status: number; data: unknown }> {
-  const res = await worker("/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, client: "app" }) });
+  let res: Response;
+  try {
+    res = await worker("/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, client: "app" }) });
+  } catch (err) {
+    return { status: 502, data: { error: "Can't reach Portal just now. Check the connection and try again." } };
+  }
   const data = (await res.json().catch(() => ({}))) as { ok?: boolean; token?: string; staff?: Session["staff"] };
   if (res.ok && data.token && data.staff) {
     keep({ token: data.token, staff: { id: data.staff.id, display_name: data.staff.display_name, role: data.staff.role }, at: new Date().toISOString() });

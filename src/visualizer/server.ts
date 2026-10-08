@@ -16,7 +16,6 @@
 // client names and the AI prompts. To view it from the VPS later, use an
 // SSH tunnel:  ssh -L 4545:localhost:4545 your-vps
 
-import { connectAs, forgetConnected, whoAmI } from "../staff";
 import { fromOurPage, passOn, session, signIn, signOut } from "../signin";
 import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
@@ -169,18 +168,15 @@ app.post("/app/api/logout", async (c) => {
   return c.json({ ok: true });
 });
 
-// Who's here: the person signed in in the Portal, or else who Nova Agent works for (src/staff.ts)
-app.get("/auth/me", async (c) => (session() ? passOn(c.req.raw) : c.json(await whoAmI(), 200, { "Cache-Control": "no-store" })));
-// "Connect as me" (back from Portal with a read-only token) and "back to automatic".
-// Only from Nova Agent's own pages: the header makes other websites' requests fail.
-app.post("/auth/link", async (c) => {
-  if (c.req.header("X-Nova-App") !== "portal-badge") return c.json({ error: "Forbidden" }, 403);
-  const body = (await c.req.json().catch(() => ({}))) as { token?: string; forget?: boolean };
-  try {
-    return c.json(body.forget ? await forgetConnected() : await connectAs(String(body.token || "")));
-  } catch (err) {
-    return c.json({ error: (err as Error).message }, 400);
-  }
+// Who's signed in: only the person signed in on this computer (src/signin.ts), so the
+// planet at the top shows someone exactly when every panel works without signing in.
+// Nobody signed in: 401, like Nova Bot. Nova Bot out of reach: who it was, from the saved sign-in.
+app.get("/auth/me", async (c) => {
+  const s = session();
+  if (!s) return c.json({ error: "Not signed in", signedIn: false }, 401, { "Cache-Control": "no-store" });
+  const res = await passOn(c.req.raw);
+  if (res.status !== 502) return res;
+  return c.json({ staff: { ...s.staff, planet_seed: s.staff.id }, via: "portal", offline: true }, 200, { "Cache-Control": "no-store" });
 });
 const planetCache = new Map<string, { at: number; body: string }>();
 app.get("/staff/:id/planet.svg", async (c) => {
