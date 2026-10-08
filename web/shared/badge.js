@@ -326,7 +326,7 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       if (s) {
         const role = s.role === "admin" ? "Admin" : "Staff";
         const index = (mode === "connect" ? WORKER : "") + "/app/memory/";
-        const profile = mode === "agent" ? portalUrl : portalUrl + (mode === "portal" ? "" : "?id=" + encodeURIComponent(s.id));
+        const profile = portalUrl + (mode === "connect" ? "?id=" + encodeURIComponent(s.id) : "?view=me");
         const links = [
           `<a class="main" data-open="/portal/" href="${profile}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.profile}<span>Your profile</span></a>`,
           `<a data-open="/app/memory/" href="${index}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.index}<span>Your Index</span></a>`,
