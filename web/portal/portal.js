@@ -22,7 +22,7 @@
   const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches || root.getAttribute("data-motion") === "calm";
   const sfx = (name) => window.NovaSfx && window.NovaSfx.play(name);
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
-  const MIN_PASSWORD = 10;
+  const MIN_PASSWORD = 1;
   const SESSION_CHECK_EVERY = 45_000;
 
   // What the page knows
@@ -214,11 +214,6 @@
     if (message && card && !still()) replay(card, "shake");
   }
 
-  // "At least 10 characters" lights up once it's long enough
-  for (const check of document.querySelectorAll(".len-check")) {
-    const input = $(check.dataset.for);
-    input.addEventListener("input", () => check.classList.toggle("good", input.value.length >= MIN_PASSWORD));
-  }
 
   // Wait for a button's request: it can't be pressed twice, and says what's happening
   async function busy(btn, label, work) {
@@ -250,7 +245,7 @@
     // Say what's missing before asking the server
     if (!name) return setError("setup-error", "What's your name?", form), $("setup-name").focus();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("setup-error", "Enter your email address.", form), $("setup-email").focus();
-    if (password.length < MIN_PASSWORD) return setError("setup-error", `Your new password needs at least ${MIN_PASSWORD} characters.`, form), $("setup-password").focus();
+    if (password.length < MIN_PASSWORD) return setError("setup-error", "Type a password.", form), $("setup-password").focus();
     if (password !== $("setup-confirm").value) return setError("setup-error", "The two new passwords don't match.", form), $("setup-confirm").focus();
     if (!studio) return setError("setup-error", "Enter the studio's shared password (from before Portal).", form), $("setup-studio").focus();
     setError("setup-error", "");
@@ -339,7 +334,7 @@
     const name = $("invite-name").value.trim();
     const password = $("invite-password").value;
     if (!name) return setError("invite-error", "What should the crew call you?", form), $("invite-name").focus();
-    if (password.length < MIN_PASSWORD) return setError("invite-error", `Your password needs at least ${MIN_PASSWORD} characters.`, form), $("invite-password").focus();
+    if (password.length < MIN_PASSWORD) return setError("invite-error", "Type a password.", form), $("invite-password").focus();
     if (password !== $("invite-confirm").value) return setError("invite-error", "The two passwords don't match.", form), $("invite-confirm").focus();
     setError("invite-error", "");
     const go = form.querySelector('button[type="submit"]');
@@ -596,14 +591,13 @@
     e.preventDefault();
     const form = $("password-form");
     const password = $("password-new").value;
-    if (password.length < MIN_PASSWORD) return setError("password-error", "Use at least 10 characters.", form), $("password-new").focus();
+    if (password.length < MIN_PASSWORD) return setError("password-error", "Type a password.", form), $("password-new").focus();
     if (password !== $("password-again").value) return setError("password-error", "The two don't match. Type it again.", form), $("password-again").focus();
     setError("password-error", "");
     try {
       const r = await busy($("password-save"), "Saving…", () => api("/auth/password", { method: "POST", body: { password, current: $("password-current").value } }));
       if (!r.ok) return setError("password-error", r.data.error || `That didn't work (error ${r.status}).`, form);
       form.reset();
-      for (const c of form.querySelectorAll(".len-check")) c.classList.remove("good");
       sfx("done");
       toast("New password saved. Use it next time you sign in.");
     } catch (err) {
