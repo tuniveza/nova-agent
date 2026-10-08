@@ -182,7 +182,10 @@
     const s = p.stats || {};
     const img = poster(p);
     const hasVideo = p.media && p.media.video;
-    const media = img
+    // Phones show a small drawn cover instead of the full-size screenshot (no download, quick to draw)
+    const media = matchMedia('(max-width: 640px)').matches
+      ? `<img src="${cover(p, 184, 184)}" alt="" decoding="async">`
+      : img
       ? `<img src="${img}" alt="" loading="lazy" decoding="async">${hasVideo ? `<video muted loop playsinline preload="none" data-src="${mediaUrl(p, p.media.video)}"></video><span class="play-hint">${ICON.play}</span>` : ''}`
       : `<img src="${cover(p)}" alt="" decoding="async"><span class="cover-title">${esc(p.name)}</span>`;
     const stack = (p.stack || []).slice(0, 5).map((t) => `<span class="chip">${esc(t)}</span>`).join('') + ((p.stack || []).length > 5 ? `<span class="chip">+${p.stack.length - 5}</span>` : '');
@@ -350,6 +353,12 @@
 
   // ---------- STAR MAP ----------
   function renderStarmap() {
+    // Phones: no star map (it's hidden there); drawn if the window grows past phone size
+    const phone = matchMedia('(max-width: 640px)');
+    if (phone.matches) {
+      if (!renderStarmap.waiting) phone.addEventListener('change', (renderStarmap.waiting = () => !phone.matches && renderStarmap()));
+      return;
+    }
     const stars = [];
     for (const p of D.projects) {
       if (p.group) p.members.forEach((m) => stars.push({ path: m.path, p, member: m, lines: m.lines }));

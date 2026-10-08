@@ -639,3 +639,41 @@ html.embed .page-wrap { padding-top: 16px; }
 @media (max-width: 880px) { html.embed .topbar { row-gap: 4px; padding: 6px 10px 3px; } }
 /* Short frames: the word count goes, so the page keeps its room */
 @media (max-height: 560px) { html.embed .statusbar { display: none; } html.embed .shell { grid-template-rows: auto auto minmax(0, 1fr); } }
+
+/* ---------- PHONES ----------
+   Everything for writing in reach without sideways scrolling: one bar on top (notes list, the
+   note's name, Google Docs), the menus, and a toolbar that wraps onto two short rows with the
+   everyday tools (the rest stay in the menus: Format, Insert, View). Lighter: no glass blur,
+   no drifting background, no grain. Fields at 16px so phones don't zoom in when you type. */
+@media (max-width: 640px) {
+  .topbar { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "lib doc actions" "menu menu menu"; row-gap: 2px; padding: 6px 8px 2px; border-radius: 16px; }
+  .topbar .brand { display: none; }
+  .doc-head { grid-area: doc; min-width: 0; }
+  .doc-title { font-size: 16px; }
+  .save-state > span { display: none; }
+  .menubar { margin-left: 0; gap: 0; }
+  .menubar > button { padding: 6px 9px; font-size: 13px; }
+  /* One row you can swipe sideways (the fade on the right says there's more) */
+  .toolbar { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; padding: 3px 6px; border-radius: 16px;
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .toolbar.at-end { -webkit-mask-image: none; mask-image: none; }
+  .tb-group { padding: 0 2px; }
+  .tb-group + .tb-group { border-left: 0; }
+  .tb { width: 36px; height: 36px; }
+  .tb-select, .tb-size { font-size: 16px; }
+  .tb-select.wide { width: 128px; }
+  .lib-search input { font-size: 16px; }
+  [data-cmd="print"], .tb-group:has(#tb-zoom), #tb-font, .tb-group.size, [data-cmd="strikeThrough"],
+  .tb-group:has([data-cmd="align"]), [data-cmd="outdent"], [data-cmd="indent"] { display: none !important; }
+  .page-wrap { padding: 8px 2px 40px; }
+  .page { padding: 28px 18px 48px; border-radius: 16px; min-height: 60dvh; }
+  .page.is-empty::before { left: 18px; right: 18px; top: 28px; }
+  .page hr.page-break::before { left: -18px; right: -18px; }
+  .statusbar { display: none; }
+  .shell { grid-template-rows: auto auto minmax(0, 1fr); gap: 6px; }
+  .glass { backdrop-filter: none; -webkit-backdrop-filter: none; background: color-mix(in srgb, var(--panel) 92%, transparent); }
+  .grain { display: none; }
+  .nebula { animation: none; }
+}
+html.embed .shell { padding-left: 6px; padding-right: 6px; }
+@media (max-width: 640px) { html.embed .shell { padding: 6px 6px 4px; } }

@@ -1,13 +1,15 @@
 /* Observatory — backdrop.js (shared with Observatory)
    The live sky behind the app: twinkling stars and the odd shooting star, tinted by the app theme.
-   Holds still when the system asks for reduced motion. */
+   Holds still when the system asks for reduced motion, and on phones (a still sky saves battery). */
 (function () {
   'use strict';
   const NO = (window.NO = window.NO || {});
   const canvas = document.getElementById('sky');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const phone = window.matchMedia('(max-width: 640px)');
+  const still = { get matches() { return reduce.matches || phone.matches; }, addEventListener(type, fn) { reduce.addEventListener(type, fn); phone.addEventListener(type, fn); } };
   let W = 0, H = 0, stars = [], pal = null, shooter = null, nextShot = 0, running = false;
 
   function resize() {
