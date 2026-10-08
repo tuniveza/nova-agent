@@ -1445,11 +1445,13 @@
   // Was Hub opened from the Home Screen icon (rather than a Safari tab)?
   const fromHomeScreen = window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 
-  // Install the doorman (sw.js) as soon as the app opens, so it's ready when needed
+  // The doorman is Nova Agent's own (/sw.js, for the whole app: Portal opens inside Nova Agent).
+  // Nova Agent installs it; make sure it's there, and look for a newer one when Portal opens.
+  function novaAgentDoorman() {
+    return navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
+  }
   if (canNotify) {
-    navigator.serviceWorker
-      .register("/portal/sw.js", { scope: "/portal/", updateViaCache: "none" })
-      // Look for a newer doorman every time Portal opens (and when it comes back to the front)
+    novaAgentDoorman()
       .then((reg) => {
         reg.update().catch(() => {});
         document.addEventListener("visibilitychange", () => !document.hidden && reg.update().catch(() => {}));
@@ -1585,13 +1587,15 @@
     return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   }
 
-  // Phones that installed Hub from /app/ got their address through the old doorman
-  // (/app/sw.js). It's kept: one address per phone, so nothing arrives twice. Everyone
-  // else uses Portal's (/portal/sw.js).
+  // Phones that installed Hub from /app/ (or Portal from /portal/) got their address through
+  // that old doorman (/app/sw.js, /portal/sw.js). It's kept: one address per phone, so nothing
+  // arrives twice. Everyone else uses Nova Agent's (/sw.js).
   async function pushDoorman() {
-    const old = await navigator.serviceWorker.getRegistration("/app/").catch(() => null);
-    if (old && old.scope.endsWith("/app/") && (await old.pushManager.getSubscription().catch(() => null))) return old;
-    return navigator.serviceWorker.ready;
+    for (const scope of ["/app/", "/portal/"]) {
+      const old = await navigator.serviceWorker.getRegistration(scope).catch(() => null);
+      if (old && old.scope.endsWith(scope) && (await old.pushManager.getSubscription().catch(() => null))) return old;
+    }
+    return novaAgentDoorman();
   }
 
   // This phone's current notification address, if it has one
