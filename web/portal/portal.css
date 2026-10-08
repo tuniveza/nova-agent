@@ -542,8 +542,3 @@ html.embed .pv .hero { --stage: min(86vw, 400px, 40vh); }
 @media (max-width: 430px) {
   .top .brand-text { display: none; }
 }
-
-/* Sign in with Google (shown once an admin has set Google up) */
-.google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
-.google-btn[hidden], .google-or[hidden] { display: none; }
-.google-or { margin: 4px 0 2px; text-align: center; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted, #B997B5); }

@@ -286,26 +286,7 @@
     $("login-password").value = "";
     if (state.lastEmail && !$("login-email").value) $("login-email").value = state.lastEmail;
     focusSoon($("login-email").value ? $("login-password") : $("login-email"));
-    showGoogle();
   }
-  // "Sign in with Google", once an admin has set Google up (Admin → Google). The planet's
-  // badge (/shared/badge.js) does the signing in; this page starts again when it's done.
-  let googleOk = null;
-  function showGoogle() {
-    if (!googleOk)
-      googleOk = fetch("/auth/google/available", { headers: { Accept: "application/json" } })
-        .then((r) => (r.ok ? r.json() : {}))
-        .then((d) => Boolean(d.available))
-        .catch(() => false);
-    googleOk.then((ok) => {
-      $("login-google").hidden = !ok;
-      $("login-or").hidden = !ok;
-    });
-  }
-  $("login-google").addEventListener("click", () => {
-    if (window.NovaPortal && window.NovaPortal.google) return window.NovaPortal.google.signIn();
-    window.open("/auth/google/start?popup=1&return=" + encodeURIComponent("/agent/"), "nova-google", "width=480,height=640");
-  });
   $("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = $("login-form");
@@ -575,11 +556,47 @@
 
     renderDetails(person, self);
 
+    $("google-card").hidden = !self;
+    if (self) loadGoogle();
+
     // Their memory (only for themselves and admins)
     const canSeeMemory = self || isAdmin();
     $("memory-card").hidden = !canSeeMemory;
     if (canSeeMemory) loadMemory(person, self);
   }
+
+  // Google, for the studio: Notes' Google Docs, and Calendar and Gmail for bookings. You sign
+  // in with Portal; Google is only connected (once, by an admin, in Admin → Google).
+  async function loadGoogle() {
+    const say = (text) => ($("google-status").textContent = text);
+    let r;
+    try {
+      r = await api("/auth/google-status");
+    } catch (err) {
+      return say("Can't check Google just now.");
+    }
+    const d = r.ok ? r.data : {};
+    const admin = isAdmin();
+    say(
+      d.account
+        ? `Connected as ${d.account} ✓`
+        : d.setUp
+          ? admin ? "Almost there: one step left." : "Not connected yet. Ask an admin to connect Google."
+          : admin ? "Not set up yet. It takes about 5 minutes, one step at a time." : "Not connected. Ask an admin to connect Google."
+    );
+    const button = $("google-setup");
+    button.hidden = !admin;
+    button.textContent = d.account ? "Google settings" : d.setUp ? "Connect Google" : "Set up Google";
+  }
+  $("google-setup").addEventListener("click", () => {
+    // Inside Nova Agent: Admin → Google in its viewer. On its own: the admin page itself.
+    for (const w of [window.top, window]) {
+      try {
+        if (w.NovaAgent && w.NovaAgent.open) return w.NovaAgent.open("/admin/google/setup");
+      } catch (err) {}
+    }
+    location.href = "/admin/google/setup";
+  });
 
   // Two buttons a row: when there's an odd one out, the last (Sign out) takes the whole row
   function evenActions() {

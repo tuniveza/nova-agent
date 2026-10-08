@@ -9,8 +9,9 @@
 // a card with the planet up close, its name, and links to your profile and your Index.
 // Where it is decides how it knows you:
 //   Nova Agent online (Nova Bot's main address) and its panels   Portal's sign-in (the cookie)
-//   Nova Agent (localhost:4545) and the panels it serves  who's signed in on this computer (sign in and out right here, in the card)
+//   Nova Agent (localhost:4545) and the panels it serves  who's signed in on this computer
 //   Notes, Calendar... on their own sites            a read-only token from "Connect" in Portal
+//   Signed out, the planet opens Portal: Portal is the one sign-in, for everything.
 // Colours come from the page's theme: --np-* if the app sets them, else Hub's names (--hi,
 // --accent...), else Nova Agent's magenta. Calm motion (reduced motion, or data-motion="calm") stills it.
 (() => {
@@ -75,26 +76,15 @@
     return d;
   }
 
-  // ---- Sign in with Google ----
-  // Google's page can't show inside Nova Agent, so it opens in a small window (or, in the
-  // installed app on a phone, takes the whole screen for a moment) and comes back signed in.
-  // On the studio PC, Nova Agent itself starts it (/auth/google) so it can keep the sign-in.
-  let googleCheck = null;
-  function googleAvailable() {
-    if (mode === "connect") return Promise.resolve(false);
-    if (!googleCheck)
-      googleCheck = fetch("/auth/google/available", { headers: { Accept: "application/json" } })
-        .then((r) => (r.ok ? r.json() : {}))
-        .then((d) => Boolean(d.available))
-        .catch(() => false);
-    return googleCheck;
-  }
-  function googleSignIn() {
-    const start = mode === "agent" ? "/auth/google" : "/auth/google/start?return=" + encodeURIComponent("/agent/");
-    const join = start.includes("?") ? "&" : "?";
-    const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-    const win = standalone ? null : window.open(start + join + "popup=1", "nova-google", "width=480,height=640");
-    if (!win) window.top.location.href = start;
+  // Portal's sign-in, the one way in: in Nova Agent's viewer when on (or inside) Nova Agent's page
+  function openPortal() {
+    sfx("open");
+    for (const w of [window, window.top]) {
+      try {
+        if (w.NovaAgent && w.NovaAgent.open) return w.NovaAgent.open("/portal/");
+      } catch (err) {}
+    }
+    location.href = portalUrl + (mode === "portal" ? "?next=" + encodeURIComponent(location.pathname + location.search) : "");
   }
 
   const POPOVER = typeof HTMLElement.prototype.showPopover === "function";
@@ -241,18 +231,6 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
 .links .main { border: 0; color: var(--c-on-accent); background: linear-gradient(90deg, var(--c-accent), var(--c-accent-2)); box-shadow: 0 8px 20px -10px var(--c-accent); }
 .links .quiet { background: transparent; color: var(--c-muted); }
 .links a:focus-visible, .links button:focus-visible { outline: 2px solid var(--c-hi); outline-offset: 2px; }
-.signin-form { display: grid; gap: 8px; margin: 0; text-align: left; }
-.or { margin: 8px 0 6px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-muted); }
-.google-row[hidden], .or[hidden] { display: none; }
-.signin-form input {
-  width: 100%; min-height: 40px; padding: 0 12px; border-radius: 12px; font: inherit; font-size: 14px; color: var(--c-bright);
-  border: 1px solid color-mix(in srgb, var(--halo) 30%, transparent); background: color-mix(in srgb, var(--c-deep) 70%, transparent);
-}
-.signin-form input:focus-visible { outline: 2px solid var(--c-hi); outline-offset: 1px; }
-.signin-form .error { margin: 0; font-size: 12px; color: #FF8A8A; }
-.signin-form .error[hidden] { display: none; }
-.links button:disabled { opacity: 0.6; cursor: progress; }
-.foot a { color: var(--c-hi); }
 .foot { margin: 10px 0 0; font-size: 10.5px; letter-spacing: 0.08em; color: var(--c-muted); opacity: 0.8; }
 
 @keyframes chip-in { from { opacity: 0; transform: translateY(-6px) scale(0.92); } }
@@ -275,7 +253,6 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
   const ICON = {
     profile: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(-20 12 12)"/></svg>',
     index: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg>',
-    google: '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.6 12.3c0-.8-.1-1.5-.2-2.2H12v4.2h6a5 5 0 0 1-2.2 3.3v2.7h3.6c2-1.9 3.2-4.7 3.2-8z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.4-2.7l-3.6-2.7c-1 .7-2.3 1.1-3.8 1.1-2.9 0-5.4-2-6.3-4.6H2v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.7 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2a11 11 0 0 0 0 9.8l3.7-2.8z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2 7.1l3.7 2.8C6.6 7.3 9.1 5.4 12 5.4z"/></svg>',
     out: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>',
   };
 
@@ -329,7 +306,7 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
           <span class="words" part="words"><span class="name">${esc(first(s.display_name))}</span>${role ? `<span class="role ${role}">${role === "admin" ? "Admin" : "Staff"}</span>` : `<span class="role">Nova Agent</span>`}</span>
         </button>`;
       } else {
-        chip = `<button class="chip signin" part="chip" type="button" aria-haspopup="dialog" aria-expanded="false" title="Sign in">
+        chip = `<button class="chip signin" part="chip" type="button" title="Sign in with Portal">
           <span class="orb"><span class="ghost"></span><span class="spark"></span></span>
           <span class="words" part="words"><span class="name">Sign in</span><span class="role">Portal</span></span>
         </button>`;
@@ -338,7 +315,9 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       // clipping (like Nova Agent's glass bar) can't trap or cut it off
       this.root.innerHTML = `${chip}<div class="card" role="dialog" aria-label="Portal" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
       const btn = this.root.querySelector(".chip");
-      btn.addEventListener("click", () => (this.isOpen ? this.close(true) : this.open()));
+      // Signed out, the planet is a door to Portal: Portal is the one sign-in for everything
+      const toPortal = !s && !(d && (d.loading || d.offline)) && mode !== "connect";
+      btn.addEventListener("click", () => (toPortal ? openPortal() : this.isOpen ? this.close(true) : this.open()));
       this.dispatchEvent(new CustomEvent("change", { detail: d }));
     }
 
@@ -367,22 +346,6 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
           ${mode === "agent" ? `<p class="note">${d.offline ? "Nova Bot can't be reached just now; you're still signed in on this computer." : "Every panel in Nova Agent uses this sign-in. It stays until you sign out."}</p>` : ""}
           <div class="links">${links}</div>
           <p class="foot">${mode === "connect" ? "Connected: name, role and planet only" : "One sign-in for every Nova app"}</p>`;
-      } else if (mode !== "connect" && !d.offline) {
-        // Nova Agent (on the studio PC, or online): sign in right here, once, for every panel
-        body = `
-          <div class="big"><span class="orb wide"><span class="ghost"></span><span class="spark"></span></span></div>
-          <div class="kicker">Portal</div>
-          <h3>Sign in</h3>
-          <p class="note">${mode === "agent" ? "Once, for every panel in Nova Agent. You stay signed in on this computer until you sign out." : "Once, for every panel in Nova Agent."}</p>
-          <div class="links google-row" hidden><button type="button" data-act="google">${ICON.google}<span>Sign in with Google</span></button></div>
-          <p class="or" hidden>or with your email</p>
-          <form class="signin-form" novalidate>
-            <input name="email" type="email" autocomplete="username" placeholder="Email" aria-label="Email" required>
-            <input name="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" required>
-            <p class="error" role="alert" hidden></p>
-            <div class="links"><button type="submit" class="main">${ICON.profile}<span>Sign in</span></button></div>
-          </form>
-          <p class="foot">New here, or forgot your password? <a data-open="/portal/" href="${portalUrl}">Open Portal</a></p>`;
       } else {
         const go = mode === "portal" ? `${portalUrl}?next=${encodeURIComponent(location.pathname + location.search)}` : mode === "agent" ? portalUrl : `${portalUrl}?connect=${back}`;
         body = `
@@ -409,21 +372,6 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       sfx("open");
       const out = card.querySelector('[data-act="out"]');
       if (out) out.addEventListener("click", () => this.signOut());
-      const form = card.querySelector(".signin-form");
-      if (form) form.addEventListener("submit", (e) => this.signIn(e, form));
-      // "Sign in with Google", once an admin has set Google up (Admin → Google)
-      const google = card.querySelector('[data-act="google"]');
-      if (google) {
-        google.addEventListener("click", () => {
-          this.close();
-          googleSignIn();
-        });
-        googleAvailable().then((ok) => {
-          if (!ok || !this.isOpen) return;
-          for (const el of card.querySelectorAll(".google-row, .or")) el.hidden = false;
-          this.place();
-        });
-      }
       // On Nova Agent's own page, Portal and Index open in its viewer, like the panels below
       for (const a of card.querySelectorAll("a[data-open]")) {
         a.addEventListener("click", (e) => {
@@ -500,40 +448,6 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       if (mode === "connect") whoAmI(true);
       else changed();
     }
-    // Sign in from the card: on the studio PC Nova Agent keeps the sign-in (src/signin.ts);
-    // online, Nova Bot sets its cookie
-    async signIn(e, form) {
-      e.preventDefault();
-      const email = form.email.value.trim();
-      const password = form.password.value;
-      const error = form.querySelector(".error");
-      const say = (text) => {
-        error.textContent = text;
-        error.hidden = !text;
-        if (text) sfx("error");
-      };
-      if (!email) return say("Enter your email address."), form.email.focus();
-      if (!password) return say("Enter your password."), form.password.focus();
-      const button = form.querySelector("button");
-      button.disabled = true;
-      say("");
-      try {
-        const res = await fetch("/auth/login", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          form.password.value = "";
-          form.password.focus();
-          return say(data.error || `That didn't work (error ${res.status}). Try again.`);
-        }
-        sfx("done");
-        this.close();
-        changed();
-      } catch (err) {
-        say("Can't reach Nova Agent. Try again.");
-      } finally {
-        button.disabled = false;
-      }
-    }
   }
 
   function esc(t) {
@@ -557,5 +471,5 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
 
   customElements.define("nova-portal-badge", NovaPortalBadge);
   // changed(): a page that signs in or out by itself (Portal) tells the badges
-  window.NovaPortal = { whoAmI, mode, changed, google: { available: googleAvailable, signIn: googleSignIn } };
+  window.NovaPortal = { whoAmI, mode, changed };
 })();

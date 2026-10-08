@@ -16,7 +16,7 @@
 // client names and the AI prompts. To view it from the VPS later, use an
 // SSH tunnel:  ssh -L 4545:localhost:4545 your-vps
 
-import { fromOurPage, passOn, session, signIn, signInWithGoogle, signOut } from "../signin";
+import { fromOurPage, passOn, session, signIn, signOut } from "../signin";
 import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -220,59 +220,6 @@ app.post("/auth/logout", async (c) => {
   await signOut();
   return c.json({ ok: true });
 });
-// ---- Sign in with Google (the planet's card, or Portal) ----
-// Google's page opens from Nova Bot; Nova Bot sends the browser back to /auth/google/done here with
-// a one-time code, which only works with the verifier this computer made up (kept here, never sent
-// to the browser), so the sign-in is kept here like a password one (src/signin.ts).
-const googleFlows = new Map<string, { verifier: string; at: number }>();
-const b64url = (bytes: Uint8Array) => Buffer.from(bytes).toString("base64url");
-app.get("/auth/google/available", async (c) => {
-  try {
-    const res = await fetch(`${config.workerUrl}/auth/google/available`, { signal: AbortSignal.timeout(8000) });
-    return c.json(await res.json(), 200, { "Cache-Control": "no-store" });
-  } catch {
-    return c.json({ available: false, clientId: "" });
-  }
-});
-app.get("/auth/google", async (c) => {
-  for (const [k, v] of googleFlows) if (Date.now() - v.at > 10 * 60_000) googleFlows.delete(k);
-  const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
-  const challenge = b64url(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))));
-  googleFlows.set(challenge, { verifier, at: Date.now() });
-  const back = new URL(c.req.url).origin;
-  const popup = c.req.query("popup") === "1" ? "&popup=1" : "";
-  return c.redirect(`${config.workerUrl}/auth/google/start?pc=${challenge}&back=${encodeURIComponent(back)}${popup}`);
-});
-app.get("/auth/google/done", (c) =>
-  c.html(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Signing in · Nova Agent</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#100816;color:#EBD3E7;font:16px/1.5 system-ui,sans-serif;padding:24px;text-align:center}h1{color:#fff;font-size:22px}a{color:#FF5FA8}</style></head>
-<body><main><h1 id="t">Signing in…</h1><p id="m"></p><p><a href="/agent/">Back to Nova Agent</a></p></main>
-<script>
-(async () => {
-  const h = new URLSearchParams(location.hash.slice(1));
-  history.replaceState(null, "", location.pathname + location.search);
-  const say = (t, m) => { document.getElementById("t").textContent = t; document.getElementById("m").textContent = m || ""; };
-  try {
-    const r = await fetch("/auth/google/finish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: h.get("code"), c: h.get("c") }) });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) return say("Not signed in", d.error || "Try again.");
-    say("✓ Signed in", d.staff ? "Hi, " + d.staff.display_name + "." : "");
-    try { new BroadcastChannel("nova-portal").postMessage("changed"); } catch (e) {}
-    if (new URLSearchParams(location.search).get("popup") === "1" && window.opener) setTimeout(() => window.close(), 600);
-    else location.replace("/agent/");
-  } catch (e) { say("Not signed in", "Couldn't reach Nova Agent. Try again."); }
-})();
-</script></body></html>`)
-);
-app.post("/auth/google/finish", async (c) => {
-  const body = (await c.req.json().catch(() => ({}))) as { code?: string; c?: string };
-  const flow = googleFlows.get(String(body.c || ""));
-  googleFlows.delete(String(body.c || ""));
-  if (!flow) return c.json({ error: "That sign-in took too long or didn't start here. Try again." }, 400);
-  const { status, data } = await signInWithGoogle(String(body.code || ""), flow.verifier);
-  return c.json(data as any, status as any);
-});
-
 // There's no shared password any more: everyone signs in with their own account in the Portal
 app.post("/app/api/login", (c) => c.json({ error: "On the studio computer, sign in with your own account in the Portal." }, 400));
 app.post("/app/api/logout", async (c) => {

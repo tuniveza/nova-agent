@@ -149,10 +149,10 @@
   // everyone: no set-up in Notes at all. (Nova Bot online, or Nova Agent on the studio PC, answers.)
   const google = { copyRich, copyAndOpen, saveToDrive, onHttp, studioClientId: '' };
   if (onHttp()) {
-    fetch('/auth/google/available', { headers: { Accept: 'application/json' } })
+    fetch('/auth/google-status', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
       .then((r) => (r.ok ? r.json() : {}))
       .then((d) => {
-        google.studioClientId = (d && d.available && d.clientId) || '';
+        google.studioClientId = (d && d.setUp && d.clientId) || '';
         const setup = document.getElementById('gd-setup');
         if (setup && google.studioClientId) setup.hidden = true;
       })
