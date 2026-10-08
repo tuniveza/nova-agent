@@ -169,7 +169,9 @@ html.embed .bar { padding-top: 8px; }
 .sheet-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(var(--hi-rgb), .12); }
 .sheet-head h2 { flex: 1; margin: 0; font: 800 17px/1.2 var(--f-display); color: var(--bright); }
 .save { height: 40px; padding: 0 18px; border-radius: 12px; border: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: var(--on-accent); font-weight: 700; }
-.sheet-body { padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); overflow: auto; display: grid; gap: 10px; }
+.sheet-body { padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.sheet-body > *, .group > *, .custom > * { min-width: 0; }
+.sheet input, .sheet select, .sheet textarea { max-width: 100%; }
 .sheet input[type="text"], .sheet input[type="date"], .sheet input[type="time"], .sheet input[type="number"], .sheet select, .sheet textarea {
   min-width: 0; height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid rgba(var(--hi-rgb), .18); background: var(--deep); font-size: 16px; color: var(--bright);
 }
@@ -242,6 +244,23 @@ html.embed .bar { padding-top: 8px; }
   .ev { padding: 1px 3px; font-size: 11px; }
   .ev small { display: none; }
 }
+@media (max-width: 719px) {
+  .row > span:first-child { width: 64px; font-size: 13.5px; }
+  .row.when { flex-wrap: wrap; }
+  .row.when input[type="date"] { flex: 1 1 140px; }
+  .row.when input[type="time"] { flex: 1 1 96px; }
+  .sheet input[type="date"], .sheet input[type="time"] { padding: 0 8px; }
+}
 @media (max-width: 380px) { .chip.today { padding: 0 8px; } .icon-btn { width: 36px; height: 36px; } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Phones: the round + does what the day list's "+ Add" does */
+@media (max-width: 719px) { .dayplan h3 button { display: none; } }
+/* Wide screens: the chosen day sits beside the month */
+@media (min-width: 1100px) {
+  .month { display: grid; grid-template-columns: minmax(0, 1fr) 320px; grid-template-rows: auto 1fr; min-height: 100%; }
+  .month .wk-head { grid-column: 1; }
+  .month .grid { grid-column: 1; }
+  .month .dayplan { grid-column: 2; grid-row: 1 / span 2; border-top: 0; border-left: 1px solid rgba(var(--hi-rgb), .12); padding-bottom: 16px; overflow: auto; }
+}

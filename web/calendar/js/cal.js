@@ -365,6 +365,12 @@ view.addEventListener("click", (e) => {
     cursor = go.dataset.goto;
     return setView("day");
   }
+  // On a phone the month's events are little bars: a tap picks the day (its list shows below)
+  const tapped = e.target.closest(".cell");
+  if (tapped && phone()) {
+    cursor = tapped.dataset.date;
+    return render();
+  }
   const item = e.target.closest("[data-id]");
   if (item) {
     e.stopPropagation();

@@ -72,9 +72,17 @@ function adopt(current) {
 
 // Send what's waiting, in order
 let flushing = null;
-async function flush() {
+function flush() {
   if (flushing) return flushing;
-  flushing = (async () => {
+  // (cleared once it's done, after it's been stored: never stuck "busy")
+  flushing = sendWaiting().finally(() => {
+    flushing = null;
+    emit("status");
+  });
+  return flushing;
+}
+async function sendWaiting() {
+  {
     while (state.queue.length) {
       const op = state.queue[0];
       try {
@@ -102,17 +110,18 @@ async function flush() {
         break;
       }
     }
-    flushing = null;
-    emit("status");
-  })();
-  return flushing;
+  }
 }
 
 // Bring this copy up to date (send waiting changes first)
 let syncing = null;
-export async function sync() {
+export function sync() {
   if (syncing) return syncing;
-  syncing = (async () => {
+  syncing = fetchChanges().finally(() => (syncing = null));
+  return syncing;
+}
+async function fetchChanges() {
+  {
     try {
       await flush();
       if (state.queue.length && !state.online) throw new Error("offline");
@@ -132,11 +141,8 @@ export async function sync() {
     } catch (err) {
       if (!err.signin) state.online = false;
       emit("status");
-    } finally {
-      syncing = null;
     }
-  })();
-  return syncing;
+  }
 }
 
 function enqueue(op) {
