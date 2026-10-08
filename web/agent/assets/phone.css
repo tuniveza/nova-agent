@@ -39,7 +39,7 @@
   /* The header: the status (with its word), the mark, your planet */
   .topbar { padding: 6px 8px; border-radius: 18px; gap: 6px; }
   .topbar .mark { width: 34px; height: 34px; border-radius: 10px; }
-  .top-side .sfx-btn, .top-side #suite-btn, .top-side nova-manual, .top-side #install { display: none !important; }
+  .top-side .sfx-btn, .top-side .music-btn, .top-side #suite-btn, .top-side nova-manual, .top-side #install { display: none !important; }
   .top-side .phone-only { width: 36px; height: 36px; flex: none; place-items: center; }
   .status { padding: 4px 9px; gap: 6px; font-size: 10.5px; letter-spacing: .04em; }
   .status .label { display: inline !important; }

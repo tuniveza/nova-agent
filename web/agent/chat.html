@@ -60,6 +60,12 @@
   .sfx-btn { font-size: 15px; line-height: 1; }
   .sfx-btn[aria-pressed="true"] .sfx-off, .sfx-btn[aria-pressed="false"] .sfx-on { display: none; }
   .sfx-btn[aria-pressed="false"] { opacity: .6; }
+  .music-btn svg { width: 15px; height: 15px; }
+  .music-btn[aria-pressed="false"] { opacity: .6; }
+  .music-btn[aria-pressed="true"] { color: var(--accent, #c9b6ff); border-color: currentColor; box-shadow: 0 0 12px -2px currentColor; }
+  .music-btn[aria-pressed="true"] svg { animation: music-breathe 4s ease-in-out infinite; }
+  @keyframes music-breathe { 50% { transform: scale(1.12); opacity: .75; } }
+  @media (prefers-reduced-motion: reduce) { .music-btn[aria-pressed="true"] svg { animation: none; } }
   .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; justify-self: center; text-align: center; }
   .brand > span { display: grid; justify-items: center; }
   .suite-btn { border: 1px solid transparent; background: linear-gradient(var(--deep), var(--deep)) padding-box, var(--edge) border-box; }
@@ -597,6 +603,8 @@
     <div class="top-side left">
       <!-- Sound effects on or off (sfx.js; remembered on this computer) -->
       <button type="button" class="icon-btn sfx-btn" id="sfx-btn" data-sfx="none" aria-pressed="true" title="Sound effects" aria-label="Sound effects"><span class="sfx-on">🔊</span><span class="sfx-off">🔈</span></button>
+      <!-- Ambient music on or off (ambient.js: quiet Novacane music, carries on across panels; remembered here) -->
+      <button type="button" class="icon-btn music-btn" id="music-btn" data-sfx="none" aria-pressed="false" title="Ambient music: off" aria-label="Ambient music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button>
       <span class="status" id="status" title="Nova Agent's mode"><span class="dot"></span><span class="label" id="status-text">Connecting…</span></span>
     </div>
     <a class="brand" href="/agent/" aria-label="Nova Agent">
@@ -793,6 +801,7 @@
   </form>
 </dialog>
 <script src="/shared/sfx.js"></script>
+<script src="/shared/ambient.js"></script>
 <script src="/shared/badge.js" defer></script>
 <script src="/shared/manual.js" defer></script>
 <script src="/calendar/js/themes.js"></script>
@@ -1508,6 +1517,21 @@
   $('sfx-btn').addEventListener('click', () => { if (window.NovaSfx) window.NovaSfx.toggle(); sfxState(); });
   window.addEventListener('novasfxchange', sfxState);
   sfxState();
+
+  // ---- Ambient music: the switch in the header (and in the phone's gear menu) ----
+  function musicState() {
+    const on = window.NovaAmbient ? window.NovaAmbient.isPlaying() : false;
+    $('music-btn').setAttribute('aria-pressed', String(on));
+    $('music-btn').title = on ? 'Ambient music: on' : 'Ambient music: off';
+  }
+  $('music-btn').addEventListener('click', async () => {
+    if (!window.NovaAmbient) return;
+    const on = await window.NovaAmbient.toggle();
+    if (window.NovaSfx) window.NovaSfx.play(on ? 'on' : 'off');
+    musicState();
+  });
+  window.addEventListener('novaambientchange', musicState);
+  musicState();
 
   // ---- Opening the panels: always inside Nova Agent (they have no pages of their own) ----
   function openInside(href, name) {

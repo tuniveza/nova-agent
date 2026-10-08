@@ -1088,23 +1088,25 @@
   setInterval(() => !document.hidden && currentView === "quests" && loadQuests(), 15000);
 
   // ===== Ambient music =====
-  // Soft electronic ambient, made live on the phone (ambient.js). Remembered on this phone.
+  // Novacane's quiet ambient music (shared/ambient.js). Inside Nova Agent it's the one player
+  // for the whole app, so it carries on across panels; it remembers on or off by itself and
+  // starts again on the first tap when it was on.
   const music = $("music");
   function musicState(on) {
     music.setAttribute("aria-pressed", on ? "true" : "false");
     music.classList.toggle("on", on);
-    try { localStorage.setItem("novahub-music", on ? "1" : "0"); } catch (err) {}
   }
   let ambient = null;
   function loadAmbient() {
     if (!ambient)
       ambient = new Promise((resolve, reject) => {
         const script = document.createElement("script");
-        script.src = "/portal/ambient.js";
+        script.src = "/shared/ambient.js";
         script.onload = () => {
           const engine = window.NovaAmbient;
           if (!engine) return reject(new Error("No music here"));
           engine.onchange = musicState;
+          musicState(engine.isPlaying());
           if (window.NovaOptions) engine.setVolume(window.NovaOptions.get().volume / 100);
           resolve(engine);
         };
@@ -1114,7 +1116,7 @@
     return ambient;
   }
   // Ready a moment after the first screen, so a tap starts it straight away
-  setTimeout(() => loadAmbient().catch(() => {}), 2500);
+  setTimeout(() => loadAmbient().catch(() => {}), window.top !== window ? 0 : 2500);
   music.addEventListener("click", async () => {
     try {
       const on = await (await loadAmbient()).toggle();
@@ -1122,14 +1124,6 @@
     } catch (err) {
       toast(err.message);
     }
-  });
-  // It was on last time: start again on the first tap (phones only allow sound after a tap)
-  let wanted = false;
-  try { wanted = localStorage.getItem("novahub-music") === "1"; } catch (err) {}
-  if (wanted) document.addEventListener("pointerdown", function again(e) {
-    if (e.target.closest("#music")) return;
-    document.removeEventListener("pointerdown", again);
-    loadAmbient().then((engine) => engine.start()).catch(() => {});
   });
 
   // ===== Alerts =====

@@ -111,10 +111,13 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
   Hands-free mode listens while the app is open for anything that starts with "Nova".
 - **Quests from Nova Agent** (`src/agent-nova.js`): Nova Agent sends its plan here every
   time it changes, and picks up taps within about a second.
-- **Ambient music** (`web/portal/ambient.js`): a gentle, never-ending soundtrack made live
-  on the phone with the Web Audio API. No audio files.
-- **Sound effects** (`web/shared/sfx.js`): soft bells and sparkles for taps, tabs,
-  switches, sends and deletes, all in one key, and a two-note chime when NovaBot answers.
+- **Ambient music** (`web/shared/ambient.js`, moved from `web/portal/`): Novacane's quiet,
+  never-ending soundtrack made live with the Web Audio API (no audio files), now with a soft
+  electric-piano phrase now and then. Inside Nova Agent, Portal's music button works the one
+  player in Nova Agent's main page, so the music carries on across panels.
+- **Sound effects** (`web/shared/sfx.js`): Novacane's glass bells, warm under-tones and soft
+  breaths of air for taps, tabs, switches, sends and deletes, all in the music's key, and a
+  two-note chime when NovaBot answers.
 - **Six themes**: Cosmic, Ember, Aurora, Ocean, Gold and Mono, shared with the admin pages.
 - **Options** (`web/portal/options.js`): theme, text alignment and size, how times show on
   alerts, animations, the drifting starfield, sound effects, pings, music volume and the

@@ -1,15 +1,46 @@
-/* Nova Ambient: a gentle, never-ending ambient soundtrack for Portal.
+/* Nova Ambient: Novacane's quiet, never-ending ambient music for all of Nova Agent.
    Everything is made live with the Web Audio API: no audio files, no libraries,
-   no network. Slow warm pads, a soft bass, little star-like bells, a faint
-   ocean of air, all washed in a big procedural reverb.
+   no network. Slow warm pads, a soft bass, little star-like bells, now and then a
+   short soft electric-piano phrase, a faint ocean of air, all washed in a big
+   reverb and kept low so it sits behind everything.
+
+   One player for the whole app: it plays in Nova Agent's main page, so it carries on
+   while panels open and close. Inside a panel this file just hands over to that one.
+   On or off is remembered on the device ("nova-music"); when it was on, it starts
+   again on the first tap (browsers only allow sound after a tap).
 
    Usage (from a tap/click handler):
      NovaAmbient.toggle().then(playing => ...)
      NovaAmbient.setVolume(0.4)
      NovaAmbient.onchange = playing => updateButton(playing)
+     window.addEventListener('novaambientchange', e => e.detail.on)  // every page, every panel
 */
 (function () {
   'use strict';
+  if (window.NovaAmbient) return;
+
+  // Inside a panel: use the main page's player (same site), so there's only ever one
+  let main = null;
+  try { if (window.top !== window && window.top.NovaAmbient) main = window.top.NovaAmbient; } catch (e) { /* another site's page */ }
+  if (main) {
+    const here = {
+      start: () => main.start(),
+      stop: () => main.stop(),
+      toggle: () => main.toggle(),
+      setVolume: (v) => main.setVolume(v),
+      isPlaying: () => main.isPlaying(),
+      wanted: () => main.wanted(),
+      nudge: () => main.nudge(),
+      onchange: null
+    };
+    window.addEventListener('novaambientchange', (e) => {
+      if (typeof here.onchange === 'function') { try { here.onchange(e.detail.on); } catch (err) { /* listener's problem */ } }
+    });
+    window.NovaAmbient = here;
+    return;
+  }
+
+  const KEY = 'nova-music';
 
   // ---- Musical material ---------------------------------------------------
   // Chords in D major with a dreamy lydian tint. MIDI numbers (60 = middle C).
@@ -26,20 +57,31 @@
   // High D major pentatonic notes for the twinkling "stars".
   const STARS = [74, 76, 78, 81, 83, 86, 88, 90];
 
-  const MAX_GAIN = 0.8;      // master level at volume 1 (kept well below clipping)
+  // Novacane's little phrases for the soft electric piano (D lydian), one every half a minute or so
+  const PHRASES = [
+    [62, 69, 73, 78],      // D A C# F#: the same signature as the "hello" sound
+    [66, 64, 61, 62],
+    [69, 71, 73, 69, 66],
+    [73, 71, 69, 64],
+    [62, 64, 66, 68, 69],  // up through the bright G#
+    [78, 76, 73, 69]
+  ];
+
+  const MAX_GAIN = 0.55;     // master level at volume 1 (quiet on purpose: it sits behind everything)
   const FADE_IN = 4;         // seconds
   const FADE_OUT = 2;        // seconds
 
   // ---- State ----------------------------------------------------------------
   let ctx = null;            // the AudioContext, created on the first start()
-  let master, comp, padBus, starBus, reverbIn, bassBus;
+  let master, comp, padBus, starBus, reverbIn, bassBus, keysBus;
   let playing = false;
-  let volume = 0.5;
+  let volume = 0.4;
   let timer = null;          // lookahead scheduler interval
   let stopTimer = null;      // pending "suspend after fade-out"
   let step = 0;              // position in the chord progression
   let nextChordAt = 0;
   let nextStarAt = 0;
+  let nextPhraseAt = 0;
 
   // ---- Small helpers --------------------------------------------------------
   const rand = (a, b) => a + Math.random() * (b - a);
@@ -114,7 +156,9 @@
     comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -20; comp.knee.value = 24; comp.ratio.value = 3;
     comp.attack.value = 0.05; comp.release.value = 0.6;
-    comp.connect(master);
+    // A soft top end, like an old tape, so nothing is ever sharp
+    const warm = filter('lowpass', 6500, 0.3);
+    comp.connect(warm).connect(master);
     master.connect(ctx.destination);
 
     // Reverb send/return.
@@ -148,6 +192,12 @@
     echoTone.connect(echoOut);
     echoOut.connect(comp);
     echoOut.connect(reverbIn);
+
+    // Keys: the electric piano, mostly into the echo and reverb
+    keysBus = gain(1);
+    keysBus.connect(gain(0.5)).connect(comp);
+    keysBus.connect(gain(0.7)).connect(reverbIn);
+    keysBus.connect(gain(0.45)).connect(delay);
 
     buildAir();
   }
@@ -263,6 +313,43 @@
     disposeWhenDone(a, [a, b, body, shine, place]);
   }
 
+  // ---- Keys: a soft electric piano (FM: a sine "tine" that mellows as it rings) ----
+  function keyNote(midi, t, pan, level) {
+    const f = mtof(midi);
+    const place = panner(pan);
+    place.connect(keysBus);
+    const amp = gain(0);
+    amp.gain.setValueAtTime(0, t);
+    amp.gain.linearRampToValueAtTime(level, t + 0.012);
+    amp.gain.setTargetAtTime(0, t + 0.02, rand(0.9, 1.5));
+    amp.connect(place);
+    const carrier = osc('sine', f);
+    const mod = osc('sine', f);
+    const depth = gain(0);
+    depth.gain.setValueAtTime(f * 1.1, t);
+    depth.gain.setTargetAtTime(f * 0.05, t, 0.35);
+    mod.connect(depth).connect(carrier.frequency);
+    // A gentle wobble, like a Rhodes' tremolo
+    const trem = osc('sine', 4.2);
+    const tremAmt = gain(level * 0.25);
+    trem.connect(tremAmt).connect(amp.gain);
+    carrier.connect(amp);
+    const end = t + 7;
+    for (const o of [carrier, mod, trem]) { o.start(t); o.stop(end); }
+    disposeWhenDone(carrier, [carrier, mod, depth, trem, tremAmt, amp, place]);
+  }
+
+  function playPhrase(t) {
+    const notes = pick(PHRASES);
+    let at = t;
+    notes.forEach((m, i) => {
+      keyNote(m, at, -0.4 + (0.8 * i) / Math.max(1, notes.length - 1), rand(0.016, 0.024));
+      at += rand(0.45, 0.9);
+    });
+    // Sometimes the last note gets a soft lower partner
+    if (Math.random() < 0.5) keyNote(notes[notes.length - 1] - 12, at - 0.2, 0, 0.012);
+  }
+
   // ---- Lookahead scheduler -----------------------------------------------------
   // Every 200 ms, book any chords/stars due in the next moment using the audio
   // clock (which keeps perfect time even if the timer itself is late). When the
@@ -275,6 +362,7 @@
     // If we fell far behind (e.g. after a pause), start fresh instead of piling up.
     if (nextChordAt < now - 0.5) nextChordAt = now + 0.1;
     if (nextStarAt < now - 0.5) nextStarAt = now + rand(1, 3);
+    if (nextPhraseAt < now - 0.5) nextPhraseAt = now + rand(12, 25);
 
     while (nextChordAt < now + ahead) {
       const length = rand(16, 24);
@@ -287,6 +375,10 @@
       // Sometimes a second star answers the first.
       if (Math.random() < 0.3) playStar(nextStarAt + rand(0.2, 0.45));
       nextStarAt += rand(2, 7);
+    }
+    while (nextPhraseAt < now + ahead) {
+      playPhrase(nextPhraseAt);
+      nextPhraseAt += rand(26, 48);
     }
   }
 
@@ -301,6 +393,7 @@
     buildGraph();
     nextChordAt = ctx.currentTime + 0.1;
     nextStarAt = ctx.currentTime + 3;
+    nextPhraseAt = ctx.currentTime + rand(10, 18);
     return true;
   }
 
@@ -329,11 +422,44 @@
     if (typeof api.onchange === 'function') {
       try { api.onchange(playing); } catch (e) { /* listener's problem, not ours */ }
     }
+    tellEveryPage(playing);
   }
 
+  // Tell this page and every panel inside it (they show the music switch too)
+  function tellEveryPage(on) {
+    (function tell(w) {
+      try { w.dispatchEvent(new w.CustomEvent('novaambientchange', { detail: { on } })); } catch (e) { return; }
+      for (let i = 0; i < w.frames.length; i++) tell(w.frames[i]);
+    })(window);
+  }
+
+  // On or off, remembered on this device (Portal's old switch, "novahub-music", counts too)
+  function wanted() {
+    try {
+      const v = localStorage.getItem(KEY);
+      if (v) return v === 'on';
+      return localStorage.getItem('novahub-music') === '1';
+    } catch (e) { return false; }
+  }
+  function remember(on) {
+    try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch (e) { /* private window */ }
+  }
+
+  // A tap anywhere (here or in a panel): music that was on last time starts again
+  function nudge() {
+    if (playing) return wake();
+    if (starting || !wanted()) return;
+    start(false).catch(() => {});
+  }
+  let starting = false;
+  document.addEventListener('pointerdown', nudge, true);
+  document.addEventListener('keydown', nudge, true);
+
   // ---- Public API ---------------------------------------------------------------
-  async function start() {
+  async function start(save = true) {
+    if (save) remember(true);
     if (!ensureContext()) return;
+    starting = true;
     clearTimeout(stopTimer);
     stopTimer = null;
     unlock();
@@ -345,10 +471,12 @@
     if (!timer) timer = setInterval(tick, 200);
     tick();
     glide(master.gain, volume * MAX_GAIN, FADE_IN);
+    starting = false;
     setPlaying(true);
   }
 
   function stop() {
+    remember(false);
     if (!ctx || !playing) return;
     setPlaying(false);
     glide(master.gain, 0, FADE_OUT);
@@ -373,6 +501,16 @@
     if (ctx && playing) glide(master.gain, volume * MAX_GAIN, 0.4);
   }
 
-  const api = { start, stop, toggle, setVolume, isPlaying: () => playing, onchange: null };
+  // The saved volume (Portal's Options → Ambient music volume; 40 out of 100 to begin with)
+  try {
+    const saved = JSON.parse(localStorage.getItem('novahub-options') || '{}').volume;
+    volume = (typeof saved === 'number' ? saved : 40) / 100;
+  } catch (e) { volume = 0.4; }
+  window.addEventListener('storage', (e) => {
+    if (e.key !== 'novahub-options') return;
+    try { const v = JSON.parse(e.newValue || '{}').volume; if (typeof v === 'number') setVolume(v / 100); } catch (err) { /* ignore */ }
+  });
+
+  const api = { start: () => start(true), stop, toggle, setVolume, isPlaying: () => playing, wanted, nudge, onchange: null };
   window.NovaAmbient = api;
 })();

@@ -259,11 +259,24 @@ inside other pages, which keeps their sign-in safe, and Nova Agent says so once.
 
 ### Sound effects
 
-Soft cosmic bells and sparkles for every tap, tab, switch, open, close, send, done and
-delete, made live with the Web Audio API (no sound files) in D major pentatonic, so it all
-sounds like one family. Nova Agent chimes when it answers. The 🔊 switch at the top left turns
-them off, and the choice is remembered on that computer. It's the same `sfx.js` every Nova
-suite app uses.
+Novacane's glass bells, warm under-tones and soft breaths of air for every tap, tab, switch,
+open, close, send, done and delete, made live with the Web Audio API (no sound files). They're in
+D lydian, the same key as the ambient music, so the two always sound right together; they're
+placed across left and right and washed in a little reverb and echo, and kept quiet. Nova Agent
+chimes when it answers, and a short "hello" (D–A–C♯–F♯) plays when sounds are switched on. The 🔊
+switch at the top left turns them off (on a phone: the gear → Sound), and the choice is remembered
+on that device. It's the same `web/shared/sfx.js` in every panel.
+
+### Ambient music
+
+Quiet, never-ending Novacane ambient music: slow warm pads, a soft bass, star-like bells, now and
+then a short soft electric-piano phrase, and a faint ocean of air, all made live (no sound files,
+nothing downloaded) by `web/shared/ambient.js`. It's off until you switch it on with the ♫ switch
+at the top left (on a phone: the gear → Music; in Portal: its music button). There's one player
+for the whole app, in Nova Agent's main page, so it carries on while panels open and close, and
+every switch shows the same state. On or off is remembered on the device: when it was on, it
+starts again on your first tap (browsers only allow sound after a tap). The volume is Portal's
+Options → Ambient music volume.
 
 ### Index: it remembers
 

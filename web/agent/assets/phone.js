@@ -2,7 +2,7 @@
 // every place in Nova Agent on it (Chat, Portal, Calendar, Notes, Quests, Missions, Index,
 // Observatory, Lossless audio, Admin, Visualizer, Manual: swipe it sideways for the rest); the
 // panels open between the header and the bar, and the last few stay loaded so switching back is
-// instant. Settings (rhythm, sound, refresh, all links) are behind the gear in the header.
+// instant. Settings (rhythm, sound, music, refresh, all links) are behind the gear in the header.
 // Also: sizing to the visible screen (so the keyboard never hides the message box), the phone's
 // back button closing an open panel, and a readable status.
 // Loaded before the page's own script (chat.html), so the star sky can be skipped on a phone.
@@ -304,6 +304,7 @@
   function fillGear() {
     const openName = !viewer.hidden ? $('viewer-name').textContent : '';
     const sfxOn = window.NovaSfx ? window.NovaSfx.enabled() : false;
+    const musicOn = window.NovaAmbient ? window.NovaAmbient.isPlaying() : false;
     const canInstall = $('install') && !$('install').hidden;
     sheet.innerHTML = `<div class="grab" aria-hidden="true"></div>
       <h4>Settings</h4>
@@ -312,6 +313,7 @@
         ${btn('rhythm', 'Your rhythm', g('⚙'))}
         ${btn('new-mission', 'New mission', g('+'))}
         ${btn('sfx', sfxOn ? 'Sound: on' : 'Sound: off', g(sfxOn ? '🔊' : '🔈'))}
+        ${btn('music', musicOn ? 'Music: on' : 'Music: off', g(musicOn ? '♫' : '♪'))}
         ${tile('/admin/links') ? btn('links', 'All links', tileIcon('/admin/links', 'g')) : ''}
         ${canInstall ? btn('install', 'Install app', g('⤓')) : btn('reload', 'Refresh app', g('⟳'))}
       </div>
@@ -332,6 +334,7 @@
     if (act === 'rhythm') { const r = $('btn-rhythm'); if (r) r.click(); return; }
     if (act === 'new-mission') { closePanel(); setPane('missions'); const n = $('new-mission-btn'); if (n) n.click(); return; }
     if (act === 'sfx') { const s = $('sfx-btn'); if (s) s.click(); return; }
+    if (act === 'music') { const m = $('music-btn'); if (m) m.click(); return; }
     if (act === 'links') return open('/admin/links');
     if (act === 'install') { const i = $('install'); if (i) i.click(); return; }
     if (act === 'reload') location.reload();
