@@ -617,3 +617,25 @@ dialog[open] .dlg-inner { animation: rise .22s ease-out; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- FIT TO THE FRAME (inside Nova Agent; see /shared/inside.js) ----------
+   Nova Agent's viewer already names the app, so the header slims down (no kicker,
+   a smaller mark, tighter rows) and the writing area gets the height. */
+html.embed .shell { gap: 8px; padding: 8px 10px 6px; }
+html.embed .topbar { column-gap: 14px; row-gap: 0; padding: 5px 12px 3px; border-radius: 16px; }
+html.embed .brand-kicker { display: none; }
+html.embed .app-mark { width: 32px; height: 32px; border-radius: 9px; }
+html.embed .wordmark { font-size: 18px; }
+html.embed .doc-title { font-size: 16px; padding-block: 2px; }
+html.embed .menubar > button { padding-block: 2px; }
+html.embed .toolbar { padding: 3px 8px; }
+html.embed .tb-group { padding: 0 3px; }
+html.embed .page-wrap { padding-top: 16px; }
+/* Not so wide: Import, Export and Google Docs keep just their icons, so the menus fit */
+@media (max-width: 1500px) {
+  html.embed .top-actions .btn.sm { padding-inline: 9px; }
+  html.embed .top-actions .btn.sm > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (max-width: 880px) { html.embed .topbar { row-gap: 4px; padding: 6px 10px 3px; } }
+/* Short frames: the word count goes, so the page keeps its room */
+@media (max-height: 560px) { html.embed .statusbar { display: none; } html.embed .shell { grid-template-rows: auto auto minmax(0, 1fr); } }

@@ -622,3 +622,6 @@ html[data-stars="off"] body::before { display: none; }
 
 /* Signing in: with Portal */
 .portal-btn { display: inline-flex; justify-content: center; width: 100%; text-decoration: none; }
+
+/* Inside Nova Agent (see /shared/inside.js): a slimmer tab bar, so more of the list shows in a short frame */
+html.embed { --tabs-h: 54px; }
