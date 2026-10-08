@@ -240,31 +240,28 @@
     if (t === 'manual') { if (window.NovaManual) window.NovaManual.open(); return; }
     open(t);
   });
-  // A hint that there's more along the bar: its edges fade where it goes on
-  function edges() {
-    const more = bar.scrollWidth > bar.clientWidth + 2;
-    bar.classList.toggle('fade-start', more && bar.scrollLeft > 4);
-    bar.classList.toggle('fade-end', more && bar.scrollLeft < bar.scrollWidth - bar.clientWidth - 4);
+  // Every place in view at once: half of them per row upright (so 12 → two rows of 6), one row on its
+  // side; and the bar's height for whatever sits above it (toasts)
+  function layout() {
+    const n = bar.querySelectorAll('[data-tab]').length || 1;
+    bar.style.setProperty('--n', n);
+    bar.style.setProperty('--cols', Math.ceil(n / 2));
+    document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight || 112}px`);
   }
-  bar.addEventListener('scroll', edges, { passive: true });
-  window.addEventListener('resize', edges);
+  window.addEventListener('resize', layout);
+  if (typeof ResizeObserver === 'function') new ResizeObserver(layout).observe(bar);
 
   // ---- Which place is lit: the home's pane, or the open panel (and the bar shows it) ----
   function current() {
     const openName = !viewer.hidden ? $('viewer-name').textContent : '';
-    let lit = null;
     for (const b of bar.querySelectorAll('[data-tab]')) {
       const t = b.dataset.tab;
       const on = t.startsWith('pane:') ? !openName && main.dataset.pane === t.slice(5) : Boolean(openName) && nameOf(tile(t)) === openName;
-      if (on) { b.setAttribute('aria-current', 'page'); lit = b; }
+      if (on) b.setAttribute('aria-current', 'page');
       else b.removeAttribute('aria-current');
     }
-    if (lit && PHONE.matches) {
-      const r = lit.getBoundingClientRect(), box = bar.getBoundingClientRect();
-      if (r.left < box.left + 8 || r.right > box.right - 8) bar.scrollTo({ left: lit.offsetLeft - (bar.clientWidth - lit.offsetWidth) / 2, behavior: STILL.matches ? 'auto' : 'smooth' });
-    }
     clear.hidden = Boolean(openName) || main.dataset.pane !== 'chat';
-    edges();
+    layout();
     if (sheet.open) fillGear();
   }
 
