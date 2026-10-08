@@ -23,27 +23,21 @@ Signalling (SDP + ICE only): browser ⇄ WebSocket ⇄ LosslessRoom Durable Obje
 | `test/playback.test.mjs` | The playback worklet's buffering, run in Node (`npm test`). |
 | `wrangler.toml` | Assets, Durable Object binding, migration. |
 
-## Deploy
+## Where it runs
+
+Nova Bot serves it at `https://novacane-worker.novacane-studio.workers.dev/lossless/` (HTTPS, which phones need before they'll give a page the mic). Its build (`scripts/sync-apps.mjs`) copies `public/lossless/` into its assets and `src/worker.js` + `src/room.js` into `src/lossless/`; Nova Bot sends `/lossless/ws` and `/lossless/ice` to them and has the `LosslessRoom` Durable Object binding and migration. Deploy Nova Bot as usual.
+
+Nova Agent shows the same page at `/lossless/` on the studio PC. Signalling and the relay setup still come from Nova Bot, so the other device can be anywhere, and invite links point at the online address.
+
+For TURN (calls across networks), set the two secrets on Nova Bot once:
 
 ```sh
-cd ~/Projects/nova-lossless-audio
-npm install
-npx wrangler login        # once
-npx wrangler deploy
+cd ~/an/pj/ns/nb/novacane-worker
+npx wrangler secret put TURN_KEY_ID
+npx wrangler secret put TURN_KEY_API_TOKEN
 ```
 
-Open `https://nova-lossless-audio.<your-subdomain>.workers.dev/lossless/`. It has to be HTTPS, because phones won't give a page the mic otherwise. Workers URLs are always HTTPS.
-
-### Adding it to the existing Nova Worker instead
-
-1. Copy `src/room.js` next to the Nova Worker's entry file and add `export { LosslessRoom } from "./room.js";`.
-2. Add the `/lossless/ws` branch from `src/worker.js` to the Nova Worker's `fetch` handler. Skip the `/` redirect.
-3. Serve `public/lossless/`:
-   - If the Nova Worker already uses `[assets]`, copy the `lossless/` folder into its assets directory.
-   - If it doesn't, add the `[assets]` block from `wrangler.toml`.
-4. Add the `[[durable_objects.bindings]]` block, then add the `[[migrations]]` block **after** any existing migrations, keeping the tag unique.
-
-Everything is under `/lossless/` and the page finds the WebSocket relative to its own URL, so it won't collide with existing routes.
+`wrangler.toml` here still deploys it on its own (`npx wrangler deploy` in this folder), which is how it ran before.
 
 ## Two-device test (laptop + phone)
 

@@ -133,6 +133,8 @@ for (const path of ["/notes/sw.js", "/calendar/sw.js"]) {
 }
 serveFolder("/observatory", "observatory/", "Observatory is missing from web/observatory.");
 serveFolder("/notes", "notes/", "Notes is missing from web/notes.");
+// Lossless audio: the page only; its signalling and relay setup are Nova Bot's (/lossless/ws, /lossless/ice)
+serveFolder("/lossless", "lossless/public/lossless/", "Lossless audio is missing from web/lossless.");
 serveFolder("/app/memory", "index/", "Index is missing from web/index.");
 // Where Index was for a day
 app.get("/index/*", (c) => c.redirect("/app/memory/" + c.req.path.slice("/index/".length)));
