@@ -90,8 +90,8 @@ a { color: var(--hi); }
 .sound-toggle[aria-pressed="false"] { color: var(--muted); }
 
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 22px; }
-.stat { padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); min-width: 0; }
-.stat b { display: block; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: clamp(20px, 2.4vw, 28px); line-height: 1.05; color: #fff; overflow-wrap: anywhere; }
+.stat { container-type: inline-size; padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); min-width: 0; }
+.stat b { display: block; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: clamp(20px, 2.4vw, 28px); font-size: clamp(16px, 15cqi, 28px); line-height: 1.05; color: #fff; overflow-wrap: anywhere; }
 .stat span { display: block; margin-top: 4px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
 .stat.lead b { background: var(--title-grad); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 11s linear infinite; }
 
@@ -305,3 +305,13 @@ dialog.detail[open] .dt-inner { animation: rise .28s ease-out; }
   .members .hide-sm { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ---------- FIT TO THE FRAME (inside Nova Agent; see /shared/inside.js) ----------
+   Nova Agent's viewer already names the app: a smaller title block, so the projects show sooner */
+html.embed .app { padding-top: 12px; }
+html.embed .hero { padding: 14px 18px; border-radius: 22px; }
+html.embed .hero .kicker { display: none; }
+html.embed .hero .sigil { width: 40px; height: 40px; }
+html.embed .wordmark { font-size: clamp(22px, 3vw, 34px); }
+html.embed .hero-lede { margin-top: 10px; font-size: 14.5px; }
+html.embed .stats { margin-top: 14px; }
