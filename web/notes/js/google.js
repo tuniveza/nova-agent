@@ -144,5 +144,28 @@
     }
   }
 
-  NN.google = { copyRich, copyAndOpen, saveToDrive, onHttp };
+  // ---------- THE STUDIO'S GOOGLE ----------
+  // Once an admin has set Google up in Nova Agent (Admin → Google), its client ID is here for
+  // everyone: no set-up in Notes at all. (Nova Bot online, or Nova Agent on the studio PC, answers.)
+  const google = { copyRich, copyAndOpen, saveToDrive, onHttp, studioClientId: '' };
+  if (onHttp()) {
+    fetch('/auth/google/available', { headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((d) => {
+        google.studioClientId = (d && d.available && d.clientId) || '';
+        const setup = document.getElementById('gd-setup');
+        if (setup && google.studioClientId) setup.hidden = true;
+      })
+      .catch(() => {});
+  }
+  // "Open Admin → Google": inside Nova Agent's viewer when Notes is open there
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest || !e.target.closest('#gd-admin')) return;
+    try {
+      if (window.top !== window && window.top.NovaAgent && window.top.NovaAgent.open) return window.top.NovaAgent.open('/admin/google/setup');
+    } catch (err) {}
+    window.open('/admin/google/setup', '_blank', 'noopener');
+  });
+
+  NN.google = google;
 })();
