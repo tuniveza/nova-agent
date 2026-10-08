@@ -19,7 +19,7 @@
 
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { readCalendar } from "../calendar/store";
+import { noteOccurrences, readCalendar } from "../calendar/store";
 import { askWithResearch } from "../llm";
 import type { Source } from "../web";
 import { memoryFor } from "../memory";
@@ -133,7 +133,10 @@ async function askForPlan(data: QuestData, parts: { request: string; deadline?: 
   const r = data.rhythm;
   const until = parts.deadline ? stampOf(parts.deadline).slice(0, 10) : fromMin(now + 120 * 1440).slice(0, 10);
   const taken = readCalendar()
-    .notes.filter((n) => !/^(quest|block|mile)-/.test(n.id) && n.start.slice(0, 10) <= until && n.end >= fromMin(now))
+    .notes.filter((n) => !/^(quest|block|mile)-/.test(n.id) && !n.allDay)
+    .flatMap((n) => noteOccurrences(n, fromMin(now).slice(0, 10), until))
+    .filter((n) => n.end >= fromMin(now))
+    .sort((a, b) => a.start.localeCompare(b.start))
     .slice(0, 80)
     .map((n) => `- ${n.start.replace("T", " ")} to ${n.end.slice(11)}: ${n.title}`)
     .join("\n");

@@ -5,6 +5,7 @@
 // Taps also arrive with each job check (jobs.ts), so they land within a second.
 
 import { calendarEvents, readCalendar } from "../calendar/store";
+import { startCalendarCloud } from "../calendar/cloud";
 import { config } from "../config";
 import { trace } from "../trace";
 import { applyQuestTap, questState, type QuestTap } from "./actions";
@@ -79,6 +80,8 @@ async function send(): Promise<void> {
 }
 
 export function startHubSync(): void {
+  // Calendar lives on Nova Bot too (so it works with this PC off): keep the two the same
+  startCalendarCloud();
   const later = () => {
     clearTimeout(soon);
     soon = setTimeout(send, 1500);

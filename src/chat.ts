@@ -18,6 +18,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { addDay, addNote, AESTHETICS, listRange, PRESETS, readCalendar, removeDay, removeNote, THEMES, updateDay, updateNote } from "./calendar/store";
+import { EVENT_EXTRAS, extrasInWords, extrasToNote } from "./calendar/chatFields";
 import { config } from "./config";
 import { getClient } from "./llm";
 import { learnFrom, memoryFor } from "./memory";
@@ -108,7 +109,7 @@ function tools(actions: ChatAction[]) {
         if (!notes.length && !days.length) return `Nothing in the calendar from ${from} to ${to}.`;
         return JSON.stringify({
           day_cards: days.map((d) => ({ id: d.id, date: d.date, title: d.title, preset: d.preset, repeats_yearly: d.repeat === "yearly", info: d.info, location: d.location, tags: d.tags })),
-          note_cards: notes.map((n) => ({ id: n.id, title: n.title, note: n.body, author: n.author, start: n.start, end: n.end })),
+          note_cards: notes.map((n) => ({ id: n.id, title: n.title, note: n.body, author: n.author, start: n.start, end: n.end, details: extrasInWords(n) || undefined })),
         });
       },
     }),
@@ -121,14 +122,15 @@ function tools(actions: ChatAction[]) {
         start: STAMP,
         end: STAMP.optional().describe("When it finishes (defaults to one hour after the start)"),
         author: z.string().max(60).optional(),
+        ...EVENT_EXTRAS,
       }),
-      run: async ({ title, note, start, end, author }) => {
+      run: async ({ title, note, start, end, author, ...extras }) => {
         const finish = end ?? (() => {
           const d = new Date(`${start}:00Z`);
           d.setUTCHours(d.getUTCHours() + 1);
           return d.toISOString().slice(0, 16);
         })();
-        const card = addNote({ title, body: note, start, end: finish, author });
+        const card = addNote({ title, body: note, start, end: finish, author, ...extrasToNote(extras) });
         did("added", `Added note card “${card.title}”: ${whenText(card.start, card.end)}`);
         return `Added note card ${card.id}: “${card.title}”, ${whenText(card.start, card.end)}.`;
       },
@@ -143,9 +145,10 @@ function tools(actions: ChatAction[]) {
         start: STAMP.optional(),
         end: STAMP.optional(),
         author: z.string().max(60).optional(),
+        ...EVENT_EXTRAS,
       }),
-      run: async ({ id, note, ...rest }) => {
-        const card = updateNote(id, { ...rest, body: note });
+      run: async ({ id, note, location, all_day, color, repeat, remind_minutes_before, ...rest }) => {
+        const card = updateNote(id, { ...rest, body: note, ...extrasToNote({ location, all_day, color, repeat, remind_minutes_before }) });
         did("changed", `Changed note card “${card.title}”: ${whenText(card.start, card.end)}`);
         return `Updated note card “${card.title}”, now ${whenText(card.start, card.end)}.`;
       },

@@ -2,7 +2,7 @@
 // the plan in Calendar (each planned quest, each blocked time and each
 // mission milestone becomes a note card there, kept in step automatically).
 
-import { readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
+import { noteOccurrences, readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
 import { config } from "../config";
 import { fromMin, planQuests, toMin, type Busy } from "./scheduler";
 import { nextSession } from "./lengths";
@@ -26,9 +26,14 @@ export function nowMinutes(at: Date = new Date()): number {
 }
 
 // Calendar entries the person made themselves count as taken time
+// (every time a repeating one happens, over the planner's whole reach; all-day events are
+// markers like day cards, not taken time)
 function calendarBusy(): Busy[] {
+  const from = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+  const to = new Date(Date.now() + (MAX_HORIZON_DAYS + 1) * 864e5).toISOString().slice(0, 10);
   return readCalendar()
-    .notes.filter((n) => !isOurNote(n.id) && n.end > n.start)
+    .notes.filter((n) => !isOurNote(n.id) && !n.allDay && n.end > n.start)
+    .flatMap((n) => noteOccurrences(n, from, to))
     .map((n) => ({ start: n.start, end: n.end, label: n.title }));
 }
 

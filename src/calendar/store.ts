@@ -15,6 +15,7 @@ import { randomUUID } from "node:crypto";
 import { sendAlert } from "../alerts";
 import { config } from "../config";
 import { trace } from "../trace";
+import { cleanRepeat, describeRepeat, occurrences, type Repeat } from "../../web/calendar/js/recur.js";
 
 export interface NoteCard {
   id: string;
@@ -26,6 +27,13 @@ export interface NoteCard {
   art: { seed: number; subject: string };
   created: string;
   updated: string;
+  // The Calendar panel's extras (all optional; older cards have none)
+  allDay?: boolean;
+  location?: string;
+  color?: string;
+  reminders?: number[]; // minutes before (phones are reminded by Nova Bot)
+  repeat?: Repeat; // see web/calendar/js/recur.js
+  exdates?: string[]; // dates taken out of a repeating series
 }
 
 export interface DayCard {
@@ -79,8 +87,34 @@ function cleanNote(n: any): NoteCard | null {
     art: { seed: Number(n.art?.seed) >>> 0 || Math.floor(Math.random() * 2 ** 32), subject: text(n.art?.subject, 30) || "auto" },
     created: text(n.created, 40) || now(),
     updated: text(n.updated, 40) || text(n.created, 40) || now(),
+    ...noteExtras(n),
   };
 }
+
+const COLORS = ["rose", "violet", "blue", "teal", "green", "amber", "orange", "red", "grey"];
+// The Calendar panel's extras, kept only when set (so older cards stay as they were)
+function noteExtras(n: any): Partial<NoteCard> {
+  const out: Partial<NoteCard> = {};
+  if (n.allDay === true) out.allDay = true;
+  if (text(n.location, 160)) out.location = text(n.location, 160);
+  if (COLORS.includes(n.color)) out.color = n.color;
+  if (Array.isArray(n.reminders)) {
+    const r = [...new Set(n.reminders.map(Number).filter((m: number) => Number.isInteger(m) && m >= 0 && m <= 40320))].slice(0, 5) as number[];
+    if (r.length) out.reminders = r.sort((a, b) => a - b);
+  }
+  const repeat = cleanRepeat(n.repeat);
+  if (repeat) {
+    out.repeat = repeat;
+    out.exdates = Array.isArray(n.exdates) ? [...new Set(n.exdates.filter(isDate) as string[])].slice(0, 500) : [];
+  }
+  return out;
+}
+
+// Each time a note card happens between two dates (a repeating one, every time; others once)
+export function noteOccurrences(n: NoteCard, from: string, to: string): NoteCard[] {
+  return occurrences(n, from, to).map((o) => ({ ...n, start: o.start, end: o.end }));
+}
+export { describeRepeat };
 
 function cleanDay(d: any): DayCard | null {
   if (!d || typeof d !== "object" || !isDate(d.date)) return null;
@@ -174,9 +208,8 @@ function change<T>(fn: (data: CalendarData) => T): T {
 // Note cards that touch a date range, and day cards in it (yearly ones included)
 export function listRange(from: string, to: string) {
   const data = readCalendar();
-  const notes = data.notes
-    .filter((n) => n.start.slice(0, 10) <= to && n.end.slice(0, 10) >= from)
-    .sort((a, b) => a.start.localeCompare(b.start));
+  // A repeating note card shows each time it happens (same id: changing it changes the series)
+  const notes = data.notes.flatMap((n) => noteOccurrences(n, from, to)).sort((a, b) => a.start.localeCompare(b.start));
   const days = data.days.filter((d) => {
     if (d.date >= from && d.date <= to) return true;
     if (d.repeat !== "yearly" || d.date > to) return false;
@@ -190,7 +223,7 @@ export function listRange(from: string, to: string) {
   return { notes, days };
 }
 
-export function addNote(input: { title: string; body?: string; author?: string; start: string; end?: string }): NoteCard {
+export function addNote(input: { title: string; body?: string; author?: string; start: string; end?: string } & Partial<NoteCard>): NoteCard {
   return change((data) => {
     const note = cleanNote({ ...input, author: input.author || data.prefs.author, created: now(), updated: now() });
     if (!note) throw new Error("A note card needs a start time like 2026-10-09T14:00.");
@@ -199,7 +232,7 @@ export function addNote(input: { title: string; body?: string; author?: string; 
   });
 }
 
-export function updateNote(id: string, changes: Partial<Pick<NoteCard, "title" | "body" | "author" | "start" | "end">>): NoteCard {
+export function updateNote(id: string, changes: Partial<NoteCard>): NoteCard {
   return change((data) => {
     const i = data.notes.findIndex((n) => n.id === id);
     if (i < 0) throw new Error(`No note card with id ${id}.`);

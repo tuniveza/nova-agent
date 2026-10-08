@@ -4,219 +4,139 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Calendar</title>
-<meta name="description" content="Calendar: a cosmic calendar of note cards and day cards, from Nova Agent by Novacane Studios.">
+<meta name="description" content="Calendar: the studio's events, day cards, Quests and bookings, inside Nova Agent.">
 <meta name="theme-color" content="#06040D">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-<link rel="icon" href="assets/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Calendar">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="application-name" content="Calendar">
+<script src="js/embed.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<script src="js/embed.js"></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap">
-<link rel="stylesheet" href="css/nova.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,800&family=Saira:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/shared/themes.css">
+<script src="/shared/themes.js"></script>
+<link rel="stylesheet" href="css/calendar.css">
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <!-- The Calendar mark: a crescent-moon C with three stars, in the current theme's colours -->
-    <radialGradient id="mk-sky" cx="72%" cy="18%" r="95%"><stop offset="0" style="stop-color:var(--accent-2)"/><stop offset=".42" style="stop-color:var(--accent-3)"/><stop offset="1" style="stop-color:var(--void)"/></radialGradient>
-    <radialGradient id="mk-neb" cx="15%" cy="90%" r="60%"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.7"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></radialGradient>
-    <linearGradient id="mk-moon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--soft)"/><stop offset=".5" style="stop-color:var(--hi)"/><stop offset="1" style="stop-color:var(--lilac)"/></linearGradient>
-    <mask id="mk-crescent"><rect width="512" height="512" fill="#000"/><circle cx="248" cy="260" r="150" fill="#fff"/><circle cx="318" cy="232" r="124" fill="#000"/></mask>
-    <filter id="mk-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="16"/></filter>
-    <filter id="mk-soft" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
-    <symbol id="i-mark" viewBox="0 0 512 512">
-      <rect width="512" height="512" fill="url(#mk-sky)"/>
-      <rect width="512" height="512" fill="url(#mk-neb)"/>
-      <g fill="#fff"><circle cx="70" cy="80" r="2.6" opacity=".8"/><circle cx="452" cy="96" r="2" opacity=".6"/><circle cx="470" cy="300" r="2.4" opacity=".6"/><circle cx="96" cy="430" r="1.8" opacity=".55"/><circle cx="196" cy="48" r="1.6" opacity=".5"/></g>
-      <rect width="512" height="512" style="fill:var(--hi)" opacity=".7" mask="url(#mk-crescent)" filter="url(#mk-glow)"/>
-      <rect width="512" height="512" fill="url(#mk-moon)" mask="url(#mk-crescent)"/>
-      <g fill="#fff" opacity=".18" mask="url(#mk-crescent)"><circle cx="150" cy="300" r="14"/><circle cx="190" cy="370" r="9"/><circle cx="140" cy="220" r="7"/></g>
-      <g transform="translate(330 214)"><circle r="12" style="fill:var(--hi)" opacity=".85" filter="url(#mk-soft)"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" fill="#fff"/></g>
-      <g transform="translate(372 290) scale(.62)"><circle r="12" style="fill:var(--lilac)" opacity=".8" filter="url(#mk-soft)"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" fill="#fff"/></g>
-      <path transform="translate(320 344) scale(.45)" d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" style="fill:var(--soft)"/>
-    </symbol>
-  </defs>
-</svg>
-<div class="splash" id="splash" aria-hidden="true">
-  <svg class="splash-mark" viewBox="0 0 512 512"><use href="#i-mark"/></svg>
-  <span class="splash-name">Calendar</span>
-  <span class="splash-kicker">Nova Agent · Novacane</span>
-</div>
-<canvas id="sky" aria-hidden="true"></canvas>
-<div class="nebula" aria-hidden="true"></div>
-<div class="grain" aria-hidden="true"></div>
-
-<div class="app">
-  <header class="topbar">
-    <a class="brand" href="./" aria-label="Calendar home">
-      <svg class="app-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
-      <span class="brand-text">
-        <span class="brand-kicker">Nova Agent · Novacane</span>
-        <span class="wordmark">Calendar</span>
-      </span>
-    </a>
-
-    <nav class="month-nav" aria-label="Month">
-      <button type="button" class="icon-btn" id="prev" aria-label="Previous month"></button>
-      <h1 class="month-label" id="month-label" aria-live="polite"></h1>
-      <button type="button" class="icon-btn" id="next" aria-label="Next month"></button>
-      <button type="button" class="btn ghost sm" id="today">Today</button>
-    </nav>
-
-    <div class="top-actions">
-      <!-- Portal: who you are (connect it once in Portal; inside Nova Agent, who Nova Agent works for) -->
-      <nova-manual compact></nova-manual>
-      <nova-portal-badge></nova-portal-badge>
-      <div class="themes" id="themes" role="radiogroup" aria-label="Colour theme"></div>
-      <!-- Every Nova Agent address, live and testing (behind the admin password) -->
-      <a class="btn ghost sm" href="https://novacane-worker.novacane-studio.workers.dev/admin/links" target="_blank" rel="noopener" title="Every Nova Agent address, live and testing (password protected)">🔒 Links</a>
-      <!-- Sound effects on or off (the shared Nova Agent sounds, js/sfx.js); it plays its own chime when switched -->
-      <button type="button" class="btn ghost sm sound-btn" id="sound" aria-pressed="true" data-sfx="none" title="Sound effects">Sound</button>
-      <button type="button" class="btn ghost sm" id="install" hidden title="Install Calendar as an app on this device">Install</button>
-      <button type="button" class="btn primary" id="new-note" data-sfx="open"></button>
-      <button type="button" class="btn ghost" id="new-day" data-sfx="open"></button>
+<div class="cal" id="cal">
+  <header class="bar">
+    <div class="nav">
+      <button class="icon-btn" id="prev" type="button" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="title" id="title" type="button" aria-label="Jump to a date"><span id="title-text">Calendar</span><svg viewBox="0 0 24 24" class="caret"><path d="M7 10l5 5 5-5"/></svg></button>
+      <button class="icon-btn" id="next" type="button" aria-label="Forward"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="chip today" id="today" type="button">Today</button>
+      <input type="date" id="jump" class="jump" aria-label="Jump to a date" tabindex="-1">
+    </div>
+    <div class="tools">
+      <div class="views" role="tablist" aria-label="View">
+        <button type="button" role="tab" data-view="month">Month</button>
+        <button type="button" role="tab" data-view="week">Week</button>
+        <button type="button" role="tab" data-view="day">Day</button>
+        <button type="button" role="tab" data-view="list">List</button>
+      </div>
+      <button class="icon-btn" id="search-btn" type="button" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
+      <button class="icon-btn" id="layers-btn" type="button" aria-label="What to show" aria-haspopup="true"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
+      <button class="add-btn" id="add" type="button" aria-label="Add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add</span></button>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="calendar" aria-label="Calendar">
-      <div class="weekdays" id="weekdays" aria-hidden="true"></div>
-      <div class="grid" id="grid"></div>
-      <div class="month-strip" id="month-strip" aria-label="This month"></div>
-      <div class="cal-foot">
-        <div class="legend">
-          <span><i class="lg-dot"></i> note card</span>
-          <span><i class="lg-bar"></i> day card</span>
-          <span><span id="lg-moon"></span> moon phase</span>
-          <span class="keys"><kbd>N</kbd> note <kbd>D</kbd> day <kbd>T</kbd> today <kbd>←→↑↓</kbd> move <kbd>PgUp</kbd><kbd>PgDn</kbd> month</span>
-        </div>
-        <div class="data-actions">
-          <button type="button" class="btn ghost sm" id="export"></button>
-          <button type="button" class="btn ghost sm" id="import"></button>
-          <input type="file" id="import-file" accept="application/json,.json" hidden>
-        </div>
-      </div>
-    </section>
+  <div class="status" id="status" hidden></div>
+  <div class="search" id="search" hidden>
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+    <input type="search" id="search-input" placeholder="Search events" autocomplete="off" aria-label="Search events">
+    <button class="icon-btn" id="search-close" type="button" aria-label="Close search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
 
-    <aside class="panel" id="panel" aria-label="Selected day" aria-live="polite"></aside>
-  </main>
-
-  <footer class="foot">Calendar · part of Nova Agent · Novacane Studios · saved in this browser only, so export a backup now and then</footer>
+  <main class="view" id="view" tabindex="-1"></main>
 </div>
 
-<!-- NOTE CARD EDITOR -->
-<dialog id="note-dlg" class="dlg" aria-labelledby="note-dlg-title">
-  <form id="note-form" class="dlg-inner" novalidate>
-    <header class="dlg-head">
-      <div><span class="dlg-kicker">Note card</span><h2 id="note-dlg-title">New note card</h2></div>
-      <button type="button" class="icon-btn" data-close aria-label="Close"></button>
-    </header>
-    <div class="dlg-body note-grid">
-      <div class="art-col">
-        <figure class="art-frame">
-          <img id="note-art" alt="Generated artwork for this note">
-          <figcaption id="note-art-cap"></figcaption>
-        </figure>
-        <div class="art-tools">
-          <label class="sr-only" for="note-subject">Art style</label>
-          <select id="note-subject" name="subject"></select>
-          <button type="button" class="btn ghost sm" id="note-regen"></button>
-          <a class="btn ghost sm" id="note-download" href="#" download="nova-calendar-art.png"></a>
+<!-- What to show -->
+<div class="pop" id="layers" hidden role="dialog" aria-label="What to show">
+  <label><input type="checkbox" data-layer="events" checked><span class="sw ev"></span>Your events</label>
+  <label><input type="checkbox" data-layer="days" checked><span class="sw day"></span>Day cards</label>
+  <label><input type="checkbox" data-layer="quests" checked><span class="sw quest"></span>Quests (Nova Agent's plan)</label>
+  <label><input type="checkbox" data-layer="bookings" checked><span class="sw book"></span>Studio bookings</label>
+</div>
+
+<!-- Add or change an event or a day card -->
+<div class="scrim" id="scrim" hidden></div>
+<section class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <form id="form" novalidate>
+    <div class="sheet-head">
+      <button class="icon-btn" type="button" id="sheet-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h2 id="sheet-title">New event</h2>
+      <button class="save" type="submit" id="save">Save</button>
+    </div>
+    <div class="sheet-body">
+      <div class="kinds" id="kinds" role="tablist">
+        <button type="button" data-kind="event" class="on">Event</button>
+        <button type="button" data-kind="day">Day card</button>
+      </div>
+      <div class="quick" id="quick">
+        <input id="quick-input" type="text" placeholder="Type it: Mix review Friday 2pm 1h" autocomplete="off" aria-label="Quick add">
+        <p class="quick-hint" id="quick-hint"></p>
+      </div>
+      <input class="big" id="f-title" type="text" placeholder="Title" maxlength="120" aria-label="Title">
+
+      <div class="group" data-for="event">
+        <label class="row toggle"><span>All day</span><input type="checkbox" id="f-allday"><span class="switch"></span></label>
+        <div class="row when"><span>Starts</span><input type="date" id="f-sdate" aria-label="Start date"><input type="time" id="f-stime" step="300" aria-label="Start time"></div>
+        <div class="row when"><span>Ends</span><input type="date" id="f-edate" aria-label="End date"><input type="time" id="f-etime" step="300" aria-label="End time"></div>
+        <div class="row"><span>Repeats</span>
+          <select id="f-repeat" aria-label="Repeats">
+            <option value="">Doesn't repeat</option>
+            <option value="daily">Every day</option>
+            <option value="weekly">Every week</option>
+            <option value="monthly">Every month</option>
+            <option value="yearly">Every year</option>
+            <option value="custom">Custom…</option>
+          </select>
         </div>
-        <p class="hint">The picture is painted from your note. Type and it changes; press Regenerate to roll a new one and keep it.</p>
-      </div>
-      <div class="field-col">
-        <label class="field"><span>Title</span><input name="title" maxlength="120" placeholder="Untitled transmission" autocomplete="off"></label>
-        <label class="field"><span>Note</span><textarea name="body" rows="6" maxlength="5000" placeholder="What's happening in this orbit?"></textarea></label>
-        <label class="field"><span>Author</span><input name="author" maxlength="60" placeholder="Who logged this" autocomplete="name"></label>
-        <div class="field-row">
-          <label class="field"><span>Start</span><input type="datetime-local" name="start" required></label>
-          <label class="field"><span>Finish</span><input type="datetime-local" name="end" required></label>
+        <div class="custom" id="custom" hidden>
+          <div class="row"><span>Every</span><input type="number" id="f-interval" min="1" max="99" value="1" aria-label="Every how many"><select id="f-freq" aria-label="Unit"><option value="daily">days</option><option value="weekly">weeks</option><option value="monthly">months</option><option value="yearly">years</option></select></div>
+          <div class="wd" id="f-days" aria-label="On these days"></div>
+          <div class="row"><span>Ends</span>
+            <select id="f-ends" aria-label="Ends"><option value="never">Never</option><option value="until">On a date</option><option value="count">After a number of times</option></select>
+            <input type="date" id="f-until" aria-label="Last date" hidden><input type="number" id="f-count" min="1" max="1000" value="10" aria-label="How many times" hidden>
+          </div>
         </div>
-        <p class="form-error" id="note-error" role="alert"></p>
-        <p class="stamp" id="note-stamp"></p>
+        <div class="row stack"><span>Remind me</span><div class="chips" id="f-reminders"></div></div>
+        <div class="row stack"><span>Colour</span><div class="colors" id="f-colors"></div></div>
+        <input id="f-location" type="text" placeholder="Where" maxlength="160" aria-label="Where">
+      </div>
+
+      <div class="group" data-for="day" hidden>
+        <div class="row"><span>Date</span><input type="date" id="d-date" aria-label="Date"></div>
+        <div class="row"><span>Kind</span><select id="d-preset" aria-label="Kind of day"></select></div>
+        <label class="row toggle"><span>Every year</span><input type="checkbox" id="d-yearly"><span class="switch"></span></label>
+        <input id="d-location" type="text" placeholder="Where" maxlength="120" aria-label="Where">
+      </div>
+
+      <textarea id="f-notes" rows="3" placeholder="Notes" maxlength="5000" aria-label="Notes"></textarea>
+      <p class="readonly" id="readonly" hidden></p>
+      <div class="actions" id="actions">
+        <button type="button" class="ghost" id="duplicate">Duplicate</button>
+        <button type="button" class="danger" id="delete">Delete</button>
       </div>
     </div>
-    <footer class="dlg-foot">
-      <button type="button" class="btn ghost danger" id="note-delete" data-sfx="tap">Delete</button>
-      <span class="spacer"></span>
-      <button type="button" class="btn ghost" data-close>Cancel</button>
-      <button type="submit" class="btn primary" data-sfx="send">Save note card</button>
-    </footer>
   </form>
-</dialog>
+</section>
 
-<!-- DAY CARD EDITOR -->
-<dialog id="day-dlg" class="dlg wide" aria-labelledby="day-dlg-title">
-  <form id="day-form" class="dlg-inner" novalidate>
-    <header class="dlg-head">
-      <div><span class="dlg-kicker">Day card</span><h2 id="day-dlg-title">New day card</h2></div>
-      <button type="button" class="icon-btn" data-close aria-label="Close"></button>
-    </header>
-    <div class="dlg-body">
-      <div class="day-preview">
-        <div id="day-preview"></div>
-        <button type="button" class="btn ghost sm reroll" id="day-reroll"></button>
-      </div>
-      <p class="series-note" id="day-series-note" hidden>This card repeats every year, so changes apply to every year it shows.</p>
-      <fieldset class="field"><legend>Preset</legend><div class="opt-grid" id="preset-grid"></div></fieldset>
-      <div class="field-row title-row">
-        <label class="field"><span>Title</span><input name="title" maxlength="80" placeholder="Name this day" autocomplete="off"></label>
-        <label class="field"><span>Date</span><input type="date" name="date" required></label>
-      </div>
-      <label class="check"><input type="checkbox" name="repeat"> Repeats every year</label>
-      <fieldset class="field"><legend>Aesthetic</legend><div class="opt-grid" id="aes-grid"></div></fieldset>
-      <fieldset class="field"><legend>Theme</legend><div class="opt-grid" id="day-theme-grid"></div></fieldset>
-      <label class="field"><span>Day information</span><textarea name="info" rows="4" maxlength="4000" placeholder="Anything worth knowing about this day"></textarea></label>
-      <div class="field-row">
-        <label class="field"><span>Location</span><input name="location" maxlength="120" placeholder="Where"></label>
-        <label class="field"><span>Tags</span><input name="tags" maxlength="300" placeholder="comma, separated"></label>
-      </div>
-      <p class="form-error" id="day-error" role="alert"></p>
-    </div>
-    <footer class="dlg-foot">
-      <button type="button" class="btn ghost danger" id="day-delete" data-sfx="tap">Delete</button>
-      <span class="spacer"></span>
-      <button type="button" class="btn ghost" data-close>Cancel</button>
-      <button type="submit" class="btn ghost" value="note" data-sfx="send">Save &amp; add note</button>
-      <button type="submit" class="btn primary" value="save" data-sfx="send">Save day card</button>
-    </footer>
-  </form>
-</dialog>
+<!-- This one, this and following, or all? -->
+<section class="sheet small" id="which" hidden role="dialog" aria-modal="true" aria-labelledby="which-title">
+  <div class="sheet-head"><h2 id="which-title">Change which?</h2></div>
+  <div class="sheet-body which">
+    <button type="button" data-which="one">Just this one</button>
+    <button type="button" data-which="following">This and the ones after</button>
+    <button type="button" data-which="all">Every one</button>
+    <button type="button" class="ghost" data-which="">Cancel</button>
+  </div>
+</section>
 
-<!-- CONFIRM -->
-<dialog id="confirm-dlg" class="dlg small" aria-labelledby="confirm-title">
-  <form method="dialog" class="dlg-inner">
-    <div class="dlg-body">
-      <h2 id="confirm-title" class="confirm-title"></h2>
-      <p id="confirm-msg" class="confirm-msg"></p>
-    </div>
-    <footer class="dlg-foot">
-      <span class="spacer"></span>
-      <button value="cancel" class="btn ghost">Keep it</button>
-      <button value="ok" class="btn danger solid" data-sfx="remove">Delete</button>
-    </footer>
-  </form>
-</dialog>
-
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" hidden role="status" aria-live="polite"><span id="toast-text"></span><button type="button" id="toast-undo" hidden>Undo</button></div>
 
 <script src="/shared/sfx.js"></script>
-<script src="js/themes.js"></script>
 <script src="js/presets.js"></script>
-<script src="js/sky.js"></script>
-<script src="js/cosmos.js"></script>
-<script src="js/store.js"></script>
-<script src="js/backdrop.js"></script>
-<script src="js/app.js"></script>
+<script type="module" src="js/cal.js"></script>
 <script src="/shared/badge.js" defer></script>
-<script src="/shared/manual.js" defer></script>
 </body>
 </html>
