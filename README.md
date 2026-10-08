@@ -30,6 +30,12 @@ inside Nova Agent. Nova Agent has one address in each place, `/agent/`:
 `/agent/<panel>` (`/agent/calendar`, `/agent/portal`, `/agent/notes`, `/agent/index`...)
 opens Nova Agent with that panel. Nova Bot (the website chat) keeps the main address.
 
+Chat, Missions, Quests, Calendar and the Visualizer run on the studio PC. The online Nova Agent
+reaches them over a link the PC opens to Nova Bot (`src/relay.ts`, a WebSocket with
+`AGENT_NOVA_KEY`), for signed-in staff only. When the PC is off, the online page says so and the
+other panels keep working. On the PC itself, its pages open the online Nova Agent, so there's one
+address; set `NOVA_LOCAL_UI=1` in `.env` to keep using the pages here (when the internet is down).
+
 On the studio PC, open `http://localhost:4545/agent/` and you get one screen that fits without
 scrolling: **Missions** on the left, a **chat** with Nova Agent in the middle, **Nova
 Quests** (today's plan) on the right, and the **panels** along the bottom.

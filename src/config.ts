@@ -81,6 +81,8 @@ export const config = {
 
   // The local visualizer page (npm run visualizer)
   visualizerPort: Number(readText("VISUALIZER_PORT", "4545")),
+  // 1: the pages stay on this computer instead of opening Nova Agent online (for when the internet is down)
+  localUi: readText("NOVA_LOCAL_UI") === "1",
 
   headless: readYesNo("HEADLESS", true),
   dryRun: readYesNo("DRY_RUN", true),

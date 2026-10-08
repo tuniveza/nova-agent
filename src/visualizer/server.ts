@@ -29,6 +29,7 @@ import { addDays, today } from "../acuity/list";
 import { readCache } from "../heal/cache";
 import { runHealthcheck } from "../healthcheck";
 import { startCollectingJobs } from "../jobs";
+import { startRelay } from "../relay";
 import { checkLogin, describeAppointments, listTask, readOnlyTour } from "../tasks";
 import { getRecentEvents, onTrace, trace } from "../trace";
 import { calendarEvents, readCalendar } from "../calendar/store";
@@ -41,7 +42,6 @@ import { startHubSync } from "../quests/hubsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { questEvents } from "../quests/store";
-import { startRelay } from "../relay";
 
 // Everything Nova Agent shows lives in web/: its own page (web/agent) and each panel
 const web = (path: string) => fileURLToPath(new URL(`../../web/${path}`, import.meta.url));
@@ -79,6 +79,24 @@ app.use("/actions/*", async (c, next) => {
     return c.json({ ok: false, message: "Missing visualizer header" }, 403);
   }
   await next();
+});
+
+// ---- One address: Nova Agent online ----
+// A page opened in a browser on this computer opens Nova Agent online instead
+// (https://…workers.dev/agent/), which reaches this server over its link (src/relay.ts).
+// NOVA_LOCAL_UI=1 keeps the pages here (for when the internet is down). Only top-level pages:
+// Nova Agent's own requests, files and the online link's requests aren't touched.
+app.use("*", async (c, next) => {
+  if (config.localUi || c.req.header("Sec-Fetch-Dest") !== "document" || (c.req.method !== "GET" && c.req.method !== "HEAD")) return next();
+  const path = c.req.path;
+  const last = path.slice(path.lastIndexOf("/") + 1);
+  if (last.includes(".") && !last.endsWith(".html")) return next();
+  const online = config.workerUrl.replace(/\/$/, "") + "/agent/";
+  const search = new URL(c.req.url).search;
+  if (path === "/" || path === "/agent" || path === "/agent/") return c.redirect(online + search);
+  if (path.startsWith("/agent/")) return c.redirect(config.workerUrl.replace(/\/$/, "") + path + search);
+  if (PANELS.some((p) => path === p || path.startsWith(p + "/"))) return c.redirect(online + "?open=" + encodeURIComponent(path + search));
+  return c.redirect(online);
 });
 
 // ---- Panels have no pages of their own ----

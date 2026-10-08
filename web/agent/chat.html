@@ -1557,12 +1557,12 @@
 })();
 </script>
 <script>
-// Online (not on the studio PC): chat, Missions and Quests come from the studio computer through
-// Nova Bot (its src/agent-relay.js). When it's off, or nobody's signed in, say so here; the panels
-// below still work. When it's back, the page starts again (or offers to, if a panel is open).
+// Online: chat, Missions and Quests come from the studio computer through Nova Bot (its
+// src/agent-relay.js). When it's off, or nobody's signed in, say so here; the panels below still
+// work. When it's back, the page starts again (or offers to, if a panel is open). On the studio
+// computer itself /status always answers, so this stays quiet.
 (function () {
   'use strict';
-  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
   const $ = (id) => document.getElementById(id);
   const input = $('input'), send = $('send');
   const hint = input.placeholder;

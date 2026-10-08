@@ -37,10 +37,19 @@
       if (put.status === 200) removeItem.call(localStorage, UNSAVED);
     }
   } catch (e) {}
+  // The first time this browser's Calendar joins Nova Agent's calendar (online, it used to keep its
+  // own), what it had is kept aside once, never overwritten: localStorage 'nova-calendar/before-nova-agent'
+  var JOINED = 'nova-calendar/joined';
+  var BACKUP = 'nova-calendar/before-nova-agent';
+  try {
+    var had = getItem.call(localStorage, KEY);
+    if (had && !getItem.call(localStorage, JOINED) && !getItem.call(localStorage, BACKUP)) setItem.call(localStorage, BACKUP, had);
+  } catch (e) {}
   try {
     var get = request('GET');
     if (get.status === 200 && get.responseText) {
       setItem.call(localStorage, KEY, get.responseText);
+      setItem.call(localStorage, JOINED, '1');
       rev = JSON.parse(get.responseText).rev;
     }
   } catch (e) {

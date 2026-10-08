@@ -27,12 +27,12 @@ const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
   { methods: ["GET"], path: /^\/status$/ },
   { methods: ["GET"], path: /^\/quests\/(state|events)$/ },
   { methods: ["POST"], path: /^\/actions\/(chat|missions|quests|blocks|rhythm|replan)$/ },
-  { methods: ["POST"], path: /^\/actions\/(missions|quests)\/[\w-]+(\/refine)?$/ },
-  { methods: ["GET"], path: /^\/calendar-sync\.js$/ },
+  { methods: ["POST"], path: /^\/actions\/(missions|quests)\/[\w-]+(\/(refine|export))?$/ },
+  { methods: ["POST"], path: /^\/actions\/files\/[\w-]+\/remove$/ },
+  { methods: ["GET"], path: /^\/files\/(list|[\w-]+\/[^/]+)$/ },
   { methods: ["GET", "PUT"], path: /^\/calendar-api\/data$/ },
   { methods: ["GET"], path: /^\/calendar-api\/events$/ },
-  { methods: ["GET", "POST", "PUT", "DELETE"], path: /^\/files\/[^/]+(\/[^/]+)?$/ },
-  { methods: ["GET"], path: /^\/(visualizer|events|cache|tasks)$/, admin: true },
+  { methods: ["GET"], path: /^\/(events|cache|tasks)$/, admin: true },
   { methods: ["POST"], path: /^\/actions\/(run\/[\w-]+|forget)$/, admin: true },
 ];
 
