@@ -30,6 +30,7 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
 
 | | |
 |---|---|
+| 👥 **Shared and Local notes** | **Shared** notes are the whole team's: everyone signed in with Portal sees and edits them, on every device, and changes show up for the others within seconds. **Local** notes stay only on this device. Tap **Local / Shared** by "Saved" to move a note between the two (with Undo), and use **All · Shared · Local** above the list to pick what you see. New notes are Local, or Shared when you're looking at Shared. If two people change a shared note at the same time, both versions are kept ("… (conflicted copy)"). |
 | 🔔 **Sound effects** | Soft cosmic sounds on every action. Switch them off or on in **View → Sound effects**. |
 | 🔒 **All Nova Agent links** | **Help → 🔒 All Nova Agent links** opens the password-protected page with every Nova Agent address, live and testing. |
 | ✦ **Inside Nova Agent** | Nova Agent serves its own copy at `/notes/`, so privacy-minded browsers don't block it there. Notes written there are kept on the studio computer. |
@@ -109,7 +110,8 @@ Every press makes a soft cosmic sound: a tap, a menu opening, a dialog closing, 
 | | On the web | Inside Nova Agent |
 |---|---|---|
 | Address | novacane-worker.novacane-studio.workers.dev/notes/ | `/notes/` on Nova Agent |
-| Where notes are kept | In that browser | On the studio computer, separate from the web app's |
+| Where Local notes are kept | In that browser | On the studio computer, separate from the web app's |
+| Shared notes | The team's, kept by Nova Bot | The same team notes |
 | Privacy-minded browsers | May limit what a website saves | Fine: it's part of Nova Agent |
 
 ## How it works
