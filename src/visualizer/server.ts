@@ -162,7 +162,7 @@ app.post("/auth/logout", async (c) => {
   await signOut();
   return c.json({ ok: true });
 });
-// The shared studio password is for phones; on this computer it's your own sign-in
+// There's no shared password any more: everyone signs in with their own account in the Portal
 app.post("/app/api/login", (c) => c.json({ error: "On the studio computer, sign in with your own account in the Portal." }, 400));
 app.post("/app/api/logout", async (c) => {
   await signOut();

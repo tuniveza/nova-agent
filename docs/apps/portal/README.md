@@ -14,7 +14,7 @@ Sign in once and you're signed in to Hub, Index and the admin pages. Every membe
 ## What it does
 
 - **Sign in once, everywhere:** email and password give you a secure session that Hub, Index and the admin pages all trust. Signing out (from any of them) ends it everywhere at once.
-- **Setting up:** the first admin is created with the studio's current shared password, to prove it's you. After that, admins **invite** people with a link (valid for 7 days), and each person chooses their own password. Nobody else ever knows it.
+- **Setting up:** the very first admin is created with the `ADMIN_PASSWORD` secret, to prove it's you. After that, admins **invite** people with a link (valid for 7 days), and each person chooses their own password. Nobody else ever knows it.
 - **Your profile:** your planet, big and animated, with your name, role and "member since". You can re-roll your planet (or go back to your original), change your name, and open your own Index.
 - **The crew (admins):** everyone as a planet badge, with their role, status and last sign-in. Invite people, change roles, switch accounts off (which signs them out at once), and send fresh invite links.
 - **Roles:**

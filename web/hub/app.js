@@ -116,16 +116,10 @@
   // Inside Nova Agent on the studio PC (not a phone)
   const onStudioPC = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
 
+  // Signed out: the one way in is Portal
   function showLogin() {
     $("app").hidden = true;
     $("login").hidden = false;
-    $("password").value = "";
-    // The shared studio password is for phones; on the studio PC it's your own sign-in
-    for (const id of ["password", "login-or", "password-label", "password-submit"]) {
-      const node = $(id);
-      if (node) node.hidden = onStudioPC;
-    }
-    if (!onStudioPC) setTimeout(() => $("password").focus(), 50);
   }
 
   function showApp() {
@@ -142,20 +136,6 @@
     $("voice").classList.toggle("on", handsFree);
     startHandsFree();
   }
-
-  $("login-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    $("login-error").textContent = "";
-    const button = e.target.querySelector("button");
-    button.disabled = true;
-    try {
-      await api("login", { body: { password: $("password").value } });
-      showApp();
-    } catch (err) {
-      $("login-error").textContent = err.message;
-    }
-    button.disabled = false;
-  });
 
   $("logout").addEventListener("click", async () => {
     try {

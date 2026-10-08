@@ -6,12 +6,11 @@ Its data and push come from Nova Bot (`/app/api/*`).
 
 Hub lives at `/app/` (online) and inside Nova Agent on the studio PC. It's a phone-first web app that installs to the home screen,
 and turns into a side-rail layout on a desktop. Staff sign in with
-Portal (or, for now, the studio's shared
-password).
+Portal, each with their own account.
 
 <table>
   <tr>
-    <td width="33%" valign="top"><img src="media/studio-signin.jpg" alt="Hub's sign-in screen, with a Sign in button and the studio password" width="100%"><br><sub><b>Sign in</b> with Portal, or the studio's shared password.</sub></td>
+    <td width="33%" valign="top"><img src="media/studio-signin.jpg" alt="Hub's sign-in screen, with a Sign in button" width="100%"><br><sub><b>Sign in</b> with Portal.</sub></td>
     <td width="33%" valign="top"><img src="media/studio-enquiries.jpg" alt="The Enquiries tab with two new enquiries and buttons to email, call, make a booking link, read the chat and mark done" width="100%"><br><sub><b>Enquiries</b>: email, call, send a booking link, read the chat, mark done.</sub></td>
     <td width="33%" valign="top"><img src="media/studio-calendar-week.jpg" alt="The smart calendar: this week's sessions, hours booked, session value, busiest day, next free hour and one clash, above a month of glowing days" width="100%"><br><sub><b>The smart calendar</b>: the week at a glance, and days that glow as they fill.</sub></td>
   </tr>

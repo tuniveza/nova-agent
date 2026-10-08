@@ -105,8 +105,7 @@ the differences lit up, and can put your edit on top of theirs in one tap, or ke
 | Staff signed in with [Portal](https://github.com/tuniveza/nova-portal) | Staff who aren't admins: the studio's memory and their own; admins: everything |
 
 Index signs in with **Portal**, the suite's one sign-in ("✦ Sign in with Nova
-Portal"), so each person sees what's theirs to see. The studio's shared Hub password
-still works too, and sees everything.
+Portal"), so each person sees what's theirs to see.
 
 The memory engine runs on Nova Bot's worker (`src/memory/` in
 [nova-bot](https://github.com/tuniveza/nova-bot)): the store, extraction and the API. The

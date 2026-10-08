@@ -232,37 +232,12 @@
     $("app").hidden = true;
     $("login").hidden = false;
     document.querySelectorAll(".sheet").forEach((s) => (s.hidden = true));
-    setTimeout(() => $("password").focus(), 50);
   }
   function showApp() {
     state.signedIn = true;
     $("login").hidden = true;
     $("app").hidden = false;
   }
-
-  $("login-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const go = e.submitter || $("login-form").querySelector("button");
-    const error = $("login-error");
-    error.textContent = "";
-    go.disabled = true;
-    try {
-      const r = await api("/app/api/login", { method: "POST", body: { password: $("password").value } });
-      if (!r.ok) {
-        error.textContent = r.data.error || "That didn't work. Try again.";
-        sfx("error");
-        return;
-      }
-      $("password").value = "";
-      sfx("done");
-      showApp();
-      await loadAll();
-    } catch (err) {
-      error.textContent = err.message;
-    } finally {
-      go.disabled = false;
-    }
-  });
 
   // ===== Loading =====
 

@@ -1070,9 +1070,8 @@ html[data-align="center"] .q-tags { justify-content: center; }
 .cal-day.full::after { content: "FULL"; position: absolute; right: 4px; top: 3px; font-family: var(--f-mono); font-size: 7.5px; letter-spacing: 0.1em; color: var(--warn); }
 .cal-day { position: relative; }
 
-/* Signing in: Portal first, the shared studio password underneath */
+/* Signing in: with Portal */
 .portal-btn { display: inline-flex; justify-content: center; width: 100%; text-decoration: none; }
-.login-or { margin: 10px 0 -2px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--muted); text-align: center; }
 
 /* ===================== Nova Agent badge (header) ===================== */
 /* Your planet, name and role; on a phone just the planet, so the brand stays centred */
