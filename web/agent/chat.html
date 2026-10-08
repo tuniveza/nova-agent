@@ -10,9 +10,9 @@
 <!-- Only the weights the page uses, and fetched without holding up the first paint -->
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110..125,700..900&family=Saira:wght@400..700&family=Source+Code+Pro:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110..125,700..900&family=Saira:wght@400..700&family=Source+Code+Pro:wght@400;600&display=optional"></noscript>
-<link rel="icon" href="/agent/icon.svg" type="image/svg+xml">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/agent/apple-touch-icon.png">
+<link rel="icon" href="/agent/icon.svg?v=2" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest?v=2">
+<link rel="apple-touch-icon" href="/agent/apple-touch-icon.png?v=2">
 <meta name="application-name" content="Nova Agent">
 <meta name="apple-mobile-web-app-title" content="Nova Agent">
 <style>
@@ -574,11 +574,9 @@
       <rect width="512" height="512" fill="url(#mk-sky)"/>
       <rect width="512" height="512" fill="url(#mk-neb)"/>
       <g fill="#fff"><circle cx="70" cy="90" r="2.6" opacity=".8"/><circle cx="440" cy="70" r="2" opacity=".6"/><circle cx="462" cy="330" r="2.4" opacity=".6"/><circle cx="80" cy="420" r="1.8" opacity=".55"/><circle cx="290" cy="470" r="1.6" opacity=".5"/></g>
-      <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" style="fill:var(--hi)" opacity=".75" filter="url(#mk-glow)"/>
-      <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" fill="url(#mk-letter)"/>
-      <ellipse cx="256" cy="296" rx="190" ry="44" fill="none" style="stroke:var(--soft)" stroke-opacity=".8" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round" transform="rotate(-14 256 296)"/>
-      <path transform="translate(256 102)" d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/>
-      <circle cx="436" cy="252" r="9" fill="#fff" opacity=".95"/>
+      <path d="M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148" fill="none" style="stroke:var(--hi)" stroke-width="34" stroke-linecap="round" opacity=".6" filter="url(#mk-glow)"/>
+      <path d="M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148" fill="none" stroke="url(#mk-letter)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="256" cy="256" r="164" fill="none" stroke="url(#mk-letter)" stroke-opacity=".18" stroke-width="3"/>
     </symbol>
     <symbol id="i-send" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
@@ -728,22 +726,35 @@
       <button type="button" class="icon-btn suite-x" id="suite-close" aria-label="Close">✕</button>
     </div>
     <div class="suite-groups">
-      <div class="suite-group">
-        <h4>Panels</h4>
+      <div class="suite-group apps">
+        <h4>Apps</h4>
         <div class="suite-grid">
           <a class="suite-app here" href="/agent/"><img src="/agent/icon.svg" alt=""><b>Chat</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
           <a class="suite-app" href="/portal/" data-inside="/portal/"><img src="/portal/icon.svg" alt=""><b>Portal</b><small>Enquiries, chats, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
           <a class="suite-app" href="/calendar/" data-inside="/calendar/"><img src="/calendar/assets/icon.svg" alt=""><b>Calendar</b><small>The one Nova Agent plans into</small></a>
           <a class="suite-app" href="/notes/" data-inside="/notes/"><img src="/notes/assets/icon.svg" alt=""><b>Notes</b><small>Notes and documents, Google Docs export</small></a>
           <a class="suite-app" href="/app/memory/" data-inside="/app/memory/"><img src="/app/memory/icon.svg" alt=""><b>Index</b><small>Everything Nova Agent remembers: browse, edit, approve</small></a>
-          <a class="suite-app" href="/observatory/" data-inside="/observatory/"><img src="/observatory/assets/sigil.svg" alt=""><b>Observatory</b><small>Every project, lines of code and the star map</small></a>
-          <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="suite-glyph">◉</span><b>Lossless audio</b><small>Raw PCM between two devices, anywhere</small></a>
+        </div>
+      </div>
+      <div class="suite-group tools tasks">
+        <h4>Tasks</h4>
+        <div class="suite-grid">
+          <a class="suite-app" href="/agent/" data-pane="quests"><span class="suite-glyph">☰</span><b>Quests</b><small>Today's plan, hour by hour</small></a>
+          <a class="suite-app" href="/agent/" data-pane="missions"><span class="suite-glyph">◆</span><b>Missions</b><small>Your goals, planned into Quests</small></a>
         </div>
       </div>
       <div class="suite-group tools">
-        <h4>Services</h4>
+        <h4>Tools</h4>
         <div class="suite-grid">
+          <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="suite-glyph">◉</span><b>Lossless audio</b><small>Raw PCM between two devices, anywhere</small></a>
           <a class="suite-app" href="/visualizer" data-inside="/visualizer"><span class="suite-glyph">◎</span><b>Visualizer</b><small>Nova Agent's live steps and memory</small></a>
+        </div>
+      </div>
+      <div class="suite-group tools helpers">
+        <h4>Helpers</h4>
+        <div class="suite-grid">
+          <a class="suite-app" href="/observatory/" data-inside="/observatory/"><img src="/observatory/assets/sigil.svg" alt=""><b>Observatory</b><small>Every project, lines of code and the star map</small></a>
+          <a class="suite-app" href="/agent/" data-act="manual"><span class="suite-glyph">📖</span><b>Manual</b><small>How everything in Nova Agent works</small></a>
         </div>
       </div>
     </div>

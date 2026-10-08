@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Nova Agent: the Novacane sigil under the night sky -->
   <defs>
     <radialGradient id="sky" cx="50%" cy="15%" r="95%"><stop offset="0" stop-color="#B01D68"/><stop offset=".42" stop-color="#25194D"/><stop offset="1" stop-color="#06040D"/></radialGradient>
     <radialGradient id="neb" cx="88%" cy="92%" r="55%"><stop offset="0" stop-color="#7A1F86" stop-opacity=".75"/><stop offset="1" stop-color="#7A1F86" stop-opacity="0"/></radialGradient>
@@ -8,9 +9,7 @@
   <rect width="512" height="512" fill="url(#sky)"/>
   <rect width="512" height="512" fill="url(#neb)"/>
   <g fill="#fff"><circle cx="70" cy="90" r="2.6" opacity=".8"/><circle cx="440" cy="70" r="2" opacity=".6"/><circle cx="462" cy="330" r="2.4" opacity=".6"/><circle cx="80" cy="420" r="1.8" opacity=".55"/><circle cx="290" cy="470" r="1.6" opacity=".5"/><circle cx="150" cy="200" r="1.4" opacity=".45"/><circle cx="380" cy="160" r="1.6" opacity=".5"/></g>
-  <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" fill="#FF5FA8" opacity=".75" filter="url(#glow)"/>
-  <path d="M256 120 386 392h-64l-26-58h-80l-26 58h-64zm0 104-26 60h52z" fill-rule="evenodd" fill="url(#letter)"/>
-  <ellipse cx="256" cy="296" rx="190" ry="44" fill="none" stroke="#FFD1EA" stroke-opacity=".8" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round" transform="rotate(-14 256 296)"/>
-  <path transform="translate(256 102)" d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/>
-  <circle cx="436" cy="252" r="9" fill="#fff" opacity=".95"/>
+  <path d="M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148" fill="none" stroke="#FF5FA8" stroke-width="34" stroke-linecap="round" opacity=".6" filter="url(#glow)"/>
+  <path d="M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148" fill="none" stroke="url(#letter)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="256" r="164" fill="none" stroke="url(#letter)" stroke-opacity=".18" stroke-width="3"/>
 </svg>

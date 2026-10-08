@@ -209,29 +209,60 @@
   gear.innerHTML = svg('i-gear');
   if (right) right.append(gear);
 
-  // ---- The bar along the bottom: every place in Nova Agent, always there ----
-  // Chat, Portal, Calendar, Notes first (the everyday ones), then Quests and Missions, then the rest.
-  const FIRST = ['/portal/', '/calendar/', '/notes/'];
+  // ---- The bar along the bottom: every place in Nova Agent, always there, in four groups ----
+  // Apps (Chat, Portal, Calendar, Notes, Index) · Tasks (Quests, Missions) · Tools (Lossless,
+  // Visualizer) · Helpers (Observatory, Manual). Any other panel joins Tools.
   const SKIP = ['/admin/links']; // All links: behind the gear
+  const GROUPS = [
+    ['apps', 'Apps', ['pane:chat', '/portal/', '/calendar/', '/notes/', '/app/memory/']],
+    ['tasks', 'Tasks', ['pane:quests', 'pane:missions']],
+    ['tools', 'Tools', ['/lossless/', '/visualizer']],
+    ['helpers', 'Helpers', ['/observatory/', 'manual']],
+  ];
   const bar = document.createElement('nav');
   bar.className = 'tabbar';
   bar.id = 'tabbar';
   bar.setAttribute('aria-label', 'Nova Agent');
   const item = (key, label, icon) => `<button type="button" data-tab="${key}">${icon}<span>${label}</span></button>`;
   const glyph = (g) => `<span class="t-ico g" aria-hidden="true">${g}</span>`;
+  const FIXED = {
+    'pane:chat': () => item('pane:chat', 'Chat', '<svg class="t-ico" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>'),
+    'pane:quests': () => item('pane:quests', 'Quests', glyph('☰')),
+    'pane:missions': () => item('pane:missions', 'Missions', glyph('◆')),
+    manual: () => item('manual', 'Manual', glyph('📖')),
+  };
+  const panelItem = (p) => (tile(p) ? item(p, nameOf(tile(p)).replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico')) : '');
   function fillBar() {
-    const rest = tiles().map((a) => a.dataset.inside).filter((p) => !FIRST.includes(p) && !SKIP.includes(p));
-    bar.innerHTML = [
-      item('pane:chat', 'Chat', '<svg class="t-ico" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>'),
-      ...FIRST.filter(tile).map((p) => item(p, nameOf(tile(p)), tileIcon(p, 't-ico'))),
-      item('pane:quests', 'Quests', glyph('☰')),
-      item('pane:missions', 'Missions', glyph('◆')),
-      ...rest.map((p) => item(p, nameOf(tile(p)).replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico'))),
-      item('manual', 'Manual', glyph('📖')),
-    ].join('');
+    const placed = new Set(GROUPS.flatMap((g) => g[2]));
+    const extra = tiles().map((a) => a.dataset.inside).filter((p) => !placed.has(p) && !SKIP.includes(p));
+    bar.innerHTML = GROUPS.map(([id, label, keys]) => {
+      const items = (id === 'tools' ? [...keys, ...extra] : keys).map((k) => (FIXED[k] ? FIXED[k]() : panelItem(k))).join('');
+      return `<div class="tgroup" data-group="${id}" role="group" aria-label="${label}"><span class="tg-label" aria-hidden="true">${label}</span><div class="tg-items">${items}</div></div>`;
+    }).join('');
     current();
   }
   shell.append(bar);
+
+  // Tasks and Helpers in the panels list (computer and phone): Quests and Missions are Nova Agent's own
+  // panes, the Manual opens over everything; none of them leave the page
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a.suite-app[data-pane], a.suite-app[data-act]');
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const dlg = $('suite');
+    if (dlg && dlg.open) dlg.close();
+    if (a.dataset.act === 'manual') { if (window.NovaManual) window.NovaManual.open(); return; }
+    if (!viewer.hidden) $('viewer-close').click();
+    const pane = a.dataset.pane;
+    if (PHONE.matches) { setPane(pane); sfx('open'); return; }
+    const box = $(pane === 'quests' ? 'quests-panel' : 'missions-panel');
+    if (box) {
+      box.scrollIntoView({ behavior: STILL.matches ? 'auto' : 'smooth', block: 'nearest' });
+      box.animate && !STILL.matches && box.animate([{ boxShadow: '0 0 0 0 transparent' }, { boxShadow: '0 0 0 3px var(--hi), 0 0 40px -6px var(--hi)' }, { boxShadow: '0 0 0 0 transparent' }], { duration: 1100 });
+    }
+    sfx('open');
+  }, true);
   bar.addEventListener('click', (e) => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;
@@ -240,13 +271,10 @@
     if (t === 'manual') { if (window.NovaManual) window.NovaManual.open(); return; }
     open(t);
   });
-  // Every place in view at once: half of them per row upright (so 12 → two rows of 6), one row on its
-  // side; and the bar's height for whatever sits above it (toasts)
+  // Each group's width follows how many places it holds; and the bar's height for whatever sits above it (toasts)
   function layout() {
-    const n = bar.querySelectorAll('[data-tab]').length || 1;
-    bar.style.setProperty('--n', n);
-    bar.style.setProperty('--cols', Math.ceil(n / 2));
-    document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight || 112}px`);
+    for (const g of bar.querySelectorAll('.tgroup')) g.style.setProperty('--k', g.querySelectorAll('[data-tab]').length || 1);
+    document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight || 126}px`);
   }
   window.addEventListener('resize', layout);
   if (typeof ResizeObserver === 'function') new ResizeObserver(layout).observe(bar);
