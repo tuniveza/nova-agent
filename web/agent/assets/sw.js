@@ -29,7 +29,7 @@ function novaAgentUrl(url) {
   const u = panelUrl(url);
   if (!u.startsWith("/") || u.startsWith("//")) return u;
   if (u === "/" || u.startsWith("/?")) return u;
-  return "/?open=" + encodeURIComponent(u);
+  return "/agent/?open=" + encodeURIComponent(u);
 }
 
 // A notification has arrived
@@ -68,7 +68,7 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
       // Nova Agent already open: bring it to the front, on the right panel
-      const open = windows.find((w) => new URL(w.url).pathname === "/");
+      const open = windows.find((w) => new URL(w.url).pathname === "/agent/");
       if (open && (!url || url.startsWith("/"))) {
         if (url) open.postMessage({ type: "nova-open", url });
         return open.focus();

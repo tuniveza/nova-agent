@@ -82,7 +82,7 @@ app.use("/actions/*", async (c, next) => {
 
 // ---- Panels have no pages of their own ----
 // Opened on its own (a bookmark, a typed address, an old link), a panel opens inside Nova Agent
-// instead: /?open=<its address>. Inside Nova Agent's viewer (a frame) it loads as itself. The
+// instead: /agent/?open=<its address>. Inside Nova Agent's viewer (a frame) it loads as itself. The
 // browser says which (Sec-Fetch-Dest); web/shared/inside.js catches browsers that don't.
 const PANELS = ["/portal", "/calendar", "/notes", "/app/memory", "/observatory", "/lossless", "/visualizer", "/admin"];
 app.use("*", async (c, next) => {
@@ -91,13 +91,21 @@ app.use("*", async (c, next) => {
   const last = path.slice(path.lastIndexOf("/") + 1);
   // (Connecting Google leaves Nova Agent: Google won't show its sign-in inside a frame)
   if (page && (!last.includes(".") || last.endsWith(".html")) && PANELS.some((p) => path === p || path.startsWith(p + "/")) && !/^\/admin\/google(\/|$)/.test(path)) {
-    return c.redirect("/?open=" + encodeURIComponent(path + new URL(c.req.url).search));
+    return c.redirect("/agent/?open=" + encodeURIComponent(path + new URL(c.req.url).search));
   }
   await next();
 });
 
 // The pages. Read from disk each time, so edits show on refresh.
-app.get("/", (c) => c.html(readFileSync(chatFile, "utf8")));
+// Nova Agent's page is /agent/, the same address as online; /agent/<panel> opens it with that panel
+const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", index: "/app/memory/", observatory: "/observatory/", lossless: "/lossless/", visualizer: "/visualizer", admin: "/admin" };
+app.get("/", (c) => c.redirect("/agent/"));
+app.get("/agent", (c) => c.redirect("/agent/"));
+app.get("/agent/", (c) => c.html(readFileSync(chatFile, "utf8")));
+app.get("/agent/:name{[a-z]+}", (c, next) => {
+  const panel = PANEL_NAMES[c.req.param("name")];
+  return panel ? c.redirect("/agent/?open=" + encodeURIComponent(panel + new URL(c.req.url).search)) : next();
+});
 app.get("/visualizer", (c) => c.html(readFileSync(pageFile, "utf8")));
 
 // ---- The installable app: manifest, service worker and icons ----

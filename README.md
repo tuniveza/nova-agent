@@ -21,10 +21,16 @@ Talk to it, give it a goal, and it plans your days to the second. It also works 
 Nova Agent is the studio's one app. Everything that used to be a separate Nova app is a
 panel of it: **Portal** (the staff app: enquiries, website chats, bookings, alerts, Ask
 NovaBot, sign-in, your planet and the team; Hub is part of it now), **Calendar**, **Notes**,
-**Index**, **Observatory** and **Lossless audio**. It runs on the studio PC with
-everything, and the same panels are online at Nova Bot's address for the staff phones.
+**Index**, **Observatory**, **Lossless audio** and **Admin**. The panels only ever open
+inside Nova Agent. Nova Agent has one address in each place, `/agent/`:
 
-On the studio PC, open `http://localhost:4545` and you get one screen that fits without
+- online, for everyone: <https://novacane-worker.novacane-studio.workers.dev/agent/>
+- on the studio PC: `http://localhost:4545/agent/`
+
+`/agent/<panel>` (`/agent/calendar`, `/agent/portal`, `/agent/notes`, `/agent/index`...)
+opens Nova Agent with that panel. Nova Bot (the website chat) keeps the main address.
+
+On the studio PC, open `http://localhost:4545/agent/` and you get one screen that fits without
 scrolling: **Missions** on the left, a **chat** with Nova Agent in the middle, **Nova
 Quests** (today's plan) on the right, and the **panels** along the bottom.
 
@@ -303,7 +309,8 @@ Acuity pages and client names, which is why Nova Agent only ever listens on `127
 
 ### An app for your launcher
 
-Open `http://localhost:4545` in a Chromium browser and press **Install app**: Nova Agent opens
+Open `http://localhost:4545/agent/` (or the online address, on a phone: Share → Add to Home
+Screen) and press **Install app**: Nova Agent opens
 in its own window, with shortcuts to Today, a new mission, Calendar and the visualizer.
 Its service worker shows reminders as system notifications; nothing is cached, because Nova
 Agent is its own server on the same machine.
@@ -346,7 +353,7 @@ cd nova-agent             # (already cloned? git submodule update --init  brings
 npm install
 npx playwright install chromium
 cp .env.example .env      # then fill it in
-npm run visualizer        # http://localhost:4545  (chat · /calendar/ · /visualizer)
+npm run visualizer        # http://localhost:4545/agent/
 npm run login             # for the Acuity helper: log in once in a visible browser window
 npm start                 # should say "Logged in to Acuity"
 ```

@@ -21,5 +21,5 @@
     } catch (err) {}
   }
   // Calendar has no page of its own: opened on its own, it opens inside Nova Agent instead
-  else location.replace("/?open=" + encodeURIComponent(location.pathname + location.search) + location.hash);
+  else location.replace("/agent/?open=" + encodeURIComponent(location.pathname + location.search) + location.hash);
 })();

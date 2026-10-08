@@ -579,7 +579,7 @@
       <button type="button" class="icon-btn sfx-btn" id="sfx-btn" data-sfx="none" aria-pressed="true" title="Sound effects" aria-label="Sound effects"><span class="sfx-on">🔊</span><span class="sfx-off">🔈</span></button>
       <span class="status" id="status" title="Nova Agent's mode"><span class="dot"></span><span class="label" id="status-text">Connecting…</span></span>
     </div>
-    <a class="brand" href="/" aria-label="Nova Agent">
+    <a class="brand" href="/agent/" aria-label="Nova Agent">
       <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
       <span><span class="kicker">Nova Agent · Novacane</span><span class="wordmark">Nova Agent</span></span>
     </a>
@@ -709,7 +709,7 @@
       <div class="suite-group">
         <h4>Panels</h4>
         <div class="suite-grid">
-          <a class="suite-app here" href="/"><img src="/agent/icon.svg" alt=""><b>Chat</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
+          <a class="suite-app here" href="/agent/"><img src="/agent/icon.svg" alt=""><b>Chat</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
           <a class="suite-app" href="/portal/" data-inside="/portal/"><img src="/portal/icon.svg" alt=""><b>Portal</b><small>Enquiries, chats, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
           <a class="suite-app" href="/calendar/" data-inside="/calendar/"><img src="/calendar/assets/icon.svg" alt=""><b>Calendar</b><small>The one Nova Agent plans into</small></a>
           <a class="suite-app" href="/notes/" data-inside="/notes/"><img src="/notes/assets/icon.svg" alt=""><b>Notes</b><small>Notes and documents, Google Docs export</small></a>
@@ -1552,7 +1552,7 @@
   const opening = new URLSearchParams(location.search).get('open');
   if (opening !== null) {
     openAddress(opening + (opening.includes('#') ? '' : location.hash));
-    window.history.replaceState(window.history.state, '', '/');
+    window.history.replaceState(window.history.state, '', '/agent/');
   }
   loadPlan();
   input.focus();

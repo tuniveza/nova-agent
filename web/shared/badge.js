@@ -71,7 +71,7 @@
     const now = !!d.signedIn;
     const flipped = wasIn !== null && wasIn !== now;
     wasIn = now;
-    if (flipped && mode !== "connect" && location.pathname !== "/") location.reload();
+    if (flipped && mode !== "connect" && location.pathname !== "/agent/") location.reload();
     return d;
   }
 

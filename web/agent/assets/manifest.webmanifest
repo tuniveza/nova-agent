@@ -1,9 +1,9 @@
 {
-  "id": "/",
+  "id": "/agent/",
   "name": "Nova Agent",
   "short_name": "Nova Agent",
   "description": "The studio's one app: chat, Missions and Quests, with Portal, Calendar, Notes, Index, Observatory and Lossless audio inside it.",
-  "start_url": "/",
+  "start_url": "/agent/",
   "scope": "/",
   "display": "standalone",
   "display_override": [
@@ -62,7 +62,7 @@
       "name": "Portal",
       "short_name": "Portal",
       "description": "Enquiries, chats, bookings and alerts",
-      "url": "/?open=%2Fportal%2F",
+      "url": "/agent/?open=%2Fportal%2F",
       "icons": [
         {
           "src": "/agent/icon-192.png",
@@ -73,7 +73,7 @@
     {
       "name": "Alerts",
       "short_name": "Alerts",
-      "url": "/?open=%2Fportal%2F%3Fview%3Dalerts",
+      "url": "/agent/?open=%2Fportal%2F%3Fview%3Dalerts",
       "icons": [
         {
           "src": "/agent/icon-192.png",
@@ -84,7 +84,7 @@
     {
       "name": "Calendar",
       "short_name": "Calendar",
-      "url": "/?open=%2Fcalendar%2F",
+      "url": "/agent/?open=%2Fcalendar%2F",
       "icons": [
         {
           "src": "/agent/icon-192.png",

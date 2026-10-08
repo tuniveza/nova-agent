@@ -71,13 +71,13 @@ self.addEventListener("notificationclick", (event) => {
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
       // Panels open inside Nova Agent now: bring Nova Agent to the front on that panel
       const local = url.startsWith("/") && !url.startsWith("//");
-      const open = local && windows.find((w) => new URL(w.url).pathname === "/");
+      const open = local && windows.find((w) => new URL(w.url).pathname === "/agent/");
       if (open) {
         open.postMessage({ type: "nova-open", url });
         return open.focus();
       }
       // Otherwise open Nova Agent there (another site, like Acuity, opens as it is)
-      return self.clients.openWindow(local ? "/?open=" + encodeURIComponent(url) : url);
+      return self.clients.openWindow(local ? "/agent/?open=" + encodeURIComponent(url) : url);
     })
   );
 });

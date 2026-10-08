@@ -22,5 +22,5 @@
   }
   // Panels have no pages of their own: opened on its own, a panel opens inside Nova Agent instead
   // (Nova Agent's server does this already; this catches browsers that don't say how a page was opened)
-  else location.replace("/?open=" + encodeURIComponent(location.pathname + location.search) + location.hash);
+  else location.replace("/agent/?open=" + encodeURIComponent(location.pathname + location.search) + location.hash);
 })();
