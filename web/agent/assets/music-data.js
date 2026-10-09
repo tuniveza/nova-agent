@@ -2,7 +2,7 @@
 // Nova Bot's /music-world). Kept small on purpose: a line or two each.
 // Quotes marked "attributed" are widely credited to that musician but their exact origin isn't
 // certain. Songs are named and described only (no lyrics: they're copyrighted); each links to
-// its lyrics on Genius.
+// its lyrics on Genius. Covers are the exact Apple Music artwork, shown through Nova Bot.
 window.NOVA_MUSIC = {
   revenue: {
     headline: "$31.7bn",
@@ -17,14 +17,14 @@ window.NOVA_MUSIC = {
     ],
   },
   genres: [
-    { name: "Pop", art: "Taylor Swift Shake It Off", line: "Still the world's biggest sound: big hooks, made to travel" },
-    { name: "Hip-hop", art: "Kendrick Lamar HUMBLE.", line: "Beats and bars, at the top of streaming in many countries" },
-    { name: "Latin", art: "Bad Bunny Titi Me Pregunto", line: "Reggaeton and Latin pop, from the fastest-growing music region" },
-    { name: "K-pop", art: "BLACKPINK How You Like That", line: "Korea's polished idol pop, with fans in every country" },
-    { name: "Afrobeats", art: "Burna Boy Last Last", line: "West Africa's groove, now mainstream in the US and Europe" },
-    { name: "Electronic", art: "Daft Punk One More Time", line: "House, techno and dance: clubs and festivals worldwide" },
-    { name: "R&B", art: "SZA Kill Bill", line: "Soulful vocals, from slow jams to alt-R&B" },
-    { name: "Rock", art: "Foo Fighters Everlong", line: "Guitars and big anthems, still huge on stage" },
+    { name: "Pop", art: "Taylor Swift Shake It Off", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/32/1d/8e/321d8e9e-d806-b545-fd30-5c7aef575abc/14UMGIM34829.rgb.jpg/300x300bb.jpg", line: "Still the world's biggest sound: big hooks, made to travel" },
+    { name: "Hip-hop", art: "Kendrick Lamar HUMBLE.", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/94/28/36/94283609-93bb-db1c-e997-44e82c157e90/00602567261216.rgb.jpg/300x300bb.jpg", line: "Beats and bars, at the top of streaming in many countries" },
+    { name: "Latin", art: "Bad Bunny Titi Me Pregunto", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/300x300bb.jpg", line: "Reggaeton and Latin pop, from the fastest-growing music region" },
+    { name: "K-pop", art: "BLACKPINK How You Like That", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/c3/64/46/c364465f-6271-8aae-93a8-b9979d2befe5/20UMGIM82075.rgb.jpg/300x300bb.jpg", line: "Korea's polished idol pop, with fans in every country" },
+    { name: "Afrobeats", art: "Burna Boy Last Last", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ca/eb/31/caeb3173-eaf0-0cd5-65ea-585adfe312ba/075679745156.jpg/300x300bb.jpg", line: "West Africa's groove, now mainstream in the US and Europe" },
+    { name: "Electronic", art: "Daft Punk One More Time", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/fd/4a/77/fd4a77db-0ebc-d043-41a2-f32fa1bb0fb4/dj.qrikkdwj.jpg/300x300bb.jpg", line: "House, techno and dance: clubs and festivals worldwide" },
+    { name: "R&B", art: "SZA Kill Bill", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/bd/3b/a9/bd3ba9fb-9609-144f-bcfe-ead67b5f6ab3/196589564931.jpg/300x300bb.jpg", line: "Soulful vocals, from slow jams to alt-R&B" },
+    { name: "Rock", art: "Foo Fighters Everlong", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/68/f5/86/68f586ca-a375-9965-a864-9e227e77ef5b/884977570328.jpg/300x300bb.jpg", line: "Guitars and big anthems, still huge on stage" },
   ],
   gear: [
     { name: "Focusrite Scarlett Solo", photo: "Focusrite Scarlett Solo 3rd Gen.jpg", kind: "Audio interface", does: "Plugs your mic or guitar into your computer", price: "about $140" },
@@ -57,19 +57,19 @@ window.NOVA_MUSIC = {
     { text: "This will be our reply to violence: to make music more intensely, more beautifully, more devotedly than ever before.", who: "Leonard Bernstein", when: "1963", wiki: "Leonard_Bernstein" },
   ],
   songs: [
-    { title: "Bohemian Rhapsody", artist: "Queen", year: 1975, about: "A six-minute mini-opera that broke every rule of the single" },
-    { title: "What's Going On", artist: "Marvin Gaye", year: 1971, about: "A gentle plea for peace and understanding" },
-    { title: "Dreams", artist: "Fleetwood Mac", year: 1977, about: "A breakup song that floats instead of fights" },
-    { title: "\"Heroes\"", artist: "David Bowie", year: 1977, about: "Two lovers meeting by the Berlin Wall" },
-    { title: "Redemption Song", artist: "Bob Marley & The Wailers", year: 1980, about: "A quiet, acoustic call to free your own mind" },
-    { title: "Billie Jean", artist: "Michael Jackson", year: 1982, about: "A tense, irresistible groove about a false claim" },
-    { title: "Purple Rain", artist: "Prince", year: 1984, about: "A slow-burning goodbye and a plea for forgiveness" },
-    { title: "Hallelujah", artist: "Leonard Cohen", year: 1984, about: "Love, faith and doubt woven into one hymn" },
-    { title: "Smells Like Teen Spirit", artist: "Nirvana", year: 1991, about: "The song that took grunge to the whole world" },
-    { title: "Lose Yourself", artist: "Eminem", year: 2002, about: "About taking your one big chance with everything you've got" },
-    { title: "Rolling in the Deep", artist: "Adele", year: 2010, about: "Heartbreak turned into thunder" },
-    { title: "Get Lucky", artist: "Daft Punk", year: 2013, about: "Disco's joy, brought back for a new generation" },
-    { title: "Alright", artist: "Kendrick Lamar", year: 2015, about: "Hope that survives hard times; it became a protest anthem" },
-    { title: "Blinding Lights", artist: "The Weeknd", year: 2019, about: "Neon synth-pop about racing through the night to someone" },
+    { title: "Bohemian Rhapsody", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/62/2e/97/622e97c4-d620-2ae1-2a47-a32e16a01492/602567988847.jpg/300x300bb.jpg", artist: "Queen", year: 1975, about: "A six-minute mini-opera that broke every rule of the single" },
+    { title: "What's Going On", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/76/36/2d/76362d74-cb7a-8ef9-104e-cde1d858e9a9/20UMGIM95279.rgb.jpg/300x300bb.jpg", artist: "Marvin Gaye", year: 1971, about: "A gentle plea for peace and understanding" },
+    { title: "Dreams", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/dd/77/35/dd773533-06a7-4566-bef4-2c43c24d08f6/603497925759.jpg/300x300bb.jpg", artist: "Fleetwood Mac", year: 1977, about: "A breakup song that floats instead of fights" },
+    { title: "\"Heroes\"", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/e2/65/b2/e265b2ae-48d5-9dd8-0251-6cd6c6c4eb53/190295842826.jpg/300x300bb.jpg", artist: "David Bowie", year: 1977, about: "Two lovers meeting by the Berlin Wall" },
+    { title: "Redemption Song", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/3c/c2/0d/3cc20dcc-8f4e-f060-36dd-7de52a7ec8fe/12UMGIM14712.rgb.jpg/300x300bb.jpg", artist: "Bob Marley & The Wailers", year: 1980, about: "A quiet, acoustic call to free your own mind" },
+    { title: "Billie Jean", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/32/4f/fd/324ffda2-9e51-8f6a-0c2d-c6fd2b41ac55/074643811224.jpg/300x300bb.jpg", artist: "Michael Jackson", year: 1982, about: "A tense, irresistible groove about a false claim" },
+    { title: "Purple Rain", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/aa/09/cc/aa09ccec-3bd0-a38c-b515-9d9bfd889b62/093624914594.jpg/300x300bb.jpg", artist: "Prince", year: 1984, about: "A slow-burning goodbye and a plea for forgiveness" },
+    { title: "Hallelujah", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/e0/d1/24/e0d12470-d938-8c1c-484d-35fa4e6d6a70/dj.kddlcyae.jpg/300x300bb.jpg", artist: "Leonard Cohen", year: 1984, about: "Love, faith and doubt woven into one hymn" },
+    { title: "Smells Like Teen Spirit", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/95/fd/b9/95fdb9b2-6d2b-92a6-97f2-51c1a6d77f1a/00602527874609.rgb.jpg/300x300bb.jpg", artist: "Nirvana", year: 1991, about: "The song that took grunge to the whole world" },
+    { title: "Lose Yourself", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/08/23/fc/0823fcd9-cb44-695b-32bf-b3bf51d9f800/00606949351229.rgb.jpg/300x300bb.jpg", artist: "Eminem", year: 2002, about: "About taking your one big chance with everything you've got" },
+    { title: "Rolling in the Deep", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f8/df/0a/f8df0ac9-ae76-9dae-86d3-4e913fc54fb1/634904152062.png/300x300bb.jpg", artist: "Adele", year: 2010, about: "Heartbreak turned into thunder" },
+    { title: "Get Lucky", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/1c/da/5a/1cda5a7d-90ad-8643-efb2-7641afb13418/886443973442.jpg/300x300bb.jpg", artist: "Daft Punk", year: 2013, about: "Disco's joy, brought back for a new generation" },
+    { title: "Alright", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/b5/a6/91/b5a69171-5232-3d5b-9c15-8963802f83dd/15UMGIM15814.rgb.jpg/300x300bb.jpg", artist: "Kendrick Lamar", year: 2015, about: "Hope that survives hard times; it became a protest anthem" },
+    { title: "Blinding Lights", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/6f/bc/e6/6fbce6c4-c38c-72d8-4fd0-66cfff32f679/20UMGIM12176.rgb.jpg/300x300bb.jpg", artist: "The Weeknd", year: 2019, about: "Neon synth-pop about racing through the night to someone" },
   ],
 };
