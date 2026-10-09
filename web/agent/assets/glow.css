@@ -232,3 +232,9 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
   .side-head { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; row-gap: 6px; padding-block: 8px !important; }
   .side-head > .sec-title, .side-head > :not(.sec-title) { grid-column: 1 !important; justify-self: center !important; }
 }
+
+/* Missions and Quests always stay inside their own columns (never under Chat) */
+@media (min-width: 981px) and (min-height: 481px) {
+  .main:not(.viewing) > .side { min-width: 0 !important; width: 100%; max-width: 100%; justify-self: stretch; overflow: hidden; }
+  .main:not(.viewing) > .chat { min-width: 0; }
+}
