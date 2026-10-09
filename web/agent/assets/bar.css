@@ -17,8 +17,7 @@
   /* Always hidden: not on the home either (the PANELS button at the top still opens them all) */
   html[data-bar="hidden"].bar-tucked .main:not(.viewing) { grid-template-rows: minmax(0, 1fr); }
   html[data-bar="hidden"].bar-tucked .main:not(.viewing) > .suite-home { display: none; }
-  /* Auto: touching the bottom edge with the mouse brings it back */
-  html[data-bar="auto"].bar-tucked .bar-peek { display: block; left: 0; right: 0; bottom: 0; height: 14px; }
+  /* Auto: the mouse near the bottom brings it back (bar.js watches where the mouse is) */
 }
 
 /* ---- A phone: the bar slides down out of the way; the handle brings it up ---- */

@@ -95,6 +95,7 @@
   .tabbar button[aria-current="page"]::after { content: ""; position: absolute; left: 50%; bottom: 2px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--hi); box-shadow: 0 0 8px var(--hi); }
   .tabbar .t-ico { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; font-size: 15px; }
   .tabbar svg.t-ico { border-radius: 6px; }
+  .tabbar .t-ico.pico { border-radius: 8px; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tint) 55%, #fff 10%); }
   .tabbar .t-ico.g { color: #fff; font-size: 14px; background: color-mix(in srgb, var(--panel-2) 85%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
 
   /* The keyboard is up: give the conversation the room (the bars come back when it's down) */

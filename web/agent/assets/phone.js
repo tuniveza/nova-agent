@@ -163,6 +163,8 @@
   const svg = (id, cls = 'ico') => `<svg class="${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
   const tileIcon = (address, cls) => {
     const t = tile(address);
+    const own = t && t.querySelector('.pico');
+    if (own) return own.outerHTML.replace('class="pico"', `class="pico ${cls}"`);
     const img = t && t.querySelector('img');
     if (img) return `<img class="${cls}" src="${img.getAttribute('src')}" alt="" width="24" height="24" decoding="async">`;
     const glyph = t && t.querySelector('.suite-glyph');
@@ -225,11 +227,13 @@
   bar.setAttribute('aria-label', 'Nova Agent');
   const item = (key, label, icon) => `<button type="button" data-tab="${key}">${icon}<span>${label}</span></button>`;
   const glyph = (g) => `<span class="t-ico g" aria-hidden="true">${g}</span>`;
+  // The panels' own icons (chat.html's .pico set: each its own colour, tinted by the theme)
+  const pico = (k) => `<span class="pico t-ico" data-p="${k}" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-${k}"/></svg></span>`;
   const FIXED = {
-    'pane:chat': () => item('pane:chat', 'Chat', '<svg class="t-ico" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>'),
-    'pane:quests': () => item('pane:quests', 'Quests', glyph('☰')),
-    'pane:missions': () => item('pane:missions', 'Missions', glyph('◆')),
-    manual: () => item('manual', 'Manual', glyph('📖')),
+    'pane:chat': () => item('pane:chat', 'Chat', pico('chat')),
+    'pane:quests': () => item('pane:quests', 'Quests', pico('quests')),
+    'pane:missions': () => item('pane:missions', 'Missions', pico('missions')),
+    manual: () => item('manual', 'Manual', pico('manual')),
   };
   const panelItem = (p) => (tile(p) ? item(p, nameOf(tile(p)).replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico')) : '');
   function fillBar() {

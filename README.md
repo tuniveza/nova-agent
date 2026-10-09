@@ -264,14 +264,16 @@ open, close, send, done and delete, made live with the Web Audio API (no sound f
 not beeps: everything swells in, chords bloom together rather than running up like a game, and a
 tap is a low felt touch. They're in D lydian, the same key as the ambient music, so the two always
 sound right together; they're placed across left and right and washed in a little reverb and
-echo, and kept quiet: calm and lush, never loud (well down in volume, with a warm, soft top end).
+echo, and kept quiet: calm, relaxing and lush, never loud or chatty. Every sound swells in slowly,
+with a warm, soft top end and plenty of space; never more than three notes at once; the small
+sounds (taps, tabs, menus) keep well apart and the same one doesn't come straight back.
 
 **Quiet extras**, barely there and with their own switch (Portal → Options → Quiet extras, or on
 a phone the gear → Quiet extras): a breath of air as you scroll (quieter the slower you go, a few
 times a second at most), the softest touch per key when typing in a box, tones that rise and fall
 as you drag a slider, a sound when you pick up and put down something you drag (Calendar's note
 cards, with a tiny tick at each step), and an extra-faint shimmer as the mouse arrives on a tile.
-They're only heard while sound effects are on. Nova Agent
+They're off to begin with (calm first) and only heard while sound effects are on. Nova Agent
 chimes when it answers, and a short "hello" (D–A–C♯–F♯) plays when sounds are switched on. The 🔊
 switch at the top left turns them off (on a phone: the gear → Sound), and the choice is remembered
 on that device. It's the same `web/shared/sfx.js` in every panel.
@@ -287,10 +289,15 @@ themselves, and come back after a pause.
 
 ### The panels bar and motion
 
-It shows and hides itself (**Auto**, the default): always there on Nova Agent's home; with a
-panel open it stays a moment, then steps aside so the panel has the whole room. It comes back when
-the mouse touches the bottom edge, when you scroll back up in a panel, or (on a phone) when you tap
-the little handle at the bottom. It can also be **Always shown** or **Always hidden**: choose in
+It shows and hides itself (**Auto**, the default): always there on Nova Agent's home. With a
+panel open it follows what you do, not timers: on a computer it's in view while the mouse is near
+the bottom and steps aside once you work higher up in the panel; on a phone it steps aside when you
+scroll down a good way on purpose and comes back as soon as you scroll up a little or tap the
+little handle at the bottom (pages that hardly scroll never hide it).
+
+Each panel's icon is from one line-art set, in its own colour (Notes amber, Calendar moon-violet,
+Index teal…) blended with the theme's accent, so the icons change with the theme and still keep
+their own mood. It can also be **Always shown** or **Always hidden**: choose in
 the Panels window (the PANELS button) or on a phone in the gear (Bar). Remembered on the device
 (`web/agent/assets/bar.js` and `bar.css`).
 

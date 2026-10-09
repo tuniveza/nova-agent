@@ -38,11 +38,11 @@
   let jitter = 1;
 
   // The extra, very quiet sounds (scrolling, typing, sliders, dragging, hovering) have their
-  // own switch: on unless switched off on this device, and only while sounds are on at all
+  // own switch: off unless switched on on this device (calm first), and only while sounds are on
   const EXTRA = "nova-sfx-extra";
   function extraEnabled() {
     try {
-      return enabled() && localStorage.getItem(EXTRA) !== "off";
+      return enabled() && localStorage.getItem(EXTRA) === "on";
     } catch (err) {
       return false;
     }
@@ -102,19 +102,19 @@
       limit.ratio.value = 5;
       // Calm and soft: well down in volume, and a warm top end so nothing is ever bright or sharp
       const master = ctx.createGain();
-      master.gain.value = 0.5;
+      master.gain.value = 0.36;
       const warm = ctx.createBiquadFilter();
       warm.type = "lowpass";
-      warm.frequency.value = 4200;
+      warm.frequency.value = 2600;
       warm.Q.value = 0.4;
       limit.connect(warm).connect(master).connect(ctx.destination);
       dry = limit;
       // Reverb
       wet = ctx.createGain();
       const verb = ctx.createConvolver();
-      verb.buffer = room(2.4);
+      verb.buffer = room(3.2);
       const verbOut = ctx.createGain();
-      verbOut.gain.value = 0.7; // more space around everything: lush, not dry
+      verbOut.gain.value = 0.85; // more space around everything: lush, not dry
       wet.connect(verb).connect(verbOut).connect(limit);
       // A soft, darkened echo that bounces left and right
       echo = ctx.createGain();
@@ -184,6 +184,11 @@
   // sharp strike), so it's more like a rubbed wine glass than a beep.
   function bell(freq, at, { gain = 0.05, length = 0.9, pan = 0, glint = 0.7, warmth = 0.35, attack = 0.03, room: r = 0.45, echo: e = 0 } = {}) {
     freq *= jitter;
+    // Calm: always a slow swell, barely any glint, a longer, softer tail
+    attack = Math.max(attack, 0.07);
+    glint = Math.min(glint, 0.18);
+    length *= 1.25;
+    gain *= 0.75;
     const t = ctx.currentTime + at;
     const out = place(pan, { room: r, echo: e });
     const amp = ctx.createGain();
@@ -236,11 +241,12 @@
   // More like a fingertip on a felt drum than a click.
   function drop(freq, at, { gain = 0.05, length = 0.4, pan = 0 } = {}) {
     freq *= jitter;
+    gain *= 0.7;
     const t = ctx.currentTime + at;
     const out = place(pan, { room: 0.5 });
     const soft = ctx.createBiquadFilter();
     soft.type = "lowpass";
-    soft.frequency.value = 1100;
+    soft.frequency.value = 850;
     soft.Q.value = 0.3;
     const amp = ctx.createGain();
     // Eases in over 35 ms along an S-curve (no corner, so no click), then fades away
@@ -294,6 +300,11 @@
   // A breath of air (opening and closing things): filtered noise that sweeps up or down and
   // drifts across, left to right or back
   function air(at, { from = 500, to = 2400, gain = 0.03, length = 0.32, panFrom = -0.4, panTo = 0.4 } = {}) {
+    // Calm: a softer, slower, lower breath
+    gain *= 0.4;
+    length *= 1.4;
+    to = Math.min(to, 1600);
+    from = Math.min(from, 1600);
     const t = ctx.currentTime + at;
     const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * length), ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -346,6 +357,9 @@
   // breath of wood around it, low-passed so it's a "tok", never a click
   function wood(freq, at, { gain = 0.03, length = 0.14, pan = 0, room: r = 0.35 } = {}) {
     freq *= jitter;
+    gain *= 0.6;
+    freq = Math.min(freq, 900); // a low, soft "tok"
+    length *= 1.6;
     const t = ctx.currentTime + at;
     const out = place(pan, { room: r });
     const lp = ctx.createBiquadFilter();
@@ -353,7 +367,7 @@
     lp.frequency.value = Math.min(3200, freq * 3);
     const amp = ctx.createGain();
     amp.gain.value = 0;
-    ease(amp.gain, t, gain, 0.006, length);
+    ease(amp.gain, t, gain, 0.012, length);
     lp.connect(amp).connect(out);
     const o = ctx.createOscillator();
     o.frequency.value = freq;
@@ -365,7 +379,7 @@
     bp.Q.value = 6;
     const nAmt = ctx.createGain();
     nAmt.gain.value = 0;
-    ease(nAmt.gain, t, 0.5, 0.004, 0.03);
+    ease(nAmt.gain, t, 0.15, 0.006, 0.03);
     n.connect(bp).connect(nAmt).connect(lp);
     o.start(t); n.start(t, Math.random());
     o.stop(t + length + 0.2); n.stop(t + 0.12);
@@ -374,6 +388,8 @@
 
   // Paper: a soft rustle or a page turning (noise with a gentle, uneven flutter, swept in tone)
   function paper(at, { gain = 0.02, length = 0.3, from = 1400, to = 2600, pan = 0, panTo = pan, room: r = 0.4 } = {}) {
+    gain *= 0.45;
+    length *= 1.3;
     const t = ctx.currentTime + at;
     const out = place(pan, { room: r });
     if (out.pan) { out.pan.setValueAtTime(pan, t); out.pan.linearRampToValueAtTime(panTo, t + length); }
@@ -397,11 +413,13 @@
   // A kalimba / soft marimba note: a round sine with a faint, quickly fading overtone
   function pluck(freq, at, { gain = 0.03, length = 0.9, pan = 0, echo: e = 0, room: r = 0.45 } = {}) {
     freq *= jitter;
+    gain *= 0.75;
+    length *= 1.3;
     const t = ctx.currentTime + at;
     const out = place(pan, { room: r, echo: e });
     const amp = ctx.createGain();
     amp.gain.value = 0;
-    ease(amp.gain, t, gain, 0.008, length);
+    ease(amp.gain, t, gain, 0.025, length);
     amp.connect(out);
     const o = ctx.createOscillator();
     o.frequency.value = freq;
@@ -410,7 +428,7 @@
     over.frequency.value = freq * 3;
     const overAmt = ctx.createGain();
     overAmt.gain.value = 0;
-    ease(overAmt.gain, t, 0.12, 0.008, 0.12);
+    ease(overAmt.gain, t, 0.05, 0.025, 0.1);
     over.connect(overAmt).connect(amp);
     o.start(t); over.start(t);
     o.stop(t + length + 0.3); over.stop(t + 0.4);
@@ -420,18 +438,19 @@
   // A soft electric piano note (FM): warm, a little bell-like as it starts, then mellow
   function keys(freq, at, { gain = 0.028, length = 1.2, pan = 0, echo: e = 0.2, room: r = 0.45 } = {}) {
     freq *= jitter;
+    gain *= 0.75;
     const t = ctx.currentTime + at;
     const out = place(pan, { room: r, echo: e });
     const amp = ctx.createGain();
     amp.gain.value = 0;
-    ease(amp.gain, t, gain, 0.012, length);
+    ease(amp.gain, t, gain, 0.03, length);
     amp.connect(out);
     const car = ctx.createOscillator();
     car.frequency.value = freq;
     const mod = ctx.createOscillator();
     mod.frequency.value = freq;
     const depth = ctx.createGain();
-    depth.gain.setValueAtTime(freq * 0.9, t);
+    depth.gain.setValueAtTime(freq * 0.45, t);
     depth.gain.setTargetAtTime(freq * 0.04, t, 0.25);
     mod.connect(depth).connect(car.frequency);
     car.connect(amp);
@@ -443,16 +462,17 @@
   // A music-box / distant clock chime: a pure tone with soft harmonics that fade first
   function chime(freq, at, { gain = 0.024, length = 1.6, pan = 0, echo: e = 0.25, room: r = 0.55 } = {}) {
     freq *= jitter;
+    gain *= 0.7;
     const t = ctx.currentTime + at;
     const out = place(pan, { room: r, echo: e });
     const parts = [out];
     let first = null;
-    [[1, 1, length], [2, 0.22, length * 0.5], [4.02, 0.06, length * 0.25]].forEach(([mult, level, len]) => {
+    [[1, 1, length], [2, 0.12, length * 0.5], [4.02, 0.025, length * 0.25]].forEach(([mult, level, len]) => {
       const o = ctx.createOscillator();
       o.frequency.value = freq * mult;
       const g = ctx.createGain();
       g.gain.value = 0;
-      ease(g.gain, t, gain * level, 0.008, len);
+      ease(g.gain, t, gain * level, 0.03, len);
       o.connect(g).connect(out);
       o.start(t);
       o.stop(t + len + 0.3);
@@ -494,9 +514,14 @@
 
   // A chord that blooms: its notes swell in together (a hair apart, like a soft strum), never a run
   // Now and then a chord leaves out one of its inner notes, so it's voiced a little differently
-  const voiced = (freqs) => (freqs.length > 2 && Math.random() < 0.35 ? freqs.filter((_, i) => i !== 1 + Math.floor(Math.random() * (freqs.length - 2))) : freqs);
-  const bloom = (freqs, at0, opts) => voiced(freqs).forEach((f, i) => bell(f, at0 + i * 0.018, { pan: (i / Math.max(1, freqs.length - 1) - 0.5) * 0.9, ...opts }));
-  const together = (fn, freqs, at0, opts) => voiced(freqs).forEach((f, i) => fn(f, at0 + i * 0.02, { pan: (i / Math.max(1, freqs.length - 1) - 0.5) * 0.8, ...opts }));
+  // Calm: never more than three notes at once (lowest, highest and one between, chosen afresh)
+  const voiced = (freqs) => {
+    let f = freqs.length > 2 && Math.random() < 0.35 ? freqs.filter((_, i) => i !== 1 + Math.floor(Math.random() * (freqs.length - 2))) : freqs;
+    if (f.length > 3) f = [f[0], f[1 + Math.floor(Math.random() * (f.length - 2))], f[f.length - 1]];
+    return f;
+  };
+  const bloom = (freqs, at0, opts) => voiced(freqs).forEach((f, i) => bell(f, at0 + i * 0.03, { pan: (i / Math.max(1, freqs.length - 1) - 0.5) * 0.9, ...opts }));
+  const together = (fn, freqs, at0, opts) => voiced(freqs).forEach((f, i) => fn(f, at0 + i * 0.03, { pan: (i / Math.max(1, freqs.length - 1) - 0.5) * 0.8, ...opts }));
 
   // ---- Nova Agent's own sounds (Chat, and anything without a theme of its own) ----
   const SOUNDS = {
@@ -556,7 +581,7 @@
     },
     // ---- The extras: barely there ----
     // Scrolling: a breath of air, quieter the slower you go (strength 0–1)
-    scroll: (k = 0.5) => air(0, { from: 500 + 500 * k, to: 900 + 900 * k, gain: 0.002 + 0.004 * k, length: 0.22, panFrom: -0.15, panTo: 0.15 }),
+    scroll: (k = 0.5) => air(0, { from: 500 + 500 * k, to: 900 + 900 * k, gain: 0.006 + 0.01 * k, length: 0.22, panFrom: -0.15, panTo: 0.15 }),
     // Typing: the softest touch per key, a little different each time
     key: () => drop(N.D5 * (1 + (Math.random() - 0.5) * 0.06), 0, { gain: 0.007, length: 0.09, pan: (Math.random() - 0.5) * 0.4 }),
     // A slider: a soft tone that rises and falls with it (k = 0–1 along the slider)
@@ -603,7 +628,7 @@
       scroll: (k = 0.5) => paper(0, { gain: 0.003 + 0.004 * k, length: 0.22, from: 1400, to: 2000 }),
       lift: () => paper(0, { gain: 0.014, length: 0.22, from: 1200, to: 2600 }),
       place: () => { paper(0, { gain: 0.012, length: 0.18, from: 2400, to: 1200 }); wood(420, 0.08, { gain: 0.02, length: 0.15 }); },
-      hover: () => paper(0, { gain: 0.003, length: 0.12, from: 2400, to: 2800 }),
+      hover: () => paper(0, { gain: 0.008, length: 0.12, from: 2400, to: 2800 }),
       message: () => together(pluck, [N.B4, N.E5], 0, { gain: 0.018, length: 1.1, echo: 0.3 }),
     },
     // Calendar: clocks and days. Soft ticks and tocks, calendar pages, a distant hour chime.
@@ -735,6 +760,8 @@
   const EXTRAS = new Set(["scroll", "key", "slide", "lift", "nudge", "place", "hover"]);
   const GAPS = { scroll: 260, key: 35, slide: 70, nudge: 60, hover: 120 }; // the least time between two
   const lastOf = {};
+  const SMALL = new Set(["tap", "tab", "menu", "pick", "check", "uncheck", "nav"]);
+  let lastSmall = 0;
   const lastVariant = {};
   let busy = 0;
   let busyAt = 0;
@@ -752,6 +779,13 @@
     } else {
       // Never a pile-up of sounds from one press
       if (now - last < 45) return;
+      // Calm, not chatty: the small sounds (taps, tabs, menus…) keep well apart, and the same
+      // one doesn't come straight back
+      if (SMALL.has(name)) {
+        if (now - lastSmall < 380 || now - (lastOf[name] || 0) < 1100) return;
+        lastSmall = now;
+        lastOf[name] = now;
+      }
       last = now;
     }
     try {

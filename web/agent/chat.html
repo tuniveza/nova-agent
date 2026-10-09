@@ -88,8 +88,28 @@
   .suite-app { position: relative; }
   .suite-app, .btn, .icon-btn, .seg button, .chip { transition-property: transform, scale, border-color, box-shadow, color, background-color; transition-duration: .2s, .16s, .2s, .2s, .2s, .2s; transition-timing-function: cubic-bezier(.2,.8,.2,1); }
   .suite-app:active, .btn:active, .icon-btn:active, .seg button:active, .chip:active, .tg-items [data-tab]:active { scale: .95; }
-  .suite-app > img, .suite-app > .suite-glyph { transition: transform .35s cubic-bezier(.2,.8,.2,1); }
-  .suite-app:hover > img, .suite-app:hover > .suite-glyph { transform: translateY(-1px) scale(1.06); }
+  /* The panels' icons: one line-art set, each in its own colour mixed with the theme's accent, so
+     they follow Cosmic, Ember, Aurora… yet each keeps its own mood */
+  .pico { --own: var(--accent); --tint: color-mix(in oklch, var(--own) 66%, var(--accent));
+    display: grid; place-items: center; flex: none; color: #fff;
+    background: radial-gradient(circle at 32% 22%, color-mix(in oklab, var(--tint) 78%, #fff 22%), var(--tint) 38%, color-mix(in oklab, var(--tint) 45%, var(--void)) 100%);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tint) 55%, #fff 10%), 0 8px 22px -10px var(--tint); }
+  .pico svg { width: 60%; height: 60%; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+  .pico svg .pf { fill: currentColor; stroke: none; }
+  .pico[data-p="chat"] { --own: var(--hi); }
+  .pico[data-p="portal"] { --own: #ff5fae; }
+  .pico[data-p="calendar"] { --own: #8c7dff; }
+  .pico[data-p="notes"] { --own: #ffb36b; }
+  .pico[data-p="index"] { --own: #45d3c4; }
+  .pico[data-p="quests"] { --own: #ffd166; }
+  .pico[data-p="missions"] { --own: #ff7a6b; }
+  .pico[data-p="lossless"] { --own: #62b6ff; }
+  .pico[data-p="visualizer"] { --own: #6fe6a6; }
+  .pico[data-p="observatory"] { --own: #5b63ff; }
+  .pico[data-p="manual"] { --own: #e6cf9f; }
+  .suite-app > .pico { width: 52px; height: 52px; border-radius: 14px; }
+  .suite-app > .pico, .suite-app > img, .suite-app > .suite-glyph { transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+  .suite-app:hover > img, .suite-app:hover > .suite-glyph, .suite-app:hover > .pico { transform: translateY(-1px) scale(1.06); }
   .suite-groups .suite-app.open::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
     box-shadow: 0 0 22px -4px var(--hi), inset 0 0 14px -6px var(--hi); opacity: .35; animation: tile-breathe 3.6s ease-in-out infinite; }
   @keyframes tile-breathe { 50% { opacity: 1; } }
@@ -177,7 +197,7 @@
     .main.viewing > .suite-home .suite-group h4 { margin: 0 0 3px; font-size: 8px; }
     .main.viewing > .suite-home .suite-grid { gap: 5px; }
     .main.viewing > .suite-home .suite-app { gap: 3px; padding: 5px 4px 4px; border-radius: 11px; }
-    .main.viewing > .suite-home .suite-app > img, .main.viewing > .suite-home .suite-app > .suite-glyph { width: 24px; height: 24px; border-radius: 7px; font-size: 12px; }
+    .main.viewing > .suite-home .suite-app > img, .main.viewing > .suite-home .suite-app > .suite-glyph, .main.viewing > .suite-home .suite-app > .pico { width: 24px; height: 24px; border-radius: 7px; font-size: 12px; }
     .main.viewing > .suite-home .suite-app b { font-size: 10px; -webkit-line-clamp: 1; }
   }
   /* A phone (or a short window) with a panel open: the panel gets the whole screen. Nova Agent's
@@ -208,7 +228,7 @@
   .suite-home .suite-group h4 { margin: 0 0 6px; font-size: 9px; letter-spacing: .26em; }
   .suite-home .suite-grid { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
   .suite-home .suite-app { gap: 5px; padding: 8px 4px 7px; border-radius: 14px; }
-  .suite-home .suite-app > img, .suite-home .suite-app > .suite-glyph { width: 34px; height: 34px; border-radius: 10px; font-size: 16px; }
+  .suite-home .suite-app > img, .suite-home .suite-app > .suite-glyph, .suite-home .suite-app > .pico { width: 34px; height: 34px; border-radius: 10px; font-size: 16px; }
   .suite-home .suite-app b { font-size: 11px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .suite-home .suite-app small { display: none; }
   .suite-group.tools .suite-app { background: color-mix(in srgb, var(--void) 35%, transparent); }
@@ -590,6 +610,18 @@
       <path d="M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148" fill="none" stroke="url(#mk-letter)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
       <circle cx="256" cy="256" r="164" fill="none" stroke="url(#mk-letter)" stroke-opacity=".18" stroke-width="3"/>
     </symbol>
+    <!-- The panels' own icons (line art, tinted by the theme and each panel's own colour: .pico) -->
+    <symbol id="pi-chat" viewBox="0 0 24 24"><path d="M4.5 7A2.5 2.5 0 0 1 7 4.5h10A2.5 2.5 0 0 1 19.5 7v6.5A2.5 2.5 0 0 1 17 16h-5.5l-4 3.5V16H7a2.5 2.5 0 0 1-2.5-2.5z"/><path class="pf" d="M12 6.8l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/></symbol>
+    <symbol id="pi-portal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10" ry="3.4" transform="rotate(-22 12 12)"/><circle class="pf" cx="19.2" cy="5.2" r=".9"/></symbol>
+    <symbol id="pi-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path class="pf" d="M14.6 12.6a3.2 3.2 0 1 0 0 5.4 2.6 2.6 0 1 1 0-5.4z"/></symbol>
+    <symbol id="pi-notes" viewBox="0 0 24 24"><path d="M7.5 3.5h6.5l4.5 4.5v11A1.5 1.5 0 0 1 17 20.5H7.5A1.5 1.5 0 0 1 6 19V5a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M14 3.5V8h4.5M9 12.5h6M9 16h3.5"/></symbol>
+    <symbol id="pi-index" viewBox="0 0 24 24"><path d="M6 7l6 5 5.5-5.5M12 12l-5 5.5M12 12l6 5"/><circle class="pf" cx="6" cy="7" r="1.7"/><circle class="pf" cx="17.5" cy="6.5" r="1.7"/><circle class="pf" cx="12" cy="12" r="2"/><circle class="pf" cx="7" cy="17.5" r="1.7"/><circle class="pf" cx="18" cy="17" r="1.7"/></symbol>
+    <symbol id="pi-quests" viewBox="0 0 24 24"><path d="M4.5 7l1.6 1.6L9 5.7M12 7h7.5M4.5 12.5l1.6 1.6L9 11.2M12 12.5h7.5M5 18h3.5M12 18h7.5"/></symbol>
+    <symbol id="pi-missions" viewBox="0 0 24 24"><path d="M3.5 20l6-10 3.5 5.5 2-3 5.5 7.5z"/><path d="M9.5 10V3.5l4.5 1.8-4.5 1.8"/></symbol>
+    <symbol id="pi-lossless" viewBox="0 0 24 24"><path d="M3 12h1.5M7 8.5v7M10.5 5v14M14 8v8M17.5 6.5v11M21 12h-.5"/></symbol>
+    <symbol id="pi-visualizer" viewBox="0 0 24 24"><path d="M2.5 12h4l2-5.5 3 11 3-8.5 2 3h5"/></symbol>
+    <symbol id="pi-observatory" viewBox="0 0 24 24"><path d="M4 14.5l11-5.5 2 4-11 5.5z"/><path d="M15 9l3-1.5 2 4-3 1.5M9.5 16.5l-2 4.5M11.5 15.5l2 5"/><path class="pf" d="M6 4.2l.6 1.3 1.3.6-1.3.6-.6 1.3-.6-1.3-1.3-.6 1.3-.6z"/></symbol>
+    <symbol id="pi-manual" viewBox="0 0 24 24"><path d="M12 6.5C10 5 6.8 4.6 3.5 5v13.2c3.3-.4 6.5 0 8.5 1.5 2-1.5 5.2-1.9 8.5-1.5V5c-3.3-.4-6.5 0-8.5 1.5zM12 6.5v13.2"/></symbol>
     <symbol id="i-send" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
@@ -750,32 +782,32 @@
       <div class="suite-group apps">
         <h4>Apps</h4>
         <div class="suite-grid">
-          <a class="suite-app here" href="/agent/"><img src="/agent/icon.svg" alt=""><b>Chat</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
-          <a class="suite-app" href="/portal/" data-inside="/portal/"><img src="/portal/icon.svg" alt=""><b>Portal</b><small>Enquiries, chats, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
-          <a class="suite-app" href="/calendar/" data-inside="/calendar/"><img src="/calendar/assets/icon.svg" alt=""><b>Calendar</b><small>The one Nova Agent plans into</small></a>
-          <a class="suite-app" href="/notes/" data-inside="/notes/"><img src="/notes/assets/icon.svg" alt=""><b>Notes</b><small>Notes and documents, Google Docs export</small></a>
-          <a class="suite-app" href="/app/memory/" data-inside="/app/memory/"><img src="/app/memory/icon.svg" alt=""><b>Index</b><small>Everything Nova Agent remembers: browse, edit, approve</small></a>
+          <a class="suite-app here" href="/agent/"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-chat"/></svg></span><b>Chat</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
+          <a class="suite-app" href="/portal/" data-inside="/portal/"><span class="pico" data-p="portal" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-portal"/></svg></span><b>Portal</b><small>Enquiries, chats, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
+          <a class="suite-app" href="/calendar/" data-inside="/calendar/"><span class="pico" data-p="calendar" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-calendar"/></svg></span><b>Calendar</b><small>The one Nova Agent plans into</small></a>
+          <a class="suite-app" href="/notes/" data-inside="/notes/"><span class="pico" data-p="notes" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-notes"/></svg></span><b>Notes</b><small>Notes and documents, Google Docs export</small></a>
+          <a class="suite-app" href="/app/memory/" data-inside="/app/memory/"><span class="pico" data-p="index" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-index"/></svg></span><b>Index</b><small>Everything Nova Agent remembers: browse, edit, approve</small></a>
         </div>
       </div>
       <div class="suite-group tools tasks">
         <h4>Tasks</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/agent/" data-pane="quests"><span class="suite-glyph">☰</span><b>Quests</b><small>Today's plan, hour by hour</small></a>
-          <a class="suite-app" href="/agent/" data-pane="missions"><span class="suite-glyph">◆</span><b>Missions</b><small>Your goals, planned into Quests</small></a>
+          <a class="suite-app" href="/agent/" data-pane="quests"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-quests"/></svg></span><b>Quests</b><small>Today's plan, hour by hour</small></a>
+          <a class="suite-app" href="/agent/" data-pane="missions"><span class="pico" data-p="missions" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-missions"/></svg></span><b>Missions</b><small>Your goals, planned into Quests</small></a>
         </div>
       </div>
       <div class="suite-group tools">
         <h4>Tools</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="suite-glyph">◉</span><b>Lossless audio</b><small>Raw PCM between two devices, anywhere</small></a>
-          <a class="suite-app" href="/visualizer" data-inside="/visualizer"><span class="suite-glyph">◎</span><b>Visualizer</b><small>Nova Agent's live steps and memory</small></a>
+          <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="pico" data-p="lossless" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-lossless"/></svg></span><b>Lossless audio</b><small>Raw PCM between two devices, anywhere</small></a>
+          <a class="suite-app" href="/visualizer" data-inside="/visualizer"><span class="pico" data-p="visualizer" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-visualizer"/></svg></span><b>Visualizer</b><small>Nova Agent's live steps and memory</small></a>
         </div>
       </div>
       <div class="suite-group tools helpers">
         <h4>Helpers</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/observatory/" data-inside="/observatory/"><img src="/observatory/assets/sigil.svg" alt=""><b>Observatory</b><small>Every project, lines of code and the star map</small></a>
-          <a class="suite-app" href="/agent/" data-act="manual"><span class="suite-glyph">📖</span><b>Manual</b><small>How everything in Nova Agent works</small></a>
+          <a class="suite-app" href="/observatory/" data-inside="/observatory/"><span class="pico" data-p="observatory" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-observatory"/></svg></span><b>Observatory</b><small>Every project, lines of code and the star map</small></a>
+          <a class="suite-app" href="/agent/" data-act="manual"><span class="pico" data-p="manual" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-manual"/></svg></span><b>Manual</b><small>How everything in Nova Agent works</small></a>
         </div>
       </div>
     </div>
