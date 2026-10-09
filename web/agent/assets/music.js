@@ -215,6 +215,10 @@
     });
   }
   new ResizeObserver(fit).observe(log);
+  // Again once the fonts and pictures are in (they change how much room it needs)
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  addEventListener("load", fit);
+  [800, 2000, 4000].forEach((ms) => setTimeout(fit, ms));
   addEventListener("resize", fit);
   document.addEventListener("load", (e) => e.target && e.target.closest && e.target.closest("#welcome") && fit(), true);
   place();
