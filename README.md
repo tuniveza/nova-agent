@@ -276,6 +276,15 @@ chimes when it answers, and a short "hello" (D–A–C♯–F♯) plays when sou
 switch at the top left turns them off (on a phone: the gear → Sound), and the choice is remembered
 on that device. It's the same `web/shared/sfx.js` in every panel.
 
+**Every panel sounds like itself**, all in the same key: Notes is paper and pencil, Calendar soft
+clock ticks and chimes, Portal deep and roomy like its planet, Index droplets that echo away,
+Observatory the wide night sky, Lossless audio a soft electric piano, Visualizer glass glints,
+Quests a warm kalimba and Missions a low, steady swell. A button that opens a panel sounds like
+that panel. Different kinds of things have their own sounds (switches, tick boxes, menus, lists,
+links, tabs…), each button has its own notes, and no sound plays exactly the same way twice
+running, so they never get too familiar. When sounds come thick and fast they get softer by
+themselves, and come back after a pause.
+
 ### The panels bar and motion
 
 Along the bottom on a computer: every panel in its four groups (Apps, Tasks, Tools, Helpers),

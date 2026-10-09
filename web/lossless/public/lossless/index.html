@@ -171,6 +171,7 @@
   <p class="note">Every frame is bit-exact (the data channel is checksummed and encrypted end to end). In <strong>Lossless</strong> mode every frame is delivered and played: if the network hiccups, playback pauses and waits rather than skipping, and the delay grows to whatever the connection needs. Use <strong>Catch up</strong> to bring it back down. <strong>Low latency</strong> mode skips late frames instead.</p>
   <p class="note"><strong>Different networks, anywhere in the world:</strong> if the two devices can't reach each other directly, the call goes through a relay (Path shows "relayed (TURN)"). To test the relay from one network, open the page with <code>?relay</code> before the <code>#</code>, e.g. <code>/lossless/?relay#my-room</code>, on one device.</p>
 </main>
+<script src="/shared/sfx.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

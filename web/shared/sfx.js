@@ -5,9 +5,18 @@
 // music in ambient.js, so the two always sound right together), placed across left and right and
 // washed in a little room of reverb and echo. Kept quiet.
 //
+// Every panel has its own sounds, in keeping with what it's for (all in the same key): Notes is
+// paper and pencil, Calendar soft clock ticks and chimes, Portal deep and roomy like its planet,
+// Index droplets that echo, Observatory the wide night sky, Lossless audio a soft electric piano,
+// Visualizer glass glints, Quests a warm kalimba and Missions a low, steady swell. Buttons that
+// open a panel sound like that panel, and each button keeps its own note, so different buttons
+// sound a little different (the same one always the same). A part of a page can choose its theme
+// with data-sfx-theme="notes|calendar|portal|index|observatory|lossless|visualizer|quests|missions|agent".
+//
 // Sounds play by themselves: one listener works out what kind of thing was pressed (a tab, a
-// switch, a "send", a "delete"...). An element can choose its own sound with
-// data-sfx="tap|tab|open|close|on|off|send|done|remove|error|message|welcome|none".
+// switch, a tick box, a menu item, a link, a "send", a "delete"...). An element can choose its own
+// sound with data-sfx="tap|tab|open|close|on|off|check|uncheck|pick|menu|nav|send|done|remove|
+// error|message|welcome|none".
 // Switched off and on with NovaSfx.setEnabled(false/true); remembered on the device.
 // The extras (scrolling, typing, sliders, dragging, hovering) are barely there and have their own
 // switch, NovaSfx.setExtraEnabled(false/true), also remembered on the device.
@@ -23,6 +32,10 @@
   let wet = null; // into the reverb
   let echo = null; // into the soft echo
   let last = 0;
+  // Set for each sound as it plays: how loud (lower when sounds come thick and fast) and a tiny
+  // pitch difference, so no two plays are exactly alike
+  let level = 1;
+  let jitter = 1;
 
   // The extra, very quiet sounds (scrolling, typing, sliders, dragging, hovering) have their
   // own switch: on unless switched off on this device, and only while sounds are on at all
@@ -133,6 +146,7 @@
   // Where a sound sits, left (-1) to right (1); old Safari has no panner, so it stays centred
   function place(pan, { room: r = 0.35, echo: e = 0 } = {}) {
     const g = ctx.createGain();
+    g.gain.value = level;
     g.parts = []; // its panner and sends, unplugged with it
     let out = g;
     if (ctx.createStereoPanner) {
@@ -169,6 +183,7 @@
   // twin a hair sharp for a soft shimmer, and a warm sine an octave under it. It swells in (no
   // sharp strike), so it's more like a rubbed wine glass than a beep.
   function bell(freq, at, { gain = 0.05, length = 0.9, pan = 0, glint = 0.7, warmth = 0.35, attack = 0.03, room: r = 0.45, echo: e = 0 } = {}) {
+    freq *= jitter;
     const t = ctx.currentTime + at;
     const out = place(pan, { room: r, echo: e });
     const amp = ctx.createGain();
@@ -220,6 +235,7 @@
   // a quiet sine an octave under it for body, through a gentle low-pass, with room around it.
   // More like a fingertip on a felt drum than a click.
   function drop(freq, at, { gain = 0.05, length = 0.4, pan = 0 } = {}) {
+    freq *= jitter;
     const t = ctx.currentTime + at;
     const out = place(pan, { room: 0.5 });
     const soft = ctx.createBiquadFilter();
@@ -228,9 +244,7 @@
     soft.Q.value = 0.3;
     const amp = ctx.createGain();
     // Eases in over 35 ms along an S-curve (no corner, so no click), then fades away
-    const rise = new Float32Array(16).map((_, i) => gain * Math.sin((Math.PI / 2) * (i / 15)) ** 2);
-    amp.gain.setValueCurveAtTime(rise, t, 0.035);
-    amp.gain.setTargetAtTime(0, t + 0.04, length / 4);
+    ease(amp.gain, t, gain, 0.035, length);
     soft.connect(amp).connect(out);
     const o = ctx.createOscillator();
     o.frequency.value = freq;
@@ -249,6 +263,7 @@
 
   // A warm swell under everything (big moments): a few soft detuned saws through a closing filter
   function swell(freqs, at, { gain = 0.018, length = 1.6 } = {}) {
+    freqs = freqs.map((f) => f * jitter);
     const t = ctx.currentTime + at;
     freqs.forEach((f, i) => {
       const out = place((i / Math.max(1, freqs.length - 1) - 0.5) * 1.2, { room: 0.8 });
@@ -305,19 +320,192 @@
     tidy(src, [src, filter, amp, out]);
   }
 
+  // An S-shaped rise (gentle at the start, so nothing clicks), then a gentle fade. Made of
+  // short straight ramps, which (unlike a value curve) never clash if the moment is late.
+  function ease(param, t, peak, rise, fade) {
+    param.setValueAtTime(0, t);
+    param.linearRampToValueAtTime(peak * 0.12, t + rise * 0.35);
+    param.linearRampToValueAtTime(peak * 0.7, t + rise * 0.7);
+    param.linearRampToValueAtTime(peak, t + rise);
+    param.setTargetAtTime(0, t + rise, fade / 4);
+  }
+  // Soft noise, made once and reused
+  let noiseBuf = null;
+  function noise() {
+    if (!noiseBuf) {
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuf;
+    return src;
+  }
+
+  // A soft wooden knock (clock ticks, pencil taps, marimba): a round sine with the faintest
+  // breath of wood around it, low-passed so it's a "tok", never a click
+  function wood(freq, at, { gain = 0.03, length = 0.14, pan = 0, room: r = 0.35 } = {}) {
+    freq *= jitter;
+    const t = ctx.currentTime + at;
+    const out = place(pan, { room: r });
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = Math.min(3200, freq * 3);
+    const amp = ctx.createGain();
+    amp.gain.value = 0;
+    ease(amp.gain, t, gain, 0.006, length);
+    lp.connect(amp).connect(out);
+    const o = ctx.createOscillator();
+    o.frequency.value = freq;
+    o.connect(lp);
+    const n = noise();
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = freq * 2;
+    bp.Q.value = 6;
+    const nAmt = ctx.createGain();
+    nAmt.gain.value = 0;
+    ease(nAmt.gain, t, 0.5, 0.004, 0.03);
+    n.connect(bp).connect(nAmt).connect(lp);
+    o.start(t); n.start(t, Math.random());
+    o.stop(t + length + 0.2); n.stop(t + 0.12);
+    tidy(o, [o, n, bp, nAmt, lp, amp, out]);
+  }
+
+  // Paper: a soft rustle or a page turning (noise with a gentle, uneven flutter, swept in tone)
+  function paper(at, { gain = 0.02, length = 0.3, from = 1400, to = 2600, pan = 0, panTo = pan, room: r = 0.4 } = {}) {
+    const t = ctx.currentTime + at;
+    const out = place(pan, { room: r });
+    if (out.pan) { out.pan.setValueAtTime(pan, t); out.pan.linearRampToValueAtTime(panTo, t + length); }
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.Q.value = 0.8;
+    bp.frequency.setValueAtTime(from, t);
+    bp.frequency.exponentialRampToValueAtTime(to, t + length);
+    const amp = ctx.createGain();
+    const steps = 24;
+    const curve = new Float32Array(steps).map((_, i) => gain * Math.sin(Math.PI * (i / (steps - 1))) ** 1.5 * (0.55 + 0.45 * Math.random()));
+    curve[0] = 0; curve[steps - 1] = 0;
+    amp.gain.setValueCurveAtTime(curve, t, length);
+    const n = noise();
+    n.connect(bp).connect(amp).connect(out);
+    n.start(t, Math.random());
+    n.stop(t + length + 0.02);
+    tidy(n, [n, bp, amp, out]);
+  }
+
+  // A kalimba / soft marimba note: a round sine with a faint, quickly fading overtone
+  function pluck(freq, at, { gain = 0.03, length = 0.9, pan = 0, echo: e = 0, room: r = 0.45 } = {}) {
+    freq *= jitter;
+    const t = ctx.currentTime + at;
+    const out = place(pan, { room: r, echo: e });
+    const amp = ctx.createGain();
+    amp.gain.value = 0;
+    ease(amp.gain, t, gain, 0.008, length);
+    amp.connect(out);
+    const o = ctx.createOscillator();
+    o.frequency.value = freq;
+    o.connect(amp);
+    const over = ctx.createOscillator();
+    over.frequency.value = freq * 3;
+    const overAmt = ctx.createGain();
+    overAmt.gain.value = 0;
+    ease(overAmt.gain, t, 0.12, 0.008, 0.12);
+    over.connect(overAmt).connect(amp);
+    o.start(t); over.start(t);
+    o.stop(t + length + 0.3); over.stop(t + 0.4);
+    tidy(o, [o, over, overAmt, amp, out]);
+  }
+
+  // A soft electric piano note (FM): warm, a little bell-like as it starts, then mellow
+  function keys(freq, at, { gain = 0.028, length = 1.2, pan = 0, echo: e = 0.2, room: r = 0.45 } = {}) {
+    freq *= jitter;
+    const t = ctx.currentTime + at;
+    const out = place(pan, { room: r, echo: e });
+    const amp = ctx.createGain();
+    amp.gain.value = 0;
+    ease(amp.gain, t, gain, 0.012, length);
+    amp.connect(out);
+    const car = ctx.createOscillator();
+    car.frequency.value = freq;
+    const mod = ctx.createOscillator();
+    mod.frequency.value = freq;
+    const depth = ctx.createGain();
+    depth.gain.setValueAtTime(freq * 0.9, t);
+    depth.gain.setTargetAtTime(freq * 0.04, t, 0.25);
+    mod.connect(depth).connect(car.frequency);
+    car.connect(amp);
+    car.start(t); mod.start(t);
+    car.stop(t + length + 0.3); mod.stop(t + length + 0.3);
+    tidy(car, [car, mod, depth, amp, out]);
+  }
+
+  // A music-box / distant clock chime: a pure tone with soft harmonics that fade first
+  function chime(freq, at, { gain = 0.024, length = 1.6, pan = 0, echo: e = 0.25, room: r = 0.55 } = {}) {
+    freq *= jitter;
+    const t = ctx.currentTime + at;
+    const out = place(pan, { room: r, echo: e });
+    const parts = [out];
+    let first = null;
+    [[1, 1, length], [2, 0.22, length * 0.5], [4.02, 0.06, length * 0.25]].forEach(([mult, level, len]) => {
+      const o = ctx.createOscillator();
+      o.frequency.value = freq * mult;
+      const g = ctx.createGain();
+      g.gain.value = 0;
+      ease(g.gain, t, gain * level, 0.008, len);
+      o.connect(g).connect(out);
+      o.start(t);
+      o.stop(t + len + 0.3);
+      parts.push(o, g);
+      first = first || o;
+    });
+    tidy(first, parts);
+  }
+
+  // A deep, soft hum that swells and fades (planets, missions, the night sky)
+  function hum(freq, at, { gain = 0.02, length = 1.4, room: r = 0.6 } = {}) {
+    freq *= jitter;
+    const t = ctx.currentTime + at;
+    const out = place(0, { room: r });
+    const amp = ctx.createGain();
+    amp.gain.setValueAtTime(0.0001, t);
+    amp.gain.exponentialRampToValueAtTime(gain, t + length * 0.3);
+    amp.gain.exponentialRampToValueAtTime(0.0001, t + length);
+    amp.connect(out);
+    const a = ctx.createOscillator(), b = ctx.createOscillator();
+    a.frequency.value = freq;
+    b.frequency.value = freq * 2;
+    b.detune.value = 4;
+    const bAmt = ctx.createGain();
+    bAmt.gain.value = 0.3;
+    a.connect(amp);
+    b.connect(bAmt).connect(amp);
+    a.start(t); b.start(t);
+    a.stop(t + length + 0.05); b.stop(t + length + 0.05);
+    tidy(a, [a, b, bAmt, amp, out]);
+  }
+
   // The notes: D lydian (D E F# G# A B C#), mostly in the middle-high range so nothing is shrill
-  const N = { A4: 440, B4: 493.88, Cs5: 554.37, D5: 587.33, E5: 659.25, Fs5: 739.99, Gs5: 830.61, A5: 880, B5: 987.77, Cs6: 1108.73, D6: 1174.66, E6: 1318.51, Fs6: 1479.98, A6: 1760, D3: 146.83, A3: 220, Fs3: 185, D4: 293.66, Fs4: 369.99, Cs4: 277.18 };
+  const N = { A4: 440, B4: 493.88, Cs5: 554.37, D5: 587.33, E5: 659.25, Fs5: 739.99, Gs5: 830.61, A5: 880, B5: 987.77, Cs6: 1108.73, D6: 1174.66, E6: 1318.51, Fs6: 1479.98, A6: 1760, D3: 146.83, E3: 164.81, A3: 220, B3: 246.94, Fs3: 185, D4: 293.66, E4: 329.63, Fs4: 369.99, Cs4: 277.18, Gs4: 415.3, D2: 73.42, A2: 110 };
+  // Each button keeps its own note (v = 0, 1, 2…, worked out from what it's called), so different
+  // buttons sound a little different, and the same button always sounds the same
+  const at = (list, v) => list[(v || 0) % list.length];
+  const wobble = () => (Math.random() - 0.5) * 0.3;
 
   // A chord that blooms: its notes swell in together (a hair apart, like a soft strum), never a run
-  const bloom = (freqs, at, opts) => freqs.forEach((f, i) => bell(f, at + i * 0.018, { pan: (i / Math.max(1, freqs.length - 1) - 0.5) * 0.9, ...opts }));
+  // Now and then a chord leaves out one of its inner notes, so it's voiced a little differently
+  const voiced = (freqs) => (freqs.length > 2 && Math.random() < 0.35 ? freqs.filter((_, i) => i !== 1 + Math.floor(Math.random() * (freqs.length - 2))) : freqs);
+  const bloom = (freqs, at0, opts) => voiced(freqs).forEach((f, i) => bell(f, at0 + i * 0.018, { pan: (i / Math.max(1, freqs.length - 1) - 0.5) * 0.9, ...opts }));
+  const together = (fn, freqs, at0, opts) => voiced(freqs).forEach((f, i) => fn(f, at0 + i * 0.02, { pan: (i / Math.max(1, freqs.length - 1) - 0.5) * 0.8, ...opts }));
 
+  // ---- Nova Agent's own sounds (Chat, and anything without a theme of its own) ----
   const SOUNDS = {
     // A light tap on anything: a soft, low, warm touch
-    tap: () => drop(N.A4, 0, { gain: 0.022, pan: (Math.random() - 0.5) * 0.3 }),
+    tap: (k, v) => drop(at([N.A4, N.Fs4, N.B4, N.E4, N.Cs5], v), 0, { gain: 0.022, pan: wobble() }),
     // Switching tabs or views: a puff of air and one glass tone
-    tab: () => {
+    tab: (k, v) => {
       air(0, { from: 900, to: 1700, gain: 0.014, length: 0.2, panFrom: -0.2, panTo: 0.2 });
-      bell(N.A5, 0.01, { gain: 0.03, length: 0.9, attack: 0.025 });
+      bell(at([N.A5, N.Fs5, N.B5, N.E5], v), 0.01, { gain: 0.03, length: 0.9, attack: 0.025 });
     },
     // Opening a sheet, dialog, menu or panel: air rising, and a chord blooming open
     open: () => {
@@ -332,6 +520,17 @@
     // A switch turned on / off: a bright pair of tones together, or a lower, softer pair
     on: () => bloom([N.Fs5, N.Cs6], 0, { gain: 0.03, length: 1.0, attack: 0.03 }),
     off: () => bloom([N.B4, N.Fs5], 0, { gain: 0.026, length: 0.8, attack: 0.03, warmth: 0.5 }),
+    // A tick box (not a switch): a little lighter than a switch
+    check: () => bloom([N.A5, N.E6], 0, { gain: 0.02, length: 0.7, attack: 0.03 }),
+    uncheck: () => bell(N.E5, 0, { gain: 0.02, length: 0.6, attack: 0.03, warmth: 0.5 }),
+    // Choosing from a list or a menu
+    pick: (k, v) => bell(at([N.Fs5, N.A5, N.B5, N.D6], v), 0, { gain: 0.022, length: 0.7, attack: 0.03, glint: 0.4 }),
+    menu: (k, v) => drop(at([N.D5, N.E5, N.Fs5, N.A5], v), 0, { gain: 0.02, length: 0.35, pan: wobble() }),
+    // Following a link to somewhere else: a little breath forward
+    nav: () => {
+      air(0, { from: 700, to: 1800, gain: 0.014, length: 0.25, panFrom: -0.3, panTo: 0.3 });
+      drop(N.D5, 0.03, { gain: 0.018, length: 0.4 });
+    },
     // Sending a message or saving something: a breath of air flying off to the right, two glass
     // tones following it into the echo
     send: () => {
@@ -362,7 +561,7 @@
     key: () => drop(N.D5 * (1 + (Math.random() - 0.5) * 0.06), 0, { gain: 0.007, length: 0.09, pan: (Math.random() - 0.5) * 0.4 }),
     // A slider: a soft tone that rises and falls with it (k = 0–1 along the slider)
     slide: (k = 0.5) => {
-      const steps = [N.D4, N.E5 / 2, N.Fs4, N.A4, N.B4, N.D5, N.E5, N.Fs5, N.A5, N.B5, N.D6];
+      const steps = [N.D4, N.E4, N.Fs4, N.A4, N.B4, N.D5, N.E5, N.Fs5, N.A5, N.B5, N.D6];
       bell(steps[Math.round(k * (steps.length - 1))], 0, { gain: 0.012, length: 0.5, attack: 0.03, glint: 0.2, warmth: 0.4 });
     },
     // Dragging: picking something up (air rising, a soft tone) and putting it down (a low touch)
@@ -377,7 +576,6 @@
     },
     // Hovering over a tile with a mouse: an extra-faint shimmer, high up
     hover: () => bell([N.Cs6, N.E6, N.Fs6, N.A6][Math.floor(Math.random() * 4)], 0, { gain: 0.006, length: 0.9, attack: 0.06, glint: 0.2, warmth: 0, pan: (Math.random() - 0.5) * 0.8 }),
-
     // Hello (sound switched on): Novacane's chord, D–A–C♯–F♯, blooming over a soft swell
     welcome: () => {
       swell([N.D3, N.A3, N.Cs5], 0, { gain: 0.012, length: 2.4 });
@@ -385,11 +583,162 @@
     },
   };
 
+  // ---- Each panel's own sounds, in keeping with what it's for (anything a panel leaves out
+  // uses Nova Agent's own above). All in the same key, so they sit together. ----
+  const THEMES = {
+    // Notes: paper and pencil. Pages turn, pencils tap, a soft felt piano underneath.
+    notes: {
+      tap: (k, v) => wood(at([1100, 1250, 980, 1320], v), 0, { gain: 0.016, length: 0.08, pan: wobble() }),
+      tab: (k, v) => { paper(0, { gain: 0.012, length: 0.18, from: 1600, to: 2400 }); pluck(at([N.A4, N.Fs4, N.B4], v), 0.03, { gain: 0.016, length: 0.6 }); },
+      open: () => { paper(0, { gain: 0.02, length: 0.45, from: 1000, to: 2600, pan: -0.4, panTo: 0.4 }); together(pluck, [N.D4, N.A4, N.Fs5], 0.12, { gain: 0.016, length: 1.2 }); },
+      close: () => { paper(0, { gain: 0.016, length: 0.32, from: 2400, to: 1000, pan: 0.4, panTo: -0.4 }); pluck(N.D4, 0.1, { gain: 0.02, length: 0.8 }); },
+      send: () => { paper(0, { gain: 0.016, length: 0.3, from: 1200, to: 2800, pan: -0.3, panTo: 0.5 }); together(pluck, [N.A4, N.E5], 0.06, { gain: 0.018, length: 1.0, echo: 0.2 }); },
+      done: () => { paper(0, { gain: 0.012, length: 0.3 }); together(pluck, [N.D4, N.Fs4, N.A4, N.Cs5, N.E5], 0.05, { gain: 0.016, length: 1.6, echo: 0.25 }); },
+      remove: () => { paper(0, { gain: 0.022, length: 0.5, from: 2600, to: 600, pan: 0.2, panTo: -0.3 }); wood(320, 0.12, { gain: 0.02, length: 0.2 }); },
+      check: () => { wood(1300, 0, { gain: 0.014, length: 0.06 }); paper(0.02, { gain: 0.01, length: 0.1, from: 2600, to: 3000 }); },
+      uncheck: () => paper(0, { gain: 0.012, length: 0.14, from: 2800, to: 1600 }),
+      pick: (k, v) => pluck(at([N.Fs5, N.A5, N.D5, N.B5], v), 0, { gain: 0.018, length: 0.6 }),
+      menu: (k, v) => paper(0, { gain: 0.01, length: 0.12, from: at([1800, 2100, 2400], v), to: 2800 }),
+      key: () => paper(0, { gain: 0.005, length: 0.05, from: 2600 + Math.random() * 600, to: 3200 }),
+      scroll: (k = 0.5) => paper(0, { gain: 0.003 + 0.004 * k, length: 0.22, from: 1400, to: 2000 }),
+      lift: () => paper(0, { gain: 0.014, length: 0.22, from: 1200, to: 2600 }),
+      place: () => { paper(0, { gain: 0.012, length: 0.18, from: 2400, to: 1200 }); wood(420, 0.08, { gain: 0.02, length: 0.15 }); },
+      hover: () => paper(0, { gain: 0.003, length: 0.12, from: 2400, to: 2800 }),
+      message: () => together(pluck, [N.B4, N.E5], 0, { gain: 0.018, length: 1.1, echo: 0.3 }),
+    },
+    // Calendar: clocks and days. Soft ticks and tocks, calendar pages, a distant hour chime.
+    calendar: {
+      tap: (k, v) => wood(at([880, 660, 990, 740], v), 0, { gain: 0.016, length: 0.1, pan: wobble() }),
+      tab: () => { wood(990, 0, { gain: 0.014, length: 0.09, pan: -0.25 }); wood(740, 0.13, { gain: 0.014, length: 0.12, pan: 0.25 }); },
+      open: () => { paper(0, { gain: 0.016, length: 0.35, from: 1200, to: 2400 }); together(chime, [N.A5, N.E6], 0.1, { gain: 0.016, length: 1.4 }); },
+      close: () => { wood(660, 0, { gain: 0.016, length: 0.12 }); paper(0.02, { gain: 0.01, length: 0.22, from: 2200, to: 1200 }); },
+      send: () => together(chime, [N.D5, N.A5, N.E6], 0.02, { gain: 0.016, length: 1.6, echo: 0.3 }),
+      done: () => { hum(N.D3, 0, { gain: 0.012, length: 2.4 }); together(chime, [N.D5, N.Fs5, N.A5, N.Cs6], 0.04, { gain: 0.016, length: 2.2, echo: 0.3 }); },
+      remove: () => { paper(0, { gain: 0.02, length: 0.4, from: 2400, to: 700 }); wood(440, 0.1, { gain: 0.016, length: 0.16 }); },
+      on: () => together(chime, [N.Fs5, N.Cs6], 0, { gain: 0.016, length: 1.0 }),
+      off: () => wood(560, 0, { gain: 0.016, length: 0.14 }),
+      check: () => wood(1180, 0, { gain: 0.014, length: 0.08 }),
+      uncheck: () => wood(700, 0, { gain: 0.014, length: 0.1 }),
+      pick: (k, v) => chime(at([N.A5, N.Fs5, N.B5, N.E6], v), 0, { gain: 0.014, length: 1.0 }),
+      menu: (k, v) => wood(at([830, 990, 740], v), 0, { gain: 0.013, length: 0.09 }),
+      nudge: () => wood(1320, 0, { gain: 0.008, length: 0.06 }),
+      lift: () => { paper(0, { gain: 0.012, length: 0.2, from: 1200, to: 2400 }); wood(880, 0.02, { gain: 0.012, length: 0.08 }); },
+      place: () => { wood(520, 0, { gain: 0.022, length: 0.16 }); chime(N.A5, 0.05, { gain: 0.01, length: 0.9 }); },
+      scroll: (k = 0.5) => wood(1500 + 300 * k, 0, { gain: 0.003 + 0.004 * k, length: 0.05 }),
+      key: () => wood(1400 + Math.random() * 200, 0, { gain: 0.005, length: 0.04 }),
+      hover: () => chime([N.Cs6, N.E6, N.Fs6][Math.floor(Math.random() * 3)], 0, { gain: 0.004, length: 0.8 }),
+      message: () => { chime(N.B5, 0, { gain: 0.016, length: 1.2 }); chime(N.E6, 0.14, { gain: 0.014, length: 1.4 }); },
+    },
+    // Portal: the studio's planet and its station. Deeper and roomier, with a soft low hum.
+    portal: {
+      tap: (k, v) => drop(at([N.Fs4, N.D4, N.A4, N.E4], v), 0, { gain: 0.024, length: 0.6, pan: wobble() }),
+      tab: (k, v) => { hum(at([N.D3, N.A2, N.E3], v), 0, { gain: 0.008, length: 0.7 }); bell(at([N.Fs5, N.A5, N.Cs6], v), 0.02, { gain: 0.022, length: 1.2, attack: 0.04, room: 0.7 }); },
+      open: () => { hum(N.D3, 0, { gain: 0.014, length: 1.4 }); air(0, { from: 300, to: 1800, gain: 0.018, length: 0.6 }); bloom([N.A4, N.E5, N.Cs6], 0.08, { gain: 0.02, length: 1.6, attack: 0.07, room: 0.7 }); },
+      close: () => { air(0, { from: 1600, to: 300, gain: 0.016, length: 0.45 }); bell(N.A4, 0.05, { gain: 0.022, length: 1.0, attack: 0.05, warmth: 0.6, room: 0.7 }); },
+      send: () => { air(0, { from: 500, to: 2600, gain: 0.018, length: 0.5, panFrom: -0.5, panTo: 0.6 }); bloom([N.E5, N.B5], 0.06, { gain: 0.022, length: 1.6, attack: 0.05, echo: 0.45, room: 0.7 }); },
+      done: () => { hum(N.D2 * 2, 0, { gain: 0.016, length: 2.6 }); bloom([N.D5, N.A5, N.E6, N.Fs6], 0.08, { gain: 0.02, length: 2.2, attack: 0.09, echo: 0.35, room: 0.7 }); },
+      message: () => { bell(N.A5, 0, { gain: 0.024, length: 1.4, attack: 0.05, echo: 0.4, room: 0.7 }); bell(N.E6, 0.16, { gain: 0.02, length: 1.8, attack: 0.05, echo: 0.5, room: 0.7 }); },
+      pick: (k, v) => bell(at([N.E5, N.Fs5, N.A5], v), 0, { gain: 0.02, length: 1.0, attack: 0.04, room: 0.7 }),
+      hover: () => bell([N.A5, N.Cs6, N.E6][Math.floor(Math.random() * 3)], 0, { gain: 0.005, length: 1.2, attack: 0.08, glint: 0.1, warmth: 0, room: 0.8 }),
+    },
+    // Index: the memory. Droplets of thought that echo away as they're recalled or stored.
+    index: {
+      tap: (k, v) => pluck(at([N.A5, N.Fs5, N.E5, N.B5], v), 0, { gain: 0.016, length: 0.5, echo: 0.3, pan: wobble() }),
+      tab: (k, v) => pluck(at([N.Cs6, N.A5, N.E6], v), 0, { gain: 0.016, length: 0.8, echo: 0.45 }),
+      open: () => { air(0, { from: 600, to: 2200, gain: 0.014, length: 0.4 }); together(pluck, [N.Fs5, N.Cs6, N.E6], 0.05, { gain: 0.014, length: 1.2, echo: 0.5 }); },
+      close: () => pluck(N.Fs5, 0, { gain: 0.016, length: 0.8, echo: 0.4 }),
+      send: () => { together(pluck, [N.D5, N.A5, N.E6], 0, { gain: 0.016, length: 1.4, echo: 0.55 }); hum(N.D3, 0, { gain: 0.008, length: 1.6 }); },
+      done: () => { hum(N.D3, 0, { gain: 0.01, length: 2.2 }); together(pluck, [N.D5, N.Fs5, N.A5, N.Cs6, N.E6], 0.03, { gain: 0.014, length: 1.8, echo: 0.5 }); },
+      remove: () => { pluck(N.A4, 0, { gain: 0.018, length: 0.6, echo: 0.3 }); air(0.05, { from: 1200, to: 300, gain: 0.012, length: 0.4 }); },
+      key: () => pluck(N.E6 * (1 + (Math.random() - 0.5) * 0.04), 0, { gain: 0.004, length: 0.15 }),
+      hover: () => pluck([N.Cs6, N.E6, N.Fs6][Math.floor(Math.random() * 3)], 0, { gain: 0.004, length: 0.5, echo: 0.4 }),
+    },
+    // Observatory: the night sky. Very wide and slow: faint stars over a deep, quiet hum.
+    observatory: {
+      tap: (k, v) => bell(at([N.Cs6, N.A5, N.E6, N.Fs6], v), 0, { gain: 0.014, length: 1.4, attack: 0.05, glint: 0.2, warmth: 0.2, room: 0.85, pan: wobble() * 2 }),
+      tab: (k, v) => { hum(at([N.D3, N.A2], v), 0, { gain: 0.008, length: 1.2 }); bell(at([N.E6, N.Cs6, N.A5], v), 0.03, { gain: 0.016, length: 1.6, attack: 0.06, room: 0.85 }); },
+      open: () => { hum(N.D2 * 2, 0, { gain: 0.014, length: 2.2 }); air(0, { from: 300, to: 1500, gain: 0.016, length: 1.0 }); bloom([N.A5, N.E6, N.Fs6], 0.15, { gain: 0.014, length: 2.0, attack: 0.12, room: 0.9 }); },
+      close: () => { air(0, { from: 1500, to: 300, gain: 0.012, length: 0.7 }); bell(N.E5, 0.05, { gain: 0.016, length: 1.4, attack: 0.08, room: 0.9 }); },
+      done: () => { hum(N.D2 * 2, 0, { gain: 0.014, length: 3 }); bloom([N.D5, N.A5, N.Cs6, N.Fs6, N.A6], 0.1, { gain: 0.014, length: 2.6, attack: 0.12, echo: 0.4, room: 0.9 }); },
+      hover: () => bell([N.Fs6, N.A6, N.Cs6][Math.floor(Math.random() * 3)], 0, { gain: 0.004, length: 1.6, attack: 0.1, glint: 0.1, warmth: 0, room: 0.9, pan: wobble() * 3 }),
+    },
+    // Lossless audio: the studio. Soft electric piano, warm and analogue.
+    lossless: {
+      tap: (k, v) => keys(at([N.A4, N.Fs4, N.D4, N.E4], v), 0, { gain: 0.02, length: 0.5, echo: 0.1, pan: wobble() }),
+      tab: (k, v) => keys(at([N.Fs5, N.A5, N.E5], v), 0, { gain: 0.018, length: 0.8 }),
+      open: () => together(keys, [N.D4, N.A4, N.Cs5, N.E5], 0.02, { gain: 0.016, length: 1.4, echo: 0.25 }),
+      close: () => together(keys, [N.A3, N.E4], 0, { gain: 0.016, length: 0.9 }),
+      on: () => { swell([N.D3, N.A3], 0, { gain: 0.012, length: 1.0 }); keys(N.Fs5, 0.08, { gain: 0.018, length: 1.0 }); },
+      off: () => keys(N.B3 * 2, 0, { gain: 0.016, length: 0.7 }),
+      send: () => together(keys, [N.A4, N.E5, N.B5], 0.02, { gain: 0.016, length: 1.2, echo: 0.35 }),
+      done: () => { swell([N.D3, N.A3, N.Fs4], 0, { gain: 0.012, length: 2.0 }); together(keys, [N.D5, N.Fs5, N.A5, N.Cs6], 0.05, { gain: 0.015, length: 1.8, echo: 0.3 }); },
+      hover: () => keys([N.A5, N.Cs6, N.E6][Math.floor(Math.random() * 3)], 0, { gain: 0.004, length: 0.6 }),
+    },
+    // Visualizer: light and data. Soft glass glints that ripple across.
+    visualizer: {
+      tap: (k, v) => bell(at([N.E5, N.A5, N.Fs5, N.B5], v), 0, { gain: 0.016, length: 0.6, attack: 0.02, glint: 1.0, warmth: 0, echo: 0.2, pan: wobble() * 2 }),
+      tab: (k, v) => { air(0, { from: 1200, to: 2400, gain: 0.01, length: 0.18 }); bell(at([N.Cs6, N.A5, N.E6], v), 0.02, { gain: 0.016, length: 0.8, glint: 1.0, warmth: 0, echo: 0.3 }); },
+      open: () => bloom([N.E5, N.B5, N.Fs6], 0.02, { gain: 0.016, length: 1.3, attack: 0.04, glint: 1.0, echo: 0.35 }),
+    },
+    // Quests (in Nova Agent): small steps of the day. Warm kalimba, like a soft marimba.
+    quests: {
+      tap: (k, v) => pluck(at([N.D5, N.A4, N.Fs5, N.E5], v), 0, { gain: 0.018, length: 0.6, pan: wobble() }),
+      tab: (k, v) => pluck(at([N.A5, N.Fs5, N.B5], v), 0, { gain: 0.018, length: 0.8 }),
+      done: () => { together(pluck, [N.D5, N.A5, N.Fs6], 0.02, { gain: 0.018, length: 1.6, echo: 0.3 }); hum(N.D3, 0, { gain: 0.01, length: 1.8 }); },
+      check: () => together(pluck, [N.A5, N.E6], 0, { gain: 0.016, length: 1.0, echo: 0.2 }),
+      remove: () => pluck(N.D4, 0, { gain: 0.02, length: 0.6 }),
+    },
+    // Missions (in Nova Agent): the big goals. Deeper and steady, with a warm low swell.
+    missions: {
+      tap: (k, v) => drop(at([N.D4, N.A3 * 2, N.Fs4], v), 0, { gain: 0.026, length: 0.6, pan: wobble() }),
+      tab: (k, v) => { hum(at([N.D3, N.A2], v), 0, { gain: 0.01, length: 0.9 }); drop(at([N.A4, N.Fs4], v), 0.02, { gain: 0.02, length: 0.5 }); },
+      open: () => { swell([N.D3, N.A3, N.E4], 0, { gain: 0.014, length: 1.6 }); bell(N.A4, 0.1, { gain: 0.018, length: 1.4, attack: 0.08, warmth: 0.6 }); },
+      send: () => { swell([N.D3, N.A3, N.Fs4], 0, { gain: 0.014, length: 1.8 }); bloom([N.A4, N.E5], 0.12, { gain: 0.02, length: 1.6, attack: 0.08, echo: 0.3 }); },
+      done: () => { hum(N.D2 * 2, 0, { gain: 0.016, length: 2.6 }); swell([N.D3, N.A3, N.Fs4, N.Cs5], 0, { gain: 0.016, length: 2.6 }); bloom([N.D5, N.A5, N.E6], 0.2, { gain: 0.018, length: 2.2, attack: 0.1, echo: 0.3 }); },
+    },
+  };
+
+  // Which panel a page, a link or a button belongs to
+  function themeFromPath(p) {
+    p = String(p || "");
+    if (/^pane:quests|#quests/.test(p)) return "quests";
+    if (/^pane:missions|#missions/.test(p)) return "missions";
+    if (/^pane:/.test(p)) return "agent";
+    if (/\/notes(\/|$)/.test(p)) return "notes";
+    if (/\/calendar(\/|$)/.test(p)) return "calendar";
+    if (/\/(portal|admin)(\/|$)/.test(p)) return "portal";
+    if (/\/(app\/memory|index)(\/|$)/.test(p)) return "index";
+    if (/\/observatory(\/|$)/.test(p)) return "observatory";
+    if (/\/lossless(\/|$)/.test(p)) return "lossless";
+    if (/\/visuali[sz]er|\/agent\/page/.test(p)) return "visualizer";
+    return "agent";
+  }
+  const PAGE_THEME = themeFromPath(location.pathname);
+  function themeOf(el) {
+    if (!el || !el.closest) return PAGE_THEME;
+    const marked = el.closest("[data-sfx-theme]");
+    if (marked) return marked.dataset.sfxTheme;
+    // A button that opens a panel sounds like that panel
+    const opener = el.closest("a.suite-app, [data-tab], [data-open]");
+    if (opener) return themeFromPath(opener.dataset.tab || opener.dataset.open || (opener.dataset.pane ? "pane:" + opener.dataset.pane : "") || opener.getAttribute("href"));
+    return PAGE_THEME;
+  }
+  // A small number from what a button is called, so each one keeps its own note
+  function variantOf(el) {
+    if (!el || !el.getAttribute) return 0;
+    const name = el.id || el.getAttribute("aria-label") || el.title || (el.textContent || "").trim().slice(0, 40) || String(el.className);
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return h % 7;
+  }
 
   const EXTRAS = new Set(["scroll", "key", "slide", "lift", "nudge", "place", "hover"]);
   const GAPS = { scroll: 260, key: 35, slide: 70, nudge: 60, hover: 120 }; // the least time between two
   const lastOf = {};
-  function play(name, arg) {
+  const lastVariant = {};
+  let busy = 0;
+  let busyAt = 0;
+  function play(name, arg, el) {
     if (!SOUNDS[name]) return;
     const extra = EXTRAS.has(name);
     if (extra ? !extraEnabled() : !enabled()) return;
@@ -407,8 +756,21 @@
     }
     try {
       if (!ready()) return;
-      SOUNDS[name](typeof arg === "number" ? arg : undefined);
+      const theme = THEMES[themeOf(el)] || {};
+      // Never the same note twice running: each play moves to another of the button's notes
+      let v = variantOf(el) + Math.floor(Math.random() * 7);
+      if (v % 7 === lastVariant[name]) v += 1 + Math.floor(Math.random() * 3);
+      lastVariant[name] = v % 7;
+      // The more sounds in quick succession, the softer they get (down to a third); a pause
+      // of a couple of seconds brings them back
+      busy = Math.max(0, busy - (now - busyAt) / 2000) + (extra ? 0.15 : 1);
+      busyAt = now;
+      level = Math.max(0.33, 1 - Math.max(0, busy - 2) * 0.12) * (0.92 + Math.random() * 0.08);
+      jitter = 1 + (Math.random() - 0.5) * 0.008; // about a tenth of a semitone either way
+      (theme[name] || SOUNDS[name])(typeof arg === "number" ? arg : undefined, v);
     } catch (err) {}
+    level = 1;
+    jitter = 1;
   }
 
   // Work out which sound a press should make
@@ -416,8 +778,11 @@
   function soundFor(el) {
     const chosen = el.closest("[data-sfx]");
     if (chosen) return chosen.dataset.sfx;
-    if (el.matches('input[type="checkbox"], input[type="radio"], [role="switch"]')) return el.checked || el.getAttribute("aria-checked") === "true" ? "on" : "off";
-    if (el.matches('[role="tab"], .tab, .seg button, .chips .chip, [role="menuitemradio"]')) return "tab";
+    const ticked = el.checked || el.getAttribute("aria-checked") === "true";
+    if (el.matches('[role="switch"], .switch input, .option-switch input')) return ticked ? "on" : "off";
+    if (el.matches('input[type="checkbox"], input[type="radio"]')) return ticked ? "check" : "uncheck";
+    if (el.matches('[role="tab"], .tab, .seg button, .chips .chip, [role="menuitemradio"], [data-tab]')) return "tab";
+    if (el.matches('[role="menuitem"], [role="option"]')) return "menu";
     if (el.matches("summary")) return el.parentElement && el.parentElement.open ? "close" : "open";
     const w = words(el);
     if (/\b(delete|remove|clear|discard|trash|unblock)\b|×|✕|card-delete/.test(w) && !/close/.test(w)) return "remove";
@@ -425,6 +790,8 @@
     if (el.getAttribute("aria-haspopup") || /\bopen\b|menu|more|options|settings|suite|brand/.test(w)) return "open";
     if (/\b(done|finish|complete|✓|mark done|session done)\b/.test(w)) return "done";
     if (el.type === "submit" || /\b(send|save|add|plan|create|start|▶|sign in|book|export|copy)\b|primary|go\b/.test(w)) return "send";
+    // A link to somewhere else (not a button made from a link)
+    if (el.matches("a[href]") && !el.matches('[role="button"], .btn, .chip, .suite-app') && !/^#|^javascript:/.test(el.getAttribute("href"))) return "nav";
     return "tap";
   }
 
@@ -434,7 +801,7 @@
     (e) => {
       const el = e.target.closest('button, a[href], [role="button"], [role="tab"], [role="menuitem"], [role="menuitemradio"], [role="option"], summary, .chip, .tab, .theme-swatch');
       if (!el || el.disabled || el.matches('input[type="checkbox"], input[type="radio"]')) return;
-      play(soundFor(el));
+      play(soundFor(el), undefined, el);
     },
     true
   );
@@ -442,8 +809,8 @@
     "change",
     (e) => {
       const el = e.target;
-      if (el.matches && el.matches('input[type="checkbox"], input[type="radio"]')) play(soundFor(el));
-      else if (el.matches && el.matches("select")) play("tap");
+      if (el.matches && el.matches('input[type="checkbox"], input[type="radio"]')) play(soundFor(el), undefined, el);
+      else if (el.matches && el.matches("select")) play("pick", undefined, el);
     },
     true
   );
@@ -461,7 +828,7 @@
       scrolled.set(el, { pos, at: performance.now() });
       if (!was) return;
       const speed = Math.abs(pos - was.pos) / Math.max(16, performance.now() - was.at); // px per ms
-      if (speed > 0.05) play("scroll", Math.min(1, speed / 3));
+      if (speed > 0.05) play("scroll", Math.min(1, speed / 3), el);
     },
     { capture: true, passive: true }
   );
@@ -472,7 +839,7 @@
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       const t = e.target;
       const typing = t && (t.isContentEditable || (t.matches && t.matches('textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"])')));
-      if (typing && (e.key.length === 1 || e.key === "Backspace" || e.key === "Enter")) play("key");
+      if (typing && (e.key.length === 1 || e.key === "Backspace" || e.key === "Enter")) play("key", undefined, t);
     },
     true
   );
@@ -483,13 +850,13 @@
       const r = e.target;
       if (!r.matches || !r.matches('input[type="range"]')) return;
       const min = Number(r.min) || 0, max = Number(r.max) || 100;
-      play("slide", (Number(r.value) - min) / (max - min || 1));
+      play("slide", (Number(r.value) - min) / (max - min || 1), r);
     },
     true
   );
   // Dragging things (anything the browser drags; Calendar's note cards call lift/nudge/place itself)
-  document.addEventListener("dragstart", () => play("lift"), true);
-  document.addEventListener("drop", () => play("place"), true);
+  document.addEventListener("dragstart", (e) => play("lift", undefined, e.target), true);
+  document.addEventListener("drop", (e) => play("place", undefined, e.target), true);
   // Hovering with a mouse over a tile or card: one faint shimmer as you arrive on it
   let hovered = null;
   document.addEventListener(
@@ -499,7 +866,7 @@
       const el = e.target.closest && e.target.closest('.suite-app, .tg-items [data-tab], .tile, .card, .stat, .note-item, [data-hover-sfx]');
       if (!el || el === hovered) return;
       hovered = el;
-      play("hover");
+      play("hover", undefined, el);
     },
     true
   );
@@ -517,5 +884,7 @@
     true
   );
 
+  // play(name) from a panel's own code sounds like that panel; play(name, undefined, element)
+  // like the element's panel (and with that element's own note)
   window.NovaSfx = { play, enabled, setEnabled, toggle: () => setEnabled(!enabled()), extraEnabled, setExtraEnabled, toggleExtra: () => setExtraEnabled(!extraEnabled()) };
 })();

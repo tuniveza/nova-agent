@@ -2,7 +2,10 @@
    Everything is made live with the Web Audio API: no audio files, no libraries,
    no network. Slow warm pads, a soft bass, little star-like bells, now and then a
    short soft electric-piano phrase, a faint ocean of air, all washed in a big
-   reverb and kept low so it sits behind everything.
+   reverb and kept low so it sits behind everything. Never the same twice: the chords
+   wander (each next one chosen from those that follow well, the recent ones less
+   likely), every few minutes the mood changes (sparser, starrier, stiller, brighter),
+   and the piano's little melodies are made up fresh each time.
 
    One player for the whole app: it plays in Nova Agent's main page, so it carries on
    while panels open and close. Inside a panel this file just hands over to that one.
@@ -50,9 +53,55 @@
     Bm: { bass: 35, notes: [50, 54, 57, 61, 64] }, // Bm11
     G:  { bass: 31, notes: [50, 54, 59, 61, 66] }, // Gmaj7#11
     A:  { bass: 33, notes: [52, 57, 59, 61, 64] }, // Aadd9
-    Em: { bass: 40, notes: [52, 55, 59, 62, 66] }  // Em9
+    Em: { bass: 40, notes: [52, 55, 59, 62, 66] }, // Em9
+    Fsm: { bass: 42, notes: [52, 54, 57, 61, 64] }, // F#m11
+    E:  { bass: 40, notes: [52, 56, 59, 61, 66] }  // E6/9 (the bright, lydian colour)
   };
-  const PROGRESSION = [CH.D, CH.Bm, CH.G, CH.A, CH.D, CH.Em, CH.G, CH.A];
+  // Never the same tune twice: instead of a fixed round of chords, each next chord is chosen from
+  // the ones that follow it well, with the ones heard lately less likely. So it wanders, slowly,
+  // and the same stretch rarely comes back.
+  const MOVES = {
+    D: ['Bm', 'G', 'A', 'Em', 'Fsm', 'E'],
+    Bm: ['G', 'Em', 'A', 'D', 'Fsm'],
+    G: ['A', 'D', 'Em', 'Bm', 'E'],
+    A: ['D', 'Bm', 'Fsm', 'G'],
+    Em: ['G', 'A', 'D', 'Bm'],
+    Fsm: ['Bm', 'G', 'D', 'E'],
+    E: ['A', 'D', 'G']
+  };
+  const recent = [];
+  let chordName = ['D', 'G', 'Bm', 'A', 'Em'][Math.floor(Math.random() * 5)];
+  function nextChord() {
+    const options = MOVES[chordName];
+    const weights = options.map((n) => 1 / (1 + 2 * recent.filter((r) => r === n).length));
+    let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+    let i = 0;
+    while (r > weights[i]) r -= weights[i++];
+    chordName = options[Math.min(i, options.length - 1)];
+    recent.push(chordName);
+    if (recent.length > 6) recent.shift();
+    return CH[chordName];
+  }
+
+  // Moods: every few minutes the music changes its feel (how many stars, how often the piano
+  // speaks, how bright the pads are, how long each chord lasts), never the same mood twice running
+  const MOODS = {
+    glow:   { stars: 1,   phrases: 1,    bright: 1,    len: [16, 24] },
+    drift:  { stars: 1.7, phrases: 1.6,  bright: 0.8,  len: [20, 28] },
+    starry: { stars: 0.6, phrases: 1.2,  bright: 1.12, len: [14, 22] },
+    still:  { stars: 2.4, phrases: 0,    bright: 0.72, len: [24, 32] },
+    tender: { stars: 1.2, phrases: 0.65, bright: 0.9,  len: [16, 22] }
+  };
+  let mood = MOODS.glow;
+  let moodName = 'glow';
+  let moodUntil = 0;
+  function maybeChangeMood(now) {
+    if (now < moodUntil) return;
+    const names = Object.keys(MOODS).filter((n) => n !== moodName);
+    moodName = names[Math.floor(Math.random() * names.length)];
+    mood = MOODS[moodName];
+    moodUntil = now + rand(150, 300);
+  }
 
   // High D major pentatonic notes for the twinkling "stars".
   const STARS = [74, 76, 78, 81, 83, 86, 88, 90];
@@ -78,7 +127,6 @@
   let volume = 0.4;
   let timer = null;          // lookahead scheduler interval
   let stopTimer = null;      // pending "suspend after fade-out"
-  let step = 0;              // position in the chord progression
   let nextChordAt = 0;
   let nextStarAt = 0;
   let nextPhraseAt = 0;
@@ -239,7 +287,7 @@
     out.connect(place).connect(padBus);
 
     // Warm low-pass with its own slow wobble.
-    const lp = filter('lowpass', rand(750, 1300), 0.4);
+    const lp = filter('lowpass', rand(750, 1300) * mood.bright, 0.4);
     lp.connect(out);
     const lfo = osc('sine', rand(0.03, 0.08));
     const lfoAmt = gain(rand(200, 400));
@@ -339,8 +387,27 @@
     disposeWhenDone(carrier, [carrier, mod, depth, trem, tremAmt, amp, place]);
   }
 
+  // A new little melody each time: a few notes moving mostly by step through the scale, ending on
+  // a note of the chord underneath. Now and then (rarely) one of Novacane's own phrases instead.
+  const SCALE = [62, 64, 66, 68, 69, 71, 73, 74, 76, 78, 81];
+  function newPhrase() {
+    if (Math.random() < 0.12) return pick(PHRASES);
+    const count = 3 + Math.floor(Math.random() * 3);
+    let i = 2 + Math.floor(Math.random() * 6);
+    const notes = [];
+    for (let n = 0; n < count; n++) {
+      notes.push(SCALE[i]);
+      const leap = Math.random() < 0.2 ? 2 : 1;
+      i = Math.max(0, Math.min(SCALE.length - 1, i + (Math.random() < 0.5 ? -leap : leap)));
+    }
+    // End on a note of the chord (moved into the melody's range)
+    const tones = CH[chordName].notes.map((m) => (m < 62 ? m + 12 : m));
+    const end = notes[notes.length - 1];
+    notes[notes.length - 1] = tones.reduce((a, b) => (Math.abs(b - end) < Math.abs(a - end) ? b : a));
+    return notes;
+  }
   function playPhrase(t) {
-    const notes = pick(PHRASES);
+    const notes = newPhrase();
     let at = t;
     notes.forEach((m, i) => {
       keyNote(m, at, -0.4 + (0.8 * i) / Math.max(1, notes.length - 1), rand(0.016, 0.024));
@@ -364,21 +431,21 @@
     if (nextStarAt < now - 0.5) nextStarAt = now + rand(1, 3);
     if (nextPhraseAt < now - 0.5) nextPhraseAt = now + rand(12, 25);
 
+    maybeChangeMood(now);
     while (nextChordAt < now + ahead) {
-      const length = rand(16, 24);
-      playChord(PROGRESSION[step % PROGRESSION.length], nextChordAt, length);
-      step++;
+      const length = rand(mood.len[0], mood.len[1]);
+      playChord(nextChord(), nextChordAt, length);
       nextChordAt += length;
     }
     while (nextStarAt < now + ahead) {
       playStar(nextStarAt);
       // Sometimes a second star answers the first.
       if (Math.random() < 0.3) playStar(nextStarAt + rand(0.2, 0.45));
-      nextStarAt += rand(2, 7);
+      nextStarAt += rand(2, 7) * mood.stars;
     }
     while (nextPhraseAt < now + ahead) {
-      playPhrase(nextPhraseAt);
-      nextPhraseAt += rand(26, 48);
+      if (mood.phrases) playPhrase(nextPhraseAt);
+      nextPhraseAt += rand(26, 48) * (mood.phrases || 1.5);
     }
   }
 
