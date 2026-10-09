@@ -19,6 +19,8 @@
     money: '<path d="M4 19h16M6 16V11M10 16V7M14 16V9M18 16V5"/>',
     song: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
   };
+  // A picture over an icon: if the picture can't be found, it goes and the icon shows
+  const art = (src) => `<img class="mw-art" alt="" loading="lazy" src="${src}" onerror="this.remove()">`;
   const ico = (k) => `<svg class="mw-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
 
   // The live Top 10 (kept an hour on this device; Nova Bot keeps it 6 hours)
@@ -32,12 +34,18 @@
         top = d.top;
         try { localStorage.setItem("nova-music-top", JSON.stringify({ at: Date.now(), top })); } catch (err) {}
         document.querySelectorAll(".mw-card[data-mw=top] .mw-line").forEach((el) => (el.textContent = topLine()));
+        topArt();
       })
       .catch(() => {});
   }
+  function topArt() {
+    if (!top[0] || !top[0].art) return;
+    document.querySelectorAll("[data-top-art]").forEach((el) => { if (!el.querySelector("img")) el.insertAdjacentHTML("afterbegin", art(top[0].art)); });
+  }
   const topLine = () => (top[0] ? `#1 ${top[0].title} · ${top[0].artist}` : "Loading the charts…");
 
-  const quote = pick(D.quotes);
+  let quoteAt = day % D.quotes.length;
+  const quote = D.quotes[quoteAt];
   const song = pick(D.songs, 3);
   const gear = pick(D.gear, 5);
   const initials = (n) => n.split(/\s+/).map((w) => w[0]).slice(0, 2).join("");
@@ -45,22 +53,22 @@
 
   function build() {
     const box = document.createElement("section");
-    box.className = "mworld";
+    box.className = "mworld cpanel";
     box.setAttribute("aria-label", "Today in music");
     box.innerHTML = `
       <h4 class="mw-title">Today in music</h4>
       <div class="mw-row">
-        <button type="button" class="mw-card" data-mw="top" data-sfx="open">${ico("top")}<span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
-        <button type="button" class="mw-card" data-mw="genres" data-sfx="open">${ico("genres")}<span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
-        <button type="button" class="mw-card" data-mw="gear" data-sfx="open">${ico("gear")}<span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
-        <button type="button" class="mw-card" data-mw="money" data-sfx="open">${ico("money")}<span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
+        <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art>${ico("top")}</span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
+        <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic">${art(`/music-world/art?q=${encodeURIComponent(D.genres[0].art)}`)}${ico("genres")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
+        <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${gear.wiki ? art(`/music-world/photo/${encodeURIComponent(gear.wiki)}`) : ""}${ico("gear")}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
+        <button type="button" class="mw-card" data-mw="money" data-sfx="open"><span class="mw-pic">${ico("money")}</span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
       </div>
       <figure class="mw-quote">
         <span class="mw-face"><img alt="" loading="lazy" src="/music-world/photo/${encodeURIComponent(quote.wiki)}"><b aria-hidden="true">${esc(initials(quote.who))}</b></span>
         <blockquote>“${esc(quote.text)}”</blockquote>
         <figcaption>${esc(quote.who)} · ${esc(quote.when)}${quote.attributed ? " · attributed" : ""}</figcaption>
       </figure>
-      <p class="mw-song">${ico("song")}<span><b>Song of the day:</b> ${esc(song.title)} · ${esc(song.artist)} (${song.year}) · ${esc(song.about)}</span> <a href="${lyrics(song)}" target="_blank" rel="noopener">Lyrics ↗</a></p>`;
+      <p class="mw-song"><span class="mw-pic sm">${art(`/music-world/art?q=${encodeURIComponent(`${song.artist} ${song.title.replace(/"/g, "")}`)}`)}${ico("song")}</span><span><b>Song of the day:</b> ${esc(song.title)} · ${esc(song.artist)} (${song.year}) · ${esc(song.about)}</span> <a href="${lyrics(song)}" target="_blank" rel="noopener">Lyrics ↗</a></p>`;
     const img = box.querySelector(".mw-face img");
     img.addEventListener("error", () => img.remove());
     box.addEventListener("click", (e) => {
@@ -82,9 +90,9 @@
     if (k === "top") {
       html = `<h5>Top 10 worldwide</h5>` + (top.length ? `<ol class="mw-list">${top.map((s) => `<li><img alt="" loading="lazy" src="${esc(s.art)}"><span><b>${esc(s.title)}</b><small>${esc(s.artist)}</small></span></li>`).join("")}</ol><p class="mw-src">Most played on Apple Music across 12 countries, updated through the day</p>` : `<p>The charts couldn't be reached just now. Try again in a bit.</p>`);
     } else if (k === "genres") {
-      html = `<h5>Popular around the world</h5><ul class="mw-list plain">${D.genres.map((g) => `<li><span><b>${esc(g.name)}</b><small>${esc(g.line)}</small></span></li>`).join("")}</ul>`;
+      html = `<h5>Popular around the world</h5><ul class="mw-list plain">${D.genres.map((g) => `<li>${art(`/music-world/art?q=${encodeURIComponent(g.art || g.name)}`)}<span><b>${esc(g.name)}</b><small>${esc(g.line)}</small></span></li>`).join("")}</ul>`;
     } else if (k === "gear") {
-      html = `<h5>Popular budget gear</h5><ul class="mw-list plain">${D.gear.map((g) => `<li><span><b>${esc(g.name)}</b><small>${esc(g.kind)}: ${esc(g.does)} · ${esc(g.price)}</small></span></li>`).join("")}</ul><p class="mw-src">Prices are rough and change by shop and country</p>`;
+      html = `<h5>Popular budget gear</h5><ul class="mw-list plain">${D.gear.map((g) => `<li>${g.wiki ? art(`/music-world/photo/${encodeURIComponent(g.wiki)}`) : `<i class="mw-dot">${ico("gear")}</i>`}<span><b>${esc(g.name)}</b><small>${esc(g.kind)}: ${esc(g.does)} · ${esc(g.price)}</small></span></li>`).join("")}</ul><p class="mw-src">Prices are rough and change by shop and country</p>`;
     } else if (k === "money") {
       html = `<h5>${esc(D.revenue.headline)} ${esc(D.revenue.sub)}</h5><ul class="mw-list plain">${D.revenue.bites.map((b) => `<li><span>${esc(b)}</span></li>`).join("")}</ul><p class="mw-src">${esc(D.revenue.source)}</p>`;
     }
@@ -105,10 +113,43 @@
   addEventListener("resize", close);
   log.addEventListener("scroll", close, { passive: true });
 
+  // A new quote every so often (a random 2 to 16 minutes each time), fading softly, never the same
+  // one twice in a row
+  function nextQuote() {
+    let n = Math.floor(Math.random() * D.quotes.length);
+    if (n === quoteAt) n = (n + 1) % D.quotes.length;
+    quoteAt = n;
+    const q = D.quotes[n];
+    document.querySelectorAll(".mw-quote").forEach((fig) => {
+      fig.classList.add("mw-fade");
+      setTimeout(() => {
+        fig.querySelector(".mw-face").innerHTML = `<img alt="" loading="lazy" src="/music-world/photo/${encodeURIComponent(q.wiki)}" onerror="this.remove()"><b aria-hidden="true">${esc(initials(q.who))}</b>`;
+        fig.querySelector("blockquote").textContent = `“${q.text}”`;
+        fig.querySelector("figcaption").textContent = `${q.who} · ${q.when}${q.attributed ? " · attributed" : ""}`;
+        fig.classList.remove("mw-fade");
+      }, 500);
+    });
+    setTimeout(nextQuote, (2 + Math.random() * 14) * 60000);
+  }
+  setTimeout(nextQuote, (2 + Math.random() * 14) * 60000);
+
   // Put it in the welcome (and again if the welcome comes back after "New chat")
+  // The welcome in three content panels, each bordered: the hello (its heading and words), the
+  // suggestions, and Today in music
   function place() {
     const w = document.getElementById("welcome");
-    if (w && !w.querySelector(".mworld")) w.append(build());
+    if (!w) return;
+    const h = w.querySelector(":scope > h3"), p = w.querySelector(":scope > p");
+    if (h && !h.closest(".cpanel")) {
+      const intro = document.createElement("div");
+      intro.className = "cpanel mw-intro";
+      h.before(intro);
+      intro.append(h);
+      if (p) intro.append(p);
+    }
+    const sug = w.querySelector(":scope > .suggest");
+    if (sug) sug.classList.add("cpanel");
+    if (!w.querySelector(".mworld")) w.append(build());
   }
   place();
   new MutationObserver(place).observe(log, { childList: true });

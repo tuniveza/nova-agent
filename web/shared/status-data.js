@@ -1,15 +1,15 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 163,
+ "build": 165,
  "date": "2026-10-09",
  "panels": {
   "chat": [
+   "Today in music on the front page",
    "Panels make room for the bars",
    "Every window size usable",
    "Smaller bar",
-   "No glass bubbles",
-   "Glowing space-scene icons"
+   "No glass bubbles"
   ],
   "portal": [
    "Cosmic icons",
@@ -61,11 +61,11 @@ window.NOVA_STATUS = {
    "Lossless audio and Observatory as panels everywhere"
   ],
   "visualizer": [
+   "Today in music on the front page",
    "Cosmic icons",
    "Shared and Local notes",
    "Nova Agent on phones",
-   "Panels on phones",
-   "Portal is the one sign-in"
+   "Panels on phones"
   ],
   "observatory": [
    "Cosmic icons",
@@ -82,22 +82,22 @@ window.NOVA_STATUS = {
    "Nova Hub is Studio"
   ],
   "look": [
+   "Welcome in content panels",
+   "Today in music on the front page",
    "Panels make room for the bars",
    "A quiet sky",
-   "Every window size usable",
-   "Smaller bar",
-   "No glass bubbles"
+   "Every window size usable"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "Panels make room for the bars"
+    "words": "Today in music on the front page"
    },
    {
     "panel": "chat",
-    "words": "Every window size usable"
+    "words": "Panels make room for the bars"
    },
    {
     "panel": "portal",
@@ -161,11 +161,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "visualizer",
-    "words": "Cosmic icons"
+    "words": "Today in music on the front page"
    },
    {
     "panel": "visualizer",
-    "words": "Shared and Local notes"
+    "words": "Cosmic icons"
    }
   ],
   "helpers": [
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Welcome in content panels",
+  "Today in music on the front page",
   "Panels make room for the bars",
   "A quiet sky",
   "Every window size usable",
   "Smaller bar",
   "No glass bubbles",
-  "Glowing space-scene icons",
-  "Cosmic icons",
-  "Calmer sounds"
+  "Glowing space-scene icons"
  ]
 };
