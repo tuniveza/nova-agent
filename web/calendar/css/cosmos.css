@@ -120,3 +120,10 @@ html[data-centred] .cell { align-items: stretch; text-align: center; }
 html[data-centred] .pill, html[data-centred] .pill b, html[data-centred] .pill span, html[data-centred] .pill > small { text-align: center !important; }
 html[data-centred] .wk-head span, html[data-centred] .tg-day { text-align: center; }
 html[data-centred] .cell .moonmark { position: absolute; top: 7px; right: 7px; }
+/* Each day shows what fits its own size: short days just titles (one line), taller ones two lines,
+   the tallest the line about what it's for too (all of it is in the chosen day's list beside) */
+@media (min-width: 701px) {
+  .cell { container-type: size; }
+  @container (max-height: 175px) { .pill > small { display: none !important; } }
+  @container (max-height: 125px) { .pill span { -webkit-line-clamp: 1 !important; line-clamp: 1 !important; } .pill b { display: inline !important; margin-right: 4px; } .pill { padding: 2px 6px !important; } .pill b + span { display: inline !important; } }
+}
