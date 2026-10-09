@@ -61,3 +61,10 @@ body {
   .pill { font-size: 10px !important; padding: 1px 3px !important; }
   .pill > small { display: none; }
 }
+/* The time on its own small line, so the title gets the whole width (up to three lines) */
+.pill { display: block !important; text-align: left; }
+.pill b { display: block; font-size: 10px; letter-spacing: .02em; opacity: .9; }
+.pill span { -webkit-line-clamp: 3 !important; line-clamp: 3 !important; }
+.pill > small { white-space: normal !important; display: -webkit-box !important; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
+/* A little more of the sky through the month */
+.cell { background: linear-gradient(180deg, rgba(var(--panel-rgb), .3), rgba(var(--deep-rgb), .18)) !important; }
