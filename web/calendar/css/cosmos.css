@@ -1,0 +1,63 @@
+/* Calendar's Novacane makeover: a spacious cosmic sky behind a glassy month, read-only layers
+   (Quests, bookings) without stripes, and note cards whose titles and purpose can be read. */
+
+/* ---- The sky: deep space, soft nebula light in the theme's colours, star dust and a faint band
+   of the galaxy (painted once, nothing moves) ---- */
+body {
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.6), transparent 60%),
+    radial-gradient(1px 1px at 72% 9%, rgba(255,255,255,.45), transparent 60%),
+    radial-gradient(1.4px 1.4px at 38% 64%, rgba(255,255,255,.45), transparent 60%),
+    radial-gradient(1px 1px at 88% 52%, rgba(255,255,255,.5), transparent 60%),
+    radial-gradient(1.2px 1.2px at 22% 86%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(1px 1px at 58% 33%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(1px 1px at 93% 88%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(1px 1px at 5% 46%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(1px 1px at 46% 12%, rgba(255,255,255,.3), transparent 60%),
+    radial-gradient(1px 1px at 66% 78%, rgba(255,255,255,.3), transparent 60%),
+    linear-gradient(158deg, transparent 38%, rgba(var(--hi-rgb), .035) 46%, rgba(255,255,255,.03) 50%, rgba(var(--accent-rgb, 176, 29, 104), .035) 54%, transparent 62%),
+    radial-gradient(55% 45% at 88% -6%, rgba(var(--hi-rgb), .18), transparent 70%),
+    radial-gradient(50% 50% at -6% 105%, rgba(var(--accent-rgb, 176, 29, 104), .16), transparent 70%),
+    radial-gradient(70% 55% at 50% 120%, rgba(var(--accent-3-rgb, 37, 25, 77), .55), transparent 72%),
+    var(--void) !important;
+  background-attachment: fixed !important;
+}
+/* The month: glass panes over the sky, a soft lit edge between days, today glowing */
+.grid { background: transparent !important; gap: 4px; padding: 4px; }
+.cell { border: 0 !important; border-radius: 12px; background: linear-gradient(180deg, rgba(var(--panel-rgb), .42), rgba(var(--deep-rgb), .3)) !important;
+  box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), .08); transition: background .2s, box-shadow .2s; }
+.cell:hover { box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), .28), 0 0 18px -10px var(--hi); }
+.cell.out { background: rgba(var(--void-rgb), .35) !important; }
+.cell.today { box-shadow: inset 0 0 0 1.5px rgba(var(--hi-rgb), .6), 0 0 26px -10px var(--hi); background: linear-gradient(180deg, rgba(var(--hi-rgb), .12), rgba(var(--deep-rgb), .3)) !important; }
+.cell.sel { box-shadow: inset 0 0 0 1.5px rgba(var(--hi-rgb), .5) !important; }
+.wk-head { background: linear-gradient(180deg, rgba(var(--deep-rgb), .92), rgba(var(--deep-rgb), .7)) !important; backdrop-filter: blur(6px); }
+.col { background-color: rgba(var(--deep-rgb), .25); }
+
+/* ---- Note cards: the whole title (two lines when it needs them) and a line saying what it's for ---- */
+.pill { display: grid !important; grid-template-columns: auto minmax(0, 1fr); align-items: start; column-gap: 5px; row-gap: 0; padding: 3px 7px !important;
+  border-radius: 8px !important; font-size: 12px !important; line-height: 1.3 !important; }
+.pill b { grid-row: 1; font-size: 10.5px; padding-top: 1px; }
+.pill span { white-space: normal !important; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; text-overflow: clip; font-weight: 600; }
+.pill > small { grid-column: 1 / -1; display: block; margin-top: 1px; font-size: 10.5px; line-height: 1.25; font-weight: 400; opacity: .82;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pill:not(:has(b)) > small { grid-column: 1 / -1; }
+.pill:not(:has(b)) > span { grid-column: 1 / -1; }
+.grid { grid-auto-rows: minmax(110px, auto) !important; }
+/* Week and day: titles wrap, and there's a line for what it's for when the card is tall enough */
+.ev strong { white-space: normal !important; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
+.ev .ev-what { display: block; font-style: normal; font-size: 11px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- Quests and bookings (shown here, changed elsewhere): no stripes; a soft tint, a dashed edge ---- */
+.ev.ro, .pill.ro, .row-item.ro {
+  background: linear-gradient(135deg, rgba(var(--c), .2), rgba(var(--c), .06)) !important;
+  box-shadow: inset 0 0 0 1px rgba(var(--c), .4) !important; border-style: dashed !important; }
+.pill.ro { border: 1px dashed rgba(var(--c), .55) !important; }
+.row-item.ro { background: linear-gradient(120deg, rgba(var(--c), .16), rgba(var(--c), .04) 70%), rgba(var(--panel-rgb), .8) !important; }
+
+/* Phones: still readable (two-line titles, no purpose line in the small month squares) */
+@media (max-width: 700px) {
+  .grid { grid-auto-rows: minmax(64px, auto) !important; gap: 2px; padding: 2px; }
+  .cell { border-radius: 8px; }
+  .pill { font-size: 10px !important; padding: 1px 3px !important; }
+  .pill > small { display: none; }
+}

@@ -16,6 +16,9 @@ const $ = (id) => document.getElementById(id);
   link.rel = "stylesheet";
   link.href = "css/extras.css";
   document.head.appendChild(link);
+  // …and the cosmic makeover last, so it has the final say
+  const cosmos = document.querySelector('link[href="css/cosmos.css"]');
+  if (cosmos) document.head.appendChild(cosmos);
 }
 const view = $("view");
 const sfx = (n) => window.NovaSfx && window.NovaSfx.play && window.NovaSfx.play(n);
@@ -253,7 +256,15 @@ function pillHtml(e) {
     const p = presets().get(e.item.preset);
     return `<div class="daycard themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day">${iconOf(p.icon)}<span>${esc(titleOf(e))}</span></div>`;
   }
-  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span></div>`;
+  // The title in full (it wraps rather than being cut short) and, under it, what it's for
+  const what = whatOf(e);
+  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}">${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
+}
+// What a card is for, in a line: its notes (first line), else where it is
+function whatOf(e) {
+  const it = e.item || {};
+  const text = String(it.notes || it.body || it.info || "").replace(/<[^>]*>/g, " ").split(/\n/)[0].trim();
+  return (text || (e.type === "booking" ? "" : it.location || "")).slice(0, 90);
 }
 function skyChip(x) {
   return `<div class="skychip" title="${esc(x.title)}">${iconOf(presets().get(x.preset).icon)}<span>${esc(x.title)}</span></div>`;
@@ -436,7 +447,7 @@ function drawTimeGrid(n) {
           const height = Math.max(18, (Math.max(15, minutesBetween(p.start, p.end)) / 60) * hh - 2);
           const w = 100 / p.cols;
           const e = p.orig;
-          return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="top:${top}px;height:${height}px;left:calc(${p.col * w}% + 2px);width:calc(${w}% - 4px)" tabindex="0" role="button" aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${esc(titleOf(e))}</strong><small>${fmtTime(e.start)}–${fmtTime(e.end)}${e.item.location ? ` · ${esc(e.item.location)}` : ""}</small>${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
+          return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="top:${top}px;height:${height}px;left:calc(${p.col * w}% + 2px);width:calc(${w}% - 4px)" tabindex="0" role="button" aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${esc(titleOf(e))}</strong><small>${fmtTime(e.start)}–${fmtTime(e.end)}${e.item.location ? ` · ${esc(e.item.location)}` : ""}</small>${whatOf(e) && whatOf(e) !== e.item.location ? `<em class="ev-what">${esc(whatOf(e))}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
         })
         .join("");
       const line = d === t ? `<div class="now-line" style="top:${(minutesBetween(`${d}T00:00`, now) / 60) * hh}px"></div>` : "";
