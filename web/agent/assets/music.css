@@ -243,3 +243,12 @@
 /* Missions with nothing to show: a short note rather than an empty box */
 #missions:empty::before { content: "No missions yet. Tap ✦ New, or ask in Chat."; display: block; padding: 18px 10px; color: var(--muted); text-align: center; }
 #view-missions:has(> :not(#missions)) #missions:empty::before { content: none; }
+
+/* No corner brackets on the content panels: just the soft glowing edge and the nebula inside */
+.welcome .cpanel {
+  background:
+    radial-gradient(60% 80% at 0% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%) padding-box,
+    radial-gradient(50% 80% at 100% 100%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 70%) padding-box,
+    linear-gradient(color-mix(in srgb, var(--panel) 62%, transparent), color-mix(in srgb, var(--void) 55%, transparent)) padding-box,
+    linear-gradient(120deg, color-mix(in srgb, var(--hi) 60%, transparent), color-mix(in srgb, var(--accent-2) 28%, transparent) 30%, color-mix(in srgb, var(--line) 100%, transparent) 50%, color-mix(in srgb, var(--accent-2) 28%, transparent) 70%, color-mix(in srgb, var(--hi) 50%, transparent)) border-box !important;
+}
