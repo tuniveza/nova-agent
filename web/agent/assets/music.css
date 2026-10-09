@@ -158,3 +158,13 @@
 .log > .welcome { margin: 0 auto !important; align-self: stretch; }
 /* No star pinned to the top of each content panel */
 .welcome .cpanel::before { content: none; display: none; }
+
+/* ---- Pictures and icons centred above their words, everywhere in the content panels ---- */
+.mw-card { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto auto auto; justify-items: center; align-content: start; row-gap: 3px; }
+.mw-card > .mw-pic { grid-row: auto !important; grid-column: 1 !important; width: 30px; height: 30px; }
+.mw-card > .mw-k, .mw-card > .mw-line { grid-column: 1 !important; }
+.mw-quote { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto auto auto; justify-items: center; row-gap: 4px; }
+.mw-quote .mw-face { grid-row: auto !important; }
+.mw-pop .mw-list li { flex-direction: column; gap: 3px; }
+.mw-pop .mw-list span { justify-items: center; }
+.mw-pop .mw-list:not(.plain) li::before { width: auto; text-align: center; }

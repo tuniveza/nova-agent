@@ -158,6 +158,21 @@
     }
   }
 
+  // A theme picked inside any panel (Portal's or Index's Options, Calendar's, Notes') becomes the
+  // theme for all of Nova Agent. Only a theme you pick counts (right after a tap or a key), not a
+  // panel putting on its own saved theme as it opens.
+  const PANEL_IDS = { cosmic: "novacane", ember: "solar", ocean: "pulsar", gold: "eclipse", aurora: "aurora", mono: "mono" };
+  let touched = 0;
+  addEventListener("pointerdown", () => (touched = Date.now()), true);
+  addEventListener("keydown", () => (touched = Date.now()), true);
+  function picked(id) {
+    const look = byId[id] ? id : PANEL_IDS[id];
+    if (!look || Date.now() - touched > 1500) return;
+    if (read().theme !== look) save({ theme: look });
+  }
+  addEventListener("novathemechange", (e) => picked(e.detail && e.detail.id));
+  new MutationObserver(() => picked(document.documentElement.dataset.theme)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
   // Another panel (or tab) changed it: follow
   window.addEventListener("storage", (e) => {
     if (e.key === KEY || e.key === PLANET) apply();
