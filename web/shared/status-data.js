@@ -1,15 +1,15 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 166,
+ "build": 203,
  "date": "2026-10-09",
  "panels": {
   "chat": [
-   "Today in music on the front page",
-   "Panels make room for the bars",
-   "Every window size usable",
-   "Smaller bar",
-   "No glass bubbles"
+   "Nova Agent reopens the app you had…",
+   "One centre line",
+   "Phones and tablets detected from the device",
+   "The chat column's title is Chat",
+   "The conversation in pages"
   ],
   "portal": [
    "Cosmic icons",
@@ -19,11 +19,11 @@ window.NOVA_STATUS = {
    "Portal on phones"
   ],
   "calendar": [
-   "Smaller bar",
-   "No glass bubbles",
-   "Cosmic icons",
-   "Calmer, lusher sounds",
-   "One panels bar everywhere"
+   "symbols on phones too",
+   "day words and symbols switch at sensible…",
+   "size checks read the month's grid",
+   "small days show cards as symbols",
+   "+ more under the card"
   ],
   "notes": [
    "Every window size usable",
@@ -82,22 +82,22 @@ window.NOVA_STATUS = {
    "Nova Hub is Studio"
   ],
   "look": [
-   "Front page fits without scrolling",
-   "Welcome in content panels",
-   "Today in music on the front page",
-   "Panels make room for the bars",
-   "A quiet sky"
+   "Chat's content panels",
+   "Status line",
+   "Nova Agent reopens the app you had…",
+   "Missions and Quests stay inside their own…",
+   "one message"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "Today in music on the front page"
+    "words": "Nova Agent reopens the app you had…"
    },
    {
     "panel": "chat",
-    "words": "Panels make room for the bars"
+    "words": "One centre line"
    },
    {
     "panel": "portal",
@@ -109,11 +109,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "calendar",
-    "words": "Smaller bar"
+    "words": "symbols on phones too"
    },
    {
     "panel": "calendar",
-    "words": "No glass bubbles"
+    "words": "day words and symbols switch at sensible…"
    },
    {
     "panel": "notes",
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
-  "Front page fits without scrolling",
-  "Welcome in content panels",
-  "Today in music on the front page",
-  "Panels make room for the bars",
-  "A quiet sky",
-  "Every window size usable",
-  "Smaller bar",
-  "No glass bubbles"
+  "symbols on phones too",
+  "day words and symbols switch at sensible…",
+  "size checks read the month's grid",
+  "small days show cards as symbols",
+  "Chat's content panels",
+  "+ more under the card",
+  "small days show one card on a…",
+  "each day shows what fits it"
  ]
 };

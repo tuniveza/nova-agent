@@ -106,7 +106,7 @@
     // Save a note; returns false if the browser refused (e.g. out of space)
     async put(n) {
       const S = sh();
-      // A brand-new note: Shared or Local, as js/shared.js says (Local unless chosen)
+      // A brand-new note: Shared or Local, as js/shared.js says (Shared when signed in)
       if (n.shared === undefined) n.shared = Boolean(S && !S.has(n.id) && !(await localHas(n.id)) && S.preferShared());
       if (n.shared === true && S && S.canShare()) {
         const ok = await S.put(clean(n));

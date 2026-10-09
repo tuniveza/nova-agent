@@ -19,7 +19,6 @@
   const LS_CURSOR = 'nova-notes/shared-cursor';
   const LS_QUEUE = 'nova-notes/shared-queue';
   const LS_SCOPE = 'nova-notes/scope';
-  const LS_LAST = 'nova-notes/last-kind';
   const POLL_MS = 15000;
   const PUSH_MS = 2500;
 
@@ -112,8 +111,8 @@
     get: (id) => (cache.has(id) ? { ...cache.get(id) } : null),
     // Offline counts as "can": the change waits here until Nova Bot can take it
     canShare: () => signedIn !== false,
-    // A new note is Shared when you're looking at Shared, or chose Shared last time (on All)
-    preferShared: () => signedIn !== false && (scope() === 'shared' || (scope() === 'all' && ls.get(LS_LAST, 'local') === 'shared')),
+    // A new note is Shared when signed in, unless you're looking at Local
+    preferShared: () => signedIn !== false && scope() !== 'local',
     async put(n) {
       const before = cache.get(n.id);
       const note = clean(n);
@@ -523,7 +522,6 @@
     n.shared = toShared;
     if (!toShared) delete n.rev;
     await NN.store.notes.put(n);
-    ls.set(LS_LAST, toShared ? 'shared' : 'local');
     rerender();
     decorate();
     tellUndo(toShared ? `“${n.title}” is shared with the team.` : `“${n.title}” is now only on this device (taken out of the team's notes).`, 'Undo', async () => {
