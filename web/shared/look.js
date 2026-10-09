@@ -1,0 +1,160 @@
+// One look for all of Nova Agent: a theme chosen once (in the Panels window) colours every app,
+// task, tool and helper, whatever their own theme is, and "Colour from my planet" can tint it all
+// with the colours of the planet you have in Portal. Loaded early in every panel's <head> and in
+// Nova Agent's page. Saved on the device ("nova-look"); every open panel follows straight away.
+// When no theme is chosen, each panel keeps its own (as before).
+//   window.NovaLook = { themes, get(), setTheme(id | null), setPlanet(on), refreshPlanet() }
+(() => {
+  "use strict";
+  if (window.NovaLook) return;
+  const KEY = "nova-look";
+  const PLANET = "nova-look-planet"; // the planet's colours, worked out once by Nova Agent's page
+  const THEMES = [
+    {"id": "novacane", "name": "Novacane", "tag": "Magenta nebula", "void": "#06040D", "deep": "#100816", "panel": "#1C1129", "panel2": "#241640", "text": "#EBD3E7", "muted": "#B997B5", "accent": "#B01D68", "accent2": "#7A1F86", "accent3": "#25194D", "hi": "#FF5FA8", "soft": "#FFD1EA", "gold": "#F2D9A0", "lilac": "#C7A4FF", "onAccent": "#FFFFFF"},
+    {"id": "solar", "name": "Solar Flare", "tag": "Red-orange", "void": "#0B0403", "deep": "#160805", "panel": "#24100A", "panel2": "#2F150C", "text": "#F7DDCF", "muted": "#C99C88", "accent": "#D9361E", "accent2": "#F2701D", "accent3": "#4A1408", "hi": "#FF9548", "soft": "#FFD8BE", "gold": "#FFD27A", "lilac": "#FFB38A", "onAccent": "#1A0603"},
+    {"id": "pulsar", "name": "Pulsar", "tag": "Cyan", "void": "#020810", "deep": "#06111C", "panel": "#0B1C2A", "panel2": "#0F2537", "text": "#D4EEF6", "muted": "#8AB3C2", "accent": "#0A7EA4", "accent2": "#2563EB", "accent3": "#0A2342", "hi": "#3DEBFF", "soft": "#C9F6FF", "gold": "#F4F1C9", "lilac": "#8FD3FF", "onAccent": "#FFFFFF"},
+    {"id": "aurora", "name": "Aurora", "tag": "Green & violet", "void": "#03090A", "deep": "#071312", "panel": "#0D1E1C", "panel2": "#122826", "text": "#D6F5EC", "muted": "#8FBAAE", "accent": "#0B8A6B", "accent2": "#6D45E8", "accent3": "#0E2A33", "hi": "#5CFFC0", "soft": "#D3FFEE", "gold": "#F3E9A1", "lilac": "#A99BFF", "onAccent": "#FFFFFF"},
+    {"id": "eclipse", "name": "Eclipse", "tag": "Gold corona", "void": "#050404", "deep": "#0D0B09", "panel": "#17140F", "panel2": "#201B14", "text": "#F1E6D2", "muted": "#B5A589", "accent": "#D9A441", "accent2": "#B07A2A", "accent3": "#221A10", "hi": "#FFCF6E", "soft": "#FFEFD0", "gold": "#FFE3A3", "lilac": "#FFE3A3", "onAccent": "#140F06"},
+    {"id": "quasar", "name": "Quasar", "tag": "Ultraviolet", "void": "#05030F", "deep": "#0B0719", "panel": "#151030", "panel2": "#1C1640", "text": "#E2DDFB", "muted": "#A49CCB", "accent": "#5B3DF5", "accent2": "#B23AEE", "accent3": "#141047", "hi": "#A98BFF", "soft": "#E4DAFF", "gold": "#FFE1F4", "lilac": "#C7B8FF", "onAccent": "#FFFFFF"},
+    {"id": "mono", "name": "Mono", "tag": "Silver & ink", "void": "#060607", "deep": "#0E0E11", "panel": "#18181C", "panel2": "#222228", "text": "#E6E6EA", "muted": "#9C9CA6", "accent": "#6A6A74", "accent2": "#4A4A52", "accent3": "#1A1A20", "hi": "#F2F2F5", "soft": "#E6E6EA", "gold": "#E8DFC8", "lilac": "#C9C9D1", "onAccent": "#FFFFFF"}
+  ];
+  const byId = Object.fromEntries(THEMES.map((t) => [t.id, t]));
+
+  // ---- Colour arithmetic (hex in, hex out) ----
+  const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const hex = (c) => "#" + c.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+  const mix = (a, b, t) => { const x = rgb(a), y = rgb(b); return hex(x.map((v, i) => v + (y[i] - v) * t)); };
+  const csv = (h) => rgb(h).join(", ");
+  const lum = (h) => { const [r, g, b] = rgb(h).map((v) => v / 255); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+
+  function read() {
+    try {
+      const v = JSON.parse(localStorage.getItem(KEY) || "{}");
+      return { theme: byId[v.theme] ? v.theme : null, planet: v.planet === true };
+    } catch (err) {
+      return { theme: null, planet: false };
+    }
+  }
+  function planetPalette() {
+    try {
+      return JSON.parse(localStorage.getItem(PLANET) || "null");
+    } catch (err) {
+      return null;
+    }
+  }
+
+  // A planet's colours made into a whole theme: its glow is the highlight, its streaks the accent,
+  // its sky the deep background
+  function fromPlanet(p, base) {
+    const b = base || byId.novacane;
+    const hi = lum(p.glow) < 0.35 ? mix(p.glow, "#ffffff", 0.35) : p.glow;
+    // The accent: the planet's streaks, but never so dark that buttons go muddy
+    let accent = mix(p.streak, p.nebula0 || p.streak, 0.25);
+    if (lum(accent) < 0.08) accent = mix(p.nebula0 || p.glow, p.streak, 0.25);
+    if (lum(accent) < 0.08) accent = mix(p.glow, "#000000", 0.35);
+    const accent3 = mix(p.sky || b.accent3, "#000000", 0.25);
+    const vd = mix("#05040A", accent3, 0.25);
+    return {
+      id: "planet", void: vd, deep: mix(vd, accent3, 0.35), panel: mix(vd, accent3, 0.7), panel2: mix(mix(vd, accent3, 0.7), accent, 0.12),
+      text: mix(p.light || "#f0eaf5", "#d8d2de", 0.4), muted: mix(p.light || "#f0eaf5", accent3, 0.45),
+      accent, accent2: p.nebula0 || mix(accent, hi, 0.3), accent3, hi, soft: p.light || mix(hi, "#ffffff", 0.7), gold: b.gold,
+      lilac: p.nebula2 || mix(hi, "#ffffff", 0.3), onAccent: lum(accent) > 0.55 ? "#140F06" : "#FFFFFF",
+    };
+  }
+
+  // Every name the panels use for their colours (Calendar, Notes, Observatory and Nova Agent use
+  // the first set; Portal and Index add the "-rgb" ones; Lossless audio and Visualizer their own)
+  function css(t) {
+    const text = t.text, bright = mix(t.soft, "#ffffff", 0.5);
+    const v = {
+      "--void": t.void, "--deep": t.deep, "--panel": t.panel, "--panel-2": t.panel2, "--text": text, "--muted": t.muted,
+      "--accent": t.accent, "--accent-2": t.accent2, "--accent-3": t.accent3, "--hi": t.hi, "--soft": t.soft,
+      "--gold": t.gold, "--lilac": t.lilac, "--on-accent": t.onAccent,
+      "--void-rgb": csv(t.void), "--deep-rgb": csv(t.deep), "--panel-rgb": csv(t.panel), "--panel-2-rgb": csv(t.panel2),
+      "--text-rgb": csv(text), "--muted-rgb": csv(t.muted), "--accent-rgb": csv(t.accent), "--accent-2-rgb": csv(t.accent2),
+      "--accent-3-rgb": csv(t.accent3), "--hi-rgb": csv(t.hi), "--soft-rgb": csv(t.soft), "--lilac-rgb": csv(t.lilac), "--gold-rgb": csv(t.gold),
+      "--bright": bright, "--accent-mid": mix(t.accent, t.accent2, 0.5), "--rose": mix(t.hi, t.soft, 0.35), "--on-hi": t.deep,
+      "--glow-rgb": csv(t.hi), "--glow-accent": t.accent, "--star-rgb": csv(mix(t.soft, "#ffffff", 0.6)),
+      "--bg": t.void, "--card": t.panel, "--ink": text, "--accent-text": t.onAccent,
+    };
+    return "html:root{" + Object.entries(v).map(([k, x]) => `${k}:${x} !important`).join(";") + "}";
+  }
+
+  // A constructed stylesheet (allowed even by panels whose security rules forbid inline styles)
+  let sheet = null;
+  function put(text) {
+    try {
+      if (!sheet) {
+        sheet = new CSSStyleSheet();
+        document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+      }
+      sheet.replaceSync(text);
+    } catch (err) {}
+  }
+  function apply() {
+    const { theme, planet } = read();
+    const pal = planet ? planetPalette() : null;
+    const t = pal ? fromPlanet(pal, byId[theme]) : theme ? byId[theme] : null;
+    if (!t) {
+      put("");
+      document.documentElement.removeAttribute("data-look");
+      return;
+    }
+    put(css(t));
+    document.documentElement.dataset.look = t.id;
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", t.void));
+    // The panels' moving star skies read their theme by name: give them the chosen one
+    try {
+      if (theme && !pal && window.NT && NT.backdrop && NT.backdrop.init) NT.backdrop.init(theme);
+      if (theme && !pal && window.NN && NN.backdrop && NN.backdrop.init) NN.backdrop.init(theme);
+    } catch (err) {}
+  }
+
+  function save(change) {
+    const next = { ...read(), ...change };
+    try {
+      localStorage.setItem(KEY, JSON.stringify(next));
+    } catch (err) {}
+    apply();
+    window.dispatchEvent(new CustomEvent("novalookchange", { detail: next }));
+    return next;
+  }
+
+  // Fetch the planet's colours (Nova Agent's page does this; panels just read them)
+  async function refreshPlanet() {
+    try {
+      const me = await fetch("/auth/me", { credentials: "same-origin", cache: "no-store" });
+      if (!me.ok) return null;
+      const data = await me.json();
+      const s = data.staff || data.user || data;
+      if (!s || !s.id) return null;
+      // Nova Bot sends the planet's colours with who you are (drawn from the same generator as
+      // the planet itself)
+      const c = (s.planet && s.planet.colors) || null;
+      if (!c || !c.glow) return null;
+      const pal = { seed: s.planet_seed || s.id, glow: c.glow, streak: c.streak || c.base || c.glow, light: c.light, base: c.base, sky: c.sky, nebula0: c.nebula0, nebula2: c.nebula2 };
+      localStorage.setItem(PLANET, JSON.stringify(pal));
+      apply();
+      return pal;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  // Another panel (or tab) changed it: follow
+  window.addEventListener("storage", (e) => {
+    if (e.key === KEY || e.key === PLANET) apply();
+  });
+  apply();
+  // Panels' own theme code may run after this: keep ours last
+  document.addEventListener("DOMContentLoaded", apply);
+
+  window.NovaLook = {
+    themes: THEMES,
+    get: read,
+    setTheme: (id) => save({ theme: byId[id] ? id : null }),
+    setPlanet: (on) => { const next = save({ planet: Boolean(on) }); if (on) refreshPlanet(); return next; },
+    refreshPlanet,
+    palette: (id) => byId[id],
+  };
+})();

@@ -28,6 +28,12 @@
   }
   let current = mode();
   root.dataset.bar = current;
+  // The top bar (Nova Agent's header) has its own: Auto, Always shown or Always hidden
+  const TOP = "nova-top";
+  let topMode = (() => { try { const m = localStorage.getItem(TOP); return MODES.includes(m) ? m : "auto"; } catch (err) { return "auto"; } })();
+  root.dataset.top = topMode;
+  let topOut = true;
+  const topbar = document.querySelector(".shell > .topbar");
 
   // Tucked away or in view. It follows what you're doing, not timers:
   //   computer: in view while the mouse is near the bottom (or on the bar), away once you're
@@ -37,12 +43,15 @@
   let out = true; // in view (Auto, with a panel open)
   let peeking = false; // brought up with the handle while "Always hidden"
   const viewing = () => main.classList.contains("viewing");
+  let typing = false; // you're typing (Nova Agent's message box or a panel's): the bar steps aside
   function update() {
-    const tuck = current === "hidden" ? !peeking : current === "auto" ? viewing() && !out : false;
+    const tuck = current === "hidden" ? !peeking : current === "auto" ? (viewing() && !out) || typing : false;
     root.classList.toggle("bar-tucked", tuck);
+    const topTuck = topMode === "shown" ? false : viewing() && !topOut;
+    root.classList.toggle("top-tucked", topTuck);
   }
   function show() {
-    if (!out) { out = true; update(); }
+    if (!out || typing) { out = true; typing = false; update(); }
   }
   function tuck() {
     if (out && current === "auto" && viewing() && !busy()) { out = false; update(); }
@@ -80,6 +89,20 @@
     note.classList.add("show");
   }
 
+  function setTopMode(m) {
+    if (!MODES.includes(m)) return topMode;
+    topMode = m;
+    try { localStorage.setItem(TOP, m); } catch (err) {}
+    root.dataset.top = m;
+    topOut = m !== "hidden";
+    update();
+    window.dispatchEvent(new CustomEvent("novabarchange", { detail: { top: m } }));
+    say(`Top bar: ${NAMES[m]}`);
+    return m;
+  }
+  function topShow() { if (!topOut) { topOut = true; update(); } }
+  function topTuck() { if (topOut && topMode !== "shown" && viewing() && !busy()) { topOut = false; update(); } }
+
   // A panel opens or closes: the bar is in view to start with (it goes once you get to work)
   let wasViewing = viewing();
   new MutationObserver(() => {
@@ -87,7 +110,9 @@
     if (now === wasViewing) return;
     wasViewing = now;
     out = true;
+    topOut = topMode !== "hidden";
     peeking = false;
+    typing = false;
     scrolled = 0;
     update();
   }).observe(main, { attributes: true, attributeFilter: ["class"] });
@@ -96,8 +121,20 @@
   // Near the bottom (within the bar's height plus a margin): in view. Well above it for a
   // moment: away. A little dead band between the two, so it never flickers.
   let awayTimer = null;
+  let topTimer = null;
   function pointerAt(y) {
-    if (PHONE.matches || current !== "auto" || !viewing()) return;
+    if (PHONE.matches) return;
+    // The top bar: near the top, in view; well below it a moment, away (Always hidden: only the
+    // very top edge brings it)
+    if (topMode !== "shown" && viewing()) {
+      const topH = topbar ? topbar.offsetHeight : 70;
+      const near = topMode === "hidden" ? y < 6 || (topOut && y < topH + 30) : y < 28 || (topOut && y < topH + 40);
+      if (near) { clearTimeout(topTimer); topTimer = null; topShow(); }
+      else if (topOut && y > topH + 90 && !topTimer) topTimer = setTimeout(() => { topTimer = null; topTuck(); }, 450);
+    }
+    if (current !== "auto") return;
+    // Typing on the home: the mouse at the bottom brings the bar back
+    if (!viewing()) { if (typing && innerHeight - y < 40) show(); return; }
     const barH = strip ? strip.offsetHeight : 90;
     const fromBottom = innerHeight - y;
     if (fromBottom < 28 || (out && fromBottom < barH + 40)) {
@@ -120,7 +157,7 @@
   let touching = 0; // until when a finger was last on the panel (only scrolling you do counts)
   const lastY = new WeakMap();
   function onScroll(e) {
-    if (!PHONE.matches || current !== "auto" || !viewing()) return;
+    if (!PHONE.matches || !viewing() || (current !== "auto" && topMode === "shown")) return;
     if (performance.now() > touching) return; // the page moved by itself
     const el = e.target && e.target.nodeType === 9 ? e.target.scrollingElement : e.target;
     if (!el || typeof el.scrollTop !== "number") return;
@@ -132,9 +169,28 @@
     if (!dy) return; // sideways scrolling
     if (Math.sign(dy) !== Math.sign(scrolled)) scrolled = 0;
     scrolled += dy;
-    if (scrolled > 70 && y > 60) tuck();
-    else if (scrolled < -24 || y <= 0) show();
+    if (scrolled > 70 && y > 60) { tuck(); topTuck(); }
+    else if (scrolled < -24 || y <= 0) { show(); if (topMode === "auto" || y <= 0) topShow(); }
   }
+
+  // Typing (Nova Agent's message box or any box in a panel): the bar steps aside until you're
+  // done (the box loses focus) or the mouse goes to the bottom
+  const editable = (t) => t && (t.isContentEditable || (t.matches && t.matches('textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"])')));
+  function onKey(e) {
+    if (current !== "auto" || PHONE.matches || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!editable(e.target) || (e.key.length !== 1 && e.key !== "Backspace")) return;
+    if (!typing) { typing = true; out = false; update(); }
+  }
+  function onBlur(e) {
+    if (!typing || !editable(e.target)) return;
+    setTimeout(() => {
+      const a = document.activeElement;
+      const inner = a && a.tagName === "IFRAME" ? (() => { try { return a.contentDocument.activeElement; } catch (err) { return null; } })() : a;
+      if (!editable(inner)) { typing = false; if (!viewing()) out = true; update(); }
+    }, 700);
+  }
+  document.addEventListener("keydown", onKey, true);
+  document.addEventListener("focusout", onBlur, true);
 
   // Each panel's page (same site): its mouse and its scrolling count too
   function watchFrame(frame) {
@@ -146,6 +202,8 @@
         if (!doc || doc.__barWatched) return;
         doc.__barWatched = true;
         doc.addEventListener("scroll", onScroll, { capture: true, passive: true });
+        doc.addEventListener("keydown", onKey, true);
+        doc.addEventListener("focusout", onBlur, true);
         const touch = () => { touching = performance.now() + 900; };
         doc.addEventListener("touchstart", touch, { capture: true, passive: true });
         doc.addEventListener("touchmove", touch, { capture: true, passive: true });
@@ -158,6 +216,9 @@
     };
     frame.addEventListener("load", attach);
     attach();
+    // A panel's page is ready for this long before it has fully loaded (pictures and all): check
+    // often, so the mouse counts from the start (cheap: one look at a flag)
+    setInterval(attach, 400);
   }
   const viewer = document.getElementById("viewer");
   if (viewer) {
@@ -191,11 +252,17 @@
       b.classList.toggle("active", on);
       b.setAttribute("aria-checked", String(on));
     });
+    document.querySelectorAll("[data-top-mode]").forEach((b) => {
+      const on = b.dataset.topMode === topMode;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-checked", String(on));
+    });
   }
   document.addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest("[data-bar-mode]");
-    if (!b) return;
-    setMode(b.dataset.barMode);
+    if (b) setMode(b.dataset.barMode);
+    const t = e.target.closest && e.target.closest("[data-top-mode]");
+    if (t) setTopMode(t.dataset.topMode);
   });
   window.addEventListener("novabarchange", showChoice);
   showChoice();
@@ -205,6 +272,9 @@
     mode: () => current,
     setMode,
     next: () => setMode(MODES[(MODES.indexOf(current) + 1) % MODES.length]),
+    topMode: () => topMode,
+    setTopMode,
+    nextTop: () => setTopMode(MODES[(MODES.indexOf(topMode) + 1) % MODES.length]),
     name: (m = current) => NAMES[m],
     reveal: show,
   };

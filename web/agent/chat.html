@@ -96,6 +96,27 @@
     box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tint) 55%, #fff 10%), 0 8px 22px -10px var(--tint); }
   .pico svg { width: 60%; height: 60%; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
   .pico svg .pf { fill: currentColor; stroke: none; }
+  /* Each icon has its own sky behind it (a ring of light, star dust, a streak, a glow from below…),
+     drawn once with gradients: more variety, no cost */
+  .pico { position: relative; overflow: hidden; isolation: isolate; }
+  .pico::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .55; background: var(--sky, none); }
+  .pico[data-p="chat"] { --sky: radial-gradient(circle at 80% 15%, rgba(255,255,255,.55) 0 1px, transparent 2px), radial-gradient(circle at 20% 85%, rgba(255,255,255,.4) 0 1px, transparent 2px); }
+  .pico[data-p="portal"] { --sky: radial-gradient(120% 60% at 50% 115%, color-mix(in oklch, var(--tint) 60%, #fff 20%) 0 30%, transparent 62%); }
+  .pico[data-p="calendar"] { --sky: radial-gradient(circle at 78% 22%, rgba(255,255,255,.35) 0 18%, transparent 30%); }
+  .pico[data-p="notes"] { --sky: linear-gradient(160deg, transparent 0 55%, rgba(255,255,255,.18) 56% 60%, transparent 61%); }
+  .pico[data-p="index"] { --sky: radial-gradient(circle at 15% 20%, rgba(255,255,255,.5) 0 1px, transparent 2px), radial-gradient(circle at 85% 80%, rgba(255,255,255,.5) 0 1px, transparent 2px), radial-gradient(circle at 70% 25%, rgba(255,255,255,.35) 0 1px, transparent 2px); }
+  .pico[data-p="quests"] { --sky: radial-gradient(90% 60% at 0% 100%, rgba(255,255,255,.28), transparent 60%); }
+  .pico[data-p="missions"] { --sky: linear-gradient(225deg, rgba(255,255,255,.3) 0 8%, transparent 40%); }
+  .pico[data-p="lossless"] { --sky: repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.14) 0 1px, transparent 1px 6px); }
+  .pico[data-p="visualizer"] { --sky: conic-gradient(from 200deg at 50% 50%, transparent, rgba(255,255,255,.28), transparent 40%); }
+  .pico[data-p="observatory"] { --sky: radial-gradient(circle at 25% 20%, rgba(255,255,255,.6) 0 1px, transparent 2px), radial-gradient(circle at 60% 12%, rgba(255,255,255,.45) 0 1px, transparent 2px), linear-gradient(180deg, rgba(0,0,0,.25), transparent 60%); }
+  .pico[data-p="manual"] { --sky: radial-gradient(70% 70% at 50% 40%, rgba(255,255,255,.22), transparent 70%); }
+  /* …and its own shape */
+  .suite-app > .pico[data-p="portal"], .pico.t-ico[data-p="portal"] { border-radius: 50%; }
+  .suite-app > .pico[data-p="missions"], .pico.t-ico[data-p="missions"] { border-radius: 40% 14px 40% 14px; }
+  .suite-app > .pico[data-p="observatory"], .pico.t-ico[data-p="observatory"] { border-radius: 50% 50% 14px 14px; }
+  .suite-app > .pico[data-p="lossless"], .pico.t-ico[data-p="lossless"] { border-radius: 30%; }
+  .suite-app > .pico[data-p="index"], .pico.t-ico[data-p="index"] { border-radius: 14px 40% 14px 40%; }
   .pico[data-p="chat"] { --own: var(--hi); }
   .pico[data-p="portal"] { --own: #ff5fae; }
   .pico[data-p="calendar"] { --own: #8c7dff; }
@@ -245,6 +266,7 @@
   .sec-title { margin: 0; display: inline-flex; align-items: center; gap: 9px; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; color: #fff; white-space: nowrap; }
   .sec-title > span { color: var(--hi); text-shadow: 0 0 10px var(--hi); }
   .sec-title.gold > span { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+  .sec-title > .pico.sec-ico { width: 24px; height: 24px; border-radius: 8px; color: #fff; text-shadow: none; }
   .icon-btn { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; }
   .icon-btn:hover { color: #fff; border-color: var(--line-strong); }
 
@@ -593,6 +615,8 @@
 <!-- On a phone: the bar along the bottom, one thing at a time, sized to the visible screen -->
 <link rel="stylesheet" href="/agent/phone.css">
 <link rel="stylesheet" href="/agent/bar.css">
+<link rel="stylesheet" href="/agent/status.css">
+<script src="/shared/look.js"></script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -611,17 +635,17 @@
       <circle cx="256" cy="256" r="164" fill="none" stroke="url(#mk-letter)" stroke-opacity=".18" stroke-width="3"/>
     </symbol>
     <!-- The panels' own icons (line art, tinted by the theme and each panel's own colour: .pico) -->
-    <symbol id="pi-chat" viewBox="0 0 24 24"><path d="M4.5 7A2.5 2.5 0 0 1 7 4.5h10A2.5 2.5 0 0 1 19.5 7v6.5A2.5 2.5 0 0 1 17 16h-5.5l-4 3.5V16H7a2.5 2.5 0 0 1-2.5-2.5z"/><path class="pf" d="M12 6.8l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/></symbol>
-    <symbol id="pi-portal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10" ry="3.4" transform="rotate(-22 12 12)"/><circle class="pf" cx="19.2" cy="5.2" r=".9"/></symbol>
-    <symbol id="pi-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path class="pf" d="M14.6 12.6a3.2 3.2 0 1 0 0 5.4 2.6 2.6 0 1 1 0-5.4z"/></symbol>
-    <symbol id="pi-notes" viewBox="0 0 24 24"><path d="M7.5 3.5h6.5l4.5 4.5v11A1.5 1.5 0 0 1 17 20.5H7.5A1.5 1.5 0 0 1 6 19V5a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M14 3.5V8h4.5M9 12.5h6M9 16h3.5"/></symbol>
-    <symbol id="pi-index" viewBox="0 0 24 24"><path d="M6 7l6 5 5.5-5.5M12 12l-5 5.5M12 12l6 5"/><circle class="pf" cx="6" cy="7" r="1.7"/><circle class="pf" cx="17.5" cy="6.5" r="1.7"/><circle class="pf" cx="12" cy="12" r="2"/><circle class="pf" cx="7" cy="17.5" r="1.7"/><circle class="pf" cx="18" cy="17" r="1.7"/></symbol>
-    <symbol id="pi-quests" viewBox="0 0 24 24"><path d="M4.5 7l1.6 1.6L9 5.7M12 7h7.5M4.5 12.5l1.6 1.6L9 11.2M12 12.5h7.5M5 18h3.5M12 18h7.5"/></symbol>
-    <symbol id="pi-missions" viewBox="0 0 24 24"><path d="M3.5 20l6-10 3.5 5.5 2-3 5.5 7.5z"/><path d="M9.5 10V3.5l4.5 1.8-4.5 1.8"/></symbol>
-    <symbol id="pi-lossless" viewBox="0 0 24 24"><path d="M3 12h1.5M7 8.5v7M10.5 5v14M14 8v8M17.5 6.5v11M21 12h-.5"/></symbol>
-    <symbol id="pi-visualizer" viewBox="0 0 24 24"><path d="M2.5 12h4l2-5.5 3 11 3-8.5 2 3h5"/></symbol>
-    <symbol id="pi-observatory" viewBox="0 0 24 24"><path d="M4 14.5l11-5.5 2 4-11 5.5z"/><path d="M15 9l3-1.5 2 4-3 1.5M9.5 16.5l-2 4.5M11.5 15.5l2 5"/><path class="pf" d="M6 4.2l.6 1.3 1.3.6-1.3.6-.6 1.3-.6-1.3-1.3-.6 1.3-.6z"/></symbol>
-    <symbol id="pi-manual" viewBox="0 0 24 24"><path d="M12 6.5C10 5 6.8 4.6 3.5 5v13.2c3.3-.4 6.5 0 8.5 1.5 2-1.5 5.2-1.9 8.5-1.5V5c-3.3-.4-6.5 0-8.5 1.5zM12 6.5v13.2"/></symbol>
+    <symbol id="pi-chat" viewBox="0 0 24 24"><path d="M5 8.5A2.5 2.5 0 0 1 7.5 6h8A2.5 2.5 0 0 1 18 8.5v5a2.5 2.5 0 0 1-2.5 2.5H11l-3.5 3v-3a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M2.5 9.5C1.4 5.6 9 2.2 16 3.2"/><circle class="pf" cx="18.6" cy="3.6" r="1.4"/><path class="pf" d="M11.5 8.6l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></symbol>
+    <symbol id="pi-portal" viewBox="0 0 24 24"><circle cx="11" cy="13" r="5"/><ellipse cx="11" cy="13" rx="10" ry="3.2" transform="rotate(-20 11 13)"/><circle class="pf" cx="19.5" cy="4.5" r="1.5"/><circle class="pf" cx="4" cy="4.5" r=".7"/></symbol>
+    <symbol id="pi-calendar" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M8 2.8v3.4M16 2.8v3.4"/><circle cx="7.5" cy="14" r="2"/><path class="pf" d="M12 12a2 2 0 0 1 0 4z"/><circle class="pf" cx="16.5" cy="14" r="2"/></symbol>
+    <symbol id="pi-notes" viewBox="0 0 24 24"><path d="M20 3.5C13 4.5 9 8.5 7.5 15.5L6.5 20"/><path d="M20 3.5c-1 5.5-4.5 9-10.5 10.5"/><circle class="pf" cx="4" cy="12" r=".9"/><circle class="pf" cx="3.2" cy="16.5" r=".7"/><path class="pf" d="M5 6.5l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5z"/></symbol>
+    <symbol id="pi-index" viewBox="0 0 24 24"><path d="M4 17l4.5-4 4 1.5L17 8l3.5 1.5M8.5 13L7 6.5"/><circle class="pf" cx="4" cy="17" r="1.5"/><circle class="pf" cx="8.5" cy="13" r="1.7"/><circle class="pf" cx="12.5" cy="14.5" r="1.3"/><circle class="pf" cx="17" cy="8" r="1.8"/><circle class="pf" cx="20.5" cy="9.5" r="1.1"/><circle class="pf" cx="7" cy="6.5" r="1.2"/></symbol>
+    <symbol id="pi-quests" viewBox="0 0 24 24"><path d="M3.5 20c3 0 4-4 7-4s3.5-5 6.5-5"/><path d="M17 11V3.5l3.5 1.5L17 6.5"/><path class="pf" d="M5 14.2l.6 1.3 1.3.6-1.3.6-.6 1.3-.6-1.3-1.3-.6 1.3-.6z"/><circle class="pf" cx="10.5" cy="16" r="1"/><circle class="pf" cx="14" cy="12.6" r=".8"/></symbol>
+    <symbol id="pi-missions" viewBox="0 0 24 24"><path d="M14.5 3.5c3 0 6 3 6 6l-6.5 6.5-5-5z"/><circle cx="15.2" cy="8.8" r="1.5"/><path d="M9 11l-3.2.4L3.5 14l3.6.6M13 15l-.4 3.2-2.6 2.3-.6-3.6"/><path d="M7.5 16.5l-3.5 3.5"/></symbol>
+    <symbol id="pi-lossless" viewBox="0 0 24 24"><circle class="pf" cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.5 5.5a9.2 9.2 0 0 0 0 13M18.5 5.5a9.2 9.2 0 0 1 0 13"/></symbol>
+    <symbol id="pi-visualizer" viewBox="0 0 24 24"><path d="M12 12a1.6 1.6 0 1 1 1.6 1.6c-2.4 0-3.6-2-3.6-3.6 0-3 2.6-4.6 5-4.6 3.4 0 5.5 2.8 5.5 5.6 0 4.2-3.6 7-7.5 7-5 0-8.5-3.8-8.5-8.5"/><circle class="pf" cx="19.5" cy="18.5" r=".8"/><circle class="pf" cx="4.5" cy="5.5" r=".8"/></symbol>
+    <symbol id="pi-observatory" viewBox="0 0 24 24"><path d="M4 14.5l11-5.5 2 4-11 5.5z"/><path d="M15 9l3-1.5 2 4-3 1.5M9.5 16.5l-2 4.5M11.5 15.5l2 5"/><path class="pf" d="M6 3.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/><circle class="pf" cx="11.5" cy="4.5" r=".8"/></symbol>
+    <symbol id="pi-manual" viewBox="0 0 24 24"><path d="M12 6.5C10 5 6.8 4.6 3.5 5v13.2c3.3-.4 6.5 0 8.5 1.5 2-1.5 5.2-1.9 8.5-1.5V5c-3.3-.4-6.5 0-8.5 1.5zM12 6.5v13.2"/><path class="pf" d="M7.5 9l.5 1.1 1.1.5-1.1.5-.5 1.1-.5-1.1-1.1-.5 1.1-.5z"/><circle class="pf" cx="16.5" cy="10.5" r=".8"/><circle class="pf" cx="15" cy="14" r=".6"/></symbol>
     <symbol id="i-send" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
@@ -674,14 +698,14 @@
     </section>
     <section class="board side glass" id="missions-panel" aria-labelledby="missions-title" data-sfx-theme="missions">
       <div class="side-head">
-        <h2 class="sec-title gold" id="missions-title"><span>◆</span> Missions</h2>
+        <h2 class="sec-title gold" id="missions-title"><span class="pico sec-ico" data-p="missions" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-missions"/></svg></span> Missions</h2>
         <button type="button" class="btn primary strip-btn" id="new-mission-btn" aria-haspopup="dialog" aria-controls="mission-dlg">✦ New mission</button>
       </div>
       <div class="view" id="view-missions"><div class="missions" id="missions"></div></div>
     </section>
     <section class="chat glass" aria-label="Chat with Nova Agent">
       <div class="chat-head">
-        <h2 class="sec-title"><span>✦</span> Talk to Nova Agent</h2>
+        <h2 class="sec-title"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-chat"/></svg></span> Talk to Nova Agent</h2>
         <button type="button" class="icon-btn" id="clear" title="Start a new chat" aria-label="Start a new chat"><svg class="ico"><use href="#i-clear"/></svg></button>
       </div>
       <div class="log" id="log" aria-live="polite">
@@ -711,7 +735,7 @@
 
     <section class="board side glass" id="quests-panel" aria-labelledby="quests-title" data-sfx-theme="quests">
       <div class="side-head">
-        <h2 class="sec-title" id="quests-title"><span>✦</span> Quests</h2>
+        <h2 class="sec-title" id="quests-title"><span class="pico sec-ico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-quests"/></svg></span> Quests</h2>
         <div class="strip-tools">
           <button type="button" class="icon-btn" id="btn-calendar" title="Open Calendar" aria-label="Open Calendar"><svg class="ico"><use href="#i-cal"/></svg></button>
           <button type="button" class="icon-btn" id="btn-replan" title="Re-plan everything from now" aria-label="Re-plan everything from now"><svg class="ico"><use href="#i-replan"/></svg></button>
@@ -775,6 +799,17 @@
         <button type="button" class="chip" role="radio" data-bar-mode="auto" data-sfx="tab">Auto</button>
         <button type="button" class="chip" role="radio" data-bar-mode="shown" data-sfx="tab">Always shown</button>
         <button type="button" class="chip" role="radio" data-bar-mode="hidden" data-sfx="tab">Always hidden</button>
+      </div>
+      <div class="bar-mode" role="radiogroup" aria-label="Top bar">
+        <span>Top bar</span>
+        <button type="button" class="chip" role="radio" data-top-mode="auto" data-sfx="tab">Auto</button>
+        <button type="button" class="chip" role="radio" data-top-mode="shown" data-sfx="tab">Always shown</button>
+        <button type="button" class="chip" role="radio" data-top-mode="hidden" data-sfx="tab">Always hidden</button>
+      </div>
+      <!-- One theme for every panel, or each its own; and the colours of your planet (look.js, status.js) -->
+      <div class="look-settings" id="look-settings">
+        <div class="look-row look-themes" role="radiogroup" aria-label="Theme for all of Nova Agent"></div>
+        <label class="look-planet"><input type="checkbox" role="switch" id="look-planet" data-sfx="none"> Colour everything from my planet (Portal)</label>
       </div>
       <button type="button" class="icon-btn suite-x" id="suite-close" aria-label="Close">✕</button>
     </div>
@@ -853,6 +888,8 @@
 <script src="/calendar/js/backdrop.js"></script>
 <script src="/agent/phone.js"></script>
 <script src="/agent/bar.js"></script>
+<script src="/shared/status-data.js"></script>
+<script src="/agent/status.js"></script>
 <script>
 (function () {
   'use strict';

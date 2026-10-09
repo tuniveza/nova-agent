@@ -35,6 +35,28 @@
   html.kb .bar-peek { display: none !important; }
 }
 
+/* ---- The top bar (Nova Agent's header), Auto or Always hidden: with a panel open it floats over
+   the top of the panel and slides away (html.top-tucked) ---- */
+@media (min-width: 981px) and (min-height: 601px) {
+  html[data-top="auto"] .shell:has(> .main.viewing), html[data-top="hidden"] .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto; }
+  html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
+    position: absolute; top: max(12px, env(safe-area-inset-top)); left: 14px; right: 14px; z-index: 30;
+    box-shadow: 0 12px 40px -18px rgba(0, 0, 0, .7), 0 0 0 1px var(--line);
+    transition: transform .4s cubic-bezier(.2, .8, .2, 1), opacity .3s ease; }
+  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 20px)); opacity: 0; pointer-events: none; }
+  /* Typing on the home (Auto): the panels strip steps aside and the columns get the room */
+  html[data-bar="auto"].bar-tucked .main:not(.viewing) { grid-template-rows: minmax(0, 1fr); }
+  html[data-bar="auto"].bar-tucked .main:not(.viewing) > .suite-home { display: none; }
+}
+@media (max-width: 980px), (max-height: 600px) {
+  html[data-top="auto"] .shell:has(> .main.viewing), html[data-top="hidden"] .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto; }
+  html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
+    position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; z-index: 41;
+    box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .8);
+    transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 14px)); pointer-events: none; }
+}
+
 /* The choice in the Panels window */
 .bar-mode { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; }
 .bar-mode > span { font-family: var(--f-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
@@ -47,5 +69,5 @@
 @keyframes bar-note { 0% { opacity: 0; scale: .96; } 12%, 75% { opacity: 1; scale: 1; } 100% { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  html .main.viewing > .suite-home, html .shell > .tabbar { transition: none !important; }
+  html .main.viewing > .suite-home, html .shell > .tabbar, html .shell > .topbar { transition: none !important; }
 }

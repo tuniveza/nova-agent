@@ -23,7 +23,8 @@
     "observatory:scan": "node scripts/observatory/scan.mjs",
     "observatory:capture": "node scripts/observatory/capture.mjs",
     "observatory:build": "node scripts/observatory/scan.mjs && node scripts/observatory/capture.mjs && node scripts/observatory/scan.mjs",
-    "manual": "node scripts/build-manual.mjs"
+    "manual": "node scripts/build-status.mjs && node scripts/build-manual.mjs",
+    "status": "node scripts/build-status.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

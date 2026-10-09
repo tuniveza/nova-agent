@@ -307,6 +307,33 @@ is light (only scale and opacity move): buttons and tiles press in softly, the o
 breathes, and panels fade in as they open (`web/shared/inside.js`, and Calendar's `embed.js`).
 It all stops when the device asks for less motion or Portal's Options → Animations is off.
 
+### One look, the top bar, and the status line
+
+**One theme for everything:** in the Panels window (the ✦ Panels button in the status line, or the
+phone's gear → Theme & look) pick a theme (Novacane, Solar Flare, Pulsar, Aurora, Eclipse, Quasar
+or Mono) and every app, task, tool and helper wears it, whatever its own theme setting; "Each
+panel's own" goes back to each panel's own. **Colour everything from my planet** tints it all
+with the colours of your planet in Portal (Nova Bot sends them with who you are). Saved on the
+device; every open panel follows at once (`web/shared/look.js`, loaded first in every panel).
+
+**The top bar** (Nova Agent's header) has the same choice as the panels bar: Auto (with a panel
+open it slides away while you work and comes back when the mouse goes to the top, or you scroll
+up on a phone), Always shown, or Always hidden. Typing in any box hides the panels bar until
+you're done or the mouse goes to the bottom.
+
+**The status line** runs under the panels bar (inside the bar on a phone), one line tall: the
+✦ Panels button, the version and build, a slowly scrolling line of what changed lately (for the
+group or panel you point at, or the one that's open), when you came on and were last off, what
+you've done lately (tap it for the list) and a 12-hour clock (`web/agent/assets/status.js`;
+the words come from `web/shared/status-data.js`, made by `npm run status`, which `npm run manual`
+runs too).
+
+**The icons** are cosmic: a speech bubble with an orbiting moon (Chat), a ringed planet (Portal),
+the moon's phases (Calendar), a quill writing stars (Notes), a constellation (Index), a path of
+stars to a flag (Quests), a rocket (Missions), a pulsar (Lossless audio), a spiral galaxy
+(Visualizer), a telescope (Observatory) and a star atlas (Manual). Each has its own colour (mixed
+with the theme), its own small sky behind it and some their own shape.
+
 ### Ambient music
 
 Quiet, never-ending Novacane ambient music: slow warm pads, a soft bass, star-like bells, now and
