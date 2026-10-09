@@ -181,3 +181,16 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
 #view-today > .day-head, .day-head { display: flex !important; flex-direction: column; align-items: center !important; justify-content: center !important; text-align: center; gap: 6px; }
 #view-today > .day-head > div:first-child, .day-head > div:first-child { display: grid !important; justify-items: center; text-align: center; }
 .day-head .stats { justify-content: center; flex-wrap: wrap; }
+
+/* ---- The conversation: it scrolls (a visible scrollbar) and, in pages, one reply at a time ---- */
+.log { overflow-y: auto; }
+.log > .msg.cp-off { display: none !important; }
+.chat-pager { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 4px 10px; border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
+.chat-pager[hidden] { display: none; }
+.chat-pager button { width: 30px; height: 26px; border-radius: 9px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 40%, transparent); color: var(--text); font-size: 16px; line-height: 1; cursor: pointer; }
+.chat-pager button:disabled { opacity: .35; cursor: default; }
+.chat-pager .cp-mode { width: auto; padding: 0 10px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; color: var(--hi); }
+.chat-pager .cp-where { min-width: 7ch; text-align: center; }
+.chat { grid-template-rows: auto minmax(0, 1fr) auto auto !important; }
+@media (max-width: 980px), (max-height: 480px) { .chat { grid-template-rows: minmax(0, 1fr) auto auto !important; } }

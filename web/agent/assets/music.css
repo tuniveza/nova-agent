@@ -100,7 +100,7 @@
 .welcome .suggest.cpanel:not(.show-all) .mw-more-idea { display: none; }
 .welcome .suggest.cpanel .mw-more { border-style: dashed; color: var(--hi); }
 /* The front page sits at the top of the chat (it shrinks to fit rather than scrolling) */
-.log:has(> .welcome):not(.mw-scroll) { overflow-y: hidden; justify-content: flex-start; }
+.log:has(> .welcome:not([hidden])):not(.mw-scroll) { overflow-y: hidden; justify-content: flex-start; }
 .welcome > .mark { display: none !important; }
 
 /* ---- The content panels' borders, Novacane style: a glowing gradient edge, lit corner brackets,
@@ -154,7 +154,7 @@
 .mw-song-pop p { margin: 4px 0; color: var(--text); }
 .mw-song-pop a { color: var(--hi); }
 /* No wasted space above it */
-.log:has(> .welcome) { padding-top: 10px; }
+.log:has(> .welcome:not([hidden])) { padding-top: 10px; }
 .log > .welcome { margin: 0 auto !important; align-self: stretch; }
 /* No star pinned to the top of each content panel */
 .welcome .cpanel::before { content: none; display: none; }
@@ -181,3 +181,4 @@
   .mw-quote .mw-face { width: 64px !important; height: 64px !important; }
 }
 .mw-quote .mw-face[hidden] { display: none !important; }
+.welcome[hidden] { display: none !important; }
