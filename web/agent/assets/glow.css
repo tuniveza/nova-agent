@@ -213,9 +213,11 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
 /* Missions and Quests: as tall as what's in them, and once that's more than the room, they stop
    at the bottom and scroll inside (nothing goes off the screen) */
 @media (min-width: 981px) and (min-height: 481px) {
-  .main > .side { display: flex !important; flex-direction: column; max-height: 100%; min-height: 0; }
-  .main > .side > .side-head { flex: none; }
-  .main > .side > .view { flex: 1 1 auto; min-height: 0; overflow-y: auto !important; }
+  .main:not(.viewing) > .side { display: flex !important; flex-direction: column; max-height: 100%; min-height: 0; }
+  .main:not(.viewing) > .side > .side-head { flex: none; }
+  .main:not(.viewing) > .side > .view { flex: 1 1 auto; min-height: 0; overflow-y: auto !important; }
   .main > #quests-panel > #view-today { overflow-y: auto !important; }
   .main > #quests-panel > #view-today > .subpanel { flex: none; overflow: visible; }
 }
+/* With an app open, Missions and Quests step aside completely (never over the app) */
+.main.viewing > .board, .main.viewing > .side { display: none !important; }
