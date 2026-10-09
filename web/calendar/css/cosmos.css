@@ -148,31 +148,27 @@ html[data-centred] .cell .moonmark { position: absolute; top: 7px; right: 7px; }
 .pill b { display: inline !important; }
 
 /* ================= The day, in words, as much as fits ================= */
-.cell { container-type: inline-size; }
-@media (min-width: 701px) { .cell { container-type: size; } }
-.num { width: auto !important; min-width: 24px; height: auto !important; min-height: 22px; padding: 2px 8px !important; border-radius: 999px; white-space: nowrap; font-size: 11.5px !important; line-height: 1.4; letter-spacing: .01em; }
+/* The month's grid is the yardstick (every day in it is the same size): its width and height decide
+   how much each day shows */
+.cell { container-type: normal !important; }
+.grid { container-type: inline-size; container-name: month; }
+@media (min-width: 701px) { .grid { container-type: size; } }
+.num { width: auto !important; min-width: 24px; height: auto !important; min-height: 22px; max-width: 100%; padding: 2px 8px !important; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 11.5px !important; line-height: 1.4; letter-spacing: .01em; flex: none !important; align-self: center !important; }
 .num > span { display: none; }
 .num > .n-long { display: inline; }
-@container (max-width: 190px) { .num > .n-long { display: none; } .num > .n-mid { display: inline; } }
-@container (max-width: 125px) { .num > .n-mid { display: none; } .num > .n-short { display: inline; } }
-@container (max-width: 72px) { .num > .n-short { display: none; } .num > .n-min { display: inline; } .num { padding: 2px 6px !important; } }
+@container month (max-width: 1330px) { .num > .n-long { display: none; } .num > .n-mid { display: inline; } }
+@container month (max-width: 880px) { .num > .n-mid { display: none; } .num > .n-short { display: inline; } }
+@container month (max-width: 520px) { .num > .n-short { display: none; } .num > .n-min { display: inline; } .num { padding: 2px 6px !important; } }
 
 /* ================= Small days: symbols instead of squashed words ================= */
-/* When a day can't show its cards' words properly, each card becomes its symbol (the title shows on
-   hover, and everything is in the chosen day's list) */
-@container (max-height: 128px) {
-  .cell { flex-flow: row wrap !important; align-content: flex-start; justify-content: center; }
-  .cell > .num { flex: 0 0 100%; text-align: center; align-self: center !important; max-width: max-content; margin-inline: auto; }
-  .pill { display: inline-grid !important; place-items: center; width: 26px; height: 26px; padding: 0 !important; border-radius: 9px !important; }
+/* When the days are too small for their cards' words, each card becomes its symbol (its title shows
+   on hover, and everything is in the chosen day's list) */
+@container month (max-height: 700px) or (max-width: 760px) {
+  .cell { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(24px, 1fr)); grid-auto-rows: min-content; align-content: start; justify-items: center; gap: 4px !important; }
+  .cell > .num, .cell > .daycard, .cell > .skychip, .cell > .more { grid-column: 1 / -1; }
+  .pill { display: grid !important; place-items: center; width: 24px; height: 24px; padding: 0 !important; border-radius: 8px !important; }
   .pill > :not(.pill-sym) { display: none !important; }
   .pill-sym { margin: 0; }
-  .pill-sym svg { width: 15px; height: 15px; }
-  .cell .more { flex: 0 0 100%; text-align: center; }
-}
-@container (max-width: 100px) {
-  .cell { flex-flow: row wrap !important; align-content: flex-start; justify-content: center; }
-  .cell > .num { flex: 0 0 100%; max-width: max-content; margin-inline: auto; }
-  .pill { display: inline-grid !important; place-items: center; width: 22px; height: 22px; padding: 0 !important; border-radius: 7px !important; }
-  .pill > :not(.pill-sym) { display: none !important; }
-  .pill-sym { margin: 0; }
+  .pill-sym svg { width: 14px; height: 14px; }
 }
