@@ -58,7 +58,9 @@
   }
   function topArt() {
     if (!top[0] || !top[0].art) return;
-    document.querySelectorAll("[data-top-art]").forEach((el) => { if (!el.querySelector("img")) el.insertAdjacentHTML("afterbegin", art(top[0].art)); });
+    // The #1's cover, through Nova Bot (so nothing in the browser blocks it)
+    const src = `/music-world/art?q=${encodeURIComponent(`${top[0].artist} ${top[0].title}`)}`;
+    document.querySelectorAll("[data-top-art]").forEach((el) => { if (!el.querySelector("img")) el.insertAdjacentHTML("afterbegin", `<img class="mw-art" alt="" loading="lazy" src="${src}" onerror="this.src='${top[0].art}'">`); });
   }
   const topLine = () => (top[0] ? `#1 ${top[0].title} · ${top[0].artist}` : "Loading the charts…");
 
@@ -76,7 +78,7 @@
     box.innerHTML = `
       <h4 class="mw-title">Today in music</h4>
       <div class="mw-row">
-        <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art>${illo("top")}</span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
+        <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art></span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
         <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic">${art(`/music-world/art?q=${encodeURIComponent(D.genres[0].art)}`)}${ico("genres")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
         <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${photo(gear.kind)}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
         <button type="button" class="mw-card" data-mw="song" data-sfx="open"><span class="mw-pic">${art(`/music-world/art?q=${encodeURIComponent(`${song.artist} ${song.title.replace(/"/g, "")}`)}`)}${ico("song")}</span><span class="mw-k">Song of the day</span><span class="mw-line">${esc(song.title)} · ${esc(song.artist)}</span></button>
