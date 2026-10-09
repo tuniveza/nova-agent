@@ -216,7 +216,7 @@
   // Visualizer) · Helpers (Observatory, Manual). Any other panel joins Tools.
   const SKIP = ['/admin/links']; // All links: behind the gear
   const GROUPS = [
-    ['apps', 'Apps', ['pane:chat', '/portal/', '/calendar/', '/notes/', '/app/memory/']],
+    ['apps', 'Apps', ['pane:chat', '/calendar/', '/portal/', '/notes/', '/app/memory/']], // Portal in the middle
     ['tasks', 'Tasks', ['pane:quests', 'pane:missions']],
     ['tools', 'Tools', ['/lossless/', '/visualizer']],
     ['helpers', 'Helpers', ['/observatory/', 'manual']],

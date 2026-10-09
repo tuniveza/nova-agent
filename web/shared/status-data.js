@@ -1,15 +1,15 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 162,
+ "build": 163,
  "date": "2026-10-09",
  "panels": {
   "chat": [
+   "Panels make room for the bars",
    "Every window size usable",
    "Smaller bar",
    "No glass bubbles",
-   "Glowing space-scene icons",
-   "Cosmic icons"
+   "Glowing space-scene icons"
   ],
   "portal": [
    "Cosmic icons",
@@ -82,22 +82,22 @@ window.NOVA_STATUS = {
    "Nova Hub is Studio"
   ],
   "look": [
+   "Panels make room for the bars",
    "A quiet sky",
    "Every window size usable",
    "Smaller bar",
-   "No glass bubbles",
-   "Glowing space-scene icons"
+   "No glass bubbles"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "Every window size usable"
+    "words": "Panels make room for the bars"
    },
    {
     "panel": "chat",
-    "words": "Smaller bar"
+    "words": "Every window size usable"
    },
    {
     "panel": "portal",
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Panels make room for the bars",
   "A quiet sky",
   "Every window size usable",
   "Smaller bar",
   "No glass bubbles",
   "Glowing space-scene icons",
   "Cosmic icons",
-  "Calmer sounds",
-  "The panels bar shows and hides itself"
+  "Calmer sounds"
  ]
 };

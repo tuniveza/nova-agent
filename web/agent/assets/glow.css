@@ -43,6 +43,10 @@ dialog.more-sheet { border-top: 1px solid transparent !important; background-ima
 }
 
 /* ---- The columns' titles in the middle (their buttons stay on the right) ---- */
+.side-head { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 10px; }
+.side-head > .sec-title { grid-column: 2; justify-self: center; }
+.side-head > :not(.sec-title) { grid-column: 3; justify-self: end; }
+.suggest, .chips, .seg, .subtabs, .stats, .q-tags, .row-btns { justify-content: safe center; }
 @media (min-width: 981px) and (min-height: 481px) {
   .side-head, .chat-head { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 10px; }
   .side-head > .sec-title, .chat-head > .sec-title { grid-column: 2; justify-self: center; }
@@ -143,7 +147,7 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
   .welcome { gap: 8px; }
   .welcome .mark, .welcome p { display: none; }
   .welcome h3 { font-size: 15px; margin: 0; }
-  .welcome .suggest, .suggest { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
+  .welcome .suggest, .suggest { flex-wrap: nowrap; justify-content: safe center; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
   .welcome .suggest .chip { flex: none; scroll-snap-align: start; }
   .status-line { height: 24px; font-size: 11px; }
 }
@@ -162,3 +166,13 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
    swipe starts at its first suggestion */
 .log > .welcome { align-self: stretch; min-width: 0; max-width: 100%; }
 .welcome > .suggest { justify-self: stretch; align-self: stretch; width: 100%; max-width: 100%; min-width: 0; }
+
+/* ---- Missions and Quests are as big as what's in them: short when there's little (so they don't
+   stand there empty), growing up to the full height when there's a lot (then scrolling inside).
+   Their widths follow their contents too, within sensible limits; the chat takes the rest. ---- */
+@media (min-width: 981px) and (min-height: 481px) {
+  .main:not(.viewing) { grid-template-columns: fit-content(clamp(240px, 26vw, 400px)) minmax(360px, 1fr) fit-content(clamp(240px, 28vw, 430px)); }
+  .main > .side { align-self: start; max-height: 100%; min-width: 220px; }
+  .main > .side > .view { min-height: 0; }
+  #view-today { overflow: auto; }
+}

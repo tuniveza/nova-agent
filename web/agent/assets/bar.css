@@ -179,3 +179,18 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
 #suite-home .suite-group h4::before { content: ""; flex: 1; height: 1px; margin: 0; font-size: 0; text-shadow: none; -webkit-text-fill-color: initial;
   background: linear-gradient(270deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 40%, transparent) 50%, transparent); box-shadow: 0 0 6px color-mix(in srgb, var(--hi) 40%, transparent); }
 .tabbar .tg-label { text-align: center; padding-left: 0; }
+
+/* ---- Room for the bars: while the panels bar or the top bar is in view over an open panel, the
+   panel moves out of its way (with a margin), instead of the bar covering it. It eases back
+   when they go. ---- */
+@media (min-width: 981px) and (min-height: 481px) {
+  html[data-bar="auto"] .main.viewing > .viewer, html[data-bar="hidden"] .main.viewing > .viewer { transition: margin .3s cubic-bezier(.2, .8, .2, 1); }
+  html[data-bar="auto"]:not(.bar-tucked) .main.viewing > .viewer, html[data-bar="hidden"]:not(.bar-tucked) .main.viewing > .viewer { margin-bottom: var(--strip-room, 110px); }
+  html[data-top="auto"]:not(.top-tucked) .shell:has(> .main.viewing) > .main > .viewer, html[data-top="hidden"]:not(.top-tucked) .shell:has(> .main.viewing) > .main > .viewer { margin-top: var(--top-room, 80px); }
+  html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home { bottom: 4px; }
+}
+@media (max-width: 980px), (max-height: 480px) {
+  html[data-bar="auto"] .shell:has(> .main.viewing), html[data-top="auto"] .shell:has(> .main.viewing) { transition: padding .28s cubic-bezier(.2, .8, .2, 1); }
+  html[data-bar="auto"]:not(.bar-tucked) .shell:has(> .main.viewing) { padding-bottom: calc(var(--bar-h, 126px) + 6px); }
+  html[data-top="auto"]:not(.top-tucked) .shell:has(> .main.viewing) { padding-top: calc(var(--top-room, 64px) + max(8px, env(safe-area-inset-top))); }
+}

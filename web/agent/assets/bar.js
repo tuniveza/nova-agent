@@ -45,7 +45,14 @@
   const viewing = () => main.classList.contains("viewing");
   let typing = false; // you're typing (Nova Agent's message box or a panel's): the bar steps aside
   // Each tile's place, so they pop in one after another (bar.css)
+  // How much room the bars take while they're in view (bar.css makes the open panel give it up)
+  function measure() {
+    if (strip) root.style.setProperty("--strip-room", `${strip.offsetHeight + 16}px`);
+    if (topbar) root.style.setProperty("--top-room", `${topbar.offsetHeight + 12}px`);
+  }
+  addEventListener("resize", measure);
   function number() {
+    measure();
     document.querySelectorAll("#suite-home .suite-app").forEach((el, i) => el.style.setProperty("--i", i));
     document.querySelectorAll("#tabbar [data-tab]").forEach((el, i) => el.style.setProperty("--i", i));
     if (topbar) topbar.querySelectorAll(".top-side > *, .brand").forEach((el, i) => el.style.setProperty("--i", i));
