@@ -182,3 +182,9 @@
 }
 .mw-quote .mw-face[hidden] { display: none !important; }
 .welcome[hidden] { display: none !important; }
+
+/* The front page sits in the middle of the Chat panel (top to bottom as well as side to side), and
+   each music card's picture and words sit in the middle of the card */
+.log:has(> .welcome:not([hidden])) { display: flex; flex-direction: column; justify-content: safe center !important; }
+.log > .welcome:not([hidden]) { margin-block: auto !important; }
+.mw-card { align-content: center !important; }
