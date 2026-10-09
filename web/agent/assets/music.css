@@ -156,3 +156,5 @@
 /* No wasted space above it */
 .log:has(> .welcome) { padding-top: 10px; }
 .log > .welcome { margin: 0 auto !important; align-self: stretch; }
+/* No star pinned to the top of each content panel */
+.welcome .cpanel::before { content: none; display: none; }
