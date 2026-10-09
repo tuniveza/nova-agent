@@ -25,7 +25,8 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { border-radius: 10px; border: 3px solid transparent; background: linear-gradient(180deg, var(--hi, var(--accent, #c9b6ff)), var(--accent-2, var(--accent, #7a5cff))) padding-box; }
 ::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { border-width: 2px; }
-::-webkit-scrollbar-corner { background: transparent; }`;
+::-webkit-scrollbar-corner { background: transparent; }
+html:root { --nebula: radial-gradient(60% 40% at 8% 0%, rgba(var(--accent-rgb, 176, 29, 104), .14), transparent 72%), radial-gradient(50% 45% at 100% 22%, rgba(var(--accent-2-rgb, 122, 31, 134), .1), transparent 72%), radial-gradient(80% 50% at 50% 110%, rgba(var(--accent-3-rgb, 37, 25, 77), .5), transparent 72%); }`;
   let inside = false;
   try {
     inside = window.self !== window.top;

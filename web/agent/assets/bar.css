@@ -97,7 +97,7 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
     radial-gradient(35% 120% at 58% 130%, color-mix(in srgb, var(--hi) 16%, transparent), transparent 70%) padding-box,
     linear-gradient(180deg, color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--void) 90%, transparent)) padding-box,
     var(--edge-glow) border-box;
-  box-shadow: 0 -14px 44px -26px var(--hi), inset 0 1px 0 rgba(255, 255, 255, .07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
 }
 #suite-home::before, .tabbar::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit; opacity: .55;
   background:
@@ -105,7 +105,7 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
     radial-gradient(circle at 63% 22%, #fff 0 .8px, transparent 1.4px), radial-gradient(circle at 81% 64%, #fff 0 .6px, transparent 1.2px),
     radial-gradient(circle at 92% 18%, #fff 0 .5px, transparent 1.1px), radial-gradient(circle at 25% 60%, var(--soft) 0 .5px, transparent 1.1px);
   background-size: 260px 100%; }
-#suite-home::after { content: ""; position: absolute; z-index: -1; right: 1.5%; top: 50%; width: 140px; height: 140px; translate: 0 -50%; rotate: -14deg; pointer-events: none; opacity: .07;
+#suite-home::after { content: ""; position: absolute; z-index: -1; right: 1.5%; top: 50%; width: 140px; height: 140px; translate: 0 -50%; rotate: -14deg; pointer-events: none; opacity: .04;
   background: var(--hi);
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148' fill='none' stroke='%23000' stroke-width='30' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148' fill='none' stroke='%23000' stroke-width='30' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
