@@ -67,7 +67,10 @@
   let quoteAt = day % D.quotes.length;
   const quote = D.quotes[quoteAt];
   const song = pick(D.songs, 3);
-  const gear = pick(D.gear, 5);
+  // Today's gear: one with a photo of that exact product
+  const withPhoto = D.gear.filter((g) => g.photo);
+  const gear = pick(withPhoto.length ? withPhoto : D.gear, 5);
+  const gearPic = (g) => (g.photo ? `<img class="mw-art" alt="" loading="lazy" src="/music-world/file/${encodeURIComponent(g.photo)}" onerror="this.parentElement.hidden = true">` : "");
   const initials = (n) => n.split(/\s+/).map((w) => w[0]).slice(0, 2).join("");
   const lyrics = (s) => `https://genius.com/search?q=${encodeURIComponent(`${s.artist} ${s.title.replace(/"/g, "")}`)}`;
 
@@ -79,10 +82,10 @@
       <h4 class="mw-title">Today in music</h4>
       <div class="mw-row">
         <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art></span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
-        <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic">${art(`/music-world/art?q=${encodeURIComponent(D.genres[0].art)}`)}${ico("genres")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
-        <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${photo(gear.kind)}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
+        <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic mw-mosaic">${D.genres.slice(0, 3).map((g) => `<img alt="" loading="lazy" src="/music-world/art?q=${encodeURIComponent(g.art)}" title="${esc(g.name)}">`).join("")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
+        <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${gearPic(gear)}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
         <button type="button" class="mw-card" data-mw="song" data-sfx="open"><span class="mw-pic">${art(`/music-world/art?q=${encodeURIComponent(`${song.artist} ${song.title.replace(/"/g, "")}`)}`)}${ico("song")}</span><span class="mw-k">Song of the day</span><span class="mw-line">${esc(song.title)} · ${esc(song.artist)}</span></button>
-        <button type="button" class="mw-card" data-mw="money" data-sfx="open"><span class="mw-pic">${photo("industry")}</span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
+        <button type="button" class="mw-card" data-mw="money" data-sfx="open"><span class="mw-pic"><img class="mw-art" alt="" loading="lazy" src="/music-world/photo/Record_shop?v=5" onerror="this.parentElement.hidden = true"></span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
       </div>
       <figure class="mw-quote">
         <span class="mw-face"><img alt="" loading="lazy" src="/music-world/photo/${encodeURIComponent(quote.wiki)}"><b aria-hidden="true">${esc(initials(quote.who))}</b></span>
@@ -114,7 +117,7 @@
     } else if (k === "genres") {
       html = `<h5>Popular around the world</h5><ul class="mw-list plain">${D.genres.map((g) => `<li>${art(`/music-world/art?q=${encodeURIComponent(g.art || g.name)}`)}<span><b>${esc(g.name)}</b><small>${esc(g.line)}</small></span></li>`).join("")}</ul>`;
     } else if (k === "gear") {
-      html = `<h5>Popular budget gear</h5><ul class="mw-list plain">${D.gear.map((g) => `<li><span class="mw-pic mw-lp">${photo(g.kind)}</span><span><b>${esc(g.name)}</b><small>${esc(g.kind)}: ${esc(g.does)} · ${esc(g.price)}</small></span></li>`).join("")}</ul><p class="mw-src">Prices are rough and change by shop and country</p>`;
+      html = `<h5>Popular budget gear</h5><ul class="mw-list plain">${D.gear.map((g) => `<li>${g.photo ? `<span class="mw-pic mw-lp">${gearPic(g)}</span>` : ""}<span><b>${esc(g.name)}</b><small>${esc(g.kind)}: ${esc(g.does)} · ${esc(g.price)}</small></span></li>`).join("")}</ul><p class="mw-src">Prices are rough and change by shop and country</p>`;
     } else if (k === "song") {
       html = `<h5>Song of the day</h5><div class="mw-song-pop">${art(`/music-world/art?q=${encodeURIComponent(`${song.artist} ${song.title.replace(/"/g, "")}`)}`)}<b>${esc(song.title)}</b><small>${esc(song.artist)} · ${song.year}</small><p>${esc(song.about)}</p><a href="${lyrics(song)}" target="_blank" rel="noopener">Read the lyrics ↗</a></div>`;
     } else if (k === "money") {

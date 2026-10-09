@@ -220,3 +220,8 @@
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -10px 18px -10px rgba(0, 0, 0, .55), inset 0 8px 14px -12px rgba(255, 255, 255, .35); }
 .mw-pic .mw-art { filter: saturate(1.08) contrast(1.04); }
 .mw-pic[hidden] { display: none !important; }
+/* The genres card: one cover for each genre it names, side by side in one tile */
+.mw-mosaic { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(0, 0, 0, .4); }
+.mw-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* No "Hey, I'm Nova Agent" heading: the words about what it does are enough */
+.mw-intro h3 { display: none !important; }
