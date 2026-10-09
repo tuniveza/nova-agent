@@ -258,7 +258,22 @@ function pillHtml(e) {
   }
   // The title in full (it wraps rather than being cut short) and, under it, what it's for
   const what = whatOf(e);
-  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}">${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
+  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}"><i class="pill-sym" aria-hidden="true">${iconOf(symbolOf(e))}</i>${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
+}
+// A symbol for what a card is about (shown when its day is too small for words)
+const SYMBOLS = [
+  [/record|recording|vocal|sing|mic|podcast|voice/i, "mic"], [/mix|master|beat|song|track|music|ep\b|album|release|gig|concert|rehears/i, "note"],
+  [/lesson|class|course|study|learn|tutor|school|exam/i, "cap"], [/listen|playlist|headphone|audio/i, "headphones"],
+  [/meet|meeting|call with|team|crew|band|session with|catch.?up/i, "people"], [/gym|workout|run|walk|yoga|train|exercise|steps/i, "dumbbell"],
+  [/lunch|dinner|breakfast|eat|food|cook|meal/i, "plate"], [/flight|fly|travel|trip|holiday|airport/i, "plane"],
+  [/phone|call\b|ring/i, "phone"], [/write|lyrics|note|journal|draft|edit\b|script/i, "pen"], [/video|film|reel|shoot|camera|youtube|tiktok/i, "film"],
+  [/read|book/i, "book"], [/email|mail|reply|send/i, "mail"], [/birthday|bday/i, "cake"], [/date|love|anniversary/i, "heart"],
+];
+function symbolOf(e) {
+  if (e.type === "booking") return "user";
+  const text = `${titleOf(e)} ${(e.item && (e.item.notes || e.item.location)) || ""}`;
+  for (const [re, ico] of SYMBOLS) if (re.test(text)) return ico;
+  return e.ro ? "flag" : "sparkle";
 }
 // What a card is for, in a line: its notes (first line), else where it is
 function whatOf(e) {
@@ -270,6 +285,12 @@ function skyChip(x) {
   return `<div class="skychip" title="${esc(x.title)}">${iconOf(presets().get(x.preset).icon)}<span>${esc(x.title)}</span></div>`;
 }
 
+// The day in words, with smaller forms for smaller days (the CSS shows the one that fits)
+const ORD = ["", "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth", "Eleventh", "Twelfth", "Thirteenth", "Fourteenth", "Fifteenth", "Sixteenth", "Seventeenth", "Eighteenth", "Nineteenth", "Twentieth", "Twenty-first", "Twenty-second", "Twenty-third", "Twenty-fourth", "Twenty-fifth", "Twenty-sixth", "Twenty-seventh", "Twenty-eighth", "Twenty-ninth", "Thirtieth", "Thirty-first"];
+function dayWords(d) {
+  const day = Number(d.slice(8)), mon = Number(d.slice(5, 7));
+  return `<span class="n-long">${ORD[day]} Day of ${MONTHS[mon - 1]}</span><span class="n-mid">${mon}month ${day}day</span><span class="n-short">${mon} ${day}</span><span class="n-min">${day}</span>`;
+}
 function drawMonth() {
   const first = `${cursor.slice(0, 7)}-01`;
   const start = mondayOf(first);
@@ -291,7 +312,7 @@ function drawMonth() {
     const room = Math.max(1, max - sky.length);
     const fits = rest.slice(0, room);
     cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${days.length ? ` style="${themeStyle(dayTheme(days[0].item))}"` : ""} aria-label="${dayLabel(d)}${list.length ? `, ${list.length} item${list.length > 1 ? "s" : ""}` : ""}">
-      <span class="num">${Number(d.slice(8))}</span>${moonMark(d)}${days.slice(0, 1).map(pillHtml).join("")}${sky.map(skyChip).join("")}${fits.map(pillHtml).join("")}${rest.length - fits.length + Math.max(0, days.length - 1) > 0 ? `<span class="more">+${rest.length - fits.length + Math.max(0, days.length - 1)} more</span>` : ""}</button>`;
+      <span class="num">${dayWords(d)}</span>${moonMark(d)}${days.slice(0, 1).map(pillHtml).join("")}${sky.map(skyChip).join("")}${fits.map(pillHtml).join("")}${rest.length - fits.length + Math.max(0, days.length - 1) > 0 ? `<span class="more">+${rest.length - fits.length + Math.max(0, days.length - 1)} more</span>` : ""}</button>`;
   }
   const heads = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => `<span>${phone() ? w[0] : w}</span>`).join("");
   view.innerHTML = `<div class="month">${stripHtml()}<div class="wk-head">${heads}</div><div class="grid">${cells}</div>${dayPlanHtml(cursor)}</div>`;

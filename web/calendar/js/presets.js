@@ -8,6 +8,22 @@
 
   // 24×24 line icons, drawn with currentColor so they pick up whatever colour sits around them
   const ICONS = {
+    // What a note card is about (shown as a symbol when its day is too small for words)
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
+    note: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+    cap: '<path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c3 2.4 8 2.4 11 0V11M21.5 9v5"/>',
+    headphones: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4.5" height="7" rx="1.8"/><rect x="16.5" y="14" width="4.5" height="7" rx="1.8"/>',
+    people: '<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9.5" r="2.4"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5M15 15.2c2.6-.5 5 .9 5.8 4.3"/>',
+    dumbbell: '<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>',
+    plate: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3.5"/><path d="M2.5 4v7M2.5 8h0M21.5 4v16"/>',
+    plane: '<path d="M2.5 13.5 21 6l-4.5 13-4-5.5z"/><path d="M12.5 13.5 21 6"/>',
+    phone: '<path d="M5 3.5h4l1.6 4.5-2.4 1.6a11 11 0 0 0 6.2 6.2l1.6-2.4 4.5 1.6v4A1.8 1.8 0 0 1 18.7 20.8 16.7 16.7 0 0 1 3.2 5.3 1.8 1.8 0 0 1 5 3.5z"/>',
+    pen: '<path d="M15.5 4.5l4 4L8 20H4v-4z"/><path d="M13.5 6.5l4 4"/>',
+    film: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7.5 4v16M16.5 4v16M3 9h4.5M3 15h4.5M16.5 9H21M16.5 15H21"/>',
+    book: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v16H5.5A1.5 1.5 0 0 0 4 20.5zM4 20.5A1.5 1.5 0 0 0 5.5 22H20"/>',
+    mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 7 8.5-7"/>',
+    flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>',
     sparkle: '<path d="M12 2.5l1.9 7.6 7.6 1.9-7.6 1.9-1.9 7.6-1.9-7.6L2.5 12l7.6-1.9z" fill="currentColor" stroke="none"/>',
     cake: '<path d="M4 21h16M5 21v-6.5A2.5 2.5 0 0 1 7.5 12h9a2.5 2.5 0 0 1 2.5 2.5V21"/><path d="M5 16.5c2.3 1.4 4.7 1.4 7 0s4.7-1.4 7 0M12 12V9.5"/><path d="M12 8.5c-1.2-.9-1.2-2.6 0-4.5 1.2 1.9 1.2 3.6 0 4.5z" fill="currentColor"/>',
     pumpkin: '<path d="M12 7c-4.8 0-8 2.8-8 6.5S7.2 20 12 20s8-2.8 8-6.5S16.8 7 12 7z"/><path d="M12 7c-1.8 1.6-2.6 3.8-2.6 6.5S10.2 18.4 12 20M12 7c1.8 1.6 2.6 3.8 2.6 6.5S13.8 18.4 12 20M12 7V4.5c1.2 0 2.2.6 2.6 1.6"/>',
