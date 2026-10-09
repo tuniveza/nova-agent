@@ -71,7 +71,8 @@
       </figure>
 `;
     const img = box.querySelector(".mw-face img");
-    img.addEventListener("error", () => img.remove());
+    // No photo for this musician: no picture at all (not a placeholder)
+    img.addEventListener("error", () => img.closest(".mw-face").hidden = true);
     box.addEventListener("click", (e) => {
       const card = e.target.closest(".mw-card");
       if (card) open(card);
@@ -126,7 +127,9 @@
     document.querySelectorAll(".mw-quote").forEach((fig) => {
       fig.classList.add("mw-fade");
       setTimeout(() => {
-        fig.querySelector(".mw-face").innerHTML = `<img alt="" loading="lazy" src="/music-world/photo/${encodeURIComponent(q.wiki)}" onerror="this.remove()"><b aria-hidden="true">${esc(initials(q.who))}</b>`;
+        const face = fig.querySelector(".mw-face");
+        face.hidden = false;
+        face.innerHTML = `<img alt="" loading="lazy" src="/music-world/photo/${encodeURIComponent(q.wiki)}" onerror="this.parentElement.hidden = true"><b aria-hidden="true">${esc(initials(q.who))}</b>`;
         fig.querySelector("blockquote").textContent = `“${q.text}”`;
         fig.querySelector("figcaption").textContent = `${q.who} · ${q.when}${q.attributed ? " · attributed" : ""}`;
         fig.classList.remove("mw-fade");

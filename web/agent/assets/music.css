@@ -180,3 +180,4 @@
   .mw-card > .mw-pic { width: 54px !important; height: 54px !important; }
   .mw-quote .mw-face { width: 64px !important; height: 64px !important; }
 }
+.mw-quote .mw-face[hidden] { display: none !important; }
