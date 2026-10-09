@@ -188,3 +188,26 @@
 .log:has(> .welcome:not([hidden])) { display: flex; flex-direction: column; justify-content: safe center !important; }
 .log > .welcome:not([hidden]) { margin-block: auto !important; }
 .mw-card { align-content: center !important; }
+
+/* ---- Illustrated pictures: the same size, corners and glow as the album art beside them ---- */
+.mw-illo { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit;
+  background: radial-gradient(circle at 30% 22%, color-mix(in srgb, var(--hi) 55%, #fff 10%), transparent 60%),
+    linear-gradient(150deg, color-mix(in srgb, var(--accent) 80%, #1a0b2a), color-mix(in srgb, var(--accent-3) 90%, #000));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.mw-illo svg { width: 78%; height: 78%; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .45)); }
+.mw-illo .a { fill: color-mix(in srgb, var(--soft) 85%, #fff); }
+.mw-illo .b { fill: color-mix(in srgb, var(--accent-3) 70%, #000); stroke: color-mix(in srgb, var(--soft) 70%, transparent); stroke-width: 1.5; }
+.mw-illo .c { fill: var(--hi); }
+.mw-illo .k { stroke: color-mix(in srgb, var(--accent-3) 80%, #000); stroke-width: 1.2; fill: none; }
+.mw-illo .l { fill: none; stroke: color-mix(in srgb, var(--soft) 90%, #fff); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.mw-illo .l2 { fill: none; stroke: color-mix(in srgb, var(--accent-3) 70%, #000); stroke-width: 1.5; stroke-linecap: round; }
+.mw-illo .lw { fill: none; stroke: var(--hi); stroke-width: 4.5; stroke-linecap: round; }
+/* Album art and photos get the same frame, so they all match */
+.mw-pic { box-shadow: 0 6px 18px -8px var(--hi); }
+.mw-pic .mw-art { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); border-radius: inherit; z-index: 1; }
+.mw-pic > .mw-ico { display: none; }
+.mw-pic:not(:has(.mw-art)):not(:has(.mw-illo)) > .mw-ico { display: block; }
+/* In the gear list */
+.mw-illo.sm { position: relative; inset: auto; width: 46px; height: 46px; border-radius: 10px; flex: none; }
+/* Every card's picture on the same line across the row (the words below can be one line or three) */
+.mw-card { align-content: start !important; padding-top: 10px !important; }

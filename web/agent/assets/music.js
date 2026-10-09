@@ -21,6 +21,19 @@
   };
   // A picture over an icon: if the picture can't be found, it goes and the icon shows
   const art = (src) => `<img class="mw-art" alt="" loading="lazy" src="${src}" onerror="this.remove()">`;
+  // Little illustrated pictures (same size and shape as the album art around them) for what has no
+  // photo: each kind of gear, the music industry, and the charts while they load
+  const ILLO = {
+    "Audio interface": '<rect x="5" y="16" width="38" height="16" rx="4" class="b"/><circle cx="14" cy="24" r="4.5" class="a"/><circle cx="26" cy="24" r="4.5" class="a"/><circle cx="14" cy="24" r="1.6" class="c"/><circle cx="26" cy="24" r="1.6" class="c"/><rect x="34" y="20" width="5" height="8" rx="1.5" class="c"/><path d="M14 32v6M26 32v6" class="l"/>',
+    mic: '<rect x="17" y="5" width="14" height="22" rx="7" class="a"/><path d="M19 12h10M19 16h10M19 20h10" class="l2"/><path d="M12 22a12 12 0 0 0 24 0M24 34v8M17 42h14" class="l"/>',
+    Headphones: '<path d="M8 30v-4a16 16 0 0 1 32 0v4" class="l"/><rect x="6" y="28" width="9" height="14" rx="3.5" class="a"/><rect x="33" y="28" width="9" height="14" rx="3.5" class="a"/>',
+    "Keyboard controller": '<rect x="4" y="12" width="40" height="26" rx="4" class="b"/><rect x="8" y="16" width="8" height="6" rx="1.5" class="a"/><rect x="18" y="16" width="8" height="6" rx="1.5" class="a"/><circle cx="34" cy="19" r="2.5" class="c"/><circle cx="40" cy="19" r="2" class="c"/><path d="M8 26h32v8H8z" class="c"/><path d="M13 26v8M18 26v8M23 26v8M28 26v8M33 26v8" class="k"/>',
+    "Studio speakers": '<rect x="5" y="8" width="16" height="32" rx="3" class="b"/><rect x="27" y="8" width="16" height="32" rx="3" class="b"/><circle cx="13" cy="15" r="3" class="c"/><circle cx="13" cy="29" r="6.5" class="a"/><circle cx="35" cy="15" r="3" class="c"/><circle cx="35" cy="29" r="6.5" class="a"/>',
+    industry: '<circle cx="18" cy="26" r="13" class="b"/><circle cx="18" cy="26" r="9" class="l2" fill="none"/><circle cx="18" cy="26" r="3" class="a"/><path d="M28 38V28M34 38V22M40 38V14" class="lw"/><path d="M27 18l6-5 4 3 6-7" class="l"/>',
+    top: '<path d="M24 6l4.6 10.6L40 18l-8.6 7.6L34 37l-10-6-10 6 2.6-11.4L8 18l11.4-1.4z" class="a"/><circle cx="24" cy="23" r="4" class="c"/>',
+  };
+  const illoKind = (k) => (/mic/i.test(k) ? "mic" : ILLO[k] ? k : "Audio interface");
+  const illo = (k, cls = "") => `<span class="mw-illo ${cls}" aria-hidden="true"><svg viewBox="0 0 48 48">${ILLO[illoKind(k)] || ILLO[k]}</svg></span>`;
   const ico = (k) => `<svg class="mw-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
 
   // The live Top 10 (kept an hour on this device; Nova Bot keeps it 6 hours)
@@ -58,11 +71,11 @@
     box.innerHTML = `
       <h4 class="mw-title">Today in music</h4>
       <div class="mw-row">
-        <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art>${ico("top")}</span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
+        <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art>${illo("top")}</span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
         <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic">${art(`/music-world/art?q=${encodeURIComponent(D.genres[0].art)}`)}${ico("genres")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
-        <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${gear.wiki ? art(`/music-world/photo/${encodeURIComponent(gear.wiki)}`) : ""}${ico("gear")}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
+        <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${illo(gear.kind)}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
         <button type="button" class="mw-card" data-mw="song" data-sfx="open"><span class="mw-pic">${art(`/music-world/art?q=${encodeURIComponent(`${song.artist} ${song.title.replace(/"/g, "")}`)}`)}${ico("song")}</span><span class="mw-k">Song of the day</span><span class="mw-line">${esc(song.title)} · ${esc(song.artist)}</span></button>
-        <button type="button" class="mw-card" data-mw="money" data-sfx="open"><span class="mw-pic">${ico("money")}</span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
+        <button type="button" class="mw-card" data-mw="money" data-sfx="open"><span class="mw-pic">${illo("industry")}</span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
       </div>
       <figure class="mw-quote">
         <span class="mw-face"><img alt="" loading="lazy" src="/music-world/photo/${encodeURIComponent(quote.wiki)}"><b aria-hidden="true">${esc(initials(quote.who))}</b></span>
@@ -94,7 +107,7 @@
     } else if (k === "genres") {
       html = `<h5>Popular around the world</h5><ul class="mw-list plain">${D.genres.map((g) => `<li>${art(`/music-world/art?q=${encodeURIComponent(g.art || g.name)}`)}<span><b>${esc(g.name)}</b><small>${esc(g.line)}</small></span></li>`).join("")}</ul>`;
     } else if (k === "gear") {
-      html = `<h5>Popular budget gear</h5><ul class="mw-list plain">${D.gear.map((g) => `<li>${g.wiki ? art(`/music-world/photo/${encodeURIComponent(g.wiki)}`) : `<i class="mw-dot">${ico("gear")}</i>`}<span><b>${esc(g.name)}</b><small>${esc(g.kind)}: ${esc(g.does)} · ${esc(g.price)}</small></span></li>`).join("")}</ul><p class="mw-src">Prices are rough and change by shop and country</p>`;
+      html = `<h5>Popular budget gear</h5><ul class="mw-list plain">${D.gear.map((g) => `<li>${illo(g.kind, "sm")}<span><b>${esc(g.name)}</b><small>${esc(g.kind)}: ${esc(g.does)} · ${esc(g.price)}</small></span></li>`).join("")}</ul><p class="mw-src">Prices are rough and change by shop and country</p>`;
     } else if (k === "song") {
       html = `<h5>Song of the day</h5><div class="mw-song-pop">${art(`/music-world/art?q=${encodeURIComponent(`${song.artist} ${song.title.replace(/"/g, "")}`)}`)}<b>${esc(song.title)}</b><small>${esc(song.artist)} · ${song.year}</small><p>${esc(song.about)}</p><a href="${lyrics(song)}" target="_blank" rel="noopener">Read the lyrics ↗</a></div>`;
     } else if (k === "money") {
