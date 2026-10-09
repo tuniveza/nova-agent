@@ -262,7 +262,7 @@ function pillHtml(e) {
 }
 // A symbol for what a card is about (shown when its day is too small for words)
 const SYMBOLS = [
-  [/record|recording|vocal|sing|mic|podcast|voice/i, "mic"], [/mix|master|beat|song|track|music|ep\b|album|release|gig|concert|rehears/i, "note"],
+  [/record|recording|vocal|sing|mic|podcast|voice|studio/i, "mic"], [/mix|master|beat|song|track|music|ep\b|album|release|gig|concert|rehears/i, "note"],
   [/lesson|class|course|study|learn|tutor|school|exam/i, "cap"], [/listen|playlist|headphone|audio/i, "headphones"],
   [/meet|meeting|call with|team|crew|band|session with|catch.?up/i, "people"], [/gym|workout|run|walk|yoga|train|exercise|steps/i, "dumbbell"],
   [/lunch|dinner|breakfast|eat|food|cook|meal/i, "plate"], [/flight|fly|travel|trip|holiday|airport/i, "plane"],
@@ -289,7 +289,7 @@ function skyChip(x) {
 const ORD = ["", "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth", "Eleventh", "Twelfth", "Thirteenth", "Fourteenth", "Fifteenth", "Sixteenth", "Seventeenth", "Eighteenth", "Nineteenth", "Twentieth", "Twenty-first", "Twenty-second", "Twenty-third", "Twenty-fourth", "Twenty-fifth", "Twenty-sixth", "Twenty-seventh", "Twenty-eighth", "Twenty-ninth", "Thirtieth", "Thirty-first"];
 function dayWords(d) {
   const day = Number(d.slice(8)), mon = Number(d.slice(5, 7));
-  return `<span class="n-long">${ORD[day]} Day of ${MONTHS[mon - 1]}</span><span class="n-mid">${mon}month ${day}day</span><span class="n-short">${mon} ${day}</span><span class="n-min">${day}</span>`;
+  return `<span class="n-long">${ORD[day]} Day ${MONTHS[mon - 1]}</span><span class="n-mid">${mon}month ${day}day</span><span class="n-short">${mon} ${day}</span><span class="n-min">${day}</span>`;
 }
 function drawMonth() {
   const first = `${cursor.slice(0, 7)}-01`;
@@ -312,10 +312,67 @@ function drawMonth() {
     const room = Math.max(1, max - sky.length);
     const fits = rest.slice(0, room);
     cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${days.length ? ` style="${themeStyle(dayTheme(days[0].item))}"` : ""} aria-label="${dayLabel(d)}${list.length ? `, ${list.length} item${list.length > 1 ? "s" : ""}` : ""}">
-      <span class="num">${dayWords(d)}</span>${moonMark(d)}${days.slice(0, 1).map(pillHtml).join("")}${sky.map(skyChip).join("")}${fits.map(pillHtml).join("")}${rest.length - fits.length + Math.max(0, days.length - 1) > 0 ? `<span class="more">+${rest.length - fits.length + Math.max(0, days.length - 1)} more</span>` : ""}</button>`;
+      <span class="num">${dayWords(d)}</span>${moonMark(d)}${days.slice(0, 1).map(pillHtml).join("")}${sky.map(skyChip).join("")}${fits.map(pillHtml).join("")}${rest.length - fits.length + Math.max(0, days.length - 1) > 0 ? `<span class="more" data-n="${rest.length - fits.length + Math.max(0, days.length - 1)}">+${rest.length - fits.length + Math.max(0, days.length - 1)} more</span>` : ""}</button>`;
   }
   const heads = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => `<span>${phone() ? w[0] : w}</span>`).join("");
   view.innerHTML = `<div class="month">${stripHtml()}<div class="wk-head">${heads}</div><div class="grid">${cells}</div>${dayPlanHtml(cursor)}</div>`;
+  fitMonth();
+}
+// Nothing cut off. Each day steps down only as far as it needs: the small line goes, then titles
+// take one line, then the times go (symbol and title), then its cards become just their symbols.
+// If a day still can't fit, every day's number goes short (and days that then have room get their
+// words back), and a day that still can't hold all its cards shows the rest as "+N" (all of them
+// are in its list). When the chosen day sits below the month, the month keeps the screen's height.
+const STEPS = ["fit-1", "fit-2", "fit-3", "sym"];
+function fitMonth() {
+  const grid = view.querySelector(".month .grid");
+  if (!grid) return;
+  const cells = [...grid.children];
+  const over = (c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1;
+  grid.classList.remove("fit-4");
+  grid.style.height = grid.style.flex = "";
+  for (const c of cells) {
+    c.classList.remove(...STEPS);
+    for (const p of c.querySelectorAll(".fit-hide")) p.classList.remove("fit-hide");
+    const extra = c.querySelector(":scope > .more:not([data-n])");
+    if (extra) extra.remove();
+  }
+  const plan = view.querySelector(".month > .dayplan");
+  if (!phone() && plan && plan.getBoundingClientRect().top >= grid.getBoundingClientRect().bottom - 1) {
+    const top = grid.getBoundingClientRect().top - view.getBoundingClientRect().top + view.scrollTop;
+    grid.style.height = `${Math.max((cells.length / 7) * 56, view.clientHeight - top)}px`;
+    grid.style.flex = "none";
+  }
+  for (const c of cells) for (const step of STEPS) if (over(c)) c.classList.add(step);
+  if (cells.some(over)) {
+    // Short numbers make room: a day that then fits its words again gets them back
+    grid.classList.add("fit-4");
+    for (const c of cells.filter((x) => x.classList.contains("sym"))) {
+      c.classList.remove("sym");
+      if (over(c)) c.classList.add("sym");
+    }
+  }
+  const symbols = cells[0] && getComputedStyle(cells[0]).getPropertyValue("--sym").trim() === "1";
+  for (const c of cells) {
+    let more = c.querySelector(":scope > .more");
+    let hidden = 0;
+    const label = () => {
+      const n = Number(more.dataset.n || 0) + hidden;
+      more.textContent = symbols || c.classList.contains("sym") ? `+${n}` : `+${n} more`;
+    };
+    if (more) label();
+    const pills = [...c.querySelectorAll(":scope > .pill")];
+    while (over(c) && pills.length) {
+      pills.pop().classList.add("fit-hide");
+      hidden++;
+      if (!more) {
+        more = document.createElement("span");
+        more.className = "more";
+        c.appendChild(more);
+      }
+      label();
+    }
+  }
 }
 // This month at a glance: day cards, full moons and special days, each a tap away
 function stripHtml() {
@@ -1361,3 +1418,5 @@ setInterval(() => !drag && $("sheet").hidden && render(), 60000);
 addEventListener("resize", () => {
   if (!drag) render();
 });
+// The fonts change how much fits
+document.fonts?.ready.then(() => fitMonth());

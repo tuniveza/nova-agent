@@ -171,18 +171,65 @@ html[data-centred] .cell .moonmark { position: absolute; top: 7px; right: 7px; }
   .pill > :not(.pill-sym) { display: none !important; }
   .pill-sym { margin: 0; }
   .pill-sym svg { width: 14px; height: 14px; }
+  .cell { --sym: 1; }
 }
-@media (min-width: 701px) {
-@container month (max-height: 540px) {
-  .cell { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(24px, 1fr)); grid-auto-rows: min-content; align-content: start; justify-items: center; gap: 4px !important; }
-  .cell > .num, .cell > .daycard, .cell > .skychip, .cell > .more { grid-column: 1 / -1; }
-  .pill { display: grid !important; place-items: center; width: 24px; height: 24px; padding: 0 !important; border-radius: 8px !important; }
-  .pill > :not(.pill-sym) { display: none !important; }
-  .pill-sym { margin: 0; }
-  .pill-sym svg { width: 14px; height: 14px; }
-}
-}
-
 /* The written-out day may take two lines; it keeps clear of the moon in the corner */
 .num > .n-long { white-space: normal; }
 .num { white-space: normal !important; max-width: calc(100% - 34px) !important; margin-inline: auto; line-height: 1.25; text-align: center; }
+
+/* ================= Every day fits (steps set by cal.js, the whole month alike) ================= */
+.cell.fit-1 .pill > small { display: none !important; }
+.cell.fit-2 .pill span { -webkit-line-clamp: 1 !important; line-clamp: 1 !important; }
+.cell.fit-3:not(.sym) .pill:not(.fit-hide) { display: flex !important; align-items: center; gap: 5px; }
+.cell.fit-3 .pill b { display: none !important; }
+.cell.fit-3 .pill span { flex: 1 1 auto; min-width: 0; }
+html[data-centred] .cell.fit-3 .pill { justify-content: center; }
+html[data-centred] .cell.fit-3 .pill span { flex: 0 1 auto; }
+.cell.sym { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(24px, 1fr)); grid-auto-rows: min-content; align-content: start; justify-items: center; gap: 4px !important; }
+.cell.sym > .num, .cell.sym > .daycard, .cell.sym > .skychip { grid-column: 1 / -1; }
+.cell.sym .pill { display: grid !important; place-items: center; width: 24px; height: 24px; padding: 0 !important; border-radius: 8px !important; }
+.cell.sym .pill > :not(.pill-sym) { display: none !important; }
+.cell.sym .pill-sym { margin: 0; }
+.cell.sym .pill-sym svg { width: 14px; height: 14px; }
+.cell.sym > .more { grid-column: auto; display: grid; place-items: center; width: 24px; height: 24px; padding: 0 !important; border-radius: 8px;
+  font-size: 10px; background: rgba(var(--hi-rgb), .12); box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), .3); }
+/* Last step: every day just its number, a little tighter */
+.grid.fit-4 .num > span { display: none !important; }
+.grid.fit-4 .num > .n-min { display: inline !important; }
+.grid.fit-4 .cell { padding: 4px !important; gap: 3px !important; }
+.grid.fit-4 .num { min-height: 18px; padding: 1px 6px !important; }
+.grid.fit-4 .cell.sym .pill, .grid.fit-4 .cell.sym > .more, .grid.fit-4 .cell.sym > .skychip { width: 20px; height: 20px; }
+/* When the chosen day sits below the month, the page scrolls down to it */
+@media (min-width: 701px) and (max-width: 1099px) { .month { height: auto !important; } }
+.cell.cell .pill.fit-hide { display: none !important; }
+
+/* ================= Cards wear the current theme ================= */
+/* Each card's own colour blended into the theme: every card belongs to it, and colours still tell
+   cards apart */
+.pill, .ev, .row-item.note { --cc: color-mix(in oklch, rgb(var(--c, var(--hi-rgb))) 40%, var(--hi)); }
+.pill:not(.ro) {
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--cc) 24%, transparent), transparent 65%) padding-box,
+    linear-gradient(180deg, rgba(var(--panel-rgb), .82), rgba(var(--deep-rgb), .78)) padding-box,
+    linear-gradient(120deg, var(--cc), color-mix(in srgb, var(--hi) 35%, transparent) 50%, color-mix(in srgb, var(--cc) 45%, transparent)) border-box !important;
+  box-shadow: 0 4px 16px -8px color-mix(in srgb, var(--cc) 90%, transparent), inset 0 1px 0 rgba(255, 255, 255, .06) !important; }
+.pill:not(.ro):hover { box-shadow: 0 6px 20px -6px var(--cc), inset 0 1px 0 rgba(255, 255, 255, .1) !important; }
+.pill b, .pill-sym { color: var(--cc) !important; filter: brightness(1.25); }
+.pill.ro { border: 1px dashed color-mix(in srgb, var(--cc) 60%, transparent) !important; }
+.ev:not(.ro) { background: linear-gradient(135deg, color-mix(in srgb, var(--cc) 30%, transparent), color-mix(in srgb, var(--cc) 10%, transparent)), rgba(var(--panel-rgb), .6) !important;
+  border: 1px solid color-mix(in srgb, var(--cc) 50%, transparent) !important; border-left: 3px solid var(--cc) !important; }
+.ev.ro { background: linear-gradient(135deg, color-mix(in srgb, var(--cc) 20%, transparent), color-mix(in srgb, var(--cc) 6%, transparent)), rgba(var(--panel-rgb), .5) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cc) 40%, transparent) !important; }
+.row-item.note { background: linear-gradient(120deg, color-mix(in srgb, var(--cc) 28%, transparent), color-mix(in srgb, var(--cc) 7%, transparent) 70%), rgba(var(--panel-rgb), .85) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cc) 38%, transparent), 0 10px 24px -18px var(--cc) !important; }
+.row-item.note.ro { background: linear-gradient(120deg, color-mix(in srgb, var(--cc) 16%, transparent), color-mix(in srgb, var(--cc) 4%, transparent) 70%), rgba(var(--panel-rgb), .8) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cc) 45%, transparent) !important; }
+
+/* Small days: special days and the moon become symbols too (their names show on hover and in the list) */
+.cell.sym > .skychip { grid-column: auto; justify-content: center; width: 24px; height: 24px; padding: 0 !important; border-radius: 8px; }
+.cell.sym > .skychip > span { display: none; }
+@container month (max-width: 700px) {
+  .cell > .skychip { grid-column: auto !important; justify-content: center; width: 24px; height: 24px; padding: 0 !important; border-radius: 8px; }
+  .cell > .skychip > span { display: none; }
+  html[data-centred] .cell > .moonmark, .cell > .moonmark { position: static !important; width: 24px; height: 24px; }
+}
