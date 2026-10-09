@@ -344,6 +344,22 @@ On a computer the top bar, the panels bar and the status line are only as wide a
 text switches it off); what you write in a Notes document, and code, keep their own alignment. It comes and goes with a quick spring, its tiles popping
 in one after another. The gear (settings) is on computers too: it opens the Panels window.
 
+### The latest polish
+
+- The panels bar is smaller, with each group's name centred between two fine lines of light.
+- The status line is plain words with small icons: the version, what's new ("Calendar: note cards
+  back"), "Here since …", "Last left …", what you did last ("Opened Notes · 2 min ago": tap for the
+  list) and the day and time.
+- The two settings buttons look different: sliders at the top for Look & layout (theme, bars,
+  text), and the sun and moon over the horizon on Quests for your daily rhythm.
+- Quests fits more on one screen: the next thing is a full card, the rest slim one-line rows
+  (time and title) that open on a tap.
+- Scrollbars everywhere are slim, rounded and glowing in the theme's colours, with soft sounds
+  when you take hold of one, as you drag it (a tone that follows where you are) and let go.
+- The sky behind Nova Agent is a deep nebula with a faint band of the galaxy and far galaxies, and
+  it takes on the colour of the app that's open, slowly.
+- The columns' titles are centred, and so is the conversation (every message in the middle).
+
 ### Ambient music
 
 Quiet, never-ending Novacane ambient music: slow warm pads, a soft bass, star-like bells, now and

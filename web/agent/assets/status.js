@@ -54,12 +54,23 @@
   line.className = "status-line";
   line.id = "status-line";
   line.setAttribute("aria-label", "Status");
+  // Small line icons, one for each part
+  const ICON = {
+    ver: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+    news: '<path d="M4 10v4h3l5 4V6L7 10zM16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>',
+    here: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4"/>',
+    left: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+    act: '<path d="M3 12h4l3-7 4 14 3-7h4"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  };
+  const ico = (k) => `<svg class="sl-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
   line.innerHTML = `
-    <span class="sl-ver" title="Nova Agent's version and build${DATA.date ? ` (${esc(DATA.date)})` : ""}">v${esc(DATA.version)} · ${esc(DATA.build)}</span>
-    <span class="sl-news" aria-live="off"><span class="sl-area"></span><span class="sl-track"><span class="sl-words"></span></span></span>
-    <span class="sl-sess" title="When you came on, and when you were last off (on this device)"></span>
-    <button type="button" class="sl-act" data-sfx="open" aria-haspopup="true" aria-expanded="false" title="What you've been doing"></button>
-    <time class="sl-clock"></time>`;
+    <span class="sl-item sl-ver" title="Nova Agent v${esc(DATA.version)}, build ${esc(DATA.build)}${DATA.date ? ` (${esc(DATA.date)})` : ""}">${ico("ver")}v${esc(DATA.version)}</span>
+    <span class="sl-item sl-news" title="What's new">${ico("news")}<span class="sl-area"></span><span class="sl-track"><span class="sl-words"></span></span></span>
+    <span class="sl-item sl-sess" title="When you came on, and when you last left (on this device)">${ico("here")}<span class="sl-on"></span></span>
+    <span class="sl-item sl-left">${ico("left")}<span class="sl-off"></span></span>
+    <button type="button" class="sl-item sl-act" data-sfx="open" aria-haspopup="true" aria-expanded="false" title="What you've been doing (tap for the list)">${ico("act")}<span class="sl-act-text"></span></button>
+    <span class="sl-item sl-time">${ico("clock")}<time class="sl-clock"></time></span>`;
   const list = document.createElement("div");
   list.className = "sl-list";
   list.hidden = true;
@@ -84,7 +95,7 @@
   const clock = line.querySelector(".sl-clock");
   function tick() {
     const d = new Date();
-    clock.textContent = time12(d);
+    clock.textContent = `${d.toLocaleDateString([], { weekday: "short" })} ${time12(d)}`;
     clock.dateTime = d.toISOString();
     clock.title = d.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
   }
@@ -92,17 +103,24 @@
   setTimeout(() => { tick(); setInterval(tick, 60000); }, (60 - new Date().getSeconds()) * 1000);
 
   // On / off
-  const sess = line.querySelector(".sl-sess");
+  const onEl = line.querySelector(".sl-on");
+  const offEl = line.querySelector(".sl-off");
+  const leftItem = line.querySelector(".sl-left");
+  const when = (t) => { const d = new Date(t); return d.toDateString() === new Date().toDateString() ? time12(d) : `${d.toLocaleDateString([], { weekday: "short" })} ${time12(d)}`; };
   function drawSession() {
     const off = lastOff();
-    sess.textContent = `On ${time12(new Date(me.on))}${off ? ` · off ${time12(new Date(off))}` : ""}`;
+    onEl.textContent = `Here since ${time12(new Date(me.on))}`;
+    leftItem.hidden = !off;
+    if (off) offEl.textContent = `Last left ${when(off)}`;
   }
   drawSession();
 
   // Activity: the latest two in the line, the list on a tap
   const actBtn = line.querySelector(".sl-act");
+  const actText = line.querySelector(".sl-act-text");
   function drawActivity() {
-    actBtn.textContent = activity.length ? activity.slice(0, 2).map((a) => `${a.text} ${ago(a.t)}`).join(" · ") : "No activity yet";
+    const a = activity[0];
+    actText.textContent = a ? `${a.text} · ${ago(a.t) === "now" ? "just now" : ago(a.t) + " ago"}` : "Nothing yet";
     if (!list.hidden) drawList();
   }
   function drawList() {
@@ -125,6 +143,7 @@
 
   // ---- What's new, for the part of the bar you're on ----
   const AREA_NAMES = { apps: "Apps", tasks: "Tasks", tools: "Tools", helpers: "Helpers" };
+  // An area's news names the panel it's about (the simple words come after)
   const PANEL_NAMES = { chat: "Chat", portal: "Portal", calendar: "Calendar", notes: "Notes", index: "Index", quests: "Quests", missions: "Missions", lossless: "Lossless", visualizer: "Visualizer", observatory: "Observatory", manual: "Manual", look: "Look & sound" };
   const areaLabel = line.querySelector(".sl-area");
   const wordsEl = line.querySelector(".sl-words");
@@ -133,9 +152,9 @@
     if (key === shownKey) return;
     shownKey = key;
     let label = "New", items = DATA.everything || [];
-    if (AREA_NAMES[key]) { label = AREA_NAMES[key]; items = (DATA.areas[key] || []).map((x) => `${PANEL_NAMES[x.panel]}: ${x.words}`); }
+    if (AREA_NAMES[key]) { const list = DATA.areas[key] || []; label = list[0] ? PANEL_NAMES[list[0].panel] : AREA_NAMES[key]; items = list.map((x) => x.words); }
     else if (PANEL_NAMES[key]) { label = PANEL_NAMES[key]; items = DATA.panels[key] || []; }
-    areaLabel.textContent = label;
+    areaLabel.textContent = label === "New" ? "New:" : `${label}:`;
     // Still, and as simple as it gets: the latest change in a few words
     wordsEl.textContent = items.length ? simple(items[0]) : "All up to date";
     wordsEl.title = items.join(" · ");
@@ -159,7 +178,12 @@
   function home() {
     const open = document.querySelector("#suite-home .suite-app.open, #tabbar [data-tab][aria-current='page']");
     const viewing = $("main") && $("main").classList.contains("viewing");
-    news(viewing && open ? keyOf(open.dataset.tab || open.dataset.inside || open.getAttribute("href")) || "" : "");
+    const key = viewing && open ? keyOf(open.dataset.tab || open.dataset.inside || open.getAttribute("href")) || "" : "";
+    news(key);
+    // The sky behind takes on the open app's colour (glow.css); the home: Quests or Missions when
+    // they're the pane in view on a phone, Nova Agent's own otherwise
+    const pane = $("main") && $("main").dataset.pane;
+    document.documentElement.dataset.scene = key || (PHONE.matches && (pane === "quests" || pane === "missions") ? pane : "chat");
   }
   // Pointing at a group or a panel on the bar shows its news
   let back = null;

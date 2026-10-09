@@ -162,3 +162,20 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
   html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home { left: 0; right: 0; margin-inline: auto; width: fit-content; max-width: calc(100% - 20px); }
   html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar { left: 0; right: 0; margin-inline: auto; width: fit-content; max-width: calc(100% - 28px); }
 }
+
+/* ---- A smaller panels bar, and its group names centred between two fine lines of light ---- */
+@media (min-width: 981px) and (min-height: 601px) {
+  .main > .suite-home .suite-body { padding: 6px 12px 7px; }
+  .main > .suite-home .suite-groups { gap: 14px; }
+  .main > .suite-home .suite-grid { grid-auto-columns: 62px; gap: 3px; }
+  .main > .suite-home .suite-app { gap: 3px; padding: 5px 2px 4px; border-radius: 10px; }
+  .main > .suite-home .suite-app > .pico, .main > .suite-home .suite-app > img, .main > .suite-home .suite-app > .suite-glyph { width: 28px; height: 28px; border-radius: 8px; }
+  .main > .suite-home .suite-app b { font-size: 10px; -webkit-line-clamp: 1; line-clamp: 1; }
+  .main.viewing > .suite-home .suite-grid { grid-auto-columns: 58px; }
+  .main.viewing > .suite-home .suite-app > .pico { width: 24px; height: 24px; border-radius: 7px; }
+  .main > .suite-home .suite-group h4 { margin: 0 0 3px; font-size: 8.5px; }
+}
+#suite-home .suite-group h4 { justify-content: center; gap: 8px; }
+#suite-home .suite-group h4::before { content: ""; flex: 1; height: 1px; margin: 0; font-size: 0; text-shadow: none; -webkit-text-fill-color: initial;
+  background: linear-gradient(270deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 40%, transparent) 50%, transparent); box-shadow: 0 0 6px color-mix(in srgb, var(--hi) 40%, transparent); }
+.tabbar .tg-label { text-align: center; padding-left: 0; }

@@ -20,7 +20,12 @@
   const GLOW = `:where(button, [role="button"], [role="tab"], .btn, .chip, a):focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--hi, var(--accent, #c9b6ff)) 70%, transparent), 0 0 18px -4px var(--hi, var(--accent, #c9b6ff)); }
   :where(.btn, .chip, [role="tab"], .tab, .icon-btn):hover { box-shadow: 0 0 0 1px color-mix(in srgb, var(--hi, var(--accent, #c9b6ff)) 22%, transparent), 0 10px 30px -18px var(--hi, var(--accent, #c9b6ff)); }
   :where(.tab.active, [role="tab"][aria-selected="true"], .chip.active) { box-shadow: 0 0 16px -6px var(--hi, var(--accent, #c9b6ff)); }
-  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select):focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi, var(--accent, #c9b6ff)) 18%, transparent), 0 0 24px -8px var(--hi, var(--accent, #c9b6ff)); }`;
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select):focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi, var(--accent, #c9b6ff)) 18%, transparent), 0 0 24px -8px var(--hi, var(--accent, #c9b6ff)); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { border-radius: 10px; border: 3px solid transparent; background: linear-gradient(180deg, var(--hi, var(--accent, #c9b6ff)), var(--accent-2, var(--accent, #7a5cff))) padding-box; }
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { border-width: 2px; }
+::-webkit-scrollbar-corner { background: transparent; }`;
   let inside = false;
   try {
     inside = window.self !== window.top;

@@ -93,9 +93,10 @@
   }
   // Centred text everywhere (on unless switched off): every bit of text in Nova Agent and its panels
   // sits in the middle. What you write in (a Notes document, which has its own alignment buttons)
-  // and code keep their own.
+  // and code keep their own. Titles in a row of buttons sit in the middle of it too.
   let centerSheet = null;
-  const CENTER = `body, body :not(pre, code, pre *, code *, [contenteditable="true"], [contenteditable="true"] *, svg, svg *) { text-align: center !important; }`;
+  const CENTER = `body, body :not(pre, code, pre *, code *, [contenteditable="true"], [contenteditable="true"] *, svg, svg *) { text-align: center !important; }
+:is([class*="head"], [class*="title"], header) > :is(h1, h2, h3) { margin-inline: auto !important; }`;
   function center(on) {
     try {
       if (!centerSheet) {

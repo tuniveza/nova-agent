@@ -205,10 +205,10 @@
   gear.type = 'button';
   gear.className = 'icon-btn phone-only';
   gear.id = 'phone-gear';
-  gear.title = 'Settings';
-  gear.setAttribute('aria-label', 'Settings');
+  gear.title = PHONE.matches ? 'Settings' : 'Look & layout: theme, bars, text';
+  gear.setAttribute('aria-label', PHONE.matches ? 'Settings' : 'Look and layout');
   gear.setAttribute('aria-haspopup', 'dialog');
-  gear.innerHTML = svg('i-gear');
+  gear.innerHTML = svg('i-tune');
   if (right) right.append(gear);
 
   // ---- The bar along the bottom: every place in Nova Agent, always there, in four groups ----

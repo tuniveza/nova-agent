@@ -601,6 +601,14 @@
     },
     // Hovering over a tile with a mouse: an extra-faint shimmer, high up
     hover: () => bell([N.Cs6, N.E6, N.Fs6, N.A6][Math.floor(Math.random() * 4)], 0, { gain: 0.006, length: 0.9, attack: 0.06, glint: 0.2, warmth: 0, pan: (Math.random() - 0.5) * 0.8 }),
+    // Scrollbars: a soft touch when you take hold of one, a quiet tone that rises and falls with
+    // where you are as you drag it (k = 0 top … 1 bottom), and a gentle settle when you let go
+    grab: () => drop(N.D4, 0, { gain: 0.03, length: 0.35 }),
+    scrub: (k = 0.5) => {
+      const steps = [N.A4, N.B4, N.Cs5, N.D5, N.E5, N.Fs5, N.A5];
+      drop(steps[Math.round((1 - k) * (steps.length - 1))], 0, { gain: 0.012, length: 0.16 });
+    },
+    release: () => bell(N.A4, 0, { gain: 0.016, length: 0.6, attack: 0.05, glint: 0.1, warmth: 0.5 }),
     // Hello (sound switched on): Novacane's chord, D–A–C♯–F♯, blooming over a soft swell
     welcome: () => {
       swell([N.D3, N.A3, N.Cs5], 0, { gain: 0.012, length: 2.4 });
@@ -758,7 +766,7 @@
   }
 
   const EXTRAS = new Set(["scroll", "key", "slide", "lift", "nudge", "place", "hover"]);
-  const GAPS = { scroll: 260, key: 35, slide: 70, nudge: 60, hover: 120 }; // the least time between two
+  const GAPS = { scroll: 260, key: 35, slide: 70, nudge: 60, hover: 120, scrub: 150 }; // the least time between two
   const lastOf = {};
   const SMALL = new Set(["tap", "tab", "menu", "pick", "check", "uncheck", "nav"]);
   let lastSmall = 0;
@@ -779,6 +787,8 @@
     } else {
       // Never a pile-up of sounds from one press
       if (now - last < 45) return;
+      if (GAPS[name] && now - (lastOf[name] || 0) < GAPS[name]) return;
+      if (GAPS[name]) lastOf[name] = now;
       // Calm, not chatty: the small sounds (taps, tabs, menus…) keep well apart, and the same
       // one doesn't come straight back
       if (SMALL.has(name)) {
@@ -847,6 +857,38 @@
       else if (el.matches && el.matches("select")) play("pick", undefined, el);
     },
     true
+  );
+
+  // ---- Scrollbars: taking hold of one, dragging it, letting go ----
+  let grabbed = null;
+  document.addEventListener(
+    "pointerdown",
+    (e) => {
+      const el = e.target === document.documentElement ? document.scrollingElement || e.target : e.target;
+      if (!el || !el.getBoundingClientRect || e.button !== 0) return;
+      const r = el.getBoundingClientRect();
+      // On its scrollbar: past the content's width (or height), inside the box
+      const onBar = (el.scrollHeight > el.clientHeight && e.clientX > r.left + el.clientLeft + el.clientWidth && e.clientX <= r.right) ||
+        (el.scrollWidth > el.clientWidth && e.clientY > r.top + el.clientTop + el.clientHeight && e.clientY <= r.bottom);
+      if (!onBar) return;
+      grabbed = el;
+      play("grab", undefined, el);
+    },
+    true
+  );
+  const letGo = () => { if (grabbed) { play("release", undefined, grabbed); grabbed = null; } };
+  addEventListener("pointerup", letGo, true);
+  addEventListener("pointercancel", letGo, true);
+  document.addEventListener(
+    "scroll",
+    (e) => {
+      if (!grabbed) return;
+      const el = e.target === document ? document.scrollingElement : e.target;
+      if (el !== grabbed) return;
+      const room = el.scrollHeight - el.clientHeight;
+      play("scrub", room > 0 ? el.scrollTop / room : 0.5, el);
+    },
+    { capture: true, passive: true }
   );
 
   // ---- The extras, found by themselves ----

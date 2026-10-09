@@ -1,15 +1,15 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 158,
+ "build": 159,
  "date": "2026-10-09",
  "panels": {
   "chat": [
+   "No glass bubbles",
    "Glowing space-scene icons",
    "Cosmic icons",
    "Calmer sounds",
-   "The panels bar shows and hides itself",
-   "Every panel sounds like itself"
+   "The panels bar shows and hides itself"
   ],
   "portal": [
    "Cosmic icons",
@@ -19,11 +19,11 @@ window.NOVA_STATUS = {
    "Portal on phones"
   ],
   "calendar": [
+   "No glass bubbles",
    "Cosmic icons",
    "Calmer, lusher sounds",
    "One panels bar everywhere",
-   "note cards again",
-   "a full calendar that works from anywhere"
+   "note cards again"
   ],
   "notes": [
    "Cosmic icons",
@@ -82,22 +82,22 @@ window.NOVA_STATUS = {
    "Nova Hub is Studio"
   ],
   "look": [
+   "No glass bubbles",
    "Glowing space-scene icons",
    "Cosmic icons",
    "Calmer sounds",
-   "The panels bar shows and hides itself",
-   "Every panel sounds like itself"
+   "The panels bar shows and hides itself"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "Glowing space-scene icons"
+    "words": "No glass bubbles"
    },
    {
     "panel": "chat",
-    "words": "Cosmic icons"
+    "words": "Glowing space-scene icons"
    },
    {
     "panel": "portal",
@@ -109,11 +109,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "calendar",
-    "words": "Cosmic icons"
+    "words": "No glass bubbles"
    },
    {
     "panel": "calendar",
-    "words": "Calmer, lusher sounds"
+    "words": "Cosmic icons"
    },
    {
     "panel": "notes",
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
-  "README wording",
-  "README, the Panels window is behind the…",
+  "No glass bubbles",
   "Glowing space-scene icons",
   "Cosmic icons",
   "Calmer sounds",
   "The panels bar shows and hides itself",
   "Every panel sounds like itself",
-  "A gentler tap"
+  "A gentler tap",
+  "Calmer, lusher sounds"
  ]
 };

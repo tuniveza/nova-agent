@@ -29,7 +29,7 @@ const GROUPS = { apps: ["chat", "portal", "calendar", "notes", "index"], tasks: 
 
 // A commit's subject made into a few plain words: no "Panel:" prefix, up to the first comma
 function words(subject) {
-  if (/^(merge|wip)\b/i.test(subject)) return "";
+  if (/^(merge|wip|readme|docs?|manual)\b/i.test(subject)) return "";
   let s = subject.replace(/^(Notes|Calendar|Portal|Index|Observatory|Lossless audio|Visualizer|Quests|Missions|Manual|Phones?|Admin|Nova Agent)\s*:\s+/i, "");
   // Up to the first comma or colon, but never just one word
   const parts = s.split(/[,;:(]| — | - /).map((p) => p.trim()).filter(Boolean);
