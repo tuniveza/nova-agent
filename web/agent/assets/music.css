@@ -242,3 +242,4 @@
 .mw-detail .mw-song-pop .mw-art { width: 140px !important; height: 140px !important; }
 /* Missions with nothing to show: a short note rather than an empty box */
 #missions:empty::before { content: "No missions yet. Tap ✦ New, or ask in Chat."; display: block; padding: 18px 10px; color: var(--muted); text-align: center; }
+#view-missions:has(> :not(#missions)) #missions:empty::before { content: none; }
