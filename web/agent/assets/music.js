@@ -201,17 +201,17 @@
       };
       // Fills the room: smaller when there's too little (never below 65%), bigger when there's
       // plenty (up to 140%), always all of it in view
-      let z = 1;
+      // The biggest size (65% to 140%) at which all of it is in view. Text rewraps as the size
+      // changes, so it's searched for rather than worked out
       const need = measure(1);
       if (!need) return;
-      if (need > room) z = Math.max(0.65, room / need);
-      else {
-        z = Math.min(1.4, room / need);
-        for (let i = 0; i < 4 && z > 1.01 && measure(z) > room; i++) z = Math.max(1, z * 0.95);
-      }
+      let lo = 0.65, hi = 1.4;
+      if (measure(hi) <= room) lo = hi;
+      else for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (measure(mid) <= room) lo = mid; else hi = mid; }
+      const z = lo;
       measure(Math.round(z * 1000) / 1000);
       // Only on a very small screen, where even smaller would be unreadable, can it scroll
-      log.classList.toggle("mw-scroll", z <= 0.65 && need * z > room + 2);
+      log.classList.toggle("mw-scroll", measure(Math.round(z * 1000) / 1000) > room + 2);
     });
   }
   new ResizeObserver(fit).observe(log);
