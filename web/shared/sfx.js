@@ -216,22 +216,35 @@
     tidy(body, nodes);
   }
 
-  // A soft, round touch (taps): a warm sine whose pitch settles as it starts, like a felt
-  // hammer on a low string, with a little room around it
-  function drop(freq, at, { gain = 0.05, length = 0.28, pan = 0 } = {}) {
+  // A soft, round touch (taps): a warm sine that swells in and fades (no click, no pitch slide),
+  // a quiet sine an octave under it for body, through a gentle low-pass, with room around it.
+  // More like a fingertip on a felt drum than a click.
+  function drop(freq, at, { gain = 0.05, length = 0.4, pan = 0 } = {}) {
     const t = ctx.currentTime + at;
-    const out = place(pan, { room: 0.4 });
-    const o = ctx.createOscillator();
-    o.frequency.setValueAtTime(freq * 1.12, t);
-    o.frequency.exponentialRampToValueAtTime(freq, t + 0.05);
+    const out = place(pan, { room: 0.5 });
+    const soft = ctx.createBiquadFilter();
+    soft.type = "lowpass";
+    soft.frequency.value = 1100;
+    soft.Q.value = 0.3;
     const amp = ctx.createGain();
-    amp.gain.setValueAtTime(0.0001, t);
-    amp.gain.exponentialRampToValueAtTime(gain, t + 0.012);
-    amp.gain.exponentialRampToValueAtTime(0.0001, t + length);
-    o.connect(amp).connect(out);
-    o.start(t);
-    o.stop(t + length + 0.05);
-    tidy(o, [o, amp, out]);
+    // Eases in over 35 ms along an S-curve (no corner, so no click), then fades away
+    const rise = new Float32Array(16).map((_, i) => gain * Math.sin((Math.PI / 2) * (i / 15)) ** 2);
+    amp.gain.setValueCurveAtTime(rise, t, 0.035);
+    amp.gain.setTargetAtTime(0, t + 0.04, length / 4);
+    soft.connect(amp).connect(out);
+    const o = ctx.createOscillator();
+    o.frequency.value = freq;
+    const under = ctx.createOscillator();
+    under.frequency.value = freq / 2;
+    const underAmt = ctx.createGain();
+    underAmt.gain.value = 0.5;
+    o.connect(soft);
+    under.connect(underAmt).connect(soft);
+    for (const x of [o, under]) {
+      x.start(t);
+      x.stop(t + length + 0.3);
+    }
+    tidy(o, [o, under, underAmt, soft, amp, out]);
   }
 
   // A warm swell under everything (big moments): a few soft detuned saws through a closing filter
@@ -299,8 +312,8 @@
   const bloom = (freqs, at, opts) => freqs.forEach((f, i) => bell(f, at + i * 0.018, { pan: (i / Math.max(1, freqs.length - 1) - 0.5) * 0.9, ...opts }));
 
   const SOUNDS = {
-    // A light tap on anything: a soft, low felt touch
-    tap: () => drop(N.D5, 0, { gain: 0.07, pan: (Math.random() - 0.5) * 0.3 }),
+    // A light tap on anything: a soft, low, warm touch
+    tap: () => drop(N.A4, 0, { gain: 0.022, pan: (Math.random() - 0.5) * 0.3 }),
     // Switching tabs or views: a puff of air and one glass tone
     tab: () => {
       air(0, { from: 900, to: 1700, gain: 0.014, length: 0.2, panFrom: -0.2, panTo: 0.2 });
@@ -332,7 +345,7 @@
     },
     // Removing or deleting: a soft low touch, and the air sinking away
     remove: () => {
-      drop(N.D4, 0, { gain: 0.07, length: 0.45 });
+      drop(N.D4, 0, { gain: 0.04, length: 0.45 });
       air(0.02, { from: 1400, to: 300, gain: 0.016, length: 0.35, panFrom: 0.2, panTo: -0.3 });
     },
     // Something went wrong: two low, muted tones together (no glass)
