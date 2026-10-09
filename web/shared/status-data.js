@@ -1,15 +1,15 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 155,
+ "build": 158,
  "date": "2026-10-09",
  "panels": {
   "chat": [
+   "Glowing space-scene icons",
    "Cosmic icons",
    "Calmer sounds",
    "The panels bar shows and hides itself",
-   "Every panel sounds like itself",
-   "One panels bar everywhere"
+   "Every panel sounds like itself"
   ],
   "portal": [
    "Cosmic icons",
@@ -82,22 +82,22 @@ window.NOVA_STATUS = {
    "Nova Hub is Studio"
   ],
   "look": [
+   "Glowing space-scene icons",
    "Cosmic icons",
    "Calmer sounds",
    "The panels bar shows and hides itself",
-   "Every panel sounds like itself",
-   "A gentler tap"
+   "Every panel sounds like itself"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "Cosmic icons"
+    "words": "Glowing space-scene icons"
    },
    {
     "panel": "chat",
-    "words": "Calmer sounds"
+    "words": "Cosmic icons"
    },
    {
     "panel": "portal",
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "README wording",
+  "README, the Panels window is behind the…",
+  "Glowing space-scene icons",
   "Cosmic icons",
   "Calmer sounds",
   "The panels bar shows and hides itself",
   "Every panel sounds like itself",
-  "A gentler tap",
-  "Calmer, lusher sounds",
-  "One panels bar everywhere",
-  "Lush Novacane sounds"
+  "A gentler tap"
  ]
 };

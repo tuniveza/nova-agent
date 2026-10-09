@@ -113,17 +113,23 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
 #suite-home .suite-group h4, .tabbar .tg-label { background: linear-gradient(90deg, var(--soft), var(--hi) 60%, var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 #suite-home .suite-group h4::before { content: "✦"; color: var(--hi); -webkit-text-fill-color: var(--hi); text-shadow: 0 0 8px var(--hi); font-size: 1.15em; margin-right: -4px; }
 #suite-home .suite-group h4::after { background: linear-gradient(90deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 40%, transparent) 50%, transparent); box-shadow: 0 0 6px color-mix(in srgb, var(--hi) 40%, transparent); }
-/* The tiles: glass that lights up */
-#suite-home .suite-app { border-color: color-mix(in srgb, var(--line) 80%, transparent);
-  background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .012) 55%), color-mix(in srgb, var(--panel-2) 42%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); }
-#suite-home .suite-group.tools .suite-app { background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .01) 55%), color-mix(in srgb, var(--void) 40%, transparent); }
-#suite-home .suite-app:hover { border-color: color-mix(in srgb, var(--hi) 55%, transparent);
-  background: radial-gradient(90% 80% at 50% 0%, color-mix(in srgb, var(--hi) 18%, transparent), transparent 70%), color-mix(in srgb, var(--panel-2) 55%, transparent);
-  box-shadow: 0 10px 30px -14px var(--hi), inset 0 1px 0 rgba(255, 255, 255, .12); }
-#suite-home .suite-app b { letter-spacing: .02em; text-shadow: 0 1px 8px rgba(0, 0, 0, .5); }
-#suite-home .suite-groups .suite-app.open { border-color: color-mix(in srgb, var(--hi) 70%, transparent);
-  background: radial-gradient(100% 90% at 50% 0%, color-mix(in srgb, var(--hi) 26%, transparent), transparent 72%), color-mix(in srgb, var(--panel-2) 60%, transparent); }
+/* The tiles: no boxes, they sit right on the night sky like one dock. Pointing at one lights a
+   soft glow behind it; the open one has a line of light under it. Thin glowing lines part the groups. */
+#suite-home .suite-app, #suite-home .suite-group.tools .suite-app, #suite-home .suite-app.here {
+  border-color: transparent; background: none; box-shadow: none; }
+#suite-home .suite-app:hover, #suite-home .suite-app:focus-visible {
+  border-color: transparent; box-shadow: none;
+  background: radial-gradient(55% 70% at 50% 34%, color-mix(in srgb, var(--hi) 20%, transparent), transparent 72%); }
+#suite-home .suite-app b { letter-spacing: .02em; text-shadow: 0 1px 8px rgba(0, 0, 0, .55); }
+#suite-home .suite-groups .suite-app.open { border-color: transparent; box-shadow: none;
+  background: radial-gradient(55% 75% at 50% 30%, color-mix(in srgb, var(--hi) 24%, transparent), transparent 74%); }
+#suite-home .suite-groups .suite-app.open b { color: #fff; }
+#suite-home .suite-groups .suite-app.open::after { inset: auto 32% 1px 32%; height: 2px; border-radius: 2px; background: var(--hi);
+  box-shadow: 0 0 10px var(--hi), 0 0 3px var(--hi); opacity: .7; }
+#suite-home .suite-group + .suite-group { position: relative; }
+#suite-home .suite-group + .suite-group::before { content: ""; position: absolute; left: -9px; top: 8%; bottom: 8%; width: 1px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--hi) 55%, transparent) 45%, color-mix(in srgb, var(--accent-2) 45%, transparent) 70%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--hi) 35%, transparent); }
 /* The phone's bar: the same night sky, a glowing top edge, and a lit pill for where you are */
 @media (max-width: 980px), (max-height: 600px) {
   .tabbar { position: relative; isolation: isolate; border-top: 0;
@@ -132,10 +138,27 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
       radial-gradient(50% 140% at 100% 100%, color-mix(in srgb, var(--accent-2) 26%, transparent), transparent 64%),
       color-mix(in srgb, var(--void) 92%, var(--panel)); }
   .tabbar::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--edge-glow); box-shadow: 0 0 10px color-mix(in srgb, var(--hi) 45%, transparent); }
-  .tabbar button[aria-current="page"] { background: radial-gradient(90% 90% at 50% 0%, color-mix(in srgb, var(--hi) 26%, transparent), transparent 75%), color-mix(in srgb, var(--hi) 10%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi) 35%, transparent); }
+  /* Where you are: a soft glow behind it and its line of light (no box) */
+  .tabbar button[aria-current="page"] { background: radial-gradient(55% 70% at 50% 35%, color-mix(in srgb, var(--hi) 24%, transparent), transparent 74%); box-shadow: none; }
 }
 /* The status line: the same glowing edge, quieter */
 .status-line:not(.tabbar > .status-line) { border: 1px solid transparent;
   background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 70%, transparent), color-mix(in srgb, var(--void) 80%, transparent)) padding-box, var(--edge-glow) border-box; }
 /* On a phone the stars are smaller and fainter (so they never look like stray dots between buttons) */
 @media (max-width: 980px), (max-height: 600px) { .tabbar::before { opacity: .22; background-size: 340px 100%; } }
+
+/* ---- Computer: the top bar, the panels bar and the status line are as wide as what's in them,
+   centred (they only stretch, up to the full width, when they need the room) ---- */
+@media (min-width: 981px) and (min-height: 601px) {
+  .shell > .topbar { justify-self: center; width: fit-content; max-width: 100%; grid-template-columns: auto auto auto; gap: 28px; }
+  .shell > .status-line { justify-self: center; width: fit-content; max-width: 100%; }
+  .status-line .sl-news { flex: 0 1 auto; }
+  .main > .suite-home { justify-self: center; width: fit-content; max-width: 100%; }
+  .main > .suite-home .suite-groups { justify-content: center; }
+  .main > .suite-home .suite-group, .main > .suite-home .suite-group.tools { flex: none; }
+  .main > .suite-home .suite-grid { grid-auto-columns: 78px; }
+  .main.viewing > .suite-home .suite-grid { grid-auto-columns: 70px; }
+  /* Floating over an open panel: centred too */
+  html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home { left: 0; right: 0; margin-inline: auto; width: fit-content; max-width: calc(100% - 20px); }
+  html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar { left: 0; right: 0; margin-inline: auto; width: fit-content; max-width: calc(100% - 28px); }
+}

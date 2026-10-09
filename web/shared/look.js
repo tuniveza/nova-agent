@@ -1,9 +1,9 @@
 // One look for all of Nova Agent: a theme chosen once (in the Panels window) colours every app,
 // task, tool and helper, whatever their own theme is, and "Colour from my planet" can tint it all
-// with the colours of the planet you have in Portal. Loaded early in every panel's <head> and in
+// with the colours of the planet you have in Portal, and all text is centred (unless switched off). Loaded early in every panel's <head> and in
 // Nova Agent's page. Saved on the device ("nova-look"); every open panel follows straight away.
 // When no theme is chosen, each panel keeps its own (as before).
-//   window.NovaLook = { themes, get(), setTheme(id | null), setPlanet(on), refreshPlanet() }
+//   window.NovaLook = { themes, get(), setTheme(id | null), setPlanet(on), setCenter(on), refreshPlanet() }
 (() => {
   "use strict";
   if (window.NovaLook) return;
@@ -30,9 +30,9 @@
   function read() {
     try {
       const v = JSON.parse(localStorage.getItem(KEY) || "{}");
-      return { theme: byId[v.theme] ? v.theme : null, planet: v.planet === true };
+      return { theme: byId[v.theme] ? v.theme : null, planet: v.planet === true, center: v.center !== false };
     } catch (err) {
-      return { theme: null, planet: false };
+      return { theme: null, planet: false, center: true };
     }
   }
   function planetPalette() {
@@ -91,8 +91,24 @@
       sheet.replaceSync(text);
     } catch (err) {}
   }
+  // Centred text everywhere (on unless switched off): every bit of text in Nova Agent and its panels
+  // sits in the middle. What you write in (a Notes document, which has its own alignment buttons)
+  // and code keep their own.
+  let centerSheet = null;
+  const CENTER = `body, body :not(pre, code, pre *, code *, [contenteditable="true"], [contenteditable="true"] *, svg, svg *) { text-align: center !important; }`;
+  function center(on) {
+    try {
+      if (!centerSheet) {
+        centerSheet = new CSSStyleSheet();
+        document.adoptedStyleSheets = [...document.adoptedStyleSheets, centerSheet];
+      }
+      centerSheet.replaceSync(on ? CENTER : "");
+    } catch (err) {}
+    document.documentElement.toggleAttribute("data-centred", on);
+  }
   function apply() {
-    const { theme, planet } = read();
+    const { theme, planet, center: centred } = read();
+    center(centred);
     const pal = planet ? planetPalette() : null;
     const t = pal ? fromPlanet(pal, byId[theme]) : theme ? byId[theme] : null;
     if (!t) {
@@ -153,6 +169,7 @@
     themes: THEMES,
     get: read,
     setTheme: (id) => save({ theme: byId[id] ? id : null }),
+    setCenter: (on) => save({ center: Boolean(on) }),
     setPlanet: (on) => { const next = save({ planet: Boolean(on) }); if (on) refreshPlanet(); return next; },
     refreshPlanet,
     palette: (id) => byId[id],

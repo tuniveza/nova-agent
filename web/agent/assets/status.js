@@ -210,12 +210,15 @@
         b.setAttribute("aria-checked", String(on));
       });
       planet.checked = v.planet;
+      if (centerBox) centerBox.checked = v.center;
     }
     look.addEventListener("click", (e) => {
       const b = e.target.closest("[data-look-theme]");
       if (b) { window.NovaLook.setTheme(b.dataset.lookTheme || null); showLook(); }
     });
     planet.addEventListener("change", () => { window.NovaLook.setPlanet(planet.checked); showLook(); });
+    const centerBox = look.querySelector("#look-center");
+    if (centerBox) centerBox.addEventListener("change", () => { window.NovaLook.setCenter(centerBox.checked); showLook(); });
     addEventListener("novalookchange", showLook);
     showLook();
     // Keep the planet's colours fresh (a new planet in Portal shows up here)

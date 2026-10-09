@@ -334,8 +334,14 @@ its moon (Portal), the moon over its phases (Calendar), a quill writing a conste
 glowing star cluster (Index), a comet streaking to a star flag (Quests), a rocket (Missions), a
 pulsar (Lossless audio), a spiral galaxy (Visualizer), a domed observatory under the moon
 (Observatory) and a star atlas (Manual). The panels bar itself is a strip of night sky: nebula
-light in the theme's colours, faint stars, the sigil softly in the corner, a glowing edge,
-shimmering group names and glass tiles. It comes and goes with a quick spring, its tiles popping
+light in the theme's colours, faint stars, the sigil softly in the corner, a glowing edge and
+shimmering group names; its tiles sit right on the sky (no boxes), with a soft glow behind the one
+you point at and a line of light under the open one. The same glowing edge and nebula light are
+on the top bar, the columns, an open panel's frame, the pop-up windows and the status line, and
+every button, tab and box (in the panels too) glows the same way when you're on it (`glow.css`).
+On a computer the top bar, the panels bar and the status line are only as wide as what's in them.
+**Centred text:** all text in Nova Agent and its panels is centred (Panels window → Centre all
+text switches it off); what you write in a Notes document, and code, keep their own alignment. It comes and goes with a quick spring, its tiles popping
 in one after another. The gear (settings) is on computers too: it opens the Panels window.
 
 ### Ambient music

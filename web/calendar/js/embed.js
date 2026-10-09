@@ -14,6 +14,13 @@
     :where(html:not([data-motion="calm"])) :where(button, [role="button"], [role="tab"], .btn, .chip, .tab) { transition: scale .16s cubic-bezier(.2,.8,.2,1); }
     :where(html:not([data-motion="calm"])) :where(button, [role="button"], [role="tab"], .btn, .chip, .tab):not(:disabled):active { scale: .96; }
   }`;
+
+  // The same glow as Nova Agent's (glow.css), on the things every panel has: buttons, tabs and boxes
+  // light up softly when you're on them. Zero-specificity rules, so a panel's own look always wins.
+  const GLOW = `:where(button, [role="button"], [role="tab"], .btn, .chip, a):focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--hi, var(--accent, #c9b6ff)) 70%, transparent), 0 0 18px -4px var(--hi, var(--accent, #c9b6ff)); }
+  :where(.btn, .chip, [role="tab"], .tab, .icon-btn):hover { box-shadow: 0 0 0 1px color-mix(in srgb, var(--hi, var(--accent, #c9b6ff)) 22%, transparent), 0 10px 30px -18px var(--hi, var(--accent, #c9b6ff)); }
+  :where(.tab.active, [role="tab"][aria-selected="true"], .chip.active) { box-shadow: 0 0 16px -6px var(--hi, var(--accent, #c9b6ff)); }
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select):focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi, var(--accent, #c9b6ff)) 18%, transparent), 0 0 24px -8px var(--hi, var(--accent, #c9b6ff)); }`;
   let inside = false;
   try {
     inside = window.self !== window.top;
@@ -27,7 +34,8 @@
     try {
       const sheet = new CSSStyleSheet();
       sheet.replaceSync(`nova-portal-badge, nova-manual { display: none !important; }
-${MOTION}`);
+${MOTION}
+${GLOW}`);
       document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
     } catch (err) {}
   }
