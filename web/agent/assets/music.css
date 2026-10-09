@@ -168,3 +168,15 @@
 .mw-pop .mw-list li { flex-direction: column; gap: 3px; }
 .mw-pop .mw-list span { justify-items: center; }
 .mw-pop .mw-list:not(.plain) li::before { width: auto; text-align: center; }
+
+/* ---- Bigger pictures where there's room ---- */
+.mw-card > .mw-pic { width: 46px !important; height: 46px !important; border-radius: 11px; }
+.mw-pic .mw-ico { width: 18px; height: 18px; }
+.mw-quote .mw-face { width: 54px !important; height: 54px !important; }
+.mw-quote .mw-face b { font-size: 17px; }
+.mw-pop .mw-list img, .mw-pop .mw-list .mw-art { width: 48px; height: 48px; border-radius: 9px; }
+.mw-song-pop .mw-art { width: 140px !important; height: 140px !important; border-radius: 16px; }
+@container (min-width: 620px) {
+  .mw-card > .mw-pic { width: 54px !important; height: 54px !important; }
+  .mw-quote .mw-face { width: 64px !important; height: 64px !important; }
+}

@@ -176,3 +176,8 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
   .main > .side > .view { min-height: 0; }
   #view-today { overflow: auto; }
 }
+
+/* ---- Quests: the day's heading centred (the date, its line, and the counts) ---- */
+#view-today > .day-head, .day-head { display: flex !important; flex-direction: column; align-items: center !important; justify-content: center !important; text-align: center; gap: 6px; }
+#view-today > .day-head > div:first-child, .day-head > div:first-child { display: grid !important; justify-items: center; text-align: center; }
+.day-head .stats { justify-content: center; flex-wrap: wrap; }
