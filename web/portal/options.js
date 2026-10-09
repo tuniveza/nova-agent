@@ -70,6 +70,17 @@
     sfx.addEventListener("change", () => window.NovaSfx.setEnabled(sfx.checked));
     window.addEventListener("novasfxchange", (e) => (sfx.checked = e.detail.on));
   }
+  // The quiet extras have their own switch (only heard while sound effects are on)
+  const extra = $("sfx-extra-switch");
+  if (extra && window.NovaSfx && window.NovaSfx.setExtraEnabled) {
+    const show = () => {
+      extra.checked = window.NovaSfx.extraEnabled();
+      extra.disabled = !window.NovaSfx.enabled();
+    };
+    show();
+    extra.addEventListener("change", () => window.NovaSfx.setExtraEnabled(extra.checked));
+    window.addEventListener("novasfxchange", show);
+  }
 
   // The music starts at the saved volume
   if (window.NovaAmbient) window.NovaAmbient.setVolume(window.NovaOptions.get().volume / 100);

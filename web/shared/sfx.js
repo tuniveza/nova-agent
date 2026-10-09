@@ -9,7 +9,10 @@
 // switch, a "send", a "delete"...). An element can choose its own sound with
 // data-sfx="tap|tab|open|close|on|off|send|done|remove|error|message|welcome|none".
 // Switched off and on with NovaSfx.setEnabled(false/true); remembered on the device.
-//   window.NovaSfx = { play(name), enabled(), setEnabled(on), toggle() }
+// The extras (scrolling, typing, sliders, dragging, hovering) are barely there and have their own
+// switch, NovaSfx.setExtraEnabled(false/true), also remembered on the device.
+//   window.NovaSfx = { play(name), enabled(), setEnabled(on), toggle(),
+//                      extraEnabled(), setExtraEnabled(on), toggleExtra() }
 (() => {
   "use strict";
   if (window.NovaSfx) return;
@@ -20,6 +23,25 @@
   let wet = null; // into the reverb
   let echo = null; // into the soft echo
   let last = 0;
+
+  // The extra, very quiet sounds (scrolling, typing, sliders, dragging, hovering) have their
+  // own switch: on unless switched off on this device, and only while sounds are on at all
+  const EXTRA = "nova-sfx-extra";
+  function extraEnabled() {
+    try {
+      return enabled() && localStorage.getItem(EXTRA) !== "off";
+    } catch (err) {
+      return false;
+    }
+  }
+  function setExtraEnabled(on) {
+    try {
+      localStorage.setItem(EXTRA, on ? "on" : "off");
+    } catch (err) {}
+    window.dispatchEvent(new CustomEvent("novasfxchange", { detail: { on: enabled(), extra: Boolean(on) } }));
+    if (on) play("hover", true);
+    return Boolean(on);
+  }
 
   // On unless switched off on this device
   function enabled() {
@@ -65,16 +87,21 @@
       limit.threshold.value = -20;
       limit.knee.value = 18;
       limit.ratio.value = 5;
+      // Calm and soft: well down in volume, and a warm top end so nothing is ever bright or sharp
       const master = ctx.createGain();
-      master.gain.value = 0.72;
-      limit.connect(master).connect(ctx.destination);
+      master.gain.value = 0.5;
+      const warm = ctx.createBiquadFilter();
+      warm.type = "lowpass";
+      warm.frequency.value = 4200;
+      warm.Q.value = 0.4;
+      limit.connect(warm).connect(master).connect(ctx.destination);
       dry = limit;
       // Reverb
       wet = ctx.createGain();
       const verb = ctx.createConvolver();
       verb.buffer = room(2.4);
       const verbOut = ctx.createGain();
-      verbOut.gain.value = 0.55;
+      verbOut.gain.value = 0.7; // more space around everything: lush, not dry
       wet.connect(verb).connect(verbOut).connect(limit);
       // A soft, darkened echo that bounces left and right
       echo = ctx.createGain();
@@ -315,6 +342,29 @@
       bell(N.B5, 0, { gain: 0.028, length: 1.1, pan: -0.2, attack: 0.035, echo: 0.3 });
       bell(N.E6, 0.12, { gain: 0.024, length: 1.5, pan: 0.25, attack: 0.04, echo: 0.45 });
     },
+    // ---- The extras: barely there ----
+    // Scrolling: a breath of air, quieter the slower you go (strength 0–1)
+    scroll: (k = 0.5) => air(0, { from: 500 + 500 * k, to: 900 + 900 * k, gain: 0.002 + 0.004 * k, length: 0.22, panFrom: -0.15, panTo: 0.15 }),
+    // Typing: the softest touch per key, a little different each time
+    key: () => drop(N.D5 * (1 + (Math.random() - 0.5) * 0.06), 0, { gain: 0.007, length: 0.09, pan: (Math.random() - 0.5) * 0.4 }),
+    // A slider: a soft tone that rises and falls with it (k = 0–1 along the slider)
+    slide: (k = 0.5) => {
+      const steps = [N.D4, N.E5 / 2, N.Fs4, N.A4, N.B4, N.D5, N.E5, N.Fs5, N.A5, N.B5, N.D6];
+      bell(steps[Math.round(k * (steps.length - 1))], 0, { gain: 0.012, length: 0.5, attack: 0.03, glint: 0.2, warmth: 0.4 });
+    },
+    // Dragging: picking something up (air rising, a soft tone) and putting it down (a low touch)
+    lift: () => {
+      air(0, { from: 500, to: 1400, gain: 0.012, length: 0.25 });
+      bell(N.Fs5, 0.02, { gain: 0.016, length: 0.6, attack: 0.04, glint: 0.3 });
+    },
+    nudge: () => drop(N.A4, 0, { gain: 0.014, length: 0.12 }),
+    place: () => {
+      drop(N.D4, 0, { gain: 0.04, length: 0.4 });
+      bell(N.A5, 0.04, { gain: 0.012, length: 0.8, attack: 0.05, glint: 0.3 });
+    },
+    // Hovering over a tile with a mouse: an extra-faint shimmer, high up
+    hover: () => bell([N.Cs6, N.E6, N.Fs6, N.A6][Math.floor(Math.random() * 4)], 0, { gain: 0.006, length: 0.9, attack: 0.06, glint: 0.2, warmth: 0, pan: (Math.random() - 0.5) * 0.8 }),
+
     // Hello (sound switched on): Novacane's chord, D–A–C♯–F♯, blooming over a soft swell
     welcome: () => {
       swell([N.D3, N.A3, N.Cs5], 0, { gain: 0.012, length: 2.4 });
@@ -323,15 +373,28 @@
   };
 
 
-  function play(name) {
-    if (!enabled() || !SOUNDS[name]) return;
-    // Never a pile-up of sounds from one press
+  const EXTRAS = new Set(["scroll", "key", "slide", "lift", "nudge", "place", "hover"]);
+  const GAPS = { scroll: 260, key: 35, slide: 70, nudge: 60, hover: 120 }; // the least time between two
+  const lastOf = {};
+  function play(name, arg) {
+    if (!SOUNDS[name]) return;
+    const extra = EXTRAS.has(name);
+    if (extra ? !extraEnabled() : !enabled()) return;
     const now = performance.now();
-    if (now - last < 45) return;
-    last = now;
+    if (extra) {
+      // Each extra keeps to its own pace, so it never turns into noise
+      if (now - (lastOf[name] || 0) < (GAPS[name] || 45)) return;
+      lastOf[name] = now;
+      // Before the first real press, browsers keep sound off: don't wake it for these
+      if (!ctx && name !== "lift" && name !== "place") return;
+    } else {
+      // Never a pile-up of sounds from one press
+      if (now - last < 45) return;
+      last = now;
+    }
     try {
       if (!ready()) return;
-      SOUNDS[name]();
+      SOUNDS[name](typeof arg === "number" ? arg : undefined);
     } catch (err) {}
   }
 
@@ -372,6 +435,63 @@
     true
   );
 
+  // ---- The extras, found by themselves ----
+  // Scrolling anywhere (the page or anything inside it): stronger the faster it moves
+  const scrolled = new WeakMap();
+  document.addEventListener(
+    "scroll",
+    (e) => {
+      const el = e.target === document ? document.scrollingElement || document.documentElement : e.target;
+      if (!el || typeof el.scrollTop !== "number") return;
+      const pos = el.scrollTop + el.scrollLeft;
+      const was = scrolled.get(el);
+      scrolled.set(el, { pos, at: performance.now() });
+      if (!was) return;
+      const speed = Math.abs(pos - was.pos) / Math.max(16, performance.now() - was.at); // px per ms
+      if (speed > 0.05) play("scroll", Math.min(1, speed / 3));
+    },
+    { capture: true, passive: true }
+  );
+  // Typing in a box: one tiny touch per key (not for shortcuts or held keys)
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target;
+      const typing = t && (t.isContentEditable || (t.matches && t.matches('textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"])')));
+      if (typing && (e.key.length === 1 || e.key === "Backspace" || e.key === "Enter")) play("key");
+    },
+    true
+  );
+  // Sliders: the tone follows where it is
+  document.addEventListener(
+    "input",
+    (e) => {
+      const r = e.target;
+      if (!r.matches || !r.matches('input[type="range"]')) return;
+      const min = Number(r.min) || 0, max = Number(r.max) || 100;
+      play("slide", (Number(r.value) - min) / (max - min || 1));
+    },
+    true
+  );
+  // Dragging things (anything the browser drags; Calendar's note cards call lift/nudge/place itself)
+  document.addEventListener("dragstart", () => play("lift"), true);
+  document.addEventListener("drop", () => play("place"), true);
+  // Hovering with a mouse over a tile or card: one faint shimmer as you arrive on it
+  let hovered = null;
+  document.addEventListener(
+    "pointerover",
+    (e) => {
+      if (e.pointerType !== "mouse") return;
+      const el = e.target.closest && e.target.closest('.suite-app, .tg-items [data-tab], .tile, .card, .stat, .note-item, [data-hover-sfx]');
+      if (!el || el === hovered) return;
+      hovered = el;
+      play("hover");
+    },
+    true
+  );
+  document.addEventListener("pointerout", (e) => { if (hovered && !hovered.contains(e.relatedTarget)) hovered = null; }, true);
+
   // The ambient music lives in Nova Agent's main page (ambient.js). A press inside a panel
   // counts as a press there too, so music that was on last time can start again from here.
   document.addEventListener(
@@ -384,5 +504,5 @@
     true
   );
 
-  window.NovaSfx = { play, enabled, setEnabled, toggle: () => setEnabled(!enabled()) };
+  window.NovaSfx = { play, enabled, setEnabled, toggle: () => setEnabled(!enabled()), extraEnabled, setExtraEnabled, toggleExtra: () => setExtraEnabled(!extraEnabled()) };
 })();

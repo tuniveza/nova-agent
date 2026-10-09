@@ -305,6 +305,7 @@
     const openName = !viewer.hidden ? $('viewer-name').textContent : '';
     const sfxOn = window.NovaSfx ? window.NovaSfx.enabled() : false;
     const musicOn = window.NovaAmbient ? window.NovaAmbient.isPlaying() : false;
+    const extraOn = window.NovaSfx && window.NovaSfx.extraEnabled ? window.NovaSfx.extraEnabled() : false;
     const canInstall = $('install') && !$('install').hidden;
     sheet.innerHTML = `<div class="grab" aria-hidden="true"></div>
       <h4>Settings</h4>
@@ -314,6 +315,7 @@
         ${btn('new-mission', 'New mission', g('+'))}
         ${btn('sfx', sfxOn ? 'Sound: on' : 'Sound: off', g(sfxOn ? '🔊' : '🔈'))}
         ${btn('music', musicOn ? 'Music: on' : 'Music: off', g(musicOn ? '♫' : '♪'))}
+        ${sfxOn ? btn('sfx-extra', extraOn ? 'Quiet extras: on' : 'Quiet extras: off', g(extraOn ? '≋' : '∼')) : ''}
         ${tile('/admin/links') ? btn('links', 'All links', tileIcon('/admin/links', 'g')) : ''}
         ${canInstall ? btn('install', 'Install app', g('⤓')) : btn('reload', 'Refresh app', g('⟳'))}
       </div>
@@ -335,6 +337,7 @@
     if (act === 'new-mission') { closePanel(); setPane('missions'); const n = $('new-mission-btn'); if (n) n.click(); return; }
     if (act === 'sfx') { const s = $('sfx-btn'); if (s) s.click(); return; }
     if (act === 'music') { const m = $('music-btn'); if (m) m.click(); return; }
+    if (act === 'sfx-extra') { if (window.NovaSfx) window.NovaSfx.toggleExtra(); return; }
     if (act === 'links') return open('/admin/links');
     if (act === 'install') { const i = $('install'); if (i) i.click(); return; }
     if (act === 'reload') location.reload();

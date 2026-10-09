@@ -264,7 +264,14 @@ open, close, send, done and delete, made live with the Web Audio API (no sound f
 not beeps: everything swells in, chords bloom together rather than running up like a game, and a
 tap is a low felt touch. They're in D lydian, the same key as the ambient music, so the two always
 sound right together; they're placed across left and right and washed in a little reverb and
-echo, and kept quiet. Nova Agent
+echo, and kept quiet: calm and lush, never loud (well down in volume, with a warm, soft top end).
+
+**Quiet extras**, barely there and with their own switch (Portal → Options → Quiet extras, or on
+a phone the gear → Quiet extras): a breath of air as you scroll (quieter the slower you go, a few
+times a second at most), the softest touch per key when typing in a box, tones that rise and fall
+as you drag a slider, a sound when you pick up and put down something you drag (Calendar's note
+cards, with a tiny tick at each step), and an extra-faint shimmer as the mouse arrives on a tile.
+They're only heard while sound effects are on. Nova Agent
 chimes when it answers, and a short "hello" (D–A–C♯–F♯) plays when sounds are switched on. The 🔊
 switch at the top left turns them off (on a phone: the gear → Sound), and the choice is remembered
 on that device. It's the same `web/shared/sfx.js` in every panel.

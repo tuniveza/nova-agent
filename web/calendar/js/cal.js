@@ -627,6 +627,7 @@ function startDrag(el, x, y, resize) {
   drag = { el, x, y, resize, start: el.dataset.start, end: el.dataset.end, dMin: 0, dDay: 0, moved: false, colW: el.parentElement.getBoundingClientRect().width };
   el.classList.add("dragging");
   if (navigator.vibrate) navigator.vibrate(12);
+  sfx("lift");
 }
 function moveDrag(x, y) {
   if (!drag) return;
@@ -634,6 +635,7 @@ function moveDrag(x, y) {
   const dMin = Math.round(((y - drag.y) / hh) * 4) * 15;
   const dDay = drag.resize || prefs.view !== "week" ? 0 : Math.round((x - drag.x) / drag.colW);
   if (dMin === drag.dMin && dDay === drag.dDay) return;
+  sfx("nudge");
   drag.dMin = dMin;
   drag.dDay = dDay;
   drag.moved = true;
@@ -647,6 +649,7 @@ function endDrag() {
   const d = drag;
   drag = null;
   d.el.classList.remove("dragging");
+  if (d.moved) sfx("place");
   if (!d.moved || (!d.dMin && !d.dDay)) {
     d.el.style.transform = "";
     if (!d.moved) openExisting(d.el.dataset.type, d.el.dataset.id, d.el.dataset.date);
