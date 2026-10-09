@@ -1,15 +1,15 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 159,
+ "build": 160,
  "date": "2026-10-09",
  "panels": {
   "chat": [
+   "Smaller bar",
    "No glass bubbles",
    "Glowing space-scene icons",
    "Cosmic icons",
-   "Calmer sounds",
-   "The panels bar shows and hides itself"
+   "Calmer sounds"
   ],
   "portal": [
    "Cosmic icons",
@@ -19,11 +19,11 @@ window.NOVA_STATUS = {
    "Portal on phones"
   ],
   "calendar": [
+   "Smaller bar",
    "No glass bubbles",
    "Cosmic icons",
    "Calmer, lusher sounds",
-   "One panels bar everywhere",
-   "note cards again"
+   "One panels bar everywhere"
   ],
   "notes": [
    "Cosmic icons",
@@ -82,22 +82,22 @@ window.NOVA_STATUS = {
    "Nova Hub is Studio"
   ],
   "look": [
+   "Smaller bar",
    "No glass bubbles",
    "Glowing space-scene icons",
    "Cosmic icons",
-   "Calmer sounds",
-   "The panels bar shows and hides itself"
+   "Calmer sounds"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "No glass bubbles"
+    "words": "Smaller bar"
    },
    {
     "panel": "chat",
-    "words": "Glowing space-scene icons"
+    "words": "No glass bubbles"
    },
    {
     "panel": "portal",
@@ -109,11 +109,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "calendar",
-    "words": "No glass bubbles"
+    "words": "Smaller bar"
    },
    {
     "panel": "calendar",
-    "words": "Cosmic icons"
+    "words": "No glass bubbles"
    },
    {
     "panel": "notes",
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Smaller bar",
   "No glass bubbles",
   "Glowing space-scene icons",
   "Cosmic icons",
   "Calmer sounds",
   "The panels bar shows and hides itself",
   "Every panel sounds like itself",
-  "A gentler tap",
-  "Calmer, lusher sounds"
+  "A gentler tap"
  ]
 };

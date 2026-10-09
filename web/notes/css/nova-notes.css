@@ -677,3 +677,13 @@ html.embed .page-wrap { padding-top: 16px; }
 }
 html.embed .shell { padding-left: 6px; padding-right: 6px; }
 @media (max-width: 640px) { html.embed .shell { padding: 6px 6px 4px; } }
+
+/* Inside Nova Agent, nothing runs off the screen: the toolbar wraps onto a second row when it
+   needs to (instead of hiding tools off the side), the page starts as tall as the window rather
+   than a whole printed page, its margins shrink on narrower frames, and the outline's lines end
+   with "…" */
+html.embed .toolbar { flex-wrap: wrap; justify-content: center; row-gap: 2px; border-radius: 16px; overflow-x: visible; }
+html.embed .page { min-height: max(320px, calc(100dvh - 250px)); padding: clamp(26px, 5vw, 72px) clamp(18px, 5.5vw, 84px) clamp(36px, 6vw, 90px); }
+html.embed .page-wrap { padding: 14px clamp(8px, 2vw, 18px) 90px; }
+.outline-list button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) { html.embed .toolbar { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; } }

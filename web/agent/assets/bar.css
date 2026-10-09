@@ -9,7 +9,7 @@
 .bar-peek > span { display: block; border-radius: 99px; }
 
 /* ---- A computer: the strip floats over the bottom of the open panel and slides away ---- */
-@media (min-width: 981px) and (min-height: 601px) {
+@media (min-width: 981px) and (min-height: 481px) {
   html[data-bar="auto"] .main.viewing, html[data-bar="hidden"] .main.viewing { position: relative; grid-template-rows: minmax(0, 1fr); }
   html[data-bar="auto"] .main.viewing > .viewer, html[data-bar="hidden"] .main.viewing > .viewer { grid-area: 1 / 1 / -1 / -1; }
   html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home {
@@ -24,7 +24,7 @@
 }
 
 /* ---- A phone: the bar slides down out of the way; the handle brings it up ---- */
-@media (max-width: 980px), (max-height: 600px) {
+@media (max-width: 980px), (max-height: 480px) {
   html[data-bar="auto"] .shell:has(> .main.viewing), html[data-bar="hidden"] .shell {
     grid-template-rows: auto minmax(0, 1fr); padding-bottom: max(6px, env(safe-area-inset-bottom)); }
   html[data-bar="auto"] .shell:has(> .main.viewing) > .tabbar, html[data-bar="hidden"] .shell > .tabbar {
@@ -40,7 +40,7 @@
 
 /* ---- The top bar (Nova Agent's header), Auto or Always hidden: with a panel open it floats over
    the top of the panel and slides away (html.top-tucked) ---- */
-@media (min-width: 981px) and (min-height: 601px) {
+@media (min-width: 981px) and (min-height: 481px) {
   html[data-top="auto"] .shell:has(> .main.viewing), html[data-top="hidden"] .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto; }
   html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
     position: absolute; top: max(12px, env(safe-area-inset-top)); left: 14px; right: 14px; z-index: 30;
@@ -53,7 +53,7 @@
   .main:not(.viewing) > .suite-home { transition: opacity .2s ease, translate .32s var(--spring), display .2s allow-discrete; }
   @starting-style { .main:not(.viewing) > .suite-home { opacity: 0; translate: 0 18px; } }
 }
-@media (max-width: 980px), (max-height: 600px) {
+@media (max-width: 980px), (max-height: 480px) {
   html[data-top="auto"] .shell:has(> .main.viewing), html[data-top="hidden"] .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto; }
   html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
     position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; z-index: 41;
@@ -131,7 +131,7 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
   background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--hi) 55%, transparent) 45%, color-mix(in srgb, var(--accent-2) 45%, transparent) 70%, transparent);
   box-shadow: 0 0 6px color-mix(in srgb, var(--hi) 35%, transparent); }
 /* The phone's bar: the same night sky, a glowing top edge, and a lit pill for where you are */
-@media (max-width: 980px), (max-height: 600px) {
+@media (max-width: 980px), (max-height: 480px) {
   .tabbar { position: relative; isolation: isolate; border-top: 0;
     background:
       radial-gradient(60% 120% at 0% 0%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 62%),
@@ -145,11 +145,11 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
 .status-line:not(.tabbar > .status-line) { border: 1px solid transparent;
   background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 70%, transparent), color-mix(in srgb, var(--void) 80%, transparent)) padding-box, var(--edge-glow) border-box; }
 /* On a phone the stars are smaller and fainter (so they never look like stray dots between buttons) */
-@media (max-width: 980px), (max-height: 600px) { .tabbar::before { opacity: .22; background-size: 340px 100%; } }
+@media (max-width: 980px), (max-height: 480px) { .tabbar::before { opacity: .22; background-size: 340px 100%; } }
 
 /* ---- Computer: the top bar, the panels bar and the status line are as wide as what's in them,
    centred (they only stretch, up to the full width, when they need the room) ---- */
-@media (min-width: 981px) and (min-height: 601px) {
+@media (min-width: 981px) and (min-height: 481px) {
   .shell > .topbar { justify-self: center; width: fit-content; max-width: 100%; grid-template-columns: auto auto auto; gap: 28px; }
   .shell > .status-line { justify-self: center; width: fit-content; max-width: 100%; }
   .status-line .sl-news { flex: 0 1 auto; }
@@ -164,7 +164,7 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
 }
 
 /* ---- A smaller panels bar, and its group names centred between two fine lines of light ---- */
-@media (min-width: 981px) and (min-height: 601px) {
+@media (min-width: 981px) and (min-height: 481px) {
   .main > .suite-home .suite-body { padding: 6px 12px 7px; }
   .main > .suite-home .suite-groups { gap: 14px; }
   .main > .suite-home .suite-grid { grid-auto-columns: 62px; gap: 3px; }

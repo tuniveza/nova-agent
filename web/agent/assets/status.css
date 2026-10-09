@@ -27,15 +27,15 @@
 .sl-list time { color: var(--muted); font-family: var(--f-mono); font-size: 11px; }
 
 /* A computer: a third row in Nova Agent's page, under the panels; no PANELS button at the top any more */
-@media (min-width: 981px) and (min-height: 601px) {
+@media (min-width: 981px) and (min-height: 481px) {
   .shell { grid-template-rows: auto minmax(0, 1fr) auto; }
   .top-side #suite-btn { display: none !important; }
   /* The gear (settings) is on computers too: it opens the Panels window */
   .top-side #phone-gear { display: grid !important; place-items: center; }
 }
-@media (min-width: 981px) and (max-width: 1250px) and (min-height: 601px) { .status-line .sl-left { display: none; } }
+@media (min-width: 981px) and (max-width: 1250px) and (min-height: 481px) { .status-line .sl-left { display: none; } }
 /* A phone: the last row of the bar, small */
-@media (max-width: 980px), (max-height: 600px) {
+@media (max-width: 980px), (max-height: 480px) {
   .tabbar > .status-line { grid-column: 1 / -1; height: 20px; gap: 8px; padding: 0 6px; margin-top: 2px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; font-size: 9.5px; }
   .tabbar > .status-line .sl-ver, .tabbar > .status-line .sl-sess, .tabbar > .status-line .sl-left { display: none !important; }
   .tabbar > .status-line .sl-item { padding: 0 6px; }

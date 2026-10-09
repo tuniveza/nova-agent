@@ -11,7 +11,7 @@
   const $ = (id) => document.getElementById(id);
   const shell = $("shell");
   const DATA = window.NOVA_STATUS || { version: "", build: "", panels: {}, areas: {}, everything: [] };
-  const PHONE = matchMedia("(max-width: 980px), (max-height: 600px)");
+  const PHONE = matchMedia("(max-width: 980px), (max-height: 480px)");
   if (!shell) return;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const time12 = (d) => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true }).replace(/\s?([AP]M)$/i, (m, x) => " " + x.toLowerCase());

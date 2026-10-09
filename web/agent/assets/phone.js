@@ -9,7 +9,7 @@
 // The look is in phone.css; on a computer all of this stays out of the way.
 (function () {
   'use strict';
-  const PHONE = matchMedia('(max-width: 980px), (max-height: 600px)');
+  const PHONE = matchMedia('(max-width: 980px), (max-height: 480px)');
   const STILL = matchMedia('(prefers-reduced-motion: reduce)');
   const $ = (id) => document.getElementById(id);
   const main = $('main'), shell = $('shell'), viewer = $('viewer');

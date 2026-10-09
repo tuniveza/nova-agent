@@ -15,7 +15,7 @@
   const root = document.documentElement;
   const main = document.getElementById("main");
   const strip = document.getElementById("suite-home");
-  const PHONE = matchMedia("(max-width: 980px), (max-height: 600px)");
+  const PHONE = matchMedia("(max-width: 980px), (max-height: 480px)");
   if (!main) return;
 
   function mode() {
@@ -141,14 +141,16 @@
     }
     if (current !== "auto") return;
     // Typing on the home: the mouse at the bottom brings the bar back
-    if (!viewing()) { if (typing && innerHeight - y < 40) show(); return; }
+    // The lower part of the window (its bottom 14%, at least 90px) brings the bar up
+    const zone = Math.max(90, innerHeight * 0.14);
+    if (!viewing()) { if (typing && innerHeight - y < zone) show(); return; }
     const barH = strip ? strip.offsetHeight : 90;
     const fromBottom = innerHeight - y;
-    if (fromBottom < 28 || (out && fromBottom < barH + 40)) {
+    if (fromBottom < zone || (out && fromBottom < barH + 40)) {
       clearTimeout(awayTimer);
       awayTimer = null;
       show();
-    } else if (out && fromBottom > barH + 90 && !awayTimer) {
+    } else if (out && fromBottom > Math.max(barH + 90, zone + 50) && !awayTimer) {
       awayTimer = setTimeout(() => { awayTimer = null; tuck(); }, 450);
     } else if (!out && awayTimer) {
       clearTimeout(awayTimer);

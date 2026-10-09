@@ -360,6 +360,16 @@ in one after another. The gear (settings) is on computers too: it opens the Pane
   it takes on the colour of the app that's open, slowly.
 - The columns' titles are centred, and so is the conversation (every message in the middle).
 
+### Every window size
+
+Nova Agent fits whatever size its window is: computer windows down to 481px tall keep the
+computer layout, getting tighter as they get shorter (a slimmer header, the chat's suggestions in
+one row you swipe, smaller bars); narrower computer windows get slimmer side columns and smaller
+buttons; tablets and windows between phone and computer size get the bar in one centred row; and
+phones keep their own layout. In Auto, the mouse anywhere in the lower part of the window (its
+bottom 14%) brings the panels bar up. Inside Nova Agent, Notes never runs off the screen: its
+toolbar wraps, and the page starts as tall as the window.
+
 ### Ambient music
 
 Quiet, never-ending Novacane ambient music: slow warm pads, a soft bass, star-like bells, now and

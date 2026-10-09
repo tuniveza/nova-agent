@@ -195,7 +195,7 @@
   /* While an app is open it gets the room: a slimmer bar above it, and the panels strip keeps its
      look but gets smaller. Only side by side: stacked on a phone or a small window, the viewer
      has its own height. */
-  @media (min-width: 981px) and (min-height: 601px) {
+  @media (min-width: 981px) and (min-height: 481px) {
     .main.viewing { gap: 10px; }
     .main.viewing .viewer-bar { padding: 5px 8px; }
     .main.viewing .viewer-bar .icon-btn { width: 32px; height: 32px; }
@@ -211,7 +211,7 @@
      header and the panels strip step aside; the slim bar above the panel goes back (← Nova Agent),
      and its name opens the panels to switch. Edge to edge, with room kept for the notch and the
      home bar, and no frosted glass or drifting clouds behind it. */
-  @media (max-width: 980px), (max-height: 600px) {
+  @media (max-width: 980px), (max-height: 480px) {
     .shell:has(> .main.viewing) { height: 100dvh; grid-template-rows: minmax(0, 1fr); gap: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
     .shell:has(> .main.viewing) > .topbar { display: none; }
     .main.viewing { display: block; height: 100%; overflow: hidden; }
@@ -565,7 +565,7 @@
   @media (max-height: 940px) { .welcome .mark { display: none; } .welcome h3 { font-size: 17px; } }
   html, body { overflow-x: clip; }
   /* Phones and very short windows can't fit it all: there it stacks and scrolls (the chat first) */
-  @media (max-width: 980px), (max-height: 600px) {
+  @media (max-width: 980px), (max-height: 480px) {
     .main { overflow-y: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: max-content; grid-template-areas: "chat" "missions" "quests" "suite"; }
     .chat { height: 72dvh; } .viewer { height: 80dvh; }
     .side > .view, #view-today, #view-today > .subpanel { overflow: visible; }
