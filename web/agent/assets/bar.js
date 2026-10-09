@@ -173,7 +173,8 @@
   let touching = 0; // until when a finger was last on the panel (only scrolling you do counts)
   const lastY = new WeakMap();
   function onScroll(e) {
-    if (!PHONE.matches || !viewing() || (current !== "auto" && topMode === "shown")) return;
+    // Phones, and touch screens of any size (a tablet showing the computer layout too)
+    if (!(PHONE.matches || root.classList.contains("is-touch")) || !viewing() || (current !== "auto" && topMode === "shown")) return;
     if (performance.now() > touching) return; // the page moved by itself
     const el = e.target && e.target.nodeType === 9 ? e.target.scrollingElement : e.target;
     if (!el || typeof el.scrollTop !== "number") return;

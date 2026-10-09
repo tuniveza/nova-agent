@@ -1,0 +1,38 @@
+/* Phones and tablets, found from the device itself (look.js: html.is-touch, .is-phone, .is-tablet),
+   whatever the window's size: the same Nova Agent, made for fingers and kept light and smooth. */
+
+/* Light: no frosted-glass blur and no drifting sky on mobile hardware (they cost the most) */
+html.is-touch .glass { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+html.is-touch .nebula { animation: none !important; }
+html.is-touch #sky { display: none; }
+html.is-touch .main > .suite-home::before, html.is-touch .tabbar::before { display: none; }
+
+/* Fingers: taps happen at once (no double-tap zoom wait), targets are big enough, and typing in a
+   box never makes the page zoom in (16px text in boxes) */
+html.is-touch button, html.is-touch a, html.is-touch [role="button"], html.is-touch .chip { touch-action: manipulation; }
+html.is-touch input, html.is-touch textarea, html.is-touch select { font-size: max(16px, 1em) !important; }
+html.is-touch .icon-btn { min-width: 40px; min-height: 40px; }
+html.is-touch .chat-pager button { width: 40px; height: 34px; }
+html.is-touch .mw-card { min-height: 44px; }
+html.is-touch .status-line .sl-item { min-height: 28px; }
+
+/* Nothing that only works with a mouse: hover lifts and glows stay off (they'd stick after a tap) */
+@media (hover: none) {
+  .suite-app:hover, .btn:hover, .icon-btn:hover, .chip:hover { transform: none; }
+  .suite-app:hover > .pico, .suite-app:hover > img { transform: none; }
+}
+
+/* A tablet showing the computer layout: the bars' hide-and-show follow your swipes (as on a phone),
+   and the little handle at the bottom brings the panels bar back */
+@media (min-width: 981px) and (min-height: 481px) {
+  html.is-touch[data-bar="auto"].bar-tucked .bar-peek { display: grid; place-items: center; left: 50%; bottom: 0; width: 110px; height: calc(24px + env(safe-area-inset-bottom)); margin-left: -55px; padding-bottom: env(safe-area-inset-bottom); }
+  html.is-touch.bar-tucked .bar-peek > span { width: 48px; height: 5px; background: color-mix(in srgb, var(--hi) 55%, var(--muted)); box-shadow: 0 0 10px -2px var(--hi); opacity: .85; }
+  html.is-tablet .main > .suite-home .suite-grid { grid-auto-columns: 72px; }
+  html.is-tablet .main > .suite-home .suite-app { padding-block: 7px 6px; }
+}
+
+/* A tablet held upright (or a big phone): the one-row bar, with roomier items */
+html.is-tablet .tabbar button { min-height: 52px; }
+html.is-tablet .tabbar .t-ico { width: 30px !important; height: 30px !important; }
+html.is-tablet .tabbar button { font-size: 12px; gap: 4px; }
+html.is-tablet .tabbar .tg-label { font-size: 10px; }

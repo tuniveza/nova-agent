@@ -380,6 +380,15 @@ the **music industry** (IFPI Global Music Report 2026: $31.7bn in 2025, up 6.4%)
 certain) and a **song of the day** (named and described, with a link to its lyrics: lyrics
 themselves are copyrighted). A tap on a card opens a short list. Data: `web/agent/assets/music-data.js`.
 
+### Phones and tablets
+
+Nova Agent knows when it's on a phone or a tablet from the device itself (iPads included), not
+just the window's size (`look.js` puts is-touch / is-phone / is-tablet on every page). There it's
+made for fingers and kept light: bigger tap targets, no zoom when you tap into a box, nothing that
+needs a mouse, no frosted-glass blur or drifting sky. On a tablet showing the computer layout the
+bars hide and show with your swipes and a handle brings them back. The conversation's pages turn
+with a sideways swipe (`web/agent/assets/touch.css`).
+
 ### Ambient music
 
 Quiet, never-ending Novacane ambient music: slow warm pads, a soft bass, star-like bells, now and

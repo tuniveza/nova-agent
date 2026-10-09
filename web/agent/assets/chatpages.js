@@ -1,6 +1,6 @@
 // The conversation in pages (Chat): each thing you asked, with Nova Agent's reply,
 // is one page that fits the panel. Turn pages with ← and → (or Space), unless you're typing in
-// the message box, or with the ‹ › under the conversation. A new reply opens on its own page. A
+// the message box, by swiping sideways on a touch screen, or with the ‹ › under the conversation. A new reply opens on its own page. A
 // page longer than the panel scrolls (it has a scrollbar). "All" shows the whole conversation as
 // one scrolling list instead (remembered on the device).
 (() => {
@@ -81,6 +81,16 @@
     if (e.key === "ArrowLeft") { e.preventDefault(); go(-1); }
     else if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(1); }
   });
+
+  // Touch: swipe left for the next page, right for the one before (a clear sideways swipe only,
+  // so scrolling a long reply up and down never turns the page)
+  let sx = 0, sy = 0, st = 0;
+  log.addEventListener("touchstart", (e) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now(); }, { passive: true });
+  log.addEventListener("touchend", (e) => {
+    if (!paged || bar.hidden) return;
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Date.now() - st < 700 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.8) go(dx < 0 ? 1 : -1);
+  }, { passive: true });
 
   // New messages: show the newest page
   new MutationObserver((changes) => {

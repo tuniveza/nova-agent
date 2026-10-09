@@ -4,6 +4,25 @@
 // Nova Agent's page. Saved on the device ("nova-look"); every open panel follows straight away.
 // When no theme is chosen, each panel keeps its own (as before).
 //   window.NovaLook = { themes, get(), setTheme(id | null), setPlanet(on), setCenter(on), refreshPlanet() }
+// What kind of device this is, from the device itself (not just the window's size), on <html> for
+// every page and panel: is-touch (a touch screen as the main pointer), is-phone, is-tablet
+// (iPads included, which say they're Macs), and data-device="phone|tablet|desktop".
+(() => {
+  try {
+    const root = document.documentElement;
+    const ua = navigator.userAgent || "";
+    const coarse = matchMedia("(pointer: coarse)").matches && !matchMedia("(pointer: fine)").matches;
+    const iPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    const uaMobile = navigator.userAgentData ? navigator.userAgentData.mobile : /Mobi|iPhone|iPod|Android.+Mobile|Windows Phone/i.test(ua);
+    const tabletUA = iPad || (/Android/i.test(ua) && !/Mobile/i.test(ua)) || /Tablet|Silk|Kindle|PlayBook/i.test(ua);
+    const short = Math.min(screen.width, screen.height);
+    const kind = uaMobile && !tabletUA ? "phone" : tabletUA || (coarse && short >= 600) ? "tablet" : coarse ? "phone" : "desktop";
+    root.dataset.device = kind;
+    root.classList.toggle("is-phone", kind === "phone");
+    root.classList.toggle("is-tablet", kind === "tablet");
+    root.classList.toggle("is-touch", kind !== "desktop" || coarse);
+  } catch (err) {}
+})();
 (() => {
   "use strict";
   if (window.NovaLook) return;
