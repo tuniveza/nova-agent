@@ -144,7 +144,7 @@
   .btn.primary { background: var(--grad); border-color: transparent; color: var(--on-accent); box-shadow: 0 8px 26px -10px var(--accent); }
   .ico { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
-  /* Main: fits the screen (no scrolling). Missions | Talk to Nova Agent | Quests, with the panels along the bottom */
+  /* Main: fits the screen (no scrolling). Missions | Chat | Quests, with the panels along the bottom */
   .main { width: min(100%, 1800px); justify-self: center; min-height: 0; overflow: hidden; display: grid; gap: 12px;
     grid-template-columns: minmax(270px, 1fr) minmax(380px, 1.35fr) minmax(270px, 1fr); grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "missions chat quests" "suite suite suite"; }
@@ -248,7 +248,7 @@
   .chat, .calendar { min-height: 0; min-width: 0; border-radius: 24px; overflow: hidden; }
   .chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
   .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--line); }
-  /* Each section's title: Talk to Nova Agent, Missions, Quests, Panels */
+  /* Each section's title: Chat, Missions, Quests, Panels */
   .sec-title { margin: 0; display: inline-flex; align-items: center; gap: 9px; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; color: #fff; white-space: nowrap; }
   .sec-title > span { color: var(--hi); text-shadow: 0 0 10px var(--hi); }
   .sec-title.gold > span { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
@@ -674,7 +674,7 @@
     </div>
   </header>
 
-  <!-- Missions | Talk to Nova Agent | Quests, with the panels along the bottom (all on one screen) -->
+  <!-- Missions | Chat | Quests, with the panels along the bottom (all on one screen) -->
   <main class="main" id="main">
     <!-- A panel, opened inside Nova Agent (panels have no pages of their own: this is where they open) -->
     <section class="viewer glass" id="viewer" hidden aria-label="App">
@@ -696,7 +696,7 @@
     </section>
     <section class="chat glass" aria-label="Chat with Nova Agent">
       <div class="chat-head">
-        <h2 class="sec-title"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span> Talk to Nova Agent</h2>
+        <h2 class="sec-title"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span> Chat</h2>
         <button type="button" class="icon-btn" id="clear" title="Start a new chat" aria-label="Start a new chat"><svg class="ico"><use href="#i-clear"/></svg></button>
       </div>
       <div class="log" id="log" aria-live="polite">

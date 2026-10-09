@@ -1,4 +1,4 @@
-// The conversation in pages (Talk to Nova Agent): each thing you asked, with Nova Agent's reply,
+// The conversation in pages (Chat): each thing you asked, with Nova Agent's reply,
 // is one page that fits the panel. Turn pages with ← and → (or Space), unless you're typing in
 // the message box, or with the ‹ › under the conversation. A new reply opens on its own page. A
 // page longer than the panel scrolls (it has a scrollbar). "All" shows the whole conversation as
