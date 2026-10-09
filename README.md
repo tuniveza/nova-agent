@@ -370,6 +370,16 @@ phones keep their own layout. In Auto, the mouse anywhere in the lower part of t
 bottom 14%) brings the panels bar up. Inside Nova Agent, Notes never runs off the screen: its
 toolbar wraps, and the page starts as tall as the window.
 
+### Today in music (the front page)
+
+Under the welcome, until you start chatting: small cards, a line or two each. The **Top 10
+worldwide** (live: the songs most played on Apple Music across 12 countries, via Nova Bot's
+/music-world, kept 6 hours), **popular genres**, **budget gear** (what each does, rough price),
+the **music industry** (IFPI Global Music Report 2026: $31.7bn in 2025, up 6.4%), a musician's
+**quote of the day** with their picture (from Wikipedia; "attributed" when its origin isn't
+certain) and a **song of the day** (named and described, with a link to its lyrics: lyrics
+themselves are copyrighted). A tap on a card opens a short list. Data: `web/agent/assets/music-data.js`.
+
 ### Ambient music
 
 Quiet, never-ending Novacane ambient music: slow warm pads, a soft bass, star-like bells, now and

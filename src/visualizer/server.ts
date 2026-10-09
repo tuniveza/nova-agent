@@ -303,6 +303,9 @@ app.all("/staff/*", (c) => passOn(c.req.raw));
 // Changes only from Nova Agent's own pages, like the rest of the staff API.
 app.use("/notes-api/*", async (c, next) => (fromOurPage(c.req.raw) ? next() : c.json({ error: "Only from Nova Agent's own pages" }, 403)));
 app.all("/notes-api/*", (c) => passOn(c.req.raw));
+// Nova Agent's front page: "Today in music" (the live charts and musicians' photos come from Nova Bot)
+app.get("/music-world", (c) => passOn(c.req.raw));
+app.get("/music-world/*", (c) => passOn(c.req.raw));
 
 // ---- Admin, as a panel: Nova Bot's admin pages, as the person signed in on this computer ----
 // (Online they're Nova Bot's own, at the same address.) Signed out: Portal, then back here.

@@ -1,0 +1,54 @@
+/* "Today in music" (music.js): small, quiet cards under the welcome. Fits any size: four cards in
+   a row on a computer, a row you swipe on narrow screens; the quote and the song stay one or two
+   lines. */
+.mworld { display: grid; gap: 8px; width: 100%; max-width: 720px; margin: 10px auto 0; text-align: center; }
+.mw-title { margin: 0; display: flex; align-items: center; gap: 10px; font-family: var(--f-mono); font-size: 9.5px; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: var(--muted); }
+.mw-title::before, .mw-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--hi) 45%, transparent)); }
+.mw-title::after { transform: scaleX(-1); }
+.mw-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.mw-card { display: grid; justify-items: center; gap: 2px; min-width: 0; padding: 7px 8px 8px; border-radius: 12px; cursor: pointer; color: var(--text); font: inherit;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent); background: color-mix(in srgb, var(--panel-2) 35%, transparent); transition: border-color .2s, box-shadow .2s, background-color .2s; }
+.mw-card:hover, .mw-card:focus-visible { border-color: color-mix(in srgb, var(--hi) 45%, transparent); box-shadow: 0 0 18px -8px var(--hi); background: color-mix(in srgb, var(--panel-2) 55%, transparent); }
+.mw-ico { width: 15px; height: 15px; fill: none; stroke: var(--hi); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.mw-k { font-family: var(--f-mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.mw-line { max-width: 100%; font-size: 12px; line-height: 1.3; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mw-quote { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding: 8px 12px; border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%); }
+.mw-face { grid-row: 1 / 3; position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, var(--hi), var(--accent-3)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--hi) 40%, transparent); }
+.mw-face b { font-size: 13px; color: #fff; }
+.mw-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.85); }
+.mw-quote blockquote { margin: 0; font-size: 13px; line-height: 1.35; font-style: italic; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mw-quote figcaption { font-size: 11px; color: var(--muted); }
+.mw-song { margin: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--muted); min-width: 0; }
+.mw-song > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mw-song b { color: var(--text); font-weight: 600; }
+.mw-song a { flex: none; color: var(--hi); text-decoration: none; }
+.mw-song a:hover { text-decoration: underline; }
+/* The short list a card opens */
+.mw-pop { position: fixed; z-index: 70; overflow: auto; padding: 10px 12px; border-radius: 16px; text-align: left;
+  border: 1px solid color-mix(in srgb, var(--hi) 35%, transparent); background: color-mix(in srgb, var(--panel) 97%, var(--void)); box-shadow: 0 18px 50px -16px #000; color: var(--text); font-size: 12.5px; }
+.mw-pop h5 { margin: 2px 0 8px; font-size: 13px; color: #fff; }
+.mw-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: n; }
+.mw-list li { display: flex; align-items: center; gap: 8px; }
+.mw-list:not(.plain) li::before { counter-increment: n; content: counter(n); width: 16px; flex: none; font-family: var(--f-mono); font-size: 11px; color: var(--hi); text-align: right; }
+.mw-list img { width: 30px; height: 30px; border-radius: 6px; flex: none; }
+.mw-list span { display: grid; min-width: 0; }
+.mw-list b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mw-list small { color: var(--muted); font-size: 11.5px; line-height: 1.3; }
+.mw-src { margin: 8px 0 0; font-size: 10.5px; color: var(--muted); }
+/* Narrow: the cards become a row you swipe; short windows: a little tighter */
+@media (max-width: 700px), (max-width: 1280px) and (min-width: 981px) {
+  .mw-row { display: flex; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 2px; }
+  .mw-card { flex: 0 0 auto; width: 150px; scroll-snap-align: start; }
+}
+@media (max-height: 760px) {
+  .mworld { gap: 6px; margin-top: 6px; }
+  .mw-quote { padding: 6px 10px; }
+  .mw-face { width: 32px; height: 32px; }
+  .mw-quote blockquote { -webkit-line-clamp: 1; line-clamp: 1; }
+}
+/* With the music cards there, the chat's suggestions sit in one row you swipe, so it all fits */
+.welcome:has(.mworld) .suggest { flex-wrap: nowrap; overflow-x: auto; justify-content: safe center; padding-bottom: 4px; scroll-snap-type: x proximity; }
+.welcome:has(.mworld) .suggest .chip { flex: none; scroll-snap-align: start; }
+.welcome:has(.mworld) { gap: 8px; }
