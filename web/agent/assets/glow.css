@@ -221,3 +221,14 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
 }
 /* With an app open, Missions and Quests step aside completely (never over the app) */
 .main.viewing > .board, .main.viewing > .side { display: none !important; }
+
+/* Missions and Quests never shrink to a sliver (while their contents load or refresh), and when
+   their column is narrow the title and its buttons stack instead of crowding each other */
+@media (min-width: 981px) and (min-height: 481px) {
+  .main:not(.viewing) > .side { min-height: min(220px, 100%); container-type: inline-size; }
+  .main:not(.viewing) > .side > .view { min-height: 120px; }
+}
+@container (max-width: 330px) {
+  .side-head { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; row-gap: 6px; padding-block: 8px !important; }
+  .side-head > .sec-title, .side-head > :not(.sec-title) { grid-column: 1 !important; justify-self: center !important; }
+}
