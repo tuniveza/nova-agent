@@ -322,6 +322,7 @@
         ${window.NovaBar ? btn('bar', `Bar: ${window.NovaBar.name()}`, g('▤')) : ''}
         ${window.NovaBar ? btn('top', `Top bar: ${window.NovaBar.name(window.NovaBar.topMode())}`, g('▔')) : ''}
         ${btn('look', 'Theme & look', g('◐'))}
+        ${window.NovaStatus ? btn('status', `Status: ${window.NovaStatus.name()}`, g('ⓘ')) : ''}
         ${sfxOn ? btn('sfx-extra', extraOn ? 'Quiet extras: on' : 'Quiet extras: off', g(extraOn ? '≋' : '∼')) : ''}
         ${tile('/admin/links') ? btn('links', 'All links', tileIcon('/admin/links', 'g')) : ''}
         ${canInstall ? btn('install', 'Install app', g('⤓')) : btn('reload', 'Refresh app', g('⟳'))}
@@ -349,6 +350,7 @@
     if (act === 'bar') { if (window.NovaBar) window.NovaBar.next(); return; }
     if (act === 'top') { if (window.NovaBar) window.NovaBar.nextTop(); return; }
     if (act === 'look') { const b = $('suite-btn'); if (b) b.click(); return; }
+    if (act === 'status') { if (window.NovaStatus) window.NovaStatus.next(); return; }
     if (act === 'sfx-extra') { if (window.NovaSfx) window.NovaSfx.toggleExtra(); return; }
     if (act === 'links') return open('/admin/links');
     if (act === 'install') { const i = $('install'); if (i) i.click(); return; }

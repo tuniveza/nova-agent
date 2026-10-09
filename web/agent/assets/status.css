@@ -52,3 +52,11 @@
 .look-swatch.active, .look-settings .chip.active { border-color: var(--hi); color: #fff; background: color-mix(in srgb, var(--hi) 16%, transparent); }
 .look-planet { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
 .tabbar > .status-line, .status-line { justify-content: center; }
+
+/* The status line's own choices (status.js): Auto hides it with the panels bar, Always hidden hides it,
+   and each part can be switched off */
+html[data-status="hidden"] .status-line, html[data-status="auto"].bar-tucked .shell > .status-line { display: none !important; }
+.status-line[data-hide~="ver"] .sl-ver, .status-line[data-hide~="news"] .sl-news, .status-line[data-hide~="sess"] .sl-sess,
+.status-line[data-hide~="left"] .sl-left, .status-line[data-hide~="act"] .sl-act, .status-line[data-hide~="time"] .sl-time { display: none !important; }
+.status-line[data-hide~="ver news sess left act time"] { display: none !important; }
+.status-parts label { font-size: 12.5px; margin: 0 4px; }

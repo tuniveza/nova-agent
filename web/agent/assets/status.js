@@ -249,3 +249,47 @@
     if (window.NovaLook.get().planet) window.NovaLook.refreshPlanet();
   }
 })();
+
+// ---- The status line: Auto (hides with the panels bar), Always shown or Always hidden, and each of
+// its parts can be switched off. Chosen in the Panels window (and the phone's gear); kept on this device.
+(() => {
+  "use strict";
+  const root = document.documentElement;
+  const line = document.getElementById("status-line");
+  if (!line) return;
+  const MODES = { auto: "Auto", shown: "Always shown", hidden: "Always hidden" };
+  const PARTS = { ver: "Version", news: "What's new", sess: "Here since", left: "Last left", act: "Activity", time: "Clock" };
+  const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (err) { return d; } };
+  const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (err) {} };
+  let mode = load("nova-status", "auto");
+  let hidden = load("nova-status-parts-off", []);
+  function apply() {
+    root.dataset.status = MODES[mode] ? mode : "auto";
+    line.dataset.hide = hidden.join(" ");
+    document.querySelectorAll("[data-status-mode]").forEach((b) => b.classList.toggle("active", b.dataset.statusMode === mode));
+    document.querySelectorAll("[data-status-part]").forEach((c) => (c.checked = !hidden.includes(c.dataset.statusPart)));
+  }
+  // The choices, under the bars' choices in the Panels window
+  const topRow = document.querySelector("[data-top-mode]");
+  if (topRow) {
+    const row = document.createElement("div");
+    row.className = "bar-mode";
+    row.setAttribute("role", "radiogroup");
+    row.setAttribute("aria-label", "Status line");
+    row.innerHTML = `<span>Status line</span>` + Object.entries(MODES).map(([k, v]) => `<button type="button" class="chip" role="radio" data-status-mode="${k}" data-sfx="tab">${v}</button>`).join("");
+    const parts = document.createElement("div");
+    parts.className = "bar-mode status-parts";
+    parts.innerHTML = `<span>Show</span>` + Object.entries(PARTS).map(([k, v]) => `<label class="look-planet"><input type="checkbox" data-status-part="${k}" data-sfx="none"> ${v}</label>`).join("");
+    topRow.parentElement.after(row, parts);
+    row.addEventListener("click", (e) => { const b = e.target.closest("[data-status-mode]"); if (b) { mode = b.dataset.statusMode; store("nova-status", mode); apply(); } });
+    parts.addEventListener("change", (e) => {
+      const c = e.target.closest("[data-status-part]");
+      if (!c) return;
+      hidden = c.checked ? hidden.filter((x) => x !== c.dataset.statusPart) : [...new Set([...hidden, c.dataset.statusPart])];
+      store("nova-status-parts-off", hidden);
+      apply();
+    });
+  }
+  window.NovaStatus = { mode: () => mode, next: () => { const k = Object.keys(MODES); mode = k[(k.indexOf(mode) + 1) % k.length]; store("nova-status", mode); apply(); return MODES[mode]; }, name: () => MODES[mode] };
+  apply();
+})();
