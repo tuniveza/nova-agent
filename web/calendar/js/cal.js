@@ -1173,7 +1173,7 @@ function openExisting(type, id, date) {
   setKind(editing.kind);
   if (ro) {
     form.querySelectorAll("input, select, textarea, .chips button, .colors button, .wd button").forEach((el) => (el.disabled = true));
-    $("readonly").textContent = "Part of Nova Agent's plan. Change it in Quests, or ask Nova Agent in Chat.";
+    $("readonly").textContent = "Part of Nova Agent's plan. Change it in Quests, or ask Agent.";
     $("readonly").hidden = false;
     $("save").hidden = true;
     $("actions").hidden = true;

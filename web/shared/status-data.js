@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 203,
+ "build": 205,
  "date": "2026-10-09",
  "panels": {
   "chat": [
@@ -19,18 +19,18 @@ window.NOVA_STATUS = {
    "Portal on phones"
   ],
   "calendar": [
+   "every day measured so nothing is cut…",
    "symbols on phones too",
    "day words and symbols switch at sensible…",
    "size checks read the month's grid",
-   "small days show cards as symbols",
-   "+ more under the card"
+   "small days show cards as symbols"
   ],
   "notes": [
+   "new notes start Shared when signed in",
    "Every window size usable",
    "Cosmic icons",
    "Shared and Local notes",
-   "Panels on phones",
-   "Portal is the one sign-in"
+   "Panels on phones"
   ],
   "index": [
    "Cosmic icons",
@@ -109,19 +109,19 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "calendar",
-    "words": "symbols on phones too"
+    "words": "every day measured so nothing is cut…"
    },
    {
     "panel": "calendar",
-    "words": "day words and symbols switch at sensible…"
+    "words": "symbols on phones too"
+   },
+   {
+    "panel": "notes",
+    "words": "new notes start Shared when signed in"
    },
    {
     "panel": "notes",
     "words": "Every window size usable"
-   },
-   {
-    "panel": "notes",
-    "words": "Cosmic icons"
    },
    {
     "panel": "index",
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "every day measured so nothing is cut…",
+  "new notes start Shared when signed in",
   "symbols on phones too",
   "day words and symbols switch at sensible…",
   "size checks read the month's grid",
   "small days show cards as symbols",
   "Chat's content panels",
-  "+ more under the card",
-  "small days show one card on a…",
-  "each day shows what fits it"
+  "+ more under the card"
  ]
 };

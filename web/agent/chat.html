@@ -695,10 +695,10 @@
       </div>
       <div class="view" id="view-missions"><div class="missions" id="missions"></div></div>
     </section>
-    <section class="chat glass" aria-label="Chat with Nova Agent">
+    <section class="chat glass" aria-label="Agent">
       <div class="chat-head">
-        <h2 class="sec-title"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span> Chat</h2>
-        <button type="button" class="icon-btn" id="clear" title="Start a new chat" aria-label="Start a new chat"><svg class="ico"><use href="#i-clear"/></svg></button>
+        <h2 class="sec-title"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span> Agent</h2>
+        <button type="button" class="icon-btn" id="clear" title="Start a new conversation" aria-label="Start a new conversation"><svg class="ico"><use href="#i-clear"/></svg></button>
       </div>
       <div class="log" id="log" aria-live="polite">
         <div class="welcome" id="welcome">
@@ -810,7 +810,7 @@
       <div class="suite-group apps">
         <h4>Apps</h4>
         <div class="suite-grid">
-          <a class="suite-app here" href="/agent/"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span><b>Chat</b><small>You're here: chat, Missions, Quests, Acuity helper</small></a>
+          <a class="suite-app here" href="/agent/"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span><b>Agent</b><small>You're here: Agent, Missions, Quests, Acuity helper</small></a>
           <a class="suite-app" href="/calendar/" data-inside="/calendar/"><span class="pico" data-p="calendar" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-calendar"/></svg></span><b>Calendar</b><small>The one Nova Agent plans into</small></a>
           <a class="suite-app" href="/portal/" data-inside="/portal/"><span class="pico" data-p="portal" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-portal"/></svg></span><b>Portal</b><small>Enquiries, chats, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
           <a class="suite-app" href="/notes/" data-inside="/notes/"><span class="pico" data-p="notes" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-notes"/></svg></span><b>Notes</b><small>Notes and documents, Google Docs export</small></a>
@@ -948,7 +948,7 @@
     calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Calendar', send: 'Add it', colour: '#9DB4FF' },
     studio: { icon: '♫', label: 'Studio bookings', hint: 'Looks at Acuity (read-only)', send: 'Check', colour: '#FFB86B' },
     ask: { icon: '?', label: 'Question', hint: 'Nova Agent answers, using your plan', send: 'Ask', colour: 'var(--soft)' },
-    chat: { icon: '✦', label: 'Chat', hint: 'Just talking to Nova Agent', send: 'Send', colour: 'var(--muted)' },
+    chat: { icon: '✦', label: 'Agent', hint: 'Just talking to Nova Agent', send: 'Send', colour: 'var(--muted)' },
   };
   const DAYS = '(?:mon|tues|wednes|thurs|fri|satur|sun)day';
   const RX = {
@@ -1286,7 +1286,7 @@
   $('mission-dlg').addEventListener('click', (e) => { if (e.target === $('mission-dlg')) showMissionForm(false); });
   function renderMissions() {
     const box = $('missions');
-    if (!st.missions.length) { box.innerHTML = '<div class="empty">No missions yet. Tap <b>✦ New mission</b>, or ask in the chat.</div>'; return; }
+    if (!st.missions.length) { box.innerHTML = '<div class="empty">No missions yet. Tap <b>✦ New mission</b>, or ask Agent.</div>'; return; }
     const order = { active: 0, paused: 1, done: 2 };
     box.innerHTML = [...st.missions].sort((a, b) => order[a.status] - order[b.status] || b.created.localeCompare(a.created)).map((m) => {
       const p = m.progress;
@@ -1720,8 +1720,8 @@
   const hint = input.placeholder;
   let state = 'ok';
   const words = {
-    off: 'Chat needs the studio computer — it’s off right now',
-    out: 'Sign in with Portal (top right) to use chat',
+    off: 'Agent needs the studio computer — it’s off right now',
+    out: 'Sign in with Portal (top right) to use Agent',
   };
   const css = document.createElement('style');
   css.textContent = '.pc-note{margin:10px;padding:12px 14px;border-radius:16px;border:1px dashed var(--line,#5a3d6e);color:var(--muted,#b997b5);font-size:13.5px;line-height:1.45;text-align:center}.pc-note button{margin-top:8px}';

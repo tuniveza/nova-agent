@@ -196,8 +196,8 @@
   clear.type = 'button';
   clear.className = 'icon-btn phone-only';
   clear.id = 'phone-clear';
-  clear.title = 'Start a new chat';
-  clear.setAttribute('aria-label', 'Start a new chat');
+  clear.title = 'Start a new conversation';
+  clear.setAttribute('aria-label', 'Start a new conversation');
   clear.innerHTML = svg('i-clear');
   clear.addEventListener('click', () => { const c = $('clear'); if (c) c.click(); });
   if (left) left.append(clear);
@@ -230,7 +230,7 @@
   // The panels' own icons (chat.html's .pico set: each its own colour, tinted by the theme)
   const pico = (k) => `<span class="pico t-ico" data-p="${k}" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-${k}"/></svg></span>`;
   const FIXED = {
-    'pane:chat': () => item('pane:chat', 'Chat', pico('chat')),
+    'pane:chat': () => item('pane:chat', 'Agent', pico('chat')),
     'pane:quests': () => item('pane:quests', 'Quests', pico('quests')),
     'pane:missions': () => item('pane:missions', 'Missions', pico('missions')),
     manual: () => item('manual', 'Manual', pico('manual')),

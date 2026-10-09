@@ -29,7 +29,7 @@
 
 ## Works with Nova Agent
 
-- Ask in Chat (a note card is what Chat calls an event): "Add a mix review Friday at 2 for an hour at Studio A", "Move it to 4", "Make the standup repeat every weekday", "Remind me 10 minutes before", "Delete it".
+- Ask Agent (a note card is what Agent calls an event): "Add a mix review Friday at 2 for an hour at Studio A", "Move it to 4", "Make the standup repeat every weekday", "Remind me 10 minutes before", "Delete it".
 - Nova Agent's planner keeps Quests out of your note cards (every time a repeating one happens). All-day note cards are markers, like day cards, not busy time.
 
 ## Where it's kept

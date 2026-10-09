@@ -2,7 +2,7 @@
   "id": "/agent/",
   "name": "Nova Agent",
   "short_name": "Nova Agent",
-  "description": "The studio's one app: chat, Missions and Quests, with Portal, Calendar, Notes, Index, Observatory and Lossless audio inside it.",
+  "description": "The studio's one app: Agent, Missions and Quests, with Portal, Calendar, Notes, Index, Observatory and Lossless audio inside it.",
   "start_url": "/agent/",
   "scope": "/",
   "display": "standalone",

@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="docs/media/hero.jpg" alt="Nova Agent: Nova Agent down the left, the chat in the middle answering 'What should I do now?', and today's plan on the right with the quest in progress" width="900">
+<img src="docs/media/hero.jpg" alt="Nova Agent: Nova Agent down the left, Agent in the middle answering 'What should I do now?', and today's plan on the right with the quest in progress" width="900">
 
 # Nova Agent
 
-**Your planner, your chat and the studio's hands in Acuity, on the studio computer.**<br>
+**Your planner, your Agent and the studio's hands in Acuity, on the studio computer.**<br>
 Talk to it, give it a goal, and it plans your days to the second. It also works Acuity's admin pages for Novacane Studios.
 
 [![Node 22](https://img.shields.io/badge/Node-22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
@@ -30,17 +30,17 @@ inside Nova Agent. Nova Agent has one address in each place, `/agent/`:
 `/agent/<panel>` (`/agent/calendar`, `/agent/portal`, `/agent/notes`, `/agent/index`...)
 opens Nova Agent with that panel. Nova Bot (the website chat) keeps the main address.
 
-Chat, Missions, Quests, Calendar and the Visualizer run on the studio PC. The online Nova Agent
+Agent, Missions, Quests, Calendar and the Visualizer run on the studio PC. The online Nova Agent
 reaches them over a link the PC opens to Nova Bot (`src/relay.ts`, a WebSocket with
 `AGENT_NOVA_KEY`), for signed-in staff only. When the PC is off, the online page says so and the
 other panels keep working. On the PC itself, its pages open the online Nova Agent, so there's one
 address; set `NOVA_LOCAL_UI=1` in `.env` to keep using the pages here (when the internet is down).
 
 On the studio PC, open `http://localhost:4545/agent/` and you get one screen that fits without
-scrolling: **Missions** on the left, a **chat** with Nova Agent in the middle, **Nova
+scrolling: **Missions** on the left, **Agent** in the middle, **Nova
 Quests** (today's plan) on the right, and the **panels** along the bottom.
 
-Behind the chat sits a planner: tell it a goal and it becomes a **Mission** of **Nova
+Behind Agent sits a planner: tell it a goal and it becomes a **Mission** of **Nova
 Quests**, fitted around your sleep, your calendar and your travel, with reminders and
 check-ins as you go. And behind that sits the job it started with: a careful, self-healing
 browser helper that does what [Acuity Scheduling](https://acuityscheduling.com)'s API can't,
@@ -52,10 +52,10 @@ All the pictures here come from a separate sample copy with made-up quests and p
 
 | | |
 |---|---|
-| **Chat** | Claude, with tools for quests, missions, Calendar, Acuity (read-only) and its own status |
+| **Agent** | Claude, with tools for quests, missions, Calendar, Acuity (read-only) and its own status |
 | **Missions and Quests** | Goals broken into quests, planned hour by hour (to the second), re-planned on every change |
 | **Reminders** | Pop-ups, check-ins, a morning plan and evening wrap-up, chimes, system notifications and your phone |
-| **Calendar** | Built in, saving to Nova Agent, so the chat and the calendar always agree |
+| **Calendar** | Built in, saving to Nova Agent, so Agent and the calendar always agree |
 | **Panels** | Portal, Calendar, Notes, Index, Observatory and Lossless audio, inside Nova Agent or in their own window |
 | **Online** | The same Portal, Index, Calendar and Notes at Nova Bot's address (`/portal/` and so on), for the phones |
 | **Index** | Reads what Nova Agent remembers before it replies, and learns after |
@@ -65,20 +65,20 @@ All the pictures here come from a separate sample copy with made-up quests and p
 ## See it work
 
 <p align="center">
-  <img src="docs/media/quest-flow.gif" alt="Asking the chat to add a quest: it appears in the plan as up next, then Start makes it the quest in progress and Done moves it to the Done tab" width="900"><br>
+  <img src="docs/media/quest-flow.gif" alt="Asking Agent to add a quest: it appears in the plan as up next, then Start makes it the quest in progress and Done moves it to the Done tab" width="900"><br>
   <sub>Ask for a quest, watch it land in the plan, then Start and Done.</sub>
 </p>
 
 <p align="center">
-  <img src="docs/media/apps-viewer.gif" alt="Opening Calendar, Notes and Index from the rail, each inside Nova Agent's viewer, then back to the chat" width="900"><br>
-  <sub>The rail opens Calendar, Notes and Index inside Nova Agent; "← Nova Agent" brings the chat back.</sub>
+  <img src="docs/media/apps-viewer.gif" alt="Opening Calendar, Notes and Index from the rail, each inside Nova Agent's viewer, then back to Agent" width="900"><br>
+  <sub>The rail opens Calendar, Notes and Index inside Nova Agent; "← Nova Agent" brings Agent back.</sub>
 </p>
 
 ## The panels
 
 | Panel | What it is | On the studio PC | Online (Nova Bot) | Code |
 |---|---|---|---|---|
-| **Chat** | Talk to Nova Agent; Missions and Quests | `/` | | `src/`, `web/agent/` |
+| **Agent** | Talk to Nova Agent; Missions and Quests | `/` | | `src/`, `web/agent/` |
 | **Portal** | The staff app: enquiries, website chats, bookings, quests, alerts, Ask NovaBot, push to the phones (what was Hub), and sign-in, your planet, the team and invites | `/portal/` | `/portal/` | `web/portal/` |
 | **Calendar** | Note cards and day cards; Nova Agent plans into it | `/calendar/` | `/calendar/` | `web/calendar/` |
 | **Notes** | Notes and documents, Google Docs export | `/notes/` | `/notes/` | `web/notes/` |
@@ -102,9 +102,9 @@ Index (`/app/memory/`) and the push helper that phones which installed Hub still
 
 ## What it does
 
-### The chat, in the middle
+### Agent, in the middle
 
-Nova Agent's chat (`src/chat.ts`) is Claude with tools. Ask it what to do next ("What should I
+Agent (`src/chat.ts`) is Claude with tools. Ask it what to do next ("What should I
 do now?" gives one clear recommendation), plan a mission, block out an evening ("I'm out tonight
 from 7 to 11"), push your day back ("I'm running late"), add or change Calendar note
 cards and day cards ("make 31 October a Halloween day card"), look at the studio's Acuity
@@ -114,7 +114,7 @@ and sees a screenshot and the page's contents), or ask how Nova Agent is doing. 
 up as a little chip under its reply, and the plan beside it redraws straight away.
 
 On a wide screen the three columns sit side by side above Nova Agent, all on one screen; on
-a phone or a very short window they stack (the chat first) and the page scrolls.
+a phone or a very short window they stack (Agent first) and the page scrolls.
 
 ### Missions and Quests
 
@@ -145,7 +145,7 @@ becomes a **Mission**. Claude (`src/quests/planner.ts`) writes:
   the travel to get there. Work that repeats per item (every song's finish → mix → film → edit →
   post) is described once as a **series** and written out here with exact spacing;
 - the **assumptions** it made and the **questions** that would sharpen it. Answer them in the
-  mission's **Refine** tab (or just tell the chat) and the work that's left is planned again;
+  mission's **Refine** tab (or just tell Agent) and the work that's left is planned again;
 - **research**: when current facts would make the plan better (how a platform works now,
   distributor lead times, prices, opening hours), it searches the web and reads pages while it
   plans. What it used is listed under "Researched on the web" in the mission's Plan tab, each
@@ -154,7 +154,7 @@ becomes a **Mission**. Claude (`src/quests/planner.ts`) writes:
 Tap a mission to open its plan: **Plan** (tracks and strategy), **Roadmap** (milestones by
 month, tick them off), **Quests** (by week, filtered by track) and **Refine**.
 
-As you type in the chat, a **cue** above the box shows what the message will become (Nova
+As you type to Agent, a **cue** above the box shows what the message will become (Nova
 Mission, Quest, repeating quest, pulse, blocked time, quest update, mission detail,
 calendar card, studio bookings or a question) and what it picked out (deadline, time, length,
 how often, how many, platforms).
@@ -224,7 +224,7 @@ check and are carried out within about a second.
 <img src="docs/media/calendar-tab.jpg" alt="The Calendar tab: Calendar's month view and today's panel, fitting the plan column" width="300" align="right">
 
 Calendar is a panel (`web/calendar/`) served at `/calendar/`. Inside Nova Agent it saves to `data/calendar.json`
-instead of only the browser, so the chat, the planner and the calendar always see the same
+instead of only the browser, so Agent, the planner and the calendar always see the same
 note cards and day cards. Every planned quest and blocked time shows up in it as a note card
 (✦ for a quest, ∞ for a repeat, ⚠ when at risk, ✓ when done), and its theme colours the whole
 of Nova Agent. The **Calendar** tab fits it to the plan column with no scrolling.
@@ -329,7 +329,7 @@ the words come from `web/shared/status-data.js`, made by `npm run status`, which
 runs too).
 
 **The icons** are little glowing scenes of space, each on its own small Novacane nebula (its own
-colour mixed with the theme's): the Novacane sigil in an orbiting orb (Chat), a ringed planet and
+colour mixed with the theme's): the Novacane sigil in an orbiting orb (Agent), a ringed planet and
 its moon (Portal), the moon over its phases (Calendar), a quill writing a constellation (Notes), a
 glowing star cluster (Index), a comet streaking to a star flag (Quests), a rocket (Missions), a
 pulsar (Lossless audio), a spiral galaxy (Visualizer), a domed observatory under the moon
@@ -363,7 +363,7 @@ in one after another. The gear (settings) is on computers too: it opens the Pane
 ### Every window size
 
 Nova Agent fits whatever size its window is: computer windows down to 481px tall keep the
-computer layout, getting tighter as they get shorter (a slimmer header, the chat's suggestions in
+computer layout, getting tighter as they get shorter (a slimmer header, Agent's suggestions in
 one row you swipe, smaller bars); narrower computer windows get slimmer side columns and smaller
 buttons; tablets and windows between phone and computer size get the bar in one centred row; and
 phones keep their own layout. In Auto, the mouse anywhere in the lower part of the window (its
@@ -372,7 +372,7 @@ toolbar wraps, and the page starts as tall as the window.
 
 ### Today in music (the front page)
 
-Under the welcome, until you start chatting: small cards, a line or two each. The **Top 10
+Under the welcome, until you start talking to Agent: small cards, a line or two each. The **Top 10
 worldwide** (live: the songs most played on Apple Music across 12 countries, via Nova Bot's
 /music-world, kept 6 hours), **popular genres**, **budget gear** (what each does, rough price),
 the **music industry** (IFPI Global Music Report 2026: $31.7bn in 2025, up 6.4%), a musician's
@@ -460,8 +460,8 @@ Agent is its own server on the same machine.
 
 ```mermaid
 flowchart LR
-    You[You, at the studio PC] --> UI[Nova Agent page<br/>chat · plan · suite]
-    UI --> Chat[Chat<br/>src/chat.ts] --> Claude[Claude]
+    You[You, at the studio PC] --> UI[Nova Agent page<br/>Agent · plan · suite]
+    UI --> Chat[Agent<br/>src/chat.ts] --> Claude[Claude]
     Chat --> Q[(Quests and calendar<br/>data/)]
     UI --> Q
     Chat <-->|reads before, learns after| NI[Index<br/>on Nova Bot's worker]
@@ -499,7 +499,7 @@ npm run login             # for the Acuity helper: log in once in a visible brow
 npm start                 # should say "Logged in to Acuity"
 ```
 
-The chat and mission planning need `ANTHROPIC_API_KEY` in `.env` (Claude also powers the
+Agent and mission planning need `ANTHROPIC_API_KEY` in `.env` (Claude also powers the
 self-healing element finder). Jobs, phone alerts, the phones' Quests sync and Index memory need
 `AGENT_NOVA_KEY`; without it they're simply off. To bring the calendar up to date with its own
 repo: `git submodule update --remote calendar`.
@@ -525,7 +525,7 @@ With `AGENT_NOVA_KEY` empty it won't collect jobs, read memory or send phone ale
 
 | Command | What it does |
 |---|---|
-| `npm run visualizer` | Nova Agent itself: the chat and plan at http://localhost:4545, reminders, the phones' Quests sync, the daily healthcheck and job collection (`npm run service` is the same) |
+| `npm run visualizer` | Nova Agent itself: Agent and plan at http://localhost:4545, reminders, the phones' Quests sync, the daily healthcheck and job collection (`npm run service` is the same) |
 | `npm start` | Checks the Acuity login; logs in automatically if the session expired |
 | `npm run login` | Opens a visible browser so you can log in to Acuity by hand |
 | `npm run list` | Appointments for the next 7 days |
@@ -563,7 +563,7 @@ Names only here; never commit `.env`.
 
 | Name | Default | What it's for |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | – | The chat, mission planning and the AI element finder |
+| `ANTHROPIC_API_KEY` | – | Agent, mission planning and the AI element finder |
 | `NOVA_MODEL` | `claude-opus-5-5` | The Claude model name |
 | `NOVA_WORKER_URL` | Novacane's worker | Nova Bot's worker: jobs, alerts, the phones' Quests sync and Index |
 | `AGENT_NOVA_KEY` | – | Must match the worker's `AGENT_NOVA_KEY` secret; blank = no jobs, phone alerts, Quests sync or memory |
@@ -582,7 +582,7 @@ Names only here; never commit `.env`.
 | `NOTIFY_CLIENTS` | `true` | Tick Acuity's "Send email to client" when cancelling |
 
 Your rhythm (wake, sleep, buffers, breaks, the daily cap, reminders, check-ins, briefings, phone
-alerts and pace limits) is set on the page with ⚙, or by asking the chat.
+alerts and pace limits) is set on the page with ⚙, or by asking Agent.
 
 Everything Nova Agent writes at run time goes in `data/` (or `NOVA_DATA_DIR`), which git
 ignores: quests and missions (`quests.json`), the calendar (`calendar.json`), the saved Acuity
@@ -599,7 +599,7 @@ result, screenshots, daily logs (`logs/<date>.jsonl`, which include client names
 - **The healthcheck** always runs with that second layer on, even when live.
 - **Cancel and edit** need an exact date and time match (and the client's name if given). If
   more than one appointment matches, the agent refuses.
-- **The chat is read-only in Acuity**: it can look at bookings and check the login, never book,
+- **Agent is read-only in Acuity**: it can look at bookings and check the login, never book,
   move or cancel.
 - **The page's buttons** only work from the page itself (a custom header other websites can't
   send), and Nova Agent only listens on this computer.
@@ -643,11 +643,11 @@ work: the first run heals each element and saves it, the second comes straight f
 
 ```
 src/visualizer/server.ts  Nova Agent's server: the pages, the plan's API, the suite apps, reminders
-src/visualizer/chat.html  the main page: Nova Agent rail, the chat, Today, Missions, Calendar
+src/visualizer/chat.html  the main page: Nova Agent rail, Agent, Today, Missions, Calendar
 src/visualizer/page.html  the visualizer
 src/visualizer/app/       the installable app: manifest, service worker, icons, sfx.js (sound effects)
 src/visualizer/calendar-sync.js  makes Calendar save to Nova Agent
-src/chat.ts               the chat: Claude with quest, calendar, Acuity (read-only), web and status tools
+src/chat.ts               Agent: Claude with quest, calendar, Acuity (read-only), web and status tools
 src/web.ts                web research and seeing webpages (public pages only, in a browser of its own)
 src/memory.ts             Index: what the suite remembers, read before replies, learned after
 src/config.ts             every setting, read once from .env
@@ -660,7 +660,7 @@ src/quests/plan.ts        re-planning, and mirroring quests into Calendar
 src/quests/reminders.ts   reminders, check-ins, the morning plan and evening wrap-up
 src/quests/deliveries.ts  every phone ping: sent once, checked, retried, logged (data/nova.db)
 src/quests/hubsync.ts     the plan to the phones (Portal), and their taps back
-src/quests/actions.ts     everything the chat and the page can do with them
+src/quests/actions.ts     everything Agent and the page can do with them
 src/calendar/store.ts     Calendar's data (calendar.json, with a revision per save)
 src/calendar/page.ts      saves from the calendar page, merged with changes made elsewhere
 src/index.ts              command-line entry point for the Acuity helper

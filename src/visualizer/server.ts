@@ -465,7 +465,7 @@ app.post("/actions/chat", async (c) => {
     return c.json({ ok: true, ...(await chat(messages)) });
   } catch (error) {
     const message = (error as Error).message;
-    trace("llm", "error", `Chat failed: ${message}`);
+    trace("llm", "error", `Agent failed: ${message}`);
     return c.json({ ok: false, message: /api[_ ]?key|authentication|401/i.test(message) ? "Nova Agent can't reach Claude: check ANTHROPIC_API_KEY in .env." : "Nova Agent couldn't answer just now. Try again in a moment." }, 500);
   }
 });
@@ -520,7 +520,7 @@ app.post("/actions/forget", (c) => {
 });
 
 serve({ fetch: app.fetch, hostname: "127.0.0.1", port: config.visualizerPort }, () => {
-  console.log(`Nova Agent: http://localhost:${config.visualizerPort}  (chat)  ·  /calendar/  ·  /visualizer`);
+  console.log(`Nova Agent: http://localhost:${config.visualizerPort}  (Agent)  ·  /calendar/  ·  /visualizer`);
 });
 
 // The daily healthcheck. It waits its turn in the task queue like any task.
