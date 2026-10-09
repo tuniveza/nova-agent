@@ -179,27 +179,39 @@
     fit();
   }
 
-  // The whole front page fits the chat's space with no scrolling: if it's taller than the room,
-  // it's drawn a little smaller (never below 60%)
+  // The whole front page fits the chat's space with no scrolling, and fills it: drawn smaller when
+  // it's taller than the room, bigger when there's room to spare
   let fitting = 0;
   function fit() {
     cancelAnimationFrame(fitting);
     fitting = requestAnimationFrame(() => {
       const w = document.getElementById("welcome");
-      if (!w || !w.isConnected || w.offsetParent === null) return;
-      w.style.zoom = "";
+      if (!w || !w.isConnected || w.hidden || !w.getClientRects().length) return;
       const cs = getComputedStyle(log);
-      const room = log.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 4;
-      // What the content itself needs (the welcome box may be stretched taller than that)
-      const kids = [...w.children].filter((k) => k.getClientRects().length && k.getBoundingClientRect().height > 0);
-      if (!kids.length) return;
-      const top = Math.min(...kids.map((k) => k.getBoundingClientRect().top));
-      const bottom = Math.max(...kids.map((k) => k.getBoundingClientRect().bottom));
-      const need = bottom - top + 12;
-      const z = need > room ? Math.max(0.65, room / need) : 1;
-      if (z < 1) w.style.zoom = z.toFixed(3);
+      const room = log.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 8;
+      // What the content itself needs, at a given size (the welcome box may be stretched taller)
+      const measure = (z) => {
+        w.style.zoom = z === 1 ? "" : String(z);
+        w.style.width = z > 1 ? `${(100 / z).toFixed(2)}%` : "";
+        const kids = [...w.children].filter((k) => k.getClientRects().length && k.getBoundingClientRect().height > 0);
+        if (!kids.length) return 0;
+        const top = Math.min(...kids.map((k) => k.getBoundingClientRect().top));
+        const bottom = Math.max(...kids.map((k) => k.getBoundingClientRect().bottom));
+        return bottom - top + 12;
+      };
+      // Fills the room: smaller when there's too little (never below 65%), bigger when there's
+      // plenty (up to 140%), always all of it in view
+      let z = 1;
+      const need = measure(1);
+      if (!need) return;
+      if (need > room) z = Math.max(0.65, room / need);
+      else {
+        z = Math.min(1.4, room / need);
+        for (let i = 0; i < 4 && z > 1.01 && measure(z) > room; i++) z = Math.max(1, z * 0.95);
+      }
+      measure(Math.round(z * 1000) / 1000);
       // Only on a very small screen, where even smaller would be unreadable, can it scroll
-      log.classList.toggle("mw-scroll", need * z > room + 2);
+      log.classList.toggle("mw-scroll", z <= 0.65 && need * z > room + 2);
     });
   }
   new ResizeObserver(fit).observe(log);
