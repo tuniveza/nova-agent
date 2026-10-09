@@ -141,7 +141,7 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
   .shell { gap: 8px; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
   .main { gap: 8px; }
   .topbar { padding: 5px 12px; }
-  .topbar .kicker { display: none; }
+ 
   .topbar .mark { width: 34px; height: 34px; border-radius: 10px; }
   .topbar .wordmark { font-size: 19px; }
   .welcome { gap: 8px; }
@@ -194,3 +194,18 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
 .chat-pager .cp-where { min-width: 7ch; text-align: center; }
 .chat { grid-template-rows: auto minmax(0, 1fr) auto auto !important; }
 @media (max-width: 980px), (max-height: 480px) { .chat { grid-template-rows: minmax(0, 1fr) auto auto !important; } }
+
+/* ---- One centre line: Missions and Quests the same width, so Chat sits in the middle of the page,
+   lined up with the brand panel (top), the navigation panel and the status panel. On the home the
+   brand panel is as wide as Chat below it (never narrower than its own buttons need). ---- */
+@media (min-width: 981px) and (min-height: 481px) {
+  html { --side-w: clamp(230px, 22vw, 400px); }
+  .main:not(.viewing) { grid-template-columns: var(--side-w) minmax(340px, 1fr) var(--side-w) !important; }
+  .shell:not(:has(> .main.viewing)) > .topbar { width: var(--chat-w, auto); min-width: max-content; max-width: 100%;
+    grid-template-columns: 1fr auto 1fr; justify-self: center; }
+  .shell:not(:has(> .main.viewing)) > .topbar > .top-side.left { justify-self: start; }
+  .shell:not(:has(> .main.viewing)) > .topbar > .top-side.right { justify-self: end; }
+}
+@media (min-width: 981px) and (max-width: 1280px) and (min-height: 481px) { html { --side-w: clamp(200px, 19vw, 280px); } .topbar { gap: 8px; } .top-side { gap: 6px; } }
+/* The brand panel's small word above Nova Agent: just "Novacane", kept on every computer size */
+@media (min-width: 981px) and (min-height: 481px) { .topbar .brand .kicker { display: block !important; } }
