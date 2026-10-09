@@ -127,3 +127,12 @@ html[data-centred] .cell .moonmark { position: absolute; top: 7px; right: 7px; }
   @container (max-height: 175px) { .pill > small { display: none !important; } }
   @container (max-height: 125px) { .pill span { -webkit-line-clamp: 1 !important; line-clamp: 1 !important; } .pill b { display: inline !important; margin-right: 4px; } .pill { padding: 2px 6px !important; } .pill b + span { display: inline !important; } }
 }
+@media (min-width: 701px) {
+  @container (max-height: 125px) {
+    .pill { display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+    .pill span { display: inline !important; -webkit-line-clamp: unset !important; line-clamp: unset !important; white-space: nowrap !important; }
+    .pill ~ .pill { display: none !important; }
+    .pill:has(~ .pill)::after { content: "  + more"; font-weight: 400; opacity: .75; }
+    .cell .more { display: none; }
+  }
+}
