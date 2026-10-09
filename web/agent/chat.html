@@ -572,6 +572,7 @@
 </style>
 <!-- On a phone: the bar along the bottom, one thing at a time, sized to the visible screen -->
 <link rel="stylesheet" href="/agent/phone.css">
+<link rel="stylesheet" href="/agent/bar.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -736,6 +737,13 @@
       <span class="kicker">Novacane Studios</span>
       <h3 id="suite-title">✦ Panels</h3>
       <p>Everything in Nova Agent, from here.</p>
+      <!-- The panels bar: shows and hides itself (Auto), or always shown, or always hidden (bar.js) -->
+      <div class="bar-mode" role="radiogroup" aria-label="Panels bar">
+        <span>Panels bar</span>
+        <button type="button" class="chip" role="radio" data-bar-mode="auto" data-sfx="tab">Auto</button>
+        <button type="button" class="chip" role="radio" data-bar-mode="shown" data-sfx="tab">Always shown</button>
+        <button type="button" class="chip" role="radio" data-bar-mode="hidden" data-sfx="tab">Always hidden</button>
+      </div>
       <button type="button" class="icon-btn suite-x" id="suite-close" aria-label="Close">✕</button>
     </div>
     <div class="suite-groups">
@@ -812,6 +820,7 @@
 <script src="/calendar/js/themes.js"></script>
 <script src="/calendar/js/backdrop.js"></script>
 <script src="/agent/phone.js"></script>
+<script src="/agent/bar.js"></script>
 <script>
 (function () {
   'use strict';

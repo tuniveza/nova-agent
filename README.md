@@ -287,6 +287,13 @@ themselves, and come back after a pause.
 
 ### The panels bar and motion
 
+It shows and hides itself (**Auto**, the default): always there on Nova Agent's home; with a
+panel open it stays a moment, then steps aside so the panel has the whole room. It comes back when
+the mouse touches the bottom edge, when you scroll back up in a panel, or (on a phone) when you tap
+the little handle at the bottom. It can also be **Always shown** or **Always hidden**: choose in
+the Panels window (the PANELS button) or on a phone in the gear (Bar). Remembered on the device
+(`web/agent/assets/bar.js` and `bar.css`).
+
 Along the bottom on a computer: every panel in its four groups (Apps, Tasks, Tools, Helpers),
 edge to edge. It's the same bar whatever is open; with a panel open it only gets smaller. Motion
 is light (only scale and opacity move): buttons and tiles press in softly, the open panel's tile
