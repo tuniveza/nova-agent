@@ -228,7 +228,7 @@
   const item = (key, label, icon) => `<button type="button" data-tab="${key}">${icon}<span>${label}</span></button>`;
   const glyph = (g) => `<span class="t-ico g" aria-hidden="true">${g}</span>`;
   // The panels' own icons (chat.html's .pico set: each its own colour, tinted by the theme)
-  const pico = (k) => `<span class="pico t-ico" data-p="${k}" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#pi-${k}"/></svg></span>`;
+  const pico = (k) => `<span class="pico t-ico" data-p="${k}" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-${k}"/></svg></span>`;
   const FIXED = {
     'pane:chat': () => item('pane:chat', 'Chat', pico('chat')),
     'pane:quests': () => item('pane:quests', 'Quests', pico('quests')),
@@ -329,6 +329,8 @@
       <button type="button" class="more-close" data-act="close">Close</button>`;
   }
   gear.addEventListener('click', () => {
+    // A computer: the gear opens the Panels window (every panel, the theme and the bars' settings)
+    if (!PHONE.matches) { const b = $('suite-btn'); if (b) b.click(); return; }
     fillGear();
     if (!sheet.open) sheet.showModal();
     sfx('open');

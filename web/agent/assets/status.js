@@ -1,7 +1,6 @@
 // The status line: one line of small text under the panels bar (inside the bar on a phone), with
-//   ✦ Panels (opens the Panels window: every panel, and the look and bar settings),
 //   Nova Agent's version and build,
-//   a slowly scrolling line of what changed lately, for the part of the bar you're on (Apps, Tasks,
+//   what changed lately, in a few still words, for the part of the bar you're on (Apps, Tasks,
 //     Tools, Helpers, or the panel that's open),
 //   when you came on and when you were last off (remembered on this device),
 //   what you've been doing lately (tap for the list), and a 12-hour clock.
@@ -56,7 +55,6 @@
   line.id = "status-line";
   line.setAttribute("aria-label", "Status");
   line.innerHTML = `
-    <button type="button" class="sl-panels" data-sfx="open" title="Every panel, and the look and bar settings"><span aria-hidden="true">✦</span> Panels</button>
     <span class="sl-ver" title="Nova Agent's version and build${DATA.date ? ` (${esc(DATA.date)})` : ""}">v${esc(DATA.version)} · ${esc(DATA.build)}</span>
     <span class="sl-news" aria-live="off"><span class="sl-area"></span><span class="sl-track"><span class="sl-words"></span></span></span>
     <span class="sl-sess" title="When you came on, and when you were last off (on this device)"></span>
@@ -81,7 +79,6 @@
   const barNow = $("tabbar");
   if (barNow) new MutationObserver(() => PHONE.matches && !barNow.contains(line) && barNow.append(line)).observe(barNow, { childList: true });
 
-  line.querySelector(".sl-panels").addEventListener("click", () => { const b = $("suite-btn"); if (b) b.click(); });
 
   // The clock
   const clock = line.querySelector(".sl-clock");
@@ -139,18 +136,16 @@
     if (AREA_NAMES[key]) { label = AREA_NAMES[key]; items = (DATA.areas[key] || []).map((x) => `${PANEL_NAMES[x.panel]}: ${x.words}`); }
     else if (PANEL_NAMES[key]) { label = PANEL_NAMES[key]; items = DATA.panels[key] || []; }
     areaLabel.textContent = label;
-    const text = items.length ? items.join("  ·  ") : "All up to date";
-    wordsEl.textContent = text;
-    // A slow scroll when it doesn't fit (it pauses while you point at it)
-    wordsEl.classList.remove("roll");
-    requestAnimationFrame(() => {
-      const box = wordsEl.parentElement;
-      if (wordsEl.scrollWidth > box.clientWidth + 4) {
-        wordsEl.textContent = `${text}  ·  ${text}  ·  `;
-        wordsEl.style.setProperty("--len", `${Math.max(14, text.length * 0.28)}s`);
-        wordsEl.classList.add("roll");
-      }
-    });
+    // Still, and as simple as it gets: the latest change in a few words
+    wordsEl.textContent = items.length ? simple(items[0]) : "All up to date";
+    wordsEl.title = items.join(" · ");
+  }
+  function simple(text) {
+    let t = String(text).replace(/^[A-Z][a-z]+: /, "").replace(/[…,.;:!].*$/, "").replace(/^(the|a|an)\s+/i, "");
+    const w = t.split(/\s+/).filter(Boolean).slice(0, 4);
+    while (w.length > 1 && /^(and|or|the|a|an|of|to|in|on|for|with|at|by|from|itself|is|are)$/i.test(w[w.length - 1])) w.pop();
+    t = w.join(" ");
+    return t.charAt(0).toUpperCase() + t.slice(1);
   }
   const keyOf = (path) => {
     const p = String(path || "");

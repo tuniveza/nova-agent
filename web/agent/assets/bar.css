@@ -1,3 +1,6 @@
+/* Quick, lively motion: things come in with a small spring and leave quickly */
+:root { --spring: cubic-bezier(.34, 1.45, .64, 1); --quick-in: cubic-bezier(.5, 0, .9, .4); }
+
 /* The panels bar showing and hiding itself (bar.js): html[data-bar="auto|shown|hidden"], and
    html.bar-tucked while it's out of the way. Only transform and opacity move, so it's smooth. */
 
@@ -12,8 +15,8 @@
   html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home {
     position: absolute; left: 10px; right: 10px; bottom: 8px; z-index: 20;
     box-shadow: 0 -12px 40px -18px rgba(0, 0, 0, .7), 0 0 0 1px var(--line);
-    transition: transform .4s cubic-bezier(.2, .8, .2, 1), opacity .3s ease; }
-  html.bar-tucked .main.viewing > .suite-home { transform: translateY(calc(100% + 24px)); opacity: 0; pointer-events: none; }
+    transition: transform .34s var(--spring), opacity .18s ease; }
+  html.bar-tucked .main.viewing > .suite-home { transform: translateY(calc(100% + 24px)); opacity: 0; pointer-events: none; transition: transform .2s var(--quick-in), opacity .18s ease .04s; }
   /* Always hidden: not on the home either (the PANELS button at the top still opens them all) */
   html[data-bar="hidden"].bar-tucked .main:not(.viewing) { grid-template-rows: minmax(0, 1fr); }
   html[data-bar="hidden"].bar-tucked .main:not(.viewing) > .suite-home { display: none; }
@@ -27,8 +30,8 @@
   html[data-bar="auto"] .shell:has(> .main.viewing) > .tabbar, html[data-bar="hidden"] .shell > .tabbar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0;
     box-shadow: 0 -10px 30px -14px rgba(0, 0, 0, .8);
-    transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
-  html.bar-tucked .shell > .tabbar { transform: translateY(calc(100% + 2px)); pointer-events: none; }
+    transition: transform .32s var(--spring); }
+  html.bar-tucked .shell > .tabbar { transform: translateY(calc(100% + 2px)); pointer-events: none; transition: transform .2s var(--quick-in); }
   html.bar-tucked .toasts { bottom: calc(20px + env(safe-area-inset-bottom)); }
   html.bar-tucked .bar-peek { display: grid; place-items: center; left: 50%; bottom: 0; width: 96px; height: calc(22px + env(safe-area-inset-bottom)); margin-left: -48px; padding-bottom: env(safe-area-inset-bottom); }
   html.bar-tucked .bar-peek > span { width: 44px; height: 5px; background: color-mix(in srgb, var(--hi) 55%, var(--muted)); box-shadow: 0 0 10px -2px var(--hi); opacity: .8; }
@@ -42,19 +45,21 @@
   html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
     position: absolute; top: max(12px, env(safe-area-inset-top)); left: 14px; right: 14px; z-index: 30;
     box-shadow: 0 12px 40px -18px rgba(0, 0, 0, .7), 0 0 0 1px var(--line);
-    transition: transform .4s cubic-bezier(.2, .8, .2, 1), opacity .3s ease; }
-  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 20px)); opacity: 0; pointer-events: none; }
+    transition: transform .34s var(--spring), opacity .18s ease; }
+  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 20px)); opacity: 0; pointer-events: none; transition: transform .2s var(--quick-in), opacity .16s ease .04s; }
   /* Typing on the home (Auto): the panels strip steps aside and the columns get the room */
   html[data-bar="auto"].bar-tucked .main:not(.viewing) { grid-template-rows: minmax(0, 1fr); }
-  html[data-bar="auto"].bar-tucked .main:not(.viewing) > .suite-home { display: none; }
+  html[data-bar="auto"].bar-tucked .main:not(.viewing) > .suite-home { display: none; opacity: 0; translate: 0 18px; }
+  .main:not(.viewing) > .suite-home { transition: opacity .2s ease, translate .32s var(--spring), display .2s allow-discrete; }
+  @starting-style { .main:not(.viewing) > .suite-home { opacity: 0; translate: 0 18px; } }
 }
 @media (max-width: 980px), (max-height: 600px) {
   html[data-top="auto"] .shell:has(> .main.viewing), html[data-top="hidden"] .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto; }
   html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
     position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; z-index: 41;
     box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .8);
-    transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
-  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 14px)); pointer-events: none; }
+    transition: transform .32s var(--spring); }
+  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 14px)); pointer-events: none; transition: transform .2s var(--quick-in); }
 }
 
 /* The choice in the Panels window */
@@ -68,6 +73,69 @@
 .bar-note.show { animation: bar-note 1.8s ease both; }
 @keyframes bar-note { 0% { opacity: 0; scale: .96; } 12%, 75% { opacity: 1; scale: 1; } 100% { opacity: 0; } }
 
+/* The tiles pop in one after another as the bar comes back (--i is each one's place, set by bar.js) */
+.main.viewing > .suite-home .suite-app, .main > .suite-home .suite-app, .tabbar [data-tab], .shell > .topbar .top-side > *, .shell > .topbar .brand {
+  transition: transform .2s, scale .16s, border-color .2s, box-shadow .2s, color .2s, background-color .2s,
+    translate .36s var(--spring) calc(var(--i, 0) * 16ms), opacity .22s ease calc(var(--i, 0) * 16ms); }
+html.bar-tucked .suite-home .suite-app, html.bar-tucked .tabbar [data-tab] { translate: 0 12px; opacity: 0; transition-delay: 0s; transition-duration: .12s; }
+html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar .brand { translate: 0 -8px; opacity: 0; transition-delay: 0s; transition-duration: .12s; }
+
 @media (prefers-reduced-motion: reduce) {
-  html .main.viewing > .suite-home, html .shell > .tabbar, html .shell > .topbar { transition: none !important; }
+  html .main.viewing > .suite-home, html .shell > .tabbar, html .shell > .topbar, html .suite-app, html .tabbar [data-tab], html .topbar * { transition: none !important; }
 }
+
+/* ---- The bar's look: a strip of Novacane night sky ----
+   Nebula light in the theme's colours, a faint field of stars, the Novacane sigil softly in the
+   corner, a glowing edge, shimmering group names and glass tiles that light up. All painted once
+   (gradients, no images, nothing moving except what's already there), so it costs nothing. */
+#suite-home, .tabbar, .status-line { --edge-glow: linear-gradient(120deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 45%, transparent) 30%, color-mix(in srgb, var(--line) 100%, transparent) 55%, color-mix(in srgb, var(--accent) 55%, transparent) 80%, color-mix(in srgb, var(--hi) 55%, transparent)); }
+#suite-home {
+  position: relative; isolation: isolate; border: 1px solid transparent;
+  background:
+    radial-gradient(55% 150% at 0% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%) padding-box,
+    radial-gradient(45% 170% at 100% 100%, color-mix(in srgb, var(--accent-2) 30%, transparent), transparent 64%) padding-box,
+    radial-gradient(35% 120% at 58% 130%, color-mix(in srgb, var(--hi) 16%, transparent), transparent 70%) padding-box,
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--void) 90%, transparent)) padding-box,
+    var(--edge-glow) border-box;
+  box-shadow: 0 -14px 44px -26px var(--hi), inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+#suite-home::before, .tabbar::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit; opacity: .55;
+  background:
+    radial-gradient(circle at 12% 30%, #fff 0 .7px, transparent 1.3px), radial-gradient(circle at 37% 78%, #fff 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 63% 22%, #fff 0 .8px, transparent 1.4px), radial-gradient(circle at 81% 64%, #fff 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 92% 18%, #fff 0 .5px, transparent 1.1px), radial-gradient(circle at 25% 60%, var(--soft) 0 .5px, transparent 1.1px);
+  background-size: 260px 100%; }
+#suite-home::after { content: ""; position: absolute; z-index: -1; right: 1.5%; top: 50%; width: 140px; height: 140px; translate: 0 -50%; rotate: -14deg; pointer-events: none; opacity: .07;
+  background: var(--hi);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148' fill='none' stroke='%23000' stroke-width='30' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148' fill='none' stroke='%23000' stroke-width='30' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+/* The group names: a little star, shimmering words, a glowing line */
+#suite-home .suite-group h4, .tabbar .tg-label { background: linear-gradient(90deg, var(--soft), var(--hi) 60%, var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#suite-home .suite-group h4::before { content: "✦"; color: var(--hi); -webkit-text-fill-color: var(--hi); text-shadow: 0 0 8px var(--hi); font-size: 1.15em; margin-right: -4px; }
+#suite-home .suite-group h4::after { background: linear-gradient(90deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 40%, transparent) 50%, transparent); box-shadow: 0 0 6px color-mix(in srgb, var(--hi) 40%, transparent); }
+/* The tiles: glass that lights up */
+#suite-home .suite-app { border-color: color-mix(in srgb, var(--line) 80%, transparent);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .012) 55%), color-mix(in srgb, var(--panel-2) 42%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); }
+#suite-home .suite-group.tools .suite-app { background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .01) 55%), color-mix(in srgb, var(--void) 40%, transparent); }
+#suite-home .suite-app:hover { border-color: color-mix(in srgb, var(--hi) 55%, transparent);
+  background: radial-gradient(90% 80% at 50% 0%, color-mix(in srgb, var(--hi) 18%, transparent), transparent 70%), color-mix(in srgb, var(--panel-2) 55%, transparent);
+  box-shadow: 0 10px 30px -14px var(--hi), inset 0 1px 0 rgba(255, 255, 255, .12); }
+#suite-home .suite-app b { letter-spacing: .02em; text-shadow: 0 1px 8px rgba(0, 0, 0, .5); }
+#suite-home .suite-groups .suite-app.open { border-color: color-mix(in srgb, var(--hi) 70%, transparent);
+  background: radial-gradient(100% 90% at 50% 0%, color-mix(in srgb, var(--hi) 26%, transparent), transparent 72%), color-mix(in srgb, var(--panel-2) 60%, transparent); }
+/* The phone's bar: the same night sky, a glowing top edge, and a lit pill for where you are */
+@media (max-width: 980px), (max-height: 600px) {
+  .tabbar { position: relative; isolation: isolate; border-top: 0;
+    background:
+      radial-gradient(60% 120% at 0% 0%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 62%),
+      radial-gradient(50% 140% at 100% 100%, color-mix(in srgb, var(--accent-2) 26%, transparent), transparent 64%),
+      color-mix(in srgb, var(--void) 92%, var(--panel)); }
+  .tabbar::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--edge-glow); box-shadow: 0 0 10px color-mix(in srgb, var(--hi) 45%, transparent); }
+  .tabbar button[aria-current="page"] { background: radial-gradient(90% 90% at 50% 0%, color-mix(in srgb, var(--hi) 26%, transparent), transparent 75%), color-mix(in srgb, var(--hi) 10%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi) 35%, transparent); }
+}
+/* The status line: the same glowing edge, quieter */
+.status-line:not(.tabbar > .status-line) { border: 1px solid transparent;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 70%, transparent), color-mix(in srgb, var(--void) 80%, transparent)) padding-box, var(--edge-glow) border-box; }
+/* On a phone the stars are smaller and fainter (so they never look like stray dots between buttons) */
+@media (max-width: 980px), (max-height: 600px) { .tabbar::before { opacity: .22; background-size: 340px 100%; } }

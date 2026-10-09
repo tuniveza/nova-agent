@@ -322,17 +322,21 @@ up on a phone), Always shown, or Always hidden. Typing in any box hides the pane
 you're done or the mouse goes to the bottom.
 
 **The status line** runs under the panels bar (inside the bar on a phone), one line tall: the
-✦ Panels button, the version and build, a slowly scrolling line of what changed lately (for the
-group or panel you point at, or the one that's open), when you came on and were last off, what
+version and build, the latest change in a few still words (for the group or panel you point at,
+or the one that's open), when you came on and were last off, what
 you've done lately (tap it for the list) and a 12-hour clock (`web/agent/assets/status.js`;
 the words come from `web/shared/status-data.js`, made by `npm run status`, which `npm run manual`
 runs too).
 
-**The icons** are cosmic: a speech bubble with an orbiting moon (Chat), a ringed planet (Portal),
-the moon's phases (Calendar), a quill writing stars (Notes), a constellation (Index), a path of
-stars to a flag (Quests), a rocket (Missions), a pulsar (Lossless audio), a spiral galaxy
-(Visualizer), a telescope (Observatory) and a star atlas (Manual). Each has its own colour (mixed
-with the theme), its own small sky behind it and some their own shape.
+**The icons** are little glowing scenes of space, each on its own small Novacane nebula (its own
+colour mixed with the theme's): the Novacane sigil in an orbiting orb (Chat), a ringed planet and
+its moon (Portal), the moon over its phases (Calendar), a quill writing a constellation (Notes), a
+glowing star cluster (Index), a comet streaking to a star flag (Quests), a rocket (Missions), a
+pulsar (Lossless audio), a spiral galaxy (Visualizer), a domed observatory under the moon
+(Observatory) and a star atlas (Manual). The panels bar itself is a strip of night sky: nebula
+light in the theme's colours, faint stars, the sigil softly in the corner, a glowing edge,
+shimmering group names and glass tiles. It comes and goes with a quick spring, its tiles popping
+in one after another. The gear (settings) is on computers too: it opens the Panels window.
 
 ### Ambient music
 

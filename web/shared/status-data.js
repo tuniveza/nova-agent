@@ -1,43 +1,43 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 154,
+ "build": 155,
  "date": "2026-10-09",
  "panels": {
   "chat": [
+   "Cosmic icons",
    "Calmer sounds",
    "The panels bar shows and hides itself",
    "Every panel sounds like itself",
-   "One panels bar everywhere",
-   "Lush Novacane sounds"
+   "One panels bar everywhere"
   ],
   "portal": [
+   "Cosmic icons",
    "Calmer, lusher sounds",
    "Lush Novacane sounds",
    "Admin lives in Portal",
-   "Portal on phones",
-   "any password length"
+   "Portal on phones"
   ],
   "calendar": [
+   "Cosmic icons",
    "Calmer, lusher sounds",
    "One panels bar everywhere",
    "note cards again",
-   "a full calendar that works from anywhere",
-   "Panels on phones"
+   "a full calendar that works from anywhere"
   ],
   "notes": [
+   "Cosmic icons",
    "Shared and Local notes",
    "Panels on phones",
    "Portal is the one sign-in",
-   "Sign in with Google",
-   "Lossless audio and Observatory as panels everywhere"
+   "Sign in with Google"
   ],
   "index": [
+   "Cosmic icons",
    "Panels on phones",
    "Portal takes in Hub",
    "Panels fit inside Nova Agent's viewer",
-   "Hub and Index",
-   "Plain names"
+   "Hub and Index"
   ],
   "quests": [
    "Portal takes in Hub",
@@ -54,24 +54,25 @@ window.NOVA_STATUS = {
    "Send the Nova Quest plan to Nova…"
   ],
   "lossless": [
+   "Cosmic icons",
    "Every panel sounds like itself",
    "Panels on phones",
    "Nova Agent is the one app",
    "Lossless audio and Observatory as panels everywhere"
   ],
   "visualizer": [
+   "Cosmic icons",
    "Shared and Local notes",
    "Nova Agent on phones",
    "Panels on phones",
-   "Portal is the one sign-in",
-   "Nova Agent online reaches the studio PC"
+   "Portal is the one sign-in"
   ],
   "observatory": [
+   "Cosmic icons",
    "Panels on phones",
    "Lossless audio and Observatory as panels everywhere",
    "Panels fit inside Nova Agent's viewer",
-   "Plain names",
-   "Nova Hub is Studio"
+   "Plain names"
   ],
   "manual": [
    "Portal on phones",
@@ -81,54 +82,54 @@ window.NOVA_STATUS = {
    "Nova Hub is Studio"
   ],
   "look": [
+   "Cosmic icons",
    "Calmer sounds",
    "The panels bar shows and hides itself",
    "Every panel sounds like itself",
-   "A gentler tap",
-   "Calmer, lusher sounds"
+   "A gentler tap"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "Calmer sounds"
+    "words": "Cosmic icons"
    },
    {
     "panel": "chat",
-    "words": "The panels bar shows and hides itself"
+    "words": "Calmer sounds"
+   },
+   {
+    "panel": "portal",
+    "words": "Cosmic icons"
    },
    {
     "panel": "portal",
     "words": "Calmer, lusher sounds"
    },
    {
-    "panel": "portal",
-    "words": "Lush Novacane sounds"
+    "panel": "calendar",
+    "words": "Cosmic icons"
    },
    {
     "panel": "calendar",
     "words": "Calmer, lusher sounds"
    },
    {
-    "panel": "calendar",
-    "words": "One panels bar everywhere"
+    "panel": "notes",
+    "words": "Cosmic icons"
    },
    {
     "panel": "notes",
     "words": "Shared and Local notes"
    },
    {
-    "panel": "notes",
-    "words": "Panels on phones"
+    "panel": "index",
+    "words": "Cosmic icons"
    },
    {
     "panel": "index",
     "words": "Panels on phones"
-   },
-   {
-    "panel": "index",
-    "words": "Portal takes in Hub"
    }
   ],
   "tasks": [
@@ -152,29 +153,29 @@ window.NOVA_STATUS = {
   "tools": [
    {
     "panel": "lossless",
-    "words": "Every panel sounds like itself"
+    "words": "Cosmic icons"
    },
    {
     "panel": "lossless",
-    "words": "Panels on phones"
+    "words": "Every panel sounds like itself"
+   },
+   {
+    "panel": "visualizer",
+    "words": "Cosmic icons"
    },
    {
     "panel": "visualizer",
     "words": "Shared and Local notes"
-   },
-   {
-    "panel": "visualizer",
-    "words": "Nova Agent on phones"
    }
   ],
   "helpers": [
    {
     "panel": "observatory",
-    "words": "Panels on phones"
+    "words": "Cosmic icons"
    },
    {
     "panel": "observatory",
-    "words": "Lossless audio and Observatory as panels everywhere"
+    "words": "Panels on phones"
    },
    {
     "panel": "manual",
@@ -187,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Cosmic icons",
   "Calmer sounds",
   "The panels bar shows and hides itself",
   "Every panel sounds like itself",
   "A gentler tap",
   "Calmer, lusher sounds",
   "One panels bar everywhere",
-  "Lush Novacane sounds",
-  "Panels in four groups everywhere"
+  "Lush Novacane sounds"
  ]
 };

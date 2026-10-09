@@ -44,7 +44,14 @@
   let peeking = false; // brought up with the handle while "Always hidden"
   const viewing = () => main.classList.contains("viewing");
   let typing = false; // you're typing (Nova Agent's message box or a panel's): the bar steps aside
+  // Each tile's place, so they pop in one after another (bar.css)
+  function number() {
+    document.querySelectorAll("#suite-home .suite-app").forEach((el, i) => el.style.setProperty("--i", i));
+    document.querySelectorAll("#tabbar [data-tab]").forEach((el, i) => el.style.setProperty("--i", i));
+    if (topbar) topbar.querySelectorAll(".top-side > *, .brand").forEach((el, i) => el.style.setProperty("--i", i));
+  }
   function update() {
+    number();
     const tuck = current === "hidden" ? !peeking : current === "auto" ? (viewing() && !out) || typing : false;
     root.classList.toggle("bar-tucked", tuck);
     const topTuck = topMode === "shown" ? false : viewing() && !topOut;
