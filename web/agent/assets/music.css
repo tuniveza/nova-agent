@@ -214,3 +214,8 @@
 /* Photos for the gear list too, in the same frame */
 .mw-pop .mw-pic.mw-lp { width: 48px; height: 48px; border-radius: 10px; flex: none; }
 .mw-pop .mw-pic.mw-lp .mw-art { width: 100%; height: 100%; }
+/* One finish for every picture (album art and photos alike): a soft shade at the edges and the
+   same light rim, so they read as one set */
+.mw-pic::after { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -10px 18px -10px rgba(0, 0, 0, .55), inset 0 8px 14px -12px rgba(255, 255, 255, .35); }
+.mw-pic .mw-art { filter: saturate(1.08) contrast(1.04); }

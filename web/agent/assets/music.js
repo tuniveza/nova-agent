@@ -33,8 +33,9 @@
     top: '<path d="M24 6l4.6 10.6L40 18l-8.6 7.6L34 37l-10-6-10 6 2.6-11.4L8 18l11.4-1.4z" class="a"/><circle cx="24" cy="23" r="4" class="c"/>',
   };
   // A real photo for each, from Wikipedia (the drawing shows underneath only if it can't load)
-  const PHOTO = { "Audio interface": "Audio_interface", mic: "Microphone", Headphones: "Headphones", "Keyboard controller": "MIDI_keyboard", "Studio speakers": "Studio_monitor", industry: "LP_record" };
-  const photo = (k) => art(`/music-world/photo/${PHOTO[illoKind(k)] || PHOTO[k]}`);
+  // Full-picture, moody photos (like album covers, not product shots on white)
+  const PHOTO = { "Audio interface": "Recording_studio", mic: "Microphone", Headphones: "Recording_studio", "Keyboard controller": "MIDI_keyboard", "Studio speakers": "Music_industry", industry: "Concert" };
+  const photo = (k) => art(`/music-world/photo/${PHOTO[illoKind(k)] || PHOTO[k]}?v=3`);
   const illoKind = (k) => (/mic/i.test(k) ? "mic" : ILLO[k] ? k : "Audio interface");
   const illo = (k, cls = "") => `<span class="mw-illo ${cls}" aria-hidden="true"><svg viewBox="0 0 48 48">${ILLO[illoKind(k)] || ILLO[k]}</svg></span>`;
   const ico = (k) => `<svg class="mw-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
