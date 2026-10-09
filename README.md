@@ -259,13 +259,23 @@ inside other pages, which keeps their sign-in safe, and Nova Agent says so once.
 
 ### Sound effects
 
-Novacane's glass bells, warm under-tones and soft breaths of air for every tap, tab, switch,
-open, close, send, done and delete, made live with the Web Audio API (no sound files). They're in
-D lydian, the same key as the ambient music, so the two always sound right together; they're
-placed across left and right and washed in a little reverb and echo, and kept quiet. Nova Agent
+Novacane's soft glass tones, warm under-tones and breaths of air for every tap, tab, switch,
+open, close, send, done and delete, made live with the Web Audio API (no sound files). Ambient,
+not beeps: everything swells in, chords bloom together rather than running up like a game, and a
+tap is a low felt touch. They're in D lydian, the same key as the ambient music, so the two always
+sound right together; they're placed across left and right and washed in a little reverb and
+echo, and kept quiet. Nova Agent
 chimes when it answers, and a short "hello" (D–A–C♯–F♯) plays when sounds are switched on. The 🔊
 switch at the top left turns them off (on a phone: the gear → Sound), and the choice is remembered
 on that device. It's the same `web/shared/sfx.js` in every panel.
+
+### The panels bar and motion
+
+Along the bottom on a computer: every panel in its four groups (Apps, Tasks, Tools, Helpers),
+edge to edge. It's the same bar whatever is open; with a panel open it only gets smaller. Motion
+is light (only scale and opacity move): buttons and tiles press in softly, the open panel's tile
+breathes, and panels fade in as they open (`web/shared/inside.js`, and Calendar's `embed.js`).
+It all stops when the device asks for less motion or Portal's Options → Animations is off.
 
 ### Ambient music
 

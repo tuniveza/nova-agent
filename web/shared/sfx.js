@@ -1,8 +1,9 @@
-// Nova Agent sound effects: Novacane's glass bells, warm under-tones and soft breaths of air for
-// every tap, tab, switch, open, close, send, done and delete. Made live with the Web Audio API
-// (no sound files), in D lydian (the same key as the ambient music in ambient.js, so the two
-// always sound right together), placed across left and right and washed in a little room of
-// reverb and echo. Kept quiet.
+// Nova Agent sound effects: Novacane's soft glass tones, warm under-tones and breaths of air for
+// every tap, tab, switch, open, close, send, done and delete. Ambient, not beeps: everything swells
+// in, chords bloom together instead of running up like a game, and taps are a low felt touch.
+// Made live with the Web Audio API (no sound files), in D lydian (the same key as the ambient
+// music in ambient.js, so the two always sound right together), placed across left and right and
+// washed in a little room of reverb and echo. Kept quiet.
 //
 // Sounds play by themselves: one listener works out what kind of thing was pressed (a tab, a
 // switch, a "send", a "delete"...). An element can choose its own sound with
@@ -137,14 +138,15 @@
     source.onended = () => all.forEach((n) => { try { n.disconnect(); } catch (err) {} });
   }
 
-  // One glass bell: a sine with a bright, slightly out-of-tune glint (FM) that melts away fast,
-  // a twin a hair sharp for a soft shimmer, and a warm sine an octave under it
-  function bell(freq, at, { gain = 0.05, length = 0.9, pan = 0, glint = 1.6, warmth = 0.35, room: r = 0.35, echo: e = 0 } = {}) {
+  // One glass tone: a sine with a faint, slightly out-of-tune glint (FM) that melts away fast, a
+  // twin a hair sharp for a soft shimmer, and a warm sine an octave under it. It swells in (no
+  // sharp strike), so it's more like a rubbed wine glass than a beep.
+  function bell(freq, at, { gain = 0.05, length = 0.9, pan = 0, glint = 0.7, warmth = 0.35, attack = 0.03, room: r = 0.45, echo: e = 0 } = {}) {
     const t = ctx.currentTime + at;
     const out = place(pan, { room: r, echo: e });
     const amp = ctx.createGain();
     amp.gain.setValueAtTime(0.0001, t);
-    amp.gain.exponentialRampToValueAtTime(gain, t + 0.008);
+    amp.gain.exponentialRampToValueAtTime(gain, t + attack);
     amp.gain.exponentialRampToValueAtTime(0.0001, t + length);
     amp.connect(out);
 
@@ -187,16 +189,17 @@
     tidy(body, nodes);
   }
 
-  // A soft, round drop of a note (taps): a sine whose pitch settles as it starts, like a water drop
-  function drop(freq, at, { gain = 0.05, length = 0.22, pan = 0 } = {}) {
+  // A soft, round touch (taps): a warm sine whose pitch settles as it starts, like a felt
+  // hammer on a low string, with a little room around it
+  function drop(freq, at, { gain = 0.05, length = 0.28, pan = 0 } = {}) {
     const t = ctx.currentTime + at;
-    const out = place(pan, { room: 0.25 });
+    const out = place(pan, { room: 0.4 });
     const o = ctx.createOscillator();
-    o.frequency.setValueAtTime(freq * 1.5, t);
-    o.frequency.exponentialRampToValueAtTime(freq, t + 0.03);
+    o.frequency.setValueAtTime(freq * 1.12, t);
+    o.frequency.exponentialRampToValueAtTime(freq, t + 0.05);
     const amp = ctx.createGain();
     amp.gain.setValueAtTime(0.0001, t);
-    amp.gain.exponentialRampToValueAtTime(gain, t + 0.005);
+    amp.gain.exponentialRampToValueAtTime(gain, t + 0.012);
     amp.gain.exponentialRampToValueAtTime(0.0001, t + length);
     o.connect(amp).connect(out);
     o.start(t);
@@ -265,68 +268,60 @@
   // The notes: D lydian (D E F# G# A B C#), mostly in the middle-high range so nothing is shrill
   const N = { A4: 440, B4: 493.88, Cs5: 554.37, D5: 587.33, E5: 659.25, Fs5: 739.99, Gs5: 830.61, A5: 880, B5: 987.77, Cs6: 1108.73, D6: 1174.66, E6: 1318.51, Fs6: 1479.98, A6: 1760, D3: 146.83, A3: 220, Fs3: 185, D4: 293.66, Fs4: 369.99, Cs4: 277.18 };
 
+  // A chord that blooms: its notes swell in together (a hair apart, like a soft strum), never a run
+  const bloom = (freqs, at, opts) => freqs.forEach((f, i) => bell(f, at + i * 0.018, { pan: (i / Math.max(1, freqs.length - 1) - 0.5) * 0.9, ...opts }));
+
   const SOUNDS = {
-    // A light tap on anything: a soft round drop
-    tap: () => drop(N.A5, 0, { gain: 0.08, pan: (Math.random() - 0.5) * 0.3 }),
-    // Switching tabs or views: two glass notes stepping across
+    // A light tap on anything: a soft, low felt touch
+    tap: () => drop(N.D5, 0, { gain: 0.07, pan: (Math.random() - 0.5) * 0.3 }),
+    // Switching tabs or views: a puff of air and one glass tone
     tab: () => {
-      bell(N.E5, 0, { gain: 0.035, length: 0.6, pan: -0.2, glint: 1.2 });
-      bell(N.B5, 0.06, { gain: 0.032, length: 0.8, pan: 0.2, glint: 1.2 });
+      air(0, { from: 900, to: 1700, gain: 0.014, length: 0.2, panFrom: -0.2, panTo: 0.2 });
+      bell(N.A5, 0.01, { gain: 0.03, length: 0.9, attack: 0.025 });
     },
-    // Opening a sheet, dialog, menu or panel: a breath of air rising, and a chord blooming
+    // Opening a sheet, dialog, menu or panel: air rising, and a chord blooming open
     open: () => {
-      air(0, { from: 450, to: 2600, gain: 0.026 });
-      bell(N.D5, 0.02, { gain: 0.03, length: 0.9, pan: -0.35 });
-      bell(N.Fs5, 0.075, { gain: 0.028, length: 1.0, pan: 0 });
-      bell(N.Cs6, 0.13, { gain: 0.026, length: 1.2, pan: 0.35, echo: 0.25 });
+      air(0, { from: 400, to: 2400, gain: 0.024, length: 0.45 });
+      bloom([N.D5, N.Fs5, N.Cs6], 0.04, { gain: 0.022, length: 1.4, attack: 0.05 });
     },
-    // Closing it again: the air falls, two notes settle
+    // Closing it again: the air falls, one warm tone settles
     close: () => {
-      air(0, { from: 2200, to: 450, gain: 0.02, length: 0.26, panFrom: 0.4, panTo: -0.4 });
-      bell(N.A5, 0, { gain: 0.026, length: 0.6, pan: 0.25, glint: 1 });
-      bell(N.E5, 0.06, { gain: 0.024, length: 0.8, pan: -0.25, glint: 1 });
+      air(0, { from: 2000, to: 400, gain: 0.02, length: 0.32, panFrom: 0.4, panTo: -0.4 });
+      bell(N.E5, 0.03, { gain: 0.026, length: 0.9, attack: 0.04, warmth: 0.5 });
     },
-    // A switch turned on / off: up a fifth, or down
-    on: () => {
-      bell(N.Fs5, 0, { gain: 0.035, length: 0.5, pan: -0.15 });
-      bell(N.Cs6, 0.055, { gain: 0.035, length: 0.8, pan: 0.15 });
-    },
-    off: () => {
-      bell(N.Cs6, 0, { gain: 0.03, length: 0.4, pan: 0.15, glint: 1 });
-      bell(N.Fs5, 0.055, { gain: 0.028, length: 0.6, pan: -0.15, glint: 1 });
-    },
-    // Sending a message or saving something: three notes flying off, with an echo
+    // A switch turned on / off: a bright pair of tones together, or a lower, softer pair
+    on: () => bloom([N.Fs5, N.Cs6], 0, { gain: 0.03, length: 1.0, attack: 0.03 }),
+    off: () => bloom([N.B4, N.Fs5], 0, { gain: 0.026, length: 0.8, attack: 0.03, warmth: 0.5 }),
+    // Sending a message or saving something: a breath of air flying off to the right, two glass
+    // tones following it into the echo
     send: () => {
-      bell(N.D5, 0, { gain: 0.035, length: 0.6, pan: -0.3 });
-      bell(N.A5, 0.05, { gain: 0.034, length: 0.7, pan: 0 });
-      bell(N.E6, 0.1, { gain: 0.03, length: 1.1, pan: 0.35, echo: 0.45 });
+      air(0, { from: 600, to: 3000, gain: 0.022, length: 0.4, panFrom: -0.5, panTo: 0.6 });
+      bloom([N.A5, N.E6], 0.05, { gain: 0.026, length: 1.3, attack: 0.04, echo: 0.4 });
     },
-    // Something finished: a sparkling run up over a warm swell
+    // Something finished: a warm swell with a shimmering chord opening over it
     done: () => {
-      swell([N.D3, N.A3, N.Fs4, N.Cs5], 0, { gain: 0.012, length: 1.8 });
-      [N.D5, N.Fs5, N.A5, N.Cs6, N.E6, N.Fs6].forEach((f, i) => bell(f, i * 0.06, { gain: 0.03, length: 1.3, pan: -0.5 + i * 0.2, echo: i > 3 ? 0.3 : 0 }));
+      swell([N.D3, N.A3, N.Fs4, N.Cs5], 0, { gain: 0.014, length: 2.2 });
+      bloom([N.D5, N.A5, N.Cs6, N.Fs6], 0.06, { gain: 0.022, length: 1.9, attack: 0.07, echo: 0.3 });
     },
-    // Removing or deleting: a soft low fall
+    // Removing or deleting: a soft low touch, and the air sinking away
     remove: () => {
-      drop(N.A4, 0, { gain: 0.05, length: 0.3, pan: 0.15 });
-      drop(N.D4, 0.08, { gain: 0.05, length: 0.45, pan: -0.15 });
+      drop(N.D4, 0, { gain: 0.07, length: 0.45 });
+      air(0.02, { from: 1400, to: 300, gain: 0.016, length: 0.35, panFrom: 0.2, panTo: -0.3 });
     },
-    // Something went wrong: two low, muted notes (no glass)
-    error: () => {
-      bell(N.Cs4 * 1.2, 0, { gain: 0.04, length: 0.35, glint: 0.3, warmth: 0.6, room: 0.2 });
-      bell(N.Cs4, 0.13, { gain: 0.04, length: 0.55, glint: 0.3, warmth: 0.6, room: 0.2 });
-    },
+    // Something went wrong: two low, muted tones together (no glass)
+    error: () => bloom([N.Cs4, N.D4], 0, { gain: 0.035, length: 0.6, glint: 0.2, warmth: 0.6, attack: 0.02, room: 0.25 }),
     // A message arrived: a high, gentle call that echoes away
     message: () => {
-      bell(N.B5, 0, { gain: 0.03, length: 0.9, pan: -0.2, echo: 0.3 });
-      bell(N.E6, 0.09, { gain: 0.026, length: 1.3, pan: 0.25, echo: 0.45 });
+      bell(N.B5, 0, { gain: 0.028, length: 1.1, pan: -0.2, attack: 0.035, echo: 0.3 });
+      bell(N.E6, 0.12, { gain: 0.024, length: 1.5, pan: 0.25, attack: 0.04, echo: 0.45 });
     },
-    // Hello (sound switched on): Novacane's little signature, D–A–C#–F#, over a soft swell
+    // Hello (sound switched on): Novacane's chord, D–A–C♯–F♯, blooming over a soft swell
     welcome: () => {
-      swell([N.D3, N.A3, N.Cs5], 0, { gain: 0.01, length: 2.2 });
-      [N.D5, N.A5, N.Cs6, N.Fs6].forEach((f, i) => bell(f, i * 0.11, { gain: 0.03, length: 1.5, pan: -0.45 + i * 0.3, echo: i === 3 ? 0.5 : 0.15 }));
+      swell([N.D3, N.A3, N.Cs5], 0, { gain: 0.012, length: 2.4 });
+      bloom([N.D5, N.A5, N.Cs6, N.Fs6], 0.05, { gain: 0.024, length: 2, attack: 0.08, echo: 0.35 });
     },
   };
+
 
   function play(name) {
     if (!enabled() || !SOUNDS[name]) return;
