@@ -309,7 +309,7 @@ It all stops when the device asks for less motion or Portal's Options → Animat
 
 ### One look, the top bar, and the status line
 
-**One theme for everything:** in the Panels window (the ✦ Panels button in the status line, or the
+**One theme for everything:** in the Panels window (the gear at the top, on a phone the
 phone's gear → Theme & look) pick a theme (Novacane, Solar Flare, Pulsar, Aurora, Eclipse, Quasar
 or Mono) and every app, task, tool and helper wears it, whatever its own theme setting; "Each
 panel's own" goes back to each panel's own. **Colour everything from my planet** tints it all
