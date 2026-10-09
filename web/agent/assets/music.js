@@ -61,6 +61,7 @@
         <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art>${ico("top")}</span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
         <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic">${art(`/music-world/art?q=${encodeURIComponent(D.genres[0].art)}`)}${ico("genres")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
         <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${gear.wiki ? art(`/music-world/photo/${encodeURIComponent(gear.wiki)}`) : ""}${ico("gear")}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
+        <button type="button" class="mw-card" data-mw="song" data-sfx="open"><span class="mw-pic">${art(`/music-world/art?q=${encodeURIComponent(`${song.artist} ${song.title.replace(/"/g, "")}`)}`)}${ico("song")}</span><span class="mw-k">Song of the day</span><span class="mw-line">${esc(song.title)} · ${esc(song.artist)}</span></button>
         <button type="button" class="mw-card" data-mw="money" data-sfx="open"><span class="mw-pic">${ico("money")}</span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
       </div>
       <figure class="mw-quote">
@@ -68,7 +69,7 @@
         <blockquote>“${esc(quote.text)}”</blockquote>
         <figcaption>${esc(quote.who)} · ${esc(quote.when)}${quote.attributed ? " · attributed" : ""}</figcaption>
       </figure>
-      <p class="mw-song"><span class="mw-pic sm">${art(`/music-world/art?q=${encodeURIComponent(`${song.artist} ${song.title.replace(/"/g, "")}`)}`)}${ico("song")}</span><span><b>Song of the day:</b> ${esc(song.title)} · ${esc(song.artist)} (${song.year}) · ${esc(song.about)}</span> <a href="${lyrics(song)}" target="_blank" rel="noopener">Lyrics ↗</a></p>`;
+`;
     const img = box.querySelector(".mw-face img");
     img.addEventListener("error", () => img.remove());
     box.addEventListener("click", (e) => {
@@ -93,6 +94,8 @@
       html = `<h5>Popular around the world</h5><ul class="mw-list plain">${D.genres.map((g) => `<li>${art(`/music-world/art?q=${encodeURIComponent(g.art || g.name)}`)}<span><b>${esc(g.name)}</b><small>${esc(g.line)}</small></span></li>`).join("")}</ul>`;
     } else if (k === "gear") {
       html = `<h5>Popular budget gear</h5><ul class="mw-list plain">${D.gear.map((g) => `<li>${g.wiki ? art(`/music-world/photo/${encodeURIComponent(g.wiki)}`) : `<i class="mw-dot">${ico("gear")}</i>`}<span><b>${esc(g.name)}</b><small>${esc(g.kind)}: ${esc(g.does)} · ${esc(g.price)}</small></span></li>`).join("")}</ul><p class="mw-src">Prices are rough and change by shop and country</p>`;
+    } else if (k === "song") {
+      html = `<h5>Song of the day</h5><div class="mw-song-pop">${art(`/music-world/art?q=${encodeURIComponent(`${song.artist} ${song.title.replace(/"/g, "")}`)}`)}<b>${esc(song.title)}</b><small>${esc(song.artist)} · ${song.year}</small><p>${esc(song.about)}</p><a href="${lyrics(song)}" target="_blank" rel="noopener">Read the lyrics ↗</a></div>`;
     } else if (k === "money") {
       html = `<h5>${esc(D.revenue.headline)} ${esc(D.revenue.sub)}</h5><ul class="mw-list plain">${D.revenue.bites.map((b) => `<li><span>${esc(b)}</span></li>`).join("")}</ul><p class="mw-src">${esc(D.revenue.source)}</p>`;
     }
@@ -127,6 +130,7 @@
         fig.querySelector("blockquote").textContent = `“${q.text}”`;
         fig.querySelector("figcaption").textContent = `${q.who} · ${q.when}${q.attributed ? " · attributed" : ""}`;
         fig.classList.remove("mw-fade");
+        fit();
       }, 500);
     });
     setTimeout(nextQuote, (2 + Math.random() * 14) * 60000);
@@ -148,9 +152,56 @@
       if (p) intro.append(p);
     }
     const sug = w.querySelector(":scope > .suggest");
-    if (sug) sug.classList.add("cpanel");
+    if (sug && !sug.classList.contains("cpanel")) {
+      sug.classList.add("cpanel");
+      // The first four ideas, and the rest a tap away
+      const chips = [...sug.querySelectorAll(".chip")];
+      if (chips.length > 4) {
+        chips.slice(4).forEach((c) => c.classList.add("mw-more-idea"));
+        const more = document.createElement("button");
+        more.type = "button";
+        more.className = "chip mw-more";
+        more.dataset.sfx = "open";
+        more.textContent = `More ideas (${chips.length - 4}) ▾`;
+        more.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const open = sug.classList.toggle("show-all");
+          more.textContent = open ? "Fewer ideas ▴" : `More ideas (${chips.length - 4}) ▾`;
+          fit();
+        });
+        sug.append(more);
+      }
+    }
     if (!w.querySelector(".mworld")) w.append(build());
+    fit();
   }
+
+  // The whole front page fits the chat's space with no scrolling: if it's taller than the room,
+  // it's drawn a little smaller (never below 60%)
+  let fitting = 0;
+  function fit() {
+    cancelAnimationFrame(fitting);
+    fitting = requestAnimationFrame(() => {
+      const w = document.getElementById("welcome");
+      if (!w || !w.isConnected || w.offsetParent === null) return;
+      w.style.zoom = "";
+      const cs = getComputedStyle(log);
+      const room = log.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 4;
+      // What the content itself needs (the welcome box may be stretched taller than that)
+      const kids = [...w.children].filter((k) => k.getClientRects().length && k.getBoundingClientRect().height > 0);
+      if (!kids.length) return;
+      const top = Math.min(...kids.map((k) => k.getBoundingClientRect().top));
+      const bottom = Math.max(...kids.map((k) => k.getBoundingClientRect().bottom));
+      const need = bottom - top + 12;
+      const z = need > room ? Math.max(0.65, room / need) : 1;
+      if (z < 1) w.style.zoom = z.toFixed(3);
+      // Only on a very small screen, where even smaller would be unreadable, can it scroll
+      log.classList.toggle("mw-scroll", need * z > room + 2);
+    });
+  }
+  new ResizeObserver(fit).observe(log);
+  addEventListener("resize", fit);
+  document.addEventListener("load", (e) => e.target && e.target.closest && e.target.closest("#welcome") && fit(), true);
   place();
   new MutationObserver(place).observe(log, { childList: true });
   loadTop();

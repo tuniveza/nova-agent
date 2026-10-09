@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 165,
+ "build": 166,
  "date": "2026-10-09",
  "panels": {
   "chat": [
@@ -82,11 +82,11 @@ window.NOVA_STATUS = {
    "Nova Hub is Studio"
   ],
   "look": [
+   "Front page fits without scrolling",
    "Welcome in content panels",
    "Today in music on the front page",
    "Panels make room for the bars",
-   "A quiet sky",
-   "Every window size usable"
+   "A quiet sky"
   ]
  },
  "areas": {
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Front page fits without scrolling",
   "Welcome in content panels",
   "Today in music on the front page",
   "Panels make room for the bars",
   "A quiet sky",
   "Every window size usable",
   "Smaller bar",
-  "No glass bubbles",
-  "Glowing space-scene icons"
+  "No glass bubbles"
  ]
 };

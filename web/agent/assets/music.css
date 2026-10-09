@@ -96,3 +96,63 @@
 .mworld.cpanel { container-type: inline-size; }
 .mworld .mw-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 @container (min-width: 540px) { .mworld .mw-row { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } }
+/* Ideas beyond the first four wait behind "More ideas" */
+.welcome .suggest.cpanel:not(.show-all) .mw-more-idea { display: none; }
+.welcome .suggest.cpanel .mw-more { border-style: dashed; color: var(--hi); }
+/* The front page sits at the top of the chat (it shrinks to fit rather than scrolling) */
+.log:has(> .welcome):not(.mw-scroll) { overflow-y: hidden; justify-content: flex-start; }
+.welcome > .mark { display: none !important; }
+
+/* ---- The content panels' borders, Novacane style: a glowing gradient edge, lit corner brackets,
+   a little star set into the top edge, and a soft nebula glow inside ---- */
+.welcome .cpanel {
+  margin-top: 6px;
+  border: 1px solid transparent;
+  background:
+    /* corner brackets */
+    linear-gradient(var(--hi), var(--hi)) top left / 14px 1.5px no-repeat padding-box,
+    linear-gradient(var(--hi), var(--hi)) top left / 1.5px 14px no-repeat padding-box,
+    linear-gradient(var(--hi), var(--hi)) top right / 14px 1.5px no-repeat padding-box,
+    linear-gradient(var(--hi), var(--hi)) top right / 1.5px 14px no-repeat padding-box,
+    linear-gradient(var(--accent-2), var(--accent-2)) bottom left / 14px 1.5px no-repeat padding-box,
+    linear-gradient(var(--accent-2), var(--accent-2)) bottom left / 1.5px 14px no-repeat padding-box,
+    linear-gradient(var(--accent-2), var(--accent-2)) bottom right / 14px 1.5px no-repeat padding-box,
+    linear-gradient(var(--accent-2), var(--accent-2)) bottom right / 1.5px 14px no-repeat padding-box,
+    /* nebula inside */
+    radial-gradient(60% 80% at 0% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%) padding-box,
+    radial-gradient(50% 80% at 100% 100%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 70%) padding-box,
+    linear-gradient(color-mix(in srgb, var(--panel) 62%, transparent), color-mix(in srgb, var(--void) 55%, transparent)) padding-box,
+    /* the glowing edge */
+    linear-gradient(120deg, color-mix(in srgb, var(--hi) 75%, transparent), color-mix(in srgb, var(--accent-2) 30%, transparent) 30%, color-mix(in srgb, var(--line) 100%, transparent) 50%, color-mix(in srgb, var(--accent-2) 30%, transparent) 70%, color-mix(in srgb, var(--hi) 60%, transparent)) border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 0 24px -14px var(--hi);
+}
+.welcome .cpanel::before { content: "✦"; position: absolute; top: 0; left: 50%; translate: -50% -55%; padding: 0 6px; font-size: 10px; line-height: 1;
+  color: var(--hi); text-shadow: 0 0 8px var(--hi); background: var(--void); border-radius: 6px; pointer-events: none; }
+/* Compact, so it fits without shrinking much */
+.welcome { gap: 8px !important; }
+.welcome .cpanel { padding: 9px 12px; }
+.mw-intro h3 { font-size: 15px !important; }
+.mw-intro p { font-size: 13px !important; line-height: 1.4; }
+.welcome .suggest.cpanel { padding: 8px; gap: 5px; }
+.welcome .suggest.cpanel .chip { font-size: 12.5px; padding: 5px 10px; }
+.mworld { gap: 6px !important; }
+.mw-card { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; justify-items: center; column-gap: 8px; row-gap: 1px; padding: 6px 8px; align-items: center; }
+.mw-card > .mw-pic { grid-row: 1 / 3; width: 30px; height: 30px; }
+.mw-card > .mw-k, .mw-card > .mw-line { grid-column: 2; }
+.mw-quote { padding: 6px 10px; }
+.mw-face { width: 34px; height: 34px; }
+.mw-quote blockquote { font-size: 12.5px; }
+.cpanel .mw-song { gap: 2px; font-size: 12px; }
+.cpanel .mw-song { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 8px; }
+.cpanel .mw-song > span:not(.mw-pic) { width: auto !important; flex: 0 1 auto; }
+.cpanel .mw-song > a { width: auto !important; }
+/* Five cards: in one row when there's room, three and two when not */
+.mworld .mw-row { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+@container (min-width: 620px) { .mworld .mw-row { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; } }
+.mw-song-pop { display: grid; justify-items: center; gap: 3px; text-align: center; }
+.mw-song-pop .mw-art { width: 96px; height: 96px; border-radius: 12px; margin-bottom: 4px; }
+.mw-song-pop p { margin: 4px 0; color: var(--text); }
+.mw-song-pop a { color: var(--hi); }
+/* No wasted space above it */
+.log:has(> .welcome) { padding-top: 10px; }
+.log > .welcome { margin: 0 auto !important; align-self: stretch; }
