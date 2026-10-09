@@ -225,3 +225,20 @@
 .mw-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 /* No "Hey, I'm Nova Agent" heading: the words about what it does are enough */
 .mw-intro h3 { display: none !important; }
+
+/* A card's list opens inside the panel, in place of the cards, with ‹ Back (the same panel, no
+   overlay); long lists scroll inside it */
+.mworld.showing > .mw-row, .mworld.showing > .mw-quote { display: none !important; }
+.mw-detail { display: none; }
+.mworld.showing > .mw-detail { display: grid; gap: 8px; justify-items: center; text-align: center; color: var(--text); font-size: 12.5px; }
+.mw-detail h5 { margin: 0; font-size: 14px; color: #fff; }
+.mw-detail .mw-back { justify-self: start; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 40%, transparent); color: var(--text); border-radius: 999px; padding: 4px 12px; font: inherit; cursor: pointer; }
+.mw-detail .mw-list { width: 100%; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.mw-detail .mw-list li { flex-direction: column; justify-content: start; gap: 3px; }
+.mw-detail .mw-list img, .mw-detail .mw-list .mw-art, .mw-detail .mw-pic.mw-lp { width: 64px !important; height: 64px !important; border-radius: 12px; object-fit: cover; position: relative; }
+.mw-detail .mw-list span { display: grid; justify-items: center; }
+.mw-detail .mw-list b { white-space: normal; }
+.mw-detail .mw-src { margin: 0; }
+.mw-detail .mw-song-pop .mw-art { width: 140px !important; height: 140px !important; }
+/* Missions with nothing to show: a short note rather than an empty box */
+#missions:empty::before { content: "No missions yet. Tap ✦ New, or ask in Chat."; display: block; padding: 18px 10px; color: var(--muted); text-align: center; }

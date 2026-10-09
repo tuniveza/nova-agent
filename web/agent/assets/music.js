@@ -131,22 +131,24 @@
     } else if (k === "money") {
       html = `<h5>${esc(D.revenue.headline)} ${esc(D.revenue.sub)}</h5><ul class="mw-list plain">${D.revenue.bites.map((b) => `<li><span>${esc(b)}</span></li>`).join("")}</ul><p class="mw-src">${esc(D.revenue.source)}</p>`;
     }
-    pop.innerHTML = html;
-    pop.hidden = false;
-    const r = card.getBoundingClientRect();
-    const w = Math.min(340, innerWidth - 16);
-    pop.style.width = `${w}px`;
-    pop.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2))}px`;
-    const below = innerHeight - r.bottom > 260 || r.top < 260;
-    pop.style.top = below ? `${r.bottom + 8}px` : "";
-    pop.style.bottom = below ? "" : `${innerHeight - r.top + 8}px`;
-    pop.style.maxHeight = `${below ? innerHeight - r.bottom - 20 : r.top - 20}px`;
+    // Shown inside the Today in music panel, in place of the cards (nothing floats over anything)
+    const box = card.closest(".mworld");
+    let detail = box.querySelector(".mw-detail");
+    if (!detail) {
+      detail = document.createElement("div");
+      detail.className = "mw-detail";
+      box.append(detail);
+    }
+    detail.innerHTML = `<button type="button" class="mw-back" data-sfx="close">‹ Back</button>${html}`;
+    detail.querySelector(".mw-back").addEventListener("click", () => closeDetail(box));
+    box.classList.add("showing");
+    fit();
   }
-  const close = () => { if (!pop.hidden) pop.hidden = true; };
-  document.addEventListener("click", (e) => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest(".mw-card")) close(); }, true);
-  document.addEventListener("keydown", (e) => e.key === "Escape" && close());
-  addEventListener("resize", close);
-  log.addEventListener("scroll", close, { passive: true });
+  function closeDetail(box) {
+    (box ? [box] : document.querySelectorAll(".mworld.showing")).forEach((b) => b.classList.remove("showing"));
+    fit();
+  }
+  document.addEventListener("keydown", (e) => e.key === "Escape" && closeDetail());
 
   // A new quote every so often (a random 2 to 16 minutes each time), fading softly, never the same
   // one twice in a row
