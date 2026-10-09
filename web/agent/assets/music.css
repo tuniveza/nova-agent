@@ -211,3 +211,6 @@
 .mw-illo.sm { position: relative; inset: auto; width: 46px; height: 46px; border-radius: 10px; flex: none; }
 /* Every card's picture on the same line across the row (the words below can be one line or three) */
 .mw-card { align-content: start !important; padding-top: 10px !important; }
+/* Photos for the gear list too, in the same frame */
+.mw-pop .mw-pic.mw-lp { width: 48px; height: 48px; border-radius: 10px; flex: none; }
+.mw-pop .mw-pic.mw-lp .mw-art { width: 100%; height: 100%; }
