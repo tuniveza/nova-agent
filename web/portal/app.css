@@ -712,7 +712,8 @@ select option:checked { background: var(--accent); color: var(--on-accent); }
 .icon-btn:active { transform: scale(0.95); }
 #refresh:active svg { transition: transform 0.5s ease; transform: rotate(-200deg); }
 .tab { transition: color 0.2s ease, background 0.25s ease; }
-.tab:hover { color: var(--text); }
+/* (hover only where there's a real pointer: on a touch screen a tapped tab doesn't stay lit) */
+@media (hover: hover) { .tab:hover { color: var(--text); } }
 .card-delete { transition: transform 0.25s ease, background 0.2s ease, color 0.2s ease; }
 .card-delete:hover { background: rgba(var(--accent-rgb), 0.35); color: #fff; }
 .card-delete:active { background: rgba(var(--accent-rgb), 0.6); }
