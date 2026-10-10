@@ -28,9 +28,11 @@
   function close() {
     sheet.hidden = true;
     opener.setAttribute("aria-expanded", "false");
-    opener.focus();
+    if (opener.offsetParent) opener.focus({ preventScroll: true });
   }
   opener.addEventListener("click", open);
+  // For the side menu's Options (inside Nova Agent, where the gear above isn't shown) and Nova Agent's gear
+  window.PortalOptions = { open, close };
   $("options-close").addEventListener("click", close);
   // A tap on the dark backdrop closes it
   sheet.addEventListener("click", (e) => e.target === sheet && close());

@@ -53,8 +53,13 @@
     } catch (err) {}
     const still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
     // A smooth cross-fade where the browser can do it; otherwise it just changes
-    if (document.startViewTransition && !still && theme.id !== current()) document.startViewTransition(() => apply(theme.id));
-    else apply(theme.id);
+    // (the browser cuts the fade short if the window changes size or another theme is tapped
+    // mid-fade; the theme still changes, so that's not an error)
+    if (document.startViewTransition && !still && theme.id !== current()) {
+      const fade = document.startViewTransition(() => apply(theme.id));
+      fade.ready.catch(() => {});
+      fade.finished.catch(() => {});
+    } else apply(theme.id);
     markSwatches(theme.id);
     window.dispatchEvent(new CustomEvent("novathemechange", { detail: { id: theme.id } }));
     return theme.id;

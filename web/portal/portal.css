@@ -51,8 +51,8 @@
   box-shadow: 0 10px 26px -12px var(--glow-accent), 0 0 0 1px rgba(var(--star-rgb), 0.06) inset;
   transition: transform 0.18s ease, box-shadow 0.25s ease, border-color 0.2s ease, filter 0.25s ease;
 }
-.pv .btn:hover { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 12px 28px -12px var(--glow-accent), 0 0 22px -6px rgba(var(--glow-rgb), 0.55); }
-.pv .btn:active { transform: scale(0.96); }
+.pv .btn:hover { filter: brightness(1.06); box-shadow: 0 12px 28px -12px var(--glow-accent), 0 0 22px -6px rgba(var(--glow-rgb), 0.55); }
+.pv .btn:active { transform: scale(0.98); }
 .pv .btn svg { width: 17px; height: 17px; flex: none; }
 .pv .btn.ghost { background: rgba(var(--panel-2-rgb), 0.45); border-color: var(--line); color: var(--text); box-shadow: none; }
 .pv .btn.ghost:hover { border-color: var(--line-strong); color: #fff; box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.22); filter: none; }
@@ -75,7 +75,7 @@
   transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.2s ease, color 0.2s ease;
 }
 .pv .icon-btn:hover { color: #fff; border-color: var(--line-strong); box-shadow: 0 0 14px -4px var(--glow); }
-.pv .icon-btn:active { transform: scale(0.9); }
+.pv .icon-btn:active { transform: scale(0.95); }
 .pv .icon-btn svg { width: 19px; height: 19px; }
 .pv input[type="password"], .pv input[type="text"], .pv input[type="email"], .pv input[type="url"] {
   width: 100%; min-width: 0;
@@ -122,7 +122,7 @@
   transition: transform 0.18s ease, color 0.2s ease, background 0.25s ease;
 }
 .pv .chip:hover { color: #fff; }
-.pv .chip:active { transform: scale(0.95); }
+.pv .chip:active { transform: scale(0.97); }
 .pv .chip.active { background: var(--grad); color: var(--on-accent); box-shadow: 0 6px 18px -8px var(--glow-accent); }
 .pv .chip:disabled { cursor: progress; opacity: 0.7; }
 
@@ -147,22 +147,21 @@
 .pv .big-mark {
   position: relative; display: block; width: 100%; height: 100%; border-radius: 32px;
   box-shadow: 0 0 0 1px rgba(var(--star-rgb), 0.14), 0 24px 60px -18px var(--glow), 0 0 60px -12px var(--glow);
-  animation: pv-float 7s ease-in-out infinite;
+  animation: pv-float 9s ease-in-out infinite;
 }
 .pv .halo {
   position: absolute; inset: -34px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(var(--hi-rgb), 0.4), rgba(var(--accent-2-rgb), 0.18) 55%, transparent 75%);
-  animation: pv-breathe 5s ease-in-out infinite;
+  background: radial-gradient(closest-side, rgba(var(--hi-rgb), 0.32), rgba(var(--accent-2-rgb), 0.14) 55%, transparent 75%);
 }
-@keyframes pv-float { 50% { transform: translateY(-6px); } }
-@keyframes pv-breathe { 50% { opacity: 0.55; transform: scale(0.94); } }
+@keyframes pv-float { 50% { transform: translateY(-4px); } }
+@keyframes pv-breathe { 50% { opacity: 0.8; } }
 
 .pv .boot {
   min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  animation: pv-fade-in 0.6s ease 0.15s both;
+  /* (only shows when opening takes a while: a quick open goes straight to Portal, no flash) */
+  animation: pv-fade-in 0.5s ease 0.6s both;
 }
-.pv .boot .kicker { animation: pv-soft-pulse 1.6s ease-in-out infinite; }
 @keyframes pv-soft-pulse { 50% { opacity: 0.45; } }
 
 /* ----- Signing in, setting up, joining ----- */
@@ -172,7 +171,7 @@
   padding: calc(32px + var(--safe-top)) 16px calc(32px + var(--safe-bottom));
 }
 .pv .auth-kicker { margin-bottom: 8px; }
-.pv .auth .wordmark { font-size: clamp(30px, 10vw, 46px); animation: pv-text-flow 10s linear infinite; }
+.pv .auth .wordmark { font-size: clamp(30px, 10vw, 46px); }
 .pv .auth-sub { margin: 8px 0 24px; color: var(--muted); font-size: 15px; max-width: 34ch; }
 .pv .auth-card {
   width: 100%; max-width: 400px; display: grid; gap: 14px; text-align: left;
@@ -197,15 +196,15 @@
 }
 .pv .reassure svg { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--ok); }
 .pv .gone { text-align: center; }
-.pv .screen-in { animation: pv-screen-in 0.55s var(--ease-out) backwards; }
-@keyframes pv-screen-in { from { opacity: 0; transform: translateY(14px) scale(0.985); } }
-.pv .shake { animation: pv-shake 0.42s ease; }
-@keyframes pv-shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.pv .screen-in { animation: pv-screen-in 0.4s ease-out backwards; }
+@keyframes pv-screen-in { from { opacity: 0; } }
+/* A problem with a form: its edge warms for a moment, then settles (nothing shakes) */
+.pv .attention { animation: pv-attention 1.6s ease-out; }
+@keyframes pv-attention { 0%, 30% { box-shadow: 0 0 0 1.5px rgba(var(--warn-rgb), 0.55), 0 0 28px -10px var(--warn); } }
 
 /* ----- The frame: header, page, suite bar ----- */
 @media (max-width: 380px) { .pv .kicker-more { display: none; } }
 
-.pv.view-in { animation: pv-screen-in 0.5s var(--ease-out) backwards; }
 .pv .view-head { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .pv .view-head h2 {
   margin: 2px 0 0;
@@ -213,7 +212,6 @@
   font-size: 26px; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.01em;
   background: var(--title-grad); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 0 14px rgba(var(--glow-rgb), 0.25));
-  animation: pv-text-flow 10s linear infinite;
 }
 .pv .back { justify-self: center; }
 .pv .back svg { width: 16px; height: 16px; }
@@ -233,7 +231,6 @@
   margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 17px; line-height: 1.2;
   text-transform: uppercase; color: var(--bright);
 }
-.pv .card-in { animation: pv-card-in 0.5s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
 @keyframes pv-card-in { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: none; } }
 
 /* ===================== The hero: the planet on its stage ===================== */
@@ -249,7 +246,7 @@
   width: 100%; height: 100%; border-radius: 50%; z-index: -2;
   background:
     radial-gradient(closest-side, rgba(var(--hi-rgb), 0.38), rgba(var(--accent-2-rgb), 0.2) 52%, rgba(var(--accent-3-rgb), 0.12) 70%, transparent 82%);
-  animation: pv-breathe 7s ease-in-out infinite;
+  animation: pv-breathe 12s ease-in-out infinite;
 }
 /* Its own stars, turning very slowly round the planet, fading out towards the edge */
 .pv .stage-stars {
@@ -265,9 +262,9 @@
     radial-gradient(1px 1px at 94% 42%, rgba(var(--lilac-rgb), 0.7), transparent 60%),
     radial-gradient(1.3px 1.3px at 70% 92%, rgba(var(--star-rgb), 0.6), transparent 60%);
   -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent 100%); mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
-  animation: pv-spin 220s linear infinite, pv-twinkle 5s ease-in-out infinite;
+  animation: pv-spin 300s linear infinite;
 }
-.pv .stage-stars.far { width: 96%; height: 96%; opacity: 0.6; transform: rotate(140deg) scale(0.9); animation: pv-spin-back 300s linear infinite, pv-twinkle 6.5s ease-in-out 1.2s infinite; }
+.pv .stage-stars.far { width: 96%; height: 96%; opacity: 0.6; transform: rotate(140deg) scale(0.9); animation: pv-spin-back 400s linear infinite; }
 @keyframes pv-spin { to { transform: rotate(360deg); } }
 @keyframes pv-spin-back { from { transform: rotate(140deg) scale(0.9); } to { transform: rotate(-220deg) scale(0.9); } }
 /* Now and then, a shooting star */
@@ -276,7 +273,7 @@
   border-radius: 2px; opacity: 0; pointer-events: none;
   background: linear-gradient(90deg, transparent, rgba(var(--soft-rgb), 0.9));
   transform: rotate(18deg);
-  animation: pv-shoot 11s ease-in 3s infinite;
+  display: none; /* (no shooting stars: nothing flashes across the planet) */
 }
 @keyframes pv-shoot {
   0% { opacity: 0; transform: rotate(18deg) translateX(-30px); }
@@ -298,29 +295,18 @@
 }
 .pv .planet.loading { opacity: 0; }
 /* A new planet: the old one collapses into a point of light, a flash, and the new one blooms out of it */
-.pv .planet.going { animation: pv-planet-out 0.5s cubic-bezier(0.6, 0, 0.8, 0.4) forwards; }
-.pv .planet.coming { animation: pv-planet-in 0.95s var(--ease-pop) both; }
-@keyframes pv-planet-out {
-  to { transform: scale(0.08) rotate(200deg); filter: brightness(3) blur(6px); opacity: 0; }
-}
-@keyframes pv-planet-in {
-  0% { transform: scale(0.1) rotate(-120deg); filter: brightness(3) blur(10px); opacity: 0; }
-  35% { opacity: 1; }
-  100% { transform: none; filter: drop-shadow(0 0 28px rgba(var(--glow-rgb), 0.28)) drop-shadow(0 18px 30px rgba(var(--shadow-rgb), 0.45)); opacity: 1; }
-}
+/* A new planet: the old one fades softly away and the new one fades in (no flash, no spin) */
+.pv .planet.going { animation: pv-planet-out 0.45s ease-in forwards; }
+.pv .planet.coming { animation: pv-planet-in 0.8s ease-out both; }
+@keyframes pv-planet-out { to { opacity: 0; transform: scale(0.96); } }
+@keyframes pv-planet-in { from { opacity: 0; transform: scale(0.97); } }
 .pv .stage-flash {
   z-index: 3; width: 34%; height: 34%; border-radius: 50%; opacity: 0; pointer-events: none;
   background: radial-gradient(closest-side, #fff, rgba(var(--soft-rgb), 0.85) 30%, rgba(var(--hi-rgb), 0.5) 60%, transparent);
 }
 .pv .stage-ring { z-index: 3; width: 40%; height: 40%; border-radius: 50%; border: 2px solid rgba(var(--soft-rgb), 0.8); opacity: 0; pointer-events: none; }
-.pv .stage.warp .stage-flash { animation: pv-flash 0.9s ease-out; }
-.pv .stage.warp .stage-ring { animation: pv-ring-out 1s ease-out; }
-.pv .stage.warp .stage-ring.late { animation: pv-ring-out 1.2s ease-out 0.12s; border-color: rgba(var(--lilac-rgb), 0.7); }
-.pv .stage.warp .stage-glow { animation: pv-glow-surge 1.2s ease-out; }
-.pv .stage.rolling .stage-stars { animation-duration: 6s, 1s; }
-@keyframes pv-flash { 0% { opacity: 0; transform: scale(0.2); } 25% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(2.4); } }
-@keyframes pv-ring-out { 0% { opacity: 0.95; transform: scale(0.3); } 100% { opacity: 0; transform: scale(2.6); } }
-@keyframes pv-glow-surge { 30% { transform: scale(1.12); filter: brightness(1.8); } }
+/* (the flash and rings of light are kept still: no burst when a planet changes) */
+.pv .stage-flash, .pv .stage-ring { display: none; }
 
 .pv .caption {
   /* (tucked up into the stage's empty sky below the planet) */
@@ -344,7 +330,6 @@
   font-size: clamp(28px, 9vw, 46px); line-height: 1.04; letter-spacing: 0.01em;
   background: var(--title-grad); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 0 18px rgba(var(--glow-rgb), 0.3));
-  animation: pv-text-flow 12s linear infinite;
 }
 .pv .name-form { display: grid; gap: 10px; width: 100%; max-width: 380px; animation: pv-rise 0.25s ease; }
 .pv .name-form input { text-align: center; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 18px; }
@@ -362,7 +347,14 @@
 .pv .action-grid .btn:only-child, .pv .action-grid .btn.span { grid-column: 1 / -1; }
 
 /* ===================== Panels under the hero ===================== */
-.pv .panels { display: grid; gap: 14px; margin-top: 12px; }
+/* In groups (Index, Account, Connections, Admin): a heading, then the group's cards */
+.pv .panels { display: grid; gap: 22px; margin-top: 18px; }
+.pv .panels > .group + .group { margin-top: 0; }
+.pv .group-cards { display: grid; gap: 12px; align-items: start; }
+@media (min-width: 760px) { .pv .group-cards { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } }
+.pv .action-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.pv .action-row .btn { flex: 1 1 160px; }
+.pv .signout-card .btn, .pv .memory-card .btn { justify-self: center; }
 html:not([data-align="left"]) .pv .card { text-align: center; }
 html:not([data-align="left"]) .pv .card .chips { justify-self: center; }
 
@@ -430,7 +422,7 @@ html:not([data-align="left"]) .pv .admin-card .field { text-align: center; }
   text-align: center; color: var(--muted); background: rgba(var(--void-rgb), 0.25); font-size: 14px;
 }
 .pv .empty strong { display: block; margin-bottom: 4px; color: var(--bright); font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; text-transform: uppercase; }
-.pv .loading-line { margin: 0; padding: 10px 0; color: var(--muted); animation: pv-soft-pulse 1.4s ease-in-out infinite; }
+.pv .loading-line { margin: 0; padding: 10px 0; color: var(--muted); }
 
 /* ===================== The crew ===================== */
 .pv .invite-new { gap: 14px; animation: pv-rise 0.25s ease; }
@@ -445,7 +437,7 @@ html:not([data-align="left"]) .pv .invite-new .field-help { text-align: center; 
   color: inherit; text-decoration: none; text-align: center; -webkit-tap-highlight-color: transparent;
   transition: transform 0.25s var(--ease-out), box-shadow 0.3s ease;
 }
-.pv .crew-card:hover { transform: translateY(-3px); box-shadow: 0 24px 40px -26px var(--shadow), 0 0 36px -14px var(--glow); }
+.pv .crew-card:hover { box-shadow: 0 24px 40px -26px var(--shadow), 0 0 36px -14px var(--glow); }
 .pv .crew-card:active { transform: scale(0.97); }
 .pv .badge-wrap { position: relative; width: 84px; height: 84px; display: grid; place-items: center; margin-bottom: 4px; }
 .pv .badge-wrap::before {
@@ -456,15 +448,15 @@ html:not([data-align="left"]) .pv .invite-new .field-help { text-align: center; 
 .pv .crew-card:hover .badge-wrap::before { transform: scale(1.15); }
 /* (the picture has room round the planet for its rings and moons, so it's drawn a bit bigger than its spot) */
 .pv .crew-planet { position: relative; width: 112px; height: 112px; margin: -14px; transition: transform 0.6s var(--ease-out); }
-.pv .crew-card:hover .crew-planet { transform: rotate(-8deg) scale(1.06); }
+.pv .crew-card:hover .crew-planet { transform: scale(1.03); }
 .pv .crew-card.invited .crew-planet { opacity: 0.55; }
-.pv .crew-card.invited .badge-wrap::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px dashed rgba(var(--gold-rgb), 0.6); animation: pv-spin 30s linear infinite; }
+.pv .crew-card.invited .badge-wrap::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px dashed rgba(var(--gold-rgb), 0.6); }
 .pv .crew-card.disabled .crew-planet { filter: grayscale(1) brightness(0.6); }
 .pv .crew-card.disabled { --edge: linear-gradient(135deg, var(--line), transparent); }
 /* Someone just invited: their card arrives with a glowing edge */
 .pv .crew-card.fresh {
   background: linear-gradient(rgba(var(--panel-2-rgb), 0.9), rgba(var(--panel-2-rgb), 0.9)) padding-box, linear-gradient(120deg, var(--hi), var(--lilac), var(--gold)) border-box;
-  animation: pv-card-in 0.5s var(--ease-out) both, pv-fresh-glow 2.4s ease-in-out 0.5s 3;
+  animation: pv-fresh-glow 2.4s ease-in-out 0.3s 1;
 }
 @keyframes pv-fresh-glow { 50% { box-shadow: 0 0 34px -6px rgba(var(--glow-rgb), 0.7); } }
 .pv .crew-name { margin: 0; max-width: 100%; color: #fff; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 15px; line-height: 1.2; overflow-wrap: anywhere; }
@@ -493,9 +485,6 @@ html:not([data-align="left"]) .pv .invite-new .field-help { text-align: center; 
   .pv .action-grid .btn { flex: 1 1 0; }
   .pv .action-grid .btn { min-height: 54px; }
   .pv .hero-actions { max-width: 720px; }
-  .pv .panels { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: start; }
-  .pv .panels > .admin-card { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
-  .pv .admin-card > .kicker, .pv .admin-card > .card-title, .pv .admin-card > #admin-invite, .pv .admin-card > .error { grid-column: 1 / -1; }
   /* (a few people sit in the middle, like the rest of the suite; a full crew fills the row) */
   .pv .crew-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 210px)); justify-content: center; gap: 14px; }
   html[data-align="left"] .pv .crew-grid { justify-content: start; }
@@ -516,7 +505,7 @@ html[data-align="left"] .pv .mem-head::before { display: none; }
 .toast.bad { border-color: color-mix(in srgb, var(--warn) 60%, transparent); color: var(--bright); }
 /* The You tab: your own planet as its icon */
 .tab .tab-planet { width: 30px; height: 30px; margin: -4px 0 -3px; flex: none; border-radius: 50%; transition: transform 0.4s var(--ease-pop); }
-.tab.active .tab-planet { filter: drop-shadow(0 0 6px rgba(var(--glow-rgb), 0.9)); animation: pv-tab-pop 0.4s var(--ease-pop); }
+.tab.active .tab-planet { filter: drop-shadow(0 0 6px rgba(var(--glow-rgb), 0.7)); }
 @media (min-width: 1024px) { .tab .tab-planet { width: 26px; height: 26px; margin: 0; } }
 /* The You tab's views sit in the same column as the work tabs */
 #main > .pv.view { text-align: center; }
@@ -545,7 +534,7 @@ html.embed .pv .hero { --stage: min(86vw, 400px, 40vh); }
 
 /* Change password (You page) */
 .pv .password-card form { display: grid; gap: 12px; margin-top: 8px; }
-.pv .password-card .btn { justify-self: start; }
+.pv .password-card .btn { justify-self: center; }
 
 /* ===================== Today: what matters at a glance ===================== */
 .today-date { margin: 0; color: var(--muted); font-size: 13.5px; }
@@ -604,10 +593,8 @@ html.embed .pv .hero { --stage: min(86vw, 400px, 40vh); }
   .hint { font-size: 13px; margin-bottom: 10px; }
 
   /* Lighter on a phone: no frosted glass or ever-moving titles (they cost battery and smoothness) */
-  .top, .tabs, .sheet, .bot-form { backdrop-filter: none; -webkit-backdrop-filter: none; }
   .top { background: rgba(var(--deep-rgb), 0.96); }
   .tabs { background: linear-gradient(rgba(var(--deep-rgb), 0.97), rgba(var(--deep-rgb), 0.97)) padding-box, var(--edge) border-box; }
-  .view-head h2, .brand .wordmark, .cal-month, .voice-status, .cal-time { animation: none; }
   body { background-attachment: scroll; }
 
   /* Alerts: compact rows (the kind and delivery details are for the full view on a computer) */

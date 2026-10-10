@@ -1,4 +1,4 @@
-// Portal's work tabs: enquiries, chats, the calendar, quests, alerts, NovaBot,
+// Portal's work tabs: enquiries, conversations, the calendar, quests, alerts, the Website bot,
 // push and voice. All data comes from /app/api/ (a Portal sign-in is needed). Everything from
 // the server is shown as plain text, never as HTML.
 // portal.js runs the page (signing in, the address, the You tab); it starts these tabs with
@@ -114,8 +114,71 @@
   }
 
   function emptyState(list, text) {
-    list.replaceChildren(el("p", "empty", text));
+    reconcile(list, [el("p", "empty", text)]);
   }
+
+  // ===== Calm redrawing =====
+  // A refresh (every 15 s on Quests, coming back to the app, a new alert) only changes what really
+  // changed: cards are matched by their key (data-key) and kept when their data (data-sig) is the
+  // same, so nothing on screen blinks, open cards stay open, and the scroll and focus stay put.
+  // Nodes without a key (day headings, "nothing here" messages) are matched by their words.
+  function reconcile(list, nodes) {
+    const old = new Map();
+    for (const n of list.children) if (n.dataset && n.dataset.key) old.set(n.dataset.key, n);
+    const used = new Set();
+    const next = nodes.map((n) => {
+      let key = n.dataset.key || "~" + n.tagName + "." + n.className + ":" + n.textContent;
+      while (used.has(key)) key += "+";
+      used.add(key);
+      n.dataset.key = key;
+      if (!n.dataset.sig) n.dataset.sig = n.textContent;
+      const was = old.get(key);
+      if (was && was.dataset.sig === n.dataset.sig) {
+        old.delete(key);
+        return was;
+      }
+      // (a card that was opened stays open when its details change)
+      if (was && was.classList.contains("open")) n.classList.add("open");
+      return n;
+    });
+    // In order, moving only what's out of place
+    let at = list.firstChild;
+    for (const n of next) {
+      if (n === at) at = at.nextSibling;
+      else list.insertBefore(n, at);
+    }
+    while (at) {
+      const gone = at;
+      at = at.nextSibling;
+      gone.remove();
+    }
+    // The first real content after the placeholders fades in once (the placeholders held its space)
+    if (list.getAttribute("aria-busy") === "true") {
+      list.removeAttribute("aria-busy");
+      list.classList.add("filled");
+    }
+  }
+  // Draw a box only when what it would show is different from what it shows (sig: what it depends on)
+  function redraw(box, sig, nodes) {
+    const html = sig + "|" + nodes.map((n) => n.outerHTML).join("");
+    if (box.dataset.sig === html) return false;
+    box.dataset.sig = html;
+    box.replaceChildren(...nodes);
+    return true;
+  }
+  // Text and counts that change only when they change (no blink, no jump)
+  function setText(id, value) {
+    const node = $(id);
+    if (node && node.textContent !== String(value)) node.textContent = String(value);
+  }
+  function setBadge(id, n) {
+    const badge = $(id);
+    const show = Number(n) > 0;
+    if (badge.hidden === show) badge.hidden = !show;
+    if (show) setText(id, n);
+  }
+  // Data as a card's signature
+  const sig = (...parts) => JSON.stringify(parts);
 
   // ===== Signing in and out =====
 
@@ -152,30 +215,79 @@
 
   // ===== Switching sections =====
 
+  // One view at a time. A view that comes into sight fades in once (only then: never on a
+  // refresh of the view already showing). portal.js shows its own views (You, Admin) with this too.
+  function showOnly(id) {
+    document.querySelectorAll("#main > .view").forEach((v) => {
+      const on = v.id === id;
+      if (v.hidden === !on) return;
+      v.hidden = !on;
+      if (on) enter(v);
+    });
+  }
+  function enter(node) {
+    node.classList.remove("view-enter");
+    if (calm()) return;
+    void node.offsetWidth;
+    node.classList.add("view-enter");
+    node.addEventListener("animationend", () => node.classList.remove("view-enter"), { once: true });
+  }
+  const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.getAttribute("data-motion") === "calm";
+
   // Show one of the work tabs (portal.js decides which from the address, and calls this)
   function show(view) {
     if (!VIEWS.includes(view)) view = "today";
     currentView = view;
     document.querySelectorAll(".tabs .tab").forEach((t) => {
       const on = t.dataset.view === view || (t.id === "tab-more" && MORE.includes(view));
-      t.classList.toggle("active", on);
+      if (t.classList.contains("active") !== on) t.classList.toggle("active", on);
       if (on) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
     });
-    document.querySelectorAll("#main > .view").forEach((v) => (v.hidden = v.id !== "view-" + view));
+    showOnly("view-" + view);
     if (view === "today") loadToday();
     if (view === "quests") loadQuests();
     if (view === "enquiries") loadEnquiries();
-    if (view === "chats") loadChats();
+    if (view === "chats") (openChatId ? openChat(openChatId, openChatName) : loadChats());
     if (view === "calendar") loadCalendar();
     // Every section keeps the Alerts badge up to date; the Alerts tab also shows the list
     loadAlerts();
-    if (view === "bot") setTimeout(() => $("bot-input").focus(), 50);
+    if (view === "bot") setTimeout(() => $("bot-input").focus({ preventScroll: true }), 50);
   }
 
   // A tab: the address follows (so a reload stays put), and portal.js shows it
-  const goView = (view) => window.PortalPage && window.PortalPage.go("/portal/?view=" + view, { replace: VIEWS.includes(view) });
+  const goView = (view) => {
+    // One calendar: Calendar (and Today's "Bookings today") open the Calendar panel
+    if (view === "calendar") return openCalendar();
+    // Conversations from the menu starts at the list
+    if (view === "chats" && currentView !== "chats") openChatId = null;
+    return window.PortalPage && window.PortalPage.go("/portal/?view=" + view, { replace: VIEWS.includes(view) });
+  };
   document.querySelectorAll(".tabs .tab[data-view]").forEach((tab) => tab.addEventListener("click", () => goView(tab.dataset.view)));
+
+  // One calendar: the Calendar panel has everything, the studio's bookings too. Inside Nova Agent it
+  // opens in Nova Agent's viewer; Portal on its own opens Nova Agent with Calendar showing.
+  // (Portal's own bookings month, /portal/?view=calendar, still works: the starting tab, voice.)
+  function openCalendar() {
+    try {
+      if (window.parent !== window && window.parent.NovaAgent && window.parent.NovaAgent.open && window.parent.NovaAgent.open("/calendar/")) return;
+    } catch (err) {}
+    location.href = "/agent/?open=%2Fcalendar%2F";
+  }
+  $("cal-open-panel").addEventListener("click", openCalendar);
+
+  // Inside Nova Agent Portal's own top bar steps aside: Voice, Music, Options and the other apps
+  // are in the side menu (or the row of sections) instead, doing just what their top-bar buttons do
+  $("nav-voice").addEventListener("click", () => $("voice").click());
+  $("nav-music").addEventListener("click", () => $("music").click());
+  $("nav-options").addEventListener("click", () => openOptions());
+  $("nav-suite").addEventListener("click", () => $("brand").click());
+  const openOptions = () => window.PortalOptions && window.PortalOptions.open();
+  // The menu's Voice glows with the mic, and goes where the mic can't be used
+  new MutationObserver(() => {
+    $("nav-voice").classList.toggle("on", $("voice").classList.contains("on"));
+    $("nav-voice").hidden = $("voice").hidden;
+  }).observe($("voice"), { attributes: true, attributeFilter: ["class", "hidden"] });
 
   // Agent: the same conversation as Nova Agent's own, never a second one. Inside Nova Agent this
   // panel steps aside for Agent; Portal on its own opens Nova Agent at Agent.
@@ -186,27 +298,40 @@
     location.href = "/agent/";
   });
 
-  // ===== More (phones): Agent, Quests, Alerts, NovaBot and You, with their counts =====
+  // ===== More (phones): the sections that don't fit on the bar, in the menu's groups (Studio:
+  // Website bot; Plans: Quests, Alerts, Agent; You; Admin), with their counts =====
   function openMore() {
     const list = $("more-list");
-    list.replaceChildren(
-      ...[...document.querySelectorAll(".tabs .tab-more")].map((tab) => {
-        const item = el("button", "more-item" + (tab.classList.contains("active") ? " active" : ""));
-        item.type = "button";
-        const icon = tab.querySelector("svg, img").cloneNode(true);
-        icon.removeAttribute("id");
-        item.append(icon, el("span", "more-name", tab.querySelector("span:not(.badge)").textContent));
-        const badge = tab.querySelector(".badge");
-        if (badge && !badge.hidden) item.appendChild(el("span", "badge", badge.textContent));
-        item.addEventListener("click", () => {
-          $("more-sheet").hidden = true;
-          // A Portal section, or (Agent) whatever that button does
-          if (tab.dataset.view) goView(tab.dataset.view);
-          else tab.click();
-        });
-        return item;
-      })
-    );
+    const items = [];
+    let group = null;
+    const inside = document.documentElement.classList.contains("embed");
+    for (const node of document.querySelector(".tabs").children) {
+      if (node.classList.contains("tab-group")) {
+        group = node;
+        continue;
+      }
+      if (!node.classList.contains("tab-more") || node.hidden || (node.classList.contains("embed-only") && !inside)) continue;
+      if (group) {
+        items.push(el("p", "more-group", group.textContent));
+        group = null;
+      }
+      const tab = node;
+      const item = el("button", "more-item" + (tab.classList.contains("active") ? " active" : ""));
+      item.type = "button";
+      const icon = tab.querySelector("svg, img").cloneNode(true);
+      icon.removeAttribute("id");
+      item.append(icon, el("span", "more-name", tab.querySelector("span:not(.badge)").textContent));
+      const badge = tab.querySelector(".badge");
+      if (badge && !badge.hidden) item.appendChild(el("span", "badge", badge.textContent));
+      item.addEventListener("click", () => {
+        $("more-sheet").hidden = true;
+        // A Portal section, or (Agent) whatever that button does
+        if (tab.dataset.view) goView(tab.dataset.view);
+        else tab.click();
+      });
+      items.push(item);
+    }
+    list.replaceChildren(...items);
     $("more-sheet").hidden = false;
   }
   $("tab-more").addEventListener("click", openMore);
@@ -214,30 +339,31 @@
   $("more-sheet").addEventListener("click", (e) => e.target === $("more-sheet") && ($("more-sheet").hidden = true));
 
   // The counts behind More (and Today's tiles) follow the Quests and Alerts badges
+  // (the Today tiles show a count once it's known: until then they keep their "–")
+  const known = new Set();
   function syncCounts() {
     const n = (id) => ($(id).hidden ? 0 : Number($(id).textContent) || 0);
-    const more = n("quest-badge") + n("alert-badge");
-    $("more-badge").hidden = !more;
-    $("more-badge").textContent = more;
-    $("t-alerts").textContent = n("alert-badge");
-    $("t-quests").textContent = n("quest-badge");
+    setBadge("more-badge", n("quest-badge") + n("alert-badge"));
+    if (known.has("alerts")) setText("t-alerts", n("alert-badge"));
+    if (known.has("quests")) setText("t-quests", n("quest-badge"));
   }
 
   // ===== Today: what matters at a glance (each tile opens its section) =====
   document.querySelectorAll("#view-today [data-go]").forEach((b) => b.addEventListener("click", () => goView(b.dataset.go)));
+  const todayName = () => new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" });
+  setText("today-date", todayName());
   async function loadToday() {
-    $("today-date").textContent = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" });
+    setText("today-date", todayName());
     const today = dayKey(new Date());
-    const set = (id, value) => ($(id).textContent = value);
+    const set = setText;
     const [enq, chats, cal] = await Promise.allSettled([api("enquiries"), api("conversations"), api("calendar")]);
     const list = $("today-list");
     if (enq.status === "fulfilled") {
       set("t-enquiries", enq.value.newCount || 0);
-      $("new-badge").hidden = !enq.value.newCount;
-      $("new-badge").textContent = enq.value.newCount;
+      setBadge("new-badge", enq.value.newCount);
       lastEnquiries = enq.value.enquiries;
       const newest = enq.value.enquiries.slice(0, 3);
-      if (newest.length) list.replaceChildren(...newest.map(enquiryCard));
+      if (newest.length) reconcile(list, newest.map(enquiryCard));
       else emptyState(list, "Nothing new. All caught up ✦");
     } else if (enq.reason && enq.reason.message !== "signed out") emptyState(list, enq.reason.message);
     if (chats.status === "fulfilled") set("t-chats", chats.value.conversations.filter((c) => c.started && dayKey(new Date(c.started)) === today).length);
@@ -270,12 +396,11 @@
     try {
       const data = await api("enquiries" + (enquiryFilter === "all" ? "?show=all" : ""));
       lastEnquiries = data.enquiries;
-      $("new-badge").hidden = !data.newCount;
-      $("new-badge").textContent = data.newCount;
+      setBadge("new-badge", data.newCount);
       if (!data.enquiries.length) {
         return emptyState(list, enquiryFilter === "all" ? "No enquiries yet." : "No new enquiries. They appear here when a customer asks NovaBot to send one.");
       }
-      list.replaceChildren(...data.enquiries.map(enquiryCard));
+      reconcile(list, data.enquiries.map(enquiryCard));
     } catch (err) {
       if (err.message !== "signed out") emptyState(list, err.message);
     }
@@ -283,6 +408,8 @@
 
   function enquiryCard(q) {
     const card = el("article", "card fold" + (q.status === "done" ? " done" : ""));
+    card.dataset.key = "e" + q.id;
+    card.dataset.sig = sig(q);
     // On a phone an enquiry is one line (what, who, when) until it's tapped
     card.addEventListener("click", (e) => {
       if (e.target.closest("a, button")) return;
@@ -314,6 +441,7 @@
       const chat = el("button", "btn small ghost", "Read conversation");
       chat.type = "button";
       chat.addEventListener("click", () => {
+        openChatId = null;
         show("chats");
         openChat(q.chat_id, q.name);
       });
@@ -396,17 +524,26 @@
 
   // ===== Conversations =====
 
+  // The conversation open in the Conversations tab (a refresh keeps it open), or null for the list
+  let openChatId = null;
+  let openChatName = "";
+
   async function loadChats() {
+    openChatId = null;
     $("chats-back").hidden = true;
-    $("chats-title").textContent = "Conversations";
+    setText("chats-title", "Conversations");
     $("chats-hint").hidden = false;
     const list = $("chat-list");
     try {
       const data = await api("conversations");
+      if (openChatId) return; // a conversation was opened meanwhile
       if (!data.conversations.length) return emptyState(list, "No conversations yet.");
-      list.replaceChildren(
-        ...data.conversations.map((c) => {
+      reconcile(
+        list,
+        data.conversations.map((c) => {
           const card = el("article", "card tappable");
+          card.dataset.key = "c" + c.chat_id;
+          card.dataset.sig = sig(c);
           const top = el("div", "card-top");
           const title = el("h3", "card-title", (c.first_question || "(no question)").slice(0, 120));
           if (c.enquiries) title.appendChild(el("span", "pill-new", "Enquiry"));
@@ -422,14 +559,20 @@
   }
 
   async function openChat(chatId, name) {
+    const fresh = openChatId !== chatId;
+    openChatId = chatId;
+    openChatName = name || "";
     $("chats-back").hidden = false;
     $("chats-hint").hidden = true;
-    $("chats-title").textContent = name ? "Conversation with " + name.split(/\s+/)[0] : "Conversation";
+    setText("chats-title", name ? "Conversation with " + name.split(/\s+/)[0] : "Conversation");
     const list = $("chat-list");
     try {
       const data = await api("conversations?chat=" + encodeURIComponent(chatId));
+      if (openChatId !== chatId) return; // moved on meanwhile
       if (!data.messages.length) return emptyState(list, "This conversation has been deleted (conversations are kept for 90 days).");
       const card = el("article", "card");
+      card.dataset.key = "chat:" + chatId;
+      card.dataset.sig = sig(data.messages);
       data.messages.forEach((m) => {
         const line = el("div", "line " + (m.role === "user" ? "visitor" : "bot"));
         line.appendChild(el("span", "who", (m.role === "user" ? "Customer" : "NovaBot") + " · " + when(m.created_at) + (m.page ? " · " + m.page : "")));
@@ -438,8 +581,8 @@
         line.appendChild(p);
         card.appendChild(line);
       });
-      list.replaceChildren(card);
-      window.scrollTo(0, 0);
+      reconcile(list, [card]);
+      if (fresh) window.scrollTo(0, 0);
     } catch (err) {
       if (err.message !== "signed out") emptyState(list, err.message);
     }
@@ -457,6 +600,9 @@
   let calMonth = null;
   // Which day is picked ("2026-10-22")
   let calPicked = null;
+  // Whether the bookings have come in yet, and why not (the feed isn't set up, or an error)
+  let calLoaded = false;
+  let calProblem = "";
   // Colours for the different sessions (each session always gets the same one)
   const CAL_COLOURS = ["#ff5fa8", "#b98bff", "#ffd08a", "#7fd8ff", "#ff9d6e", "#8ef0c0"];
 
@@ -505,19 +651,25 @@
       const data = await api("calendar");
       // The feed isn't set up
       if (!data.setUp) {
-        $("cal-day-list").replaceChildren(el("p", "empty", "The Acuity calendar feed isn't set up yet."));
+        calProblem = "The Acuity calendar feed isn't set up yet.";
+        drawDay();
         return;
       }
+      calProblem = "";
       // Each booking with its start and end as real dates
       calBookings = data.bookings
         .map((b) => ({ ...b, from: feedDate(b.start), to: feedDate(b.end) }))
         .filter((b) => b.from);
-      // Draw again with them (no slide animation)
+      calLoaded = true;
+      // Draw again with them (only what changed is drawn again: no blink)
       drawMonth();
       drawDay();
     } catch (err) {
       // Show the problem
-      if (err.message !== "signed out") $("cal-day-list").replaceChildren(el("p", "empty", err.message));
+      if (err.message !== "signed out") {
+        calProblem = err.message;
+        drawDay();
+      }
     }
   }
 
@@ -652,7 +804,7 @@
     const ask = el("button", "chip smart-ask", "✦ Ask Nova about this week");
     ask.type = "button";
     ask.addEventListener("click", () => askAbout("nova", `Give me a quick rundown of the week starting ${short(days[0])}: who's in, anything unpaid or clashing, and where we've got space.`));
-    box.replaceChildren(head, tiles, ask);
+    redraw(box, calPicked, [head, tiles, ask]);
   }
 
   // The picked day: how full it is, warnings, free slots, filters, and Ask Nova
@@ -702,7 +854,7 @@
     ask.addEventListener("click", () => askAbout("nova", `What's on ${name}? Anything I should know: who's in, what's paid, clashes, and free time.`));
     tools.append(filters, ask);
     parts.push(tools);
-    box.replaceChildren(...parts);
+    redraw(box, calPicked + calFilter, parts);
   }
 
   function bookingsOn(key) {
@@ -777,10 +929,11 @@
     while (cells.length % 7) cells.push(el("span", "cal-blank"));
     // Put them in
     const grid = $("cal-grid");
-    grid.replaceChildren(...cells);
+    // (the same month drawn again is left as it is)
+    if (!redraw(grid, "", cells) && !slide) return;
     // Slide in from the side when the month changes
     grid.classList.remove("from-left", "from-right");
-    if (slide) {
+    if (slide && !calm()) {
       void grid.offsetWidth; // restart the animation
       grid.classList.add(slide === "left" ? "from-left" : "from-right");
     }
@@ -795,20 +948,26 @@
     // Its bookings
     const list = bookingsOn(calPicked);
     // The heading
-    $("cal-day-title").textContent = name + (list.length ? " · " + list.length + (list.length === 1 ? " booking" : " bookings") : "");
-    // The list
+    setText("cal-day-title", name + (list.length ? " · " + list.length + (list.length === 1 ? " booking" : " bookings") : ""));
+    // The list (drawn only when it changes; a day picked by hand fades in once)
     const box = $("cal-day-list");
+    const put = (...nodes) => {
+      if (redraw(box, calPicked + calFilter, nodes) && animate) enter(box);
+    };
     // The smart parts: this week, and this day
     drawSmartWeek();
     drawSmartDay();
     // Calendar's cards and Quests that day, after the bookings (as the filter says)
     const suite = suiteOn(calPicked).filter((i) => calFilter === "all" || (calFilter === "quests" ? i.kind === "quest" : calFilter === "notes" ? i.kind !== "quest" : false));
     if (calFilter !== "all" && calFilter !== "bookings") {
-      return box.replaceChildren(...(suite.length ? suite.map(suiteCard) : [el("p", "empty", calFilter === "quests" ? "No quests this day." : "No Calendar cards this day.")]));
+      return put(...(suite.length ? suite.map(suiteCard) : [el("p", "empty", calFilter === "quests" ? "No quests this day." : "No Calendar cards this day.")]));
     }
-    if (calFilter === "bookings" && !list.length) return box.replaceChildren(el("p", "empty", "No bookings this day."));
-    if (calFilter === "bookings") return box.replaceChildren(...list.map((b, i) => calCard(b, animate ? i : -1)));
-    if (suite.length) return box.replaceChildren(...list.map((b, i) => calCard(b, animate ? i : -1)), ...suite.map(suiteCard));
+    // The bookings aren't here yet: hold their place (or say why they can't come)
+    if (!list.length && calProblem) return put(el("p", "empty", calProblem), ...suite.map(suiteCard));
+    if (!list.length && !calLoaded) return put(el("div", "skeleton"), ...suite.map(suiteCard));
+    if (calFilter === "bookings" && !list.length) return put(el("p", "empty", "No bookings this day."));
+    if (calFilter === "bookings") return put(...list.map(calCard));
+    if (suite.length) return put(...list.map(calCard), ...suite.map(suiteCard));
     // None that day: say so, and offer the next booking
     if (!list.length) {
       // The next booking after that day
@@ -823,10 +982,10 @@
         jump.addEventListener("click", () => pickDay(dayKey(next.from)));
         empty.appendChild(jump);
       }
-      return box.replaceChildren(empty);
+      return put(empty);
     }
-    // One card per booking (sliding in one after another)
-    box.replaceChildren(...list.map((b, i) => calCard(b, animate ? i : -1)));
+    // One card per booking
+    put(...list.map(calCard));
   }
 
   // Jump to a day (changing month if needed)
@@ -843,15 +1002,10 @@
   }
 
   // One booking, as a card
-  function calCard(b, order) {
+  function calCard(b) {
     // The card, edged in the session's colour
     const card = el("article", "card cal-card");
     card.style.setProperty("--c", sessionColour(b.session));
-    // Slide in, one after another
-    if (order >= 0) {
-      card.style.setProperty("--i", order);
-      card.classList.add("cal-in");
-    }
     // The time ("14:15 – 16:15")
     card.appendChild(el("p", "cal-time", clock(b.from) + (b.to ? " – " + clock(b.to) : "")));
     // The customer's name, then the session
@@ -966,6 +1120,8 @@
       e.stopPropagation();
       b.disabled = true;
       onClick();
+      // (the card is only drawn again if the quest changes: ready again for another try)
+      setTimeout(() => (b.disabled = false), 5000);
     });
     return b;
   }
@@ -987,6 +1143,8 @@
   function questCard(q, missions, big) {
     const card = el("article", "card quest-card " + q.status + (q.atRisk ? " risk" : "") + (big ? " now" : ""));
     const mission = missions.find((m) => m.id === q.missionId);
+    card.dataset.key = "q" + q.id + (big ? ":now" : "");
+    card.dataset.sig = sig(q, mission && mission.title);
     // Every quest says so: "✦ Quest" (with where it's at for the big one), and its mission
     const tags = el("div", "q-tags");
     tags.appendChild(el("span", "q-tag", (q.ongoing ? "∞ Quest · repeat" : "✦ Quest") + (big ? (q.status === "doing" ? " · in progress" : " · up next") : "")));
@@ -1007,7 +1165,6 @@
       tags.appendChild(chip);
     }
     card.appendChild(tags);
-    card.style.setProperty("--i", questCard.count = (questCard.count || 0) + 1);
     const top = el("div", "card-top");
     top.append(el("h3", "card-title", q.title), el("span", "card-meta", q.start ? hhmm(q.start) + "–" + hhmm(q.end) : "not planned yet"));
     card.appendChild(top);
@@ -1024,20 +1181,20 @@
     const body = $("quests-body");
     const data = lastQuests;
     if (!data || !data.state) {
-      $("quests-sync").textContent = "Nothing from Nova Agent yet. It sends its plan here once it's running the latest version.";
-      return body.replaceChildren();
+      setText("quests-sync", "Nothing from Nova Agent yet. It sends its plan here once it's running the latest version.");
+      return reconcile(body, []);
     }
     const st = data.state;
     const ago = data.at ? Math.round((Date.now() - Date.parse(data.at)) / 60000) : null;
-    $("quests-sync").textContent = (data.online ? "● Nova Agent is online" : "○ Nova Agent is offline") + (ago !== null ? ` · updated ${ago < 1 ? "just now" : ago + " min ago"}` : "");
+    setText("quests-sync", (data.online ? "● Nova Agent is online" : "○ Nova Agent is offline") + (ago !== null ? ` · updated ${ago < 1 ? "just now" : ago + " min ago"}` : ""));
     const missions = st.missions || [];
     const quests = st.quests || [];
     const today = (st.now || "").slice(0, 10);
     const open = quests.filter((q) => q.status === "todo" || q.status === "doing");
     // The badge: quests left today
     const left = open.filter((q) => q.start && q.start.startsWith(today)).length;
-    $("quest-badge").hidden = !left;
-    $("quest-badge").textContent = left;
+    setBadge("quest-badge", left);
+    known.add("quests");
     syncCounts();
     // The Calendar tab shows Calendar and quests too: redraw it with the latest
     if (currentView === "calendar" && calMonth) {
@@ -1046,13 +1203,14 @@
     }
     if (currentView !== "quests") return;
     const cards = [];
-    questCard.count = 0;
 
     if (questTab === "today") {
       const current = st.current || (st.next || [])[0];
       if (current) cards.push(questCard(current, missions, true));
       for (const q of st.pulses || []) {
         const card = el("article", "card quest-card pulse");
+        card.dataset.key = "p" + q.id;
+        card.dataset.sig = sig(q);
         card.append(el("span", "nova-label quest", "Pulse"), el("h3", "card-title", "∞ " + q.title), el("p", "quest-meta", length(q) + (q.deadline ? " · until " + hhmm(q.deadline) : "")));
         card.appendChild(questButtons(q));
         cards.push(card);
@@ -1080,6 +1238,8 @@
         const p = m.progress || { done: 0, total: 0, atRisk: 0, minutesLeft: 0 };
         const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
         const card = el("article", "card mission-card " + m.status);
+        card.dataset.key = "m" + m.id;
+        card.dataset.sig = sig(m);
         const ring = el("div", "ring", pct + "%");
         ring.style.setProperty("--p", pct);
         const head = el("div", "mission-head");
@@ -1113,7 +1273,7 @@
       const skipped = quests.filter((q) => q.status === "skipped");
       if (skipped.length) cards.push(el("h3", "quest-day", `Skipped · ${skipped.length}`), ...skipped.map((q) => questCard(q, missions)));
     }
-    body.replaceChildren(...cards);
+    reconcile(body, cards);
   }
 
   document.querySelectorAll("[data-quests]").forEach((chip) =>
@@ -1132,8 +1292,10 @@
   // starts again on the first tap when it was on.
   const music = $("music");
   function musicState(on) {
-    music.setAttribute("aria-pressed", on ? "true" : "false");
-    music.classList.toggle("on", on);
+    for (const b of [music, $("nav-music")]) {
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.classList.toggle("on", on);
+    }
   }
   let ambient = null;
   function loadAmbient() {
@@ -1209,16 +1371,16 @@
       // How many are newer than the last one he saw
       const unseen = notifications.filter((n) => n.id > seenAlert()).length;
       // Show the number on the tab, or hide it when there are none
-      $("alert-badge").hidden = !unseen;
-      // The number itself
-      $("alert-badge").textContent = unseen;
+      setBadge("alert-badge", unseen);
+      known.add("alerts");
       syncCounts();
       // Not on the Alerts tab: the badge is all we needed
       if (!looking) return;
       // Nothing yet: say so
       if (!notifications.length) return emptyState(list, "No alerts yet. New enquiries and bookings appear here once they've reached a phone.");
-      // Draw one card per alert
-      list.replaceChildren(...notifications.map(alertCard));
+      // One card per alert (only new or changed ones are drawn), and the "ago" times brought up to date
+      reconcile(list, notifications.map(alertCard));
+      list.querySelectorAll(".alert-when[data-at]").forEach((p) => setTimeText(p, p.dataset.at));
     } catch (err) {
       // Show the problem (unless he's just been signed out)
       if (err.message !== "signed out" && currentView === "alerts") emptyState(list, err.message);
@@ -1256,8 +1418,15 @@
     return days === 1 ? "yesterday" : days + " days ago";
   }
 
-  // What Acuity said about each booking (asked once per visit)
+  // "Tue 6 Oct 2026 · 21:02:40 · 3 min ago", or just "3 min ago" (Options), on an alert
+  function setTimeText(node, iso) {
+    const text = window.NovaOptions && window.NovaOptions.get().times === "ago" ? ago(iso) : exactTime(iso) + " · " + ago(iso);
+    if (node.textContent !== text) node.textContent = text;
+  }
+
+  // What Acuity said about each booking (asked once per visit), and the answers that came back
   const verified = new Map();
+  const verifiedAnswer = new Map();
   // A panel that checks the booking with Acuity when it comes into view
   function verifyPanel(id) {
     const box = el("div", "verify checking");
@@ -1269,8 +1438,19 @@
       box.querySelector(".verify-title").textContent = icon + r.title;
       box.querySelector(".verify-lines").replaceChildren(...(r.lines || []).map((line) => el("span", "", line)));
     };
+    // Already known: shown straight away (no "Checking…" every time the list is refreshed)
+    if (verifiedAnswer.has(id)) {
+      fill(verifiedAnswer.get(id));
+      return box;
+    }
     const check = () => {
-      if (!verified.has(id)) verified.set(id, api("verify-booking?id=" + encodeURIComponent(id)).catch((err) => ({ status: "unknown", title: err.message, lines: [] })));
+      if (!verified.has(id))
+        verified.set(
+          id,
+          api("verify-booking?id=" + encodeURIComponent(id))
+            .catch((err) => ({ status: "unknown", title: err.message, lines: [] }))
+            .then((r) => (verifiedAnswer.set(id, r), r))
+        );
       verified.get(id).then(fill);
     };
     // Only ask Acuity about bookings that are actually on screen
@@ -1306,8 +1486,12 @@
     // The top: the title
     const top = el("div", "card-top");
     top.append(el("h3", "card-title", n.title));
-    // When it was sent: the exact moment (to the second) and how long ago
-    const exact = el("p", "alert-when", window.NovaOptions && window.NovaOptions.get().times === "ago" ? ago(n.created_at) : exactTime(n.created_at) + " · " + ago(n.created_at));
+    // When it was sent: the exact moment (to the second) and how long ago (kept up to date in place)
+    const exact = el("p", "alert-when");
+    exact.dataset.at = n.created_at;
+    setTimeText(exact, n.created_at);
+    card.dataset.key = "a" + n.id;
+    card.dataset.sig = sig(n, window.NovaOptions && window.NovaOptions.get().times);
     // Then every detail (coloured), and how many phones it reached
     card.append(remove, el("span", "alert-kind " + kind, KIND_LABELS[kind] || "Alert"), top, exact, richDetails(n.body), el("p", "card-foot", `Alert #${n.id} · delivered to ${n.phones} ${n.phones === 1 ? "phone" : "phones"}`));
     // A booking in Acuity: check it with Acuity itself, so a real booking can't be mistaken for a test or a fake
@@ -1546,6 +1730,8 @@
       askNovaBot();
     }
   });
+  // "Ask Agent instead": the same as Agent in the side menu
+  $("bot-agent").addEventListener("click", () => $("nav-agent").click());
   $("bot-clear").addEventListener("click", () => {
     botHistory.length = 0;
     $("bot-messages").replaceChildren();
@@ -1613,7 +1799,8 @@
     agent: [880, 1318.5],
   };
 
-  // Play a ping (bright bell-like notes, each with a shimmer an octave up)
+  // Play a ping: soft bell-like notes, each with a faint shimmer an octave up (quiet and unhurried,
+  // so an alert arriving is noticed without a jolt)
   function ping(kind) {
     // Wake the sound maker if it's allowed
     wakeSound();
@@ -1626,9 +1813,9 @@
     // Play each note a little after the last
     notes.forEach((freq, i) => {
       // When this note starts
-      const t = t0 + i * 0.11;
+      const t = t0 + i * 0.16;
       // The note and its shimmer
-      [[freq, 0.22, "sine"], [freq * 2, 0.06, "triangle"]].forEach(([f, loud, wave]) => {
+      [[freq, 0.09, "sine"], [freq * 2, 0.018, "sine"]].forEach(([f, loud, wave]) => {
         // The tone
         const osc = sound.createOscillator();
         // Its volume
@@ -1636,14 +1823,14 @@
         // Set the tone
         osc.type = wave;
         osc.frequency.value = f;
-        // A sharp strike that rings away, like a bell
+        // A soft strike that rings away, like a bell heard from the next room
         gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(loud, t + 0.008);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+        gain.gain.exponentialRampToValueAtTime(loud, t + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
         // Wire it up and play it
         osc.connect(gain).connect(sound.destination);
         osc.start(t);
-        osc.stop(t + 1);
+        osc.stop(t + 1.3);
       });
     });
     // A buzz too, on phones that can
@@ -1755,8 +1942,9 @@
     $("notify-off").hidden = !address;
   }
 
-  // Open the panel when the bell is tapped
-  $("bell").addEventListener("click", () => {
+  // Alerts in one place: the bell opens the Alerts tab; this phone's notifications are a button there
+  $("bell").addEventListener("click", () => goView("alerts"));
+  $("alerts-notify").addEventListener("click", () => {
     // Show the panel
     $("notify-sheet").hidden = false;
     // Fill it in
@@ -1894,6 +2082,14 @@
   $("handsfree-switch").addEventListener("change", () => setHandsFree($("handsfree-switch").checked));
   // The "Stop" button on the listening bar
   $("listening-off").addEventListener("click", () => setHandsFree(false));
+  // Escape closes whichever sheet is open, the same as its Close (or Done) button
+  // (the Options and Nova Agent sheets close themselves: options.js, suite.js)
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    for (const [sheet, close] of [["voice-sheet", "voice-stop"], ["sheet", "sheet-close"], ["notify-sheet", "notify-close"], ["more-sheet", "more-close"]]) {
+      if (!$(sheet).hidden) return $(close).click();
+    }
+  });
 
   // Show the listening panel with a message
   function voiceStatus(text, thinking) {
@@ -2445,8 +2641,8 @@
   document.addEventListener("pointerdown", (e) => {
     // The button (or chip, icon button, tab, calendar day) that was tapped
     const button = e.target.closest(".btn, .chip, .icon-btn, .tab, .cal-day, .card-delete");
-    // Not a button, or the phone prefers less movement
-    if (!button || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Not a button, or less movement is asked for (the device, or Options → Animations off)
+    if (!button || calm()) return;
     // Where on the button it was tapped
     const box = button.getBoundingClientRect();
     // The ring
@@ -2463,5 +2659,7 @@
   // ===== Start =====
 
   // ===== Start: portal.js starts the tabs once someone's signed in =====
-  window.PortalApp = { VIEWS, start, stop, show, get view() { return currentView; } };
+  // (openOptions: Nova Agent's gear opens Portal's Options when Portal is the panel showing;
+  //  showOnly: portal.js shows its own views the same way)
+  window.PortalApp = { VIEWS, start, stop, show, showOnly, openOptions, get view() { return currentView; } };
 })();

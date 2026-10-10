@@ -1,7 +1,7 @@
 // Portal: the studio's staff app, one sign-in for every Nova app, and everyone's planet.
 //
 // This runs the page: who's signed in, which tab shows, and Portal's own parts. The work tabs
-// (Enquiries, Chats, Calendar, Quests, Alerts, NovaBot: what was Portal) are app.js, started here
+// (Enquiries, Conversations, Calendar, Quests, Alerts, Website bot) are app.js, started here
 // with window.PortalApp once someone's signed in.
 // Each member of the studio gets a profile, drawn as a planet grown from their own seed (the
 // server draws it: /staff/<id>/planet.svg).
@@ -215,9 +215,10 @@
   function focusSoon(node) {
     setTimeout(() => node && node.focus({ preventScroll: true }), 60);
   }
+  // A problem: said under the form, and the form's edge warms for a moment (no shaking)
   function setError(id, message, card) {
     $(id).textContent = message || "";
-    if (message && card && !still()) replay(card, "shake");
+    if (message && card && !still()) replay(card, "attention");
   }
 
 
@@ -431,6 +432,9 @@
     $("open-crew").hidden = !isAdmin();
     $("open-admin").hidden = !isAdmin();
     $("nav-admin").hidden = !isAdmin();
+    $("nav-admin-group").hidden = !isAdmin();
+    // (the crew page's "+ Invite someone" was never shown: admins get it)
+    $("invite-toggle").hidden = !isAdmin();
   }
   // The You tab lights up for my profile, the crew and someone's profile
   function markNav() {
@@ -438,7 +442,7 @@
       // (on a phone the You tab is under More, so More lights up)
       const admin = currentRoute().view === "admin" || currentRoute().view === "crew";
       const on = admin ? tab.dataset.view === "admin" : tab.dataset.view === "you" || tab.id === "tab-more";
-      tab.classList.toggle("active", on);
+      if (tab.classList.contains("active") !== on) tab.classList.toggle("active", on);
       if (on) tab.setAttribute("aria-current", "page");
       else tab.removeAttribute("aria-current");
     }
@@ -482,6 +486,36 @@
     sfx("tab");
     go(a.getAttribute("href"));
   });
+  // Links to the admin pages and the other panels (Open my Index, the Nova Agent sheet, the planet's
+  // card): the admin pages open in Portal's own Admin; another panel opens in Nova Agent's viewer
+  // when Portal is inside it, and in a window of its own from the Portal phone app (so the app
+  // stays Portal). (composedPath: the planet's card is drawn in its own shadow DOM.)
+  document.addEventListener("click", (e) => {
+    const a = e.composedPath().find((n) => n instanceof HTMLAnchorElement && n.hasAttribute("href"));
+    if (!a || a.dataset.nav || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (state.screen !== "app") return;
+    if (openElsewhere(a.href)) e.preventDefault();
+  });
+  function openElsewhere(href) {
+    const url = new URL(href, location.href);
+    if (url.origin !== location.origin || url.pathname.startsWith("/portal/")) return false;
+    const address = url.pathname + url.search + url.hash;
+    if (/^\/admin(\/|$)/.test(url.pathname) && isAdmin()) {
+      sfx("tab");
+      for (const id of ["suite-sheet", "more-sheet"]) $(id).hidden = true;
+      $("brand").setAttribute("aria-expanded", "false");
+      go("/portal/?view=admin&page=" + encodeURIComponent(safeAdminPage(url.pathname)));
+      return true;
+    }
+    try {
+      if (window.top !== window && window.top.NovaAgent && window.top.NovaAgent.open) return window.top.NovaAgent.open(address) === true;
+    } catch (err) {}
+    if (window.top === window && root.classList.contains("portal-app")) {
+      window.open(address, "_blank", "noopener");
+      return true;
+    }
+    return false;
+  }
 
   async function renderRoute({ fresh } = {}) {
     const route = currentRoute();
@@ -556,14 +590,10 @@
     });
   }
 
-  // One view at a time (the work tabs' views too)
+  // One view at a time (the work tabs' views too); a view coming into sight fades in once (app.js)
   function showView(id) {
-    for (const v of document.querySelectorAll("#main > .view")) {
-      const on = v.id === id;
-      if (v.hidden === !on) continue;
-      v.hidden = !on;
-      if (on) replay(v, "view-in");
-    }
+    if (work() && work().showOnly) return work().showOnly(id);
+    for (const v of document.querySelectorAll("#main > .view")) v.hidden = v.id !== id;
   }
 
   // ===== A profile =====
@@ -583,21 +613,21 @@
     $("p-pills").replaceChildren(...pills);
     $("p-since").textContent = person.status === "invited" ? `Invited ${monthYear(person.created_at)}` : `Member since ${monthYear(person.created_at)}`;
 
-    // The planet: blooms in when it's someone new (or the first time), otherwise stays put
+    // The planet: fades in softly when it's someone new (or the first time), otherwise stays put
     setPlanet(person, changedPerson || fresh);
 
-    // What I can do: everything on my own; an admin can open someone's Index
-    $("self-actions").hidden = !(self || isAdmin());
-    document.querySelector(".action-grid").hidden = !self;
-    $("open-index").href = `/app/memory/?scope=staff&owner=${encodeURIComponent(person.id)}`;
-    $("open-index-label").textContent = self ? "Open my Index" : `Open ${possessive(firstName(person.display_name))} Index`;
+    // My planet: re-roll it, go back to the first one, rename myself (my own profile only)
+    $("self-actions").hidden = !self;
     $("reset-planet").hidden = !self || !person.planet_seed || person.planet_seed === person.id;
     evenActions();
 
+    // Admin: the crew and the admin pages (my own, as an admin); someone else's account
+    $("self-admin").hidden = !(self && isAdmin());
     $("admin-card").hidden = self || !isAdmin();
     if (!self && isAdmin()) renderAdmin(person);
 
     renderDetails(person, self);
+    $("signout-card").hidden = !self;
 
     $("google-card").hidden = !self;
     if (self) loadGoogle();
@@ -621,10 +651,21 @@
     // Admins choose a new password without the old one; everyone else confirms it
     $("password-current-field").hidden = isAdmin();
 
-    // Their memory (only for themselves and admins)
+    // Their Index: one button to it (only for themselves and admins)
     const canSeeMemory = self || isAdmin();
     $("memory-card").hidden = !canSeeMemory;
-    if (canSeeMemory) loadMemory(person, self);
+    const first2 = firstName(person.display_name);
+    $("memory-title").textContent = self ? "Your memory" : `${possessive(first2)} memory`;
+    $("memory-hint").textContent = self
+      ? "What the Nova apps remember about you, and what the whole studio knows."
+      : `What the Nova apps remember about ${first2}, and what the whole studio knows.`;
+    $("open-index").href = `/app/memory/?scope=staff&owner=${encodeURIComponent(person.id)}`;
+    $("open-index-label").textContent = self ? "Open my Index" : `Open ${possessive(first2)} Index`;
+
+    // A group with nothing to show (Connections for someone else, Admin for staff) steps aside
+    for (const group of document.querySelectorAll("#view-profile .panels > .group")) {
+      group.hidden = ![...group.querySelectorAll(".group-cards > .card")].some((c) => !c.hidden);
+    }
   }
 
   // Google, for the studio: Notes' Google Docs, and Calendar and Gmail for bookings. You sign
@@ -703,16 +744,11 @@
   });
 
   $("google-setup").addEventListener("click", () => {
-    // Inside Nova Agent: Admin → Google in its viewer. On its own: the admin page itself.
-    for (const w of [window.top, window]) {
-      try {
-        if (w.NovaAgent && w.NovaAgent.open) return w.NovaAgent.open("/admin/google/setup");
-      } catch (err) {}
-    }
-    location.href = "/admin/google/setup";
+    // Admin → Google, here in Portal (the admin pages live in Portal's Admin)
+    if (!openElsewhere("/admin/google/setup")) location.href = "/admin/google/setup";
   });
 
-  // Two buttons a row: when there's an odd one out, the last (Sign out) takes the whole row
+  // Two buttons a row: when there's an odd one out, the last takes the whole row
   function evenActions() {
     const shown = [...document.querySelectorAll(".action-grid .btn")].filter((b) => !b.hidden);
     shown.forEach((b, i) => b.classList.toggle("span", shown.length % 2 === 1 && i === shown.length - 1));
@@ -743,7 +779,6 @@
     img.src = url;
     img.classList.remove("loading");
     replay(img, "coming");
-    replay($("stage"), "warp");
   }
 
   // The caption: what the planet generator says this world is like (it's the picture's <title>)
@@ -783,7 +818,7 @@
     const buttons = [$("reroll"), $("reset-planet")];
     buttons.forEach((b) => (b.disabled = true));
     stage.classList.add("rolling");
-    // The old planet starts collapsing straight away, while the server picks the new seed
+    // The old planet fades away straight away, while the server picks the new seed
     let collapsed = Promise.resolve();
     if (!still()) {
       img.classList.remove("coming");
@@ -800,10 +835,7 @@
       img.dataset.src = url;
       img.src = url;
       img.classList.remove("going");
-      if (!still()) {
-        replay(stage, "warp");
-        replay(img, "coming");
-      }
+      if (!still()) replay(img, "coming");
       sfx("done");
       loadCaption(state.me);
       drawNav();
@@ -885,68 +917,6 @@
     if (self || isAdmin()) row("Index partition", person.index_partition, true);
     $("details-title").textContent = self ? "About you" : `About ${firstName(person.display_name)}`;
     $("details").replaceChildren(...rows);
-  }
-
-  // ----- Their Index: their own files, and what the studio shares with everyone -----
-  async function loadMemory(person, self) {
-    const list = $("memory-list");
-    $("memory-title").textContent = self ? "Your memory" : `${possessive(firstName(person.display_name))} memory`;
-    $("memory-hint").textContent = self
-      ? "What the Nova apps remember about you, and what the whole studio knows."
-      : `What the Nova apps remember about ${firstName(person.display_name)}, and what the whole studio knows.`;
-    list.replaceChildren(el("p", "loading-line", "Looking in Index…"));
-    let data;
-    try {
-      data = await must(`/staff/${encodeURIComponent(person.id)}/index`);
-    } catch (err) {
-      if (!state.person || state.person.id !== person.id) return;
-      list.replaceChildren(el("p", "empty", err.message));
-      return;
-    }
-    if (!state.person || state.person.id !== person.id) return;
-    const files = Array.isArray(data.files) ? data.files : [];
-    const mine = files.filter((f) => f.scope === "staff");
-    const studio = files.filter((f) => f.scope === "studio");
-    const ownerLink = `/app/memory/?scope=staff&owner=${encodeURIComponent(person.id)}`;
-    let i = 0;
-
-    const own = el("div", "mem-group", [el("p", "mem-head", self ? "Yours" : firstName(person.display_name))]);
-    if (mine.length) own.append(...mine.map((f) => memFile(f, ownerLink, i++)));
-    else {
-      const empty = el("p", "empty", [
-        el("strong", "", "Nothing yet"),
-        self ? "As you use the Nova apps, what they learn about you shows up here." : "Nothing has been remembered about them yet.",
-      ]);
-      own.append(empty);
-    }
-
-    const shared = el("div", "mem-group", [el("p", "mem-head", "The studio · shared")]);
-    const SHOW = 4;
-    if (studio.length) {
-      shared.append(...studio.slice(0, SHOW).map((f) => memFile(f, "/app/memory/?scope=studio", i++)));
-      if (studio.length > SHOW) {
-        const more = button("btn small ghost mem-more", `Show all ${studio.length}`, () => {
-          more.replaceWith(...studio.slice(SHOW).map((f, j) => memFile(f, "/app/memory/?scope=studio", j)));
-        }, { "data-sfx": "open" });
-        shared.append(more);
-      }
-    } else shared.append(el("p", "empty", "The studio hasn't shared anything yet."));
-    list.replaceChildren(own, shared);
-  }
-  function memFile(f, href, i) {
-    const a = el("a", "mem-file card-in", [
-      el("span", "mem-path", f.path),
-      f.name && f.name !== f.path ? el("p", "mem-name", f.name) : null,
-      f.description ? el("p", "mem-desc", f.description) : null,
-      el("span", "mem-meta", [
-        el("span", "mem-facts", plural(Number(f.facts) || 0, "fact")),
-        f.updated_at ? el("span", "", "updated " + ago(f.updated_at)) : null,
-        f.source_app ? el("span", "", "from " + f.source_app) : null,
-      ]),
-    ]);
-    a.href = href;
-    a.style.setProperty("--i", String(Math.min(i, 12)));
-    return a;
   }
 
   // ----- Admin: someone else's account -----

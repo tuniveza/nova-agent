@@ -147,6 +147,9 @@ button { cursor: pointer; }
 :host([compact]) .open .orb { width: 32px; height: 32px; }
 :host([compact]) .open .dot { left: 27px; }
 :host([compact]) .open .label { display: none; }
+/* calm (an attribute): the chip stays still (no orbiting spark, turning ring or breathing dot). Portal's header uses it. */
+:host([calm]) .open .orb::after, :host([calm]) .open .dot { animation: none; }
+:host([calm]) .open .spark { display: none; }
 @media (max-width: 560px) { :host([floating]) .open { padding: 0 5px; } :host([floating]) .open .label { display: none; } }
 
 /* ---- The panel ---- */

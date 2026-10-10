@@ -2,7 +2,7 @@
 //
 //   <script src="/shared/badge.js" defer></script>        (on Nova Bot's worker and in Nova Agent)
 //   <script src="https://novacane-worker.novacane-studio.workers.dev/portal/badge.js" defer></script>
-//   <nova-portal-badge></nova-portal-badge>                 (compact: planet only; align="start" opens its card to the right)
+//   <nova-portal-badge></nova-portal-badge>                 (compact: planet only; align="start" opens its card to the right; calm: no ever-moving parts)
 // Pages can style ::part(chip) and ::part(words) (e.g. hide the words on a phone).
 //
 // It shows your planet (turning, with a halo in its own colour), your name and your role, and opens
@@ -248,6 +248,12 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
 @keyframes link-in { from { opacity: 0; transform: translateY(8px); } }
 :host(.calm) *, :host(.calm) *::before, :host(.calm) *::after { animation: none !important; transition: none !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+/* calm (an attribute): the chip stays still (no turning ring, orbiting spark, shimmer or breathing glow);
+   it only fades in once. Portal's header uses it. */
+:host([calm]) .orb::before, :host([calm]) .orb::after, :host([calm]) .orb .ghost, :host([calm]) .orb .spark,
+:host([calm]) .role.admin::after, :host([calm]) .stars i, :host([calm]) .big::before { animation: none; }
+:host([calm]) .orb .spark, :host([calm]) .role.admin::after { display: none; }
+:host([calm]) .big img { animation: rise 0.7s ease both 0.05s; }
 `;
 
   const ICON = {
