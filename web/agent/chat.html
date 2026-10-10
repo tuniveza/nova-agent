@@ -1367,16 +1367,31 @@
   const escH = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   let calNotes = [];
 
-  async function loadPlan() {
+  // The plan, fetched again whenever anything changes (live, see "Live" below). It's only drawn
+  // again when something in it is different, never while a quest's mode or phones menu is open
+  // (it waits for the menu to close), and a hiccup keeps the last good plan on screen.
+  let planKey = '', planWait = null, lastLoad = 0;
+  const menuOpen = () => Boolean(document.querySelector('.qm-menu:not([hidden])'));
+  // `quiet` (the live refreshes): only when something changed. Otherwise (after a tap here) always.
+  async function loadPlan(quiet = false) {
+    quiet = quiet === true;
+    clearTimeout(planWait);
+    if (menuOpen()) { planWait = setTimeout(() => loadPlan(quiet), 600); return; }
+    lastLoad = Date.now();
     try {
-      const [state, cal] = await Promise.all([fetch('/quests/state').then((r) => r.json()), fetch('/calendar-api/data').then((r) => r.json())]);
+      const [state, cal] = await Promise.all([fetch('/quests/state', { cache: 'no-store' }).then((r) => r.json()), fetch('/calendar-api/data', { cache: 'no-store' }).then((r) => r.json())]);
+      if (menuOpen()) { planWait = setTimeout(() => loadPlan(quiet), 600); return; }
+      // The same plan (to the minute, for the now-line and progress): nothing to draw
+      const key = JSON.stringify([{ ...state, now: String(state.now).slice(0, 16) }, cal.notes || []]);
       st = state;
       calNotes = (cal.notes || []).filter((n) => !/^(quest|block|mile)-/.test(n.id));
-      renderToday();
+      if (quiet && key === planKey) return;
+      planKey = key;
+      renderToday(quiet);
       renderMissions();
       if ($('mv').open) renderMissionView();
     } catch (e) {
-      $('view-today').innerHTML = '<div class="empty">Couldn’t load the plan.</div>';
+      if (!planKey) $('view-today').innerHTML = '<div class="empty">Couldn’t load the plan.</div>';
     }
   }
 
@@ -1418,7 +1433,9 @@
     card.classList.toggle('open', openRows.has(key));
     if (window.NovaSfx) window.NovaSfx.play(card.classList.contains('open') ? 'open' : 'close', undefined, card);
   });
-  function renderToday() {
+  // `quiet`: a live refresh (the cards don't play their entrance again)
+  function renderToday(quiet = false) {
+    $('view-today').classList.toggle('quiet', quiet === true);
     const today = st.now.slice(0, 10);
     const nowM = mins(st.now);
     const items = [];
@@ -1437,28 +1454,30 @@
       <div class="stats"><div class="stat"><b>${quests.length}</b>quests</div><div class="stat"><b>${(plannedMin / 60).toFixed(1)}h</b>planned</div><div class="stat"><b>${done}</b>done</div>${atRisk ? `<div class="stat warn"><b>${atRisk}</b>at risk</div>` : ''}</div></div>`;
 
     const cur = st.current;
+    // The quest on the big card (on now, or up next)
+    const nowId = cur ? cur.id : st.next[0] ? st.next[0].id : '';
     if (cur) {
       const pct = cur.start && cur.end ? Math.max(0, Math.min(100, ((nowM - mins(cur.start)) / Math.max(1, mins(cur.end) - mins(cur.start))) * 100)) : 0;
       html += `<div class="now-card"><div class="now-kicker">✦ Quest · ${cur.status === 'doing' ? 'In progress' : 'Happening now'} ${modeChip(cur)}</div><div class="now-title">${escH(cur.title)}</div>
-        <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${dur(cur)}${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>
+        <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${dur(cur)}${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>${cur.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(cur.from)}</span></div>` : ''}
         <div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div>${questButtons(cur)}</div>`;
     } else if (st.next[0]) {
       const n = st.next[0];
-      html += `<div class="now-card"><div class="now-kicker">✦ Quest · Up next ${modeChip(n)}</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div><div style="margin-top:10px">${questButtons(n)}</div></div>`;
+      html += `<div class="now-card"><div class="now-kicker">✦ Quest · Up next ${modeChip(n)}</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div>${n.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(n.from)}</span></div>` : ''}<div style="margin-top:10px">${questButtons(n)}</div></div>`;
     }
 
     // One timeline row (a quest, blocked time or a calendar card). Compact rows show just the time
     // and title, so the whole day fits: tap one to open its details and buttons (tap again to fold)
-    const row = (it, compact = false) => {
+    const row = (it, compact = false, label = '') => {
       let html = '';
-        const past = mins(it.end) <= nowM;
+      const past = mins(it.end) <= nowM;
       const key = `${it.kind}:${(it.q || it.b || it.n || {}).id || it.start}`;
       const fold = compact ? ` compact${openRows.has(key) ? ' open' : ''}" data-row="${escH(key)}` : '';
       if (it.kind === 'quest') {
         const q = it.q;
-        html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
+        html += `<div class="tl-item${past ? ' past' : ''}${q.id === nowId ? ' is-now' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
           <div class="tl-card quest ${q.status}${q.atRisk ? ' risk' : ''}${q.ongoing ? ' ongoing' : ''}${fold}" style="--i:${questIndex++}">
-          <div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Quest · repeat' : '✦ Quest'}</span>${modeChip(q)}${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${q.from ? `<span class="m-tag">✎ ${escH(q.from)}</span>` : ''}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
+          ${label ? `<div class="tl-label">${label}</div>` : ''}<div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Quest · repeat' : '✦ Quest'}</span>${modeChip(q)}${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${q.from ? `<span class="m-tag">✎ ${escH(q.from)}</span>` : ''}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
           <div class="tl-title">${escH(q.title)}</div>
           <div class="tl-meta"><span class="prio ${q.priority}">${q.priority}</span> · ${dur(q)}${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline && !q.ongoing ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
           ${q.status === 'done' ? '' : questButtons(q)}</div></div>`;
@@ -1496,7 +1515,11 @@
     let panel = '';
     if (todayTab === 'ahead') {
       if (!ahead.length) panel = `<div class="empty">${items.length ? 'All done for today ✦' : 'Nothing planned today.<br>Ask me to plan a mission, or say what you need to get done.'}</div>`;
-      else panel = `<div class="timeline">${ahead.map((it, i) => (i === 0 && mins(it.start) > nowM ? '<div class="now-line"></div>' : '') + row(it, i > 0)).join('')}</div>`;
+      else {
+        // The quest already on the card above is a folded row here; the one after it is open
+        const open = Math.max(0, ahead.findIndex((it) => !(it.kind === 'quest' && it.q.id === nowId)));
+        panel = `<div class="timeline">${ahead.map((it, i) => (i === 0 && mins(it.start) > nowM ? '<div class="now-line"></div>' : '') + row(it, i !== open, i === open && cur && i > 0 && it.kind === 'quest' ? 'Up next' : '')).join('')}</div>`;
+      }
     } else if (todayTab === 'done') {
       panel = `<div class="timeline">${finished.map((it) => row(it, true)).join('')}</div>`;
     } else if (todayTab === 'coming') {
@@ -1847,21 +1870,40 @@
   bellState();
 
   // Live: re-draw when the plan changes; pop up reminders as they come
-  try {
-    const es = new EventSource('/quests/events');
-    let t = null;
-    es.addEventListener('changed', () => { clearTimeout(t); t = setTimeout(loadPlan, 250); });
-    es.addEventListener('notice', (e) => {
-      let n = null;
-      try { n = JSON.parse(e.data); } catch (err) { return; }
-      // Pulses (quick repeats): one ticking card and a short ping each beat, nothing else redrawn
-      if (n.kind === 'pulse') return pulse(n);
-      notice(n);
-      loadPlan();
-    });
-    new EventSource('/calendar-api/events').addEventListener('change', () => { clearTimeout(t); t = setTimeout(loadPlan, 250); });
-  } catch (e) {}
-  setInterval(loadPlan, 60000); // keeps the now-line and progress moving
+  // A change made anywhere (Notes, Portal, Agent, another tab, a reminder) shows here in about a
+  // second: the stream says something changed, and the plan is fetched again (drawn only if it's
+  // different). If the stream is down, it asks every 10 seconds instead while the page is in view,
+  // and always on coming back to the page.
+  let liveT = null, questStream = null;
+  const refresh = (wait = 250) => { clearTimeout(liveT); liveT = setTimeout(() => loadPlan(true), wait); };
+  function listen() {
+    try {
+      const es = new EventSource('/quests/events');
+      questStream = es;
+      es.addEventListener('open', () => { if (planKey) refresh(); }); // (again) caught up after a gap
+      es.addEventListener('changed', () => refresh());
+      es.addEventListener('notice', (e) => {
+        let n = null;
+        try { n = JSON.parse(e.data); } catch (err) { return; }
+        // Pulses (quick repeats): one ticking card and a short ping each beat, nothing else redrawn
+        if (n.kind === 'pulse') return pulse(n);
+        notice(n);
+        refresh(0);
+      });
+      // Closed for good (the link answered with an error): try again in a little while
+      es.addEventListener('error', () => { if (es.readyState === 2 && questStream === es) setTimeout(listen, 5000); });
+    } catch (e) {}
+  }
+  listen();
+  try { new EventSource('/calendar-api/events').addEventListener('change', () => refresh()); } catch (e) {}
+  setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+    const live = questStream && questStream.readyState === 1;
+    // Every 10 s without the stream; with it, once a minute (the now-line and progress move)
+    if (!live || Date.now() - lastLoad > 55000) refresh(0);
+  }, 10000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(0); });
+  window.addEventListener('focus', () => refresh(0));
 
   // ---- The Nova Agent section at the bottom of the page: the launcher's groups and tiles ----
   $('suite-body').append($('suite').querySelector('.suite-groups').cloneNode(true));
