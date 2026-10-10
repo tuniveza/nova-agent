@@ -158,13 +158,14 @@
       })
       .catch(() => {});
   }
-  // "Open Admin → Google": inside Nova Agent's viewer when Notes is open there
+  // "Open Admin → Google": in Portal → Admin (the one place for admin things), inside Nova Agent
   document.addEventListener('click', (e) => {
     if (!e.target.closest || !e.target.closest('#gd-admin')) return;
+    const page = '/portal/?view=admin&page=' + encodeURIComponent('/admin/google/setup');
     try {
-      if (window.top !== window && window.top.NovaAgent && window.top.NovaAgent.open) return window.top.NovaAgent.open('/admin/google/setup');
+      if (window.top !== window && window.top.NovaAgent && window.top.NovaAgent.open) return window.top.NovaAgent.open(page);
     } catch (err) {}
-    window.open('/admin/google/setup', '_blank', 'noopener');
+    window.open('/agent/?open=' + encodeURIComponent(page), '_blank', 'noopener');
   });
 
   NN.google = google;

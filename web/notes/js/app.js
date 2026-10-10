@@ -686,6 +686,14 @@
       { label: 'This note as a backup (.json)', icon: 'export', sfx: 'send', run: () => exportAs('json') }
     ];
   }
+  // All links: Portal → Admin, inside Nova Agent (or Nova Agent opened there, from Notes on its own)
+  function openAllLinks() {
+    const page = '/portal/?view=admin&page=' + encodeURIComponent('/admin/links');
+    try {
+      if (window.top !== window && window.top.NovaAgent && window.top.NovaAgent.open) return window.top.NovaAgent.open(page);
+    } catch (err) {}
+    window.open('/agent/?open=' + encodeURIComponent(page), '_blank', 'noopener');
+  }
   const MENUS = [
     ['File', () => [
       { label: 'New note', icon: 'plus', kbd: 'Ctrl+Alt+N', run: newNote },
@@ -793,8 +801,8 @@
     ['Help', () => [
       { label: 'Install Notes as an app', icon: 'export', run: installApp },
       { label: 'Keyboard shortcuts', icon: 'keys', kbd: 'Ctrl+/', run: showKeys },
-      // Every Nova Agent address, live and testing (behind the admin password, on Portal's admin page)
-      { label: '🔒 All Nova Agent links', icon: 'link', run: () => window.open('https://novacane-worker.novacane-studio.workers.dev/admin/links', '_blank', 'noopener') },
+      // Every Nova Agent address, live and testing (admins: in Portal → Admin, the one place for admin things)
+      { label: '🔒 All Nova Agent links', icon: 'link', run: openAllLinks },
       { label: 'About Notes', icon: 'info', run: () => $('dlg-about').showModal() }
     ]]
   ];

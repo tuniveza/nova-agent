@@ -315,6 +315,7 @@
       <h4>Settings</h4>
       <div class="more-grid">
         ${openName ? btn('reload-panel', `Reload ${openName}`, g('↻')) : ''}
+        ${window.NovaSettings && window.NovaSettings.panel() ? btn('panel-settings', `${openName} settings`, g('⚙')) : ''}
         ${btn('rhythm', 'Your rhythm', g('⚙'))}
         ${btn('new-mission', 'New mission', g('+'))}
         ${btn('sfx', sfxOn ? 'Sound: on' : 'Sound: off', g(sfxOn ? '🔊' : '🔈'))}
@@ -345,6 +346,7 @@
     const act = b.dataset.act;
     sheet.close();
     if (act === 'reload-panel') { const r = $('viewer-reload'); if (r) r.click(); return; }
+    if (act === 'panel-settings') { const p = window.NovaSettings && window.NovaSettings.panel(); if (p) p.open(); return; }
     if (act === 'rhythm') { const r = $('btn-rhythm'); if (r) r.click(); return; }
     if (act === 'new-mission') { closePanel(); setPane('missions'); const n = $('new-mission-btn'); if (n) n.click(); return; }
     if (act === 'sfx') { const s = $('sfx-btn'); if (s) s.click(); return; }
@@ -356,7 +358,8 @@
     if (act === 'app-help') { if (window.NovaInstall) window.NovaInstall.help(); return; }
     if (act === 'status') { if (window.NovaStatus) window.NovaStatus.next(); return; }
     if (act === 'sfx-extra') { if (window.NovaSfx) window.NovaSfx.toggleExtra(); return; }
-    if (act === 'links') return open('/admin/links');
+    // Admin things live in Portal → Admin
+    if (act === 'links') return window.NovaAgent && window.NovaAgent.open('/portal/?view=admin&page=' + encodeURIComponent('/admin/links'));
     if (act === 'install') { const i = $('install'); if (i) i.click(); return; }
     if (act === 'reload') location.reload();
   });
