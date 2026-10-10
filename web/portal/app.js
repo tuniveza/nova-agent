@@ -1,4 +1,4 @@
-// Portal's work tabs: enquiries, conversations, the calendar, clients, approvals, quests, alerts, the Website bot,
+// Portal's work tabs: enquiries, conversations, the calendar, clients, approvals, campaigns, quests, alerts, the Website bot,
 // push and voice. All data comes from /app/api/ (a Portal sign-in is needed). Everything from
 // the server is shown as plain text, never as HTML.
 // portal.js runs the page (signing in, the address, the You tab); it starts these tabs with
@@ -10,9 +10,9 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "approvals", "quests", "alerts", "bot"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "approvals", "campaigns", "quests", "alerts", "bot"];
   // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
-  const MORE = ["clients", "approvals", "quests", "alerts", "bot"];
+  const MORE = ["clients", "approvals", "campaigns", "quests", "alerts", "bot"];
   let currentView = "today";
   let running = false;
   let sessions = null; // session types for booking links
@@ -207,6 +207,8 @@
     loadAlerts();
     // The Approvals badge (booking changes waiting for an admin)
     loadApprovals();
+    // The Campaigns badge (email campaigns waiting for an admin)
+    loadCampaigns();
     // Light the bell up if this phone already gets notifications
     updateNotifyPanel();
     // Hands-free voice: the mic glows, and listening starts
@@ -260,6 +262,7 @@
     if (view === "chats") (openChatId ? openChat(openChatId, openChatName) : loadChats());
     if (view === "calendar") loadCalendar();
     if (view === "approvals") loadApprovals();
+    if (view === "campaigns") loadCampaigns();
     if (view === "clients") loadClients();
     // Every section keeps the Alerts badge up to date; the Alerts tab also shows the list
     loadAlerts();
@@ -314,7 +317,7 @@
   });
 
   // ===== More (phones): the sections that don't fit on the bar, in the menu's groups (Studio:
-  // Clients, Approvals, Website bot; Plans: Quests, Alerts, Agent; You; Admin), with their counts =====
+  // Clients, Approvals, Campaigns, Website bot; Plans: Quests, Alerts, Agent; You; Admin), with their counts =====
   function openMore() {
     const list = $("more-list");
     const items = [];
@@ -356,12 +359,12 @@
   $("more-close").addEventListener("click", () => ($("more-sheet").hidden = true));
   $("more-sheet").addEventListener("click", (e) => e.target === $("more-sheet") && ($("more-sheet").hidden = true));
 
-  // The counts behind More (and Today's tiles) follow the Quests, Alerts and Approvals badges
+  // The counts behind More (and Today's tiles) follow the Quests, Alerts, Approvals and Campaigns badges
   // (the Today tiles show a count once it's known: until then they keep their "–")
   const known = new Set();
   function syncCounts() {
     const n = (id) => ($(id).hidden ? 0 : Number($(id).textContent) || 0);
-    setBadge("more-badge", n("quest-badge") + n("alert-badge") + n("approvals-badge"));
+    setBadge("more-badge", n("quest-badge") + n("alert-badge") + n("approvals-badge") + n("campaigns-badge"));
     if (known.has("alerts")) setText("t-alerts", n("alert-badge"));
     if (known.has("quests")) setText("t-quests", n("quest-badge"));
   }
@@ -825,6 +828,459 @@
   // Approvals refresh while they're on screen (not while a proposal's fields are open); the badge every minute
   setInterval(() => !document.hidden && running && currentView === "approvals" && approvalEditing === null && loadApprovals(), 15000);
   setInterval(() => !document.hidden && running && currentView !== "approvals" && loadApprovals(), 60000);
+
+  // ===== Campaigns: email newsletters, waiting for an admin =====
+  // Emails to the studio's opted-in fans (signed up and confirmed by email) and clients (said yes to
+  // studio news), sent through Resend by Nova Bot. Agent (and anyone signed in, with Write one) only
+  // DRAFTS them: nothing is sent until an admin presses Approve here (or on the campaign's card under
+  // Agent's reply) with their own sign-in. Nova Bot keeps a fingerprint of exactly what was approved
+  // and won't send anything that changed since; here, Approve also checks the campaign is still the
+  // one on screen first. Waiting ones come first (with the email as people will get it, in a
+  // sandboxed frame), then scheduled, sent (with how they did) and rejected ones, then the fan sign-up
+  // link to share. canDecide (from Nova Bot) says whether this person can approve, reject and send
+  // themselves a test. ?view=campaigns&campaign=<id> points at one. Times are shown in UK time.
+  let campaignEditing = null; // the campaign whose fields are open (refreshes wait meanwhile), or null
+  let campaignRejecting = null; // the campaign whose "why" box is open, or null
+  let campaignPicked = null; // the ?campaign= one already pointed at
+  const campaignOpen = new Set(); // sent or decided ones whose email is showing
+  const campaignDetail = new Map(); // id -> { updatedAt, previewHtml, log } (fetched once per version)
+  const CAMPAIGN_STATUS = {
+    draft: ["pill-draft", "Draft"],
+    pending_approval: ["pill-draft", "Waiting for approval"],
+    approved: ["pill-replied", "Approved · sending"],
+    scheduled: ["pill-replied", "Scheduled"],
+    sent: ["pill-done", "Sent"],
+    failed: ["pill-failed", "Didn't send"],
+    rejected: ["pill-stop", "Rejected"],
+  };
+  const AUDIENCE_NAMES = { fans: "Fans", clients: "Studio clients", everyone: "Everyone (fans and clients)" };
+  const CAMPAIGN_WRITERS = { agent: "Agent", "staff-chat": "Portal's staff chat" };
+  const CAMPAIGN_EVENTS = { created: "Written", edited: "Changed", submitted: "Sent for approval", approved: "Approved", rejected: "Rejected", sent: "Sent", scheduled: "Scheduled", failed: "Didn't send", stats: "Results updated" };
+  const campaignWaiting = (c) => c.status === "pending_approval" || c.status === "draft";
+  const people = (n) => (Number(n) || 0) + (Number(n) === 1 ? " person" : " people");
+  const pickedCampaign = () => Number(new URLSearchParams(location.search).get("campaign")) || null;
+  // A UK wall-clock time ("2026-10-16T18:00", from a date-and-time box) as UTC ISO, whatever the clocks are doing
+  function ukToIso(local) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(local || "");
+    if (!m) return null;
+    const wall = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    const offset = (t) => {
+      const p = {};
+      for (const x of new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(t))) p[x.type] = x.value;
+      return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) - t;
+    };
+    let t = wall - offset(wall);
+    t = wall - offset(t);
+    return new Date(t).toISOString();
+  }
+  // "Fri 16 Oct 2026, 18:00" (UK time)
+  const ukWhen = (iso) => {
+    const d = new Date(iso);
+    if (!iso || isNaN(d)) return "";
+    return d.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }).replace(/^(\p{L}+),/u, "$1");
+  };
+  const pct = (n, of) => (of > 0 ? Math.round((n / of) * 100) + "%" : "–");
+
+  // The email as people will get it (and its history), once per version of the campaign
+  async function campaignDetails(c) {
+    const have = campaignDetail.get(c.id);
+    if (have && have.updatedAt === c.updatedAt) return have;
+    const d = await api("campaigns/" + c.id);
+    const got = { updatedAt: c.updatedAt, previewHtml: String(d.previewHtml || ""), log: d.log || [] };
+    campaignDetail.set(c.id, got);
+    return got;
+  }
+
+  async function loadCampaigns() {
+    const list = $("campaigns-list");
+    let data;
+    try {
+      data = await api("campaigns");
+    } catch (err) {
+      if (currentView === "campaigns" && err.message !== "signed out") emptyState(list, "Couldn't load campaigns: " + err.message);
+      return;
+    }
+    const all = data.campaigns || [];
+    setBadge("campaigns-badge", all.filter((c) => c.status === "pending_approval").length);
+    syncCounts();
+    if (currentView !== "campaigns") return;
+    setText("campaigns-hint", data.canDecide ? "Emails to fans and clients who opted in. Nothing is sent until you approve it." : "Emails to fans and clients who opted in. An admin approves these (signed in to Portal in a browser); nothing is sent until then.");
+    const want = pickedCampaign();
+    if (want && campaignPicked !== String(want)) campaignOpen.add(want);
+    // The emails to show: every waiting one, and any that's been opened
+    await Promise.allSettled(all.filter((c) => campaignWaiting(c) || campaignOpen.has(c.id)).map(campaignDetails));
+    if (currentView !== "campaigns") return;
+    const by = (key, dir) => (a, b) => dir * String(a[key] || a.updatedAt || "").localeCompare(String(b[key] || b.updatedAt || ""));
+    const waiting = all.filter(campaignWaiting).sort(by("createdAt", 1));
+    const later = all.filter((c) => c.status === "approved" || c.status === "scheduled").sort(by("sendAt", 1));
+    const sent = all.filter((c) => c.status === "sent" || c.status === "failed").sort(by("sentAt", -1)).slice(0, 20);
+    const rejected = all.filter((c) => c.status === "rejected").sort(by("decidedAt", -1)).slice(0, 10);
+    const card = (c) => campaignCard(c, data);
+    const nodes = waiting.length ? waiting.map(card) : [el("p", "empty", "Nothing waiting for approval.")];
+    if (later.length) nodes.push(el("h3", "group-head", "Scheduled"), ...later.map(card));
+    if (sent.length) nodes.push(el("h3", "group-head", "Sent"), ...sent.map(card));
+    if (rejected.length) nodes.push(el("h3", "group-head", "Rejected"), ...rejected.map(card));
+    reconcile(list, nodes);
+    drawSignup(data);
+    // Pointed at one (from a notification or Agent's card): bring it into view, once
+    if (want && campaignPicked !== String(want)) {
+      const node = list.querySelector('[data-key="cp-' + CSS.escape(String(want)) + '"]');
+      if (node) {
+        campaignPicked = String(want);
+        node.classList.add("picked");
+        node.scrollIntoView({ block: "center", behavior: calm() ? "auto" : "smooth" });
+      }
+    }
+  }
+
+  function campaignCard(c, data) {
+    const canDecide = Boolean(data.canDecide);
+    const audiences = data.audiences || {};
+    const editable = campaignWaiting(c) || c.status === "rejected";
+    const editing = campaignEditing === c.id && editable;
+    const rejecting = campaignRejecting === c.id && campaignWaiting(c) && canDecide;
+    const open = campaignWaiting(c) || campaignOpen.has(c.id);
+    const detail = open ? campaignDetail.get(c.id) : null;
+    const card = el("article", "card cp-card" + (campaignWaiting(c) ? "" : " done"));
+    card.dataset.key = "cp-" + c.id;
+    card.dataset.sig = sig(c, canDecide, audiences[c.audience], editing, rejecting, open, detail ? [detail.updatedAt, detail.previewHtml.length, detail.log.length] : null);
+    const top = el("div", "card-top");
+    const title = el("h3", "card-title", c.subject || "(No subject)");
+    const pill = CAMPAIGN_STATUS[c.status] || ["pill-stop", c.status];
+    title.appendChild(el("span", pill[0], pill[1]));
+    top.append(title, el("span", "card-meta", when(c.createdAt)));
+    card.append(top, el("p", "card-who", "Written by " + (CAMPAIGN_WRITERS[c.createdBy] || "someone in the team")));
+    // Who, when, and how it went
+    const facts = el("dl", "cp-facts");
+    const fact = (label, value) => value && facts.append(el("dt", "", label), el("dd", "", value));
+    const size = audiences[c.audience];
+    fact("Goes to", (AUDIENCE_NAMES[c.audience] || c.audience) + (size !== undefined && c.status !== "sent" ? " · " + size + " opted in" : ""));
+    if (c.status === "sent") fact("Sent", ukWhen(c.sentAt) + (c.recipients !== null && c.recipients !== undefined ? " · to " + people(c.recipients) : ""));
+    else if (c.status !== "failed" && c.status !== "rejected") fact(c.status === "scheduled" ? "Sends" : "Send time", c.sendAt ? ukWhen(c.sendAt) + " (UK time)" : "As soon as it's approved");
+    if (c.decidedByName && c.status !== "pending_approval") fact(c.status === "rejected" ? "Rejected by" : "Approved by", c.decidedByName + (c.decidedAt ? " · " + ukWhen(c.decidedAt) : ""));
+    card.appendChild(facts);
+    if (c.note) card.appendChild(el("p", "appr-why", "Note: " + c.note));
+    if (c.status === "failed") card.appendChild(el("p", "appr-result bad", "Didn't send: " + String(c.error || "unknown reason").replace(/\.$/, "") + ". Nobody got it."));
+    if (c.status === "approved") card.appendChild(el("p", "appr-result", "Approved · going out through Resend…"));
+    if (c.status === "sent") card.appendChild(campaignStats(c));
+    // The email, as people will get it (or as written, while the preview loads)
+    if (editing) card.appendChild(campaignFields(c, audiences));
+    else if (open) {
+      if (detail && detail.previewHtml) {
+        const frame = el("iframe", "cp-preview");
+        frame.setAttribute("sandbox", "");
+        frame.setAttribute("referrerpolicy", "no-referrer");
+        frame.setAttribute("loading", "lazy");
+        frame.title = "The email: " + (c.subject || "");
+        frame.srcdoc = detail.previewHtml;
+        card.appendChild(frame);
+      } else card.appendChild(el("div", "cp-plain", c.body || ""));
+      if (detail && detail.log.length && !campaignWaiting(c)) {
+        const log = el("ul", "cp-log");
+        for (const e of detail.log.slice(-8)) log.appendChild(el("li", "", ukWhen(e.at) + " · " + (CAMPAIGN_EVENTS[e.event] || e.event) + (e.detail ? " · " + e.detail : "")));
+        card.appendChild(log);
+      }
+    }
+    if (rejecting) {
+      const why = el("label", "cp-field cp-reject");
+      const input = el("input");
+      input.type = "text";
+      input.maxLength = 500;
+      input.dataset.field = "note";
+      input.placeholder = "So Agent (or whoever wrote it) can fix it";
+      why.append(el("span", "", "Why (optional)"), input);
+      card.appendChild(why);
+    }
+    const row = el("div", "actions");
+    const button = (text, cls, fn) => {
+      const b = el("button", "btn small" + (cls ? " " + cls : ""), text);
+      b.type = "button";
+      b.addEventListener("click", () => fn(b));
+      row.appendChild(b);
+      return b;
+    };
+    if (editing) {
+      button("Save changes", "", () => saveCampaign(card, c));
+      button("Cancel", "ghost", () => {
+        campaignEditing = null;
+        loadCampaigns();
+      });
+    } else if (rejecting) {
+      button("Reject it", "", () => decideCampaign(card, c, "reject", { note: card.querySelector('[data-field="note"]').value.trim() || undefined }));
+      button("Cancel", "ghost", () => {
+        campaignRejecting = null;
+        loadCampaigns();
+      });
+    } else {
+      if (campaignWaiting(c) && canDecide) {
+        // Approve: pressed twice (it emails real people), saying exactly what will happen
+        button("Approve", "", (b) => {
+          if (b.dataset.sure !== "1") {
+            b.dataset.sure = "1";
+            b.textContent = c.sendAt ? "Schedule it for " + ukWhen(c.sendAt) + "?" : "Send it to " + (size !== undefined ? people(size) : "them") + " now?";
+            return;
+          }
+          approveCampaign(card, c);
+        });
+      }
+      if (editable) {
+        button("Edit", "ghost", () => {
+          campaignEditing = c.id;
+          campaignRejecting = null;
+          loadCampaigns();
+        });
+      }
+      if (campaignWaiting(c) && canDecide) {
+        button("Reject", "ghost", () => {
+          campaignRejecting = c.id;
+          campaignEditing = null;
+          loadCampaigns();
+        });
+        button("Send me a test", "ghost", () => testCampaign(card, c));
+      }
+      if (!campaignWaiting(c)) {
+        button(open ? "Hide the email" : "Show the email", "ghost", () => {
+          if (open) campaignOpen.delete(c.id);
+          else campaignOpen.add(c.id);
+          loadCampaigns();
+        });
+      }
+    }
+    if (row.children.length) card.appendChild(row);
+    if (campaignWaiting(c) && !canDecide) card.appendChild(el("p", "card-foot", "An admin approves these, signed in to Portal in a browser. Nothing is sent until then."));
+    return card;
+  }
+
+  // How a sent one did: delivered, opened and clicked (of those it reached), unsubscribed
+  function campaignStats(c) {
+    const s = c.stats || {};
+    const sent = Number(s.sent || c.recipients) || 0;
+    const delivered = Number(s.delivered) || 0;
+    const base = delivered || sent;
+    const box = el("div", "cp-stats");
+    const tile = (value, label) => {
+      const t = el("div", "cp-stat");
+      t.append(el("b", "", value), el("span", "", label));
+      box.appendChild(t);
+    };
+    tile(String(delivered), "Delivered");
+    tile(pct(Number(s.opened) || 0, base), "Opened");
+    tile(pct(Number(s.clicked) || 0, base), "Clicked");
+    tile(String(Number(s.unsubscribed) || 0), "Unsubscribed");
+    if (Number(s.bounced)) tile(String(s.bounced), "Bounced");
+    const wrap = el("div", "");
+    wrap.appendChild(box);
+    wrap.appendChild(el("p", "card-foot", s.fetchedAt ? "From Resend, " + ukWhen(s.fetchedAt) + ". Opens only count email apps that load images." : "Results come from Resend within the hour."));
+    return wrap;
+  }
+
+  // The edit fields, filled from the campaign as it is
+  function campaignFields(c, audiences) {
+    const box = el("div", "appr-edit");
+    const field = (label, input, wide) => {
+      const l = el("label", "cp-field" + (wide ? " cp-wide" : ""));
+      l.append(el("span", "", label), input);
+      box.appendChild(l);
+    };
+    const subject = el("input");
+    subject.type = "text";
+    subject.maxLength = 150;
+    subject.value = c.subject || "";
+    subject.dataset.field = "subject";
+    field("Subject", subject, true);
+    const body = el("textarea");
+    body.rows = 10;
+    body.maxLength = 20000;
+    body.value = c.body || "";
+    body.dataset.field = "body";
+    field("The email", body, true);
+    const who = el("select");
+    for (const k of Object.keys(AUDIENCE_NAMES)) {
+      const o = el("option", "", AUDIENCE_NAMES[k] + (audiences[k] !== undefined ? " · " + audiences[k] + " opted in" : ""));
+      o.value = k;
+      o.selected = k === c.audience;
+      who.appendChild(o);
+    }
+    who.dataset.field = "audience";
+    field("Who it goes to", who);
+    const at = el("input");
+    at.type = "datetime-local";
+    at.value = c.sendAt ? ukLocal(c.sendAt) : "";
+    at.dataset.field = "sendAt";
+    field("Send at (UK time; empty: as soon as it's approved)", at);
+    return box;
+  }
+
+  // The reason something didn't work stays on the card (nothing changed, so it isn't redrawn: its buttons work again)
+  function campaignProblem(card, text) {
+    let why = card.querySelector(".appr-error");
+    if (!why) {
+      why = el("p", "appr-result bad appr-error");
+      why.setAttribute("role", "alert");
+      card.appendChild(why);
+    }
+    why.textContent = text;
+    card.querySelectorAll("button").forEach((b) => (b.disabled = false));
+  }
+  const busy = (card) => card.querySelectorAll("button").forEach((b) => (b.disabled = true));
+
+  async function saveCampaign(card, c) {
+    const v = (k) => card.querySelector('[data-field="' + k + '"]').value;
+    const subject = v("subject").trim();
+    const body = v("body").trim();
+    if (!subject || !body) return campaignProblem(card, "Not saved: it needs a subject and the email.");
+    const sendAt = v("sendAt") ? ukToIso(v("sendAt")) : null;
+    if (v("sendAt") && (!sendAt || Date.parse(sendAt) < Date.now())) return campaignProblem(card, "Not saved: pick a send time that hasn't passed, or leave it empty.");
+    busy(card);
+    try {
+      await api("campaigns/" + c.id + "/edit", { body: { subject, body, audience: v("audience"), sendAt } });
+    } catch (err) {
+      if (err.message === "signed out") return;
+      toast(err.message);
+      return campaignProblem(card, "Not saved: " + err.message);
+    }
+    campaignEditing = null;
+    campaignDetail.delete(c.id);
+    toast("Saved: waiting for approval");
+    loadCampaigns();
+  }
+
+  async function approveCampaign(card, c) {
+    busy(card);
+    // Still exactly what's on screen? (someone may have changed it since this was drawn)
+    try {
+      const now = (await api("campaigns/" + c.id)).campaign || {};
+      if (now.updatedAt !== c.updatedAt || now.status !== c.status) {
+        campaignDetail.delete(c.id);
+        toast("It changed since it was shown: check it again");
+        return loadCampaigns();
+      }
+    } catch (err) {
+      if (err.message === "signed out") return;
+      return campaignProblem(card, "Not approved: " + err.message);
+    }
+    let done;
+    try {
+      done = (await api("campaigns/" + c.id + "/approve", { body: {} })).campaign || {};
+    } catch (err) {
+      if (err.message === "signed out") return;
+      toast(err.message);
+      return campaignProblem(card, "Not approved: " + err.message);
+    }
+    if (done.status === "sent") toast("Sent to " + people(done.recipients));
+    else if (done.status === "scheduled") toast("Scheduled for " + ukWhen(done.sendAt));
+    else if (done.status === "failed") toast("Didn't send: " + (done.error || "see the card"));
+    else toast("Approved: sending now");
+    loadCampaigns();
+  }
+
+  async function decideCampaign(card, c, path, body) {
+    busy(card);
+    try {
+      await api("campaigns/" + c.id + "/" + path, { body });
+    } catch (err) {
+      if (err.message === "signed out") return;
+      toast(err.message);
+      return campaignProblem(card, "Not rejected: " + err.message);
+    }
+    campaignRejecting = null;
+    toast("Rejected: nothing was sent");
+    loadCampaigns();
+  }
+
+  async function testCampaign(card, c) {
+    busy(card);
+    try {
+      await api("campaigns/test-send", { body: { id: c.id } });
+    } catch (err) {
+      if (err.message === "signed out") return;
+      toast(err.message);
+      return campaignProblem(card, "Test not sent: " + err.message);
+    }
+    card.querySelectorAll("button").forEach((b) => (b.disabled = false));
+    const old = card.querySelector(".appr-error");
+    if (old) old.remove();
+    toast("A test is on its way to your own email (marked [TEST])");
+  }
+
+  // The fan sign-up link (for SoundCloud and socials), with who's opted in
+  function drawSignup(data) {
+    const a = data.audiences || {};
+    const card = el("article", "card");
+    card.dataset.key = "signup";
+    card.dataset.sig = sig(data.signupUrl, a);
+    card.appendChild(el("h3", "card-title", "Fan sign-up link"));
+    card.appendChild(el("p", "appr-why", "Share it on SoundCloud, Instagram and your other socials. People confirm by email before they're on the list, and can unsubscribe from any email."));
+    if (data.signupUrl) {
+      const link = el("a", "cp-link", data.signupUrl);
+      link.href = data.signupUrl;
+      link.target = "_blank";
+      link.rel = "noopener";
+      card.appendChild(link);
+      const row = el("div", "actions");
+      const copy = el("button", "btn small", "Copy");
+      copy.type = "button";
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(data.signupUrl);
+          toast("Copied the sign-up link");
+        } catch (err) {
+          toast("Couldn't copy: press and hold the link instead");
+        }
+      });
+      row.appendChild(copy);
+      card.appendChild(row);
+    }
+    const facts = el("dl", "cp-facts");
+    const fact = (label, value) => facts.append(el("dt", "", label), el("dd", "", String(value)));
+    fact("Confirmed fans", Number(a.fans) || 0);
+    fact("Clients who said yes", Number(a.clients) || 0);
+    fact("Everyone (each once)", Number(a.everyone) || 0);
+    card.appendChild(facts);
+    reconcile($("campaigns-signup"), [card]);
+  }
+
+  // Write one (anyone signed in): it waits for an admin's approval like Agent's drafts
+  $("campaigns-new").addEventListener("click", () => {
+    const form = $("campaigns-form");
+    form.hidden = !form.hidden;
+    $("campaigns-new").setAttribute("aria-expanded", String(!form.hidden));
+    if (!form.hidden) $("cp-new-subject").focus();
+  });
+  $("cp-new-cancel").addEventListener("click", () => {
+    $("campaigns-form").hidden = true;
+    $("campaigns-new").setAttribute("aria-expanded", "false");
+  });
+  $("campaigns-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = $("campaigns-form");
+    const local = $("cp-new-when").value;
+    const sendAt = local ? ukToIso(local) : null;
+    if (local && (!sendAt || Date.parse(sendAt) < Date.now())) return setText("cp-new-error", "Pick a send time that hasn't passed, or leave it empty.");
+    setText("cp-new-error", "");
+    const go = form.querySelector('button[type="submit"]');
+    go.disabled = true;
+    try {
+      const body = { subject: $("cp-new-subject").value.trim(), body: $("cp-new-body").value.trim(), audience: $("cp-new-audience").value };
+      if (sendAt) body.sendAt = sendAt;
+      await api("campaigns", { body });
+    } catch (err) {
+      go.disabled = false;
+      if (err.message !== "signed out") setText("cp-new-error", "Not saved: " + err.message);
+      return;
+    }
+    go.disabled = false;
+    form.reset();
+    form.hidden = true;
+    $("campaigns-new").setAttribute("aria-expanded", "false");
+    toast("Saved: waiting for an admin's approval");
+    loadCampaigns();
+  });
+
+  // Campaigns refresh while they're on screen (not while one's fields are open, or one's being written); the badge every minute
+  const campaignBusy = () => campaignEditing !== null || campaignRejecting !== null || !$("campaigns-form").hidden;
+  setInterval(() => !document.hidden && running && currentView === "campaigns" && !campaignBusy() && loadCampaigns(), 20000);
+  setInterval(() => !document.hidden && running && currentView !== "campaigns" && loadCampaigns(), 60000);
 
   // ===== Clients: the studio's client list =====
   // Everyone who's booked through Acuity, sent an enquiry, been imported from Acuity's spreadsheets

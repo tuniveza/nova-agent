@@ -1266,3 +1266,32 @@ html.embed .listening-bar { top: 0; }
 .cl-session.off .cl-when, .cl-session.off .cl-what { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
 .cl-when { color: var(--gold); font-size: 14px; }
 .cl-what { color: var(--bright); font-size: 14.5px; }
+
+/* ----- Campaigns: email newsletters, waiting for an admin's approval ----- */
+.cp input[type="datetime-local"] {
+  width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px;
+  background: rgba(var(--void-rgb), 0.6); color: var(--bright); font-size: 16px;
+}
+.cp input[type="text"], .cp textarea, .cp select { min-width: 0; color: var(--bright); }
+.cp textarea { resize: vertical; min-height: 140px; line-height: 1.5; }
+.cp-form { display: grid; gap: 12px; margin: 0 0 14px; min-width: 0; }
+.cp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; min-width: 0; }
+.cp-field { display: grid; gap: 4px; min-width: 0; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
+.cp-small { margin: 0; font-size: 12.5px; }
+.cp-error:empty { display: none; }
+.cp-card .card-title { overflow-wrap: anywhere; }
+.cp-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px 14px; margin: 12px 0 0; }
+.cp-facts dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted); }
+.cp-facts dd { margin: 2px 0 0; color: var(--bright); font-size: 14.5px; overflow-wrap: anywhere; }
+/* The email as people will get it: its own sandboxed page, scrolled inside, never wider than the card */
+.cp-preview { display: block; width: 100%; max-width: 100%; height: 420px; margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(var(--void-rgb), 0.35); }
+.cp-plain { margin: 12px 0 0; max-height: 240px; overflow: auto; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.35); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 14px; line-height: 1.55; }
+.cp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr)); gap: 8px; margin: 12px 0 0; }
+.cp-stat { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); min-width: 0; }
+.cp-stat b { color: var(--bright); font-size: 18px; font-weight: 600; }
+.cp-stat span { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted); }
+.cp-reject { margin-top: 12px; }
+.cp-log { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.cp-signup .cp-link { display: block; margin: 10px 0 0; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.35); color: var(--bright); font-family: var(--f-mono); font-size: 13px; overflow-wrap: anywhere; text-decoration: none; }
+.card.cp-card.picked { box-shadow: 0 0 0 1px var(--line-strong), 0 0 24px -8px rgba(var(--glow-rgb), 0.55); }
+.cp-wide { grid-column: 1 / -1; }

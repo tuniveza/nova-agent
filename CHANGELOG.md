@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Quest 3: email campaigns with an admin's approval (Resend, through Nova Bot)
+
+- Agent has five campaign tools: suggest_campaign (who's opted in and how recent campaigns did;
+  it saves nothing), create_campaign_draft, edit_campaign_draft, campaign_results (opened and
+  clicked as percentages, in plain words) and list_campaigns. There's no send, schedule, approve
+  or test tool: Agent says plainly that nothing is sent until an admin approves it.
+- A campaign card under Agent's reply (subject, who it goes to and how many, when, the start of
+  the email) with Approve / Edit / Reject on the person's own Portal sign-in online, or Open in
+  Portal on the studio computer. Approve is pressed twice and checks the campaign hasn't changed.
+- Portal → Campaigns (Studio; the badge counts the ones waiting): waiting ones first with the
+  email in a sandboxed preview, Approve / Edit / Reject / Send me a test for admins, then
+  scheduled, sent (delivered, opened %, clicked %, unsubscribed) and rejected ones; Write one;
+  and the fan sign-up link with Copy and who's opted in.
+
 ### Quest 2: client list, and bookings from Acuity's calendar feed
 
 - `ACUITY_SOURCE=feed` reads the studio's bookings from Acuity's private calendar feed through

@@ -13,6 +13,9 @@
 //     as the visualizer, read-only, as before
 //   - look up the studio's clients (clients.ts, read-only): find one, their session history, who
 //     owes money, who hasn't booked since a date
+//   - email campaigns to opted-in fans and clients (campaigns.ts): suggest ideas, DRAFT and edit
+//     them, read how sent ones did. It can't send, schedule or approve: an admin approves each
+//     campaign (Approve, in Portal → Campaigns or on the campaign's card) before anything goes
 //   - plan Missions for any goal (a strategy, tracks, milestones and quests),
 //     refine them with new detail, and run the quests day to day
 //   - research the internet (web search and web fetch, run by Anthropic) and
@@ -41,6 +44,7 @@ import { fileCard, FILE_TYPES, findFile, listFiles, readFileText, removeFile, sa
 import { missionMarkdown } from "./quests/export";
 import { draftReply, listEnquiries, readEnquiry, threadText, type DraftCard } from "./enquiries";
 import { actionLine, appointmentsText, availability, BOOKING_KINDS, feedBookingsText, findClients, listActions, listAppointments, listBlocks, listFeedBookings, proposeChange, sessionTypes, ukWhen, type BookingAction, type BookingKind } from "./acuity-api";
+import { AUDIENCES, campaignContext, campaignLine, CAMPAIGN_STATUSES, contextText, createDraft, editDraft, listCampaigns, readCampaign, resultsText, ukToUtc, type Audiences, type CampaignCard, type CampaignChanges } from "./campaigns";
 import { clientHistory, clientsLapsed, clientsOwing, clientsText, findClients as findStudioClients, historyText, lapsedText, MONTH_NAMES, owingText, sinceDate } from "./clients";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
@@ -59,11 +63,12 @@ export interface ChatTurn {
   content: string;
 }
 export interface ChatAction {
-  kind: "added" | "changed" | "removed" | "looked" | "file" | "draft" | "booking";
+  kind: "added" | "changed" | "removed" | "looked" | "file" | "draft" | "booking" | "campaign";
   text: string;
   file?: ReturnType<typeof fileCard>; // for "file": the card to preview and download it
   draft?: DraftCard; // for "draft": a reply to an enquiry, waiting for a person's Approve & send
   booking?: BookingAction; // for "booking": a proposed booking change, waiting for an admin's Approve
+  campaign?: CampaignCard; // for "campaign": an email campaign draft, waiting for an admin's Approve
 }
 
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("A date, YYYY-MM-DD (UK)");
@@ -109,6 +114,7 @@ ${bookingsPrompt()}
 - Export a mission: mission_export writes a mission's whole plan (strategy, milestones, every quest, research links) as a Markdown file.
 - Enquiries: read the studio's enquiries from customers (enquiry_list, enquiry_read) and draft a reply to one (enquiry_draft_reply). You can only ever draft: you can't send, approve or email anyone, and nothing goes to a customer until a person from the studio reads your draft and presses Approve & send (on the card under your reply, or in Portal). Say that plainly when you draft ("Here's a draft for you to check; it goes when you approve it"), never that you've replied or sent anything. Read the enquiry and its conversation first, write the whole email in a warm, plain UK English voice signed "Novacane Studios" (the footer about why they're getting it and how to stop is added automatically), and only promise what the studio has said it can do. Never draft for someone marked do-not-contact.
 - The studio's clients (read-only): client_find (by name, email or phone), client_history (one client's sessions), clients_owing (who owes money, biggest first), clients_not_booked_since (who hasn't booked since a date: for "since July" pass month "July", which means 1 July of the most recent July; for "in the last 3 months" pass months_back 3). Say money in pounds (£120.00) and dates in UK time, as the tools give them. These are the list in Portal → Clients, where staff edit contact details, notes, money and marketing consent; you can't change anything there. Marketing consent is "no" unless it's been recorded with a date and a source: never suggest sending marketing to someone marked "marketing: no".
+- Email campaigns (newsletters to the studio's fans and clients, sent through Resend): suggest_campaign (who's opted in, how recent ones did; then you suggest 1–3 ideas, and nothing is saved), create_campaign_draft, edit_campaign_draft, campaign_results (how a sent one did: opened and clicked as percentages), list_campaigns. You can only draft and edit: you can't send, schedule or approve a campaign, and nobody can through you. Nothing is sent to anyone until an admin presses Approve in Portal → Campaigns (or on the card under your reply). Say that plainly every time you draft or change one ("It's saved as a draft: nothing is sent until an admin approves it in Portal → Campaigns"), and never say a campaign is sent or scheduled unless campaign_results or list_campaigns shows it. Only people who opted in get campaigns (confirmed fans, and clients who said yes to studio news); Nova Bot adds the footer saying who it's from, why they're getting it and how to unsubscribe, so don't write one. Write in warm, plain UK English: a short subject line, short paragraphs separated by blank lines, **bold** for the one thing that matters, full links (https://…), signed "Novacane Studios". Give a send time (UK) when one is asked for or matters; otherwise it goes as soon as it's approved.
 - Say how you're doing (agent_status).
 
 How to work:
@@ -726,6 +732,146 @@ export function clientTools(actions: ChatAction[]) {
   ];
 }
 
+// Email campaigns (Portal → Campaigns on Nova Bot): suggest, DRAFT, edit and read results. There is no
+// send, schedule, approve or test-send tool, on purpose: an admin approves every campaign with their
+// own Portal sign-in before anything goes (Nova Bot only lets a signed-in admin's press send it).
+// The trace only gets ids and counts, never subjects, bodies or anyone's details.
+export function campaignTools(actions: ChatAction[]) {
+  const failed = (error: unknown) => `Couldn't reach the email campaigns just now: ${(error as Error).message}`;
+  const notSent = "Nothing has been sent: it goes to nobody until an admin approves it in Portal → Campaigns or on the card under your reply. Tell them that plainly.";
+  const SUBJECT = z.string().min(1).max(150).describe("The subject line: short and specific");
+  const BODY = z
+    .string()
+    .min(1)
+    .max(20000)
+    .describe("The email as it should read: plain text, paragraphs separated by a blank line, **bold** for emphasis, full links (https://…), signed Novacane Studios. No unsubscribe footer: Nova Bot adds who it's from, why they're getting it and the unsubscribe link.");
+  const AUDIENCE = z.enum(AUDIENCES).describe("fans = confirmed fans who signed up; clients = studio clients who said yes to studio news; everyone = both (each person once)");
+  const SEND_AT = STAMP.describe("When to send it, UK wall-clock YYYY-MM-DDTHH:MM (leave out to send as soon as it's approved)");
+  // The send time as UTC ISO (or a reason it can't be used)
+  const sendTime = (local: string): string | { error: string } => {
+    const iso = ukToUtc(local);
+    if (!iso) return { error: "That send time isn't a UK date and time (YYYY-MM-DDTHH:MM)." };
+    if (Date.parse(iso) < Date.now() + 5 * 60_000) return { error: "That send time has passed (or is too close: an admin still has to approve it). Pick a later time, or leave it out to send as soon as it's approved." };
+    return iso;
+  };
+  // The card under the reply, with how many people its audience has when that's known
+  const card = async (campaign: Awaited<ReturnType<typeof createDraft>>, audiences?: Audiences | null): Promise<CampaignCard> => {
+    let a = audiences ?? null;
+    if (!a) a = await campaignContext().then((c) => c.audiences).catch(() => null);
+    return { ...campaign, audienceCount: a ? (a[campaign.audience] ?? null) : null };
+  };
+  return [
+    betaZodTool({
+      name: "suggest_campaign",
+      description:
+        "Before suggesting an email campaign: how many people are opted in (confirmed fans, clients who said yes to studio news, everyone), how the last few campaigns did, and today's date. It saves nothing. Then suggest 1–3 ideas in your reply; write one with create_campaign_draft once they pick it.",
+      inputSchema: z.object({}),
+      run: async () => {
+        try {
+          const ctx = await campaignContext();
+          noteAction(actions, "looked", `Looked at who's opted in for email (${ctx.audiences.everyone}) and ${ctx.recent.length} recent campaign${ctx.recent.length === 1 ? "" : "s"}`);
+          return contextText(ctx);
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "create_campaign_draft",
+      description:
+        "Write an email campaign to the studio's opted-in fans and/or clients. It is NOT sent: it's saved as a draft waiting for an admin, who reads it and presses Approve in Portal → Campaigns (or on the card under your reply) before anything is sent or scheduled. Write the whole email.",
+      inputSchema: z.object({ subject: SUBJECT, body: BODY, audience: AUDIENCE, send_at: SEND_AT.optional() }),
+      run: async ({ subject, body, audience, send_at }) => {
+        let sendAt: string | null = null;
+        if (send_at) {
+          const t = sendTime(send_at);
+          if (typeof t !== "string") return `${t.error} Nothing was saved.`;
+          sendAt = t;
+        }
+        let campaign;
+        try {
+          campaign = await createDraft({ subject, body, audience, sendAt });
+        } catch (error) {
+          return `Couldn't save the draft: ${(error as Error).message} Nothing was saved or sent.`;
+        }
+        const c = await card(campaign);
+        actions.push({ kind: "campaign", text: `Drafted an email campaign, waiting for an admin's approval`, campaign: c });
+        trace("input", "ok", `Chat: drafted email campaign #${campaign.id} (waiting for approval)`);
+        return `Campaign #${campaign.id} saved as a draft, NOT sent: ${campaignLine(campaign, null)}${c.audienceCount !== null ? ` · ${c.audienceCount} opted in now` : ""}. ${notSent}${c.audienceCount === 0 ? " Nobody in that audience has opted in yet, so it would reach no one." : ""}`;
+      },
+    }),
+    betaZodTool({
+      name: "edit_campaign_draft",
+      description:
+        "Change a campaign that hasn't gone yet (its subject, the email, who it's for, or when it sends). It goes back to waiting for an admin's approval (any approval is cleared), and it is NOT sent. Read it first with list_campaigns or campaign_results.",
+      inputSchema: z.object({
+        id: z.number().int().positive().describe("The campaign's id"),
+        subject: SUBJECT.optional(),
+        body: BODY.optional(),
+        audience: AUDIENCE.optional(),
+        send_at: SEND_AT.optional(),
+        send_when_approved: z.boolean().optional().describe("true: drop the send time, so it goes as soon as it's approved"),
+      }),
+      run: async ({ id, subject, body, audience, send_at, send_when_approved }) => {
+        const changes: CampaignChanges = {};
+        if (subject !== undefined) changes.subject = subject;
+        if (body !== undefined) changes.body = body;
+        if (audience !== undefined) changes.audience = audience;
+        if (send_at) {
+          const t = sendTime(send_at);
+          if (typeof t !== "string") return `${t.error} Nothing was changed.`;
+          changes.sendAt = t;
+        } else if (send_when_approved) changes.sendAt = null;
+        if (!Object.keys(changes).length) return "Say what to change: the subject, the email, the audience or the send time.";
+        let campaign;
+        try {
+          campaign = await editDraft(id, changes);
+        } catch (error) {
+          return `Couldn't change campaign #${id}: ${(error as Error).message} Nothing was changed or sent.`;
+        }
+        const c = await card(campaign);
+        actions.push({ kind: "campaign", text: `Changed an email campaign, waiting for an admin's approval`, campaign: c });
+        trace("input", "ok", `Chat: edited email campaign #${id} (waiting for approval)`);
+        return `Campaign #${id} changed and back to waiting for approval: ${campaignLine(campaign, null)}. ${notSent}`;
+      },
+    }),
+    betaZodTool({
+      name: "campaign_results",
+      description: "How a sent email campaign did, in plain words: how many it went to, delivered, opened and clicked (as percentages), unsubscribed and bounced. The latest sent one, or one by id. Read-only.",
+      inputSchema: z.object({ id: z.number().int().positive().optional().describe("The campaign's id (leave out for the latest sent one)") }),
+      run: async ({ id }) => {
+        try {
+          if (id) {
+            const { campaign } = await readCampaign(id);
+            noteAction(actions, "looked", `Looked at email campaign #${id}'s results`);
+            return resultsText(campaign);
+          }
+          const sent = (await listCampaigns("sent")).filter((c) => c.status === "sent").sort((a, b) => String(b.sentAt ?? "").localeCompare(String(a.sentAt ?? "")));
+          if (!sent.length) return "No campaign has been sent yet, so there are no results.";
+          noteAction(actions, "looked", `Looked at email campaign #${sent[0].id}'s results`);
+          return resultsText(sent[0]);
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "list_campaigns",
+      description: "The studio's email campaigns, newest first: subject, status (waiting for approval, scheduled, sent, rejected, didn't send), who it's for, and when it sends or was sent (UK time). Read-only.",
+      inputSchema: z.object({ status: z.enum(CAMPAIGN_STATUSES).optional().describe("Only those with this status (leave out for all)") }),
+      run: async ({ status }) => {
+        try {
+          const list = (await listCampaigns(status)).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+          noteAction(actions, "looked", `Looked at ${list.length} email campaign${list.length === 1 ? "" : "s"}`);
+          return list.length ? list.map((c) => campaignLine(c)).join("\n") : status ? "No campaigns with that status." : "No campaigns yet.";
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+  ];
+}
+
 const noteAction = (actions: ChatAction[], kind: ChatAction["kind"], text: string) => {
   actions.push({ kind, text });
   trace("input", "ok", `Chat: ${text}`);
@@ -1004,7 +1150,7 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
     model,
     max_tokens: 16000,
     system: memory ? `${systemPrompt()}\n\n${memory}` : systemPrompt(),
-    tools: [...tools(actions), ...questTools(actions), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...webTools({ search: 5, fetch: 5 })],
+    tools: [...tools(actions), ...questTools(actions), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...campaignTools(actions), ...webTools({ search: 5, fetch: 5 })],
     messages,
     output_config: { effort: "low" },
     max_iterations: 16 + MAX_CONTINUATIONS,

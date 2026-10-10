@@ -303,6 +303,16 @@
   .bcard .bedit label.tick { display: flex; align-items: center; gap: 8px; }
   .bcard .bedit input:not([type="checkbox"]), .bcard .bedit textarea { width: 100%; min-width: 0; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text); font: inherit; font-size: 13.5px; }
   .bcard .bedit textarea { min-height: 60px; resize: vertical; }
+  .action.campaign { border-color: color-mix(in srgb, var(--hi) 40%, transparent); background: color-mix(in srgb, var(--hi) 9%, transparent); color: var(--soft); }
+  .ccard { border-color: color-mix(in srgb, var(--hi) 30%, transparent); background: linear-gradient(120deg, color-mix(in srgb, var(--hi) 6%, var(--panel)), color-mix(in srgb, var(--panel-2) 60%, transparent)); }
+  .ccard .dtag { color: var(--soft); }
+  .ccard .dsubject { overflow-wrap: anywhere; }
+  .ccard .cmeta { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .ccard .dbody { max-height: 180px; overflow-wrap: anywhere; }
+  .ccard .bedit { display: grid; gap: 8px; padding: 10px; border-radius: 12px; background: color-mix(in srgb, var(--void) 45%, transparent); }
+  .ccard .bedit label { display: grid; gap: 3px; font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); min-width: 0; }
+  .ccard .bedit input, .ccard .bedit textarea, .ccard .bedit select { width: 100%; min-width: 0; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text); font: inherit; font-size: 13.5px; }
+  .ccard .bedit textarea { min-height: 120px; resize: vertical; }
   /* Files Nova Agent wrote: a card under the reply, the Files list, and the viewer */
   .fcards { display: grid; gap: 8px; margin-top: 8px; }
   .fcard { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center; padding: 10px 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); background: linear-gradient(120deg, color-mix(in srgb, var(--gold) 9%, var(--panel)), color-mix(in srgb, var(--panel-2) 60%, transparent)); animation: quest-in .4s cubic-bezier(.2,.8,.2,1) both; }
@@ -1440,6 +1450,154 @@
     return card;
   }
 
+  // ===== Email campaign drafts =====
+  // Agent can only draft (and change) a campaign. It goes to people when an admin presses Approve
+  // here (or in Portal → Campaigns): that's their own Portal sign-in in this browser (online at
+  // /agent/), never Agent's key. On the studio computer's own page there's no browser sign-in to
+  // approve with, so the card links to the campaign in Portal instead. Approve first checks the
+  // campaign is still exactly what's on the card (Nova Bot checks that again when it sends).
+  const CAMPAIGN_AUDIENCES = { fans: 'Fans', clients: 'Studio clients', everyone: 'Everyone (fans and clients)' };
+  const ukWhenC = (iso) => {
+    const d = new Date(iso);
+    if (!iso || isNaN(d)) return '';
+    return d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London' }).replace(/^(\p{L}+),/u, '$1');
+  };
+  // A UK wall-clock time (from a date-and-time box) as UTC ISO, whatever the clocks are doing
+  const ukToIsoC = (local) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(local || '');
+    if (!m) return null;
+    const wall = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    const offset = (t) => {
+      const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(t)).map((x) => [x.type, x.value]));
+      return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) - t;
+    };
+    let t = wall - offset(wall);
+    t = wall - offset(t);
+    return new Date(t).toISOString();
+  };
+  // The start of the email as plain words (no **)
+  const shortPreview = (body) => { const t = String(body || '').replace(/\*\*(.+?)\*\*/g, '$1').trim(); return t.length > 420 ? t.slice(0, 420).replace(/\s+\S*$/, '') + '…' : t; };
+  function campaignCard(c) {
+    const card = document.createElement('div');
+    card.className = 'dcard ccard';
+    card.dataset.campaign = String(c.id);
+    const portal = c.portalUrl || '/portal/?view=campaigns&campaign=' + encodeURIComponent(c.id);
+    card.innerHTML = `<span class="dtag">Email campaign · waiting for an admin</span>
+      <span class="dsubject"></span>
+      <span class="cmeta"></span>
+      <div class="dbody"></div>
+      <div class="bedit" hidden></div>
+      <div class="dfoot"><span class="dstate">Checking…</span><button type="button" class="mini go" data-cok hidden>✓ Approve</button><button type="button" class="mini" data-cedit hidden>✎ Edit</button><button type="button" class="mini" data-cno hidden>✕ Reject</button><a class="mini" data-open href="${escF(portal)}" target="_blank" rel="noopener">↗ Open in Portal</a></div>`;
+    const state = card.querySelector('.dstate');
+    const ok = card.querySelector('[data-cok]');
+    const edit = card.querySelector('[data-cedit]');
+    const no = card.querySelector('[data-cno]');
+    const box = card.querySelector('.bedit');
+    let count = c.audienceCount === undefined ? null : c.audienceCount;
+    let counts = null;
+    const say = (text, cls) => { state.textContent = text; state.className = 'dstate' + (cls ? ' ' + cls : ''); };
+    const people = (n) => n + (n === 1 ? ' person' : ' people');
+    // What the card shows: subject, who and how many, when, and the start of the email
+    function draw() {
+      card.querySelector('.dsubject').textContent = c.subject;
+      const sent = c.status === 'sent';
+      card.querySelector('.cmeta').textContent = 'To ' + (CAMPAIGN_AUDIENCES[c.audience] || c.audience) + (sent && c.recipients != null ? ' · sent to ' + people(c.recipients) : count != null ? ' · ' + count + ' opted in' : '') + ' · ' + (sent && c.sentAt ? 'sent ' + ukWhenC(c.sentAt) : c.sendAt ? 'sends ' + ukWhenC(c.sendAt) + ' (UK time)' : 'sends as soon as it’s approved');
+      card.querySelector('.dbody').textContent = shortPreview(c.body);
+    }
+    const buttons = (decide, canEdit) => { ok.hidden = no.hidden = !decide; edit.hidden = !canEdit; };
+    // The edit fields, filled from the campaign as it is now
+    function fields() {
+      box.replaceChildren();
+      const add = (label, input) => { const l = document.createElement('label'); l.append(document.createTextNode(label), input); box.appendChild(l); };
+      const subject = document.createElement('input'); subject.type = 'text'; subject.maxLength = 150; subject.value = c.subject || ''; subject.dataset.field = 'subject';
+      const body = document.createElement('textarea'); body.maxLength = 20000; body.rows = 8; body.value = c.body || ''; body.dataset.field = 'body';
+      const who = document.createElement('select'); who.dataset.field = 'audience';
+      for (const k of Object.keys(CAMPAIGN_AUDIENCES)) { const o = document.createElement('option'); o.value = k; o.textContent = CAMPAIGN_AUDIENCES[k] + (counts && counts[k] != null ? ' · ' + counts[k] + ' opted in' : ''); o.selected = k === c.audience; who.appendChild(o); }
+      const at = document.createElement('input'); at.type = 'datetime-local'; at.value = c.sendAt ? ukLocal(c.sendAt) : ''; at.dataset.field = 'sendAt';
+      add('Subject', subject); add('The email', body); add('Who it goes to', who); add('Send at (UK time; empty: as soon as it’s approved)', at);
+    }
+    function edited() {
+      const v = (k) => box.querySelector('[data-field="' + k + '"]').value;
+      const local = v('sendAt');
+      const sendAt = local ? ukToIsoC(local) : null;
+      if (local && (!sendAt || Date.parse(sendAt) < Date.now())) return 'Pick a send time that hasn’t passed, or leave it empty.';
+      if (!v('subject').trim() || !v('body').trim()) return 'It needs a subject and the email.';
+      return { subject: v('subject').trim(), body: v('body').trim(), audience: v('audience'), sendAt };
+    }
+    // Where the campaign is now (someone may have changed or decided it in Portal)
+    async function check() {
+      let r;
+      try { r = await fetch('/app/api/campaigns', { cache: 'no-store', credentials: 'same-origin' }); } catch { r = null; }
+      if (!r || r.status === 401 || r.status === 403) { buttons(false, false); return say('An admin approves this in Portal → Campaigns. Nothing is sent until then.'); }
+      const t = await r.json().catch(() => null);
+      if (!t || !r.ok) { buttons(false, false); return say(t && t.error ? t.error : 'Open it in Portal to approve it. Nothing is sent until an admin does.'); }
+      const now = (t.campaigns || []).find((x) => x.id === c.id);
+      if (!now) { buttons(false, false); return say('Open it in Portal to see where it’s up to.'); }
+      Object.assign(c, now);
+      counts = t.audiences || null;
+      if (counts && counts[c.audience] != null) count = counts[c.audience];
+      if (c.portalUrl) card.querySelector('[data-open]').href = c.portalUrl;
+      draw();
+      const tag = card.querySelector('.dtag');
+      const waiting = c.status === 'pending_approval' || c.status === 'draft';
+      box.hidden = true;
+      edit.textContent = '✎ Edit';
+      buttons(false, waiting || c.status === 'rejected');
+      tag.textContent = 'Email campaign · ' + (waiting ? 'waiting for an admin' : c.status === 'sent' ? 'sent' : c.status === 'scheduled' ? 'scheduled' : c.status === 'rejected' ? 'rejected' : c.status === 'failed' ? 'didn’t send' : 'approved');
+      if (c.status === 'sent') { const s = c.stats || {}; const base = Number(s.delivered) || Number(s.sent || c.recipients) || 0; return say('Sent ✓' + (c.decidedByName ? ' · approved by ' + c.decidedByName : '') + (base && s.fetchedAt ? ' · ' + Math.round(((Number(s.opened) || 0) / base) * 100) + '% opened, ' + Math.round(((Number(s.clicked) || 0) / base) * 100) + '% clicked' : ''), 'sent'); }
+      if (c.status === 'scheduled') return say('Approved' + (c.decidedByName ? ' by ' + c.decidedByName : '') + ' · goes out ' + ukWhenC(c.sendAt) + ' (UK time)', 'sent');
+      if (c.status === 'approved') return say('Approved · going out now…');
+      if (c.status === 'failed') return say('Didn’t send: ' + String(c.error || 'unknown reason').replace(/\.$/, '') + '. Nobody got it.', 'failed');
+      if (c.status === 'rejected') return say('Rejected' + (c.decidedByName ? ' by ' + c.decidedByName : '') + (c.note ? ': “' + c.note + '”' : '') + '. Nothing was sent; an edit sends it back for approval.');
+      if (!t.canDecide) return say('Waiting for an admin to approve it in Portal → Campaigns (signed in in a browser). Nothing is sent until then.');
+      buttons(true, true);
+      say('Not sent. Read it (Open in Portal shows the whole email), then approve it to ' + (c.sendAt ? 'schedule it.' : 'send it now.'));
+    }
+    async function post(path, body, doing) {
+      for (const b of [ok, edit, no]) b.disabled = true;
+      say(doing);
+      let good = false;
+      try {
+        const r = await fetch('/app/api/campaigns/' + path, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) say(data.error || 'That didn’t work.', 'failed');
+        else { good = true; if (data.campaign) Object.assign(c, data.campaign); }
+      } catch (err) {
+        say('Couldn’t reach Portal. Try again.', 'failed');
+      }
+      for (const b of [ok, edit, no]) b.disabled = false;
+      ok.dataset.sure = no.dataset.sure = '';
+      ok.textContent = '✓ Approve'; no.textContent = '✕ Reject';
+      if (good) check();
+    }
+    // Approve: pressed twice (it emails real people), after checking it's still what's on the card
+    ok.addEventListener('click', async () => {
+      if (ok.dataset.sure !== '1') { ok.dataset.sure = '1'; ok.textContent = c.sendAt ? 'Schedule it?' : 'Send it to ' + (count != null ? people(count) : 'them') + '?'; return; }
+      const seen = c.updatedAt;
+      ok.disabled = true;
+      let now = null;
+      try { const r = await fetch('/app/api/campaigns/' + encodeURIComponent(c.id), { cache: 'no-store', credentials: 'same-origin' }); if (r.ok) now = ((await r.json()) || {}).campaign; } catch {}
+      ok.disabled = false;
+      if (!now || now.updatedAt !== seen || now.status !== c.status) { ok.dataset.sure = ''; ok.textContent = '✓ Approve'; await check(); return say('It changed since the card was drawn: read it again, then approve.', 'failed'); }
+      post(encodeURIComponent(c.id) + '/approve', {}, c.sendAt ? 'Approving and scheduling…' : 'Approving and sending…');
+    });
+    // Edit: open the fields; pressed again, save them (it goes back to waiting for approval)
+    edit.addEventListener('click', () => {
+      if (box.hidden) { fields(); box.hidden = false; edit.textContent = '✓ Save changes'; ok.hidden = no.hidden = true; return; }
+      const e = edited();
+      if (typeof e === 'string') return say(e, 'failed');
+      post(encodeURIComponent(c.id) + '/edit', e, 'Saving…');
+    });
+    // Reject: pressed twice, so a stray tap doesn't
+    no.addEventListener('click', () => {
+      if (no.dataset.sure !== '1') { no.dataset.sure = '1'; no.textContent = 'Reject it?'; return; }
+      post(encodeURIComponent(c.id) + '/reject', {}, 'Rejecting…');
+    });
+    draw();
+    check();
+    return card;
+  }
+
   function bubble(role, text, actions, isError) {
     $('welcome').hidden = true;
     const wrap = document.createElement('div');
@@ -1455,7 +1613,7 @@
       for (const a of actions) {
         const chip = document.createElement('span');
         chip.className = `action ${a.kind}`;
-        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : a.kind === 'draft' ? '✉' : a.kind === 'booking' ? '◷' : '✦'} ${a.text}`;
+        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : a.kind === 'draft' ? '✉' : a.kind === 'booking' ? '◷' : a.kind === 'campaign' ? '✉' : '✦'} ${a.text}`;
         row.appendChild(chip);
       }
       wrap.appendChild(row);
@@ -1492,6 +1650,14 @@
         const box = document.createElement('div');
         box.className = 'dcards';
         for (const a of proposals) box.appendChild(bookingCard(a.booking));
+        wrap.appendChild(box);
+      }
+      // Each email campaign it drafted or changed: the campaign, with Approve / Edit / Reject for a signed-in admin
+      const campaigns = actions.filter((a) => a.kind === 'campaign' && a.campaign && a.campaign.id);
+      if (campaigns.length) {
+        const box = document.createElement('div');
+        box.className = 'dcards';
+        for (const a of campaigns) box.appendChild(campaignCard(a.campaign));
         wrap.appendChild(box);
       }
     }
