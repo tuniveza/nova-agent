@@ -242,6 +242,45 @@ main {
 .card-who { margin: 6px 0 0; font-size: 14.5px; color: var(--lilac); }
 .details { margin: 10px 0 0; white-space: pre-wrap; color: var(--bright); font-size: 15px; line-height: 1.55; }
 .card-foot { margin: 10px 0 0; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
+/* An enquiry's state: replied, drafts from Agent waiting, a reply that didn't send, don't contact */
+.pill-replied, .pill-draft, .pill-failed, .pill-stop {
+  display: inline-block; margin-left: 8px; padding: 2px 9px; border-radius: 999px; vertical-align: 3px;
+  font-family: var(--f-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+}
+.pill-replied { border: 1px solid rgba(var(--ok-rgb), 0.5); color: var(--ok); }
+.pill-draft { border: 1px dashed var(--lilac); color: var(--lilac); }
+.pill-failed { border: 1px solid rgba(var(--bad-rgb), 0.55); color: var(--bad); }
+.pill-stop { border: 1px solid var(--line-strong); color: var(--muted); }
+
+/* ----- One enquiry: details, the conversation and the reply box ----- */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.thread { display: grid; gap: 12px; text-align: left; }
+.thread-list { gap: 10px; }
+.msg-card { padding: 12px 14px; }
+.msg-who { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--hi); }
+.msg-card.customer .msg-who { color: var(--lilac); }
+.msg-card.note { --card-edge: linear-gradient(rgba(var(--gold-rgb), 0.45), rgba(var(--gold-rgb), 0.15)); --card-bg: rgba(var(--gold-rgb), 0.05); box-shadow: none; }
+.msg-card.note .msg-who { color: var(--gold); }
+.msg-card.draft { --card-edge: linear-gradient(var(--lilac), rgba(var(--accent-2-rgb), 0.4)); border-style: dashed; }
+.msg-card.draft .msg-who { color: var(--lilac); }
+.msg-card.pending { opacity: 0.8; }
+.msg-body { margin: 6px 0 0; white-space: pre-wrap; line-height: 1.55; color: var(--bright); overflow-wrap: anywhere; }
+.msg-edit { width: 100%; margin-top: 8px; resize: vertical; min-height: 120px; }
+.msg-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.msg-state { flex: 1 1 auto; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
+.msg-state.sent { color: var(--ok); }
+.msg-state.failed { color: var(--bad); }
+.msg-state.draft { color: var(--lilac); }
+.dnc { display: block; margin-top: 12px; cursor: pointer; }
+.dnc input { width: 18px; height: 18px; margin: 0 8px 0 0; vertical-align: -3px; accent-color: var(--hi); }
+.dnc span { font-weight: 600; }
+.dnc small { display: block; margin-top: 2px; color: var(--muted); font-size: 12.5px; }
+.thread-form { display: grid; gap: 10px; }
+.thread-form-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.thread-form textarea { width: 100%; resize: vertical; min-height: 104px; }
+.thread-hint { margin: 0; font-size: 12.5px; }
+.thread-send { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.thread-send .btn:disabled { cursor: not-allowed; }
 /* Booking and enquiry details, line by line: the first line stands out, labels are pink, values bright, times gold */
 .d-line { display: block; }
 .d-first { font-weight: 700; color: #fff; font-size: 16px; }

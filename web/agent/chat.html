@@ -279,6 +279,19 @@
   .action.looked { border-color: var(--line); background: none; color: var(--muted); }
   .action.file { border-color: color-mix(in srgb, var(--gold) 45%, transparent); background: color-mix(in srgb, var(--gold) 10%, transparent); color: var(--gold); }
   .fcards .fallback-dl { display: inline-flex; margin: 4px 4px 0 0; text-decoration: none; }
+  /* A reply Agent drafted to an enquiry: it waits for a person's Approve & send (it never sends itself) */
+  .action.draft { border-color: color-mix(in srgb, var(--lilac) 45%, transparent); background: color-mix(in srgb, var(--lilac) 10%, transparent); color: var(--lilac); }
+  .dcards { display: grid; gap: 8px; margin-top: 8px; }
+  .dcard { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--lilac) 35%, transparent); background: linear-gradient(120deg, color-mix(in srgb, var(--lilac) 8%, var(--panel)), color-mix(in srgb, var(--panel-2) 60%, transparent)); }
+  .dcard .dtag { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--lilac); }
+  .dcard .dto { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .dcard .dsubject { font-weight: 700; color: #fff; font-size: 14px; }
+  .dcard .dbody { white-space: pre-wrap; font-size: 13.5px; line-height: 1.55; color: var(--text); max-height: 260px; overflow: auto; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--void) 45%, transparent); }
+  .dcard .dfoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
+  .dcard .dfoot a { text-decoration: none; }
+  .dcard .dstate { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); flex: 1 1 100%; }
+  .dcard .dstate.sent { color: #8EF0C0; }
+  .dcard .dstate.failed { color: #FF9D9D; }
   /* Files Nova Agent wrote: a card under the reply, the Files list, and the viewer */
   .fcards { display: grid; gap: 8px; margin-top: 8px; }
   .fcard { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center; padding: 10px 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); background: linear-gradient(120deg, color-mix(in srgb, var(--gold) 9%, var(--panel)), color-mix(in srgb, var(--panel-2) 60%, transparent)); animation: quest-in .4s cubic-bezier(.2,.8,.2,1) both; }
@@ -1242,6 +1255,63 @@
     }
   });
 
+  // ===== Drafted replies to enquiries =====
+  // Agent can only draft. The draft goes to the customer when a person presses Approve & send
+  // here (or in Portal): that's their own Portal sign-in in this browser (online at /agent/),
+  // never Agent's key. On the studio computer's own page there's no browser sign-in to send
+  // with, so the card says to approve it in Portal instead.
+  function draftCard(d) {
+    const card = document.createElement('div');
+    card.className = 'dcard';
+    card.dataset.draft = String(d.id);
+    card.innerHTML = `<span class="dtag">Draft reply · waiting for approval</span>
+      <span class="dto">To ${escF(d.name)} &lt;${escF(d.email)}&gt;</span>
+      <span class="dsubject">${escF('Re: ' + (d.subject || 'your enquiry to Novacane Studios'))}</span>
+      <div class="dbody">${escF(d.body)}</div>
+      <div class="dfoot"><span class="dstate">Checking…</span><button type="button" class="mini go" data-approve hidden>✓ Approve &amp; send</button><a class="mini" data-open href="${escF(d.portalUrl || '/portal/?view=enquiries&enquiry=' + d.enquiryId)}" target="_blank" rel="noopener">↗ Open in Portal</a></div>`;
+    const state = card.querySelector('.dstate');
+    const btn = card.querySelector('[data-approve]');
+    const say = (text, cls) => { state.textContent = text; state.className = 'dstate' + (cls ? ' ' + cls : ''); };
+    // Where the draft is now (someone may have edited, sent or discarded it in Portal)
+    async function check() {
+      let r;
+      try { r = await fetch('/app/api/enquiries/thread?id=' + encodeURIComponent(d.enquiryId), { cache: 'no-store', credentials: 'same-origin' }); } catch { r = null; }
+      if (!r || r.status === 401 || r.status === 403) { btn.hidden = true; return say('Approve it in Portal (signed in). Nothing is sent until someone does.'); }
+      const t = await r.json().catch(() => null);
+      if (!t || !r.ok) { btn.hidden = true; return say(t && t.error ? t.error : 'Open it in Portal to approve it.'); }
+      if (t.onlineUrl) card.querySelector('[data-open]').href = t.onlineUrl;
+      const m = (t.messages || []).find((x) => x.id === d.id);
+      if (!m) { btn.hidden = true; return say('Discarded in Portal.'); }
+      card.querySelector('.dbody').textContent = m.body;
+      d.body = m.body;
+      btn.hidden = true;
+      if (m.status === 'sent') return say('Sent ✓' + (m.approver_name ? ' · approved by ' + m.approver_name : ''), 'sent');
+      if (m.status === 'approved') return say('Sending…');
+      if (m.status === 'failed') return say('Didn’t send: ' + String(m.error || 'unknown reason').replace(/\.$/, '') + '. Retry it in Portal.', 'failed');
+      if (t.enquiry && t.enquiry.state === 'do-not-contact') return say('They’ve asked not to be contacted, so this can’t be sent.');
+      if (!t.canSend) return say('Approve it in Portal online (sending needs a browser sign-in).');
+      btn.hidden = false;
+      say('Not sent. Read it, then approve it to email ' + d.name + '.');
+    }
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      say('Sending…');
+      try {
+        const r = await fetch('/app/api/enquiries/draft/approve', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messageId: d.id, body: d.body }) });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) { say(data.error || 'Couldn’t send it.', 'failed'); btn.disabled = false; return; }
+      } catch (err) {
+        say('Couldn’t reach Portal. Try again.', 'failed');
+        btn.disabled = false;
+        return;
+      }
+      btn.disabled = false;
+      check();
+    });
+    check();
+    return card;
+  }
+
   function bubble(role, text, actions, isError) {
     $('welcome').hidden = true;
     const wrap = document.createElement('div');
@@ -1257,7 +1327,7 @@
       for (const a of actions) {
         const chip = document.createElement('span');
         chip.className = `action ${a.kind}`;
-        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : '✦'} ${a.text}`;
+        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : a.kind === 'draft' ? '✉' : '✦'} ${a.text}`;
         row.appendChild(chip);
       }
       wrap.appendChild(row);
@@ -1279,6 +1349,14 @@
         }
         wrap.appendChild(cards);
         if (missing.length) fileLinks(cards, missing);
+      }
+      // Each reply it drafted to an enquiry: the draft, with Approve & send for a signed-in person
+      const drafts = actions.filter((a) => a.kind === 'draft' && a.draft && a.draft.id);
+      if (drafts.length) {
+        const box = document.createElement('div');
+        box.className = 'dcards';
+        for (const a of drafts) box.appendChild(draftCard(a.draft));
+        wrap.appendChild(box);
       }
     }
     log.appendChild(wrap);

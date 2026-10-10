@@ -308,13 +308,35 @@
     <!-- Enquiries -->
     <section id="view-enquiries" class="view">
       <div class="view-head">
-        <h2>Enquiries</h2>
-        <div class="chips" role="tablist">
+        <h2 id="enq-title">Enquiries</h2>
+        <div class="chips" role="tablist" id="enq-chips">
           <button class="chip active" data-show="all" type="button">All</button>
           <button class="chip" data-show="new" type="button">New</button>
         </div>
+        <button id="enq-back" class="chip" type="button" hidden>&larr; All enquiries</button>
       </div>
       <div id="enquiry-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+      <!-- One enquiry open: its details, the conversation (their message, replies, notes, Agent's drafts) and the reply box -->
+      <div id="enquiry-thread" class="thread" hidden>
+        <div id="thread-head"></div>
+        <div id="thread-list" class="list thread-list" aria-live="polite"></div>
+        <form id="thread-form" class="card thread-form" autocomplete="off">
+          <div class="thread-form-top">
+            <div class="chips" role="tablist" aria-label="Reply or note">
+              <button class="chip active" data-mode="reply" type="button" aria-pressed="true">Reply</button>
+              <button class="chip" data-mode="note" type="button" aria-pressed="false">Note</button>
+            </div>
+            <span id="thread-to" class="card-meta"></span>
+          </div>
+          <label class="sr-only" for="thread-input">Your reply</label>
+          <textarea id="thread-input" rows="4" maxlength="8000" placeholder="Write a reply…"></textarea>
+          <p id="thread-hint" class="hint thread-hint"></p>
+          <div class="thread-send">
+            <a id="thread-online" class="btn small ghost" href="/portal/" target="_blank" rel="noopener" hidden>Open Portal online to send</a>
+            <button id="thread-send" class="btn" type="submit">Send</button>
+          </div>
+        </form>
+      </div>
     </section>
 
     <!-- Conversations -->

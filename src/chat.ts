@@ -14,6 +14,8 @@
 //   - write files for you (Markdown, text, CSV, JSON, HTML) to preview, download
 //     or open in Notes, read them back, and export a mission as a document
 //     (files.ts, quests/export.ts)
+//   - read the studio's enquiries and DRAFT replies to them (enquiries.ts). It can't send:
+//     a person approves each draft (Approve & send, in Portal or on the draft's card)
 //   - say how Nova Agent itself is doing
 // The SDK's tool runner does the back-and-forth with Claude.
 
@@ -30,6 +32,7 @@ import { getRecentEvents, trace } from "./trace";
 import { lookAt, lookResult, webTools } from "./web";
 import { fileCard, FILE_TYPES, findFile, listFiles, readFileText, removeFile, saveFile, sizeText } from "./files";
 import { missionMarkdown } from "./quests/export";
+import { draftReply, listEnquiries, readEnquiry, threadText, type DraftCard } from "./enquiries";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
 import { createMission, refineMission } from "./quests/planner";
@@ -46,9 +49,10 @@ export interface ChatTurn {
   content: string;
 }
 export interface ChatAction {
-  kind: "added" | "changed" | "removed" | "looked" | "file";
+  kind: "added" | "changed" | "removed" | "looked" | "file" | "draft";
   text: string;
   file?: ReturnType<typeof fileCard>; // for "file": the card to preview and download it
+  draft?: DraftCard; // for "draft": a reply to an enquiry, waiting for a person's Approve & send
 }
 
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("A date, YYYY-MM-DD (UK)");
@@ -91,6 +95,7 @@ What you can do:
 - See webpages: page_look opens a public page in a browser and gives you a screenshot and its contents, for when how a page looks matters or web_fetch can't read it (pages built by scripts, a profile, a shop page, checking their own site or socials). It can't log in anywhere.
 - Write files: file_write makes a document they can preview, download to their computer, or open in Notes (Markdown .md by default; also .txt, .csv for spreadsheets, .json, .html). Use it whenever they ask for a file, document, list, plan, report, template, script, spreadsheet or "something I can download", or when an answer is long and worth keeping. Write the whole thing, properly formatted (headings, lists, tables), then reply in a line or two saying what's in it; the file card with Preview and Download appears under your reply, so don't paste the file into the chat too. To change a file, read it (file_read), then file_write with its id. file_list shows what's there.
 - Export a mission: mission_export writes a mission's whole plan (strategy, milestones, every quest, research links) as a Markdown file.
+- Enquiries: read the studio's enquiries from customers (enquiry_list, enquiry_read) and draft a reply to one (enquiry_draft_reply). You can only ever draft: you can't send, approve or email anyone, and nothing goes to a customer until a person from the studio reads your draft and presses Approve & send (on the card under your reply, or in Portal). Say that plainly when you draft ("Here's a draft for you to check; it goes when you approve it"), never that you've replied or sent anything. Read the enquiry and its conversation first, write the whole email in a warm, plain UK English voice signed "Novacane Studios" (the footer about why they're getting it and how to stop is added automatically), and only promise what the studio has said it can do. Never draft for someone marked do-not-contact.
 - Say how you're doing (agent_status).
 
 How to work:
@@ -387,6 +392,52 @@ function fileTools(actions: ChatAction[]) {
   ];
 }
 
+// Enquiries: read them and DRAFT replies. There is no send tool, on purpose: a person approves
+// every draft before it goes (Nova Bot only lets a signed-in person's press send anything).
+export function enquiryTools(actions: ChatAction[]) {
+  return [
+    betaZodTool({
+      name: "enquiry_list",
+      description: "List the studio's enquiries from customers (newest first): id, who, subject, state (new, replied, closed, do-not-contact), the start of their message, and how many drafts are waiting.",
+      inputSchema: z.object({ show: z.enum(["open", "new", "all"]).optional().describe("open = new or replied (default); new = not answered yet; all = everything") }),
+      run: async ({ show }) => {
+        const list = await listEnquiries(show ?? "open");
+        if (!list.length) return "No enquiries there.";
+        noteAction(actions, "looked", `Looked at ${list.length} enquir${list.length === 1 ? "y" : "ies"}`);
+        return JSON.stringify(list);
+      },
+    }),
+    betaZodTool({
+      name: "enquiry_read",
+      description: "Read one enquiry in full: their details, their message, and the conversation since (replies sent, drafts waiting, team notes). Do this before drafting a reply.",
+      inputSchema: z.object({ id: z.number().int().positive() }),
+      run: async ({ id }) => {
+        const t = await readEnquiry(id);
+        noteAction(actions, "looked", `Read ${t.enquiry.name}'s enquiry`);
+        return threadText(t);
+      },
+    }),
+    betaZodTool({
+      name: "enquiry_draft_reply",
+      description: "Draft an email reply to an enquiry. It is NOT sent: it's saved as a draft for a person at the studio to check, edit and approve (Approve & send). Write the whole email body, greeting to sign-off.",
+      inputSchema: z.object({
+        id: z.number().int().positive().describe("The enquiry's id"),
+        body: z.string().min(1).max(8000).describe("The email body, as it should read"),
+      }),
+      run: async ({ id, body }) => {
+        const draft = await draftReply(id, body);
+        actions.push({ kind: "draft", text: `Drafted a reply to ${draft.name}, waiting for approval`, draft });
+        trace("input", "ok", `Chat: drafted a reply to enquiry #${id} (waiting for approval)`);
+        return `Draft ${draft.id} saved for ${draft.name}. It has NOT been sent: it waits for someone at the studio to approve it (the card under your reply, or Portal).`;
+      },
+    }),
+  ];
+}
+const noteAction = (actions: ChatAction[], kind: ChatAction["kind"], text: string) => {
+  actions.push({ kind, text });
+  trace("input", "ok", `Chat: ${text}`);
+};
+
 function questTools(actions: ChatAction[]) {
   const did = (kind: ChatAction["kind"], text: string) => {
     actions.push({ kind, text });
@@ -636,7 +687,7 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
     model,
     max_tokens: 16000,
     system: memory ? `${systemPrompt()}\n\n${memory}` : systemPrompt(),
-    tools: [...tools(actions), ...questTools(actions), ...fileTools(actions), ...webTools({ search: 5, fetch: 5 })],
+    tools: [...tools(actions), ...questTools(actions), ...fileTools(actions), ...enquiryTools(actions), ...webTools({ search: 5, fetch: 5 })],
     messages,
     output_config: { effort: "low" },
     max_iterations: 16 + MAX_CONTINUATIONS,

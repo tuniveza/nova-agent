@@ -54,7 +54,7 @@
   function when(iso) {
     if (!iso) return "";
     const date = new Date(iso);
-    return date.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
   }
 
   function toast(message) {
@@ -400,9 +400,14 @@
   );
 
   async function loadEnquiries() {
+    // An enquiry open (?enquiry=ID in the address): its conversation; otherwise the list
+    const openId = Number(new URLSearchParams(location.search).get("enquiry"));
+    if (Number.isInteger(openId) && openId > 0) return openThread(openId);
+    closeThread();
     const list = $("enquiry-list");
     try {
       const data = await api("enquiries" + (enquiryFilter === "all" ? "?show=all" : ""));
+      if (threadId) return; // an enquiry was opened meanwhile
       lastEnquiries = data.enquiries;
       setBadge("new-badge", data.newCount);
       if (!data.enquiries.length) {
@@ -411,6 +416,35 @@
       reconcile(list, data.enquiries.map(enquiryCard));
     } catch (err) {
       if (err.message !== "signed out") emptyState(list, err.message);
+    }
+  }
+
+  // Open one enquiry (the address changes, so Back returns to the list)
+  const goEnquiry = (id) => window.PortalPage && window.PortalPage.go("/portal/?view=enquiries" + (id ? "&enquiry=" + id : ""));
+
+  // The enquiry's state as a pill: New, Replied, Done, Don't contact (and drafts waiting)
+  function statePills(title, q) {
+    if (q.do_not_contact_at) title.appendChild(el("span", "pill-stop", "Don't contact"));
+    else if (q.status === "new") title.appendChild(el("span", "pill-new", "New"));
+    else if (q.status === "replied") title.appendChild(el("span", "pill-replied", "Replied"));
+    else title.appendChild(el("span", "pill-done", "Done"));
+    if (q.drafts) title.appendChild(el("span", "pill-draft", q.drafts === 1 ? "Draft to approve" : q.drafts + " drafts to approve"));
+    if (q.failed) title.appendChild(el("span", "pill-failed", "Didn't send"));
+  }
+
+  // Call, text and email links for a customer ("or otherwise": texts open the phone's own Messages)
+  function contactLinks(actions, q, emailClass = "btn small") {
+    const reply = el("a", emailClass, "Email");
+    reply.href = "mailto:" + encodeURIComponent(q.email) + "?subject=" + encodeURIComponent("Re: " + (q.subject || "Your Novacane enquiry"));
+    actions.appendChild(reply);
+    if (q.phone) {
+      const number = q.phone.replace(/[^0-9+]/g, "");
+      const call = el("a", "btn small ghost", "Call");
+      call.href = "tel:" + number;
+      actions.appendChild(call);
+      const text = el("a", "btn small ghost", "Text");
+      text.href = "sms:" + number;
+      actions.appendChild(text);
     }
   }
 
@@ -425,22 +459,19 @@
     });
     const top = el("div", "card-top");
     const title = el("h3", "card-title", q.subject || "Enquiry");
-    if (q.status === "new") title.appendChild(el("span", "pill-new", "New"));
-    else title.appendChild(el("span", "pill-done", "Done"));
+    statePills(title, q);
     top.append(title, el("span", "card-meta", when(q.created_at)));
     card.append(top, el("p", "card-who", q.name + " · " + q.email + (q.phone ? " · " + q.phone : "")));
     card.appendChild(el("p", "details", q.details));
-    card.appendChild(el("p", "card-foot", [q.page ? "From " + q.page : "", q.emailed ? "Email copy sent" : ""].filter(Boolean).join(" · ")));
+    card.appendChild(el("p", "card-foot", [q.page ? "From " + q.page : "", q.emailed ? "Email copy sent" : "", q.replies ? q.replies + (q.replies === 1 ? " reply sent" : " replies sent") : ""].filter(Boolean).join(" · ")));
 
     const actions = el("div", "actions");
-    const reply = el("a", "btn small", "Email");
-    reply.href = "mailto:" + encodeURIComponent(q.email) + "?subject=" + encodeURIComponent("Re: " + (q.subject || "Your Novacane enquiry"));
-    actions.appendChild(reply);
-    if (q.phone) {
-      const call = el("a", "btn small ghost", "Call");
-      call.href = "tel:" + q.phone.replace(/[^0-9+]/g, "");
-      actions.appendChild(call);
-    }
+    // The conversation: reply from here, see drafts and notes
+    const open = el("button", "btn small", q.drafts ? "Open · approve draft" : "Open & reply");
+    open.type = "button";
+    open.addEventListener("click", () => goEnquiry(q.id));
+    actions.appendChild(open);
+    contactLinks(actions, q, "btn small ghost");
     const link = el("button", "btn small ghost", "Booking link");
     link.type = "button";
     link.addEventListener("click", () => openSheet(q));
@@ -455,6 +486,13 @@
       });
       actions.appendChild(chat);
     }
+    actions.appendChild(doneButton(q));
+    card.appendChild(actions);
+    return card;
+  }
+
+  // Mark done / Move to new
+  function doneButton(q) {
     const done = el("button", "btn small ghost", q.status === "done" ? "Move to new" : "Mark done");
     done.type = "button";
     done.addEventListener("click", async () => {
@@ -468,10 +506,377 @@
         done.disabled = false;
       }
     });
-    actions.appendChild(done);
+    return done;
+  }
+
+  // The enquiry list refreshes itself while it's on screen (only what changed is redrawn)
+  setInterval(() => !document.hidden && running && currentView === "enquiries" && !threadId && loadEnquiries(), 20000);
+
+  // ===== One enquiry: the conversation =====
+  // Their message, then every reply, note and draft from Agent, oldest first. While it's open
+  // and on screen it checks for news every 5 seconds, so other staff's replies and Agent's
+  // drafts appear by themselves; only messages that changed are redrawn (nothing flickers).
+
+  let threadId = null; // the enquiry open, or null
+  let thread = null; // its latest data
+  let threadMode = "reply"; // the box writes a reply or a note
+  let threadTimer = null;
+  let threadLoading = false;
+  const editing = new Map(); // drafts being edited: message id -> the text so far
+  const pending = new Map(); // Send presses not answered yet: key -> { body, mode, failed, error }
+  const THREAD_POLL_MS = 5000;
+
+  // A random id for one press of Send (the server never saves the same press twice)
+  const pressKey = () => "p-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
+
+  function closeThread() {
+    if (!threadId) return;
+    threadId = null;
+    thread = null;
+    editing.clear();
+    pending.clear();
+    clearInterval(threadTimer);
+    threadTimer = null;
+    $("enquiry-thread").hidden = true;
+    $("enquiry-list").hidden = false;
+    $("enq-chips").hidden = false;
+    $("enq-back").hidden = true;
+    setText("enq-title", "Enquiries");
+    $("thread-input").value = "";
+  }
+
+  async function openThread(id) {
+    const fresh = threadId !== id;
+    if (fresh) {
+      closeThread();
+      threadId = id;
+      $("enquiry-list").hidden = true;
+      $("enq-chips").hidden = true;
+      $("enq-back").hidden = false;
+      $("enquiry-thread").hidden = false;
+      $("thread-head").replaceChildren();
+      $("thread-list").replaceChildren(el("div", "skeleton"));
+      delete $("thread-head").dataset.sig;
+      setMode("reply");
+      threadTimer = setInterval(() => !document.hidden && running && currentView === "enquiries" && loadThread(), THREAD_POLL_MS);
+      window.scrollTo(0, 0);
+    }
+    await loadThread();
+  }
+
+  async function loadThread() {
+    const id = threadId;
+    if (!id || threadLoading) return;
+    threadLoading = true;
+    try {
+      const data = await api("enquiries/thread?id=" + id);
+      if (threadId !== id) return;
+      thread = data;
+      drawThread();
+    } catch (err) {
+      if (err.message !== "signed out" && threadId === id && !thread) emptyState($("thread-list"), err.message);
+    } finally {
+      threadLoading = false;
+    }
+  }
+
+  function drawThread() {
+    const q = thread.enquiry;
+    setText("enq-title", q.name);
+    // The details card (redrawn only when it changes)
+    redraw($("thread-head"), sig(q, thread.canSend), [threadHead(q)]);
+    // The conversation: their message first, then each message, then presses still on their way
+    const nodes = [customerMessage(q)];
+    for (const m of thread.messages) nodes.push(editing.has(m.id) ? keepEditing(m) : messageCard(m));
+    for (const [key, p] of pending) nodes.push(pendingCard(key, p));
+    reconcile($("thread-list"), nodes);
+    updateBox();
+  }
+
+  // Name, how to reach them (email, call, text), consent, Don't contact
+  function threadHead(q) {
+    const card = el("article", "card thread-head" + (q.status === "done" ? " done" : ""));
+    const top = el("div", "card-top");
+    const title = el("h3", "card-title", q.subject || "Enquiry");
+    statePills(title, q);
+    top.append(title, el("span", "card-meta", when(q.created_at)));
+    card.append(top, el("p", "card-who", q.name + " · " + q.email + (q.phone ? " · " + q.phone : "")));
+    const actions = el("div", "actions");
+    contactLinks(actions, q);
+    const link = el("button", "btn small ghost", "Booking link");
+    link.type = "button";
+    link.addEventListener("click", () => openSheet(q));
+    actions.appendChild(link);
+    if (q.chat_id) {
+      const chat = el("button", "btn small ghost", "Read conversation");
+      chat.type = "button";
+      chat.addEventListener("click", () => {
+        openChatId = null;
+        show("chats");
+        openChat(q.chat_id, q.name);
+      });
+      actions.appendChild(chat);
+    }
+    actions.appendChild(doneButton(q));
     card.appendChild(actions);
+    if (q.phone) card.appendChild(el("p", "card-foot", "Call or Text opens your phone. Texts aren't sent from Portal yet: email replies are."));
+    // UK GDPR: why the studio may contact them
+    card.appendChild(el("p", "card-foot", "Asked to be contacted: " + when(q.consent_at || q.created_at) + (q.consent_source ? " · " + q.consent_source : "")));
+    // Don't contact: blocks every send (the customer's own stop link can't be undone here)
+    const stop = el("label", "dnc");
+    const box = el("input");
+    box.type = "checkbox";
+    box.checked = Boolean(q.do_not_contact_at);
+    box.disabled = q.do_not_contact_by === "customer";
+    stop.append(box, el("span", "", "Don't contact"));
+    const why = q.do_not_contact_at
+      ? q.do_not_contact_by === "customer"
+        ? "They asked to stop with the link in an email (" + when(q.do_not_contact_at) + "). Nothing can be sent."
+        : "Switched on " + when(q.do_not_contact_at) + ". Nothing can be sent while it's on."
+      : "Switch on if they ask the studio to stop contacting them.";
+    stop.appendChild(el("small", "", why));
+    box.addEventListener("change", async () => {
+      box.disabled = true;
+      try {
+        await api("enquiries/contact", { body: { id: q.id, doNotContact: box.checked } });
+        toast(box.checked ? "They won't be contacted" : "Replies are allowed again");
+      } catch (err) {
+        toast(err.message);
+        box.checked = !box.checked;
+      }
+      box.disabled = false;
+      loadThread();
+    });
+    card.appendChild(stop);
     return card;
   }
+
+  // Their first message (from NovaBot's chat)
+  function customerMessage(q) {
+    const card = el("article", "card msg-card customer");
+    card.dataset.key = "first";
+    card.dataset.sig = sig(q.details, q.created_at);
+    card.appendChild(el("span", "msg-who", q.name + " · " + when(q.created_at)));
+    card.appendChild(el("p", "msg-body", q.details));
+    return card;
+  }
+
+  // Sending / Sent ✓ / Failed (with the reason) / Draft
+  function stateChip(m) {
+    if (m.status === "sent") return el("span", "msg-state sent", "Sent ✓ " + when(m.sent_at) + (m.approver_name && m.created_by === "agent" ? " · approved by " + m.approver_name : ""));
+    if (m.status === "approved") return el("span", "msg-state sending", m.stuck ? "Still sending? You can retry" : "Sending…");
+    if (m.status === "failed") return el("span", "msg-state failed", "Didn't send: " + (m.error || "unknown reason"));
+    if (m.status === "draft") return el("span", "msg-state draft", "Draft · waiting for approval");
+    return null;
+  }
+
+  function messageCard(m) {
+    const kind = m.direction === "note" ? "note" : m.status === "draft" ? "draft" : "out";
+    const card = el("article", "card msg-card " + kind);
+    card.dataset.key = "m" + m.id;
+    card.dataset.sig = sig(m.status, m.body, m.updated_at, m.error, m.stuck, thread.canSend, Boolean(thread.enquiry.do_not_contact_at));
+    const who =
+      m.direction === "note"
+        ? "Note · " + (m.created_by === "customer" ? "Nova Bot" : m.author_name || "Staff")
+        : m.created_by === "agent"
+          ? "Draft by Agent"
+          : "Reply · " + (m.author_name || "Staff");
+    card.appendChild(el("span", "msg-who", who + " · " + when(m.created_at)));
+    card.appendChild(el("p", "msg-body", m.body));
+    const chip = stateChip(m);
+    const row = el("div", "msg-foot");
+    if (chip) row.appendChild(chip);
+    const blocked = Boolean(thread.enquiry.do_not_contact_at);
+    if (m.status === "draft") {
+      if (!blocked && thread.canSend) row.appendChild(button("Approve & send", "btn small", () => approve(m, card)));
+      if (!blocked && !thread.canSend && thread.onlineUrl) {
+        const online = el("a", "btn small", "Approve in Portal online");
+        online.href = thread.onlineUrl;
+        online.target = "_blank";
+        online.rel = "noopener";
+        row.appendChild(online);
+      }
+      row.appendChild(button("Edit", "btn small ghost", () => {
+        editing.set(m.id, m.body);
+        drawThread();
+      }));
+      row.appendChild(button("Discard", "btn small ghost", () => discard(m)));
+    }
+    if ((m.status === "failed" || m.stuck) && !blocked && thread.canSend) row.appendChild(button("Retry", "btn small", () => retry(m)));
+    if (row.childNodes.length) card.appendChild(row);
+    return card;
+  }
+
+  // A draft being edited stays as it is while the thread refreshes around it
+  function keepEditing(m) {
+    const was = $("thread-list").querySelector('[data-key="m' + m.id + '"].editing');
+    if (was && m.status === "draft") return was;
+    if (m.status !== "draft") {
+      editing.delete(m.id);
+      return messageCard(m);
+    }
+    const card = el("article", "card msg-card draft editing");
+    card.dataset.key = "m" + m.id;
+    card.dataset.sig = "editing";
+    card.appendChild(el("span", "msg-who", "Draft by Agent · editing"));
+    const area = el("textarea", "msg-edit");
+    area.value = editing.get(m.id);
+    area.rows = Math.min(14, Math.max(4, area.value.split("\n").length + 1));
+    area.addEventListener("input", () => editing.set(m.id, area.value));
+    card.appendChild(area);
+    const row = el("div", "msg-foot");
+    row.appendChild(button("Save", "btn small", async (b) => {
+      b.disabled = true;
+      try {
+        await api("enquiries/draft/edit", { body: { messageId: m.id, body: area.value } });
+        editing.delete(m.id);
+        toast("Draft saved");
+      } catch (err) {
+        toast(err.message);
+        b.disabled = false;
+        return;
+      }
+      loadThread();
+    }));
+    if (thread.canSend && !thread.enquiry.do_not_contact_at) {
+      row.appendChild(button("Approve & send", "btn small ghost", () => approve(m, card, area.value)));
+    }
+    row.appendChild(button("Cancel", "btn small ghost", () => {
+      editing.delete(m.id);
+      drawThread();
+    }));
+    card.appendChild(row);
+    setTimeout(() => area.focus({ preventScroll: true }), 30);
+    return card;
+  }
+
+  function button(text, cls, onClick) {
+    const b = el("button", cls, text);
+    b.type = "button";
+    b.addEventListener("click", () => onClick(b));
+    return b;
+  }
+
+  // Approve & send: the person's press is the approval; the text they see is what goes
+  async function approve(m, card, body) {
+    card.querySelectorAll("button").forEach((b) => (b.disabled = true));
+    const chip = card.querySelector(".msg-state");
+    if (chip) {
+      chip.className = "msg-state sending";
+      chip.textContent = "Sending…";
+    }
+    try {
+      const data = await api("enquiries/draft/approve", { body: { messageId: m.id, body: body !== undefined ? body : m.body } });
+      editing.delete(m.id);
+      if (data.message && data.message.status === "failed") toast("Didn't send: " + (data.message.error || "unknown reason"));
+      else toast("Sent to " + thread.enquiry.name);
+    } catch (err) {
+      toast(err.message);
+    }
+    loadThread();
+  }
+
+  async function discard(m) {
+    try {
+      await api("enquiries/draft/discard", { body: { messageId: m.id } });
+      editing.delete(m.id);
+      toast("Draft discarded");
+    } catch (err) {
+      toast(err.message);
+    }
+    loadThread();
+  }
+
+  async function retry(m) {
+    try {
+      const data = await api("enquiries/retry", { body: { messageId: m.id } });
+      toast(data.message && data.message.status === "sent" ? "Sent ✓" : "Didn't send: " + ((data.message && data.message.error) || "unknown reason"));
+    } catch (err) {
+      toast(err.message);
+    }
+    loadThread();
+  }
+
+  // A press of Send still on its way (or that couldn't reach Nova Bot: Retry sends the same press)
+  function pendingCard(key, p) {
+    const card = el("article", "card msg-card " + (p.mode === "note" ? "note" : "out") + " pending");
+    card.dataset.key = "p" + key;
+    card.dataset.sig = sig(p);
+    card.appendChild(el("span", "msg-who", (p.mode === "note" ? "Note" : "Reply") + " · you"));
+    card.appendChild(el("p", "msg-body", p.body));
+    const row = el("div", "msg-foot");
+    row.appendChild(el("span", "msg-state " + (p.failed ? "failed" : "sending"), p.failed ? "Didn't reach Nova Bot: " + p.error : p.mode === "note" ? "Saving…" : "Sending…"));
+    if (p.failed) row.appendChild(button("Retry", "btn small", () => submitPress(key, p)));
+    card.appendChild(row);
+    return card;
+  }
+
+  async function submitPress(key, p) {
+    const id = threadId;
+    p.failed = false;
+    pending.set(key, p);
+    if (thread) drawThread();
+    try {
+      const data = await api(p.mode === "note" ? "enquiries/note" : "enquiries/reply", { body: { id, body: p.body, key } });
+      pending.delete(key);
+      if (p.mode !== "note" && data.message && data.message.status === "failed") toast("Didn't send: " + (data.message.error || "unknown reason"));
+      else if (p.mode !== "note") toast("Sent to " + (thread ? thread.enquiry.name : "them"));
+    } catch (err) {
+      if (err.message === "signed out") return;
+      // Refused (e.g. don't contact): back in the box to change; couldn't reach: Retry
+      if (/^(Something went wrong \(5|Failed to fetch|NetworkError|Load failed)/.test(err.message)) {
+        pending.set(key, { ...p, failed: true, error: err.message });
+      } else {
+        pending.delete(key);
+        if (!$("thread-input").value) $("thread-input").value = p.body;
+        toast(err.message);
+      }
+    }
+    if (threadId === id) loadThread();
+  }
+
+  // The reply box: Reply or Note, who it goes to, and whether this sign-in can send
+  function setMode(mode) {
+    threadMode = mode;
+    document.querySelectorAll("#thread-form [data-mode]").forEach((c) => {
+      c.classList.toggle("active", c.dataset.mode === mode);
+      c.setAttribute("aria-pressed", String(c.dataset.mode === mode));
+    });
+    updateBox();
+  }
+  function updateBox() {
+    const q = thread && thread.enquiry;
+    const note = threadMode === "note";
+    const blocked = q && q.do_not_contact_at;
+    const cantSend = thread && !thread.canSend;
+    const first = q ? q.name.split(/\s+/)[0] : "them";
+    $("thread-input").placeholder = note ? "A note for the team (never sent)…" : "Write a reply to " + first + "…";
+    setText("thread-to", note ? "Team only" : q ? "To " + q.email : "");
+    let hint = "";
+    if (!note && blocked) hint = "They've asked not to be contacted, so replies can't be sent. Notes still work.";
+    else if (!note && cantSend) hint = "Sending needs Portal open in a browser, signed in. Notes work here.";
+    else if (!note) hint = "Emailed from the studio. Their replies come to the studio inbox. Every email says why they're getting it and how to stop.";
+    setText("thread-hint", hint);
+    const online = !note && cantSend && !blocked;
+    $("thread-online").hidden = !online;
+    if (online && thread.onlineUrl) $("thread-online").href = thread.onlineUrl;
+    $("thread-send").disabled = !note && Boolean(blocked || cantSend);
+    setText("thread-send", note ? "Add note" : "Send");
+  }
+
+  document.querySelectorAll("#thread-form [data-mode]").forEach((c) => c.addEventListener("click", () => setMode(c.dataset.mode)));
+  $("thread-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const body = $("thread-input").value.trim();
+    if (!body || !threadId || $("thread-send").disabled) return;
+    $("thread-input").value = "";
+    submitPress(pressKey(), { body, mode: threadMode });
+  });
+  // Ctrl/Cmd + Enter sends
+  $("thread-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("thread-form").requestSubmit();
+  });
+  $("enq-back").addEventListener("click", () => goEnquiry(null));
 
   // ===== Booking link sheet =====
 
