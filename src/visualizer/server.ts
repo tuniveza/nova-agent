@@ -41,6 +41,7 @@ import { createMission, refineMission } from "../quests/planner";
 import { startPortalSync } from "../quests/portalsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
+import { startBookingRefresh } from "../quests/bookings";
 import { questEvents } from "../quests/store";
 import { missionMarkdown } from "../quests/export";
 import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile, saveFile } from "../files";
@@ -582,6 +583,8 @@ try {
 }
 startQuestReminders();
 startPulses();
+// The studio's bookings as busy time for Quests (ACUITY_SOURCE=api): now, every 10 minutes, and on a change in Acuity
+startBookingRefresh();
 startPortalSync();
 // Online: Nova Bot passes staff members' requests to this server over a link the PC opens (src/relay.ts)
 startRelay(app.fetch);

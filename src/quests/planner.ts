@@ -133,7 +133,7 @@ async function askForPlan(data: QuestData, parts: { request: string; deadline?: 
   const r = data.rhythm;
   const until = parts.deadline ? stampOf(parts.deadline).slice(0, 10) : fromMin(now + 120 * 1440).slice(0, 10);
   const taken = readCalendar()
-    .notes.filter((n) => !/^(quest|block|mile)-/.test(n.id) && !n.allDay)
+    .notes.filter((n) => !/^(quest|block|mile|music)-/.test(n.id) && !n.allDay)
     .flatMap((n) => noteOccurrences(n, fromMin(now).slice(0, 10), until))
     .filter((n) => n.end >= fromMin(now))
     .sort((a, b) => a.start.localeCompare(b.start))

@@ -11,7 +11,7 @@
 //                 how much it matters, when it's due, what it waits for, where
 //   Block         time that's taken ("out tonight 7-11", "off sick today")
 //   Rhythm        how the days work: wake, sleep, wind-down, buffers, breaks,
-//                 reminders
+//                 reminders, and music time (time set aside for music)
 //
 // Everything lives in data/quests.json. Times are local UK wall-clock times,
 // written like the calendar's: "2026-10-09T14:00" (with seconds when a quest
@@ -165,6 +165,15 @@ export interface Rhythm {
   // right now, to the second, back to back
   paceLimits: boolean;
   daysOff: number[]; // days of the week with no quests at all (0 = Sunday ... 6 = Saturday)
+  // Music time: time set aside for music on these days, at this time, for this long
+  // (minutes 0 = off). Planned like a blocked time; moved within its day when something clashes.
+  music: MusicTime;
+}
+
+export interface MusicTime {
+  days: number[]; // 0 = Sunday ... 6 = Saturday
+  start: string; // "19:00", its usual time
+  minutes: number; // how long (0 = no music time)
 }
 
 export interface QuestData {
@@ -194,6 +203,7 @@ export const DEFAULT_RHYTHM: Rhythm = {
   phonePush: true,
   paceLimits: true,
   daysOff: [],
+  music: { days: [], start: "19:00", minutes: 0 },
 };
 
 const file = `${config.paths.dataDir}quests.json`;
@@ -255,6 +265,17 @@ function cleanRhythm(r: any): Rhythm {
     paceLimits: typeof r?.paceLimits === "boolean" ? r.paceLimits : d.paceLimits,
     // Never every day of the week (there'd be nowhere to plan anything)
     daysOff: Array.isArray(r?.daysOff) ? [...new Set<number>(r.daysOff.map(Number).filter((n: number) => Number.isInteger(n) && n >= 0 && n <= 6))].sort().slice(0, 6) : d.daysOff,
+    music: cleanMusic(r?.music),
+  };
+}
+
+// Music time: any days of the week, a usual start, and up to 12 hours (0 = off)
+export function cleanMusic(m: any): MusicTime {
+  const d = DEFAULT_RHYTHM.music;
+  return {
+    days: Array.isArray(m?.days) ? [...new Set<number>(m.days.map(Number).filter((n: number) => Number.isInteger(n) && n >= 0 && n <= 6))].sort() : [...d.days],
+    start: isHm(m?.start) ? m.start : d.start,
+    minutes: num(m?.minutes, 0, 720, d.minutes),
   };
 }
 

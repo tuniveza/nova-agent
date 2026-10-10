@@ -18,7 +18,8 @@ import { questEvents, readQuests, writeQuests, type Quest } from "./store";
 
 export interface QuestNotice {
   // missed: a session that passed without a ping (Nova Agent was off); undelivered: a ping the phones never got
-  kind: "starting" | "leave" | "checkin" | "moved" | "briefing" | "wrapup" | "mission" | "pulse" | "missed" | "undelivered";
+  // music: a studio booking change moved today's or tomorrow's music time
+  kind: "starting" | "leave" | "checkin" | "moved" | "briefing" | "wrapup" | "mission" | "pulse" | "missed" | "undelivered" | "music";
   title: string;
   message: string;
   questId?: string;
@@ -40,6 +41,7 @@ const PHONE: Record<QuestNotice["kind"], { ttl: number; urgent: boolean }> = {
   pulse: { ttl: 60, urgent: false },
   missed: { ttl: 3600, urgent: false },
   undelivered: { ttl: 3600, urgent: false },
+  music: { ttl: 3 * 3600, urgent: false },
 };
 
 // Show a notice on the page and send it to the phones, once: `session` is what
@@ -89,6 +91,12 @@ export function remindLate(q: Quest, sessions: string[], push: boolean): void {
 // Mission news (planned, complete): on the page and, if the rhythm says so, the phones
 export function notifyMission(what: "planned" | "complete", title: string, message: string, missionId: string): void {
   notify({ kind: "mission", title, message, questId: `mission-${missionId}` }, readQuests().rhythm.phonePush, `${what}@${fromMin(nowMinutes())}`);
+}
+
+// A booking change moved today's or tomorrow's music time: one calm notice, said once
+// (`key` is what moved, so the same move is never told twice)
+export function notifyMusicMoved(lines: string[], key: string): void {
+  notify({ kind: "music", title: "Music time moved", message: `${lines.join(" · ")} (a studio booking is on then). Calendar shows the new time.`, questId: "music" }, readQuests().rhythm.phonePush, key);
 }
 
 export const recentNotices = () => [...recent];

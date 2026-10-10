@@ -1,4 +1,4 @@
-// Portal's work tabs: enquiries, conversations, the calendar, quests, alerts, the Website bot,
+// Portal's work tabs: enquiries, conversations, the calendar, approvals, quests, alerts, the Website bot,
 // push and voice. All data comes from /app/api/ (a Portal sign-in is needed). Everything from
 // the server is shown as plain text, never as HTML.
 // portal.js runs the page (signing in, the address, the You tab); it starts these tabs with
@@ -10,9 +10,9 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "quests", "alerts", "bot"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "approvals", "quests", "alerts", "bot"];
   // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
-  const MORE = ["quests", "alerts", "bot"];
+  const MORE = ["approvals", "quests", "alerts", "bot"];
   let currentView = "today";
   let running = false;
   let sessions = null; // session types for booking links
@@ -199,6 +199,8 @@
     // The Quests badge (quests left today), whatever tab is open
     loadQuests();
     loadAlerts();
+    // The Approvals badge (booking changes waiting for an admin)
+    loadApprovals();
     // Light the bell up if this phone already gets notifications
     updateNotifyPanel();
     // Hands-free voice: the mic glows, and listening starts
@@ -251,6 +253,7 @@
     if (view === "enquiries") loadEnquiries();
     if (view === "chats") (openChatId ? openChat(openChatId, openChatName) : loadChats());
     if (view === "calendar") loadCalendar();
+    if (view === "approvals") loadApprovals();
     // Every section keeps the Alerts badge up to date; the Alerts tab also shows the list
     loadAlerts();
     if (view === "bot") setTimeout(() => $("bot-input").focus({ preventScroll: true }), 50);
@@ -304,7 +307,7 @@
   });
 
   // ===== More (phones): the sections that don't fit on the bar, in the menu's groups (Studio:
-  // Website bot; Plans: Quests, Alerts, Agent; You; Admin), with their counts =====
+  // Approvals, Website bot; Plans: Quests, Alerts, Agent; You; Admin), with their counts =====
   function openMore() {
     const list = $("more-list");
     const items = [];
@@ -346,12 +349,12 @@
   $("more-close").addEventListener("click", () => ($("more-sheet").hidden = true));
   $("more-sheet").addEventListener("click", (e) => e.target === $("more-sheet") && ($("more-sheet").hidden = true));
 
-  // The counts behind More (and Today's tiles) follow the Quests and Alerts badges
+  // The counts behind More (and Today's tiles) follow the Quests, Alerts and Approvals badges
   // (the Today tiles show a count once it's known: until then they keep their "–")
   const known = new Set();
   function syncCounts() {
     const n = (id) => ($(id).hidden ? 0 : Number($(id).textContent) || 0);
-    setBadge("more-badge", n("quest-badge") + n("alert-badge"));
+    setBadge("more-badge", n("quest-badge") + n("alert-badge") + n("approvals-badge"));
     if (known.has("alerts")) setText("t-alerts", n("alert-badge"));
     if (known.has("quests")) setText("t-quests", n("quest-badge"));
   }
@@ -613,6 +616,199 @@
 
   // The enquiry list refreshes itself while it's on screen (only what changed is redrawn)
   setInterval(() => !document.hidden && running && currentView === "enquiries" && !threadId && loadEnquiries(), 20000);
+
+  // ===== Approvals: booking changes waiting for an admin =====
+  // Agent (and Portal's staff chat) can only PROPOSE a booking change: a new booking, a move, a
+  // cancel, new details, or a blocked time added or removed. Nothing happens in Acuity until an
+  // admin presses Approve here (or on the proposal's card under Agent's reply), with their own
+  // sign-in; Nova Bot checks that again and runs it once. Everyone signed in can look; canDecide
+  // (from Nova Bot) says whether this person can decide. Waiting ones come first, then the recent
+  // decided ones with what became of them. ?view=approvals&action=<id> points at one.
+  let approvalEditing = null; // the proposal whose fields are open (refreshes wait meanwhile), or null
+  let approvalPicked = null; // the ?action= one already pointed at
+  const APPROVAL_KINDS = { create: "New booking", reschedule: "Move a booking", cancel: "Cancel a booking", update: "Booking details", block_add: "Block off time", block_remove: "Unblock time" };
+  const APPROVAL_STATUS = { pending: ["pill-draft", "Waiting"], approved: ["pill-replied", "Approved"], executed: ["pill-done", "Done"], failed: ["pill-failed", "Didn't go through"], rejected: ["pill-stop", "Rejected"] };
+  const PROPOSERS = { agent: "Agent", "staff-chat": "Portal's staff chat" };
+  // The simple fields each kind can have changed before it's approved
+  const APPROVAL_FIELDS = {
+    create: [["start", "When (UK time)", "when"], ["firstName", "First name"], ["lastName", "Last name"], ["email", "Email", "email"], ["phone", "Phone"], ["notes", "Notes", "long"], ["notifyClient", "Acuity emails the client", "tick"]],
+    reschedule: [["start", "New time (UK time)", "when"], ["notifyClient", "Acuity emails the client", "tick"]],
+    cancel: [["note", "Cancel note", "long"], ["notifyClient", "Acuity emails the client", "tick"]],
+    update: [["firstName", "First name"], ["lastName", "Last name"], ["email", "Email", "email"], ["phone", "Phone"], ["notes", "Notes", "long"]],
+    block_add: [["start", "From (UK time)", "when"], ["end", "Until (UK time)", "when"], ["notes", "Notes", "long"]],
+    block_remove: [],
+  };
+  // A UTC time as UK wall-clock "YYYY-MM-DDTHH:MM" (for a date-and-time box)
+  function ukLocal(iso) {
+    const d = new Date(iso);
+    if (!iso || isNaN(d)) return "";
+    const p = {};
+    for (const x of new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(d)) p[x.type] = x.value;
+    return p.year + "-" + p.month + "-" + p.day + "T" + p.hour + ":" + p.minute;
+  }
+
+  async function loadApprovals() {
+    const list = $("approvals-list");
+    let data;
+    try {
+      data = await api("booking-actions?status=all");
+    } catch (err) {
+      if (currentView === "approvals" && err.message !== "signed out") emptyState(list, "Couldn't load approvals: " + err.message);
+      return;
+    }
+    const actions = data.actions || [];
+    const pending = actions.filter((a) => a.status === "pending").sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+    setBadge("approvals-badge", pending.length);
+    syncCounts();
+    if (currentView !== "approvals") return;
+    setText("approvals-hint", data.canDecide ? "Booking changes Agent proposed. Nothing changes in Acuity until you approve it." : "Booking changes Agent proposed. An admin approves these; nothing changes in Acuity until then.");
+    const decided = actions
+      .filter((a) => a.status !== "pending")
+      .sort((a, b) => String(b.decidedAt || b.createdAt).localeCompare(String(a.decidedAt || a.createdAt)))
+      .slice(0, 20);
+    const nodes = pending.length ? pending.map((a) => approvalCard(a, data.canDecide)) : [el("p", "empty", "Nothing waiting for approval.")];
+    if (decided.length) nodes.push(el("h3", "group-head", "Decided"), ...decided.map((a) => approvalCard(a, data.canDecide)));
+    reconcile(list, nodes);
+    // Pointed at one (from a notification or Agent's card): bring it into view, once
+    const want = new URLSearchParams(location.search).get("action");
+    if (want && approvalPicked !== want) {
+      const card = list.querySelector('[data-key="act-' + CSS.escape(want) + '"]');
+      if (card) {
+        approvalPicked = want;
+        card.classList.add("picked");
+        card.scrollIntoView({ block: "center", behavior: calm() ? "auto" : "smooth" });
+      }
+    }
+  }
+
+  function approvalCard(a, canDecide) {
+    const editing = approvalEditing === a.id && a.status === "pending" && canDecide;
+    const card = el("article", "card appr" + (a.status === "pending" ? "" : " done"));
+    card.dataset.key = "act-" + a.id;
+    card.dataset.sig = sig(a.status, a.summary, a.payload, a.reason, a.decidedByName, a.error, a.executedAt, canDecide, editing);
+    const top = el("div", "card-top");
+    const title = el("h3", "card-title", APPROVAL_KINDS[a.kind] || "Booking change");
+    const pill = APPROVAL_STATUS[a.status] || ["pill-stop", a.status];
+    title.appendChild(el("span", pill[0], pill[1]));
+    top.append(title, el("span", "card-meta", when(a.createdAt)));
+    card.append(top, el("p", "details appr-summary", a.summary));
+    card.appendChild(el("p", "card-who", "Proposed by " + (PROPOSERS[a.proposedBy] || a.proposedBy || "someone")));
+    if (a.reason) card.appendChild(el("p", "appr-why", "Why: " + a.reason));
+    // What became of it
+    const by = a.decidedByName ? " by " + a.decidedByName : "";
+    if (a.status === "executed") card.appendChild(el("p", "appr-result ok", "Done in Acuity · approved" + by + (a.executedAt ? " · " + when(a.executedAt) : "")));
+    if (a.status === "approved") card.appendChild(el("p", "appr-result", "Approved" + by + " · going through to Acuity…"));
+    if (a.status === "failed") card.appendChild(el("p", "appr-result bad", "Didn't go through: " + String(a.error || "unknown reason").replace(/\.$/, "") + ". Approved" + by + "; nothing else was changed."));
+    if (a.status === "rejected") card.appendChild(el("p", "appr-result", "Rejected" + by + (a.decidedAt ? " · " + when(a.decidedAt) : "") + ". Nothing was changed."));
+    if (a.status !== "pending") return card;
+    if (!canDecide) {
+      card.appendChild(el("p", "card-foot", "An admin approves these."));
+      return card;
+    }
+    const fields = APPROVAL_FIELDS[a.kind] || [];
+    const box = editing ? approvalFields(a, fields) : null;
+    if (box) card.appendChild(box);
+    const row = el("div", "actions");
+    const ok = el("button", "btn small", editing ? "Approve with changes" : "Approve");
+    ok.type = "button";
+    ok.addEventListener("click", () => decideApproval(card, "approve", editing ? { id: a.id, payload: editedPayload(a, box) } : { id: a.id }));
+    row.appendChild(ok);
+    if (fields.length) {
+      const edit = el("button", "btn small ghost", editing ? "Save changes" : "Edit");
+      edit.type = "button";
+      edit.addEventListener("click", () => {
+        if (!editing) {
+          approvalEditing = a.id;
+          return loadApprovals();
+        }
+        decideApproval(card, "edit", { id: a.id, payload: editedPayload(a, box) });
+      });
+      row.appendChild(edit);
+    }
+    if (editing) {
+      const close = el("button", "btn small ghost", "Cancel");
+      close.type = "button";
+      close.addEventListener("click", () => {
+        approvalEditing = null;
+        loadApprovals();
+      });
+      row.appendChild(close);
+    }
+    // Reject: pressed twice, so a stray tap doesn't
+    const no = el("button", "btn small ghost", "Reject");
+    no.type = "button";
+    no.addEventListener("click", () => {
+      if (no.dataset.sure !== "1") {
+        no.dataset.sure = "1";
+        no.textContent = "Reject it?";
+        return;
+      }
+      decideApproval(card, "reject", { id: a.id });
+    });
+    row.appendChild(no);
+    card.appendChild(row);
+    return card;
+  }
+
+  // The edit fields, filled from the proposal as it is
+  function approvalFields(a, fields) {
+    const box = el("div", "appr-edit");
+    for (const [key, label, type] of fields) {
+      const v = a.payload ? a.payload[key] : undefined;
+      const row = el("label", "appr-field" + (type === "tick" ? " tick" : ""));
+      let input;
+      if (type === "tick") {
+        input = el("input");
+        input.type = "checkbox";
+        input.checked = v !== false;
+      } else if (type === "long") {
+        input = el("textarea");
+        input.rows = 2;
+        input.maxLength = 2000;
+        input.value = v || "";
+      } else {
+        input = el("input");
+        input.type = type === "when" ? "datetime-local" : type === "email" ? "email" : "text";
+        input.value = type === "when" ? ukLocal(v) : v || "";
+      }
+      input.dataset.field = key;
+      input.dataset.type = type || "text";
+      if (type === "tick") row.append(input, el("span", "", label));
+      else row.append(el("span", "", label), input);
+      box.appendChild(row);
+    }
+    return box;
+  }
+  // What the fields say now (the proposal's other details stay as they were; Nova Bot checks it all again)
+  function editedPayload(a, box) {
+    const p = Object.assign({}, a.payload);
+    for (const input of box.querySelectorAll("[data-field]")) {
+      const key = input.dataset.field;
+      if (input.dataset.type === "tick") p[key] = input.checked;
+      else if (input.value.trim() || key in p) p[key] = input.value.trim();
+    }
+    return p;
+  }
+
+  async function decideApproval(card, path, body) {
+    card.querySelectorAll("button").forEach((b) => (b.disabled = true));
+    try {
+      const data = await api("booking-actions/" + path, { body });
+      const a = data.action || {};
+      approvalEditing = null;
+      if (path === "approve") toast(a.status === "executed" ? "Done in Acuity" : a.status === "failed" ? "Didn't go through: " + (a.error || "see the card") : "Approved");
+      else toast(path === "edit" ? "Saved: still waiting for approval" : "Rejected: nothing was changed");
+    } catch (err) {
+      toast(err.message);
+      // (nothing changed, so the card isn't redrawn: its buttons work again)
+      card.querySelectorAll("button").forEach((b) => (b.disabled = false));
+    }
+    loadApprovals();
+  }
+
+  // Approvals refresh while they're on screen (not while a proposal's fields are open); the badge every minute
+  setInterval(() => !document.hidden && running && currentView === "approvals" && approvalEditing === null && loadApprovals(), 15000);
+  setInterval(() => !document.hidden && running && currentView !== "approvals" && loadApprovals(), 60000);
 
   // ===== One enquiry: the conversation =====
   // Their message, then every reply, note and draft from Agent, oldest first. While it's open

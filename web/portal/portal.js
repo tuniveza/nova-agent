@@ -8,7 +8,8 @@
 //   Setup     the very first time: the first admin, proven with the studio's current password
 //   Sign in   email and password; signs in Index and the admin pages too
 //   Invite    ?invite=<token>: someone joining picks their name and password
-//   Work tabs ?view=today|enquiries|chats|calendar|quests|alerts|bot (no ?view: the starting tab from Options)
+//   Work tabs ?view=today|enquiries|chats|calendar|approvals|quests|alerts|bot (no ?view: the starting tab from Options)
+//             (?view=approvals&action=<id> points at one proposed booking change)
 //   You       ?view=me: their planet, big and turning; re-roll it, rename, open their Index, sign out
 //   Crew      ?view=crew (admins): everyone as planets; invite people, change roles, switch accounts off
 // Which one shows depends on the address (?invite=, ?view=, ?id=<someone>, ?next=) and on who's
@@ -47,7 +48,7 @@
   const isAdmin = () => Boolean(state.me && state.me.role === "admin");
   // The work tabs (app.js)
   const work = () => window.PortalApp;
-  const WORK = ["today", "enquiries", "chats", "calendar", "quests", "alerts", "bot"];
+  const WORK = ["today", "enquiries", "chats", "calendar", "approvals", "quests", "alerts", "bot"];
   // Tell the top-right badge (and other panels) that who's signed in has changed
   const changed = () => window.NovaPortal && window.NovaPortal.changed && window.NovaPortal.changed();
 

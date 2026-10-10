@@ -35,6 +35,14 @@ function readYesNo(name: string, fallback: boolean): boolean {
   return fallback;
 }
 
+// One of a few words; anything else falls back to the default (and says so)
+function readChoice<T extends string>(name: string, choices: readonly T[], fallback: T): T {
+  const value = readText(name).toLowerCase();
+  if ((choices as readonly string[]).includes(value)) return value as T;
+  if (value !== "") console.warn(`[config] Didn't understand ${name}="${value}", using ${fallback}.`);
+  return fallback;
+}
+
 export const config = {
   // Acuity login (used for automatic re-login in a later phase)
   acuityEmail: readText("ACUITY_EMAIL"),
@@ -89,6 +97,12 @@ export const config = {
 
   // When cancelling, tick Acuity's "Send email to client" (Acuity's own default).
   notifyClients: readYesNo("NOTIFY_CLIENTS", true),
+
+  // Where Agent reads the studio's bookings from: "api" (Acuity's API, through Nova Bot's
+  // worker: quick, and no browser opens) or "browser" (Acuity's admin pages in the background
+  // browser, as before). Anything else is "api". Either way Agent can't change a booking itself:
+  // with "api" it proposes a change and an admin approves it in Portal → Approvals.
+  acuitySource: readChoice("ACUITY_SOURCE", ["api", "browser"] as const, "api"),
 
   paths: {
     dataDir,

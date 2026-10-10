@@ -11,8 +11,15 @@
 //
 // Nova Agent only ever calls out to the worker, so it can run on any
 // computer: nothing on the internet needs to reach it.
+//
+// Each "any jobs?" also says when Nova Agent last caught up with Acuity
+// (bookingsSeen), and the answer says when Acuity last changed
+// (bookingsChanged, from Acuity's webhook). When that's newer, the studio's
+// bookings are read again and Quests re-planned (quests/bookings.ts), so a
+// booking made in Acuity shows in Nova Agent within about a minute.
 
 import { applyQuestTaps } from "./quests/portalsync";
+import { bookingsChanged, bookingsSeen } from "./quests/bookings";
 import { z } from "zod";
 import type { ActionResult } from "./acuity/types";
 import { config } from "./config";
@@ -80,18 +87,20 @@ async function collectForever(): Promise<never> {
   }
 }
 
-async function checkForJob(): Promise<"job" | "none" | "problem"> {
+export async function checkForJob(): Promise<"job" | "none" | "problem"> {
   if (busy) return "none";
   busy = true;
   try {
-    const { job, questActions } = (await callWorker(
+    const { job, questActions, bookingsChanged: changed } = (await callWorker(
       "/nova-agent/next",
-      { dryRun: config.dryRun, bookingsPerVisitor: config.bookingsPerVisitorPerDay, wait: WAIT_SECONDS },
+      { dryRun: config.dryRun, bookingsPerVisitor: config.bookingsPerVisitorPerDay, wait: WAIT_SECONDS, bookingsSeen: bookingsSeen() },
       (WAIT_SECONDS + 15) * 1000,
-    )) as { job: unknown; questActions?: unknown };
+    )) as { job: unknown; questActions?: unknown; bookingsChanged?: unknown };
     lastProblem = "";
     // Taps from Portal's Quests tab come along with the job check
     applyQuestTaps(questActions);
+    // Something changed in Acuity: read the bookings again and re-plan (in the background)
+    void bookingsChanged(changed);
     if (!job) return "none";
     await doJob(job);
     return "job";

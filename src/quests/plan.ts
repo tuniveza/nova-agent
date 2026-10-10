@@ -1,10 +1,13 @@
 // Re-planning: run the planner over everything open, save the times, and show
-// the plan in Calendar (each planned quest, each blocked time and each
-// mission milestone becomes a note card there, kept in step automatically).
+// the plan in Calendar (each planned quest, each blocked time, each mission
+// milestone and each day's music time becomes a note card there, kept in step
+// automatically). Taken time is the calendar, blocked time, and (with
+// ACUITY_SOURCE=api) the studio's bookings and Acuity's blocked times (bookings.ts).
 
 import { noteOccurrences, readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
 import { config } from "../config";
-import { fromMin, planQuests, toMin, type Busy } from "./scheduler";
+import { bookingsBusy } from "./bookings";
+import { fromMin, planMusic, planQuests, toMin, type Busy, type MusicSlot } from "./scheduler";
 import { nextSession } from "./lengths";
 import { sessionDelivery, sessionSettled } from "./deliveries";
 import { isPulse } from "./pulses";
@@ -14,7 +17,8 @@ import { readQuests, writeQuests, type Quest, type QuestData } from "./store";
 const QUEST_NOTE = "quest-";
 const BLOCK_NOTE = "block-";
 const MILESTONE_NOTE = "mile-";
-const isOurNote = (id: string) => id.startsWith(QUEST_NOTE) || id.startsWith(BLOCK_NOTE) || id.startsWith(MILESTONE_NOTE);
+const MUSIC_NOTE = "music-";
+const isOurNote = (id: string) => id.startsWith(QUEST_NOTE) || id.startsWith(BLOCK_NOTE) || id.startsWith(MILESTONE_NOTE) || id.startsWith(MUSIC_NOTE);
 // However far ahead the rhythm says to plan, a mission's work is planned as far as its deadlines (up to a year)
 const MAX_HORIZON_DAYS = 370;
 
@@ -37,8 +41,12 @@ function calendarBusy(): Busy[] {
     .map((n) => ({ start: n.start, end: n.end, label: n.title }));
 }
 
+// Music time as last planned (for Calendar, and to tell when a booking moved it)
+let lastMusic: MusicSlot[] = [];
+export const currentMusic = () => [...lastMusic];
+
 // Plan everything again. Returns a short summary of what changed.
-export function replan(data: QuestData = readQuests()): { data: QuestData; atRisk: number; unplaced: { id: string; title: string; why: string }[] } {
+export function replan(data: QuestData = readQuests()): { data: QuestData; atRisk: number; unplaced: { id: string; title: string; why: string }[]; music: MusicSlot[] } {
   const now = nowMinutes();
   // Repeats whose last session is over but whose ping hasn't got through yet: they stay put
   const waiting = new Set<string>();
@@ -88,7 +96,11 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
   const paused = new Set(data.missions.filter((m) => m.status !== "active").map((m) => m.id));
   // Pulses run on their own timers (pulses.ts), not in the plan
   const planning = data.quests.filter((q) => !paused.has(q.missionId) && !isPulse(q) && !waiting.has(q.id));
-  const busy: Busy[] = [...calendarBusy(), ...data.blocks.map((b) => ({ start: b.start, end: b.end, label: b.reason }))];
+  const taken: Busy[] = [...calendarBusy(), ...data.blocks.map((b) => ({ start: b.start, end: b.end, label: b.reason })), ...bookingsBusy()];
+  // Music time goes in first, around everything already in the diary; then it's taken time too
+  const music = planMusic({ rhythm: data.rhythm, busy: taken, now });
+  lastMusic = music.placed;
+  const busy: Busy[] = [...taken, ...music.placed.map((m) => ({ start: m.start, end: m.end, label: "Music time" }))];
   const furthest = Math.max(0, ...planning.filter((q) => q.status === "todo" || q.status === "doing").map((q) => Math.max(q.deadline ? toMin(q.deadline) : 0, q.earliest ? toMin(q.earliest) + 1440 : 0)));
   const horizonDays = Math.min(MAX_HORIZON_DAYS, Math.max(data.rhythm.horizonDays, Math.ceil((furthest - now) / 1440) + 1));
   const result = planQuests({ rhythm: { ...data.rhythm, horizonDays }, quests: planning, busy, now });
@@ -120,7 +132,7 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
   }
   writeQuests(data);
   syncCalendar(data);
-  return { data, atRisk: data.quests.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length, unplaced };
+  return { data, atRisk: data.quests.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length, unplaced, music: music.placed };
 }
 
 // A repeat's slots from `first`, while `keep` says so (and before its deadline)
@@ -137,8 +149,8 @@ function tellMissed(q: Quest, slots: string[], push: boolean): void {
   remindLate(q, slots.filter((s) => !sessionDelivery(q.id, s)), push);
 }
 
-// Keep Calendar showing the plan: one note card per planned quest and per blocked time
-export function syncCalendar(data: QuestData): void {
+// Keep Calendar showing the plan: one note card per planned quest, per blocked time and per day's music time
+export function syncCalendar(data: QuestData, music: MusicSlot[] = lastMusic): void {
   const cal = readCalendar();
   const missions = new Map(data.missions.map((m) => [m.id, m]));
   const seed = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -169,6 +181,20 @@ export function syncCalendar(data: QuestData): void {
   }
   for (const b of data.blocks) {
     ours.push({ id: `${BLOCK_NOTE}${b.id}`, title: `Busy · ${b.reason}`.slice(0, 120), body: "Blocked out in Nova Agent", author: "Nova Agent", start: b.start, end: b.end, art: { seed: seed(b.id), subject: "auto" }, created: b.start, updated: b.start });
+  }
+  // Music time: one card a day, saying when it moved and why
+  for (const m of music) {
+    ours.push({
+      id: `${MUSIC_NOTE}${m.day}`,
+      title: `♪ Music time${m.moved ? " (moved)" : ""}`,
+      body: m.moved ? `Time set aside for music. Moved from ${m.usual.slice(11, 16)}: something else is on then.` : "Time set aside for music.",
+      author: "Nova Agent",
+      start: m.start,
+      end: m.end,
+      art: { seed: seed(`music-${m.day}`), subject: "auto" },
+      created: `${m.day}T00:00`,
+      updated: `${m.day}T00:00`,
+    });
   }
   const others = cal.notes.filter((n) => !isOurNote(n.id));
   const before = JSON.stringify(cal.notes.filter((n) => isOurNote(n.id)).map((n) => [n.id, n.title, n.start, n.end, n.body]).sort());

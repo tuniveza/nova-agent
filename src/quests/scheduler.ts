@@ -223,3 +223,61 @@ export function planQuests(options: { rhythm: Rhythm; quests: Quest[]; busy: Bus
   }
   return { placed, unplaced };
 }
+
+// ===== Music time =====
+// Time set aside for music (rhythm.music): on its days, at its usual time, for its length. It's
+// planned before the quests and counts as taken time for them. When something already in the
+// diary overlaps it (a studio booking, a calendar entry, a blocked time), it moves to the nearest
+// free stretch that day between waking up (+ start-up) and wind-down. With no room that day,
+// that day has none (and says why). Planned up to 21 days ahead.
+export interface MusicSlot {
+  day: string; // "2026-10-10"
+  start: string; // "2026-10-10T19:00"
+  end: string;
+  usual: string; // where it would be if nothing clashed
+  moved: boolean;
+}
+export const MUSIC_DAYS = 21;
+
+export function planMusic(options: { rhythm: Rhythm; busy: Busy[]; now: number }): { placed: MusicSlot[]; unplaced: { day: string; why: string }[] } {
+  const { rhythm } = options;
+  const m = rhythm.music;
+  const placed: MusicSlot[] = [];
+  const unplaced: { day: string; why: string }[] = [];
+  if (!m || m.minutes <= 0 || !m.days.length) return { placed, unplaced };
+  const taken: Interval[] = options.busy.map((b) => [toMin(b.start), toMin(b.end)] as Interval).filter(([s, e]) => e > s);
+  const today = Math.floor(options.now / DAY) * DAY;
+  const wake = hm(rhythm.wake);
+  let sleep = hm(rhythm.sleep);
+  if (sleep <= wake) sleep += DAY;
+  for (let d = 0; d < Math.min(rhythm.horizonDays, MUSIC_DAYS); d++) {
+    const day = today + d * DAY;
+    if (!m.days.includes(new Date(day * 60000).getUTCDay())) continue;
+    const dayName = fromMin(day).slice(0, 10);
+    const usual = day + hm(m.start);
+    const clashes = (s: number, e: number) => taken.some(([a, b]) => a < e && b > s);
+    if (!clashes(usual, usual + m.minutes)) {
+      placed.push({ day: dayName, start: fromMin(usual), end: fromMin(usual + m.minutes), usual: fromMin(usual), moved: false });
+      continue;
+    }
+    // The nearest free stretch long enough, that day (on a 5-minute mark when it fits)
+    let free: Interval[] = [[day + wake + rhythm.startUpMinutes, day + sleep - rhythm.windDownMinutes]];
+    for (const [a, b] of taken) free = subtract(free, a, b);
+    let best: number | null = null;
+    for (const [s, e] of free) {
+      if (e - s < m.minutes) continue;
+      let at = Math.min(Math.max(usual, s), e - m.minutes);
+      const up = roundUp(at);
+      const down = Math.floor(at / 5) * 5;
+      if (at === s && up + m.minutes <= e) at = up;
+      else if (down >= s && at !== s) at = down;
+      if (best === null || Math.abs(at - usual) < Math.abs(best - usual)) best = at;
+    }
+    if (best === null) {
+      unplaced.push({ day: dayName, why: "no free stretch long enough that day" });
+      continue;
+    }
+    placed.push({ day: dayName, start: fromMin(best), end: fromMin(best + m.minutes), usual: fromMin(usual), moved: true });
+  }
+  return { placed, unplaced };
+}

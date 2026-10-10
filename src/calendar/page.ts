@@ -15,7 +15,7 @@ import { updateQuest } from "../quests/actions";
 import { calendarAtRev, calendarEvents, normalise, readCalendar, writeCalendar, type CalendarData, type DayCard, type NoteCard } from "./store";
 
 // Cards Nova Agent makes from the plan: the plan is where they're changed
-const DERIVED = /^(quest|block|mile)-/;
+const DERIVED = /^(quest|block|mile|music)-/;
 // The mark in front of a quest card's title (✦ planned, ∞ ongoing, ⚠ at risk, ✓ done)
 const MARK = /^[✦∞⚠✓]\s*/;
 

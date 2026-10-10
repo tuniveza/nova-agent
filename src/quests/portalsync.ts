@@ -34,7 +34,7 @@ function snapshot() {
   const to = new Date(Date.now() + 62 * 864e5).toISOString().slice(0, 10);
   const calendar = {
     notes: cal.notes
-      .filter((n) => !/^(quest|block|mile)-/.test(n.id) && n.end.slice(0, 10) >= from && n.start.slice(0, 10) <= to)
+      .filter((n) => !/^(quest|block|mile|music)-/.test(n.id) && n.end.slice(0, 10) >= from && n.start.slice(0, 10) <= to)
       .map((n) => ({ id: n.id, title: n.title, body: n.body.slice(0, 300), author: n.author, start: n.start, end: n.end })),
     days: cal.days
       .filter((d) => d.repeat === "yearly" || (d.date >= from && d.date <= to))

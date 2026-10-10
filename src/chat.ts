@@ -4,8 +4,11 @@
 // answers as Nova Agent, with tools to:
 //   - read, add, change and remove Calendar note cards and day cards
 //     (calendar/store.ts; the calendar on the page refreshes when it changes)
-//   - look at the studio's Acuity bookings and check the Acuity login
-//     (read-only for now, through the same browser tasks as the visualizer)
+//   - look at the studio's Acuity bookings, free times, blocked times, session types and
+//     clients through Acuity's API on Nova Bot (acuity-api.ts; ACUITY_SOURCE=api, the default),
+//     and PROPOSE a booking change, which happens only when an admin approves it in Portal →
+//     Approvals (no tool here can approve). With ACUITY_SOURCE=browser: the bookings and the
+//     Acuity login through the same browser tasks as the visualizer, read-only, as before
 //   - plan Missions for any goal (a strategy, tracks, milestones and quests),
 //     refine them with new detail, and run the quests day to day
 //   - research the internet (web search and web fetch, run by Anthropic) and
@@ -33,12 +36,14 @@ import { lookAt, lookResult, webTools } from "./web";
 import { fileCard, FILE_TYPES, findFile, listFiles, readFileText, removeFile, saveFile, sizeText } from "./files";
 import { missionMarkdown } from "./quests/export";
 import { draftReply, listEnquiries, readEnquiry, threadText, type DraftCard } from "./enquiries";
+import { actionLine, appointmentsText, availability, BOOKING_KINDS, findClients, listActions, listAppointments, listBlocks, proposeChange, sessionTypes, ukWhen, type BookingAction, type BookingKind } from "./acuity-api";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
 import { createMission, refineMission } from "./quests/planner";
 import { describeLength } from "./quests/lengths";
 import { isPulse } from "./quests/pulses";
 import { EVERY, MODES, MODE_NAMES, PRIORITIES, readQuests, TIMES_OF_DAY, WEEKDAYS, type Mission, type Quest } from "./quests/store";
+import { currentMusic } from "./quests/plan";
 
 const DEFAULT_MODEL = "claude-opus-5-5";
 const MAX_HISTORY = 40;
@@ -49,10 +54,11 @@ export interface ChatTurn {
   content: string;
 }
 export interface ChatAction {
-  kind: "added" | "changed" | "removed" | "looked" | "file" | "draft";
+  kind: "added" | "changed" | "removed" | "looked" | "file" | "draft" | "booking";
   text: string;
   file?: ReturnType<typeof fileCard>; // for "file": the card to preview and download it
   draft?: DraftCard; // for "draft": a reply to an enquiry, waiting for a person's Approve & send
+  booking?: BookingAction; // for "booking": a proposed booking change, waiting for an admin's Approve
 }
 
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("A date, YYYY-MM-DD (UK)");
@@ -86,11 +92,12 @@ You also run Missions and Quests, a smart planner for the people you talk to:
 - Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
 - Help them prioritise and pivot: for "what should I do now?" use what_now and give one clear recommendation. When plans change ("I'm running late", "I'm out tonight", "I'm ill today"), block the time or update the quest, then say what moved. Mark quests done, started or skipped when they tell you. Point out quests at risk of missing a deadline and suggest what to drop, shorten or move.
 - Their daily rhythm (wake, sleep, buffers, breaks, reminders, phone notifications, days off with no quests at all) can be changed with rhythm_set.
+- Music time is time they set aside for music (music_time_set: which days, the usual start, how long; 0 minutes turns it off). It's planned like a blocked time at its usual time, moves to the nearest free time that day when a booking, calendar entry or block overlaps it, quests are planned around it, and it shows in Calendar as "♪ Music time" cards.
 - Nova Agent remembers (Index): durable facts from these chats (preferences, how they work, people and projects they mention) are saved automatically after each conversation, and what's relevant is given to you below when there is any. When someone tells you something to remember, just say you'll remember it. Never claim you have no memory. They can see and edit everything remembered in Index.
 
 What you can do:
 - Calendar: read, add, change and remove note cards (a title, the note itself, an author, a start and finish time) and day cards (a date with a title, a preset, a title aesthetic, a colour theme, information, a location, tags, and optionally repeating every year). Use the calendar tools for this; the calendar beside the chat updates straight away.
-- The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Portal or Acuity.
+${bookingsPrompt()}
 - Research the internet: search the web (web_search) and read pages (web_fetch) for anything current or specific (prices, opening times, platform rules, news, how-tos, people and companies). Say where facts came from, with the link.
 - See webpages: page_look opens a public page in a browser and gives you a screenshot and its contents, for when how a page looks matters or web_fetch can't read it (pages built by scripts, a profile, a shop page, checking their own site or socials). It can't log in anywhere.
 - Write files: file_write makes a document they can preview, download to their computer, or open in Notes (Markdown .md by default; also .txt, .csv for spreadsheets, .json, .html). Use it whenever they ask for a file, document, list, plan, report, template, script, spreadsheet or "something I can download", or when an answer is long and worth keeping. Write the whole thing, properly formatted (headings, lists, tables), then reply in a line or two saying what's in it; the file card with Preview and Download appears under your reply, so don't paste the file into the chat too. To change a file, read it (file_read), then file_write with its id. file_list shows what's there.
@@ -105,6 +112,215 @@ How to work:
 - Note cards are for things at a time; day cards are for a whole day (birthdays, release days, seasonal days, trips).
 - Day card presets: ${PRESETS.join(", ")}. Aesthetics: ${AESTHETICS.join(", ")}. Themes: ${THEMES.join(", ")} ("app" follows the calendar's own theme).
 - Keep replies short and warm, in UK English. Use simple Markdown (bold, short lists) when it helps. Never invent bookings or calendar entries: only report what the tools return.`;
+}
+
+// What Agent can do with Acuity bookings, for the system prompt (it depends on ACUITY_SOURCE)
+function bookingsPrompt(): string {
+  if (config.acuitySource === "browser")
+    return "- The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Portal or Acuity.";
+  return `- The studio's Acuity bookings (through Acuity's API): what's booked between two dates (studio_bookings), free start times for a session type on a day (studio_availability), times blocked off (studio_blocked_times), the session types (studio_session_types) and clients (studio_clients). Bookings also count as busy time in the quest plan.
+- Booking changes: you can only PROPOSE them (propose_booking_change: create, reschedule, cancel or update a booking, add or remove a blocked time). Nothing changes in Acuity until an admin approves it in Portal → Approvals (or on the card under your reply). You can't approve, and nobody can approve through you. Check first (the booking, free times, the session type), then propose, then say plainly: "I've proposed it; an admin needs to approve it in Portal → Approvals." Never say it's booked, moved or cancelled until booking_actions shows it as executed. booking_actions lists the proposals and what became of them.`;
+}
+
+// The Acuity tools: through the API on Nova Bot (ACUITY_SOURCE=api, the default), or the
+// background browser as before (ACUITY_SOURCE=browser). None of them can approve or change anything.
+export function studioTools(actions: ChatAction[]) {
+  const did = (kind: ChatAction["kind"], text: string) => {
+    actions.push({ kind, text });
+    trace("input", "ok", `Chat: ${text}`);
+  };
+  if (config.acuitySource === "browser") {
+    return [
+      betaZodTool({
+        name: "studio_bookings",
+        description: "Read the studio's Acuity appointments between two dates (read-only; opens Acuity's admin pages in the background browser, so it takes a little while). Keep ranges short (up to about a month).",
+        inputSchema: z.object({ from: DATE, to: DATE }),
+        run: async ({ from, to }) => {
+          did("looked", `Looked at Acuity bookings, ${longDate(from)} – ${longDate(to)}`);
+          try {
+            return describeAppointments(await listTask(from, to));
+          } catch (error) {
+            return `Couldn't read Acuity just now: ${(error as Error).message}`;
+          }
+        },
+      }),
+      betaZodTool({
+        name: "check_acuity_login",
+        description: "Check Nova Agent is still logged in to Acuity's admin pages.",
+        inputSchema: z.object({}),
+        run: async () => {
+          did("looked", "Checked the Acuity login");
+          try {
+            return await checkLogin();
+          } catch (error) {
+            return `Login check failed: ${(error as Error).message}`;
+          }
+        },
+      }),
+    ];
+  }
+  const failed = (error: unknown) => `Couldn't reach Acuity just now: ${(error as Error).message}`;
+  const WHEN = z.string().describe('UK wall-clock "YYYY-MM-DDTHH:MM", or a UTC ISO time');
+  return [
+    betaZodTool({
+      name: "studio_bookings",
+      description: "Read the studio's Acuity bookings between two UK dates (inclusive, up to 62 days): time, session type, client, price and paid, notes, cancelled or not. Read-only.",
+      inputSchema: z.object({ from: DATE, to: DATE }),
+      run: async ({ from, to }) => {
+        did("looked", `Looked at Acuity bookings, ${longDate(from)} – ${longDate(to)}`);
+        try {
+          return appointmentsText(await listAppointments(from, to));
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "studio_availability",
+      description: "Free start times in Acuity for one session type (its id, from studio_session_types) on one UK date.",
+      inputSchema: z.object({ type_id: z.number().int().positive(), date: DATE }),
+      run: async ({ type_id, date }) => {
+        did("looked", `Looked at free times, ${longDate(date)}`);
+        try {
+          const times = await availability(type_id, date);
+          return times.length ? `Free start times on ${longDate(date)} (UK): ${times.map((t) => t.label).join(", ")}` : `No free times on ${longDate(date)} for that session type.`;
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "studio_blocked_times",
+      description: "Times blocked off in Acuity between two UK dates (inclusive), with their ids (needed to remove one).",
+      inputSchema: z.object({ from: DATE, to: DATE }),
+      run: async ({ from, to }) => {
+        did("looked", `Looked at blocked times, ${longDate(from)} – ${longDate(to)}`);
+        try {
+          const blocks = await listBlocks(from, to);
+          return blocks.length ? blocks.map((b) => `#${b.id} · ${ukWhen(b.start)} – ${ukWhen(b.end)}${b.calendar ? ` · ${b.calendar}` : ""}${b.notes ? ` · ${b.notes}` : ""}`).join("\n") : "Nothing blocked off then.";
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "studio_session_types",
+      description: "The studio's session types in Acuity: id, name, price, length in minutes, and whether it's active or private.",
+      inputSchema: z.object({}),
+      run: async () => {
+        try {
+          const types = await sessionTypes();
+          return types.length ? types.map((t) => `${t.id} · ${t.name} · £${t.price} · ${t.duration} min${t.active ? "" : " · inactive"}${t.private ? " · private" : ""}`).join("\n") : "No session types.";
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "studio_clients",
+      description: "Find the studio's clients in Acuity by name, email or phone (up to 25).",
+      inputSchema: z.object({ search: z.string().min(2).max(100) }),
+      run: async ({ search }) => {
+        did("looked", "Looked up clients in Acuity");
+        try {
+          const clients = await findClients(search);
+          return clients.length ? JSON.stringify(clients) : `No clients matching “${search}”.`;
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "propose_booking_change",
+      description:
+        "PROPOSE a change to Acuity: it is NOT done. It waits for an admin to approve it in Portal → Approvals. Kinds and what each needs: create (type_id, start, first_name, last_name, email; phone, notes optional), reschedule (appointment_id, start), cancel (appointment_id; notes = a cancel note), update (appointment_id and the fields that change: first_name, last_name, email, phone, notes), block_add (start, end; notes, calendar_id optional), block_remove (block_id). notify_client (default true) says whether Acuity emails the client. Always give the reason.",
+      inputSchema: z.object({
+        kind: z.enum(BOOKING_KINDS),
+        reason: z.string().min(3).max(500).describe("Why: who asked, and for what"),
+        appointment_id: z.number().int().positive().optional(),
+        type_id: z.number().int().positive().optional(),
+        start: WHEN.optional(),
+        end: WHEN.optional(),
+        first_name: z.string().max(60).optional(),
+        last_name: z.string().max(60).optional(),
+        email: z.string().max(200).optional(),
+        phone: z.string().max(40).optional(),
+        notes: z.string().max(2000).optional(),
+        notify_client: z.boolean().optional(),
+        block_id: z.number().int().positive().optional(),
+        calendar_id: z.number().int().positive().optional(),
+      }),
+      run: async (i) => {
+        const built = bookingPayload(i);
+        if (typeof built === "string") return built;
+        let action: BookingAction;
+        try {
+          action = await proposeChange(i.kind, built, i.reason);
+        } catch (error) {
+          return `Couldn't propose it: ${(error as Error).message} Nothing has changed.`;
+        }
+        actions.push({ kind: "booking", text: `Proposed: ${action.summary} (waiting for an admin)`, booking: action });
+        trace("input", "ok", `Chat: proposed booking change #${action.id} (${action.kind}), waiting for an admin`);
+        return `Proposal #${action.id} saved, NOT done: “${action.summary}”. Nothing has changed in Acuity. An admin must approve it in Portal → Approvals (${action.portalUrl}) or on the card under your reply; tell them that.`;
+      },
+    }),
+    betaZodTool({
+      name: "booking_actions",
+      description: "The proposed booking changes and what became of them (pending, approved, executed, failed, rejected). Read-only.",
+      inputSchema: z.object({ status: z.enum(["pending", "all"]).optional().describe("pending (default) or all") }),
+      run: async ({ status }) => {
+        try {
+          const list = await listActions(status ?? "pending");
+          return list.length ? list.map(actionLine).join("\n") : status === "all" ? "No proposals yet." : "Nothing waiting for approval.";
+        } catch (error) {
+          return `Couldn't read the proposals: ${(error as Error).message}`;
+        }
+      },
+    }),
+  ];
+}
+
+// What each kind of proposal needs (Nova Bot checks it all again; this catches the obvious early)
+type ProposalInput = {
+  kind: BookingKind;
+  appointment_id?: number;
+  type_id?: number;
+  start?: string;
+  end?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+  notify_client?: boolean;
+  block_id?: number;
+  calendar_id?: number;
+};
+export function bookingPayload(i: ProposalInput): Record<string, unknown> | string {
+  const need = (fields: (keyof ProposalInput)[]) => {
+    const missing = fields.filter((f) => i[f] === undefined || i[f] === "");
+    return missing.length ? `A ${i.kind} needs ${missing.join(", ")}. Nothing was proposed.` : null;
+  };
+  const some = (o: Record<string, unknown>) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
+  const notifyClient = i.notify_client ?? true;
+  switch (i.kind) {
+    case "create":
+      return need(["type_id", "start", "first_name", "last_name", "email"]) ?? some({ typeId: i.type_id, start: i.start, firstName: i.first_name, lastName: i.last_name, email: i.email, phone: i.phone, notes: i.notes, notifyClient });
+    case "reschedule":
+      return need(["appointment_id", "start"]) ?? { appointmentId: i.appointment_id, start: i.start, notifyClient };
+    case "cancel":
+      return need(["appointment_id"]) ?? some({ appointmentId: i.appointment_id, notifyClient, note: i.notes });
+    case "update": {
+      const missing = need(["appointment_id"]);
+      if (missing) return missing;
+      const changes = some({ firstName: i.first_name, lastName: i.last_name, email: i.email, phone: i.phone, notes: i.notes });
+      return Object.keys(changes).length ? { appointmentId: i.appointment_id, ...changes } : "An update needs at least one field to change. Nothing was proposed.";
+    }
+    case "block_add":
+      return need(["start", "end"]) ?? some({ start: i.start, end: i.end, notes: i.notes, calendarId: i.calendar_id });
+    case "block_remove":
+      return need(["block_id"]) ?? { blockId: i.block_id };
+  }
 }
 
 function tools(actions: ChatAction[]) {
@@ -227,32 +443,8 @@ function tools(actions: ChatAction[]) {
         return `Removed day card “${day.title}”.`;
       },
     }),
-    betaZodTool({
-      name: "studio_bookings",
-      description: "Read the studio's Acuity appointments between two dates (read-only; opens Acuity's admin pages in the background browser, so it takes a little while). Keep ranges short (up to about a month).",
-      inputSchema: z.object({ from: DATE, to: DATE }),
-      run: async ({ from, to }) => {
-        did("looked", `Looked at Acuity bookings, ${longDate(from)} – ${longDate(to)}`);
-        try {
-          return describeAppointments(await listTask(from, to));
-        } catch (error) {
-          return `Couldn't read Acuity just now: ${(error as Error).message}`;
-        }
-      },
-    }),
-    betaZodTool({
-      name: "check_acuity_login",
-      description: "Check Nova Agent is still logged in to Acuity's admin pages.",
-      inputSchema: z.object({}),
-      run: async () => {
-        did("looked", "Checked the Acuity login");
-        try {
-          return await checkLogin();
-        } catch (error) {
-          return `Login check failed: ${(error as Error).message}`;
-        }
-      },
-    }),
+    // The studio's Acuity bookings (API or browser, as ACUITY_SOURCE says)
+    ...studioTools(actions),
     betaZodTool({
       name: "page_look",
       description: "Open a public webpage in a browser and see it: returns a screenshot of the top of the page and the page's contents (headings, links, buttons, text). Use it when how a page looks matters, or web_fetch can't read a page. Can't log in or open local addresses.",
@@ -291,6 +483,8 @@ function tools(actions: ChatAction[]) {
 }
 
 const hm = (stamp: string) => (stamp.length > 16 ? stamp.slice(11, 19) : stamp.slice(11, 16));
+// "Saturday 10 October 2026 19:00–21:00 (moved from 18:00)"
+const musicLine = (m: ReturnType<typeof currentMusic>[number]) => `${longDate(m.day)} ${hm(m.start)}–${hm(m.end)}${m.moved ? ` (moved from ${hm(m.usual)})` : ""}`;
 const questLine = (q: Quest) =>
   `${q.id.slice(0, 8)} · ${q.title}${q.track ? ` [${q.track}]` : ""} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : isPulse(q) ? `pulse (own timer${q.deadline ? `, until ${hm(q.deadline)}` : ""})` : "not scheduled"} · ${describeLength(q)}${q.ongoing ? ` · ${q.sessions} sessions done` : ""} · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status} · ${MODE_NAMES[q.mode] ?? q.mode}${q.from ? ` · from ${q.from}` : ""}${q.atRisk ? " · AT RISK" : ""}`;
 
@@ -504,7 +698,7 @@ function questTools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "what_now",
-      description: "The quest happening now, the next few, anything overdue or unplanned, and missions at risk. Use it for 'what should I do now?' and before giving advice on priorities.",
+      description: "The quest happening now, the next few, anything overdue or unplanned, missions at risk, and music time today and tomorrow. Use it for 'what should I do now?' and before giving advice on priorities.",
       inputSchema: z.object({}),
       run: async () => {
         const st = questState();
@@ -515,6 +709,7 @@ function questTools(actions: ChatAction[]) {
           overdue: st.overdue.map(questLine),
           unplanned: st.unplanned.map(questLine),
           missions: st.missions.filter((m) => m.status === "active").map((m) => `${m.id.slice(0, 8)} · ${m.title}${m.deadline ? ` · due ${m.deadline}` : ""} · ${m.progress.done}/${m.progress.total} done · ${m.progress.atRisk} at risk · ${Math.round(m.progress.minutesLeft / 60)} h left`),
+          music_time: currentMusic().slice(0, 2).map(musicLine),
         });
       },
     }),
@@ -599,7 +794,7 @@ function questTools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "block_time",
-      description: "Block out time that's taken (plans changed, out for the evening, ill, appointment): quests move out of the way. Or remove a block by id.",
+      description: "Block out time that's taken (plans changed, out for the evening, ill, appointment): quests (and music time, within its day) move out of the way. Or remove a block by id.",
       inputSchema: z.object({ start: STAMP.optional(), end: STAMP.optional(), reason: z.string().optional(), remove_id: z.string().optional() }),
       run: async ({ start, end, reason, remove_id }) => {
         if (remove_id) {
@@ -630,7 +825,7 @@ function questTools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "rhythm_set",
-      description: "Change the daily rhythm the planner works to. Only send what changes.",
+      description: "Change the daily rhythm the planner works to. Only send what changes. (Music time has its own tool: music_time_set.)",
       inputSchema: z.object({
         wake: z.string().regex(/^\d{2}:\d{2}$/).optional(),
         sleep: z.string().regex(/^\d{2}:\d{2}$/).optional(),
@@ -655,8 +850,31 @@ function questTools(actions: ChatAction[]) {
       },
     }),
     betaZodTool({
+      name: "music_time_set",
+      description: "Set music time: time the person sets aside for music, on chosen days of the week, at a usual start time, for a length. It's planned like a blocked time and quests go around it; if a studio booking, calendar entry or block overlaps it, it moves to the nearest free time that day (they get one calm notice if a booking moves today's or tomorrow's). Shown in Calendar as \"♪ Music time\" cards. minutes 0 turns it off. Only send what changes.",
+      inputSchema: z.object({
+        days: z.array(z.enum(WEEKDAYS)).optional().describe("The whole set of days with music time (replaces the current set)"),
+        start: z.string().regex(/^\d{2}:\d{2}$/).optional().describe('Its usual start, "HH:MM" (UK time)'),
+        minutes: z.number().int().min(0).max(720).optional().describe("How long; 0 turns music time off"),
+      }),
+      run: async ({ days, start, minutes }) => {
+        const was = readQuests().rhythm.music;
+        const music = { days: days ? days.map((d) => WEEKDAYS.indexOf(d)) : was.days, start: start ?? was.start, minutes: minutes ?? was.minutes };
+        if (music.minutes > 0 && !music.days.length) return "Which days should music time be on? Nothing was changed.";
+        const r = setRhythm({ music });
+        if (!r.music.minutes) {
+          did("changed", "Music time: off");
+          return "Music time is off. Everything has been re-planned.";
+        }
+        const names = r.music.days.map((d) => WEEKDAYS[d][0].toUpperCase() + WEEKDAYS[d].slice(1, 3)).join(", ");
+        did("changed", `Music time: ${names}, ${r.music.start}, ${r.music.minutes} min`);
+        const next = currentMusic().slice(0, 5);
+        return `Music time set: ${names} at ${r.music.start} for ${r.music.minutes} minutes. Quests have been re-planned around it.${next.length ? ` Next: ${next.map(musicLine).join("; ")}` : ""}`;
+      },
+    }),
+    betaZodTool({
       name: "replan",
-      description: "Re-plan everything from now (after big changes, or when asked to optimise the schedule).",
+      description: "Re-plan everything from now (after big changes, or when asked to optimise the schedule): music time first, then quests around it, the calendar, blocks and studio bookings.",
       inputSchema: z.object({}),
       run: async () => {
         const r = replan();

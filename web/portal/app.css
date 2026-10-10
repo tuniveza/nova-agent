@@ -1205,3 +1205,21 @@ html.embed .listening-bar { top: 0; }
 }
 /* The Booking tools link under Today's Studio tiles */
 .today-tools { justify-self: center; min-height: 34px; font-size: 10px; }
+
+/* ----- Approvals: booking changes waiting for an admin ----- */
+.appr-summary { color: var(--bright); font-weight: 600; overflow-wrap: anywhere; }
+.appr-why { margin: 6px 0 0; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.appr-result { margin: 10px 0 0; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--muted); overflow-wrap: anywhere; }
+.appr-result.ok { color: var(--ok); }
+.appr-result.bad { color: var(--bad); }
+.appr-edit { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; margin-top: 12px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.35); min-width: 0; }
+.appr-field { display: grid; gap: 4px; min-width: 0; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
+.appr-field.tick { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.appr-field input[type="datetime-local"], .appr-field input[type="email"] {
+  width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px;
+  background: rgba(var(--void-rgb), 0.6); color: var(--bright); font-size: 16px;
+}
+.appr-field input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--hi); }
+.appr-field textarea { resize: vertical; min-height: 64px; }
+/* The one a notification pointed at: a soft glow, no motion */
+.card.appr.picked { box-shadow: 0 0 0 1px var(--line-strong), 0 0 24px -8px rgba(var(--glow-rgb), 0.55); }

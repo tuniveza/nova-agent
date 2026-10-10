@@ -36,7 +36,7 @@ const COLORS = ["violet", "rose", "blue", "teal", "green", "amber", "orange", "r
 const REMINDERS = [[0, "At start"], [10, "10 min"], [30, "30 min"], [60, "1 hour"], [1440, "1 day"]];
 const PREFS = "nova-calendar/prefs";
 const SUBJECTS = ["planet", "galaxy", "nebula", "binary", "comet", "blackhole", "constellation", "eclipse", "supernova", "orbit", "aurora", "crescent"];
-const isAgent = (id) => /^(quest|block|mile)-/.test(String(id || ""));
+const isAgent = (id) => /^(quest|block|mile|music)-/.test(String(id || ""));
 const pad = (n) => String(n).padStart(2, "0");
 const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const phone = () => matchMedia("(max-width: 719px)").matches;
