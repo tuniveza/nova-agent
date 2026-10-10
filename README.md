@@ -403,6 +403,15 @@ working?** covers the in-between problems: installed but can't find it, no insta
 in the browser, no notifications, an old name or picture, signing in again, two copies, stuck or
 out of date, or a phone too old (`web/shared/install.js`, `install.css`).
 
+### Updates arrive by themselves
+
+Phones don't reload an app from the home screen: they wake the copy still in memory. So Nova
+Agent and the Portal app ask Nova Bot which version is live (`/app-version`, new with every deploy)
+whenever they're opened or come back to the front, and every 10 minutes while on screen; when it's
+new they refresh themselves (waiting while you type or have a window open), then say "Updated ✦"
+(`web/shared/update.js`). A new name or icon still needs the app re-added on iPhone and iPad (Apple
+never updates those); Android updates them by itself within about a day.
+
 ### Ambient music
 
 Quiet, never-ending Novacane ambient music: slow warm pads, a soft bass, star-like bells, now and

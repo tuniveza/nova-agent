@@ -57,7 +57,7 @@
   function removeSteps(app) {
     if (isApple) return `<li>Go to your home screen and <b>press and hold</b> the ${esc(app.name)} icon.</li><li>Tap <b>Remove App</b>, then <b>Delete App</b>.</li>`;
     if (isAndroid) return `<li>Go to your home screen and <b>press and hold</b> the ${esc(app.name)} icon.</li><li>Tap <b>Uninstall</b> (or <b>App info → Uninstall</b>), then <b>OK</b>.</li>`;
-    return `<li>Open ${esc(app.name)}'s window, click the menu ${DOTS} at its top right and choose <b>Uninstall</b>.</li>`;
+    return `<li>In Chrome, type <b>chrome://apps</b> in the address bar and press Enter.</li><li><b>Right-click</b> ${esc(app.name)} and choose <b>Remove from Chrome</b>, then <b>Remove</b>.</li><li>(Or in ${esc(app.name)}'s own window: the menu ${DOTS} at its very top right → <b>Uninstall</b>.)</li>`;
   }
 
   // ---- Something not working? The usual problems, and the fix on this device ----
