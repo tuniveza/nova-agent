@@ -61,6 +61,10 @@
     html() {
       const copy = this.el.cloneNode(true);
       copy.querySelectorAll('.nn-selected').forEach((n) => n.classList.remove('nn-selected'));
+      // A quest's colour over what's written under it (tasks.js) is drawn, never saved
+      copy.querySelectorAll('[data-qtint]').forEach((n) => n.removeAttribute('data-qtint'));
+      copy.querySelectorAll('[data-qtint-end]').forEach((n) => n.removeAttribute('data-qtint-end'));
+      copy.querySelectorAll('[data-qopen]').forEach((n) => n.removeAttribute('data-qopen'));
       copy.querySelectorAll('[class=""]').forEach((n) => n.removeAttribute('class'));
       return copy.innerHTML;
     }

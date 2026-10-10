@@ -1391,6 +1391,8 @@
     if (q.status === 'doing') b.push(`<button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">+15 min</button>`);
     if (q.status === 'todo') b.push(`<button class="mini" data-q="${q.id}" data-a="snooze" data-m="60">Not now</button>`, `<button class="mini" data-q="${q.id}" data-a="skip">Skip</button>`);
     if (q.status === 'done' || q.status === 'skipped') b.push(`<button class="mini" data-q="${q.id}" data-a="reopen">Undo</button>`);
+    // Which phones get its reminders (the owner's unless some are picked)
+    if (q.status !== 'done' && q.status !== 'skipped') b.push(`<button class="mini" data-qphones="${q.id}" data-chosen="${escH((q.phones || []).join(','))}" title="Which phones get its reminders">📱 ${q.phones && q.phones.length ? `${q.phones.length} phone${q.phones.length === 1 ? '' : 's'}` : 'Owner'}</button>`);
     return `<div class="row-btns">${b.join('')}</div>`;
   }
 
@@ -1670,6 +1672,16 @@
       const mode = await NovaQuestModes.pick(mc, current ? current.slice(3) : 'waiting');
       if (!mode) return;
       const res = await api(`/actions/quests/${mc.dataset.qmode}`, { action: 'mode', mode });
+      if (!res.ok) toast({ title: 'That didn’t work', message: res.message });
+      return loadPlan();
+    }
+    // Which phones get a quest's reminders
+    const pb = e.target.closest('[data-qphones]');
+    if (pb && window.NovaQuestModes) {
+      e.stopPropagation();
+      const phones = await NovaQuestModes.pickPhones(pb, pb.dataset.chosen ? pb.dataset.chosen.split(',') : []);
+      if (!phones) return;
+      const res = await api(`/actions/quests/${pb.dataset.qphones}`, { changes: { phones } });
       if (!res.ok) toast({ title: 'That didn’t work', message: res.message });
       return loadPlan();
     }

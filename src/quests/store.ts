@@ -122,6 +122,7 @@ export interface Quest {
   mode: QuestMode; // how it's going (MODES)
   from: string; // where it was made, for people ("Notes · Studio plan"; "" = Nova Agent itself)
   link: string; // what it's tied to ("note:<note id>|<heading id>"), so a change in either place shows in both
+  phones: string[]; // which phones get its reminders (Nova Bot's phone ids); none = the studio owner's phones
   // Set by the planner
   start: string;
   end: string;
@@ -281,6 +282,7 @@ export function cleanQuest(q: any): Quest {
     mode: (MODES as readonly string[]).includes(q?.mode) ? q.mode : modeFor(q?.status),
     from: text(q?.from, 80),
     link: text(q?.link, 160),
+    phones: Array.isArray(q?.phones) ? [...new Set(q.phones.filter((x: unknown) => typeof x === "string" && /^[0-9a-f]{12}$/.test(x)))].slice(0, 10) as string[] : [],
     start: isStamp(q?.start) ? q.start : "",
     end: isStamp(q?.end) ? q.end : "",
     travelStart: isStamp(q?.travelStart) ? q.travelStart : "",

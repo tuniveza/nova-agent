@@ -18,7 +18,12 @@ let lastProblem = "";
 function snapshot() {
   const st = questState();
   const cutoff = st.now.slice(0, 10);
-  const quests = st.quests.filter((q) => q.status === "todo" || q.status === "doing" || (q.start && q.start.slice(0, 10) >= cutoff));
+  // Every quest (open first, then the most recently changed), so Portal shows them all, wherever
+  // they were made (Agent, Notes, Portal); kept to a size a phone loads quickly
+  const open = (q: { status: string }) => q.status === "todo" || q.status === "doing";
+  const quests = [...st.quests]
+    .sort((a, b) => Number(open(b)) - Number(open(a)) || (b.start && b.start.slice(0, 10) >= cutoff ? 1 : 0) - (a.start && a.start.slice(0, 10) >= cutoff ? 1 : 0) || String(b.updated).localeCompare(String(a.updated)))
+    .slice(0, 400);
   const slim = (q: (typeof st.quests)[number]) => {
     const { notes, remindedFor, checkedFor, created, updated, completed, ...rest } = q;
     return rest;

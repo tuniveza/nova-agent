@@ -55,6 +55,7 @@ export interface Push {
   ttl: number; // seconds it's worth delivering
   urgent: boolean;
   keep: boolean;
+  phones?: string[]; // which phones (Nova Bot's phone ids); none = the studio owner's phones
 }
 
 // Waits between tries: 15 s, 30 s, 1 min, 2 min, then every 5 min (until the ttl runs out)

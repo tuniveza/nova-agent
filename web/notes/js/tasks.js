@@ -118,6 +118,7 @@
     const el = ensureBox();
     if (!el) return;
     const all = questHeadings(editor);
+    tint(editor, all);
     const shown = query ? all.filter((h) => h.textContent.toLowerCase().includes(query)) : all;
     const done = all.filter((h) => h.getAttribute('data-task') === 'done').length;
     el.querySelector('.tasks-count').textContent = all.length ? `${done}/${all.length}` : '';
@@ -137,6 +138,7 @@
         <div class="task-row">
           <button type="button" class="task-st qm-chip qm-${mode}" aria-haspopup="menu" title="How it's going (tap to change)">${nameOf(mode)}</button>
           <button type="button" class="task-chat" title="Talk about this quest with Agent" aria-label="Talk about this quest with Agent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V15h.5A2.5 2.5 0 0 1 5 12.5z"/></svg>Agent</button>
+          <button type="button" class="task-phones" title="Which phones get its reminders" aria-label="Which phones get its reminders"${linked ? '' : ' hidden'}>📱</button>
           <button type="button" class="task-off" title="Take it off Quests (the text stays in the note)" aria-label="Take it off Quests">✕</button>
         </div>
         <small class="task-link">${linked ? '✦ In Nova Quests' : '◌ On its way to Nova Quests'}</small>`;
@@ -150,9 +152,27 @@
       li.querySelector('.task-st').addEventListener('click', (e) => pick(e.currentTarget, h, editor));
       li.querySelector('.task-chat').addEventListener('click', () => chatAbout(h, noteTitle()));
       li.querySelector('.task-off').addEventListener('click', () => unQuest(h, editor));
+      li.querySelector('.task-phones').addEventListener('click', (e) => choosePhones(e.currentTarget, h));
       list.appendChild(li);
     }
     soon(editor);
+  }
+
+  // Each quest wears its mode's colour: the heading, and everything written under it (to the next
+  // heading). Drawn with data-qtint, which the editor leaves out when it saves (editor.js html()).
+  function tint(editor, headings) {
+    for (const n of editor.el.querySelectorAll('[data-qtint]')) n.removeAttribute('data-qtint');
+    for (const n of editor.el.querySelectorAll('[data-qtint-end]')) n.removeAttribute('data-qtint-end');
+    for (const h of headings) {
+      const mode = validMode(h.getAttribute('data-task'));
+      let last = null;
+      for (let n = h.nextElementSibling; n && !/^(H1|H2|H3)$/.test(n.tagName) && !n.classList.contains('title'); n = n.nextElementSibling) {
+        n.setAttribute('data-qtint', mode);
+        last = n;
+      }
+      if (last) last.setAttribute('data-qtint-end', '');
+      h.toggleAttribute('data-qopen', Boolean(last));
+    }
   }
 
   // The modes, to choose from (the shared menu: the same as the front page's and Portal's)
@@ -170,6 +190,25 @@
     editor.changed();
     render(...NN.tasks._last);
     soon(editor, 200);
+  }
+
+  // Which phones get its reminders (kept in Nova Quests: the owner's unless some are picked)
+  async function choosePhones(btn, h) {
+    const id = h.getAttribute('data-qid');
+    if (!id || !M() || !M().pickPhones) return;
+    let chosen = [];
+    try {
+      const st = await api('GET', '/quests/state');
+      chosen = ((st.quests || []).find((q) => q.id === id) || {}).phones || [];
+    } catch (err) {}
+    const phones = await M().pickPhones(btn, chosen);
+    if (!phones) return;
+    try {
+      await api('POST', `/actions/quests/${encodeURIComponent(id)}`, { changes: { phones } });
+      sfx('done', btn);
+    } catch (err) {
+      say('Nova Quests can’t be reached just now, so the phones weren’t changed. Try again in a moment.');
+    }
   }
 
   // ---- Keeping Nova Quests in step ----

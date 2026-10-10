@@ -49,7 +49,9 @@ function notify(n: Omit<QuestNotice, "time">, push: boolean, session = fromMin(n
   const source = n.kind === "mission" ? "mission" : "quest";
   // To the staff phones too, labelled as Quest or Mission.
   // Pulses replace each other on the phone and stay out of Portal's Alerts list
-  const phone = push && n.kind !== "undelivered" ? { title: n.title, message: n.message, source, kind: n.kind, tag: n.questId || n.kind, ...PHONE[n.kind], keep: n.kind !== "pulse" } as const : null;
+  // Only the phones the quest picked (none picked: the studio owner's, Nova Bot decides)
+  const phones = n.questId ? readQuests().quests.find((q) => q.id === n.questId)?.phones ?? [] : [];
+  const phone = push && n.kind !== "undelivered" ? { title: n.title, message: n.message, source, kind: n.kind, tag: n.questId || n.kind, ...PHONE[n.kind], keep: n.kind !== "pulse", ...(phones.length ? { phones } : {}) } as const : null;
   if (!deliver({ questId: n.questId || n.kind, session, kind: n.kind, push: phone, covers })) return false;
   if (n.kind === "pulse") {
     // A quick ping: not kept in the notices list or the trace

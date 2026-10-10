@@ -49,3 +49,24 @@ describe("quest modes", () => {
     expect(nova.quest(q.id)).toMatchObject({ mode: "working", status: "doing", title: "QUEST: book mastering" });
   });
 });
+
+describe("which phones get a quest's reminders", () => {
+  it("none picked: the ping says nothing (Nova Bot sends it to the studio owner's phones)", async () => {
+    const nova = await boot("2026-10-07T09:55");
+    nova.setQuests({ quests: [{ id: "water", title: "Drink water", minutes: 5, fixedStart: "2026-10-07T10:00" }] });
+    nova.start();
+    await nova.run("10m");
+    expect(nova.pings("water", "starting")[0].phones).toBeUndefined();
+  });
+
+  it("picked phones go with every ping, and the choice is kept", async () => {
+    const nova = await boot("2026-10-07T09:55");
+    nova.setQuests({ quests: [{ id: "water", title: "Drink water", minutes: 5, fixedStart: "2026-10-07T10:00" }] });
+    nova.actions.updateQuest("water", { phones: ["a1b2c3d4e5f6"] } as any);
+    expect(nova.quest("water").phones).toEqual(["a1b2c3d4e5f6"]);
+    expect(() => nova.actions.updateQuest("water", { phones: ["not-a-phone"] } as any)).toThrow(/phone ids/);
+    nova.start();
+    await nova.run("10m");
+    expect(nova.pings("water", "starting")[0].phones).toEqual(["a1b2c3d4e5f6"]);
+  });
+});

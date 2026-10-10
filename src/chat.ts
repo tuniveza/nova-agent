@@ -513,6 +513,7 @@ function questTools(actions: ChatAction[]) {
         time_of_day: z.enum(TIMES_OF_DAY).optional(),
         notes: z.string().optional(),
         mode: z.enum(MODES).optional(),
+        phones: z.array(z.string().regex(/^[0-9a-f]{12}$/)).max(10).optional().describe("Which phones get this quest's reminders (phone ids; [] = the studio owner's phones)"),
       }),
       run: async ({ id, fixed_start, travel_minutes, time_of_day, seconds, minutes, hours, days, every_minutes, ...rest }) => {
         const q = updateQuest(id, { ...rest, everyMinutes: every_minutes, minutes: totalMinutes({ seconds, minutes, hours, days }), fixedStart: fixed_start, travelMinutes: travel_minutes, timeOfDay: time_of_day });

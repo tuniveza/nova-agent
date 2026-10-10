@@ -1068,6 +1068,9 @@
         }
         cards.push(questCard(q, missions));
       }
+      // Quests with no time yet (from Notes, or waiting for room in the plan)
+      const unplanned = open.filter((q) => !q.start && (!current || q.id !== current.id));
+      if (unplanned.length) cards.push(el("h3", "quest-day", "Not planned yet"), ...unplanned.map((q) => questCard(q, missions)));
       if (!cards.length) return emptyState(body, "Nothing planned. Ask Nova Agent for a mission, or add a quest.");
     }
 
@@ -1095,9 +1098,20 @@
     }
 
     if (questTab === "all") {
-      const sorted = [...quests].sort((a, b) => (a.start || "z").localeCompare(b.start || "z"));
-      if (!sorted.length) return emptyState(body, "No quests yet.");
-      cards.push(...sorted.map((q) => questCard(q, missions)));
+      // Every quest, wherever it was made, grouped by how it's going (Waiting first, Done last)
+      const live = quests.filter((q) => q.status !== "skipped");
+      if (!live.length) return emptyState(body, "No quests yet.");
+      const modeOf = (q) => q.mode || (q.status === "done" ? "done" : q.status === "doing" ? "working" : "waiting");
+      const order = window.NovaQuestModes ? NovaQuestModes.list.map((m) => m.id) : ["waiting", "soon", "working", "nearly", "longer", "questions", "done"];
+      for (const mode of order) {
+        const group = live.filter((q) => modeOf(q) === mode).sort((a, b) => (a.start || "z").localeCompare(b.start || "z"));
+        if (!group.length) continue;
+        const head = el("h3", "quest-day quest-mode-head");
+        head.innerHTML = (window.NovaQuestModes ? NovaQuestModes.chip(mode, { tag: "span" }) : mode) + ` <small>${group.length}</small>`;
+        cards.push(head, ...group.map((q) => questCard(q, missions)));
+      }
+      const skipped = quests.filter((q) => q.status === "skipped");
+      if (skipped.length) cards.push(el("h3", "quest-day", `Skipped · ${skipped.length}`), ...skipped.map((q) => questCard(q, missions)));
     }
     body.replaceChildren(...cards);
   }

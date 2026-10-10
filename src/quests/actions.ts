@@ -225,6 +225,7 @@ const EDITABLE: Record<string, (v: any) => unknown> = {
   fixedStart: (v) => readStamp(v, "09:00"),
   from: (v) => words(v, 80, "Where it's from"),
   link: (v) => words(v, 160, "What it's tied to"),
+  phones: (v) => (Array.isArray(v) && v.length <= 10 && v.every((x) => typeof x === "string" && /^[0-9a-f]{12}$/.test(x)) ? [...new Set(v)] : bad("Phones must be a list of up to 10 phone ids.")),
   dependsOn: (v) => (Array.isArray(v) && v.length <= 20 && v.every((x) => typeof x === "string" && x.length <= 64) ? v : bad("Depends on must be a list of up to 20 quest ids.")),
 };
 function bad(message: string): never {

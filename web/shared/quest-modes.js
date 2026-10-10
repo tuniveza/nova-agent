@@ -35,33 +35,85 @@
     if (menu) menu.hidden = true;
     if (settle) { const s = settle; settle = null; s(value); }
   }
-  function pick(anchor, current) {
-    close();
-    if (!menu) {
-      menu = document.createElement('div');
-      menu.className = 'qm-menu';
-      menu.setAttribute('role', 'menu');
-      menu.setAttribute('aria-label', "How it's going");
-      document.body.appendChild(menu);
-      document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target) && e.target !== anchorNow) close(); }, true);
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) close(); });
-      addEventListener('resize', () => close());
-      menu.addEventListener('click', (e) => { const b = e.target.closest('[data-mode]'); if (b) close(b.dataset.mode); });
-    }
-    anchorNow = anchor;
-    menu.innerHTML = LIST.map((m) => `<button type="button" role="menuitemradio" class="qm-${m.id}" data-mode="${m.id}" aria-checked="${m.id === current}">${esc(m.name)}</button>`).join('');
+  // The one menu (modes, or phones), made the first time it's needed
+  function ensureMenu() {
+    if (menu) return menu;
+    menu = document.createElement('div');
+    menu.className = 'qm-menu';
+    menu.setAttribute('role', 'menu');
+    menu.hidden = true;
+    document.body.appendChild(menu);
+    document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target) && e.target !== anchorNow) close(); }, true);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) close(); });
+    addEventListener('resize', () => close());
+    menu.addEventListener('click', (e) => { const b = e.target.closest('[data-mode]'); if (b) close(b.dataset.mode); });
+    return menu;
+  }
+  // Beside the anchor, always fully on screen
+  function place(anchor) {
     menu.hidden = false;
-    // Beside the chip, always fully on screen
     const r = anchor.getBoundingClientRect();
     const w = menu.offsetWidth, h = menu.offsetHeight;
-    const left = Math.max(8, Math.min(innerWidth - w - 8, r.left));
-    const below = r.bottom + 6 + h <= innerHeight - 8;
-    menu.style.left = `${left}px`;
-    menu.style.top = `${Math.max(8, below ? r.bottom + 6 : r.top - 6 - h)}px`;
+    menu.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, r.left))}px`;
+    menu.style.top = `${Math.max(8, r.bottom + 6 + h <= innerHeight - 8 ? r.bottom + 6 : r.top - 6 - h)}px`;
+  }
+  function pick(anchor, current) {
+    close();
+    ensureMenu();
+    menu.setAttribute('aria-label', "How it's going");
+    anchorNow = anchor;
+    menu.innerHTML = LIST.map((m) => `<button type="button" role="menuitemradio" class="qm-${m.id}" data-mode="${m.id}" aria-checked="${m.id === current}">${esc(m.name)}</button>`).join('');
+    place(anchor);
     const first = menu.querySelector('[aria-checked="true"]') || menu.querySelector('button');
     if (first) first.focus({ preventScroll: true });
     return new Promise((resolve) => (settle = resolve));
   }
   let anchorNow = null;
-  window.NovaQuestModes = { list: LIST, name, chip, pick, valid };
+
+  // Which phones get a quest's reminders: the studio owner's (none picked), or the ones ticked.
+  // The list comes from Nova Bot (/app/api/push/phones: the phones with notifications on).
+  // Resolves with the new list of phone ids, or null if nothing changed.
+  async function pickPhones(anchor, chosen = []) {
+    close();
+    let phones = [];
+    try {
+      const r = await fetch('/app/api/push/phones', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+      phones = r.ok ? (await r.json()).phones || [] : [];
+    } catch (err) {}
+    ensureMenu();
+    menu.setAttribute('aria-label', 'Which phones get its reminders');
+    anchorNow = anchor;
+    let picked = chosen.filter((id) => phones.some((p) => p.id === id));
+    const draw = () => {
+      menu.innerHTML =
+        `<button type="button" role="menuitemcheckbox" class="qm-soon" data-phone="" aria-checked="${!picked.length}">Owner's phones</button>` +
+        (phones.length
+          ? phones.map((p) => `<button type="button" role="menuitemcheckbox" class="qm-nearly" data-phone="${esc(p.id)}" aria-checked="${picked.includes(p.id)}">${esc(p.name)}${p.who ? ` · ${esc(p.who)}` : ''}</button>`).join('')
+          : '<p class="qm-note">No phones have notifications on yet (Portal → Alerts → turn them on).</p>') +
+        '<button type="button" class="qm-done qm-ok" data-ok="1">Done</button>';
+    };
+    draw();
+    place(anchor);
+    return new Promise((resolve) => {
+      const before = JSON.stringify([...chosen].sort());
+      const onClick = (e) => {
+        const b = e.target.closest('[data-phone], [data-ok]');
+        if (!b) return;
+        e.stopImmediatePropagation();
+        if (b.dataset.ok) {
+          menu.removeEventListener('click', onClick, true);
+          menu.hidden = true;
+          settle = null;
+          return resolve(JSON.stringify([...picked].sort()) === before ? null : picked);
+        }
+        const id = b.dataset.phone;
+        picked = !id ? [] : picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id];
+        draw();
+      };
+      menu.addEventListener('click', onClick, true);
+      // Closed another way (Escape, a tap outside): nothing changes
+      settle = () => { menu.removeEventListener('click', onClick, true); resolve(null); };
+    });
+  }
+  window.NovaQuestModes = { list: LIST, name, chip, pick, valid, pickPhones };
 })();

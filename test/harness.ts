@@ -18,6 +18,7 @@ export interface Ping {
   title: string;
   message: string;
   kind: string;
+  phones?: string[];
   tag: string;
   keep: boolean;
 }
@@ -66,7 +67,7 @@ export async function boot(at: string) {
     if (!worker.up) throw new TypeError("fetch failed");
     if (worker.status !== 200) return new Response("Service Unavailable", { status: worker.status });
     const body = JSON.parse(String(init?.body));
-    sent.push({ at: wallClock(new Date()), title: body.title, message: body.message, kind: body.kind, tag: body.tag, keep: body.keep });
+    sent.push({ at: wallClock(new Date()), title: body.title, message: body.message, kind: body.kind, tag: body.tag, keep: body.keep, phones: body.phones });
     return Response.json({ ok: true, phones: worker.phones });
   });
   // Quiet: the trace prints every notice
