@@ -602,7 +602,22 @@
     $("google-card").hidden = !self;
     if (self) loadGoogle();
 
-    $("password-card").hidden = !self;
+    // Email and password: changed only here, signed in. Your own, or anyone's for an admin.
+    const canChange = self || isAdmin();
+    const first = firstName(person.display_name);
+    $("email-card").hidden = !canChange;
+    $("email-title").textContent = self ? "Change email" : `Change ${possessive(first)} email`;
+    // Staff confirm a new email with their password; admins don't need to
+    $("email-current-field").hidden = isAdmin();
+    if (changedPerson || fresh) {
+      $("email-form").reset();
+      $("email-new").value = person.email || "";
+      setError("email-error", "");
+    }
+    $("password-card").hidden = !canChange;
+    $("password-title").textContent = self ? "Change password" : `New password for ${first}`;
+    $("password-save").textContent = self ? "Save new password" : `Save ${possessive(first)} new password`;
+    if (changedPerson) $("password-form").reset();
     // Admins choose a new password without the old one; everyone else confirms it
     $("password-current-field").hidden = isAdmin();
 
@@ -643,13 +658,47 @@
     if (password !== $("password-again").value) return setError("password-error", "The two don't match. Type it again.", form), $("password-again").focus();
     setError("password-error", "");
     try {
-      const r = await busy($("password-save"), "Saving…", () => api("/auth/password", { method: "POST", body: { password, current: $("password-current").value } }));
+      // Mine (/auth/password), or, for an admin, someone else's (they're signed out everywhere)
+      const person = state.person;
+      const self = !person || person.id === state.me.id;
+      const r = await busy($("password-save"), "Saving…", () =>
+        self
+          ? api("/auth/password", { method: "POST", body: { password, current: $("password-current").value } })
+          : api(`/staff/${encodeURIComponent(person.id)}/password`, { method: "POST", body: { password } })
+      );
       if (!r.ok) return setError("password-error", r.data.error || `That didn't work (error ${r.status}).`, form);
       form.reset();
       sfx("done");
-      toast("New password saved. Use it next time you sign in.");
+      if (self) return toast("New password saved. Use it next time you sign in.");
+      if (r.data.staff) renderProfile({ ...person, ...r.data.staff });
+      toast(`New password saved for ${firstName(person.display_name)}. They're signed out: tell them the new one.`);
     } catch (err) {
       setError("password-error", err.message, form);
+    }
+  });
+
+  $("email-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = $("email-form");
+    const person = state.person;
+    if (!person) return;
+    const email = $("email-new").value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("email-error", "Type a real email address.", form), $("email-new").focus();
+    if (email === person.email) return setError("email-error", "That's the email already.", form), $("email-new").focus();
+    if (!isAdmin() && !$("email-current").value) return setError("email-error", "Type your password to confirm.", form), $("email-current").focus();
+    setError("email-error", "");
+    try {
+      const r = await busy($("email-save"), "Saving…", () => api(`/staff/${encodeURIComponent(person.id)}`, { method: "PATCH", body: { email, current: $("email-current").value } }));
+      if (!r.ok) return setError("email-error", r.data.error || `That didn't work (error ${r.status}).`, form);
+      $("email-current").value = "";
+      if (person.id === state.me.id) state.me = { ...state.me, ...r.data.staff };
+      if (state.crew) state.crew = state.crew.map((p) => (p.id === person.id ? { ...p, ...r.data.staff } : p));
+      renderProfile({ ...person, ...r.data.staff });
+      $("email-new").value = r.data.staff.email || email;
+      sfx("done");
+      toast(person.id === state.me.id ? `Saved. Sign in with ${email} from now on.` : `Saved. ${firstName(person.display_name)} signs in with ${email} from now on.`);
+    } catch (err) {
+      setError("email-error", err.message, form);
     }
   });
 

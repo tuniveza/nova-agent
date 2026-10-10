@@ -278,6 +278,7 @@
   .action.removed { border-color: color-mix(in srgb, #E5484D 50%, transparent); background: color-mix(in srgb, #E5484D 12%, transparent); }
   .action.looked { border-color: var(--line); background: none; color: var(--muted); }
   .action.file { border-color: color-mix(in srgb, var(--gold) 45%, transparent); background: color-mix(in srgb, var(--gold) 10%, transparent); color: var(--gold); }
+  .fcards .fallback-dl { display: inline-flex; margin: 4px 4px 0 0; text-decoration: none; }
   /* Files Nova Agent wrote: a card under the reply, the Files list, and the viewer */
   .fcards { display: grid; gap: 8px; margin-top: 8px; }
   .fcard { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center; padding: 10px 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); background: linear-gradient(120deg, color-mix(in srgb, var(--gold) 9%, var(--panel)), color-mix(in srgb, var(--panel-2) 60%, transparent)); animation: quest-in .4s cubic-bezier(.2,.8,.2,1) both; }
@@ -1087,6 +1088,31 @@
   function fileButtons(f, opts) {
     return `<button type="button" class="mini go" data-fv="${escF(f.id)}">◎ Preview</button><a class="mini" href="${escF(f.url)}?download" download="${escF(f.name)}" data-fdl>⤓ Download</a>${toNotes(f) ? `<a class="mini" href="/notes/?open=${encodeURIComponent(f.url)}" target="_blank" rel="noopener">✎ Open in Notes</a>` : ''}<button type="button" class="mini" data-fcopy="${escF(f.id)}">⧉ Copy</button>${opts && opts.remove ? `<button type="button" class="mini" data-fdel="${escF(f.id)}">✕ Delete</button>` : ''}`;
   }
+  // The safety net: a direct download link for a file whose card couldn't be drawn (found by its
+  // details, or by the name in "Wrote release-plan.md" from Nova Agent's list of files)
+  async function fileLinks(box, acts) {
+    let list = null;
+    for (const a of acts) {
+      let f = a.file && a.file.url ? a.file : null;
+      if (!f) {
+        const name = String(a.text || '').replace(/^(Wrote|Updated|Exported)\s+/i, '').trim();
+        if (!list) list = await fetch('/files/list', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : { files: [] })).then((d) => d.files || []).catch(() => []);
+        f = list.find((x) => x.name === name || x.title === name) || null;
+      }
+      const link = document.createElement('a');
+      link.className = 'mini fallback-dl';
+      if (f) {
+        link.href = `${f.url}?download`;
+        link.setAttribute('download', f.name);
+        link.textContent = `⤓ Download ${f.name}`;
+      } else {
+        link.href = '#';
+        link.textContent = '▤ Open your files';
+        link.addEventListener('click', (e) => { e.preventDefault(); const b = document.getElementById('files-btn'); if (b) b.click(); });
+      }
+      box.appendChild(link);
+    }
+  }
   function fileCardHtml(f, opts) {
     known.set(f.id, f);
     return `<div class="fcard" data-fcard="${escF(f.id)}"><span class="ficon" aria-hidden="true">${escF(f.type)}</span><span class="ftitle" title="${escF(f.title)}">${escF(f.title)}</span><span class="fmeta">${escF(f.name)} · ${fsize(f.size)}${f.updated ? ` · ${fwhen(f.updated)}` : ''}</span><div class="fbtns">${fileButtons(f, opts)}</div></div>`;
@@ -1220,13 +1246,24 @@
         row.appendChild(chip);
       }
       wrap.appendChild(row);
-      // Each file it wrote: a card to preview, download or open in Notes
-      const files = actions.filter((a) => a.file);
-      if (files.length) {
+      // Each file it wrote: a card to preview, download or open in Notes. If a card can't be drawn
+      // (or the reply names a file without its details), a plain download link takes its place,
+      // so a saved file is never missing from the reply that made it
+      const fileActs = actions.filter((a) => a.file || a.kind === 'file');
+      if (fileActs.length) {
         const cards = document.createElement('div');
         cards.className = 'fcards';
-        cards.innerHTML = files.map((a) => fileCardHtml(a.file)).join('');
+        const missing = [];
+        for (const a of fileActs) {
+          try {
+            if (!a.file || !a.file.url) throw new Error('no card');
+            cards.insertAdjacentHTML('beforeend', fileCardHtml(a.file));
+          } catch (err) {
+            missing.push(a);
+          }
+        }
         wrap.appendChild(cards);
+        if (missing.length) fileLinks(cards, missing);
       }
     }
     log.appendChild(wrap);

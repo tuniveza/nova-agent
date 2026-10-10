@@ -147,7 +147,9 @@ async function fetchChanges() {
 
 function enqueue(op) {
   const id = op.op === "put" ? op.item.id : op.id;
-  // Only the latest change to each item needs to go
+  // Only the latest change to each item needs to go (made to the version the first one was)
+  const replaced = state.queue.find((q) => q.op === "put" && q.item.id === id && q.item.base);
+  if (replaced && op.op === "put") op = { ...op, item: { ...op.item, base: replaced.item.base } };
   state.queue = state.queue.filter((q) => (q.op === "put" ? q.item.id : q.id) !== id);
   state.queue.push(op);
   writeCache();
@@ -159,8 +161,12 @@ function enqueue(op) {
 export function save(item) {
   const now = nowIso();
   const out = { ...item, id: item.id || uid(), created: item.created || now, updated: now };
+  // The version this change was made to: if this device's clock is behind, Nova Bot still
+  // knows it's the newest change and keeps it
+  const base = state.items.get(out.id)?.updated;
+  delete out.base;
   state.items.set(out.id, out);
-  enqueue({ op: "put", item: out });
+  enqueue({ op: "put", item: base ? { ...out, base } : out });
   return out;
 }
 // Delete one; returns the item (for Undo)

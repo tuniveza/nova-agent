@@ -32,6 +32,7 @@ export interface NoteCard {
   location?: string;
   color?: string;
   reminders?: number[]; // minutes before (phones are reminded by Nova Bot)
+  phones?: string[]; // which phones get them (Nova Bot's phone ids; none = the studio owner's)
   repeat?: Repeat; // see web/calendar/js/recur.js
   exdates?: string[]; // dates taken out of a repeating series
 }
@@ -101,6 +102,10 @@ function noteExtras(n: any): Partial<NoteCard> {
   if (Array.isArray(n.reminders)) {
     const r = [...new Set(n.reminders.map(Number).filter((m: number) => Number.isInteger(m) && m >= 0 && m <= 40320))].slice(0, 5) as number[];
     if (r.length) out.reminders = r.sort((a, b) => a - b);
+  }
+  if (Array.isArray(n.phones)) {
+    const p = [...new Set(n.phones.filter((x: unknown) => typeof x === "string" && /^[0-9a-f]{12}$/.test(x)))].slice(0, 10) as string[];
+    if (p.length) out.phones = p;
   }
   const repeat = cleanRepeat(n.repeat);
   if (repeat) {

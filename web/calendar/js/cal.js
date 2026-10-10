@@ -818,14 +818,15 @@ function askWhich(title = "Change which?") {
   });
 }
 // it: the event; date: the day this time of it starts; was: its start then; changes: new fields
-async function changeOccurrence(it, date, was, changes, word = "Saved") {
+// chosen (optional): "one", "following" or "all", already asked
+async function changeOccurrence(it, date, was, changes, word = "Saved", chosen = null) {
   const before = { ...it };
   if (!it.repeat) {
     data.save({ ...it, ...changes });
     toast(word, () => data.save(before));
     return render();
   }
-  const which = await askWhich();
+  const which = chosen || (await askWhich());
   if (!which) return render();
   if (which === "one") {
     data.save({ ...it, exdates: [...new Set([...(it.exdates || []), date])] });
@@ -870,6 +871,7 @@ let art = { seed: 0, subject: "auto", salt: "", tempId: "" };
 
 function fillChips() {
   $("f-reminders").innerHTML = REMINDERS.map(([m, l]) => `<button type="button" data-min="${m}" aria-pressed="${picked.reminders.includes(m)}">${l}</button>`).join("");
+  fillPhones();
   $("f-colors").innerHTML = COLORS.map((c) => `<button type="button" data-color="${c}" data-pick="${c}" aria-pressed="${picked.color === c}" aria-label="${c}"></button>`).join("");
   $("f-days").innerHTML = [1, 2, 3, 4, 5, 6, 0].map((d) => `<button type="button" data-day="${d}" aria-pressed="${picked.days.includes(d)}">${WD[d].slice(0, 2)}</button>`).join("");
   $("aes-grid").innerHTML = presets()
@@ -941,12 +943,46 @@ $("f-title").addEventListener("input", () => {
   $("art-title").textContent = $("f-title").value || (editing && editing.kind === "day" ? presets().get($("d-preset").value).label : "");
 });
 $("f-sdate").addEventListener("change", () => refreshSheetArt());
+// Which phones get the reminders: the owner's (the default), or the ones picked here.
+// The list comes from Nova Bot (the phones with notifications on, and whose they are).
+let phoneList = null;
+async function loadPhones() {
+  if (phoneList) return phoneList;
+  try {
+    const r = await fetch("/app/api/push/phones", { credentials: "same-origin", headers: { Accept: "application/json" } });
+    phoneList = r.ok ? (await r.json()).phones || [] : [];
+  } catch {
+    phoneList = [];
+  }
+  fillPhones();
+  return phoneList;
+}
+function fillPhones() {
+  const chosen = picked.phones || [];
+  const list = phoneList || [];
+  // Phones picked before that are gone now still show, so they can be taken off
+  const known = new Set(list.map((p) => p.id));
+  const gone = chosen.filter((id) => !known.has(id)).map((id) => ({ id, name: "A phone that's turned off", who: "" }));
+  $("f-phones-row").hidden = !picked.reminders.length || (!list.length && !gone.length);
+  $("f-phones").innerHTML =
+    `<button type="button" data-phone="" aria-pressed="${!chosen.length}" title="The studio owner's phones">Owner's phones</button>` +
+    [...list, ...gone].map((p) => `<button type="button" data-phone="${esc(p.id)}" aria-pressed="${chosen.includes(p.id)}">${esc(p.name)}${p.who ? ` · ${esc(p.who)}` : ""}</button>`).join("");
+}
+$("f-phones").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-phone]");
+  if (!b) return;
+  const id = b.dataset.phone;
+  const chosen = picked.phones || [];
+  picked.phones = !id ? [] : chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id];
+  fillPhones();
+});
 $("f-reminders").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-min]");
   if (!b) return;
   const m = Number(b.dataset.min);
   picked.reminders = picked.reminders.includes(m) ? picked.reminders.filter((x) => x !== m) : [...picked.reminders, m];
   fillChips();
+  if (picked.reminders.length) void loadPhones();
 });
 $("f-colors").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-pick]");
@@ -1150,7 +1186,8 @@ function openExisting(type, id, date) {
   resetForm();
   const ro = isAgent(id);
   editing = { mode: "edit", kind: it.kind === "day" ? "day" : "event", item: it, date, ro };
-  picked = { reminders: [...(it.reminders || [])], color: it.color || "violet", days: [], aesthetic: it.aesthetic || "nebula", theme: it.theme || "app" };
+  picked = { reminders: [...(it.reminders || [])], phones: [...(it.phones || [])], color: it.color || "violet", days: [], aesthetic: it.aesthetic || "nebula", theme: it.theme || "app" };
+  if (picked.reminders.length) void loadPhones();
   art = it.art ? { seed: it.art.seed >>> 0, subject: it.art.subject || "auto", salt: it.artSalt || "", tempId: it.id } : { seed: hash32(String(it.id)), subject: "auto", salt: it.artSalt || "", tempId: it.id };
   $("f-title").value = it.title || "";
   $("f-notes").value = it.kind === "day" ? it.info || "" : it.body || "";
@@ -1237,6 +1274,7 @@ form.addEventListener("submit", async (e) => {
     body: $("f-notes").value,
     color: picked.color,
     reminders: picked.reminders,
+    phones: picked.reminders.length ? picked.phones || [] : [],
     repeat: readRepeat(start),
     art: { seed: art.seed >>> 0, subject: art.subject || "auto" },
   };
@@ -1252,18 +1290,37 @@ form.addEventListener("submit", async (e) => {
   const it = editing.item;
   const was = editing.was;
   const date = editing.date;
+  const ruleChanged = it.repeat && JSON.stringify(cleanRepeat(it.repeat)) !== JSON.stringify(fields.repeat);
+  // A repeating one: which times does this change? Asked with the editor still open, so
+  // Cancel goes back to it with nothing lost. Only reminders changed: every time, no question.
+  let which = null;
+  if (it.repeat && !ruleChanged) {
+    which = onlyRemindersChanged(it, was || it.start, fields) ? "all" : await askWhich();
+    if (!which) return;
+  }
   closeSheet();
   sfx("done");
   // A repeating one whose rule was changed: the new rule is for the whole series
-  if (it.repeat && JSON.stringify(cleanRepeat(it.repeat)) !== JSON.stringify(fields.repeat)) {
+  if (ruleChanged) {
     const before = { ...it };
     const shift = minutesBetween(was, start);
     data.save({ ...it, ...fields, start: addMinutes(it.start, shift), end: addMinutes(addMinutes(it.start, shift), minutesBetween(start, end)), exdates: fields.repeat ? it.exdates || [] : [] });
     toast("Saved", () => data.save(before));
     return render();
   }
-  changeOccurrence(it, date || it.start.slice(0, 10), was || it.start, fields);
+  changeOccurrence(it, date || it.start.slice(0, 10), was || it.start, fields, "Saved", which);
 });
+// Nothing but the reminders (or which phones get them) differs from this time of the event
+function onlyRemindersChanged(it, was, fields) {
+  const same = (a, b) => JSON.stringify(a ?? "") === JSON.stringify(b ?? "");
+  const length = minutesBetween(it.start, it.end);
+  return (
+    fields.start === was &&
+    minutesBetween(fields.start, fields.end) === length &&
+    ["title", "location", "body", "color", "allDay"].every((k) => same(fields[k], k === "allDay" ? Boolean(it[k]) : it[k] || (k === "color" ? "violet" : ""))) &&
+    same(fields.art, it.art || fields.art)
+  );
+}
 
 $("delete").addEventListener("click", async () => {
   if (!editing || !editing.item) return;
@@ -1293,7 +1350,7 @@ $("duplicate").addEventListener("click", () => {
   if (kind === "event") {
     fillWhen(values.start, values.end, values.allDay);
     $("f-location").value = values.location;
-    picked = { reminders: [...(it.reminders || [])], color: it.color || "violet", days: [] };
+    picked = { reminders: [...(it.reminders || [])], phones: [...(it.phones || [])], color: it.color || "violet", days: [] };
     fillRepeat(it.repeat);
     fillChips();
     art.subject = (it.art && it.art.subject) || "auto";

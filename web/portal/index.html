@@ -514,7 +514,25 @@
           <button class="btn ghost" type="button" id="google-setup" hidden>Set up Google</button>
         </section>
 
-        <!-- A new password (admins needn't know the old one) -->
+        <!-- The email used to sign in: your own (staff confirm with their password), or anyone's for an admin -->
+        <section id="email-card" class="card password-card" aria-labelledby="email-title" hidden>
+          <span class="kicker">Email</span>
+          <h2 id="email-title" class="card-title">Change email</h2>
+          <form id="email-form" novalidate>
+            <div class="field">
+              <label class="field-label" for="email-new">Email to sign in with</label>
+              <input id="email-new" type="email" autocomplete="email" inputmode="email" spellcheck="false">
+            </div>
+            <div class="field" id="email-current-field" hidden>
+              <label class="field-label" for="email-current">Your password</label>
+              <input id="email-current" type="password" autocomplete="current-password">
+            </div>
+            <p class="error" id="email-error" role="alert"></p>
+            <button class="btn" type="submit" id="email-save">Save new email</button>
+          </form>
+        </section>
+
+        <!-- A new password: your own (admins needn't know the old one), or, for an admin, someone else's -->
         <section id="password-card" class="card password-card" aria-labelledby="password-title" hidden>
           <span class="kicker">Password</span>
           <h2 id="password-title" class="card-title">Change password</h2>
