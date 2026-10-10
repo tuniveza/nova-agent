@@ -1,29 +1,29 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 205,
- "date": "2026-10-09",
+ "build": 206,
+ "date": "2026-10-10",
  "panels": {
   "chat": [
+   "\"Chat\" is now \"Agent\" everywhere you see…",
    "Nova Agent reopens the app you had…",
    "One centre line",
    "Phones and tablets detected from the device",
-   "The chat column's title is Chat",
-   "The conversation in pages"
+   "The chat column's title is Chat"
   ],
   "portal": [
+   "\"Chat\" is now \"Agent\" everywhere you see…",
    "Cosmic icons",
    "Calmer, lusher sounds",
    "Lush Novacane sounds",
-   "Admin lives in Portal",
-   "Portal on phones"
+   "Admin lives in Portal"
   ],
   "calendar": [
+   "\"Chat\" is now \"Agent\" everywhere you see…",
    "every day measured so nothing is cut…",
    "symbols on phones too",
    "day words and symbols switch at sensible…",
-   "size checks read the month's grid",
-   "small days show cards as symbols"
+   "size checks read the month's grid"
   ],
   "notes": [
    "new notes start Shared when signed in",
@@ -61,11 +61,11 @@ window.NOVA_STATUS = {
    "Lossless audio and Observatory as panels everywhere"
   ],
   "visualizer": [
+   "\"Chat\" is now \"Agent\" everywhere you see…",
    "Today in music on the front page",
    "Cosmic icons",
    "Shared and Local notes",
-   "Nova Agent on phones",
-   "Panels on phones"
+   "Nova Agent on phones"
   ],
   "observatory": [
    "Cosmic icons",
@@ -82,38 +82,38 @@ window.NOVA_STATUS = {
    "Nova Hub is Studio"
   ],
   "look": [
+   "\"Chat\" is now \"Agent\" everywhere you see…",
    "Chat's content panels",
    "Status line",
    "Nova Agent reopens the app you had…",
-   "Missions and Quests stay inside their own…",
-   "one message"
+   "Missions and Quests stay inside their own…"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "Nova Agent reopens the app you had…"
+    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
    },
    {
     "panel": "chat",
-    "words": "One centre line"
+    "words": "Nova Agent reopens the app you had…"
+   },
+   {
+    "panel": "portal",
+    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
    },
    {
     "panel": "portal",
     "words": "Cosmic icons"
    },
    {
-    "panel": "portal",
-    "words": "Calmer, lusher sounds"
+    "panel": "calendar",
+    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
    },
    {
     "panel": "calendar",
     "words": "every day measured so nothing is cut…"
-   },
-   {
-    "panel": "calendar",
-    "words": "symbols on phones too"
    },
    {
     "panel": "notes",
@@ -161,11 +161,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "visualizer",
-    "words": "Today in music on the front page"
+    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
    },
    {
     "panel": "visualizer",
-    "words": "Cosmic icons"
+    "words": "Today in music on the front page"
    }
   ],
   "helpers": [
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "\"Chat\" is now \"Agent\" everywhere you see…",
   "every day measured so nothing is cut…",
   "new notes start Shared when signed in",
   "symbols on phones too",
   "day words and symbols switch at sensible…",
   "size checks read the month's grid",
   "small days show cards as symbols",
-  "Chat's content panels",
-  "+ more under the card"
+  "Chat's content panels"
  ]
 };

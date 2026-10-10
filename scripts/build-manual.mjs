@@ -172,10 +172,13 @@ function readme(file) {
   }
   parts.push(cur);
   const [top, ...sections] = parts;
-  // The tagline: the first bold line, or the first sentence, under the title
-  const topText = top.lines.join("\n");
-  const bold = /\*\*([^*]+)\*\*/.exec(topText);
-  const tagline = plain(inline(bold ? bold[1] : topText.split("\n").find((l) => l.trim() && !/^[<!\[]/.test(l.trim())) || ""));
+  // The tagline: the first bold line, or the first sentence, under the title (not the
+  // "> A Nova Agent panel." note that sits above it)
+  // (badges, like GitHub's shields, are for the repo page, not the manual)
+  const topText = top.lines.filter((l) => !/^\s*\[!\[/.test(l)).join("\n");
+  const ownText = top.lines.filter((l) => !/^\s*>/.test(l)).join("\n");
+  const bold = /\*\*([^*]+)\*\*/.exec(ownText);
+  const tagline = plain(inline(bold ? bold[1] : ownText.split("\n").find((l) => l.trim() && !/^[<!\[]/.test(l.trim())) || ""));
   const intro = toHtml(topText.replace(/^\s*\*\*[^*]+\*\*\s*(<br>)?\s*$/m, ""));
   return { tagline, intro, sections: sections.map((s) => ({ title: plain(inline(s.title)), md: s.lines.join("\n") })) };
 }
