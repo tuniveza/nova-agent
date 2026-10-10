@@ -439,9 +439,31 @@
   // conversation. q.dial is the number in full international form from Nova Bot
   // ("+447700900123"), or null when it isn't a mobile.
   const onPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
-  // WhatsApp's own link (wa.me redirects here, and loses emoji on the way): opens the app on a
-  // phone, and offers the app or WhatsApp Web on a computer
-  const waLink = (dial, text) => "https://api.whatsapp.com/send?phone=" + dial.replace(/\D/g, "") + (text ? "&text=" + encodeURIComponent(text) : "");
+  // Where WhatsApp opens. On a phone: WhatsApp's own link, which opens the app. On a computer:
+  // straight into WhatsApp Web (no "continue to chat" page in between), always in the same
+  // tab, or the WhatsApp app if the person picked it (remembered on this computer).
+  const waQuery = (dial, text) => "phone=" + dial.replace(/\D/g, "") + (text ? "&text=" + encodeURIComponent(text) : "");
+  const WA_PICK = "nova-portal-whatsapp";
+  function waWhere() {
+    if (onPhone) return "phone";
+    try {
+      return localStorage.getItem(WA_PICK) === "app" ? "app" : "web";
+    } catch (err) {
+      return "web";
+    }
+  }
+  function waLink(dial, text) {
+    const where = waWhere();
+    if (where === "app") return "whatsapp://send?" + waQuery(dial, text);
+    return (where === "web" ? "https://web.whatsapp.com/send?" : "https://api.whatsapp.com/send?") + waQuery(dial, text);
+  }
+  function openWhatsApp(dial, text) {
+    const where = waWhere();
+    if (where === "app") location.href = waLink(dial, text);
+    // One WhatsApp Web tab, used again each time (it can't have two open at once)
+    else if (where === "web") window.open(waLink(dial, text), "nova-whatsapp-web");
+    else window.open(waLink(dial, text), "_blank", "noopener");
+  }
   // "?&body=" works on both iPhone and Android
   const smsLink = (dial, text) => "sms:" + dial + (text ? "?&body=" + encodeURIComponent(text) : "");
   // A number to call: the mobile, or whatever they typed (a landline can still be called)
@@ -464,6 +486,10 @@
       wa.href = waLink(q.dial);
       wa.target = "_blank";
       wa.rel = "noopener";
+      wa.addEventListener("click", (e) => {
+        e.preventDefault();
+        openWhatsApp(q.dial);
+      });
       actions.appendChild(wa);
     }
     const number = callNumber(q);
@@ -957,7 +983,7 @@
     );
     let hint = "";
     if (!note && blocked) hint = "They've asked not to be contacted, so replies can't be sent. Notes still work.";
-    else if (threadMode === "whatsapp") hint = (onPhone ? "Opens WhatsApp" : "Opens WhatsApp (the app, or WhatsApp Web)") + " with this filled in. Press send there, then come back and tap “Yes, it sent”.";
+    else if (threadMode === "whatsapp") hint = { phone: "Opens WhatsApp", web: "Opens WhatsApp Web", app: "Opens the WhatsApp app" }[waWhere()] + " with this filled in. Press send there, then come back and tap “Yes, it sent”.";
     else if (threadMode === "sms") hint = onPhone ? "Opens Messages with this filled in. Press send there, then come back and tap “Yes, it sent”." : "Shows the number and message to send from your phone (or Messages on this computer). Then tap “Yes, it sent”.";
     else if (!note && cantSend) hint = "Sending needs Portal open in a browser, signed in. Notes work here.";
     else if (!note) hint = "Emailed from the studio. Their replies come to the studio inbox. Every email says why they're getting it and how to stop.";
@@ -966,6 +992,9 @@
     $("thread-online").hidden = !online;
     if (online && thread.onlineUrl) $("thread-online").href = thread.onlineUrl;
     $("thread-send").disabled = !note && Boolean(blocked || (!phone && cantSend));
+    const where = waWhere();
+    $("thread-wa-where").hidden = threadMode !== "whatsapp" || where === "phone";
+    setText("thread-wa-where", where === "app" ? "Use WhatsApp Web instead" : "Use the WhatsApp app instead");
     setText("thread-send", note ? "Add note" : threadMode === "whatsapp" ? "Open WhatsApp" : threadMode === "sms" ? (onPhone ? "Open Messages" : "Text from your phone") : "Send");
   }
 
@@ -977,7 +1006,7 @@
   function openPhoneReply(body) {
     const q = thread.enquiry;
     const kind = threadMode;
-    if (kind === "whatsapp") window.open(waLink(q.dial, body), "_blank", "noopener");
+    if (kind === "whatsapp") openWhatsApp(q.dial, body);
     else if (onPhone) location.href = smsLink(q.dial, body);
     else phoneSheet(q, "sms", body);
     sentAsk = { kind, body, key: pressKey() };
@@ -1004,7 +1033,7 @@
     row.appendChild(button("Yes, it sent", "btn small", () => logContact(a, () => (sentAsk = null))));
     row.appendChild(button(a.kind === "whatsapp" ? "Open WhatsApp again" : onPhone ? "Open Messages again" : "Show the number again", "btn small ghost", () => {
       const q = thread.enquiry;
-      if (a.kind === "whatsapp") window.open(waLink(q.dial, a.body), "_blank", "noopener");
+      if (a.kind === "whatsapp") openWhatsApp(q.dial, a.body);
       else if (onPhone) location.href = smsLink(q.dial, a.body);
       else phoneSheet(q, "sms", a.body);
     }));
@@ -1073,6 +1102,14 @@
   }
 
   document.querySelectorAll("#thread-form [data-mode]").forEach((c) => c.addEventListener("click", () => setMode(c.dataset.mode)));
+  // On a computer: WhatsApp Web (the default) or the WhatsApp app installed on it
+  $("thread-wa-where").addEventListener("click", () => {
+    try {
+      localStorage.setItem(WA_PICK, waWhere() === "app" ? "web" : "app");
+    } catch (err) {}
+    updateBox();
+    toast(waWhere() === "app" ? "WhatsApp will open in the app" : "WhatsApp will open in WhatsApp Web");
+  });
   $("thread-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const body = $("thread-input").value.trim();
