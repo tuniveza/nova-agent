@@ -177,7 +177,16 @@
   const goView = (view) => window.PortalPage && window.PortalPage.go("/portal/?view=" + view, { replace: VIEWS.includes(view) });
   document.querySelectorAll(".tabs .tab[data-view]").forEach((tab) => tab.addEventListener("click", () => goView(tab.dataset.view)));
 
-  // ===== More (phones): Quests, Alerts, NovaBot and You, with their counts =====
+  // Agent: the same conversation as Nova Agent's own, never a second one. Inside Nova Agent this
+  // panel steps aside for Agent; Portal on its own opens Nova Agent at Agent.
+  $("nav-agent").addEventListener("click", () => {
+    try {
+      if (window.parent !== window && window.parent.NovaAgent && window.parent.NovaAgent.agent) return window.parent.NovaAgent.agent();
+    } catch (err) {}
+    location.href = "/agent/";
+  });
+
+  // ===== More (phones): Agent, Quests, Alerts, NovaBot and You, with their counts =====
   function openMore() {
     const list = $("more-list");
     list.replaceChildren(
@@ -191,7 +200,9 @@
         if (badge && !badge.hidden) item.appendChild(el("span", "badge", badge.textContent));
         item.addEventListener("click", () => {
           $("more-sheet").hidden = true;
-          goView(tab.dataset.view);
+          // A Portal section, or (Agent) whatever that button does
+          if (tab.dataset.view) goView(tab.dataset.view);
+          else tab.click();
         });
         return item;
       })
@@ -300,7 +311,7 @@
     link.addEventListener("click", () => openSheet(q));
     actions.appendChild(link);
     if (q.chat_id) {
-      const chat = el("button", "btn small ghost", "Read chat");
+      const chat = el("button", "btn small ghost", "Read conversation");
       chat.type = "button";
       chat.addEventListener("click", () => {
         show("chats");
@@ -413,11 +424,11 @@
   async function openChat(chatId, name) {
     $("chats-back").hidden = false;
     $("chats-hint").hidden = true;
-    $("chats-title").textContent = name ? "Chat with " + name.split(/\s+/)[0] : "Chat";
+    $("chats-title").textContent = name ? "Conversation with " + name.split(/\s+/)[0] : "Conversation";
     const list = $("chat-list");
     try {
       const data = await api("conversations?chat=" + encodeURIComponent(chatId));
-      if (!data.messages.length) return emptyState(list, "This chat has been deleted (chats are kept for 90 days).");
+      if (!data.messages.length) return emptyState(list, "This conversation has been deleted (conversations are kept for 90 days).");
       const card = el("article", "card");
       data.messages.forEach((m) => {
         const line = el("div", "line " + (m.role === "user" ? "visitor" : "bot"));

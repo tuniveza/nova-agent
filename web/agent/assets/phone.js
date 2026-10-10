@@ -1,5 +1,5 @@
 // Nova Agent on a phone (or a small window): one bar along the bottom that never goes away, with
-// every place in Nova Agent on it (Chat, Portal, Calendar, Notes, Quests, Missions, Index,
+// every place in Nova Agent on it (Portal, Agent, Calendar, Notes, Quests, Missions, Index,
 // Observatory, Lossless audio, Admin, Visualizer, Manual: swipe it sideways for the rest); the
 // panels open between the header and the bar, and the last few stay loaded so switching back is
 // instant. Settings (rhythm, sound, music, refresh, all links) are behind the gear in the header.
@@ -212,11 +212,11 @@
   if (right) right.append(gear);
 
   // ---- The bar along the bottom: every place in Nova Agent, always there, in four groups ----
-  // Apps (Chat, Portal, Calendar, Notes, Index) · Tasks (Quests, Missions) · Tools (Lossless,
+  // Apps (Portal, Agent, Calendar, Notes, Index) · Tasks (Quests, Missions) · Tools (Lossless,
   // Visualizer) · Helpers (Observatory, Manual). Any other panel joins Tools.
   const SKIP = ['/admin/links']; // All links: behind the gear
   const GROUPS = [
-    ['apps', 'Apps', ['pane:chat', '/calendar/', '/portal/', '/notes/', '/app/memory/']], // Portal in the middle
+    ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/app/memory/']], // Portal first, Agent second
     ['tasks', 'Tasks', ['pane:quests', 'pane:missions']],
     ['tools', 'Tools', ['/lossless/', '/visualizer']],
     ['helpers', 'Helpers', ['/observatory/', 'manual']],

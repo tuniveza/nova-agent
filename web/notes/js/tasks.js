@@ -92,7 +92,7 @@
         <button type="button" class="task-go" title="Go to this task"></button>
         <div class="task-row">
           <button type="button" class="task-st" aria-haspopup="true" title="How it's going">${nameOf(st)}</button>
-          <button type="button" class="task-chat" title="Talk about this task with Agent" aria-label="Talk about this task with Agent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V15h.5A2.5 2.5 0 0 1 5 12.5z"/></svg>Chat</button>
+          <button type="button" class="task-chat" title="Talk about this task with Agent" aria-label="Talk about this task with Agent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V15h.5A2.5 2.5 0 0 1 5 12.5z"/></svg>Agent</button>
         </div>`;
       li.querySelector('.task-go').textContent = h.textContent.trim();
       li.querySelector('.task-go').addEventListener('click', () => {

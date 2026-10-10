@@ -829,7 +829,7 @@
   <div class="rh" style="position:relative">
     <button type="button" class="icon-btn suite-x" data-close aria-label="Close" style="right:16px;top:16px">✕</button>
     <h3 id="files-title">Your files</h3>
-    <p>Everything Nova Agent has written for you: preview it, download it to this computer, or open it in Notes. Ask in the chat for any document, list, plan or spreadsheet.</p>
+    <p>Everything Nova Agent has written for you: preview it, download it to this computer, or open it in Notes. Ask Agent for any document, list, plan or spreadsheet.</p>
     <div class="files-list" id="files-list"></div>
   </div>
 </dialog>
@@ -872,9 +872,9 @@
       <div class="suite-group apps">
         <h4>Apps</h4>
         <div class="suite-grid">
+          <a class="suite-app" href="/portal/" data-inside="/portal/"><span class="pico" data-p="portal" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-portal"/></svg></span><b>Portal</b><small>Enquiries, conversations, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
           <a class="suite-app here" href="/agent/"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span><b>Agent</b><small>You're here: Agent, Missions, Quests, Acuity helper</small></a>
           <a class="suite-app" href="/calendar/" data-inside="/calendar/"><span class="pico" data-p="calendar" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-calendar"/></svg></span><b>Calendar</b><small>The one Nova Agent plans into</small></a>
-          <a class="suite-app" href="/portal/" data-inside="/portal/"><span class="pico" data-p="portal" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-portal"/></svg></span><b>Portal</b><small>Enquiries, chats, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
           <a class="suite-app" href="/notes/" data-inside="/notes/"><span class="pico" data-p="notes" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-notes"/></svg></span><b>Notes</b><small>Notes and documents, Google Docs export</small></a>
           <a class="suite-app" href="/app/memory/" data-inside="/app/memory/"><span class="pico" data-p="index" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-index"/></svg></span><b>Index</b><small>Everything Nova Agent remembers: browse, edit, approve</small></a>
         </div>
@@ -1203,7 +1203,7 @@
     if (!$('files-dlg').open) $('files-dlg').showModal();
     try {
       const { files } = await (await fetch('/files/list', { cache: 'no-store' })).json();
-      $('files-list').innerHTML = files.length ? files.map((f) => fileCardHtml(f, { remove: true })).join('') : '<p>No files yet. Try “write me a release checklist as a file” in the chat.</p>';
+      $('files-list').innerHTML = files.length ? files.map((f) => fileCardHtml(f, { remove: true })).join('') : '<p>No files yet. Try “write me a release checklist as a file” in Agent.</p>';
     } catch (e) { $('files-list').innerHTML = '<p>Couldn’t load your files.</p>'; }
   }
   $('files-btn').addEventListener('click', openFiles);
@@ -1914,7 +1914,16 @@
     return true;
   }
   // The planet's card (web/shared/badge.js) opens your profile and Index here too
-  window.NovaAgent = { open: openAddress };
+  // Agent itself (Portal's side menu has it): the open panel steps aside and this conversation shows,
+  // the same one as on the bar (there's only ever one)
+  function showAgent() {
+    const tab = document.querySelector('#tabbar [data-tab="pane:chat"]');
+    if (tab && tab.offsetParent) tab.click();
+    else if (!$('viewer').hidden) $('viewer-close').click();
+    setTimeout(() => $('input').focus({ preventScroll: true }), 120);
+    return true;
+  }
+  window.NovaAgent = { open: openAddress, agent: showAgent };
 
   // ---- The Nova Agent launcher ----
   $('suite-btn').addEventListener('click', () => $('suite').showModal());
