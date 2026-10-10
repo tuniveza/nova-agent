@@ -238,3 +238,68 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
   .main:not(.viewing) > .side { min-width: 0 !important; width: 100%; max-width: 100%; justify-self: stretch; overflow: hidden; }
   .main:not(.viewing) > .chat { min-width: 0; }
 }
+
+/* ---- Quests: easy to read, and nothing ever off the screen ----
+   The whole pane (the day, the card for now, the tabs and the list) is one scrolling area, so a
+   long title can't push the list out of sight; words wrap instead of being cut short; sizes a
+   little larger and steadier; a narrow column puts each time above its card. */
+#quests-panel { container: quests / inline-size; }
+#quests-panel > #view-today { overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; }
+#quests-panel > #view-today > .subpanel { flex: none !important; overflow: visible !important; padding-right: 0; }
+#view-today > * { max-width: 100%; min-width: 0; }
+/* What's on now (or next): the clearest thing in the pane, at a size a long title still fits */
+#view-today .now-card { text-align: center; overflow-wrap: anywhere; }
+#view-today .now-kicker { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; font-size: 11px; letter-spacing: .14em; }
+#view-today .now-card .now-title { font-size: clamp(16px, 5.2cqi, 19px) !important; line-height: 1.3; margin: 6px 0 4px; overflow-wrap: anywhere; }
+#view-today .now-meta { font-size: 13.5px; line-height: 1.45; }
+#view-today .now-from { display: flex; justify-content: center; margin-top: 6px; }
+#view-today .now-card .row-btns { justify-content: center; }
+/* The list */
+#view-today .tl-time { font-size: 12.5px; color: var(--text); }
+#view-today .tl-time small { font-size: 11px; color: var(--muted); }
+#view-today .tl-item:has(> .tl-card.compact) .tl-time { font-size: 12px; }
+#view-today .tl-card { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+#view-today .tl-title { line-height: 1.3; }
+#view-today .tl-card.compact:not(.open) > .tl-title { font-size: 14px; font-weight: 600; line-height: 1.35; white-space: normal; overflow: visible; text-overflow: clip; }
+#view-today .tl-meta { font-size: 13px; line-height: 1.45; }
+#view-today .prio { font-size: 11px; }
+#view-today .tl-label { margin: 0 0 6px; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--hi); }
+/* The quest that's on the card above, as its row: marked, quietly */
+#view-today .tl-item.is-now .tl-card.compact { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi) 45%, transparent); }
+#view-today .tl-item.is-now .tl-time { color: var(--hi); }
+/* Tags, the mode chip and the buttons: readable, and they wrap rather than poke out */
+#view-today .q-tags { min-width: 0; }
+#view-today :is(.q-tag, .m-tag, .risk-tag, .t-tag) { min-width: 0; max-width: 100%; font-size: 11px; letter-spacing: .04em; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+#view-today .m-tag { text-transform: none; letter-spacing: .02em; }
+#view-today .qm-chip { min-width: 0; max-width: 100%; white-space: normal; overflow: visible; text-overflow: clip; text-align: left; overflow-wrap: anywhere; }
+#view-today .mini { max-width: 100%; font-size: 11.5px; padding: 6px 12px; letter-spacing: .03em; white-space: normal; text-align: center; }
+#view-today .subtabs button { font-size: 11px; letter-spacing: .06em; }
+#view-today .up-day li { font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; }
+#view-today .up-day li .qm-chip { vertical-align: middle; }
+#view-today .tl-card.done, #view-today .tl-card.quest.done { opacity: .7; }
+/* A refresh while you're looking: the cards don't play their entrance again */
+#view-today.quiet .subpanel, #view-today.quiet .tl-card.quest:not(.doing) { animation: none; }
+#view-today.quiet .tl-card.quest.doing { animation: quest-breathe 2.4s ease-in-out infinite; }
+#view-today.quiet .now-card { animation: now-breathe 3s ease-in-out infinite; }
+/* A narrow column: each time sits above its card, so the card gets the full width */
+@container quests (max-width: 300px) {
+  #view-today .tl-item, #view-today .tl-item:has(> .tl-card.compact) { grid-template-columns: minmax(0, 1fr) !important; gap: 2px !important; }
+  #view-today .tl-time { display: flex; justify-content: center; gap: 4px; padding-top: 2px; text-align: center; }
+  #view-today .tl-time small { display: inline !important; }
+  #view-today .tl-time small::before { content: "– "; }
+  #view-today .now-line { margin: 18px 0 4px !important; }
+  #view-today .now-line::before { left: 0 !important; width: 100% !important; top: -16px; text-align: center !important; }
+}
+/* The day's counts: one quiet line of words (no boxes), so the list starts higher up */
+#view-today .day-head .stats { gap: 2px 14px; }
+#view-today .day-head .stat { padding: 0; border: 0; background: none; border-radius: 0; font-size: 12px; }
+#view-today .day-head .stat b { font-size: 15px; }
+@container quests (max-width: 300px) {
+  #view-today .now-card { padding: 9px 10px; }
+}
+/* A phone: the pane's name and its four buttons share one centred row when they fit */
+@media (max-width: 980px), (max-height: 480px) {
+  #quests-panel > .side-head { display: flex !important; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; padding: 6px 8px !important; }
+  #quests-panel > .side-head > * { grid-column: auto !important; }
+  #quests-panel > .side-head .strip-tools { gap: 3px; }
+}

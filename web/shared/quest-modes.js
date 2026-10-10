@@ -46,16 +46,25 @@
     document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target) && e.target !== anchorNow) close(); }, true);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) close(); });
     addEventListener('resize', () => close());
+    // The list under it scrolled away: the menu goes too (it never floats away from its quest)
+    document.addEventListener('scroll', (e) => {
+      const t = e.target;
+      if (!menu.hidden && anchorNow && (t === document || (t instanceof Element && t.contains(anchorNow)))) close();
+    }, true);
     menu.addEventListener('click', (e) => { const b = e.target.closest('[data-mode]'); if (b) close(b.dataset.mode); });
     return menu;
   }
-  // Beside the anchor, always fully on screen
+  // Beside the anchor, always fully on screen: below it, or above it, or (no room for either)
+  // as low as it fits; taller than the screen, it scrolls inside (quest-modes.css)
   function place(anchor) {
     menu.hidden = false;
+    menu.style.left = menu.style.top = '0px';
     const r = anchor.getBoundingClientRect();
+    const W = document.documentElement.clientWidth || innerWidth, H = innerHeight;
     const w = menu.offsetWidth, h = menu.offsetHeight;
-    menu.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, r.left))}px`;
-    menu.style.top = `${Math.max(8, r.bottom + 6 + h <= innerHeight - 8 ? r.bottom + 6 : r.top - 6 - h)}px`;
+    menu.style.left = `${Math.max(8, Math.min(W - w - 8, r.left))}px`;
+    const top = r.bottom + 6 + h <= H - 8 ? r.bottom + 6 : r.top - 6 - h >= 8 ? r.top - 6 - h : H - 8 - h;
+    menu.style.top = `${Math.max(8, top)}px`;
   }
   function pick(anchor, current) {
     close();
