@@ -799,9 +799,18 @@
       if (path === "approve") toast(a.status === "executed" ? "Done in Acuity" : a.status === "failed" ? "Didn't go through: " + (a.error || "see the card") : "Approved");
       else toast(path === "edit" ? "Saved: still waiting for approval" : "Rejected: nothing was changed");
     } catch (err) {
+      if (err.message === "signed out") return;
       toast(err.message);
-      // (nothing changed, so the card isn't redrawn: its buttons work again)
+      // The reason stays on the card (nothing changed, so the card isn't redrawn: its buttons work again)
+      let why = card.querySelector(".appr-error");
+      if (!why) {
+        why = el("p", "appr-result bad appr-error");
+        why.setAttribute("role", "alert");
+        card.appendChild(why);
+      }
+      why.textContent = (path === "approve" ? "Not approved: " : path === "edit" ? "Not saved: " : "Not rejected: ") + err.message;
       card.querySelectorAll("button").forEach((b) => (b.disabled = false));
+      return;
     }
     loadApprovals();
   }
