@@ -109,7 +109,7 @@
     {
       "id": "nova-bot",
       "name": "Nova Bot",
-      "tagline": "The studio's AI chat assistant, plus Hub for staff",
+      "tagline": "The studio's AI chat assistant, plus Portal for staff",
       "path": "../nova-bot",
       "category": "Nova Agent",
       "theme": "novacane",
@@ -128,12 +128,12 @@
         "Vitest"
       ],
       "status": "active",
-      "goal": "The AI chat assistant for Novacane Studios, a recording studio in London. It sits on the studio's website as a chat widget, answers from Claude, finds free Acuity times and opens a booking card where the visitor pays the deposit to book. It also serves Hub, the staff app. Its own booking system (Google Calendar, Gmail and Stripe) is built and waiting behind a switch.",
+      "goal": "The AI chat assistant for Novacane Studios, a recording studio in London. It sits on the studio's website as a chat widget, answers from Claude, finds free Acuity times and opens a booking card where the visitor pays the deposit to book. It also serves Portal, the staff app. Its own booking system (Google Calendar, Gmail and Stripe) is built and waiting behind a switch.",
       "vision": "A front desk that never closes: visitors get real answers and real bookings, and staff run enquiries, chats and bookings from their phones.",
       "features": [
         "Themed chat widget with optional voice; Claude answers with every link checked",
         "Free Acuity times, booking links and an in-chat booking card (deposit first)",
-        "Hub staff app: enquiries, customer chats, bookings by chat, push alerts",
+        "Portal staff app: enquiries, customer chats, bookings by chat, push alerts",
         "Enquiries, referral codes and a password-protected admin page",
         "Behind a switch (off by default): its own booking page, Google Calendar diary, Gmail emails and Stripe deposits",
         "352 Vitest tests, covering both booking systems and the switch"

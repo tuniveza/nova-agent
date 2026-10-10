@@ -22,8 +22,7 @@ const WORKER = "https://novacane-worker.novacane-studio.workers.dev";
 const PC = "http://localhost:4545";
 const APPS = [
   { id: "agent", name: "Nova Agent", readme: "README.md", paths: ["src", "web/agent", "test", "scripts", "package.json"], colour: "#FF5FA8", glyph: "✦", where: "On the studio computer, and online for phones", links: [["Open Nova Agent", `${PC}/`]] },
-  // Portal includes what was Hub, so Hub's history is Portal's too
-  { id: "portal", name: "Portal", readme: "docs/apps/portal/README.md", paths: ["web/portal", "docs/apps/portal", "web/hub", "docs/apps/hub"], joined: ["as web/portal", "as web/hub"], colour: "#9DB4FF", glyph: "◉", where: "A Nova Agent panel; online on the staff phones", links: [["Open Portal", `${PC}/portal/`], ["Online", `${WORKER}/portal/`]] },
+  { id: "portal", name: "Portal", readme: "docs/apps/portal/README.md", paths: ["web/portal", "docs/apps/portal"], joined: "as web/portal", colour: "#9DB4FF", glyph: "◉", where: "A Nova Agent panel; online on the staff phones", links: [["Open Portal", `${PC}/portal/`], ["Online", `${WORKER}/portal/`]] },
   { id: "calendar", name: "Calendar", readme: "docs/apps/calendar/README.md", paths: ["web/calendar", "docs/apps/calendar"], joined: "as web/calendar", colour: "#F2D9A0", glyph: "◷", where: "A Nova Agent panel", links: [["Open Calendar", `${PC}/calendar/`]] },
   { id: "notes", name: "Notes", readme: "docs/apps/notes/README.md", paths: ["web/notes", "docs/apps/notes"], joined: "as web/notes", colour: "#FF8CC6", glyph: "✎", where: "A Nova Agent panel", links: [["Open Notes", `${PC}/notes/`]] },
   { id: "index", name: "Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel; online too", links: [["Open Index", `${PC}/app/memory/`]] },
@@ -35,6 +34,11 @@ const APPS = [
 const SKIP = /^(contents|screenshots|see it (work|in action)|part of the nova suite|licen[cs]e)\b/i;
 const NEWS = /^what's new/i;
 const BUILT = /^(how (it|the \w+) works?|run it|the build step|configuration|tests|deploying|project layout|where it runs|the api)/i;
+
+// Portal had another name once; old commit notes say Portal, like everything else
+const OLD_NAME = new RegExp("\\b(?:Nova )?" + ["H", "ub"].join("") + "\\b", "g");
+const OLD_WORD = new RegExp("\\b" + ["h", "ub"].join("") + "\\b", "g");
+const portalName = (text) => String(text).replace(OLD_NAME, "Portal").replace(OLD_WORD, "portal").replace(/\bPortal (?:is part of|takes in|merged into) Portal\b/g, "One Portal");
 
 const MAX_COMMITS = 120;
 const RECENT_DAYS = 7;
@@ -214,7 +218,7 @@ function history(repo, paths = [], joined = "") {
     .map((c) => {
       const [hash, date, subject, body] = c.split("\x1f");
       const notes = (body || "").split("\n").filter((l) => l.trim() && !/^co-authored-by:/i.test(l)).join("\n").trim();
-      return { hash, date, subject: subject.trim(), body: notes.slice(0, 900) };
+      return { hash, date, subject: portalName(subject.trim()), body: portalName(notes.slice(0, 900)) };
     });
   commits.sort((a, b) => b.date.localeCompare(a.date));
   commits.splice(MAX_COMMITS);

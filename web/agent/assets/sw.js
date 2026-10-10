@@ -2,7 +2,7 @@
 // an installable app, wakes up when a phone notification arrives (even with Nova Agent closed),
 // and opens Nova Agent on the right panel when a notification is tapped. Nothing is cached.
 // On the studio PC it also brings Nova Agent back for its own reminders.
-// (Phones that installed Hub from /app/ or Portal from /portal/ keep their old doorman,
+// (Phones that installed Portal (from /app/ or /portal/) keep their old doorman,
 // /app/sw.js or /portal/sw.js, which sends taps here too.)
 
 self.addEventListener("install", () => self.skipWaiting());
@@ -19,7 +19,7 @@ const BUZZ = {
 };
 
 // Where a notification goes: a panel's address (/portal/#nova, /app/memory/...) opens inside
-// Nova Agent; Hub's old address (/app/) is Portal; other sites (Acuity) open as they are
+// Nova Agent; Portal's old address (/app/) is Portal; other sites (Acuity) open as they are
 function panelUrl(url) {
   let u = String(url || "/");
   if (u === "/app" || (u.startsWith("/app/") && !u.startsWith("/app/memory"))) u = "/portal/" + u.slice(5).replace(/^\//, "");

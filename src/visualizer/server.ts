@@ -38,7 +38,7 @@ import { chat, type ChatTurn } from "../chat";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
 import { createMission, refineMission } from "../quests/planner";
-import { startHubSync } from "../quests/hubsync";
+import { startPortalSync } from "../quests/portalsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { questEvents } from "../quests/store";
@@ -132,7 +132,7 @@ const appRoot = web("agent/assets/");
 const appFile = (name: string) => (c: any) => c.body(readFileSync(appRoot + name), 200, { "Content-Type": TYPES[extname(name)], "Cache-Control": "no-cache" });
 app.get("/manifest.webmanifest", appFile("manifest.webmanifest"));
 app.get("/sw.js", appFile("sw.js"));
-// Nova Agent's own icons (/app/ was Hub's address; Hub is part of Portal now)
+// Nova Agent's own icons (/app/ was Portal's old address)
 app.get("/agent/:file", (c) => {
   const name = c.req.param("file");
   if (/^[\w-]+\.(png|svg|js|css)$/.test(name) && existsSync(appRoot + name)) return appFile(name)(c);
@@ -187,22 +187,22 @@ app.get("/index/*", (c) => c.redirect("/app/memory/" + c.req.path.slice("/index/
 // Nova Agent's key; the planet pictures come through here too, so the panels never talk to another site.
 serveFolder("/shared", "shared/", "web/shared is missing.");
 
-// ---- Portal, as a panel (Hub is part of it now) ----
+// ---- Portal, as a panel ----
 // It uses Nova Bot's staff API. Signing in on the Portal signs Nova Agent in to Nova Bot
 // as that person (src/signin.ts); their requests are passed on with that sign-in.
 serveFolder("/portal", "portal/", "web/portal is missing.");
-// Hub's old address: its pages go to Portal (/app/#nova stays #nova; the browser keeps it).
+// Portal's old address: its pages go to Portal (/app/#nova stays #nova; the browser keeps it).
 // The API (/app/api/) and Index (/app/memory/) keep theirs, and so do the files phones that
-// installed Hub still use (its push helper, manifest and icons).
-const oldHubFiles = web("portal/old-app-address/");
-const OLD_HUB_FILES = new Set(["sw.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"]);
+// installed Portal still use (its push helper, manifest and icons).
+const oldPortalFiles = web("portal/old-app-address/");
+const OLD_ADDRESS_FILES = new Set(["sw.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"]);
 app.get("/app", (c) => c.redirect("/portal/" + new URL(c.req.url).search));
 app.get("/app/*", async (c, next) => {
   const rest = c.req.path.slice("/app/".length);
   if (/^(api|memory)(\/|$)/.test(rest)) return next();
-  if (OLD_HUB_FILES.has(rest)) {
+  if (OLD_ADDRESS_FILES.has(rest)) {
     const type = TYPES[extname(rest)] || MEDIA[extname(rest)] || (rest.endsWith(".webmanifest") ? "application/manifest+json" : "application/octet-stream");
-    return c.body(readFileSync(oldHubFiles + rest) as any, 200, { "Content-Type": type, "Cache-Control": "no-cache" });
+    return c.body(readFileSync(oldPortalFiles + rest) as any, 200, { "Content-Type": type, "Cache-Control": "no-cache" });
   }
   return c.redirect("/portal/" + new URL(c.req.url).search);
 });
@@ -544,6 +544,6 @@ try {
 }
 startQuestReminders();
 startPulses();
-startHubSync();
+startPortalSync();
 // Online: Nova Bot passes staff members' requests to this server over a link the PC opens (src/relay.ts)
 startRelay(app.fetch);

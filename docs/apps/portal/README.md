@@ -8,7 +8,7 @@
 
 Portal is where the staff work: enquiries, website chats, bookings, quests, alerts, Ask NovaBot and push notifications to the staff phones. It's also where you sign in (once, for Portal, Index and the admin pages), and where every member of the team has a profile with a unique planet, drawn from their id.
 
-**Hub is part of Portal now.** Everything Hub did is here, in the same tabs. Hub's old address, `/app/`, opens Portal (with the same tab: `/app/?view=alerts` is `/portal/?view=alerts`). Phones that added Hub to the Home Screen keep working and keep getting notifications; adding Portal to the Home Screen gives the new icon.
+Portal's old address, `/app/`, opens Portal (with the same tab: `/app/?view=alerts` is `/portal/?view=alerts`). Phones that added Portal to the Home Screen keep working and keep getting notifications; adding Portal to the Home Screen gives the new icon.
 
 <p align="center"><img src="media/planets.jpg" width="860" alt="48 generated planets: ringed gas giants, ocean worlds, molten worlds, ice worlds and rocky worlds, each one different"></p>
 
@@ -18,7 +18,7 @@ Along the bottom on a phone, down the side on a desktop:
 
 | Tab | |
 |---|---|
-| **Enquiries · Chats · Calendar · Quests · Alerts · NovaBot** | The work tabs (what was Hub). See [the work tabs](#the-work-tabs). |
+| **Enquiries · Chats · Calendar · Quests · Alerts · NovaBot** | The work tabs. See [the work tabs](#the-work-tabs). |
 | **You** | Your planet (it's the tab's icon), your profile, your Index, and for admins the crew and the admin pages. |
 
 The address follows the tab, so a reload or a link lands in the same place: `/portal/?view=enquiries` (or `chats`, `calendar`, `quests`, `alerts`, `bot`), `/portal/?view=me`, `/portal/?view=crew`, `/portal/?id=<someone>`. With no `?view=`, Portal opens on the starting tab from Options; a Nova Agent notification (`#nova`) opens Alerts.
@@ -100,7 +100,7 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
 - **Real-booking checks.** A booking alert asks Acuity about that booking as it comes into
   view: "✓ Real booking: confirmed in Acuity", with the deposit paid, or "Cancelled" or
   "Not found". Tests are labelled as tests, so nothing fake can pass for a booking.
-- **Push notifications that work with the app closed** (Nova Bot's `src/push.js`, and `web/portal/sw.js`; phones that installed Hub from `/app/` keep `/app/sw.js`).
+- **Push notifications that work with the app closed** (Nova Bot's `src/push.js`, and `web/portal/sw.js`; phones that installed Portal from `/app/` keep `/app/sw.js`).
   New enquiries, bookings (with every detail from Acuity's private calendar feed), and
   alerts from Nova Agent, Quest and Mission. Android gets rich notifications
   with their own buzz; iPhones get the plain version, so nothing is ever lost.
@@ -140,7 +140,7 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
 </p>
 
 <p align="center">
-  <img src="media/studio-desktop.jpg" alt="Portal (then called Hub) on a desktop: tabs in a side rail, and alerts in two columns, including a booking checked in Acuity and a Quest alert" width="100%"><br>
+  <img src="media/studio-desktop.jpg" alt="Portal on a desktop: tabs in a side rail, and alerts in two columns, including a booking checked in Acuity and a Quest alert" width="100%"><br>
   <sub>On a desktop, the tabs become a side rail and lists go two-up.</sub>
 </p>
 

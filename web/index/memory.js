@@ -1068,7 +1068,7 @@
   function sourceMark(app) {
     const a = String(app || "").toLowerCase();
     if (a.includes("agent")) return "i-mark-a";
-    if (a.includes("hub")) return "i-mark-h";
+    if (a.includes("portal")) return "i-mark-p";
     if (a.includes("bot") || a.includes("website")) return "i-mark-bot";
     return "i-mark-i";
   }

@@ -38,7 +38,7 @@ function missionProgress(data: QuestData, m: Mission) {
 }
 
 // Everything the page needs, in one go
-// A tap from Hub's Quests tab (passed on by Nova Bot's worker)
+// A tap from Portal's Quests tab (passed on by Nova Bot's worker)
 export interface QuestTap {
   kind: "quest" | "mission";
   id: string;
@@ -90,7 +90,7 @@ export function questState() {
 }
 
 // For an ongoing quest, "done" finishes this session and lines up the next one;
-// `finish` ends the quest for good. `forSession` (from a Hub tap): the
+// `finish` ends the quest for good. `forSession` (from a Portal tap): the
 // session it was tapped on; if that one's already done, nothing changes.
 export function setQuestStatus(id: string, status: Quest["status"], finish = false, forSession?: string): Quest {
   const data = readQuests();

@@ -1,7 +1,7 @@
 # Index — Build Spec
 
 **For:** Claude Code
-**Goal:** Build one shared memory engine for the Nova Agent, plus **Index** — a browsable app that is the human face of that memory. Every app (Nova Bot, Nova Agent, Nova Club, Hub) feeds facts *into* it and reads context *out of* it, so everything Nova Agent knows about people, the studio and ongoing work lives in one place.
+**Goal:** Build one shared memory engine for the Nova Agent, plus **Index** — a browsable app that is the human face of that memory. Every app (Nova Bot, Nova Agent, Nova Club, Portal) feeds facts *into* it and reads context *out of* it, so everything Nova Agent knows about people, the studio and ongoing work lives in one place.
 
 This must be highly optimised, very performant: fast reads, tiny prompts, memory that never bloats, and extraction that never makes a person wait.
 
@@ -18,7 +18,7 @@ The test for every stored fact: **"Would this still be true/useful in three mont
 1. **The engine (quiet):** a shared memory store + extraction/retrieval service on Nova Bot's Worker. Every app talks to it over HTTP. No app owns the data; they all share one brain.
 2. **Index (the app):** a browsable window onto that brain. Scroll people, topics and studio facts; watch memory grow; edit a line; approve a pending fact. Like Observatory is a dashboard you look *into*, Index is the dashboard you look into the suite's **memory** through. It is fed by every app and read by every app — one place for everything Nova Agent knows.
 
-**Shared store, per-app behaviour.** The store is one brain, but each app only sees and writes its own slice, enforced server-side by scope: `studio` (shared facts), `staff` (per staff member), `customer` (per client). Nova Agent pulls a staff member's rhythm + studio facts; the website chat only sees customer-facing facts; Nova Club is read-only and member-facing; Hub + Index can see and edit across scopes for the people running the studio.
+**Shared store, per-app behaviour.** The store is one brain, but each app only sees and writes its own slice, enforced server-side by scope: `studio` (shared facts), `staff` (per staff member), `customer` (per client). Nova Agent pulls a staff member's rhythm + studio facts; the website chat only sees customer-facing facts; Nova Club is read-only and member-facing; Portal + Index can see and edit across scopes for the people running the studio.
 
 ---
 
@@ -33,7 +33,7 @@ The test for every stored fact: **"Would this still be true/useful in three mont
    reads/writes│        │          │           │      │
       context  │        │          │           │      │
       ┌────────┘   ┌────┘     ┌────┘      ┌────┘   ┌──┘
- Nova Agent   Website chat  Hub   Nova Club   NOVA INDEX
+ Nova Agent   Website chat  Portal   Nova Club   NOVA INDEX
  (staff+studio) (customer)  (all,edit) (read-only) (browse all, edit, approve)
 ```
 
@@ -113,7 +113,7 @@ Runs **async, off the critical path** — never blocks a reply.
 
 1. **Distil.** One small, cheap model call (low effort, strict JSON out). Returns an array of `{ path, tag, fact }` — durable facts only, one clause each, phrased to outlast specifics ("meeting-heavy mornings", not "10:15 standup"). Prompt rules: apply the three-month test; no transient state; no live/queryable data; no model-invented advice; one short line per fact; refuse PII it shouldn't keep (card/account numbers, government IDs).
 2. **Merge, don't pile up.** For each fact: load the target file; if a line already covers the *same subject*, **rewrite that line** (this is what keeps files flat); only append if genuinely new. Write back with `if_version`; on `409`, re-read and retry once.
-3. **Human gate (customer/sensitive):** drop into `memory_pending` for one-tap approve/reject in Index/Hub instead of auto-writing.
+3. **Human gate (customer/sensitive):** drop into `memory_pending` for one-tap approve/reject in Index/Portal instead of auto-writing.
 
 **Keep files small:** cap each file (~2–4 KB). On overflow, run a one-shot **condense** pass that merges related lines. Small files = cheap reads = fast prompts.
 
@@ -162,7 +162,7 @@ The browsable face. Built as a PWA in the shared Suite style (Archivo/Saira, the
 1. D1 schema + engine API on the Worker (with `if_version` concurrency).
 2. Retrieval + prompt-cache wiring in Nova Bot and Nova Agent (**read-only first — ship value immediately**). Replace Nova Agent's single-person `homeBase`/rhythm with the retrieved profile so multi-staff plans stop mixing.
 3. Async extraction + merge-not-append logic.
-4. **Index app** — browse, edit, approve — plus the same memory screen surfaced inside Hub.
+4. **Index app** — browse, edit, approve — plus the same memory screen surfaced inside Portal.
 5. Condense pass + token budgets + edge caching (the optimisation pass).
 
 **Definition of done:** a fact learned in a website chat on Monday shapes Nova Agent's reply on Wednesday; the person's file is still under a page after a month; no reply ever waits on extraction; and Index shows the whole suite's memory, growing live, in one browsable place.

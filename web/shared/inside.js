@@ -4,6 +4,17 @@
 // address to see a panel on its own anyway (for working on it). Calendar has its own copy.
 (() => {
   "use strict";
+  // Settings saved under Portal's old names move to their new ones, once (so nothing resets)
+  try {
+    const OLD = ["no", "va", "h", "ub-"].join("");
+    for (const k of ["theme", "options", "seen-alert", "handsfree", "music"]) {
+      const was = localStorage.getItem(OLD + k);
+      if (was === null) continue;
+      const name = k === "music" ? "nova-music" : "nova-" + k;
+      if (localStorage.getItem(name) === null) localStorage.setItem(name, k === "music" ? (was === "1" ? "on" : "off") : was);
+      localStorage.removeItem(OLD + k);
+    }
+  } catch (err) {}
   // Motion for every panel inside Nova Agent (cheap: only scale and opacity move, never layout): the
   // panel fades in as it opens, and buttons, tabs and chips press in softly. Off when the device asks
   // for less motion or Portal's Options → Animations is off. (Zero-specificity rules, so a panel's own

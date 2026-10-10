@@ -1,4 +1,4 @@
-/* Hub themes: every colour the app uses, as custom properties.
+/* Portal themes: every colour the app uses, as custom properties.
    :root is the default theme ("cosmic", Nova Agent's magenta and purple); each
    :root[data-theme="..."] block below swaps the colours for another theme.
    Only colours, gradients, glows and fonts live here (no layout), so other pages on the

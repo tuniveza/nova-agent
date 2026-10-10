@@ -1,4 +1,4 @@
-// Hub themes: puts the chosen theme on the page, remembers it on this device, and draws
+// Portal themes: puts the chosen theme on the page, remembers it on this device, and draws
 // the theme picker (a swatch per theme) wherever the page has a <div id="theme-list">.
 // Loaded in the <head>, before the page is drawn, so the right colours show from the very first
 // frame (the site's security rules don't allow scripts written inside the page itself).
@@ -15,7 +15,7 @@
     { id: "gold", name: "Gold", color: "#070605", preview: "radial-gradient(120% 90% at 20% 0%, #F0D08A 0%, #9C7A36 40%, #2B2316 70%, #070605 100%), #070605" },
     { id: "mono", name: "Mono", color: "#060607", preview: "radial-gradient(120% 90% at 20% 0%, #F2F2F5 0%, #6A6A74 35%, #1A1A20 70%, #060607 100%), #060607" },
   ];
-  const KEY = "novahub-theme";
+  const KEY = "nova-theme";
   const root = document.documentElement;
 
   // Find a theme by its id (or the default, Cosmic)
@@ -106,12 +106,12 @@
   window.NovaThemes = { list: list.map(({ id, name, preview }) => ({ id, name, preview })), current, set };
 })();
 
-// Hub options: how the app looks and behaves on this device (chosen in the Options sheet,
+// Portal options: how the app looks and behaves on this device (chosen in the Options sheet,
 // options.js). Applied here too, before the page is drawn, so there's no jump when it opens.
 // window.NovaOptions = { get(), set(changes), reset(), defaults }
 (() => {
   "use strict";
-  const KEY = "novahub-options";
+  const KEY = "nova-options";
   const defaults = { align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "today" };
   const root = document.documentElement;
 

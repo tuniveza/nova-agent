@@ -2,7 +2,7 @@
 //
 // Novabot's worker queues two kinds of job for Nova Agent:
 //   - "book":   a customer asked Novabot to book a session for them
-//   - "change": staff asked (in Hub) to change a booking's session type,
+//   - "change": staff asked (in Portal) to change a booking's session type,
 //               price or paid status, which Acuity's API can't do
 // Nova Agent keeps asking the worker "any jobs for me?" (also saying
 // whether it's live or rehearsing, so Novabot only offers to book while it's
@@ -12,7 +12,7 @@
 // Nova Agent only ever calls out to the worker, so it can run on any
 // computer: nothing on the internet needs to reach it.
 
-import { applyQuestTaps } from "./quests/hubsync";
+import { applyQuestTaps } from "./quests/portalsync";
 import { z } from "zod";
 import type { ActionResult } from "./acuity/types";
 import { config } from "./config";
@@ -90,7 +90,7 @@ async function checkForJob(): Promise<"job" | "none" | "problem"> {
       (WAIT_SECONDS + 15) * 1000,
     )) as { job: unknown; questActions?: unknown };
     lastProblem = "";
-    // Taps from Hub's Quests tab come along with the job check
+    // Taps from Portal's Quests tab come along with the job check
     applyQuestTaps(questActions);
     if (!job) return "none";
     await doJob(job);

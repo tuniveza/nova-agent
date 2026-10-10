@@ -1,6 +1,6 @@
 // Signing in to Nova Bot as a person, from Nova Agent on the studio PC.
 //
-// The Hub and Portal panels use Nova Bot's staff API (/app/api/*, /auth/*, /staff*).
+// Portal uses Nova Bot's staff API (/app/api/*, /auth/*, /staff*).
 // Online, the browser talks to Nova Bot itself. Here, Nova Agent passes those
 // requests on: signing in in the Portal logs in to Nova Bot the way an app does
 // (an app token, "nsess_…"), and the token stays in data/signin.json, never in the

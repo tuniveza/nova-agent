@@ -1,9 +1,9 @@
 // Portal's "doorman" (service worker). It lives on the phone and wakes up when Apple
-// delivers a notification, even if Portal is closed. (Phones that installed Hub from /app/
+// delivers a notification, even if Portal is closed. (Phones that installed Portal from its old address, /app/
 // keep the old one, /app/sw.js, which does the same.)
 
 // A new version of the doorman takes over straight away (instead of waiting
-// until every Hub window has been closed), so fixes reach the phone at once
+// until every Portal window has been closed), so fixes reach the phone at once
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
@@ -17,7 +17,7 @@ const BUZZ = {
   agent: [500, 150, 500],
 };
 
-// Hub's old address (/app/, /app/#nova) is Portal now; Index (/app/memory/) and other sites stay
+// Portal's old address (/app/, /app/#nova) is Portal now; Index (/app/memory/) and other sites stay
 function portalUrl(url) {
   const u = String(url || "/portal/");
   if (u === "/app" || (u.startsWith("/app/") && !u.startsWith("/app/memory"))) return "/portal/" + u.slice(5).replace(/^\//, "");
@@ -27,7 +27,7 @@ function portalUrl(url) {
 // A notification has arrived from Apple
 self.addEventListener("push", (event) => {
   // Unpack the title, text and where to go when it's tapped (or use plain defaults)
-  const data = event.data ? event.data.json() : { title: "Nova Agent", body: "Something new in Hub" };
+  const data = event.data ? event.data.json() : { title: "Nova Agent", body: "Something new in Portal" };
   // The plain version: title, text, icon and where to go (what every phone shows, iPhones included)
   const plain = { body: data.body || "", icon: "/portal/icon-192.png", data: { url: portalUrl(data.url) } };
   // The rich version adds a buzz pattern, a tag (a newer one replaces the older one), and
@@ -50,9 +50,9 @@ self.addEventListener("push", (event) => {
     Promise.all([
       // Show the notification on the phone
       show(),
-      // A dot on the Home Screen icon until Hub is opened (never allowed to stop the notification)
+      // A dot on the Home Screen icon until Portal is opened (never allowed to stop the notification)
       self.navigator.setAppBadge ? self.navigator.setAppBadge().catch(() => {}) : null,
-      // If Hub is open, tell it too, so it can ping and show a banner straight away
+      // If Portal is open, tell it too, so it can ping and show a banner straight away
       self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => windows.forEach((w) => w.postMessage({ type: "nova-push", ...data }))).catch(() => {}),
     ])
   );
@@ -66,7 +66,7 @@ self.addEventListener("notificationclick", (event) => {
   const url = portalUrl(event.notification.data?.url);
   // Keep the doorman awake until the right screen is open
   event.waitUntil(
-    // Look for Hub windows that are already open
+    // Look for Portal windows that are already open
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
       // Panels open inside Nova Agent now: bring Nova Agent to the front on that panel
       const local = url.startsWith("/") && !url.startsWith("//");

@@ -20,7 +20,7 @@ Talk to it, give it a goal, and it plans your days to the second. It also works 
 
 Nova Agent is the studio's one app. Everything that used to be a separate Nova app is a
 panel of it: **Portal** (the staff app: enquiries, website chats, bookings, alerts, Ask
-NovaBot, sign-in, your planet and the team; Hub is part of it now), **Calendar**, **Notes**,
+NovaBot, sign-in, your planet and the team; Portal is part of it now), **Calendar**, **Notes**,
 **Index**, **Observatory**, **Lossless audio** and **Admin**. The panels only ever open
 inside Nova Agent. Nova Agent has one address in each place, `/agent/`:
 
@@ -79,7 +79,7 @@ All the pictures here come from a separate sample copy with made-up quests and p
 | Panel | What it is | On the studio PC | Online (Nova Bot) | Code |
 |---|---|---|---|---|
 | **Agent** | Talk to Nova Agent; Missions and Quests | `/` | | `src/`, `web/agent/` |
-| **Portal** | The staff app: enquiries, website chats, bookings, quests, alerts, Ask NovaBot, push to the phones (what was Hub), and sign-in, your planet, the team and invites | `/portal/` | `/portal/` | `web/portal/` |
+| **Portal** | The staff app: enquiries, website chats, bookings, quests, alerts, Ask NovaBot, push to the phones, and sign-in, your planet, the team and invites | `/portal/` | `/portal/` | `web/portal/` |
 | **Calendar** | Note cards and day cards; Nova Agent plans into it | `/calendar/` | `/calendar/` | `web/calendar/` |
 | **Notes** | Notes and documents, Google Docs export | `/notes/` | `/notes/` | `web/notes/` |
 | **Index** | Everything Nova Agent remembers: browse, edit, approve | `/app/memory/` | `/app/memory/` | `web/index/` |
@@ -96,8 +96,8 @@ own permissions, and Nova Agent works for you. Only Nova Agent's own pages can u
 
 **Online.** Nova Bot's worker copies the panels in at build time (its
 `scripts/sync-apps.mjs`, from this repo's `web/`) and serves them for phones and anywhere
-away from the studio PC. Hub's old address (`/app/`) opens Portal; its API (`/app/api/`),
-Index (`/app/memory/`) and the push helper that phones which installed Hub still use
+away from the studio PC. Portal's old address (`/app/`) opens Portal; its API (`/app/api/`),
+Index (`/app/memory/`) and the push helper that phones which installed Portal still use
 (`/app/sw.js`) keep their addresses.
 
 ## What it does
@@ -215,7 +215,7 @@ until they're answered, and a pulse replaces its last notification.
 
 Nova Agent sends its plan (missions, quests, pulses, and Calendar's note and day cards)
 to Nova Bot's worker whenever it changes, and every minute so "now" keeps moving
-(`src/quests/hubsync.ts`). Portal's Quests and Calendar tabs show it on the staff phones,
+(`src/quests/portalsync.ts`). Portal's Quests and Calendar tabs show it on the staff phones,
 and taps made there (Done, Start, Not now, Skip, pause a mission) come back with each job
 check and are carried out within about a second.
 
@@ -659,7 +659,7 @@ src/quests/planner.ts     turning a goal into a Mission and its Quests (Claude)
 src/quests/plan.ts        re-planning, and mirroring quests into Calendar
 src/quests/reminders.ts   reminders, check-ins, the morning plan and evening wrap-up
 src/quests/deliveries.ts  every phone ping: sent once, checked, retried, logged (data/nova.db)
-src/quests/hubsync.ts     the plan to the phones (Portal), and their taps back
+src/quests/portalsync.ts     the plan to the phones (Portal), and their taps back
 src/quests/actions.ts     everything Agent and the page can do with them
 src/calendar/store.ts     Calendar's data (calendar.json, with a revision per save)
 src/calendar/page.ts      saves from the calendar page, merged with changes made elsewhere
@@ -679,8 +679,8 @@ test/scheduler.test.ts    planner checks
 test/planner.test.ts      mission plans: series written out, quests far ahead
 test/web.test.ts          research only cites pages it read; public webpages only
 web/agent/                Nova Agent's own page (chat.html), the visualizer and the installable app
-web/portal/               the Portal panel (Hub is part of it; old-app-address/ is what
-                          phones that installed Hub from /app/ still use)
+web/portal/               the Portal panel (Portal is part of it; old-app-address/ is what
+                          phones that installed Portal from its old address, /app/ still use)
 web/calendar/ web/notes/ web/index/ web/observatory/ web/lossless/   the other panels
 web/shared/               themes, sounds, the badge and the Manual (manual-data.js: npm run manual)
 src/signin.ts             signing in to Nova Bot as a person, for Portal on the PC

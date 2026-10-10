@@ -8,7 +8,7 @@
 //
 // Only Nova Agent's own addresses are answered (RELAYED, the same list as Nova Bot's), and a
 // relayed request never counts as "from our page" (src/signin.ts), so the PC's Portal sign-in,
-// Hub's API and the staff pages can't be reached this way.
+// Portal's API and the staff pages can't be reached this way.
 // Dropped connection (Nova Bot redeployed, network gone): it reconnects by itself.
 
 import { config } from "./config";

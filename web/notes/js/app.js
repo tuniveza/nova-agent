@@ -792,7 +792,7 @@
     ['Help', () => [
       { label: 'Install Notes as an app', icon: 'export', run: installApp },
       { label: 'Keyboard shortcuts', icon: 'keys', kbd: 'Ctrl+/', run: showKeys },
-      // Every Nova Agent address, live and testing (behind the admin password, on Hub's admin page)
+      // Every Nova Agent address, live and testing (behind the admin password, on Portal's admin page)
       { label: '🔒 All Nova Agent links', icon: 'link', run: () => window.open('https://novacane-worker.novacane-studio.workers.dev/admin/links', '_blank', 'noopener') },
       { label: 'About Notes', icon: 'info', run: () => $('dlg-about').showModal() }
     ]]

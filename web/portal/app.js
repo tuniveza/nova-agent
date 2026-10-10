@@ -1,8 +1,8 @@
-// Portal's work tabs (what was Hub): enquiries, chats, the calendar, quests, alerts, NovaBot,
+// Portal's work tabs: enquiries, chats, the calendar, quests, alerts, NovaBot,
 // push and voice. All data comes from /app/api/ (a Portal sign-in is needed). Everything from
 // the server is shown as plain text, never as HTML.
 // portal.js runs the page (signing in, the address, the You tab); it starts these tabs with
-// window.NovaHub.start() once someone's signed in, and they hand a sign-out back to it.
+// window.PortalApp.start() once someone's signed in, and they hand a sign-out back to it.
 
 (function () {
   "use strict";
@@ -1135,7 +1135,7 @@
     // Read it, or 0 if this phone hasn't seen any yet (or can't remember)
     try {
       // The number saved last time
-      return Number(localStorage.getItem("novahub-seen-alert")) || 0;
+      return Number(localStorage.getItem("nova-seen-alert")) || 0;
     } catch (err) {
       // This phone can't remember things: treat everything as unseen
       return 0;
@@ -1147,7 +1147,7 @@
     // Save it, ignoring phones that can't
     try {
       // Write it down
-      localStorage.setItem("novahub-seen-alert", String(id));
+      localStorage.setItem("nova-seen-alert", String(id));
     } catch (err) {}
   }
 
@@ -1515,15 +1515,15 @@
 
   // ===== Notifications =====
   // Like giving the post office your address once: the phone gets a delivery
-  // address from Apple, Hub hands it to the Worker, and from then on the
-  // Worker can post notifications to it, even when Hub is closed.
+  // address from Apple, Portal hands it to the Worker, and from then on the
+  // Worker can post notifications to it, even when Portal is closed.
 
   // Can this browser do notifications at all? (needs all three of these.) Not inside Nova
   // Agent on the studio PC: Nova Agent shows its own notices there, and phone pushes are for phones.
   const canNotify = !onStudioPC && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   // Is this an iPhone or iPad?
   const isIPhone = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  // Was Hub opened from the Home Screen icon (rather than a Safari tab)?
+  // Was Portal opened from the Home Screen icon (rather than a Safari tab)?
   const fromHomeScreen = window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
 
   // The doorman is Nova Agent's own (/sw.js, for the whole app: Portal opens inside Nova Agent).
@@ -1541,7 +1541,7 @@
   }
 
   // ===== Pings =====
-  // When a notification arrives while Hub is open, it rings out with a
+  // When a notification arrives while Portal is open, it rings out with a
   // bright ping (a different one for each kind) and drops a banner from the top.
 
   // The sound maker (made on the first tap, because phones only allow sound after a tap)
@@ -1651,12 +1651,12 @@
     });
   }
 
-  // Opening Hub clears the dot on its Home Screen icon
+  // Opening Portal clears the dot on its Home Screen icon
   function clearIconDot() {
     // Only where the phone supports it
     if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
   }
-  // Now, and every time Hub comes back to the front
+  // Now, and every time Portal comes back to the front
   clearIconDot();
   document.addEventListener("visibilitychange", () => !document.hidden && clearIconDot());
 
@@ -1668,7 +1668,7 @@
     return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   }
 
-  // Phones that installed Hub from /app/ (or Portal from /portal/) got their address through
+  // Phones that installed Portal (from /app/ or /portal/) got their address through
   // that old doorman (/app/sw.js, /portal/sw.js). It's kept: one address per phone, so nothing
   // arrives twice. Everyone else uses Nova Agent's (/sw.js).
   async function pushDoorman() {
@@ -1704,7 +1704,7 @@
     // Any other browser that can't do it
     else if (!canNotify) status = "This browser can't show notifications.";
     // He said no to the iPhone's question earlier: only Settings can change that now
-    else if (Notification.permission === "denied") status = "Notifications are blocked for this app. Turn them on in the iPhone's Settings, then Notifications, then Portal (or Nova Agent, if you added Hub to the Home Screen before).";
+    else if (Notification.permission === "denied") status = "Notifications are blocked for this app. Turn them on in the iPhone's Settings, then Notifications, then Portal (or Nova Agent, if you added it to the Home Screen before).";
     // Already on
     else if (address) status = "Notifications are on for this phone.";
     // Put the message in the panel
@@ -1804,12 +1804,12 @@
   });
 
   // ===== Voice commands =====
-  // Tap the mic, say what to do, and Hub does it. Like asking someone at
+  // Tap the mic, say what to do, and Portal does it. Like asking someone at
   // the front desk: the recording goes to the Worker, which writes down the
   // words (Whisper), and the app matches them to a command below. Anything
   // that isn't a command is asked to NovaBot instead.
   //
-  // Hands-free ("Always listen"): while Hub is open on screen, it keeps
+  // Hands-free ("Always listen"): while Portal is open on screen, it keeps
   // listening and acts on anything that starts with "Nova" ("Nova, show
   // alerts"), so everyday conversation is ignored. iPhones only allow the
   // microphone while the app is open, so it pauses when you leave and starts
@@ -1824,7 +1824,7 @@
   // Is hands-free switched on (remembered on this phone)?
   let handsFree = false;
   try {
-    handsFree = localStorage.getItem("novahub-handsfree") === "on";
+    handsFree = localStorage.getItem("nova-handsfree") === "on";
   } catch (err) {}
   // Is the hands-free loop running right now?
   let looping = false;
@@ -1898,7 +1898,7 @@
     // Remember the choice
     handsFree = on;
     try {
-      localStorage.setItem("novahub-handsfree", on ? "on" : "off");
+      localStorage.setItem("nova-handsfree", on ? "on" : "off");
     } catch (err) {}
     // The mic glows while it's on
     $("voice").classList.toggle("on", on);
@@ -2078,8 +2078,8 @@
   // What was said after "Nova" (null if it didn't start with "Nova").
   // Whisper sometimes hears "Nova" as "Noah", "Nava" or "Nover".
   function afterWakeWord(text) {
-    // "Nova, show alerts", "Hey Nova show alerts", "Hub, call Eric"
-    const m = String(text).match(/^\W*(?:(?:hey|hi|ok|okay)\W+)?(?:nova(?:\s*hub)?|novah|noah|nava|nover|no va)\b\W*(.*)$/i);
+    // "Nova, show alerts", "Hey Nova show alerts", "Portal, call Eric"
+    const m = String(text).match(/^\W*(?:(?:hey|hi|ok|okay)\W+)?(?:nova(?:\s*portal)?|novah|noah|nava|nover|no va)\b\W*(.*)$/i);
     // The command (maybe empty), or null
     return m ? m[1].trim() : null;
   }
@@ -2138,7 +2138,7 @@
         if (err.message === "signed out") break;
         continue;
       }
-      // The command after "Nova" (null: not meant for Hub, so ignore it)
+      // The command after "Nova" (null: not meant for Portal, so ignore it)
       const command = afterWakeWord(text);
       // Not for us
       if (command === null) continue;
@@ -2424,5 +2424,5 @@
   // ===== Start =====
 
   // ===== Start: portal.js starts the tabs once someone's signed in =====
-  window.NovaHub = { VIEWS, start, stop, show, get view() { return currentView; } };
+  window.PortalApp = { VIEWS, start, stop, show, get view() { return currentView; } };
 })();

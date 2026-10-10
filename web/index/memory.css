@@ -181,7 +181,7 @@ input:focus, select:focus, textarea:focus {
   .top-actions nova-portal-badge::part(words) { display: none; }
   .top-actions nova-portal-badge::part(chip) { padding: 0 3px; gap: 0; }
 }
-.hub-mark { width: 26px !important; height: 26px !important; border-radius: 8px; }
+.portal-mark { width: 26px !important; height: 26px !important; border-radius: 8px; }
 .brand {
   justify-self: center; min-width: 0;
   display: flex; align-items: center; gap: 10px;

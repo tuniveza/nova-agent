@@ -48,7 +48,7 @@ const PHONE: Record<QuestNotice["kind"], { ttl: number; urgent: boolean }> = {
 function notify(n: Omit<QuestNotice, "time">, push: boolean, session = fromMin(nowMinutes()), covers?: string[]): boolean {
   const source = n.kind === "mission" ? "mission" : "quest";
   // To the staff phones too, labelled as Quest or Mission.
-  // Pulses replace each other on the phone and stay out of Hub's Alerts list
+  // Pulses replace each other on the phone and stay out of Portal's Alerts list
   const phone = push && n.kind !== "undelivered" ? { title: n.title, message: n.message, source, kind: n.kind, tag: n.questId || n.kind, ...PHONE[n.kind], keep: n.kind !== "pulse" } as const : null;
   if (!deliver({ questId: n.questId || n.kind, session, kind: n.kind, push: phone, covers })) return false;
   if (n.kind === "pulse") {

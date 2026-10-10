@@ -1,4 +1,4 @@
-/* Hub: Nova Agent look (the same cosmic skin as Nova Agent, Notes and Calendar),
+/* Portal: Nova Agent look (the same cosmic skin as Nova Agent, Notes and Calendar),
    built for phones first. Type: Archivo (wide, 900) for display, Saira for reading, Source Code Pro
    for little labels. Glass panels with a gradient hairline edge, floating among the stars.
    Every colour comes from themes.css, so the themes (Cosmic, Ember, Aurora, Ocean, Gold, Mono) restyle it all. */
@@ -506,7 +506,7 @@ main {
   box-shadow: 0 0 20px -6px var(--glow);
 }
 
-/* The banner that drops in when a notification arrives while Hub is open */
+/* The banner that drops in when a notification arrives while Portal is open */
 .ping-banner {
   position: fixed; left: max(12px, var(--safe-left)); right: max(12px, var(--safe-right)); top: calc(12px + var(--safe-top)); z-index: 40;
   max-width: 560px; margin: 0 auto;

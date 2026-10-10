@@ -12,7 +12,7 @@
 //   Nova Agent (localhost:4545) and the panels it serves  who's signed in on this computer
 //   Notes, Calendar... on their own sites            a read-only token from "Connect" in Portal
 //   Signed out, the planet opens Portal: Portal is the one sign-in, for everything.
-// Colours come from the page's theme: --np-* if the app sets them, else Hub's names (--hi,
+// Colours come from the page's theme: --np-* if the app sets them, else Portal's names (--hi,
 // --accent...), else Nova Agent's magenta. Calm motion (reduced motion, or data-motion="calm") stills it.
 (() => {
   "use strict";

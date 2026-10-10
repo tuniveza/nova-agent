@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <!-- The Portal mark: a cosmic P, in the Nova Agent family (same sky, stars, orbit and sparkle as
-       Hub's mark and Index's I). The planet riding the orbit has a ring of its own: everyone who
+       Portal's mark and Index's I). The planet riding the orbit has a ring of its own: everyone who
        signs in here gets a world like it. -->
   <defs>
     <radialGradient id="sky" cx="50%" cy="15%" r="95%"><stop offset="0" stop-color="#B01D68"/><stop offset=".42" stop-color="#25194D"/><stop offset="1" stop-color="#06040D"/></radialGradient>

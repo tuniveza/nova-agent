@@ -1,8 +1,8 @@
 // Portal: the studio's staff app, one sign-in for every Nova app, and everyone's planet.
 //
 // This runs the page: who's signed in, which tab shows, and Portal's own parts. The work tabs
-// (Enquiries, Chats, Calendar, Quests, Alerts, NovaBot: what was Hub) are app.js, started here
-// with window.NovaHub once someone's signed in.
+// (Enquiries, Chats, Calendar, Quests, Alerts, NovaBot: what was Portal) are app.js, started here
+// with window.PortalApp once someone's signed in.
 // Each member of the studio gets a profile, drawn as a planet grown from their own seed (the
 // server draws it: /staff/<id>/planet.svg).
 //   Setup     the very first time: the first admin, proven with the studio's current password
@@ -46,7 +46,7 @@
   };
   const isAdmin = () => Boolean(state.me && state.me.role === "admin");
   // The work tabs (app.js)
-  const hub = () => window.NovaHub;
+  const work = () => window.PortalApp;
   const WORK = ["today", "enquiries", "chats", "calendar", "quests", "alerts", "bot"];
   // Tell the top-right badge (and other panels) that who's signed in has changed
   const changed = () => window.NovaPortal && window.NovaPortal.changed && window.NovaPortal.changed();
@@ -102,7 +102,7 @@
   const fullDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
 
   // Where to go after signing in: only a path on this site ("/admin"), never another website
-  // ("//evil.example", "https://…", "/\evil") or anything odd. Portal itself (or Hub's old
+  // ("//evil.example", "https://…", "/\evil") or anything odd. Portal itself (or its old
   // address, which is Portal now) means staying here.
   function safeNext(raw) {
     const v = String(raw || "");
@@ -396,7 +396,7 @@
   // Signed out (by choice, by an admin, or the session ran out): back to the sign-in card
   function signedOut(message) {
     if (state.screen !== "app") return;
-    if (hub()) hub().stop();
+    if (work()) work().stop();
     changed();
     state.lastEmail = (state.me && state.me.email) || state.lastEmail;
     state.me = null;
@@ -416,7 +416,7 @@
     window.scrollTo(0, 0); // (a long sign-in form may have been scrolled)
     replay($("app"), "screen-in");
     drawNav();
-    if (hub()) hub().start();
+    if (work()) work().start();
     renderRoute({ fresh });
     startChecks();
     if (message) setTimeout(() => toast(message), fresh ? 900 : 200);
@@ -488,7 +488,7 @@
     closeNameForm();
     if (route.view === "work") {
       document.title = "Portal";
-      return hub() && hub().show(route.tab);
+      return work() && work().show(route.tab);
     }
     markNav();
     if (route.view === "admin") {

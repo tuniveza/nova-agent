@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 206,
+ "build": 212,
  "date": "2026-10-10",
  "panels": {
   "chat": [
@@ -35,23 +35,23 @@ window.NOVA_STATUS = {
   "index": [
    "Cosmic icons",
    "Panels on phones",
-   "Portal takes in Hub",
    "Panels fit inside Nova Agent's viewer",
-   "Hub and Index"
+   "Portal and Index",
+   "Plain names"
   ],
   "quests": [
-   "Portal takes in Hub",
    "Plain names",
    "Nova Agent talks to Nova Bot at…",
-   "Nova Hub is Studio",
-   "Nova Missions"
+   "Portal is Studio",
+   "Nova Missions",
+   "Nova Quests"
   ],
   "missions": [
-   "Portal takes in Hub",
    "Plain names",
    "Nova Agent talks to Nova Bot at…",
-   "Nova Hub is Studio",
-   "Send the Nova Quest plan to Nova…"
+   "Portal is Studio",
+   "Send the Nova Quest plan to Portal",
+   "self-healing browser helper for Acuity's admin pages"
   ],
   "lossless": [
    "Cosmic icons",
@@ -68,25 +68,25 @@ window.NOVA_STATUS = {
    "Nova Agent on phones"
   ],
   "observatory": [
+   "only the categories that have projects show…",
+   "more on screen",
    "Cosmic icons",
    "Panels on phones",
-   "Lossless audio and Observatory as panels everywhere",
-   "Panels fit inside Nova Agent's viewer",
-   "Plain names"
+   "Lossless audio and Observatory as panels everywhere"
   ],
   "manual": [
+   "Undo, the Manual keeps \"Nova Agent\"",
    "Portal on phones",
-   "Portal takes in Hub",
    "Plain names",
    "The Nova Manual is built from Nova…",
-   "Nova Hub is Studio"
+   "Portal is Studio"
   ],
   "look": [
+   "more on screen",
    "\"Chat\" is now \"Agent\" everywhere you see…",
    "Chat's content panels",
    "Status line",
-   "Nova Agent reopens the app you had…",
-   "Missions and Quests stay inside their own…"
+   "Nova Agent reopens the app you had…"
   ]
  },
  "areas": {
@@ -135,19 +135,19 @@ window.NOVA_STATUS = {
   "tasks": [
    {
     "panel": "quests",
-    "words": "Portal takes in Hub"
+    "words": "Plain names"
    },
    {
     "panel": "quests",
-    "words": "Plain names"
-   },
-   {
-    "panel": "missions",
-    "words": "Portal takes in Hub"
+    "words": "Nova Agent talks to Nova Bot at…"
    },
    {
     "panel": "missions",
     "words": "Plain names"
+   },
+   {
+    "panel": "missions",
+    "words": "Nova Agent talks to Nova Bot at…"
    }
   ],
   "tools": [
@@ -171,30 +171,30 @@ window.NOVA_STATUS = {
   "helpers": [
    {
     "panel": "observatory",
-    "words": "Cosmic icons"
+    "words": "only the categories that have projects show…"
    },
    {
     "panel": "observatory",
-    "words": "Panels on phones"
+    "words": "more on screen"
+   },
+   {
+    "panel": "manual",
+    "words": "Undo, the Manual keeps \"Nova Agent\""
    },
    {
     "panel": "manual",
     "words": "Portal on phones"
-   },
-   {
-    "panel": "manual",
-    "words": "Portal takes in Hub"
    }
   ]
  },
  "everything": [
+  "only the categories that have projects show…",
+  "more on screen",
+  "Undo, the Manual keeps \"Nova Agent\"",
   "\"Chat\" is now \"Agent\" everywhere you see…",
   "every day measured so nothing is cut…",
   "new notes start Shared when signed in",
   "symbols on phones too",
-  "day words and symbols switch at sensible…",
-  "size checks read the month's grid",
-  "small days show cards as symbols",
-  "Chat's content panels"
+  "day words and symbols switch at sensible…"
  ]
 };

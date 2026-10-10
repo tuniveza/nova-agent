@@ -221,7 +221,7 @@ export function acknowledge(questId: string, session: string): void {
   if (!updated.changes) d.prepare("INSERT OR IGNORE INTO deliveries (key, quest_id, session, kind, state, created) VALUES (?, ?, ?, 'starting', 'acknowledged', ?)").run(deliveryKey(questId, session, "starting"), questId, session, now);
 }
 
-// Hub taps carry an id: true the first time one is seen, false after (a tap
+// Portal taps carry an id: true the first time one is seen, false after (a tap
 // can be handed over twice; it must only count once)
 export function firstTimeForTap(id: string): boolean {
   const d = open();

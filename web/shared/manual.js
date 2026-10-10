@@ -347,7 +347,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
   };
 
   // Per-item colours and delays are set from here, not as style="" (pages with strict
-  // security rules, like Hub's, don't allow inline styles; setting them in code is fine)
+  // security rules, like Portal's, don't allow inline styles; setting them in code is fine)
   function paint(root) {
     for (const el of root.querySelectorAll("[data-v]")) {
       for (const pair of el.getAttribute("data-v").split(";")) {
@@ -617,7 +617,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
           day = d;
           out += `<div class="day">${esc(dayOf(c.date))}</div><div class="line">`;
         }
-        out += `<div class="commit" data-v="--i:${Math.min(i++, 12)};--app:${a.colour}"><div class="s">${esc(c.subject)}</div><div class="m">${showApp ? `<span class="tag" data-v="--c:${a.colour}">${esc(a.repo === "nb/novacane-worker" ? "Nova Bot & Hub" : a.name)}</span>` : ""}<span>${esc(timeOf(c.date))}</span><code>${esc(c.hash)}</code></div>${c.body ? `<details><summary>More about this change</summary><pre>${esc(c.body)}</pre></details>` : ""}</div>`;
+        out += `<div class="commit" data-v="--i:${Math.min(i++, 12)};--app:${a.colour}"><div class="s">${esc(c.subject)}</div><div class="m">${showApp ? `<span class="tag" data-v="--c:${a.colour}">${esc(a.repo === "nb/novacane-worker" ? "Nova Bot & Portal" : a.name)}</span>` : ""}<span>${esc(timeOf(c.date))}</span><code>${esc(c.hash)}</code></div>${c.body ? `<details><summary>More about this change</summary><pre>${esc(c.body)}</pre></details>` : ""}</div>`;
       }
       return day ? out + "</div>" : out;
     }
@@ -659,7 +659,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         for (const c of a.news) add(a, "new", c, c.text, `${a.name} · What's new`);
         if (!repos.has(a.repo)) {
           repos.add(a.repo);
-          for (const c of a.history.commits) add(a, "history", { id: "", title: c.subject }, c.body || "", `${a.repo === "nb/novacane-worker" ? "Nova Bot & Hub" : a.name} · History · ${shortDay(c.date)}`);
+          for (const c of a.history.commits) add(a, "history", { id: "", title: c.subject }, c.body || "", `${a.repo === "nb/novacane-worker" ? "Nova Bot & Portal" : a.name} · History · ${shortDay(c.date)}`);
         }
       }
       hits.sort((x, y) => y.rank - x.rank);

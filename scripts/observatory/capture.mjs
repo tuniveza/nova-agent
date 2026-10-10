@@ -56,7 +56,7 @@ const MIME = {
 };
 
 // A tiny static file server on a free local port. mounts maps URL prefixes to folders inside root,
-// for apps that expect to be served from a sub-path (the Hub lives at /app).
+// for apps that expect to be served from a sub-path (the Portal lives at /app).
 function serve(root, mounts = {}) {
   return new Promise((resolve) => {
     const srv = http.createServer(async (req, res) => {
@@ -255,7 +255,7 @@ const SCRIPTS = {
     if (server) {
       await page.goto(server.base + '/app/', { waitUntil: 'load' });
       await sleep(2000);
-      await shot('Hub, the staff app');
+      await shot('Portal, the staff app');
     }
   },
 

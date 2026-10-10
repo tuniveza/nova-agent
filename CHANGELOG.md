@@ -39,7 +39,7 @@
   or the clocks went forward) gets one late `Missed: …` ping. Slots jumped over are
   covered by that same ping.
 - A repeat isn't finished at its deadline while its last ping is still on its way.
-- Nova Hub taps carry a tap id and the session they were tapped on. A tap handed over
+- Portal taps carry a tap id and the session they were tapped on. A tap handed over
   twice, or a late "Session done", no longer uses up the next session. This needs Nova
   Bot's worker change on branch `fix/p0-1-quest-taps`.
 - Quest ids given in short form must match only one quest. An empty id matches

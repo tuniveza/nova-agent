@@ -1,7 +1,7 @@
-// Hub's Quests and Calendar tabs: Nova Agent sends its plan (missions,
+// Portal's Quests and Calendar tabs: Nova Agent sends its plan (missions,
 // quests, pulses, and Calendar's note and day cards)
 // to Nova Bot's worker whenever it changes (and every minute, so "now" moves
-// on), and carries out the taps made in Hub (Done, Start, Not now...).
+// on), and carries out the taps made in Portal (Done, Start, Not now...).
 // Taps also arrive with each job check (jobs.ts), so they land within a second.
 
 import { calendarEvents, readCalendar } from "../calendar/store";
@@ -79,7 +79,7 @@ async function send(): Promise<void> {
   }
 }
 
-export function startHubSync(): void {
+export function startPortalSync(): void {
   // Calendar lives on Nova Bot too (so it works with this PC off): keep the two the same
   startCalendarCloud();
   const later = () => {

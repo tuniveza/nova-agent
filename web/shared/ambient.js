@@ -500,12 +500,12 @@
     })(window);
   }
 
-  // On or off, remembered on this device (Portal's old switch, "novahub-music", counts too)
+  // On or off, remembered on this device
   function wanted() {
     try {
       const v = localStorage.getItem(KEY);
       if (v) return v === 'on';
-      return localStorage.getItem('novahub-music') === '1';
+      return false;
     } catch (e) { return false; }
   }
   function remember(on) {
@@ -570,11 +570,11 @@
 
   // The saved volume (Portal's Options → Ambient music volume; 40 out of 100 to begin with)
   try {
-    const saved = JSON.parse(localStorage.getItem('novahub-options') || '{}').volume;
+    const saved = JSON.parse(localStorage.getItem('nova-options') || '{}').volume;
     volume = (typeof saved === 'number' ? saved : 40) / 100;
   } catch (e) { volume = 0.4; }
   window.addEventListener('storage', (e) => {
-    if (e.key !== 'novahub-options') return;
+    if (e.key !== 'nova-options') return;
     try { const v = JSON.parse(e.newValue || '{}').volume; if (typeof v === 'number') setVolume(v / 100); } catch (err) { /* ignore */ }
   });
 
