@@ -969,10 +969,11 @@
       if (detail && detail.previewHtml) {
         const frame = el("iframe", "cp-preview");
         frame.setAttribute("sandbox", "");
-        frame.setAttribute("referrerpolicy", "no-referrer");
         frame.setAttribute("loading", "lazy");
         frame.title = "The email: " + (c.subject || "");
-        frame.srcdoc = detail.previewHtml;
+        // Nova Bot serves the email as its own page, with rules that let its styles show
+        // (Portal's own rules would block them in an inline copy)
+        frame.src = "/app/api/campaigns/" + encodeURIComponent(c.id) + "/preview?v=" + encodeURIComponent(c.updatedAt || "");
         card.appendChild(frame);
       } else card.appendChild(el("div", "cp-plain", c.body || ""));
       if (detail && detail.log.length && !campaignWaiting(c)) {
