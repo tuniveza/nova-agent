@@ -1,5 +1,5 @@
 # Dependencies
-node_modules/
+node_modules
 
 # Secrets: only .env.example (empty values) is shared
 .env
