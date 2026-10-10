@@ -322,8 +322,10 @@
         <div id="thread-list" class="list thread-list" aria-live="polite"></div>
         <form id="thread-form" class="card thread-form" autocomplete="off">
           <div class="thread-form-top">
-            <div class="chips" role="tablist" aria-label="Reply or note">
+            <div class="chips" role="tablist" aria-label="Reply by email, WhatsApp or text, or a note">
               <button class="chip active" data-mode="reply" type="button" aria-pressed="true">Reply</button>
+              <button class="chip" data-mode="whatsapp" type="button" aria-pressed="false" hidden>WhatsApp</button>
+              <button class="chip" data-mode="sms" type="button" aria-pressed="false" hidden>Text</button>
               <button class="chip" data-mode="note" type="button" aria-pressed="false">Note</button>
             </div>
             <span id="thread-to" class="card-meta"></span>
@@ -601,6 +603,23 @@
           </div>
         </section>
 
+        <!-- How it works: what each part of Nova runs on (Resend for email…), and whether it's set up -->
+        <section class="group" aria-labelledby="group-tech-head">
+          <h2 class="group-head" id="group-tech-head">How it works</h2>
+          <div class="group-cards">
+            <section id="tech-card" class="card tech-card" aria-labelledby="tech-title" hidden>
+              <h3 id="tech-title" class="card-title">What Nova runs on</h3>
+              <p class="hint">Each part of Nova and the service behind it. A green dot means it's set up.</p>
+              <ul id="tech-list" class="tech-list"><li class="hint">Checking…</li></ul>
+              <div class="action-row">
+                <button class="btn ghost" type="button" id="tech-test-email" hidden>Send me a test email</button>
+                <button class="btn ghost" type="button" id="tech-refresh">Check again</button>
+              </div>
+              <p class="hint" id="tech-result" role="status"></p>
+            </section>
+          </div>
+        </section>
+
         <!-- Admin (admins only): the crew and the admin pages; someone else's account -->
         <section class="group" aria-labelledby="group-admin-head">
           <h2 class="group-head" id="group-admin-head">Admin</h2>
@@ -819,6 +838,26 @@
     </div>
     <p id="sheet-error" class="error" role="alert"></p>
     <button id="sheet-close" class="btn ghost" type="button">Close</button>
+  </div>
+</div>
+
+<!-- Call or text from your phone (on a computer, where tel: and sms: links may not work) -->
+<div id="phone-sheet" class="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="phone-title">
+    <h3 id="phone-title">Call from your phone</h3>
+    <p class="hint" id="phone-for"></p>
+    <a id="phone-number" class="phone-number" href="#"></a>
+    <div id="phone-text-box" hidden>
+      <label for="phone-text">The message</label>
+      <textarea id="phone-text" rows="4" readonly></textarea>
+    </div>
+    <div class="row">
+      <button id="phone-copy" class="btn ghost" type="button">Copy number</button>
+      <button id="phone-copy-text" class="btn ghost" type="button" hidden>Copy message</button>
+    </div>
+    <a id="phone-here" class="btn ghost" href="#">Try on this computer</a>
+    <p class="hint" id="phone-hint"></p>
+    <button id="phone-close" class="btn" type="button">Done</button>
   </div>
 </div>
 

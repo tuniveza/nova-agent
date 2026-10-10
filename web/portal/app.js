@@ -432,21 +432,97 @@
     if (q.failed) title.appendChild(el("span", "pill-failed", "Didn't send"));
   }
 
-  // Call, text and email links for a customer ("or otherwise": texts open the phone's own Messages)
-  function contactLinks(actions, q, emailClass = "btn small") {
+  // ===== WhatsApp, calls and texts (from the person's own phone) =====
+  // Portal doesn't send these itself: it opens WhatsApp (the app, or WhatsApp Web on a
+  // computer), Messages or the dialler with the customer's number and the message filled in.
+  // The person sends or calls from there; then Portal asks how it went and adds that to the
+  // conversation. q.dial is the number in full international form from Nova Bot
+  // ("+447700900123"), or null when it isn't a mobile.
+  const onPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+  // WhatsApp's own link (wa.me redirects here, and loses emoji on the way): opens the app on a
+  // phone, and offers the app or WhatsApp Web on a computer
+  const waLink = (dial, text) => "https://api.whatsapp.com/send?phone=" + dial.replace(/\D/g, "") + (text ? "&text=" + encodeURIComponent(text) : "");
+  // "?&body=" works on both iPhone and Android
+  const smsLink = (dial, text) => "sms:" + dial + (text ? "?&body=" + encodeURIComponent(text) : "");
+  // A number to call: the mobile, or whatever they typed (a landline can still be called)
+  const callNumber = (q) => q.dial || String(q.phone || "").replace(/[^0-9+]/g, "");
+  // "+44 7700 900123": easy to read and type
+  function prettyNumber(dial) {
+    const uk = /^\+44(\d{4})(\d{6})$/.exec(dial);
+    return uk ? "+44 " + uk[1] + " " + uk[2] : dial;
+  }
+
+  // Email, WhatsApp, Call and Text for a customer (none but Email once they've asked not to be
+  // contacted). onCall: also run when Call is pressed (the conversation asks how it went).
+  function contactLinks(actions, q, emailClass = "btn small", onCall) {
     const reply = el("a", emailClass, "Email");
     reply.href = "mailto:" + encodeURIComponent(q.email) + "?subject=" + encodeURIComponent("Re: " + (q.subject || "Your Novacane enquiry"));
     actions.appendChild(reply);
-    if (q.phone) {
-      const number = q.phone.replace(/[^0-9+]/g, "");
-      const call = el("a", "btn small ghost", "Call");
-      call.href = "tel:" + number;
-      actions.appendChild(call);
-      const text = el("a", "btn small ghost", "Text");
-      text.href = "sms:" + number;
-      actions.appendChild(text);
+    if (q.do_not_contact_at) return;
+    if (q.dial) {
+      const wa = el("a", "btn small ghost", "WhatsApp");
+      wa.href = waLink(q.dial);
+      wa.target = "_blank";
+      wa.rel = "noopener";
+      actions.appendChild(wa);
+    }
+    const number = callNumber(q);
+    if (number) actions.appendChild(phoneButton("Call", "tel:" + number, () => phoneSheet(q, "call"), onCall));
+    if (q.dial) actions.appendChild(phoneButton("Text", smsLink(q.dial), () => phoneSheet(q, "sms")));
+  }
+
+  // On a phone: straight to the dialler or Messages. On a computer (where those links often do
+  // nothing): the number to use on your phone, plus "Try on this computer" for a Mac or PC that can.
+  function phoneButton(text, href, onComputer, after) {
+    if (onPhone) {
+      const a = el("a", "btn small ghost", text);
+      a.href = href;
+      if (after) a.addEventListener("click", after);
+      return a;
+    }
+    return button(text, "btn small ghost", () => {
+      onComputer();
+      if (after) after();
+    });
+  }
+
+  // The "from your phone" sheet: a call, or a text (with the message to send)
+  function phoneSheet(q, kind, text) {
+    const number = kind === "call" ? callNumber(q) : q.dial;
+    const first = q.name.split(/\s+/)[0];
+    const link = kind === "call" ? "tel:" + number : smsLink(number, text);
+    setText("phone-title", (kind === "call" ? "Call " : "Text ") + first);
+    setText("phone-for", kind === "call" ? "Call this number from your phone:" : "Send " + (text ? "this message" : "a text") + " to this number from your phone:");
+    $("phone-number").textContent = prettyNumber(number);
+    $("phone-number").href = link;
+    $("phone-number").dataset.number = number;
+    $("phone-here").href = link;
+    setText("phone-here", kind === "call" ? "Call from this computer" : "Open Messages on this computer");
+    $("phone-text-box").hidden = !text;
+    $("phone-text").value = text || "";
+    $("phone-copy-text").hidden = !text;
+    setText(
+      "phone-hint",
+      kind === "call"
+        ? "On a Mac with an iPhone, or a PC with Phone Link, “Call from this computer” rings through your phone."
+        : "On a Mac with an iPhone, or a PC with Phone Link, “Open Messages” sends it through your phone."
+    );
+    $("phone-sheet").hidden = false;
+  }
+  async function copyText(text, done) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(done);
+    } catch (err) {
+      toast("Couldn't copy: select it and copy it");
     }
   }
+  $("phone-copy").addEventListener("click", () => copyText($("phone-number").dataset.number, "Number copied"));
+  $("phone-copy-text").addEventListener("click", () => copyText($("phone-text").value, "Message copied"));
+  $("phone-close").addEventListener("click", () => ($("phone-sheet").hidden = true));
+  $("phone-sheet").addEventListener("click", (e) => {
+    if (e.target === $("phone-sheet")) $("phone-sheet").hidden = true;
+  });
 
   function enquiryCard(q) {
     const card = el("article", "card fold" + (q.status === "done" ? " done" : ""));
@@ -524,6 +600,8 @@
   let threadLoading = false;
   const editing = new Map(); // drafts being edited: message id -> the text so far
   const pending = new Map(); // Send presses not answered yet: key -> { body, mode, failed, error }
+  let sentAsk = null; // WhatsApp or Messages opened with a message: { kind, body, key } until "Yes, it sent"
+  let callAsk = null; // a call made from here: { key, note } until they say how it went
   const THREAD_POLL_MS = 5000;
 
   // A random id for one press of Send (the server never saves the same press twice)
@@ -535,6 +613,8 @@
     thread = null;
     editing.clear();
     pending.clear();
+    sentAsk = null;
+    callAsk = null;
     clearInterval(threadTimer);
     threadTimer = null;
     $("enquiry-thread").hidden = true;
@@ -589,6 +669,8 @@
     const nodes = [customerMessage(q)];
     for (const m of thread.messages) nodes.push(editing.has(m.id) ? keepEditing(m) : messageCard(m));
     for (const [key, p] of pending) nodes.push(pendingCard(key, p));
+    if (sentAsk) nodes.push(sentCard());
+    if (callAsk) nodes.push(callCard());
     reconcile($("thread-list"), nodes);
     updateBox();
   }
@@ -602,7 +684,7 @@
     top.append(title, el("span", "card-meta", when(q.created_at)));
     card.append(top, el("p", "card-who", q.name + " · " + q.email + (q.phone ? " · " + q.phone : "")));
     const actions = el("div", "actions");
-    contactLinks(actions, q);
+    contactLinks(actions, q, "btn small", askCall);
     const link = el("button", "btn small ghost", "Booking link");
     link.type = "button";
     link.addEventListener("click", () => openSheet(q));
@@ -619,7 +701,8 @@
     }
     actions.appendChild(doneButton(q));
     card.appendChild(actions);
-    if (q.phone) card.appendChild(el("p", "card-foot", "Call or Text opens your phone. Texts aren't sent from Portal yet: email replies are."));
+    if (q.dial && !q.do_not_contact_at) card.appendChild(el("p", "card-foot", "WhatsApp, Call and Text use your own phone (or WhatsApp Web on a computer). Write a WhatsApp or text below and Portal opens it ready to send, then adds it here."));
+    else if (q.phone && !q.do_not_contact_at) card.appendChild(el("p", "card-foot", "Their number isn't a mobile, so there's no WhatsApp or texts. Call still works."));
     // UK GDPR: why the studio may contact them
     card.appendChild(el("p", "card-foot", "Asked to be contacted: " + when(q.consent_at || q.created_at) + (q.consent_source ? " · " + q.consent_source : "")));
     // Don't contact: blocks every send (the customer's own stop link can't be undone here)
@@ -663,6 +746,8 @@
 
   // Sending / Sent ✓ / Failed (with the reason) / Draft
   function stateChip(m) {
+    if (m.status === "sent" && m.channel === "whatsapp") return el("span", "msg-state sent", "Sent on WhatsApp ✓ " + when(m.sent_at));
+    if (m.status === "sent" && m.channel === "sms") return el("span", "msg-state sent", "Texted ✓ " + when(m.sent_at));
     if (m.status === "sent") return el("span", "msg-state sent", "Sent ✓ " + when(m.sent_at) + (m.approver_name && m.created_by === "agent" ? " · approved by " + m.approver_name : ""));
     if (m.status === "approved") return el("span", "msg-state sending", m.stuck ? "Still sending? You can retry" : "Sending…");
     if (m.status === "failed") return el("span", "msg-state failed", "Didn't send: " + (m.error || "unknown reason"));
@@ -672,17 +757,21 @@
 
   function messageCard(m) {
     const kind = m.direction === "note" ? "note" : m.status === "draft" ? "draft" : "out";
-    const card = el("article", "card msg-card " + kind);
+    // A call made from someone's phone is kept as a note starting "Phone call: " (Nova Bot's CALL_PREFIX)
+    const call = m.direction === "note" && m.body.startsWith(CALL_PREFIX);
+    const card = el("article", "card msg-card " + kind + (call ? " call" : ""));
     card.dataset.key = "m" + m.id;
     card.dataset.sig = sig(m.status, m.body, m.updated_at, m.error, m.stuck, thread.canSend, Boolean(thread.enquiry.do_not_contact_at));
-    const who =
-      m.direction === "note"
+    const by = { whatsapp: "WhatsApp", sms: "Text" }[m.channel] || "Reply";
+    const who = call
+      ? "Call · " + (m.author_name || "Staff")
+      : m.direction === "note"
         ? "Note · " + (m.created_by === "customer" ? "Nova Bot" : m.author_name || "Staff")
         : m.created_by === "agent"
           ? "Draft by Agent"
-          : "Reply · " + (m.author_name || "Staff");
+          : by + " · " + (m.author_name || "Staff");
     card.appendChild(el("span", "msg-who", who + " · " + when(m.created_at)));
-    card.appendChild(el("p", "msg-body", m.body));
+    card.appendChild(el("p", "msg-body", call ? m.body.slice(CALL_PREFIX.length) : m.body));
     const chip = stateChip(m);
     const row = el("div", "msg-foot");
     if (chip) row.appendChild(chip);
@@ -846,22 +935,141 @@
   }
   function updateBox() {
     const q = thread && thread.enquiry;
+    // WhatsApp and Text need a mobile number (and nobody's asked not to be contacted)
+    const mobile = Boolean(q && q.dial);
+    document.querySelectorAll("#thread-form [data-mode=whatsapp], #thread-form [data-mode=sms]").forEach((c) => (c.hidden = !mobile));
+    if (!mobile && (threadMode === "whatsapp" || threadMode === "sms")) return setMode("reply");
     const note = threadMode === "note";
+    const phone = threadMode === "whatsapp" || threadMode === "sms";
     const blocked = q && q.do_not_contact_at;
     const cantSend = thread && !thread.canSend;
     const first = q ? q.name.split(/\s+/)[0] : "them";
-    $("thread-input").placeholder = note ? "A note for the team (never sent)…" : "Write a reply to " + first + "…";
-    setText("thread-to", note ? "Team only" : q ? "To " + q.email : "");
+    $("thread-input").placeholder = note
+      ? "A note for the team (never sent)…"
+      : threadMode === "whatsapp"
+        ? "Write a WhatsApp message to " + first + "…"
+        : threadMode === "sms"
+          ? "Write a text to " + first + "…"
+          : "Write a reply to " + first + "…";
+    setText(
+      "thread-to",
+      note ? "Team only" : !q ? "" : threadMode === "whatsapp" ? "To " + prettyNumber(q.dial) + " on WhatsApp" : threadMode === "sms" ? "To " + prettyNumber(q.dial) + " by text" : "To " + q.email
+    );
     let hint = "";
     if (!note && blocked) hint = "They've asked not to be contacted, so replies can't be sent. Notes still work.";
+    else if (threadMode === "whatsapp") hint = (onPhone ? "Opens WhatsApp" : "Opens WhatsApp (the app, or WhatsApp Web)") + " with this filled in. Press send there, then come back and tap “Yes, it sent”.";
+    else if (threadMode === "sms") hint = onPhone ? "Opens Messages with this filled in. Press send there, then come back and tap “Yes, it sent”." : "Shows the number and message to send from your phone (or Messages on this computer). Then tap “Yes, it sent”.";
     else if (!note && cantSend) hint = "Sending needs Portal open in a browser, signed in. Notes work here.";
     else if (!note) hint = "Emailed from the studio. Their replies come to the studio inbox. Every email says why they're getting it and how to stop.";
     setText("thread-hint", hint);
-    const online = !note && cantSend && !blocked;
+    const online = !note && !phone && cantSend && !blocked;
     $("thread-online").hidden = !online;
     if (online && thread.onlineUrl) $("thread-online").href = thread.onlineUrl;
-    $("thread-send").disabled = !note && Boolean(blocked || cantSend);
-    setText("thread-send", note ? "Add note" : "Send");
+    $("thread-send").disabled = !note && Boolean(blocked || (!phone && cantSend));
+    setText("thread-send", note ? "Add note" : threadMode === "whatsapp" ? "Open WhatsApp" : threadMode === "sms" ? (onPhone ? "Open Messages" : "Text from your phone") : "Send");
+  }
+
+  // ----- WhatsApp, texts and calls: open them, then ask how it went -----
+  const CALL_PREFIX = "Phone call: ";
+
+  // Write a WhatsApp or text: open it ready to send (WhatsApp in a new tab: the app or
+  // WhatsApp Web), then ask "Did it send?" (the press itself opens it, so nothing blocks it)
+  function openPhoneReply(body) {
+    const q = thread.enquiry;
+    const kind = threadMode;
+    if (kind === "whatsapp") window.open(waLink(q.dial, body), "_blank", "noopener");
+    else if (onPhone) location.href = smsLink(q.dial, body);
+    else phoneSheet(q, "sms", body);
+    sentAsk = { kind, body, key: pressKey() };
+    $("thread-input").value = "";
+    drawThread();
+  }
+
+  // After Call: how did it go?
+  function askCall() {
+    if (!callAsk) callAsk = { key: pressKey(), note: "" };
+    if (thread) drawThread();
+  }
+
+  function sentCard() {
+    const a = sentAsk;
+    const app = a.kind === "whatsapp" ? "WhatsApp" : "text";
+    const card = el("article", "card msg-card out ask");
+    card.dataset.key = "ask-sent";
+    card.dataset.sig = sig(a.key, a.saving, a.error);
+    card.appendChild(el("span", "msg-who", (a.kind === "whatsapp" ? "WhatsApp" : "Text") + " · you"));
+    card.appendChild(el("p", "msg-body", a.body));
+    card.appendChild(el("p", "ask-q", "Did your " + app + " to " + thread.enquiry.name.split(/\s+/)[0] + " send?"));
+    const row = el("div", "msg-foot");
+    row.appendChild(button("Yes, it sent", "btn small", () => logContact(a, () => (sentAsk = null))));
+    row.appendChild(button(a.kind === "whatsapp" ? "Open WhatsApp again" : onPhone ? "Open Messages again" : "Show the number again", "btn small ghost", () => {
+      const q = thread.enquiry;
+      if (a.kind === "whatsapp") window.open(waLink(q.dial, a.body), "_blank", "noopener");
+      else if (onPhone) location.href = smsLink(q.dial, a.body);
+      else phoneSheet(q, "sms", a.body);
+    }));
+    row.appendChild(button("No, change it", "btn small ghost", () => {
+      sentAsk = null;
+      setMode(a.kind);
+      $("thread-input").value = a.body;
+      drawThread();
+      $("thread-input").focus();
+    }));
+    if (a.error) row.appendChild(el("span", "msg-state failed", a.error));
+    row.querySelectorAll("button").forEach((b) => (b.disabled = Boolean(a.saving)));
+    card.appendChild(row);
+    return card;
+  }
+
+  function callCard() {
+    const a = callAsk;
+    const card = el("article", "card msg-card note call ask");
+    card.dataset.key = "ask-call";
+    card.dataset.sig = sig(a.key, a.saving, a.error);
+    card.appendChild(el("span", "msg-who", "Call · you"));
+    card.appendChild(el("p", "ask-q", "How did the call with " + thread.enquiry.name.split(/\s+/)[0] + " go?"));
+    const note = el("input", "ask-note");
+    note.type = "text";
+    note.maxLength = 1000;
+    note.placeholder = "A note for the team (optional), e.g. booked Tuesday 2pm";
+    note.setAttribute("aria-label", "A note about the call (optional)");
+    note.value = a.note;
+    note.addEventListener("input", () => (a.note = note.value));
+    card.appendChild(note);
+    const row = el("div", "msg-foot");
+    for (const [outcome, label] of [["spoke", "Spoke to them"], ["voicemail", "Left a voicemail"], ["no-answer", "No answer"]]) {
+      row.appendChild(button(label, outcome === "spoke" ? "btn small" : "btn small ghost", () => logContact({ ...a, kind: "call", outcome, body: a.note }, () => (callAsk = null), a)));
+    }
+    row.appendChild(button("Skip", "btn small ghost", () => {
+      callAsk = null;
+      drawThread();
+    }));
+    if (a.error) row.appendChild(el("span", "msg-state failed", a.error));
+    card.querySelectorAll("button, input").forEach((b) => (b.disabled = Boolean(a.saving)));
+    row.querySelectorAll("button").forEach((b) => (b.disabled = Boolean(a.saving)));
+    card.appendChild(row);
+    return card;
+  }
+
+  // Write what happened into the conversation (the same press is never saved twice)
+  async function logContact(p, clear, ask = p) {
+    const id = threadId;
+    ask.saving = true;
+    ask.error = "";
+    drawThread();
+    try {
+      await api("enquiries/logged", { body: { id, kind: p.kind, body: p.body, outcome: p.outcome, key: p.key } });
+      clear();
+      toast(p.kind === "call" ? "Call added to the conversation" : "Added to the conversation");
+    } catch (err) {
+      if (err.message === "signed out") return;
+      ask.saving = false;
+      ask.error = err.message;
+    }
+    if (threadId === id) {
+      drawThread();
+      loadThread();
+    }
   }
 
   document.querySelectorAll("#thread-form [data-mode]").forEach((c) => c.addEventListener("click", () => setMode(c.dataset.mode)));
@@ -869,6 +1077,7 @@
     e.preventDefault();
     const body = $("thread-input").value.trim();
     if (!body || !threadId || $("thread-send").disabled) return;
+    if (threadMode === "whatsapp" || threadMode === "sms") return openPhoneReply(body);
     $("thread-input").value = "";
     submitPress(pressKey(), { body, mode: threadMode });
   });
@@ -2501,7 +2710,7 @@
   // (the Options and Nova Agent sheets close themselves: options.js, suite.js)
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    for (const [sheet, close] of [["voice-sheet", "voice-stop"], ["sheet", "sheet-close"], ["notify-sheet", "notify-close"], ["more-sheet", "more-close"]]) {
+    for (const [sheet, close] of [["voice-sheet", "voice-stop"], ["sheet", "sheet-close"], ["phone-sheet", "phone-close"], ["notify-sheet", "notify-close"], ["more-sheet", "more-close"]]) {
       if (!$(sheet).hidden) return $(close).click();
     }
   });

@@ -631,6 +631,8 @@
 
     $("google-card").hidden = !self;
     if (self) loadGoogle();
+    $("tech-card").hidden = !self;
+    if (self && (changedPerson || fresh)) loadServices();
 
     // Email and password: changed only here, signed in. Your own, or anyone's for an admin.
     const canChange = self || isAdmin();
@@ -691,6 +693,55 @@
     button.hidden = !admin;
     button.textContent = d.account ? "Google settings" : d.setUp ? "Connect Google" : "Set up Google";
   }
+
+  // How it works: each part of Nova, the service behind it (Resend for email…), set up or not.
+  // Never a key: Nova Bot only says yes or no (src/services.js).
+  async function loadServices() {
+    const list = $("tech-list");
+    let r;
+    try {
+      r = await api("/app/api/services");
+    } catch (err) {
+      return list.replaceChildren(el("li", "hint", "Can't check just now."));
+    }
+    if (!r.ok) return list.replaceChildren(el("li", "hint", r.data.error || "Can't check just now."));
+    const services = r.data.services || [];
+    list.replaceChildren(
+      ...services.map((s) => {
+        const state = s.ready === true ? "on" : s.ready === "partly" ? "partly" : "off";
+        const label = state === "on" ? "Set up" : state === "partly" ? "Partly set up" : "Not set up";
+        const dot = el("span", "tech-dot " + state);
+        dot.title = label;
+        dot.setAttribute("role", "img");
+        dot.setAttribute("aria-label", label);
+        const last = s.last ? `Last sent ${new Date(s.last).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" })}.` : "";
+        return el("li", "tech-item", [
+          dot,
+          el("div", "tech-text", [el("p", "tech-name", [el("strong", "", s.name), el("span", "tech-by", s.tech)]), el("p", "hint", [s.detail, last].filter(Boolean).join(" "))]),
+        ]);
+      })
+    );
+    const email = services.find((s) => s.id === "email");
+    $("tech-test-email").hidden = !(email && email.test);
+  }
+  $("tech-refresh").addEventListener("click", () => {
+    $("tech-result").textContent = "";
+    loadServices();
+  });
+  // Send me a test email: through Resend, to whoever pressed it (at most once a minute)
+  $("tech-test-email").addEventListener("click", async () => {
+    const b = $("tech-test-email");
+    const say = (text) => ($("tech-result").textContent = text);
+    b.disabled = true;
+    say("Sending…");
+    try {
+      const r = await api("/app/api/services/test-email", { method: "POST", body: {} });
+      say(r.ok ? r.data.message || "Sent. Check your inbox." : r.data.error || "It didn't send.");
+    } catch (err) {
+      say(err.message);
+    }
+    b.disabled = false;
+  });
   $("password-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = $("password-form");

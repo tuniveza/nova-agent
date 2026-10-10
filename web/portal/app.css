@@ -264,6 +264,15 @@ main {
 .msg-card.draft { --card-edge: linear-gradient(var(--lilac), rgba(var(--accent-2-rgb), 0.4)); border-style: dashed; }
 .msg-card.draft .msg-who { color: var(--lilac); }
 .msg-card.pending { opacity: 0.8; }
+/* WhatsApp, texts and calls from someone's own phone: calls in teal, "how did it go?" cards stand out */
+.msg-card.call { --card-edge: linear-gradient(rgba(var(--ok-rgb, 92, 255, 192), 0.5), rgba(var(--ok-rgb, 92, 255, 192), 0.12)); --card-bg: color-mix(in srgb, var(--ok, #5CFFC0) 6%, rgb(var(--panel-2-rgb))); box-shadow: none; }
+.msg-card.call .msg-who { color: var(--ok, #5CFFC0); }
+.msg-card.ask { border-style: dashed; }
+.ask-q { margin: 8px 0 0; font-weight: 700; color: #fff; }
+.ask-note { width: 100%; margin-top: 10px; }
+/* The "from your phone" sheet: the number big enough to read across a desk */
+.phone-number { display: block; font-family: var(--f-mono); font-size: clamp(22px, 7vw, 30px); letter-spacing: 0.04em; color: #fff; text-decoration: none; overflow-wrap: anywhere; }
+#phone-text { width: 100%; resize: none; }
 .msg-body { margin: 6px 0 0; white-space: pre-wrap; line-height: 1.55; color: var(--bright); overflow-wrap: anywhere; }
 .msg-edit { width: 100%; margin-top: 8px; resize: vertical; min-height: 120px; }
 .msg-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }

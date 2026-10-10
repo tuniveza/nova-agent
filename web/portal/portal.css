@@ -642,3 +642,15 @@ html.embed nova-manual { display: none; }
 .pv.admin-view[hidden] { display: none; }
 .pv .admin-frame { flex: 1; width: 100%; min-height: calc(100dvh - 210px); border: 0; border-radius: 16px; background: var(--deep, #100816); }
 html.embed .pv .admin-frame { min-height: calc(100dvh - 120px); }
+
+/* ----- How it works: each part of Nova and the service behind it ----- */
+.pv .tech-list { list-style: none; margin: 12px 0 14px; padding: 0; display: grid; gap: 10px; }
+.pv .tech-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(var(--panel-2-rgb), 0.35); }
+.pv .tech-text { min-width: 0; flex: 1; }
+.pv .tech-name { margin: 0 0 3px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; color: var(--bright); font-size: 14.5px; }
+.pv .tech-by { color: var(--soft, var(--text)); font-size: 13px; overflow-wrap: anywhere; }
+.pv .tech-item .hint { font-size: 13px; overflow-wrap: anywhere; }
+.pv .tech-dot { flex: none; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: var(--muted); }
+.pv .tech-dot.on { background: var(--ok, #5CFFC0); box-shadow: 0 0 0 3px rgba(var(--ok-rgb, 92, 255, 192), 0.18); }
+.pv .tech-dot.partly { background: var(--warn, #FFB86B); box-shadow: 0 0 0 3px rgba(var(--warn-rgb, 255, 184, 107), 0.18); }
+.pv .tech-dot.off { background: transparent; border: 2px solid var(--bad, #FF6B81); }
