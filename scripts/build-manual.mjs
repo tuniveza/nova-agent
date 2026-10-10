@@ -239,6 +239,17 @@ function chapter(s, i) {
   return { id: `${slug(s.title)}-${i}`, title: s.title, html, text: plain(html).slice(0, 4000) };
 }
 
+// In the Manual the app is called "Agent": only Nova Agent's own page (and the Manual's header)
+// keep "Nova Agent". The READMEs, on GitHub, keep their words.
+const toAgent = (v) =>
+  typeof v === "string"
+    ? v.replace(/\b([Aa]) Nova Agent\b/g, (m, a) => (a === "A" ? "An" : "an") + " Agent").replace(/Nova Agent/g, "Agent")
+    : Array.isArray(v)
+      ? v.map(toAgent)
+      : v && typeof v === "object"
+        ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, toAgent(x)]))
+        : v;
+
 function build() {
   const apps = [];
   for (const app of APPS) {
@@ -269,6 +280,7 @@ function build() {
       news: news.map(chapter),
       history: hist,
     });
+    if (app.id !== "agent") apps[apps.length - 1] = toAgent(apps[apps.length - 1]);
   }
   return { built: new Date().toISOString(), recentDays: RECENT_DAYS, suite: null, apps };
 }

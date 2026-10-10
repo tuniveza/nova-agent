@@ -402,7 +402,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
     drawButton() {
       this.root.innerHTML = `<button class="open" part="button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Manual (press ?)">
           <span class="orb">${ICON.book.replace("<svg", '<svg width="18" height="18"')}<span class="spark"></span></span>
-          <span class="label"><b>Manual</b><small>Nova Agent</small></span>
+          <span class="label"><b>Manual</b><small>Agent</small></span>
         </button>
         <div class="panel" role="dialog" aria-modal="true" aria-label="Manual" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
       this.root.querySelector(".open").addEventListener("click", () => (this.isOpen ? this.close(true) : this.open()));
