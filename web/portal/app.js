@@ -1149,7 +1149,9 @@
 
   // One quest as a card
   function questCard(q, missions, big) {
-    const card = el("article", "card quest-card " + q.status + (q.atRisk ? " risk" : "") + (big ? " now" : ""));
+    // The whole card wears its mode's colour (Waiting, Soon, Working On It...: /shared/quest-modes.css)
+    const mode = q.mode || (q.status === "done" ? "done" : q.status === "doing" ? "working" : "waiting");
+    const card = el("article", "card quest-card " + q.status + (q.atRisk ? " risk" : "") + (big ? " now" : "") + " qm-tinted qm-" + mode);
     const mission = missions.find((m) => m.id === q.missionId);
     card.dataset.key = "q" + q.id + (big ? ":now" : "");
     card.dataset.sig = sig(q, mission && mission.title);
