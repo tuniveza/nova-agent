@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 213,
+ "build": 214,
  "date": "2026-10-10",
  "panels": {
   "chat": [
@@ -26,11 +26,11 @@ window.NOVA_STATUS = {
    "size checks read the month's grid"
   ],
   "notes": [
+   "pasted Markdown becomes formatting",
    "Portal everywhere",
    "new notes start Shared when signed in",
    "Every window size usable",
-   "Cosmic icons",
-   "Shared and Local notes"
+   "Cosmic icons"
   ],
   "index": [
    "Portal everywhere",
@@ -117,11 +117,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "notes",
-    "words": "Portal everywhere"
+    "words": "pasted Markdown becomes formatting"
    },
    {
     "panel": "notes",
-    "words": "new notes start Shared when signed in"
+    "words": "Portal everywhere"
    },
    {
     "panel": "index",
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "pasted Markdown becomes formatting",
   "Portal everywhere",
   "only the categories that have projects show…",
   "more on screen",
   "Undo, the Manual keeps \"Nova Agent\"",
   "\"Chat\" is now \"Agent\" everywhere you see…",
   "every day measured so nothing is cut…",
-  "new notes start Shared when signed in",
-  "symbols on phones too"
+  "new notes start Shared when signed in"
  ]
 };

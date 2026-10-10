@@ -189,3 +189,14 @@ still reach Acuity's API and alerts staff phones if not (`src/health.js`).
 - **Cross-site changes:** changes must come from the site itself.
 
 The code is in [nova-bot](https://github.com/tuniveza/nova-bot) under `src/portal/`.
+
+## Portal on your phone (its own app)
+
+Portal can be its own app on a phone's home screen, separate from Nova Agent: its own icon and
+name, opening straight into Portal, full screen, with its own notifications. On the phone open
+**/portal/?app=1** (in Safari on an iPhone, Chrome on Android), sign in, then **Share → Add to
+Home Screen** (iPhone) or **⋮ → Add to Home screen / Install app** (Android). Opened from that icon,
+Portal stays Portal (even when it reloads); anywhere else (a normal browser tab) Portal opens inside
+Nova Agent as before. Tapping a notification on a phone with the Portal app opens Portal, on the
+right tab (`web/shared/inside.js` decides; Nova Bot lets Portal's pages through; `sw.js` routes taps).
+

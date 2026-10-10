@@ -101,5 +101,18 @@ ${GLOW}`);
   }
   // Panels have no pages of their own: opened on its own, a panel opens inside Nova Agent instead
   // (Nova Agent's server does this already; this catches browsers that don't say how a page was opened)
-  else location.replace("/agent/?open=" + encodeURIComponent(location.pathname + location.search) + location.hash);
+  // …except Portal as its own phone app: opened from its home-screen icon, or from the install
+  // link (/portal/?app=1), it stays Portal, full screen (the Portal phone app)
+  else if (!portalApp()) location.replace("/agent/?open=" + encodeURIComponent(location.pathname + location.search) + location.hash);
+  function portalApp() {
+    if (!location.pathname.startsWith("/portal/")) return false;
+    const fromHomeScreen = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+    if (fromHomeScreen || /[?&]app=1\b/.test(location.search)) {
+      document.documentElement.classList.add("portal-app");
+      // Tell the notification helper which app this phone opens (sw.js)
+      if (fromHomeScreen && window.caches) caches.open("nova-home").then((c) => c.put("/home", new Response("portal"))).catch(() => {});
+      return true;
+    }
+    return false;
+  }
 })();

@@ -293,3 +293,10 @@
   window.NovaStatus = { mode: () => mode, next: () => { const k = Object.keys(MODES); mode = k[(k.indexOf(mode) + 1) % k.length]; store("nova-status", mode); apply(); return MODES[mode]; }, name: () => MODES[mode] };
   apply();
 })();
+
+// Opened as the Nova Agent phone app: notifications on this phone open Nova Agent (sw.js; the
+// Portal phone app says "portal" the same way, in shared/inside.js)
+(() => {
+  const fromHomeScreen = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+  if (fromHomeScreen && window.caches) caches.open("nova-home").then((c) => c.put("/home", new Response("agent"))).catch(() => {});
+})();

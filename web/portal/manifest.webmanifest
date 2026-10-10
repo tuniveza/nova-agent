@@ -1,9 +1,9 @@
 {
   "name": "Portal",
   "short_name": "Portal",
-  "description": "One sign-in for every Nova app, and a planet of your own: your profile, your Index memory and (for admins) the whole crew.",
+  "description": "Portal for Novacane Studios: enquiries, chats, bookings, quests and alerts, your planet and the team. Part of Nova Agent.",
   "id": "/portal/",
-  "start_url": "/portal/",
+  "start_url": "/portal/?app=1",
   "scope": "/portal/",
   "display": "standalone",
   "orientation": "portrait",

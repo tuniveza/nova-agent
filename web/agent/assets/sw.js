@@ -25,6 +25,22 @@ function panelUrl(url) {
   if (u === "/app" || (u.startsWith("/app/") && !u.startsWith("/app/memory"))) u = "/portal/" + u.slice(5).replace(/^\//, "");
   return u;
 }
+// In the Portal phone app: the same place, in Portal itself (other places open as they are)
+function portalAppUrl(url) {
+  const u = panelUrl(url);
+  if (u.startsWith("/portal/")) return u + (u.includes("?") ? "&" : "?") + "app=1";
+  if (!u.startsWith("/") || u.startsWith("//")) return u;
+  return "/portal/?app=1&view=alerts";
+}
+// Which app this phone opens for notifications: "portal" when it's the Portal phone app
+async function homeApp() {
+  try {
+    const hit = await (await caches.open("nova-home")).match("/home");
+    return hit ? await hit.text() : "agent";
+  } catch (err) {
+    return "agent";
+  }
+}
 function novaAgentUrl(url) {
   const u = panelUrl(url);
   if (!u.startsWith("/") || u.startsWith("//")) return u;
@@ -66,7 +82,13 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = event.notification.data?.url ? panelUrl(event.notification.data.url) : "";
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+    Promise.all([self.clients.matchAll({ type: "window", includeUncontrolled: true }), homeApp()]).then(([windows, home]) => {
+      // The Portal phone app: open (or bring back) Portal itself, on the right tab
+      const portal = windows.find((w) => new URL(w.url).pathname.startsWith("/portal/"));
+      if (home === "portal" || (portal && !windows.some((w) => new URL(w.url).pathname === "/agent/"))) {
+        if (portal) return (url && portal.navigate ? portal.navigate(portalAppUrl(url)).catch(() => portal) : Promise.resolve(portal)).then((w) => (w || portal).focus());
+        return self.clients.openWindow(portalAppUrl(url || "/portal/"));
+      }
       // Nova Agent already open: bring it to the front, on the right panel
       const open = windows.find((w) => new URL(w.url).pathname === "/agent/");
       if (open && (!url || url.startsWith("/"))) {
