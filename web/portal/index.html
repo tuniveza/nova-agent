@@ -289,6 +289,7 @@
             <button class="t-tile" type="button" data-go="calendar"><span class="t-num" id="t-bookings">–</span><span class="t-label">Bookings today</span></button>
             <button class="t-tile" type="button" data-go="bot"><span class="t-num t-icon" aria-hidden="true">✦</span><span class="t-label">Website bot</span></button>
           </div>
+          <button id="today-booking-tools" class="chip today-tools" type="button">Booking tools · week at a glance and free slots</button>
         </section>
         <section class="group" aria-labelledby="today-plans-head">
           <h3 class="group-head" id="today-plans-head">Plans</h3>
@@ -706,6 +707,11 @@
     <button class="tab" data-view="calendar" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       <span>Calendar</span>
+    </button>
+    <!-- Booking tools: Portal's own bookings month (this week at a glance, free slots, Ask Nova) -->
+    <button class="tab tab-more" id="nav-booking-tools" type="button" title="Booking tools: week at a glance and free slots">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3M8 17.5h6"/></svg>
+      <span>Booking tools</span><small class="tab-hint">Week at a glance and free slots</small>
     </button>
     <!-- Website bot: NovaBot as clients see it on the website -->
     <button class="tab tab-more" data-view="bot" type="button">

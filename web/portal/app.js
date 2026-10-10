@@ -239,7 +239,8 @@
     if (!VIEWS.includes(view)) view = "today";
     currentView = view;
     document.querySelectorAll(".tabs .tab").forEach((t) => {
-      const on = t.dataset.view === view || (t.id === "tab-more" && MORE.includes(view));
+      // (Portal's bookings month lights Booking tools: the Calendar item opens the Calendar panel)
+      const on = t.id === "nav-booking-tools" ? view === "calendar" : t.dataset.view === "calendar" ? false : t.dataset.view === view || (t.id === "tab-more" && (MORE.includes(view) || view === "calendar"));
       if (t.classList.contains("active") !== on) t.classList.toggle("active", on);
       if (on) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
@@ -275,6 +276,10 @@
     location.href = "/agent/?open=%2Fcalendar%2F";
   }
   $("cal-open-panel").addEventListener("click", openCalendar);
+  // Booking tools: Portal's own bookings month (this week at a glance, free slots), one tap away
+  const openBookingTools = () => window.PortalPage && window.PortalPage.go("/portal/?view=calendar", { replace: true });
+  $("nav-booking-tools").addEventListener("click", openBookingTools);
+  $("today-booking-tools").addEventListener("click", openBookingTools);
 
   // Inside Nova Agent Portal's own top bar steps aside: Voice, Music, Options and the other apps
   // are in the side menu (or the row of sections) instead, doing just what their top-bar buttons do
@@ -320,7 +325,10 @@
       item.type = "button";
       const icon = tab.querySelector("svg, img").cloneNode(true);
       icon.removeAttribute("id");
-      item.append(icon, el("span", "more-name", tab.querySelector("span:not(.badge)").textContent));
+      const hint = tab.querySelector(".tab-hint");
+      const name = el("span", "more-name", tab.querySelector("span:not(.badge)").textContent);
+      if (hint) name.append(el("small", "more-hint", hint.textContent));
+      item.append(icon, name);
       const badge = tab.querySelector(".badge");
       if (badge && !badge.hidden) item.appendChild(el("span", "badge", badge.textContent));
       item.addEventListener("click", () => {
