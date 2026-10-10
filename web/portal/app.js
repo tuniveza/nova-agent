@@ -947,9 +947,9 @@
   }
 
   // Send a tap to Nova Agent, then look again a moment later
-  async function questTap(id, action, kind = "quest", minutes, session) {
+  async function questTap(id, action, kind = "quest", minutes, session, mode) {
     try {
-      await api("quests/action", { body: { id, action, kind, minutes, session } });
+      await api("quests/action", { body: { id, action, kind, minutes, session, mode } });
       toast(lastQuests && lastQuests.online ? "Sent to Nova Agent" : "Sent: Nova Agent will do it when it's back online");
       setTimeout(loadQuests, 1500);
       setTimeout(loadQuests, 4000);
@@ -991,7 +991,21 @@
     const tags = el("div", "q-tags");
     tags.appendChild(el("span", "q-tag", (q.ongoing ? "∞ Quest · repeat" : "✦ Quest") + (big ? (q.status === "doing" ? " · in progress" : " · up next") : "")));
     if (mission) tags.appendChild(el("span", "m-tag", "◆ " + mission.title));
+    if (q.from) tags.appendChild(el("span", "m-tag", "✎ " + q.from));
     if (q.atRisk && q.status !== "done") tags.appendChild(el("span", "risk-tag", "⚠ At risk"));
+    // How it's going: a coloured chip (the same as in Notes and on Nova Agent's front page); tap to change
+    if (window.NovaQuestModes) {
+      const mode = q.mode || (q.status === "done" ? "done" : q.status === "doing" ? "working" : "waiting");
+      const holder = document.createElement("span");
+      holder.innerHTML = NovaQuestModes.chip(mode);
+      const chip = holder.firstElementChild;
+      chip.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const picked = await NovaQuestModes.pick(chip, mode);
+        if (picked && picked !== mode) questTap(q.id, "mode", "quest", undefined, undefined, picked);
+      });
+      tags.appendChild(chip);
+    }
     card.appendChild(tags);
     card.style.setProperty("--i", questCard.count = (questCard.count || 0) + 1);
     const top = el("div", "card-top");

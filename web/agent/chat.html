@@ -646,6 +646,7 @@
 <link rel="stylesheet" href="/agent/bar.css">
 <link rel="stylesheet" href="/agent/status.css">
 <link rel="stylesheet" href="/agent/glow.css">
+<link rel="stylesheet" href="/shared/quest-modes.css">
 <link rel="stylesheet" href="/shared/install.css">
 <link rel="stylesheet" href="/agent/music.css">
 <link rel="stylesheet" href="/agent/touch.css">
@@ -935,6 +936,7 @@
     </div>
   </form>
 </dialog>
+<script src="/shared/quest-modes.js"></script>
 <script src="/shared/sfx.js"></script>
 <script src="/shared/ambient.js"></script>
 <script src="/shared/badge.js" defer></script>
@@ -1378,6 +1380,9 @@
     }
   }
 
+  // How a quest is going (Waiting, Soon, Working On It...): a coloured chip, tap to change (quest-modes.js)
+  const modeChip = (q) => (window.NovaQuestModes ? NovaQuestModes.chip(q.mode || (q.status === 'done' ? 'done' : q.status === 'doing' ? 'working' : 'waiting'), { 'data-qmode': q.id }) : '');
+
   function questButtons(q) {
     const b = [];
     if (q.status === 'todo') b.push(`<button class="mini go" data-q="${q.id}" data-a="start">▶ Start</button>`);
@@ -1432,12 +1437,12 @@
     const cur = st.current;
     if (cur) {
       const pct = cur.start && cur.end ? Math.max(0, Math.min(100, ((nowM - mins(cur.start)) / Math.max(1, mins(cur.end) - mins(cur.start))) * 100)) : 0;
-      html += `<div class="now-card"><div class="now-kicker">✦ Quest · ${cur.status === 'doing' ? 'In progress' : 'Happening now'}</div><div class="now-title">${escH(cur.title)}</div>
+      html += `<div class="now-card"><div class="now-kicker">✦ Quest · ${cur.status === 'doing' ? 'In progress' : 'Happening now'} ${modeChip(cur)}</div><div class="now-title">${escH(cur.title)}</div>
         <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${dur(cur)}${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>
         <div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div>${questButtons(cur)}</div>`;
     } else if (st.next[0]) {
       const n = st.next[0];
-      html += `<div class="now-card"><div class="now-kicker">✦ Quest · Up next</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div><div style="margin-top:10px">${questButtons(n)}</div></div>`;
+      html += `<div class="now-card"><div class="now-kicker">✦ Quest · Up next ${modeChip(n)}</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div><div style="margin-top:10px">${questButtons(n)}</div></div>`;
     }
 
     // One timeline row (a quest, blocked time or a calendar card). Compact rows show just the time
@@ -1451,7 +1456,7 @@
         const q = it.q;
         html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
           <div class="tl-card quest ${q.status}${q.atRisk ? ' risk' : ''}${q.ongoing ? ' ongoing' : ''}${fold}" style="--i:${questIndex++}">
-          <div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Quest · repeat' : '✦ Quest'}</span>${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
+          <div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Quest · repeat' : '✦ Quest'}</span>${modeChip(q)}${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${q.from ? `<span class="m-tag">✎ ${escH(q.from)}</span>` : ''}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
           <div class="tl-title">${escH(q.title)}</div>
           <div class="tl-meta"><span class="prio ${q.priority}">${q.priority}</span> · ${dur(q)}${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline && !q.ongoing ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
           ${q.status === 'done' ? '' : questButtons(q)}</div></div>`;
@@ -1497,7 +1502,7 @@
     } else if (todayTab === 'pulses') {
       panel = `<div class="upcoming"><div class="up-day"><ul>${pulses.map((q) => `<li>\u221E ${escH(q.title)} \u00B7 ${dur(q)} <button class="mini" data-q="${q.id}" data-a="finish">Stop</button></li>`).join('')}</ul></div></div>`;
     } else if (todayTab === 'unplanned') {
-      panel = `<div class="upcoming"><div class="up-day"><ul>${st.unplanned.map((q) => `<li>⚠ ${escH(q.title)} · ${dur(q)}</li>`).join('')}</ul></div></div>`;
+      panel = `<div class="upcoming"><div class="up-day"><ul>${st.unplanned.map((q) => `<li>⚠ ${escH(q.title)} · ${dur(q)} ${modeChip(q)}</li>`).join('')}</ul></div></div>`;
     }
     html += `<div class="subpanel">${panel}</div>`;
     $('view-today').innerHTML = html;
@@ -1583,7 +1588,7 @@
       const thisWeek = monday(st.now);
       const weeks = {};
       for (const q of open) (weeks[q.start ? monday(q.start) : 'zz'] = weeks[q.start ? monday(q.start) : 'zz'] || []).push(q);
-      const row = (q) => `<div class="mv-row${q.status === 'done' ? ' done' : ''}${q.atRisk ? ' risk' : ''}"><button class="tick${q.status === 'done' ? ' on' : ''}" data-q="${q.id}" data-a="${q.status === 'done' ? 'reopen' : 'done'}" aria-label="Done">✓</button><time>${q.start ? `${escH(shortDay(q.start))} ${hhmm(q.start)}` : 'Not planned yet'}</time><span class="t">${q.atRisk ? '⚠ ' : ''}${escH(q.title)}</span>${trackTag(q) || '<span></span>'}</div>`;
+      const row = (q) => `<div class="mv-row${q.status === 'done' ? ' done' : ''}${q.atRisk ? ' risk' : ''}"><button class="tick${q.status === 'done' ? ' on' : ''}" data-q="${q.id}" data-a="${q.status === 'done' ? 'reopen' : 'done'}" aria-label="Done">✓</button><time>${q.start ? `${escH(shortDay(q.start))} ${hhmm(q.start)}` : 'Not planned yet'}</time><span class="t">${q.atRisk ? '⚠ ' : ''}${escH(q.title)} ${modeChip(q)}</span>${trackTag(q) || '<span></span>'}</div>`;
       for (const [wk, list] of Object.entries(weeks).sort()) {
         const label = wk === 'zz' ? 'Needs a slot' : wk === thisWeek ? 'This week' : wk < thisWeek ? 'Earlier' : `Week of ${shortDay(wk)}`;
         html += `<div class="mv-sub">${label} · ${list.length}</div><div class="mv-rows">${list.map(row).join('')}</div>`;
@@ -1657,6 +1662,17 @@
 
   // Buttons anywhere on the page
   document.addEventListener('click', async (e) => {
+    // A quest's mode chip: pick how it's going
+    const mc = e.target.closest('[data-qmode]');
+    if (mc && window.NovaQuestModes) {
+      e.stopPropagation();
+      const current = [...mc.classList].find((c) => c.startsWith('qm-') && c !== 'qm-chip');
+      const mode = await NovaQuestModes.pick(mc, current ? current.slice(3) : 'waiting');
+      if (!mode) return;
+      const res = await api(`/actions/quests/${mc.dataset.qmode}`, { action: 'mode', mode });
+      if (!res.ok) toast({ title: 'That didn’t work', message: res.message });
+      return loadPlan();
+    }
     const qb = e.target.closest('[data-q][data-a]');
     if (qb) {
       qb.disabled = true;

@@ -35,7 +35,7 @@ import { replan } from "./quests/plan";
 import { createMission, refineMission } from "./quests/planner";
 import { describeLength } from "./quests/lengths";
 import { isPulse } from "./quests/pulses";
-import { EVERY, PRIORITIES, readQuests, TIMES_OF_DAY, WEEKDAYS, type Mission, type Quest } from "./quests/store";
+import { EVERY, MODES, MODE_NAMES, PRIORITIES, readQuests, TIMES_OF_DAY, WEEKDAYS, type Mission, type Quest } from "./quests/store";
 
 const DEFAULT_MODEL = "claude-opus-5-5";
 const MAX_HISTORY = 40;
@@ -287,7 +287,7 @@ function tools(actions: ChatAction[]) {
 
 const hm = (stamp: string) => (stamp.length > 16 ? stamp.slice(11, 19) : stamp.slice(11, 16));
 const questLine = (q: Quest) =>
-  `${q.id.slice(0, 8)} · ${q.title}${q.track ? ` [${q.track}]` : ""} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : isPulse(q) ? `pulse (own timer${q.deadline ? `, until ${hm(q.deadline)}` : ""})` : "not scheduled"} · ${describeLength(q)}${q.ongoing ? ` · ${q.sessions} sessions done` : ""} · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status}${q.atRisk ? " · AT RISK" : ""}`;
+  `${q.id.slice(0, 8)} · ${q.title}${q.track ? ` [${q.track}]` : ""} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : isPulse(q) ? `pulse (own timer${q.deadline ? `, until ${hm(q.deadline)}` : ""})` : "not scheduled"} · ${describeLength(q)}${q.ongoing ? ` · ${q.sessions} sessions done` : ""} · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status} · ${MODE_NAMES[q.mode] ?? q.mode}${q.from ? ` · from ${q.from}` : ""}${q.atRisk ? " · AT RISK" : ""}`;
 
 // What a new or re-planned mission looks like, for Claude to explain (the first stretch of quests in full)
 function missionReport(r: { mission: Mission; quests: Quest[]; atRisk: number; unplaced: string[] }): string {
@@ -500,7 +500,7 @@ function questTools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "quest_update",
-      description: "Change a quest: its length, priority, deadline, location/travel, preferred time of day, notes, or pin it to a time with fixed_start (\"\" unpins it so the planner chooses). Everything re-plans.",
+      description: "Change a quest: its length, priority, deadline, location/travel, preferred time of day, notes, its mode (how it's going: waiting, soon, working = Working On It, nearly = Nearly Finished, longer = Taking longer than expected, questions, done), or pin it to a time with fixed_start (\"\" unpins it so the planner chooses). Everything re-plans.",
       inputSchema: z.object({
         id: z.string(),
         title: z.string().optional(),
@@ -512,6 +512,7 @@ function questTools(actions: ChatAction[]) {
         travel_minutes: z.number().int().min(0).max(300).optional(),
         time_of_day: z.enum(TIMES_OF_DAY).optional(),
         notes: z.string().optional(),
+        mode: z.enum(MODES).optional(),
       }),
       run: async ({ id, fixed_start, travel_minutes, time_of_day, seconds, minutes, hours, days, every_minutes, ...rest }) => {
         const q = updateQuest(id, { ...rest, everyMinutes: every_minutes, minutes: totalMinutes({ seconds, minutes, hours, days }), fixedStart: fixed_start, travelMinutes: travel_minutes, timeOfDay: time_of_day });

@@ -272,7 +272,7 @@
       ol.appendChild(li);
     }
     $('outline-empty').hidden = items.length > 0;
-    if (NN.tasks) NN.tasks.render(editor, () => (current && current.title) || 'this note');
+    if (NN.tasks) NN.tasks.render(editor, () => (current && current.title) || 'this note', () => (current && current.id) || '');
     const st = editor.stats();
     $('st-words').textContent = `${st.words.toLocaleString('en-GB')} word${st.words === 1 ? '' : 's'}`;
     $('st-chars').textContent = `${st.chars.toLocaleString('en-GB')} characters`;

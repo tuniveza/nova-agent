@@ -1,0 +1,56 @@
+/* Quest modes (quest-modes.js): how a quest is going, the same colours everywhere (Notes, Nova Agent's
+   front page, Portal). Each mode keeps its own hue, blended a little toward the chosen theme
+   (look.js sets --hi, --accent, --soft and --gold), so they always belong to it. */
+:root {
+  --qm-waiting: color-mix(in oklab, #A8A2CC 76%, var(--soft, #F0EAF5));
+  --qm-soon: color-mix(in oklab, #62B8FF 80%, var(--accent, #C7A4FF));
+  --qm-working: color-mix(in oklab, #FFC857 82%, var(--gold, #F2D9A0));
+  --qm-nearly: color-mix(in oklab, #9E86FF 78%, var(--hi, #FF5FA8));
+  --qm-longer: color-mix(in oklab, #FF8466 82%, var(--hi, #FF5FA8));
+  --qm-questions: color-mix(in oklab, #FF6FBF 80%, var(--accent, #C7A4FF));
+  --qm-done: color-mix(in oklab, #4FF2B5 80%, var(--soft, #F0EAF5));
+}
+.qm-waiting { --qm: var(--qm-waiting); }
+.qm-soon { --qm: var(--qm-soon); }
+.qm-working { --qm: var(--qm-working); }
+.qm-nearly { --qm: var(--qm-nearly); }
+.qm-longer { --qm: var(--qm-longer); }
+.qm-questions { --qm: var(--qm-questions); }
+.qm-done { --qm: var(--qm-done); }
+
+/* The chip: a soft glowing pill in the mode's colour, a lit dot in front */
+.qm-chip {
+  --qm: var(--qm-waiting);
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+  padding: 3px 10px 3px 8px; border-radius: 999px;
+  font: inherit; font-size: 11.5px; font-weight: 600; letter-spacing: .01em; line-height: 1.3; white-space: nowrap;
+  color: color-mix(in oklab, var(--qm) 88%, #fff);
+  border: 1px solid color-mix(in oklab, var(--qm) 50%, transparent);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--qm) 22%, transparent), color-mix(in oklab, var(--qm) 7%, transparent));
+  box-shadow: 0 0 14px -6px var(--qm), inset 0 1px 0 color-mix(in oklab, #fff 10%, transparent);
+  overflow: hidden; text-overflow: ellipsis;
+}
+.qm-chip::before {
+  content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--qm); box-shadow: 0 0 8px 1px color-mix(in oklab, var(--qm) 70%, transparent);
+}
+button.qm-chip { cursor: pointer; transition: border-color .15s, box-shadow .15s, transform .12s; }
+button.qm-chip:hover { border-color: var(--qm); box-shadow: 0 0 18px -4px var(--qm); }
+button.qm-chip:active { transform: scale(.97); }
+.qm-chip.qm-done { text-decoration: none; }
+
+/* The menu of modes */
+.qm-menu {
+  position: fixed; z-index: 2147483000; display: grid; gap: 3px; padding: 6px; width: 250px; max-width: calc(100vw - 16px);
+  border-radius: 16px; border: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 25%, rgba(255,255,255,.12));
+  background: color-mix(in oklab, var(--panel, #1C1129) 96%, #000); box-shadow: 0 20px 60px -18px #000, 0 0 30px -18px var(--hi, #FF5FA8);
+}
+.qm-menu[hidden] { display: none; }
+.qm-menu button {
+  display: flex; align-items: center; gap: 9px; text-align: left; padding: 8px 10px; border-radius: 10px; border: 0;
+  background: none; color: color-mix(in oklab, var(--qm) 85%, #fff); font: inherit; font-size: 13.5px; cursor: pointer;
+}
+.qm-menu button::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--qm); box-shadow: 0 0 8px var(--qm); flex: none; }
+.qm-menu button:hover, .qm-menu button:focus-visible, .qm-menu button[aria-checked="true"] { background: color-mix(in oklab, var(--qm) 16%, transparent); outline: none; }
+.qm-menu button[aria-checked="true"]::after { content: "✓"; margin-left: auto; }
+@media (prefers-reduced-motion: reduce) { button.qm-chip { transition: none; } }

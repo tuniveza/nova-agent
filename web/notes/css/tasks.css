@@ -1,5 +1,5 @@
-/* Notes — tasks (tasks.js): the list at the top of the side panel, each task's status, and the
-   status on the heading itself in the note. The side panel scrolls as one, and nothing in it is
+/* Notes — quests (tasks.js): the list at the top of the side panel, each quest's mode, and the
+   mode on the heading itself in the note. The side panel scrolls as one, and nothing in it is
    ever cut off. */
 .outline { overflow-y: auto; scrollbar-width: thin; }
 .outline .outline-list { overflow: visible; }
@@ -19,29 +19,31 @@
 .task-st, .task-chat { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--text); font: inherit; font-size: 11.5px; cursor: pointer; }
 .task-chat svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
 .task-chat:hover, .task-st:hover { border-color: var(--hi); color: #fff; }
-/* Each status has its own colour */
-.st-waiting { --st: #9C9CB6; }
-.st-soon { --st: #62B6FF; }
-.st-working { --st: #FFD166; }
-.st-longer { --st: #FF8A6B; }
-.st-done { --st: #5CFFC0; }
-.task .task-st { border-color: color-mix(in srgb, var(--st) 60%, transparent); color: var(--st); background: color-mix(in srgb, var(--st) 12%, transparent); }
-.task.st-done .task-go { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--st) 70%, transparent); }
-.task-menu { position: fixed; z-index: 80; display: grid; gap: 4px; padding: 6px; width: 232px; border-radius: 14px; border: 1px solid var(--line-strong, var(--line)); background: color-mix(in srgb, var(--panel) 97%, var(--void)); box-shadow: 0 18px 50px -16px #000; }
-.task-menu[hidden] { display: none; }
-.task-menu button { text-align: left; padding: 7px 10px; border-radius: 9px; border: 0; background: none; color: var(--st); font: inherit; font-size: 13px; cursor: pointer; }
-.task-menu button::before { content: "●"; margin-right: 8px; }
-.task-menu button:hover, .task-menu button[aria-checked="true"] { background: color-mix(in srgb, var(--st) 16%, transparent); }
+/* Each mode has its own colour (the shared set in /shared/quest-modes.css, tinted by the theme) */
+.task { border-color: color-mix(in oklab, var(--qm) 28%, var(--line)); background: linear-gradient(135deg, color-mix(in oklab, var(--qm) 9%, transparent), color-mix(in srgb, var(--panel-2) 35%, transparent)); }
+.task .task-st { font-size: 11.5px; }
+.task.qm-done .task-go { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in oklab, var(--qm) 70%, transparent); }
+.task-off { display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--muted); font-size: 11px; cursor: pointer; }
+.task-off:hover { color: #fff; border-color: var(--hi); }
+.task-link { display: block; text-align: center; font-size: 10.5px; letter-spacing: .03em; color: var(--muted); }
+.tasks-tools { display: grid; gap: 6px; }
+.tasks-new { justify-self: center; padding: 6px 14px; border-radius: 999px; border: 1px solid color-mix(in oklab, var(--hi) 45%, var(--line)); background: color-mix(in oklab, var(--hi) 12%, transparent); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.tasks-new:hover { border-color: var(--hi); box-shadow: 0 0 16px -6px var(--hi); }
+.tasks-sync { margin: 0; font-size: 11.5px; color: var(--muted); text-align: center; }
 
-/* In the note: a task heading shows its status beside it (it isn't text, so it never prints or exports) */
-.page h3[data-task]::after { content: "Waiting"; display: inline-block; margin-left: 10px; padding: 2px 9px; border-radius: 999px; vertical-align: middle;
+/* In the note: a quest heading shows its mode beside it (it isn't text, so it never prints or exports) */
+.page :is(h2, h3)[data-task] { --qm: var(--qm-waiting); }
+.page :is(h2, h3)[data-task]::after { content: "Waiting"; display: inline-block; margin-left: 10px; padding: 2px 10px 2px 9px; border-radius: 999px; vertical-align: middle;
   font-family: var(--f-body); font-size: 11px; font-weight: 600; letter-spacing: .02em; text-transform: none;
-  color: var(--st); border: 1px solid color-mix(in srgb, var(--st) 55%, transparent); background: color-mix(in srgb, var(--st) 12%, transparent); }
-.page h3[data-task="waiting"] { --st: #9C9CB6; }
-.page h3[data-task="soon"] { --st: #62B6FF; } .page h3[data-task="soon"]::after { content: "Soon"; }
-.page h3[data-task="working"] { --st: #FFD166; } .page h3[data-task="working"]::after { content: "Working on it"; }
-.page h3[data-task="longer"] { --st: #FF8A6B; } .page h3[data-task="longer"]::after { content: "Taking longer than expected"; }
-.page h3[data-task="done"] { --st: #5CFFC0; } .page h3[data-task="done"]::after { content: "Done"; }
-.page h3.task-flash { animation: task-flash 1.2s ease; }
+  color: color-mix(in oklab, var(--qm) 88%, #fff); border: 1px solid color-mix(in oklab, var(--qm) 50%, transparent);
+  background: linear-gradient(135deg, color-mix(in oklab, var(--qm) 22%, transparent), color-mix(in oklab, var(--qm) 7%, transparent));
+  box-shadow: 0 0 14px -6px var(--qm); }
+.page :is(h2, h3)[data-task="soon"] { --qm: var(--qm-soon); } .page :is(h2, h3)[data-task="soon"]::after { content: "Soon"; }
+.page :is(h2, h3)[data-task="working"] { --qm: var(--qm-working); } .page :is(h2, h3)[data-task="working"]::after { content: "Working On It"; }
+.page :is(h2, h3)[data-task="nearly"] { --qm: var(--qm-nearly); } .page :is(h2, h3)[data-task="nearly"]::after { content: "Nearly Finished"; }
+.page :is(h2, h3)[data-task="longer"] { --qm: var(--qm-longer); } .page :is(h2, h3)[data-task="longer"]::after { content: "Taking longer than expected"; }
+.page :is(h2, h3)[data-task="questions"] { --qm: var(--qm-questions); } .page :is(h2, h3)[data-task="questions"]::after { content: "Questions"; }
+.page :is(h2, h3)[data-task="done"] { --qm: var(--qm-done); } .page :is(h2, h3)[data-task="done"]::after { content: "Done"; }
+.page :is(h2, h3).task-flash { animation: task-flash 1.2s ease; }
 @keyframes task-flash { 30% { background: color-mix(in srgb, var(--hi) 22%, transparent); border-radius: 8px; } }
-@media print { .page h3[data-task]::after { display: none; } }
+@media print { .page :is(h2, h3)[data-task]::after { display: none; } }

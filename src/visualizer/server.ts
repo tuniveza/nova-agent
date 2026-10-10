@@ -35,7 +35,7 @@ import { getRecentEvents, onTrace, trace } from "../trace";
 import { calendarEvents, readCalendar } from "../calendar/store";
 import { saveFromPage } from "../calendar/page";
 import { chat, type ChatTurn } from "../chat";
-import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
+import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestMode, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
 import { createMission, refineMission } from "../quests/planner";
 import { startPortalSync } from "../quests/portalsync";
@@ -476,6 +476,7 @@ app.post("/actions/quests/:id", async (c) => {
     if (body.action === "reopen") return setQuestStatus(id, "todo");
     if (body.action === "snooze") return snoozeQuest(id, Number(body.minutes) || 15);
     if (body.action === "remove") return removeQuest(id);
+    if (body.action === "mode") return setQuestMode(id, String(body.mode || ""));
     return updateQuest(id, body.changes || {});
   });
 });

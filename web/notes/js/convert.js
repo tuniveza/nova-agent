@@ -122,8 +122,14 @@
     if ((tag === 'td' || tag === 'th') && +src.getAttribute('colspan') > 1) el.setAttribute('colspan', Math.min(20, +src.getAttribute('colspan')));
     if ((tag === 'td' || tag === 'th') && +src.getAttribute('rowspan') > 1) el.setAttribute('rowspan', Math.min(50, +src.getAttribute('rowspan')));
     if (tag === 'ol' && +src.getAttribute('start') > 1) el.setAttribute('start', +src.getAttribute('start'));
-    // A task heading's status (tasks.js): kept with the note
-    if (tag === 'h3' && /^(waiting|soon|working|longer|done)$/.test(src.getAttribute('data-task') || '')) el.setAttribute('data-task', src.getAttribute('data-task'));
+    // A quest heading's mode and its tie to Nova Quests (tasks.js): kept with the note
+    if (tag === 'h2' || tag === 'h3') {
+      const mode = /^(waiting|soon|working|nearly|longer|questions|done)$/;
+      if (mode.test(src.getAttribute('data-task') || '')) el.setAttribute('data-task', src.getAttribute('data-task'));
+      if (mode.test(src.getAttribute('data-qsync') || '')) el.setAttribute('data-qsync', src.getAttribute('data-qsync'));
+      if (/^[\w-]{1,64}$/.test(src.getAttribute('data-qid') || '')) el.setAttribute('data-qid', src.getAttribute('data-qid'));
+      if (/^[\w-]{1,32}$/.test(src.getAttribute('data-qkey') || '')) el.setAttribute('data-qkey', src.getAttribute('data-qkey'));
+    }
     return el;
   }
 
@@ -395,8 +401,8 @@
           continue;
         }
         let level = Math.max(1, Math.min(3, m[1].length - (titleMode ? 1 : 0)));
-        // "### …TASK…" is always a heading 3, so it's a task in the side panel (tasks.js)
-        if (m[1].length === 3 && /\btask\b/i.test(m[2])) level = 3;
+        // "### …QUEST…" (or TASK) is always a heading 3, so it's a quest in the side panel (tasks.js)
+        if (m[1].length === 3 && /\b(quest|task)\b/i.test(m[2])) level = 3;
         out.push(`<h${level}>${inlineMd(m[2])}</h${level}>`);
         continue;
       }

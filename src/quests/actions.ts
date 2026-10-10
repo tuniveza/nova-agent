@@ -9,7 +9,7 @@ import { nextSession, splitLong } from "./lengths";
 import { isPulse } from "./pulses";
 import { notifyMission, recentNotices } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
-import { cleanQuest, EVERY, PRIORITIES, readQuests, readStamp, TIMES_OF_DAY, writeQuests, type Block, type Mission, type Quest, type QuestData, type Rhythm } from "./store";
+import { cleanQuest, EVERY, MODES, PRIORITIES, readQuests, readStamp, TIMES_OF_DAY, writeQuests, type Block, type Mission, type Quest, type QuestData, type QuestMode, type Rhythm } from "./store";
 
 const stamp = () => fromMin(nowMinutes());
 
@@ -46,6 +46,7 @@ export interface QuestTap {
   minutes?: number;
   tapId?: string; // the same tap handed over twice counts once
   session?: string; // the session (start) it was tapped on
+  mode?: string; // for "mode": how it's going now (MODES)
 }
 export function applyQuestTap(t: QuestTap): string {
   if (t.tapId && !firstTimeForTap(t.tapId)) {
@@ -64,6 +65,7 @@ export function applyQuestTap(t: QuestTap): string {
   if (t.action === "skip") return done(setQuestStatus(t.id, "skipped"));
   if (t.action === "reopen") return done(setQuestStatus(t.id, "todo"));
   if (t.action === "snooze") return done(snoozeQuest(t.id, Math.max(1, Number(t.minutes) || 15)));
+  if (t.action === "mode") return done(setQuestMode(t.id, String(t.mode || "")));
   throw new Error(`Quests can't "${t.action}"`);
 }
 
@@ -122,6 +124,10 @@ export function setQuestStatus(id: string, status: Quest["status"], finish = fal
   }
   q.status = status;
   q.updated = new Date().toISOString();
+  // The mode follows: done is Done, started is Working On It (unless it already says how it's going)
+  if (status === "done") q.mode = "done";
+  if (status === "doing" && !["working", "nearly", "longer"].includes(q.mode)) q.mode = "working";
+  if (status === "todo" && ["done", "working", "nearly", "longer"].includes(q.mode)) q.mode = "waiting";
   if (status === "done") q.completed = q.updated;
   if (status === "doing") {
     // Started now: it takes its time from here (the rest of the day moves around it)
@@ -152,6 +158,25 @@ export function setQuestStatus(id: string, status: Quest["status"], finish = fal
   return readQuests().quests.find((x) => x.id === q.id)!;
 }
 
+// How it's going (Notes, the front page, Portal): the mode, and the status it means.
+// Done finishes it; Working On It, Nearly Finished and Taking longer than expected start it;
+// Waiting, Soon and Questions put it back to be done.
+export function setQuestMode(id: string, mode: string): Quest {
+  if (!(MODES as readonly string[]).includes(mode)) throw new Error(`The mode must be one of: ${MODES.join(", ")}.`);
+  const m = mode as QuestMode;
+  const q = find(readQuests().quests, id, "quest");
+  const started = m === "working" || m === "nearly" || m === "longer";
+  if (m === "done" && q.status !== "done") setQuestStatus(q.id, "done", true);
+  else if (started && q.status !== "doing") setQuestStatus(q.id, "doing");
+  else if (!started && m !== "done" && (q.status === "doing" || q.status === "done")) setQuestStatus(q.id, "todo");
+  const data = readQuests();
+  const saved = data.quests.find((x) => x.id === q.id)!;
+  saved.mode = m;
+  saved.updated = saved.edited = new Date().toISOString();
+  writeQuests(data);
+  return saved;
+}
+
 // Not now: try again in `minutes` (or more time if it's under way)
 export function snoozeQuest(id: string, minutes = 15): Quest {
   const data = readQuests();
@@ -173,7 +198,7 @@ export function snoozeQuest(id: string, minutes = 15): Quest {
 
 export function addQuest(input: Partial<Quest>): Quest {
   const data = readQuests();
-  const q = cleanQuest({ ...input, id: randomUUID(), status: "todo" });
+  const q = cleanQuest({ ...input, id: randomUUID(), status: "todo", mode: (MODES as readonly string[]).includes(input.mode as string) && !["done", "working", "nearly", "longer"].includes(input.mode as string) ? input.mode : "waiting" });
   // A long quest becomes sessions; the last one keeps the id
   data.quests.push(...splitLong(q, data.rhythm));
   writeQuests(data);
@@ -198,6 +223,8 @@ const EDITABLE: Record<string, (v: any) => unknown> = {
   deadline: (v) => readStamp(v, "23:59"),
   earliest: (v) => readStamp(v, "00:00"),
   fixedStart: (v) => readStamp(v, "09:00"),
+  from: (v) => words(v, 80, "Where it's from"),
+  link: (v) => words(v, 160, "What it's tied to"),
   dependsOn: (v) => (Array.isArray(v) && v.length <= 20 && v.every((x) => typeof x === "string" && x.length <= 64) ? v : bad("Depends on must be a list of up to 20 quest ids.")),
 };
 function bad(message: string): never {
@@ -221,6 +248,12 @@ function checkedChanges(changes: Record<string, unknown>): Partial<Quest> {
 }
 
 export function updateQuest(id: string, changes: Partial<Quest>): Quest {
+  // A new mode (and the status it means) has its own way in
+  const { mode, ...rest } = changes as Partial<Quest> & { mode?: string };
+  if (mode !== undefined) {
+    const q = setQuestMode(id, mode);
+    return Object.keys(rest).length ? updateQuest(q.id, rest) : q;
+  }
   const wanted = checkedChanges(changes);
   const data = readQuests();
   const q = find(data.quests, id, "quest");

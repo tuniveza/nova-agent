@@ -29,6 +29,21 @@ export type Priority = (typeof PRIORITIES)[number];
 export const TIMES_OF_DAY = ["any", "morning", "afternoon", "evening"] as const;
 export type TimeOfDay = (typeof TIMES_OF_DAY)[number];
 export type QuestStatus = "todo" | "doing" | "done" | "skipped";
+// How a quest is going, in the person's words (the same everywhere: Notes, Nova Agent, Portal).
+// Done is finished; Working on it, Nearly finished and Taking longer than expected are started.
+export const MODES = ["waiting", "soon", "working", "nearly", "longer", "questions", "done"] as const;
+export type QuestMode = (typeof MODES)[number];
+export const MODE_NAMES: Record<QuestMode, string> = {
+  waiting: "Waiting",
+  soon: "Soon",
+  working: "Working On It",
+  nearly: "Nearly Finished",
+  longer: "Taking longer than expected",
+  questions: "Questions",
+  done: "Done",
+};
+// The mode a status means, when a quest has none yet
+export const modeFor = (status: string): QuestMode => (status === "done" ? "done" : status === "doing" ? "working" : "waiting");
 export const EVERY = ["day", "weekday", "week", "interval"] as const; // interval: every `everyMinutes`
 export type Every = (typeof EVERY)[number];
 export const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
@@ -104,6 +119,9 @@ export interface Quest {
   timeOfDay: TimeOfDay; // when it suits best
   fixedStart: string; // pinned to this time ("" = the planner chooses)
   status: QuestStatus;
+  mode: QuestMode; // how it's going (MODES)
+  from: string; // where it was made, for people ("Notes · Studio plan"; "" = Nova Agent itself)
+  link: string; // what it's tied to ("note:<note id>|<heading id>"), so a change in either place shows in both
   // Set by the planner
   start: string;
   end: string;
@@ -260,6 +278,9 @@ export function cleanQuest(q: any): Quest {
     timeOfDay: (TIMES_OF_DAY as readonly string[]).includes(q?.timeOfDay) ? q.timeOfDay : "any",
     fixedStart: isStamp(q?.fixedStart) ? q.fixedStart : "",
     status: ["todo", "doing", "done", "skipped"].includes(q?.status) ? q.status : "todo",
+    mode: (MODES as readonly string[]).includes(q?.mode) ? q.mode : modeFor(q?.status),
+    from: text(q?.from, 80),
+    link: text(q?.link, 160),
     start: isStamp(q?.start) ? q.start : "",
     end: isStamp(q?.end) ? q.end : "",
     travelStart: isStamp(q?.travelStart) ? q.travelStart : "",
