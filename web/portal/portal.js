@@ -537,7 +537,7 @@
   }
   function showAdminPage(page) {
     for (const chip of document.querySelectorAll("[data-admin]")) {
-      const on = chip.dataset.admin === "/admin" ? page === "/admin" || (page.startsWith("/admin/") && !page.startsWith("/admin/google") && page !== "/admin/links") : page.startsWith(chip.dataset.admin);
+      const on = chip.dataset.admin === "/admin" ? page === "/admin" || (page.startsWith("/admin/") && !page.startsWith("/admin/google") && page !== "/admin/links" && !page.startsWith("/admin/test-booking")) : page.startsWith(chip.dataset.admin);
       chip.classList.toggle("active", on);
       chip.setAttribute("aria-selected", on ? "true" : "false");
     }
