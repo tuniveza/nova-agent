@@ -42,6 +42,8 @@ import { startPortalSync } from "../quests/portalsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { questEvents } from "../quests/store";
+import { missionMarkdown } from "../quests/export";
+import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile, saveFile } from "../files";
 
 // Everything Nova Agent shows lives in web/: its own page (web/agent) and each panel
 const web = (path: string) => fileURLToPath(new URL(`../../web/${path}`, import.meta.url));
@@ -422,6 +424,41 @@ app.post("/actions/missions/:id", async (c) => {
   });
 });
 // Answers to the plan's questions, or any new detail: the work that's left is planned again
+// ---- Files Nova Agent wrote (files.ts): the list, each one to view or download ----
+app.get("/files/list", (c) => c.json({ files: listFiles().map(fileCard) }, 200, { "Cache-Control": "no-store" }));
+app.get("/files/:id/:name", (c) => {
+  const f = findFile(c.req.param("id"));
+  if (!f || f.id !== c.req.param("id")) return c.text("No such file", 404);
+  const download = c.req.query("download") !== undefined;
+  return c.body(readFileText(f), 200, {
+    // Markdown and CSV show as plain text in the browser; ?download saves the file
+    "Content-Type": download ? CONTENT_TYPES[f.type] : f.type === "html" ? CONTENT_TYPES.html : f.type === "json" ? CONTENT_TYPES.json : "text/plain; charset=utf-8",
+    "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${f.name.replace(/"/g, "")}"; filename*=UTF-8''${encodeURIComponent(f.name)}`,
+    // A file is only ever a document: it can't run scripts or reach Nova Agent's pages
+    "Content-Security-Policy": "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data: https:",
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+  });
+});
+app.post("/actions/files/:id/remove", (c) => {
+  try {
+    return c.json({ ok: true, file: fileCard(removeFile(c.req.param("id"))) });
+  } catch (error) {
+    return c.json({ ok: false, message: (error as Error).message }, 404);
+  }
+});
+// A mission's whole plan as a Markdown file (exporting again updates the same file)
+app.post("/actions/missions/:id/export", (c) => {
+  try {
+    const doc = missionMarkdown(c.req.param("id"));
+    const source = `mission:${doc.missionId}`;
+    const before = listFiles().find((f) => f.source === source);
+    return c.json({ ok: true, file: fileCard(saveFile({ name: doc.name, title: doc.title, content: doc.content, id: before?.id, source })) });
+  } catch (error) {
+    return c.json({ ok: false, message: (error as Error).message }, 400);
+  }
+});
+
 app.post("/actions/missions/:id/refine", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   if (typeof body.detail !== "string" || !body.detail.trim()) return c.json({ ok: false, message: "Say what's new first." }, 400);

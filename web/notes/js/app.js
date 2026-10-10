@@ -1479,6 +1479,7 @@
   // Works offline once opened (sw.js), can be installed, and can be launched to do something:
   //   ./?new                     a fresh note (the icon's "New note" shortcut)
   //   ./?share&title=&text=&url= a note from something shared to Notes on a phone
+  //   ./?open=/files/<id>/<name>  a file Nova Agent wrote (inside Nova Agent only)
   //   opening a file with it     imports the file (desktop, once installed)
 
   let installPrompt = null;
@@ -1537,6 +1538,19 @@
       }
     } else if (q.has('new')) {
       await newNote();
+    } else if (q.has('open')) {
+      // A file Nova Agent wrote (./?open=/files/<id>/<name>), when Notes runs inside Nova
+      // Agent: only from this same site's /files/, and only documents (never a backup to restore)
+      try {
+        const u = new URL(q.get('open') || '', location.href);
+        const name = decodeURIComponent(u.pathname.split('/').pop() || '');
+        if (u.origin !== location.origin || !/^\/files\/[\w-]+\/[^/]+$/.test(u.pathname) || !/\.(md|markdown|txt|html?)$/i.test(name)) throw new Error('not a Nova Agent file');
+        const res = await fetch(u.pathname, { cache: 'no-store' });
+        if (!res.ok) throw new Error(res.status === 404 ? 'it has been deleted' : `error ${res.status}`);
+        await importFiles([new File([await res.text()], name, { type: /\.html?$/i.test(name) ? 'text/html' : 'text/plain' })]);
+      } catch (err) {
+        toast(`Couldn't open that file from Nova Agent: ${err.message}`);
+      }
     }
     if (location.search) history.replaceState(null, '', location.pathname);
     // Files opened with the installed app

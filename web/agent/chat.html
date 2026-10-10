@@ -277,6 +277,47 @@
   .action { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong); background: color-mix(in srgb, var(--accent) 16%, transparent); font-family: var(--f-mono); font-size: 10.5px; color: var(--soft); }
   .action.removed { border-color: color-mix(in srgb, #E5484D 50%, transparent); background: color-mix(in srgb, #E5484D 12%, transparent); }
   .action.looked { border-color: var(--line); background: none; color: var(--muted); }
+  .action.file { border-color: color-mix(in srgb, var(--gold) 45%, transparent); background: color-mix(in srgb, var(--gold) 10%, transparent); color: var(--gold); }
+  /* Files Nova Agent wrote: a card under the reply, the Files list, and the viewer */
+  .fcards { display: grid; gap: 8px; margin-top: 8px; }
+  .fcard { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center; padding: 10px 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); background: linear-gradient(120deg, color-mix(in srgb, var(--gold) 9%, var(--panel)), color-mix(in srgb, var(--panel-2) 60%, transparent)); animation: quest-in .4s cubic-bezier(.2,.8,.2,1) both; }
+  .fcard .ficon { grid-row: span 2; width: 40px; height: 46px; border-radius: 8px 14px 8px 8px; display: grid; place-items: end center; padding-bottom: 6px; font-family: var(--f-mono); font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--deep); background: linear-gradient(160deg, #fff, var(--gold)); box-shadow: 0 6px 16px -8px var(--gold); position: relative; }
+  .fcard .ficon::before { content: ""; position: absolute; top: 0; right: 0; width: 12px; height: 12px; border-radius: 0 12px 0 6px; background: color-mix(in srgb, var(--gold) 60%, #000); opacity: .45; }
+  .fcard .ftitle { min-width: 0; font-weight: 700; color: #fff; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fcard .fmeta { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fcard .fbtns { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .fcard .fbtns a { text-decoration: none; }
+  .files-dlg { width: min(720px, calc(100vw - 24px)); }
+  .files-list { display: grid; gap: 8px; max-height: min(62vh, 640px); overflow-y: auto; padding-right: 2px; }
+  .fv-dlg { width: min(980px, calc(100vw - 24px)); }
+  .fv-head { display: flex; align-items: center; gap: 12px; padding-right: 40px; flex-wrap: wrap; }
+  .fv-head .fwords { flex: 1; min-width: 200px; }
+  .fv-head .fbtns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fv-head .fbtns a { text-decoration: none; }
+  .fv-body { max-height: min(70vh, 760px); overflow: auto; padding: 18px 22px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 55%, transparent); }
+  .fv-body iframe { width: 100%; height: min(66vh, 720px); border: 0; border-radius: 12px; background: #fff; }
+  .doc { font-size: 14.5px; line-height: 1.62; color: var(--text); }
+  .doc h1, .doc h2, .doc h3, .doc h4 { font-family: var(--f-display); color: #fff; line-height: 1.2; margin: 1.1em 0 .45em; }
+  .doc h1 { font-size: 26px; font-stretch: 112%; font-weight: 900; margin-top: 0; }
+  .doc h2 { font-size: 19px; font-weight: 800; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .doc h3 { font-size: 16px; font-weight: 800; color: var(--gold); }
+  .doc h4 { font-size: 14px; font-weight: 800; }
+  .doc p { margin: 0 0 .8em; }
+  .doc ul, .doc ol { margin: .2em 0 .9em; padding-left: 1.4em; } .doc li { margin: .2em 0; } .doc li::marker { color: var(--gold); }
+  .doc li.task { list-style: none; margin-left: -1.2em; } .doc li.task::before { content: "☐ "; color: var(--gold); } .doc li.task.done::before { content: "☑ "; } .doc li.task.done { color: var(--muted); }
+  .doc a { color: var(--gold); text-underline-offset: 3px; }
+  .doc strong { color: #fff; }
+  .doc code { font-family: var(--f-mono); font-size: .86em; padding: 1px 5px; border-radius: 6px; background: color-mix(in srgb, var(--void) 70%, transparent); border: 1px solid var(--line); }
+  .doc pre { margin: .4em 0 1em; padding: 12px 14px; border-radius: 12px; overflow-x: auto; background: color-mix(in srgb, var(--void) 80%, transparent); border: 1px solid var(--line); }
+  .doc pre code { padding: 0; border: 0; background: none; font-size: 12.5px; white-space: pre; }
+  .doc blockquote { margin: .4em 0 1em; padding: 8px 14px; border-left: 3px solid var(--gold); border-radius: 0 12px 12px 0; background: color-mix(in srgb, var(--gold) 7%, transparent); }
+  .doc hr { border: 0; border-top: 1px solid var(--line); margin: 1.2em 0; }
+  .doc .tbl { overflow-x: auto; margin: .4em 0 1em; border-radius: 12px; border: 1px solid var(--line); }
+  .doc table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .doc th { text-align: left; font-family: var(--f-display); font-weight: 800; color: #fff; background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .doc th, .doc td { padding: 7px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .doc tr:last-child td { border-bottom: 0; }
+  .doc.plain { white-space: pre-wrap; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.55; }
   .typing { display: inline-flex; gap: 5px; padding: 12px 16px; }
   .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--hi); animation: orbit 1.2s ease-in-out infinite; }
   .typing span:nth-child(2) { animation-delay: .15s; background: var(--lilac); } .typing span:nth-child(3) { animation-delay: .3s; background: var(--soft); }
@@ -644,6 +685,7 @@
     <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="i-clear" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12M6 11l6 6 6-6M5 21h14"/></symbol>
     <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
     <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
@@ -700,7 +742,7 @@
     <section class="chat glass" aria-label="Agent">
       <div class="chat-head">
         <h2 class="sec-title"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span> Agent</h2>
-        <button type="button" class="icon-btn" id="clear" title="Start a new conversation" aria-label="Start a new conversation"><svg class="ico"><use href="#i-clear"/></svg></button>
+        <span style="display:flex;gap:6px"><button type="button" class="icon-btn" id="files-btn" title="Files Nova Agent wrote for you" aria-label="Your files"><svg class="ico"><use href="#i-file"/></svg></button><button type="button" class="icon-btn" id="clear" title="Start a new conversation" aria-label="Start a new conversation"><svg class="ico"><use href="#i-clear"/></svg></button></span>
       </div>
       <div class="log" id="log" aria-live="polite">
         <div class="welcome" id="welcome">
@@ -779,6 +821,22 @@
     </div>
     <div class="mv-body" id="mv-body"></div>
     <div class="mv-foot" id="mv-foot"></div>
+  </div>
+</dialog>
+<!-- Files Nova Agent wrote, and the viewer for one -->
+<dialog class="rhythm files-dlg" id="files-dlg" aria-labelledby="files-title">
+  <div class="rh" style="position:relative">
+    <button type="button" class="icon-btn suite-x" data-close aria-label="Close" style="right:16px;top:16px">✕</button>
+    <h3 id="files-title">Your files</h3>
+    <p>Everything Nova Agent has written for you: preview it, download it to this computer, or open it in Notes. Ask in the chat for any document, list, plan or spreadsheet.</p>
+    <div class="files-list" id="files-list"></div>
+  </div>
+</dialog>
+<dialog class="rhythm fv-dlg" id="fv" aria-labelledby="fv-title">
+  <div class="rh" style="position:relative">
+    <button type="button" class="icon-btn suite-x" data-close aria-label="Close" style="right:16px;top:16px">✕</button>
+    <div class="fv-head" id="fv-head"></div>
+    <div class="fv-body" id="fv-body"></div>
   </div>
 </dialog>
 <dialog class="rhythm suite-dlg" id="suite" aria-labelledby="suite-title">
@@ -1020,6 +1078,129 @@
     if (box === $('composer')) $('send').textContent = k.send;
   }
 
+  // ---- Files Nova Agent wrote: cards, the Files list, the viewer ----
+  const escF = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const fsize = (b) => (b < 1000 ? `${b} B` : b < 1e6 ? `${(b / 1000).toFixed(1)} KB` : `${(b / 1e6).toFixed(1)} MB`);
+  const fwhen = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
+  const known = new Map(); // id -> the latest card for it
+  const toNotes = (f) => ['md', 'txt', 'html'].includes(f.type);
+  function fileButtons(f, opts) {
+    return `<button type="button" class="mini go" data-fv="${escF(f.id)}">◎ Preview</button><a class="mini" href="${escF(f.url)}?download" download="${escF(f.name)}" data-fdl>⤓ Download</a>${toNotes(f) ? `<a class="mini" href="/notes/?open=${encodeURIComponent(f.url)}" target="_blank" rel="noopener">✎ Open in Notes</a>` : ''}<button type="button" class="mini" data-fcopy="${escF(f.id)}">⧉ Copy</button>${opts && opts.remove ? `<button type="button" class="mini" data-fdel="${escF(f.id)}">✕ Delete</button>` : ''}`;
+  }
+  function fileCardHtml(f, opts) {
+    known.set(f.id, f);
+    return `<div class="fcard" data-fcard="${escF(f.id)}"><span class="ficon" aria-hidden="true">${escF(f.type)}</span><span class="ftitle" title="${escF(f.title)}">${escF(f.title)}</span><span class="fmeta">${escF(f.name)} · ${fsize(f.size)}${f.updated ? ` · ${fwhen(f.updated)}` : ''}</span><div class="fbtns">${fileButtons(f, opts)}</div></div>`;
+  }
+  async function fileText(f) {
+    const r = await fetch(f.url, { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status === 404 ? 'That file has been deleted.' : `Couldn't open it (${r.status}).`);
+    return r.text();
+  }
+  // A fuller Markdown than the chat's: headings, tables, code, quotes, checklists, links
+  function mdDoc(text) {
+    const lines = text.replace(/\r/g, '').split('\n');
+    const link = (s) => s.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_, t, u) => `<a href="${u.replace(/"/g, '%22')}" target="_blank" rel="noopener">${t}</a>`);
+    const il = (s) => link(inline(s)).replace(/~~(.+?)~~/g, '<s>$1</s>');
+    const out = [];
+    let list = null, para = [];
+    const flushP = () => { if (para.length) out.push(`<p>${para.map(il).join('<br>')}</p>`); para = []; };
+    const flushL = () => { if (list) out.push(`</${list}>`); list = null; };
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (/^\s*```/.test(line)) {
+        flushP(); flushL();
+        const code = [];
+        while (++i < lines.length && !/^\s*```/.test(lines[i])) code.push(lines[i]);
+        out.push(`<pre><code>${esc(code.join('\n'))}</code></pre>`);
+        continue;
+      }
+      if (!line.trim()) { flushP(); if (list && !/^\s*([-*+]|\d+[.)])\s/.test(lines[i + 1] || '')) flushL(); continue; }
+      const h = line.match(/^(#{1,6})\s+(.*)$/);
+      if (h) { flushP(); flushL(); const n = Math.min(4, h[1].length); out.push(`<h${n}>${il(h[2])}</h${n}>`); continue; }
+      if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) { flushP(); flushL(); out.push('<hr>'); continue; }
+      if (/^\s*\|.*\|\s*$/.test(line) && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] || '')) {
+        flushP(); flushL();
+        const cells = (l) => l.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map((c) => il(c.trim().replace(/\\\|/g, '|')));
+        const head = cells(line); i++;
+        const rows = [];
+        while (i + 1 < lines.length && /^\s*\|.*\|\s*$/.test(lines[i + 1])) rows.push(cells(lines[++i]));
+        out.push(`<div class="tbl"><table><thead><tr>${head.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+        continue;
+      }
+      const q = line.match(/^\s*>\s?(.*)$/);
+      if (q) { flushP(); flushL(); out.push(`<blockquote>${il(q[1])}</blockquote>`); continue; }
+      const li = line.match(/^\s*(?:([-*+])|(\d+)[.)])\s+(.*)$/);
+      if (li) {
+        flushP();
+        const tag = li[2] ? 'ol' : 'ul';
+        if (list !== tag) { flushL(); list = tag; out.push(`<${tag}>`); }
+        const task = li[3].match(/^\[( |x|X)\]\s+(.*)$/);
+        out.push(task ? `<li class="task${task[1] !== ' ' ? ' done' : ''}">${il(task[2])}</li>` : `<li>${il(li[3])}</li>`);
+        continue;
+      }
+      flushL();
+      para.push(line.trim());
+    }
+    flushP(); flushL();
+    return out.join('');
+  }
+  function csvRows(text) {
+    const rows = []; let row = [], cell = '', quoted = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (quoted) { if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (ch === '"') quoted = false; else cell += ch; }
+      else if (ch === '"') quoted = true;
+      else if (ch === ',') { row.push(cell); cell = ''; }
+      else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+      else cell += ch;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter((r) => r.some((c) => c.trim()));
+  }
+  async function viewFile(f) {
+    $('fv-head').innerHTML = `<span class="ficon" aria-hidden="true" style="width:40px;height:46px;border-radius:8px 14px 8px 8px;display:grid;place-items:end center;padding-bottom:6px;font-family:var(--f-mono);font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--deep);background:linear-gradient(160deg,#fff,var(--gold))">${escF(f.type)}</span><div class="fwords"><h3 id="fv-title" style="text-transform:none">${escF(f.title)}</h3><p>${escF(f.name)} · ${fsize(f.size)}</p></div><div class="fbtns">${fileButtons(f).replace(/<button type="button" class="mini go" data-fv="[^"]*">◎ Preview<\/button>/, '')}</div>`;
+    $('fv-body').innerHTML = '<p style="color:var(--muted)">Opening…</p>';
+    if (!$('fv').open) $('fv').showModal();
+    try {
+      if (f.type === 'html') { $('fv-body').innerHTML = `<iframe sandbox title="${escF(f.title)}" src="${escF(f.url)}"></iframe>`; return; }
+      const text = await fileText(f);
+      if (f.type === 'md') $('fv-body').innerHTML = `<div class="doc">${mdDoc(text)}</div>`;
+      else if (f.type === 'csv') {
+        const rows = csvRows(text);
+        $('fv-body').innerHTML = rows.length ? `<div class="doc"><div class="tbl"><table><thead><tr>${rows[0].map((c) => `<th>${escF(c)}</th>`).join('')}</tr></thead><tbody>${rows.slice(1).map((r) => `<tr>${r.map((c) => `<td>${escF(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p style="color:var(--muted)">${rows.length - 1} rows · opens in Excel, Numbers or Google Sheets</p></div>` : '<p>Empty.</p>';
+      } else if (f.type === 'json') { let t = text; try { t = JSON.stringify(JSON.parse(text), null, 2); } catch (e) {} $('fv-body').innerHTML = `<div class="doc plain">${escF(t)}</div>`; }
+      else $('fv-body').innerHTML = `<div class="doc plain">${escF(text)}</div>`;
+    } catch (err) { $('fv-body').innerHTML = `<p>${escF(err.message)}</p>`; }
+  }
+  async function openFiles() {
+    $('files-list').innerHTML = '<p>Loading…</p>';
+    if (!$('files-dlg').open) $('files-dlg').showModal();
+    try {
+      const { files } = await (await fetch('/files/list', { cache: 'no-store' })).json();
+      $('files-list').innerHTML = files.length ? files.map((f) => fileCardHtml(f, { remove: true })).join('') : '<p>No files yet. Try “write me a release checklist as a file” in the chat.</p>';
+    } catch (e) { $('files-list').innerHTML = '<p>Couldn’t load your files.</p>'; }
+  }
+  $('files-btn').addEventListener('click', openFiles);
+  document.addEventListener('click', async (e) => {
+    const t = e.target.closest('[data-fv], [data-fdel], [data-fcopy], [data-close], [data-fdl]');
+    if (!t) { for (const id of ['files-dlg', 'fv']) if (e.target === $(id)) $(id).close(); return; }
+    if (t.hasAttribute('data-close')) return t.closest('dialog').close();
+    if (t.hasAttribute('data-fdl')) { if (window.NovaSfx) window.NovaSfx.play('done'); return; }
+    const f = known.get(t.dataset.fv || t.dataset.fdel || t.dataset.fcopy);
+    if (!f) return;
+    if (t.dataset.fv) return viewFile(f);
+    if (t.dataset.fcopy) {
+      try { await navigator.clipboard.writeText(await fileText(f)); t.textContent = '✓ Copied'; setTimeout(() => (t.textContent = '⧉ Copy'), 1600); }
+      catch (err) { t.textContent = 'Couldn’t copy'; }
+      return;
+    }
+    if (t.dataset.fdel) {
+      if (t.dataset.sure !== '1') { t.dataset.sure = '1'; t.textContent = 'Delete it?'; return; }
+      const r = await api(`/actions/files/${encodeURIComponent(f.id)}/remove`);
+      if (r.ok) { for (const c of document.querySelectorAll(`[data-fcard="${CSS.escape(f.id)}"]`)) c.remove(); known.delete(f.id); if (!$('files-list').children.length) openFiles(); }
+    }
+  });
+
   function bubble(role, text, actions, isError) {
     $('welcome').hidden = true;
     const wrap = document.createElement('div');
@@ -1035,10 +1216,18 @@
       for (const a of actions) {
         const chip = document.createElement('span');
         chip.className = `action ${a.kind}`;
-        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : '✦'} ${a.text}`;
+        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : '✦'} ${a.text}`;
         row.appendChild(chip);
       }
       wrap.appendChild(row);
+      // Each file it wrote: a card to preview, download or open in Notes
+      const files = actions.filter((a) => a.file);
+      if (files.length) {
+        const cards = document.createElement('div');
+        cards.className = 'fcards';
+        cards.innerHTML = files.map((a) => fileCardHtml(a.file)).join('');
+        wrap.appendChild(cards);
+      }
     }
     log.appendChild(wrap);
     log.scrollTop = log.scrollHeight;
@@ -1299,7 +1488,7 @@
       const nx = p.nextMilestone;
       return `<article class="mission ${m.status}${p.atRisk ? ' risk' : ''}" data-mission="${m.id}" tabindex="0" role="button" aria-label="Open the plan for ${escH(m.title)}"><div class="mission-top"><div class="ring" style="--p:${pct}">${pct}%</div><div style="min-width:0;flex:1"><h4>${escH(m.title)}</h4><p class="sum">${escH(m.summary)}</p></div></div>
         ${trackBars(p.tracks)}
-        <div class="badges">${m.deadline ? `<span class="badge">Due ${escH(shortDay(m.deadline))}</span>` : ''}<span class="badge">${p.done}/${p.total} quests</span><span class="badge">${(p.minutesLeft / 60).toFixed(1)}h left</span>${p.atRisk ? `<span class="badge warn">${p.atRisk} at risk</span>` : ''}${m.status === 'done' ? '<span class="badge ok">Mission complete</span>' : ''}${m.status === 'paused' ? '<span class="badge">Paused</span>' : ''}</div>
+        <div class="badges"><button type="button" class="mini" id="mv-export" title="The whole plan as a Markdown file">⤓ Export as Markdown</button>${m.deadline ? `<span class="badge">Due ${escH(shortDay(m.deadline))}</span>` : ''}<span class="badge">${p.done}/${p.total} quests</span><span class="badge">${(p.minutesLeft / 60).toFixed(1)}h left</span>${p.atRisk ? `<span class="badge warn">${p.atRisk} at risk</span>` : ''}${m.status === 'done' ? '<span class="badge ok">Mission complete</span>' : ''}${m.status === 'paused' ? '<span class="badge">Paused</span>' : ''}</div>
         ${nx ? `<div class="m-next">◆ Next: <b>${escH(nx.title)}</b> · ${escH(shortDay(nx.at))} ${hhmm(nx.at)}</div>` : ''}
         ${m.questions.length && m.status !== 'done' ? `<div class="m-ask">? ${m.questions.length} question${m.questions.length === 1 ? '' : 's'} would sharpen this plan</div>` : ''}</article>`;
     }).join('');
@@ -1380,6 +1569,14 @@
   }
   $('mv').addEventListener('click', async (e) => {
     if (e.target === $('mv') || e.target.closest('#mv-close')) return $('mv').close();
+    if (e.target.closest('#mv-export')) {
+      const b = e.target.closest('#mv-export');
+      b.disabled = true; b.textContent = 'Exporting…';
+      const r = await api(`/actions/missions/${mvId}/export`);
+      b.disabled = false; b.textContent = '⤓ Export as Markdown';
+      if (r.ok) viewFile(r.file);
+      return;
+    }
     const tab = e.target.closest('[data-mv]');
     if (tab) { mvTab = tab.dataset.mv; return renderMissionView(); }
     const tr = e.target.closest('[data-mvtrack]');

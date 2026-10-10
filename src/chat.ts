@@ -11,6 +11,9 @@
 //   - research the internet (web search and web fetch, run by Anthropic) and
 //     look at any public webpage in a browser of its own (web.ts): a
 //     screenshot and the page's text, so it sees the page as a person would
+//   - write files for you (Markdown, text, CSV, JSON, HTML) to preview, download
+//     or open in Notes, read them back, and export a mission as a document
+//     (files.ts, quests/export.ts)
 //   - say how Nova Agent itself is doing
 // The SDK's tool runner does the back-and-forth with Claude.
 
@@ -25,6 +28,8 @@ import { learnFrom, memoryFor } from "./memory";
 import { checkLogin, describeAppointments, listTask } from "./tasks";
 import { getRecentEvents, trace } from "./trace";
 import { lookAt, lookResult, webTools } from "./web";
+import { fileCard, FILE_TYPES, findFile, listFiles, readFileText, removeFile, saveFile, sizeText } from "./files";
+import { missionMarkdown } from "./quests/export";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
 import { createMission, refineMission } from "./quests/planner";
@@ -41,8 +46,9 @@ export interface ChatTurn {
   content: string;
 }
 export interface ChatAction {
-  kind: "added" | "changed" | "removed" | "looked";
+  kind: "added" | "changed" | "removed" | "looked" | "file";
   text: string;
+  file?: ReturnType<typeof fileCard>; // for "file": the card to preview and download it
 }
 
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("A date, YYYY-MM-DD (UK)");
@@ -83,6 +89,8 @@ What you can do:
 - The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Portal or Acuity.
 - Research the internet: search the web (web_search) and read pages (web_fetch) for anything current or specific (prices, opening times, platform rules, news, how-tos, people and companies). Say where facts came from, with the link.
 - See webpages: page_look opens a public page in a browser and gives you a screenshot and its contents, for when how a page looks matters or web_fetch can't read it (pages built by scripts, a profile, a shop page, checking their own site or socials). It can't log in anywhere.
+- Write files: file_write makes a document they can preview, download to their computer, or open in Notes (Markdown .md by default; also .txt, .csv for spreadsheets, .json, .html). Use it whenever they ask for a file, document, list, plan, report, template, script, spreadsheet or "something I can download", or when an answer is long and worth keeping. Write the whole thing, properly formatted (headings, lists, tables), then reply in a line or two saying what's in it; the file card with Preview and Download appears under your reply, so don't paste the file into the chat too. To change a file, read it (file_read), then file_write with its id. file_list shows what's there.
+- Export a mission: mission_export writes a mission's whole plan (strategy, milestones, every quest, research links) as a Markdown file.
 - Say how you're doing (agent_status).
 
 How to work:
@@ -298,6 +306,85 @@ function missionReport(r: { mission: Mission; quests: Quest[]; atRisk: number; u
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+function fileTools(actions: ChatAction[]) {
+  const made = (f: ReturnType<typeof saveFile>, verb: string) => {
+    actions.push({ kind: "file", text: `${verb} ${f.name}`, file: fileCard(f) });
+    trace("input", "ok", `Chat: ${verb} file ${f.name} (${sizeText(f.size)})`);
+  };
+  return [
+    betaZodTool({
+      name: "file_write",
+      description: `Write a file they can preview and download: a new one, or replace one by id (read it first with file_read). Types: ${FILE_TYPES.join(", ")} (from the name's ending; Markdown if none).`,
+      inputSchema: z.object({
+        name: z.string().min(1).max(100).describe('A short file name with its ending, e.g. "release-plan.md", "content-calendar.csv"'),
+        title: z.string().max(140).optional().describe("What it is, in a few words (shown on the file card)"),
+        content: z.string().min(1).describe("The whole file"),
+        id: z.string().optional().describe("Only to replace an existing file: its id"),
+      }),
+      run: async ({ name, title, content, id }) => {
+        try {
+          const f = saveFile({ name, title, content, id });
+          made(f, id ? "Updated" : "Wrote");
+          return `Saved ${f.name} (${sizeText(f.size)}), id ${f.id.slice(0, 8)}. They can preview, download it or open it in Notes from the card under your reply.`;
+        } catch (error) {
+          return `Couldn't save it: ${(error as Error).message}`;
+        }
+      },
+    }),
+    betaZodTool({
+      name: "file_read",
+      description: "Read one of the files you've written (by id or name), to answer from it or change it.",
+      inputSchema: z.object({ id: z.string().describe("Its id (the first 8 characters are enough) or its name") }),
+      run: async ({ id }) => {
+        const f = findFile(id);
+        if (!f) return `No file called ${id}. Use file_list to see them.`;
+        const text = readFileText(f);
+        return `${f.name} · “${f.title}” · id ${f.id.slice(0, 8)} · ${sizeText(f.size)} · updated ${f.updated.slice(0, 16).replace("T", " ")}\n\n${text.length > 60000 ? `${text.slice(0, 60000)}\n…(the rest is cut off here)` : text}`;
+      },
+    }),
+    betaZodTool({
+      name: "file_list",
+      description: "The files you've written for them, newest first.",
+      inputSchema: z.object({}),
+      run: async () => {
+        const list = listFiles();
+        return list.length ? list.slice(0, 60).map((f) => `${f.id.slice(0, 8)} · ${f.name} · “${f.title}” · ${sizeText(f.size)} · ${f.updated.slice(0, 10)}`).join("\n") : "No files yet.";
+      },
+    }),
+    betaZodTool({
+      name: "file_delete",
+      description: "Delete one of the files you've written (when they ask).",
+      inputSchema: z.object({ id: z.string() }),
+      run: async ({ id }) => {
+        try {
+          const f = removeFile(id);
+          actions.push({ kind: "removed", text: `Deleted ${f.name}` });
+          return `Deleted ${f.name}.`;
+        } catch (error) {
+          return (error as Error).message;
+        }
+      },
+    }),
+    betaZodTool({
+      name: "mission_export",
+      description: "Write a mission's whole plan as a Markdown file to download: summary, progress, tracks, strategy, milestones, every quest by track, assumptions, questions and research links. Exporting again updates the same file.",
+      inputSchema: z.object({ id: z.string().describe("The mission's id") }),
+      run: async ({ id }) => {
+        try {
+          const doc = missionMarkdown(id);
+          const source = `mission:${doc.missionId}`;
+          const before = listFiles().find((f) => f.source === source);
+          const f = saveFile({ name: doc.name, title: doc.title, content: doc.content, id: before?.id, source });
+          made(f, before ? "Updated" : "Exported");
+          return `Exported “${doc.title}” as ${f.name} (${sizeText(f.size)}).`;
+        } catch (error) {
+          return `Couldn't export it: ${(error as Error).message}`;
+        }
+      },
+    }),
+  ];
 }
 
 function questTools(actions: ChatAction[]) {
@@ -547,7 +634,7 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
     model,
     max_tokens: 16000,
     system: memory ? `${systemPrompt()}\n\n${memory}` : systemPrompt(),
-    tools: [...tools(actions), ...questTools(actions), ...webTools({ search: 5, fetch: 5 })],
+    tools: [...tools(actions), ...questTools(actions), ...fileTools(actions), ...webTools({ search: 5, fetch: 5 })],
     messages,
     output_config: { effort: "low" },
     max_iterations: 16 + MAX_CONTINUATIONS,
