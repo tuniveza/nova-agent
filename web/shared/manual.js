@@ -506,7 +506,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       const rail = this.root.querySelector(".rail");
       if (!rail || !this.d) return;
       const btn = (id, name, small, colour, glyph, i, extra) =>
-        `<button type="button" data-app="${id}" aria-current="${this.app === id && !this.query}" data-v="--c:${colour};animation-delay:${i * 35}ms"><span class="planet" aria-hidden="true">${glyph}</span><span class="words"><b>${esc(name)}</b><small>${esc(small)}</small></span>${extra}</button>`;
+        `<button type="button" data-app="${id}" aria-current="${this.app === id && !this.query}" data-v="--c:${colour};animation-delay:${i * 35}ms"><span class="planet" aria-hidden="true">${glyph}</span><span class="words" title="${esc(small)}"><b>${esc(name)}</b><small>${esc(small)}</small></span>${extra}</button>`;
       rail.innerHTML =
         btn("", "Start here", "The suite, and what's new", "var(--c-hi)", "✺", 0, "") +
         `<div class="label">The apps</div>` +
@@ -514,7 +514,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
           .map((a, i) => {
             const fresh = recent(a, 2).length;
             const extra = a.id === this.here ? `<span class="here">Here</span>` : fresh ? `<span class="fresh" title="Changed in the last two days"></span>` : "";
-            return btn(a.id, a.name, a.where, a.colour, a.glyph, i + 1, extra);
+            return btn(a.id, a.name, a.tagline, a.colour, a.glyph, i + 1, extra);
           })
           .join("");
       paint(rail);
