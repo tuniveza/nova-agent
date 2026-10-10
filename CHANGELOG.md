@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+### Quest 2: client list, and bookings from Acuity's calendar feed
+
+- `ACUITY_SOURCE=feed` reads the studio's bookings from Acuity's private calendar feed through
+  Nova Bot (`/nova-agent/bookings-feed`): for Acuity plans without the API. Agent's
+  studio_bookings uses it (never the browser), and bookings are busy time for Quests and music
+  time (every 10 minutes and on Nova Bot's "bookings changed" signal). The Acuity API tools and
+  propose_booking_change aren't offered in feed mode. `.env.example` now suggests feed.
+- Agent has four read-only client tools: client_find, client_history, clients_owing and
+  clients_not_booked_since ("since July" means 1 July of the most recent July). Money in
+  pounds, dates in UK time.
+- Portal → Clients (Studio): search, filters (All, Owes money, Not booked since a month,
+  Enquiries only), a page per client (sessions, contact, notes, money in pounds, marketing
+  consent with where and when, and its history), Add a client; admins also Sync with Acuity
+  now and Import from Acuity (the appointments or clients CSV, chosen or pasted).
+
 ### P0-2: edits always save, or say why
 
 - Quest edits from the chat, the page or Nova Calendar are checked before they're saved.

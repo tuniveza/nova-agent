@@ -9,6 +9,9 @@
 //   POST /nova-agent/acuity/clients        { search }          -> clients matching a name/email
 //   POST /nova-agent/booking-actions/propose { kind, payload, reason } -> a PROPOSED change
 //   POST /nova-agent/booking-actions       { status }          -> the proposals and what became of them
+//   POST /nova-agent/bookings-feed         { from, to }        -> the bookings in Acuity's private
+//        calendar feed (ACUITY_SOURCE=feed: for Acuity plans without the API; read-only, and
+//        cancelled bookings aren't in it)
 //
 // That's all the key can do. There is deliberately no approve, edit or run here: a proposed
 // change only happens when a signed-in admin presses Approve in Portal → Approvals (or on the
@@ -113,6 +116,30 @@ async function call<T>(path: string, body: unknown = {}): Promise<T> {
 // The bookings between two UK dates (inclusive; up to 62 days), cancelled ones too (marked)
 export async function listAppointments(from: string, to: string): Promise<Appointment[]> {
   return (await call<{ appointments: Appointment[] }>("/nova-agent/acuity/appointments", { from, to })).appointments ?? [];
+}
+
+// A booking from Acuity's calendar feed: only what the feed has (times in UTC ISO)
+export interface FeedBooking {
+  id: number;
+  start: string;
+  end: string;
+  type: string;
+  name: string;
+}
+
+// The bookings in Acuity's calendar feed between two UK dates (inclusive; up to 62 days). The feed
+// has no cancelled bookings, no blocked times and no prices: just who, what and when.
+export async function listFeedBookings(from: string, to: string): Promise<FeedBooking[]> {
+  return (await call<{ appointments: FeedBooking[] }>("/nova-agent/bookings-feed", { from, to })).appointments ?? [];
+}
+
+// The feed's bookings as text for Claude (UK times)
+export function feedBookingsText(list: FeedBooking[]): string {
+  if (!list.length) return "No bookings in that range.";
+  return [...list]
+    .sort((a, b) => a.start.localeCompare(b.start))
+    .map((a) => [`#${a.id}`, `${ukWhen(a.start)}${a.end ? `–${ukTime(a.end)}` : ""}`, a.type, a.name].filter(Boolean).join(" · "))
+    .join("\n");
 }
 
 // Free start times for one session type on one UK date

@@ -393,6 +393,73 @@
       <div id="approvals-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
     </section>
 
+    <!-- Clients: everyone who's booked through Acuity, sent an enquiry, been imported from Acuity's
+         spreadsheets or added by hand (Nova Bot's client list). Search, filters, a client's page
+         (sessions, contact, notes, money in pounds, marketing consent and its history); admins
+         also sync with Acuity and import Acuity's spreadsheets. -->
+    <section id="view-clients" class="view cl" hidden>
+      <div class="view-head">
+        <h2 id="clients-title">Clients</h2>
+        <button id="clients-back" class="chip" type="button" hidden>&larr; All clients</button>
+      </div>
+      <div id="clients-browse">
+        <div class="cl-tools">
+          <input id="clients-search" type="search" placeholder="Search by name, email or phone" aria-label="Search clients" autocomplete="off" enterkeyhint="search">
+          <div class="chips wrap" role="tablist" id="clients-chips" aria-label="Show">
+            <button class="chip active" data-filter="all" type="button" aria-pressed="true">All</button>
+            <button class="chip" data-filter="owing" type="button" aria-pressed="false">Owes money</button>
+            <button class="chip" data-filter="lapsed" type="button" aria-pressed="false">Not booked since</button>
+            <button class="chip" data-filter="enquiry" type="button" aria-pressed="false">Enquiries only</button>
+          </div>
+          <label id="clients-since-row" class="cl-since" hidden>
+            <span>Not booked since the start of</span>
+            <input id="clients-since" type="month" aria-label="Month">
+          </label>
+        </div>
+        <div class="settings-row cl-actions">
+          <button id="clients-add" class="chip" type="button" aria-expanded="false">Add a client</button>
+          <button id="clients-sync" class="chip admin-only" type="button" hidden>Sync with Acuity now</button>
+          <button id="clients-import-open" class="chip admin-only" type="button" aria-expanded="false" aria-controls="clients-import" hidden>Import from Acuity</button>
+        </div>
+        <!-- Add a client by hand (anyone signed in) -->
+        <form id="clients-add-form" class="card cl-form" autocomplete="off" hidden>
+          <h3 class="card-title">Add a client</h3>
+          <div class="cl-grid">
+            <label class="cl-field"><span>Name</span><input id="add-name" type="text" maxlength="200" required></label>
+            <label class="cl-field"><span>Email</span><input id="add-email" type="email" maxlength="200"></label>
+            <label class="cl-field"><span>Phone</span><input id="add-phone" type="tel" maxlength="40"></label>
+            <label class="cl-field cl-wide"><span>Notes</span><textarea id="add-notes" rows="2" maxlength="4000"></textarea></label>
+          </div>
+          <p class="hint cl-small">Marketing consent starts as no. Turn it on from their page once they've said yes.</p>
+          <div class="actions">
+            <button class="btn small" type="submit">Add</button>
+            <button id="add-cancel" class="btn small ghost" type="button">Cancel</button>
+          </div>
+        </form>
+        <!-- Import from Acuity (admins): Acuity's appointments or clients spreadsheet (CSV) -->
+        <form id="clients-import" class="card cl-form" autocomplete="off" hidden>
+          <h3 class="card-title">Import from Acuity</h3>
+          <ol class="cl-steps">
+            <li>In Acuity, open Reports → Export and download the appointments CSV.</li>
+            <li>For everyone on Acuity's client list too, open Clients → Export (Import/Export) and download that CSV as well.</li>
+            <li>Choose a file below (or paste what's in it) and press Import. One file at a time; importing the same file again changes nothing.</li>
+          </ol>
+          <label class="cl-field"><span>The CSV file</span><input id="import-file" type="file" accept=".csv,text/csv,text/plain"></label>
+          <label class="cl-field"><span>Or paste it here</span><textarea id="import-text" rows="4" spellcheck="false" placeholder="Start Time,End Time,First Name,Last Name,…"></textarea></label>
+          <p class="hint cl-small">Importing never turns marketing consent on, and never overwrites contact details someone has already filled in.</p>
+          <div class="actions">
+            <button id="import-go" class="btn small" type="submit">Import</button>
+            <button id="import-cancel" class="btn small ghost" type="button">Close</button>
+          </div>
+          <div id="import-result" class="cl-result" aria-live="polite"></div>
+        </form>
+        <p class="hint" id="clients-count" aria-live="polite"></p>
+        <div id="clients-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+      </div>
+      <!-- One client: their details, marketing consent, sessions -->
+      <div id="client-page" class="list" hidden></div>
+    </section>
+
     <!-- Quests: Nova Agent's plan (missions, today's quests, pulses), synced from the studio computer -->
     <section id="view-quests" class="view" hidden>
       <div class="view-head">
@@ -753,6 +820,11 @@
     <button class="tab" data-view="chats" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>
       <span>Conversations</span>
+    </button>
+    <!-- Clients: the studio's client list (search, a client's sessions, money and marketing consent) -->
+    <button class="tab tab-more" data-view="clients" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M15.5 5.2a3 3 0 0 1 0 5.6"/><path d="M17.5 14.6c1.7.6 2.8 2.2 3.1 4.9"/></svg>
+      <span>Clients</span>
     </button>
     <!-- Calendar: opens the Calendar panel (one calendar for everything) -->
     <button class="tab" data-view="calendar" type="button">

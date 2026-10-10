@@ -7,8 +7,12 @@
 //   - look at the studio's Acuity bookings, free times, blocked times, session types and
 //     clients through Acuity's API on Nova Bot (acuity-api.ts; ACUITY_SOURCE=api, the default),
 //     and PROPOSE a booking change, which happens only when an admin approves it in Portal →
-//     Approvals (no tool here can approve). With ACUITY_SOURCE=browser: the bookings and the
-//     Acuity login through the same browser tasks as the visualizer, read-only, as before
+//     Approvals (no tool here can approve). With ACUITY_SOURCE=feed (Acuity plans without the
+//     API): the bookings from Acuity's calendar feed on Nova Bot, read-only. With
+//     ACUITY_SOURCE=browser: the bookings and the Acuity login through the same browser tasks
+//     as the visualizer, read-only, as before
+//   - look up the studio's clients (clients.ts, read-only): find one, their session history, who
+//     owes money, who hasn't booked since a date
 //   - plan Missions for any goal (a strategy, tracks, milestones and quests),
 //     refine them with new detail, and run the quests day to day
 //   - research the internet (web search and web fetch, run by Anthropic) and
@@ -36,7 +40,8 @@ import { lookAt, lookResult, webTools } from "./web";
 import { fileCard, FILE_TYPES, findFile, listFiles, readFileText, removeFile, saveFile, sizeText } from "./files";
 import { missionMarkdown } from "./quests/export";
 import { draftReply, listEnquiries, readEnquiry, threadText, type DraftCard } from "./enquiries";
-import { actionLine, appointmentsText, availability, BOOKING_KINDS, findClients, listActions, listAppointments, listBlocks, proposeChange, sessionTypes, ukWhen, type BookingAction, type BookingKind } from "./acuity-api";
+import { actionLine, appointmentsText, availability, BOOKING_KINDS, feedBookingsText, findClients, listActions, listAppointments, listBlocks, listFeedBookings, proposeChange, sessionTypes, ukWhen, type BookingAction, type BookingKind } from "./acuity-api";
+import { clientHistory, clientsLapsed, clientsOwing, clientsText, findClients as findStudioClients, historyText, lapsedText, MONTH_NAMES, owingText, sinceDate } from "./clients";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
 import { createMission, refineMission } from "./quests/planner";
@@ -103,6 +108,7 @@ ${bookingsPrompt()}
 - Write files: file_write makes a document they can preview, download to their computer, or open in Notes (Markdown .md by default; also .txt, .csv for spreadsheets, .json, .html). Use it whenever they ask for a file, document, list, plan, report, template, script, spreadsheet or "something I can download", or when an answer is long and worth keeping. Write the whole thing, properly formatted (headings, lists, tables), then reply in a line or two saying what's in it; the file card with Preview and Download appears under your reply, so don't paste the file into the chat too. To change a file, read it (file_read), then file_write with its id. file_list shows what's there.
 - Export a mission: mission_export writes a mission's whole plan (strategy, milestones, every quest, research links) as a Markdown file.
 - Enquiries: read the studio's enquiries from customers (enquiry_list, enquiry_read) and draft a reply to one (enquiry_draft_reply). You can only ever draft: you can't send, approve or email anyone, and nothing goes to a customer until a person from the studio reads your draft and presses Approve & send (on the card under your reply, or in Portal). Say that plainly when you draft ("Here's a draft for you to check; it goes when you approve it"), never that you've replied or sent anything. Read the enquiry and its conversation first, write the whole email in a warm, plain UK English voice signed "Novacane Studios" (the footer about why they're getting it and how to stop is added automatically), and only promise what the studio has said it can do. Never draft for someone marked do-not-contact.
+- The studio's clients (read-only): client_find (by name, email or phone), client_history (one client's sessions), clients_owing (who owes money, biggest first), clients_not_booked_since (who hasn't booked since a date: for "since July" pass month "July", which means 1 July of the most recent July; for "in the last 3 months" pass months_back 3). Say money in pounds (£120.00) and dates in UK time, as the tools give them. These are the list in Portal → Clients, where staff edit contact details, notes, money and marketing consent; you can't change anything there. Marketing consent is "no" unless it's been recorded with a date and a source: never suggest sending marketing to someone marked "marketing: no".
 - Say how you're doing (agent_status).
 
 How to work:
@@ -116,6 +122,8 @@ How to work:
 
 // What Agent can do with Acuity bookings, for the system prompt (it depends on ACUITY_SOURCE)
 function bookingsPrompt(): string {
+  if (config.acuitySource === "feed")
+    return "- The studio's Acuity bookings, from Acuity's calendar feed: what's booked between two dates (studio_bookings: time, session type and client; cancelled bookings aren't in the feed, and it has no prices, paid status or blocked times). Bookings also count as busy time in the quest plan. This is read-only: you can't book, move or cancel Acuity appointments from this chat (the studio's Acuity plan has no API for it). If someone asks, say so and suggest Acuity itself.";
   if (config.acuitySource === "browser")
     return "- The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Portal or Acuity.";
   return `- The studio's Acuity bookings (through Acuity's API): what's booked between two dates (studio_bookings), free start times for a session type on a day (studio_availability), times blocked off (studio_blocked_times), the session types (studio_session_types) and clients (studio_clients). Bookings also count as busy time in the quest plan.
@@ -160,6 +168,25 @@ export function studioTools(actions: ChatAction[]) {
     ];
   }
   const failed = (error: unknown) => `Couldn't reach Acuity just now: ${(error as Error).message}`;
+  // Acuity's calendar feed (plans without the API): the bookings only, read-only. The API tools and
+  // propose_booking_change aren't offered (they need Acuity's API).
+  if (config.acuitySource === "feed") {
+    return [
+      betaZodTool({
+        name: "studio_bookings",
+        description: "Read the studio's Acuity bookings between two UK dates (inclusive, up to 62 days), from Acuity's calendar feed: time (UK), session type and client. Cancelled bookings aren't in the feed. Read-only.",
+        inputSchema: z.object({ from: DATE, to: DATE }),
+        run: async ({ from, to }) => {
+          did("looked", `Looked at Acuity bookings, ${longDate(from)} – ${longDate(to)}`);
+          try {
+            return feedBookingsText(await listFeedBookings(from, to));
+          } catch (error) {
+            return `Couldn't read Acuity's calendar feed just now: ${(error as Error).message}`;
+          }
+        },
+      }),
+    ];
+  }
   const WHEN = z.string().describe('UK wall-clock "YYYY-MM-DDTHH:MM", or a UTC ISO time');
   return [
     betaZodTool({
@@ -627,6 +654,78 @@ export function enquiryTools(actions: ChatAction[]) {
     }),
   ];
 }
+// The studio's clients (Portal → Clients on Nova Bot), read-only: nothing here can change a client.
+// The trace only gets ids and counts, never names or contact details.
+export function clientTools(actions: ChatAction[]) {
+  const failed = (error: unknown) => `Couldn't read the client list just now: ${(error as Error).message}`;
+  return [
+    betaZodTool({
+      name: "client_find",
+      description:
+        "Find the studio's clients (Portal → Clients) by name, email or phone (up to 20). Each comes with their id, contact details, when they last booked and next booked (UK time), how many sessions, what they owe (in pounds), and whether they've agreed to marketing.",
+      inputSchema: z.object({ search: z.string().min(2).max(100).describe("Part of a name, an email or a phone number") }),
+      run: async ({ search }) => {
+        try {
+          const list = await findStudioClients(search);
+          noteAction(actions, "looked", `Looked up clients (${list.length} found)`);
+          return list.length ? clientsText(list) : `No clients matching “${search}”.`;
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "client_history",
+      description: "One client's details and their whole session history (newest first, UK time, with session type, price and cancelled ones marked). Find their id with client_find first.",
+      inputSchema: z.object({ id: z.number().int().positive().describe("The client's id (from client_find)") }),
+      run: async ({ id }) => {
+        try {
+          const h = await clientHistory(id);
+          noteAction(actions, "looked", `Looked at client #${id}'s sessions`);
+          return historyText(h);
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "clients_owing",
+      description: "Who owes the studio money: every client with an outstanding amount, biggest first, in pounds, with the total. Use it for “who owes money?”, “who hasn't paid?”, “what's outstanding?”. Amounts are what staff recorded in Portal → Clients.",
+      inputSchema: z.object({}),
+      run: async () => {
+        try {
+          const list = await clientsOwing();
+          noteAction(actions, "looked", `Looked at who owes money (${list.length})`);
+          return owingText(list);
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "clients_not_booked_since",
+      description:
+        "Clients who haven't booked since a day: their last session was before it, and nothing is booked on or after it. Use it for “who hasn't booked since July?” (month: July, meaning 1 July of the most recent July), “who hasn't been in for 3 months?” (months_back: 3) or a date (since). Give exactly one of since, month or months_back. Say the date it used.",
+      inputSchema: z.object({
+        since: DATE.optional(),
+        month: z.enum(MONTH_NAMES).optional().describe("A month name: the 1st of the most recent such month (this month counts)"),
+        months_back: z.number().int().min(0).max(120).optional().describe("So many months before today"),
+      }),
+      run: async (i) => {
+        const since = sinceDate(i);
+        if (!since) return "Say since when: a date (since), a month (month) or how many months back (months_back).";
+        try {
+          const list = await clientsLapsed(since);
+          noteAction(actions, "looked", `Looked at who hasn't booked since ${since} (${list.length})`);
+          return lapsedText(list, since);
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+  ];
+}
+
 const noteAction = (actions: ChatAction[], kind: ChatAction["kind"], text: string) => {
   actions.push({ kind, text });
   trace("input", "ok", `Chat: ${text}`);
@@ -905,7 +1004,7 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
     model,
     max_tokens: 16000,
     system: memory ? `${systemPrompt()}\n\n${memory}` : systemPrompt(),
-    tools: [...tools(actions), ...questTools(actions), ...fileTools(actions), ...enquiryTools(actions), ...webTools({ search: 5, fetch: 5 })],
+    tools: [...tools(actions), ...questTools(actions), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...webTools({ search: 5, fetch: 5 })],
     messages,
     output_config: { effort: "low" },
     max_iterations: 16 + MAX_CONTINUATIONS,

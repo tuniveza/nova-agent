@@ -1,8 +1,10 @@
 // The studio's bookings as busy time for Quests (and music time).
 //
-// With ACUITY_SOURCE=api, Nova Agent keeps a copy of what's in Acuity for the next few weeks in
-// data/bookings.json: each booking (not the cancelled ones) and each time blocked off in Acuity
-// counts as taken time, so quests and music time are planned around sessions. The copy is
+// With ACUITY_SOURCE=api or feed, Nova Agent keeps a copy of what's in Acuity for the next few
+// weeks in data/bookings.json: each booking (not the cancelled ones) and each time blocked off in
+// Acuity counts as taken time, so quests and music time are planned around sessions. With "api"
+// it's read through Acuity's API; with "feed" from Acuity's private calendar feed (on Nova Bot),
+// which has the bookings but no blocked times and no cancelled bookings. The copy is
 // refreshed every 10 minutes, and as soon as Nova Bot says something changed in Acuity (its
 // answer to "any jobs?" carries bookingsChanged, the time of Acuity's last change; see jobs.ts),
 // then everything is re-planned. So a booking made in Acuity shows here within about a minute.
@@ -14,7 +16,7 @@
 // plan never fails because of it: replan() only ever reads this file.
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { listAppointments, listBlocks } from "../acuity-api";
+import { listAppointments, listBlocks, listFeedBookings } from "../acuity-api";
 import { config } from "../config";
 import { trace } from "../trace";
 import { currentMusic, nowMinutes, replan } from "./plan";
@@ -36,6 +38,9 @@ const EVERY_MS = 10 * 60 * 1000;
 // One day back (a session still going) to 22 days ahead (music time looks 21 days ahead)
 const DAYS_BACK = 1;
 const DAYS_AHEAD = 22;
+
+// Bookings are read for Quests with Acuity's API or its calendar feed (not the browser)
+const readsBookings = () => config.acuitySource === "api" || config.acuitySource === "feed";
 
 const empty = (): BookingsCopy => ({ fetchedAt: "", from: "", to: "", seen: "", appointments: [], blocks: [] });
 let copy: BookingsCopy | null = null;
@@ -104,7 +109,7 @@ export function bookingsChanged(changed: unknown): Promise<boolean> | null {
   const was = Date.parse(bookingsSeen());
   if (Number.isFinite(was) && at <= was) return null;
   seen = changed;
-  if (config.acuitySource !== "api") return null; // (browser mode: bookings aren't read this way)
+  if (!readsBookings()) return null; // (browser mode: bookings aren't read this way)
   trace("input", "info", "Bookings changed in Acuity: refreshing them and re-planning");
   return refreshBookings("a change in Acuity");
 }
@@ -117,7 +122,7 @@ export const bookingsIdle = async (): Promise<void> => {
 // Read the next few weeks from Acuity, keep the copy, and re-plan if anything changed.
 // Never throws: a problem is said in the trace and the last copy is kept.
 export function refreshBookings(why = "the regular refresh"): Promise<boolean> {
-  if (config.acuitySource !== "api" || !config.agentNovaKey) return Promise.resolve(false);
+  if (!readsBookings() || !config.agentNovaKey) return Promise.resolve(false);
   if (running) return running;
   running = (async () => {
     try {
@@ -137,7 +142,11 @@ async function refresh(why: string): Promise<boolean> {
   const before = readBookings();
   let next: BookingsCopy;
   try {
-    const [appointments, blocks] = await Promise.all([listAppointments(from, to), listBlocks(from, to)]);
+    // The calendar feed has the bookings only (never cancelled ones, never blocked times)
+    const [appointments, blocks] =
+      config.acuitySource === "feed"
+        ? [(await listFeedBookings(from, to)).map((a) => ({ ...a, canceled: false })), []]
+        : await Promise.all([listAppointments(from, to), listBlocks(from, to)]);
     next = {
       fetchedAt: new Date().toISOString(),
       from,
@@ -191,7 +200,7 @@ function tellMusicMoves(before: MusicSlot[], after: MusicSlot[], today: number):
 
 // Every 10 minutes (and once now), in the background
 export function startBookingRefresh(): void {
-  if (config.acuitySource !== "api") return;
+  if (!readsBookings()) return;
   if (!config.agentNovaKey) {
     console.log("Not reading studio bookings for Quests: set AGENT_NOVA_KEY in .env.");
     return;

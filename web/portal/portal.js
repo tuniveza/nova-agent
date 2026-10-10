@@ -48,7 +48,7 @@
   const isAdmin = () => Boolean(state.me && state.me.role === "admin");
   // The work tabs (app.js)
   const work = () => window.PortalApp;
-  const WORK = ["today", "enquiries", "chats", "calendar", "approvals", "quests", "alerts", "bot"];
+  const WORK = ["today", "enquiries", "chats", "calendar", "clients", "approvals", "quests", "alerts", "bot"];
   // Tell the top-right badge (and other panels) that who's signed in has changed
   const changed = () => window.NovaPortal && window.NovaPortal.changed && window.NovaPortal.changed();
 
@@ -1261,6 +1261,9 @@
     signOut,
     signedOut,
     refresh: () => state.screen === "app" && renderRoute(),
+    // Who's signed in, for the work tabs (Clients shows admins Sync and Import; Nova Bot checks again)
+    isAdmin,
+    me: () => state.me,
   };
 
   // ===== Start: who's here? =====

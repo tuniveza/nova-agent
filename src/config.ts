@@ -99,10 +99,12 @@ export const config = {
   notifyClients: readYesNo("NOTIFY_CLIENTS", true),
 
   // Where Agent reads the studio's bookings from: "api" (Acuity's API, through Nova Bot's
-  // worker: quick, and no browser opens) or "browser" (Acuity's admin pages in the background
-  // browser, as before). Anything else is "api". Either way Agent can't change a booking itself:
-  // with "api" it proposes a change and an admin approves it in Portal → Approvals.
-  acuitySource: readChoice("ACUITY_SOURCE", ["api", "browser"] as const, "api"),
+  // worker: quick, and no browser opens), "feed" (Acuity's private calendar feed, through Nova
+  // Bot: works on every Acuity plan, including those without the API; read-only) or "browser"
+  // (Acuity's admin pages in the background browser, as before). Anything else is "api". Agent
+  // can't change a booking itself: with "api" it proposes a change and an admin approves it in
+  // Portal → Approvals; with "feed" and "browser" it can only look.
+  acuitySource: readChoice("ACUITY_SOURCE", ["api", "feed", "browser"] as const, "api"),
 
   paths: {
     dataDir,

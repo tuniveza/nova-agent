@@ -1,4 +1,4 @@
-// Portal's work tabs: enquiries, conversations, the calendar, approvals, quests, alerts, the Website bot,
+// Portal's work tabs: enquiries, conversations, the calendar, clients, approvals, quests, alerts, the Website bot,
 // push and voice. All data comes from /app/api/ (a Portal sign-in is needed). Everything from
 // the server is shown as plain text, never as HTML.
 // portal.js runs the page (signing in, the address, the You tab); it starts these tabs with
@@ -10,9 +10,9 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "approvals", "quests", "alerts", "bot"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "approvals", "quests", "alerts", "bot"];
   // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
-  const MORE = ["approvals", "quests", "alerts", "bot"];
+  const MORE = ["clients", "approvals", "quests", "alerts", "bot"];
   let currentView = "today";
   let running = false;
   let sessions = null; // session types for booking links
@@ -38,7 +38,13 @@
       showLogin();
       throw new Error("signed out");
     }
-    if (!res.ok) throw new Error(data.error || "Something went wrong (" + res.status + ")");
+    if (!res.ok) {
+      const err = new Error(data.error || "Something went wrong (" + res.status + ")");
+      // (what Nova Bot said, for the few places that need more than the words, e.g. a duplicate's id)
+      err.data = data;
+      err.status = res.status;
+      throw err;
+    }
     return data;
   }
 
@@ -254,6 +260,7 @@
     if (view === "chats") (openChatId ? openChat(openChatId, openChatName) : loadChats());
     if (view === "calendar") loadCalendar();
     if (view === "approvals") loadApprovals();
+    if (view === "clients") loadClients();
     // Every section keeps the Alerts badge up to date; the Alerts tab also shows the list
     loadAlerts();
     if (view === "bot") setTimeout(() => $("bot-input").focus({ preventScroll: true }), 50);
@@ -307,7 +314,7 @@
   });
 
   // ===== More (phones): the sections that don't fit on the bar, in the menu's groups (Studio:
-  // Approvals, Website bot; Plans: Quests, Alerts, Agent; You; Admin), with their counts =====
+  // Clients, Approvals, Website bot; Plans: Quests, Alerts, Agent; You; Admin), with their counts =====
   function openMore() {
     const list = $("more-list");
     const items = [];
@@ -818,6 +825,551 @@
   // Approvals refresh while they're on screen (not while a proposal's fields are open); the badge every minute
   setInterval(() => !document.hidden && running && currentView === "approvals" && approvalEditing === null && loadApprovals(), 15000);
   setInterval(() => !document.hidden && running && currentView !== "approvals" && loadApprovals(), 60000);
+
+  // ===== Clients: the studio's client list =====
+  // Everyone who's booked through Acuity, sent an enquiry, been imported from Acuity's spreadsheets
+  // or added by hand. Nova Bot keeps the list (one card per person: same email, else same phone,
+  // else same name). Search and filters up top; tapping a card opens that client's page
+  // (?view=clients&client=<id>, so Back returns to the list): contact and notes, money in pounds,
+  // marketing consent and its history, and their sessions. Marketing consent is NO for everyone
+  // until someone records a yes with where it came from and when; every change is kept, with who.
+  // Admins also get "Sync with Acuity now" (Acuity's calendar feed) and "Import from Acuity"
+  // (Acuity's appointments or clients spreadsheet). Money is pounds as text ("120.00"); times UK.
+  let clientFilter = "all"; // all | owing | lapsed | enquiry
+  let clientSearch = "";
+  let clientSearchTimer = 0;
+  let clientsAsked = 0; // the newest list asked for (an older answer arriving late is dropped)
+  let clientOpen = null; // the open client's latest data ({ client, sessions, consentLog }), or null
+  let consentAsking = false; // the consent switch is waiting for where the yes came from, and when
+  let importText = ""; // the chosen file's text
+  const CLIENT_SOURCES = { booking: "Booked through Acuity", enquiry: "Sent an enquiry", import: "Imported from Acuity", staff: "Added by hand" };
+  const SESSION_SOURCES = { feed: "from Acuity's calendar", webhook: "from Acuity", import: "imported" };
+  const isAdminHere = () => Boolean(window.PortalPage && window.PortalPage.isAdmin && window.PortalPage.isAdmin());
+  const openClientId = () => {
+    const id = Number(new URLSearchParams(location.search).get("client"));
+    return Number.isInteger(id) && id > 0 ? id : null;
+  };
+  const goClient = (id) => window.PortalPage && window.PortalPage.go("/portal/?view=clients" + (id ? "&client=" + id : ""));
+  const gbp = (v) => "£" + (Number(v) || 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const owes = (c) => Number(c.outstanding) > 0;
+  // "Sat 1 Aug 2026" (and ", 14:00" with the time), UK time
+  function ukDay(iso, withTime) {
+    const d = new Date(iso);
+    if (!iso || isNaN(d)) return "";
+    const o = { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" };
+    if (withTime) Object.assign(o, { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleString("en-GB", o).replace(/^(\p{L}+),/u, "$1");
+  }
+  // Today in the UK, YYYY-MM-DD
+  const ukToday = () => ukLocal(new Date().toISOString()).slice(0, 10);
+  // The month n months ago, YYYY-MM (the "Not booked since" picker starts three months back)
+  function monthsAgo(n) {
+    const [y, m] = ukToday().split("-").map(Number);
+    const total = y * 12 + (m - 1) - n;
+    return Math.floor(total / 12) + "-" + String((total % 12) + 1).padStart(2, "0");
+  }
+  // Pounds as typed ("£1,200", "45.5", "") → "1200.00", or null when it isn't an amount
+  function readPounds(text) {
+    const t = String(text).replace(/[£,\s]/g, "");
+    if (t === "") return "0.00";
+    return /^\d{1,7}(\.\d{1,2})?$/.test(t) ? Number(t).toFixed(2) : null;
+  }
+
+  async function loadClients() {
+    const admin = isAdminHere();
+    for (const b of document.querySelectorAll("#view-clients .admin-only")) if (b.hidden === admin) b.hidden = !admin;
+    if (!admin) $("clients-import").hidden = true;
+    const id = openClientId();
+    if (id) return openClient(id);
+    closeClient();
+    const list = $("clients-list");
+    if (!$("clients-since").value) $("clients-since").value = monthsAgo(3);
+    const q = new URLSearchParams({ filter: clientFilter });
+    if (clientSearch) q.set("search", clientSearch);
+    if (clientFilter === "lapsed") q.set("since", $("clients-since").value + "-01");
+    const asked = ++clientsAsked;
+    let data;
+    try {
+      data = await api("clients?" + q);
+    } catch (err) {
+      if (asked === clientsAsked && currentView === "clients" && err.message !== "signed out") {
+        setText("clients-count", "");
+        emptyState(list, "Couldn't load clients: " + err.message);
+      }
+      return;
+    }
+    if (asked !== clientsAsked || openClientId()) return;
+    const clients = data.clients || [];
+    setText("clients-count", clientsCount(clients, Number(data.total) || clients.length));
+    if (!clients.length) return emptyState(list, clientsEmpty());
+    reconcile(list, clients.map(clientCard));
+  }
+  function clientsCount(clients, total) {
+    const more = clients.length < total ? " (the first " + clients.length + " shown: search to narrow it down)" : "";
+    if (clientFilter === "owing") {
+      const sum = clients.reduce((n, c) => n + Math.round((Number(c.outstanding) || 0) * 100), 0) / 100;
+      return total + (total === 1 ? " client owes " : " clients owe ") + gbp(sum) + (more ? " between them" + more : " in all");
+    }
+    if (clientFilter === "lapsed") return total + (total === 1 ? " client hasn't" : " clients haven't") + " booked since " + ukDay($("clients-since").value + "-01T12:00:00Z") + more;
+    return total + (total === 1 ? " client" : " clients") + more;
+  }
+  function clientsEmpty() {
+    if (clientSearch) return "No clients match “" + clientSearch + "”.";
+    if (clientFilter === "owing") return "Nobody owes anything.";
+    if (clientFilter === "lapsed") return "Everyone who booked before then has booked again since.";
+    if (clientFilter === "enquiry") return "No clients from enquiries only.";
+    return isAdminHere() ? "No clients yet. Sync with Acuity now, or import Acuity's spreadsheet." : "No clients yet. They appear here as people book and send enquiries.";
+  }
+
+  // Their marketing consent as a badge
+  const consentPill = (c) => (c.consent && c.consent.yes ? el("span", "pill-replied", "Marketing: yes") : el("span", "pill-stop", "No marketing"));
+
+  function clientCard(c) {
+    const card = el("article", "card cl-card");
+    card.dataset.key = "c" + c.id;
+    card.dataset.sig = sig(c);
+    card.tabIndex = 0;
+    card.setAttribute("role", "link");
+    card.setAttribute("aria-label", c.name + ": open");
+    const top = el("div", "card-top");
+    const title = el("h3", "card-title", c.name);
+    title.appendChild(consentPill(c));
+    if (owes(c)) title.appendChild(el("span", "pill-failed", "Owes " + gbp(c.outstanding)));
+    if (c.source === "enquiry" && !c.sessionCount) title.appendChild(el("span", "pill-draft", "Enquiry"));
+    top.appendChild(title);
+    card.appendChild(top);
+    const contact = [c.email, c.phone].filter(Boolean).join(" · ");
+    if (contact) card.appendChild(el("p", "card-who", contact));
+    const booked = [c.lastBooked ? "Last booked " + ukDay(c.lastBooked) : "Not booked yet", c.nextBooked ? "Next " + ukDay(c.nextBooked, true) : "", c.sessionCount ? c.sessionCount + (c.sessionCount === 1 ? " session" : " sessions") : ""];
+    card.appendChild(el("p", "card-foot", booked.filter(Boolean).join(" · ")));
+    card.addEventListener("click", (e) => !e.target.closest("a, button") && goClient(c.id));
+    card.addEventListener("keydown", (e) => (e.key === "Enter" || e.key === " ") && e.target === card && (e.preventDefault(), goClient(c.id)));
+    return card;
+  }
+
+  // ----- One client's page -----
+  async function openClient(id) {
+    $("clients-browse").hidden = true;
+    $("clients-back").hidden = false;
+    setText("clients-title", "Client");
+    const page = $("client-page");
+    page.hidden = false;
+    if (!clientOpen || clientOpen.client.id !== id) {
+      clientOpen = null;
+      consentAsking = false;
+      page.setAttribute("aria-busy", "true");
+      page.classList.remove("filled");
+      page.replaceChildren(el("div", "skeleton"), el("div", "skeleton short"));
+    }
+    let data;
+    try {
+      data = await api("clients/" + id);
+    } catch (err) {
+      if (openClientId() === id && err.message !== "signed out") emptyState(page, "Couldn't open this client: " + err.message);
+      return;
+    }
+    if (openClientId() !== id || currentView !== "clients") return;
+    clientOpen = { client: data.client, sessions: data.sessions || [], consentLog: data.consentLog || [] };
+    drawClient();
+  }
+  function closeClient() {
+    clientOpen = null;
+    consentAsking = false;
+    $("client-page").hidden = true;
+    $("clients-browse").hidden = false;
+    $("clients-back").hidden = true;
+    setText("clients-title", "Clients");
+  }
+  function drawClient() {
+    if (!clientOpen) return;
+    const { client, sessions, consentLog } = clientOpen;
+    reconcile($("client-page"), [clientHead(client), consentCard(client, consentLog), clientForm(client), sessionsCard(sessions)]);
+  }
+
+  function clientHead(c) {
+    const card = el("article", "card");
+    card.dataset.key = "head";
+    card.dataset.sig = sig(c);
+    const title = el("h3", "card-title cl-name", c.name);
+    title.appendChild(consentPill(c));
+    if (owes(c)) title.appendChild(el("span", "pill-failed", "Owes " + gbp(c.outstanding)));
+    card.appendChild(title);
+    const contact = [c.email, c.phone].filter(Boolean).join(" · ");
+    card.appendChild(el("p", "card-who", contact || "No email or phone yet"));
+    const facts = el("dl", "cl-facts");
+    const fact = (label, value) => value && facts.append(el("dt", "", label), el("dd", "", value));
+    fact("Last booked", c.lastBooked ? ukDay(c.lastBooked, true) : "Not yet");
+    fact("Next booked", c.nextBooked ? ukDay(c.nextBooked, true) : "Nothing booked");
+    fact("Sessions", String(c.sessionCount || 0));
+    fact("Owes", gbp(c.outstanding));
+    fact("Deposits paid", gbp(c.depositsPaid));
+    fact("Invoiced", gbp(c.invoiced));
+    card.appendChild(facts);
+    card.appendChild(el("p", "card-foot", [CLIENT_SOURCES[c.source] || "", c.createdAt ? "On the list since " + ukDay(c.createdAt) : ""].filter(Boolean).join(" · ")));
+    const row = el("div", "actions");
+    if (c.email) {
+      const a = el("a", "btn small ghost", "Email");
+      a.href = "mailto:" + c.email;
+      row.appendChild(a);
+    }
+    if (c.phone) {
+      const a = el("a", "btn small ghost", "Call");
+      a.href = "tel:" + String(c.phone).replace(/[^\d+]/g, "");
+      row.appendChild(a);
+    }
+    card.appendChild(row);
+    return card;
+  }
+
+  // Marketing consent: a switch. Turning it on asks where the yes came from and when (today unless
+  // changed); turning it off is straight away. Every change is kept below, with who and when.
+  function consentCard(c, log) {
+    const yes = Boolean(c.consent && c.consent.yes);
+    const card = el("article", "card cl-consent");
+    card.dataset.key = "consent";
+    card.dataset.sig = sig(c.consent, log, consentAsking);
+    card.appendChild(el("h3", "card-title", "Marketing"));
+    const label = el("label", "switch");
+    const box = el("input");
+    box.type = "checkbox";
+    box.setAttribute("role", "switch");
+    box.checked = yes || consentAsking;
+    const track = el("span", "switch-track");
+    track.setAttribute("aria-hidden", "true");
+    track.appendChild(el("span", "switch-knob"));
+    label.append(box, track, el("span", "", "They've said yes to marketing"));
+    card.appendChild(label);
+    card.appendChild(el("p", "hint cl-small", yes ? "Yes since " + ukDay(c.consent.at) + (c.consent.source ? " · " + c.consent.source : "") : "No. Everyone starts at no: it's only yes once you record where their yes came from, and when. A reply to an enquiry doesn't count."));
+    const problem = el("p", "error cl-error");
+    problem.setAttribute("role", "alert");
+    box.addEventListener("change", () => {
+      if (box.checked && !yes) {
+        consentAsking = true;
+        drawClient();
+        const first = $("client-page").querySelector("#consent-source");
+        if (first) first.focus();
+        return;
+      }
+      if (!box.checked && consentAsking) {
+        consentAsking = false;
+        return drawClient();
+      }
+      if (!box.checked && yes) saveConsent(c.id, { yes: false, source: "Switched off in Portal" }, card, problem);
+    });
+    if (consentAsking) {
+      const form = el("div", "cl-grid cl-ask");
+      const src = el("label", "cl-field cl-wide");
+      const input = el("input");
+      input.type = "text";
+      input.id = "consent-source";
+      input.maxLength = 300;
+      input.setAttribute("list", "consent-sources");
+      input.placeholder = "e.g. Ticked on the booking form";
+      input.addEventListener("input", () => (problem.textContent = ""));
+      const me = window.PortalPage && window.PortalPage.me && window.PortalPage.me();
+      const list = el("datalist");
+      list.id = "consent-sources";
+      for (const text of ["Ticked on the booking form", "Said yes in person, recorded by " + ((me && me.display_name) || "me"), "Fan sign-up"]) {
+        const o = el("option");
+        o.value = text;
+        list.appendChild(o);
+      }
+      src.append(el("span", "", "Where their yes came from"), input, list);
+      const at = el("label", "cl-field");
+      const day = el("input");
+      day.type = "date";
+      day.max = ukToday();
+      day.value = ukToday();
+      at.append(el("span", "", "When they said yes"), day);
+      form.append(src, at);
+      card.appendChild(form);
+      const row = el("div", "actions");
+      const ok = el("button", "btn small", "Save their yes");
+      ok.type = "button";
+      ok.addEventListener("click", () => {
+        const source = input.value.trim();
+        if (!source) return (problem.textContent = "Say where their yes came from first."), input.focus();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(day.value) || day.value > ukToday()) return (problem.textContent = "Pick the day they said yes (today or before)."), day.focus();
+        saveConsent(c.id, { yes: true, source, at: day.value }, card, problem);
+      });
+      const no = el("button", "btn small ghost", "Cancel");
+      no.type = "button";
+      no.addEventListener("click", () => {
+        consentAsking = false;
+        drawClient();
+      });
+      row.append(ok, no);
+      card.appendChild(row);
+    }
+    card.appendChild(problem);
+    if (log.length) {
+      card.appendChild(el("p", "cl-sub", "History"));
+      const ul = el("ul", "cl-log");
+      for (const e of [...log].sort((a, b) => String(b.recorded_at || b.at).localeCompare(String(a.recorded_at || a.at)))) {
+        const who = e.byName || e.by_name || (e.by === "customer" ? "the customer" : e.by === "import" ? "an import" : e.by || "");
+        ul.appendChild(el("li", "", [Number(e.consent) ? "Yes" : "No", e.at ? ukDay(e.at) : "", e.source || "", who ? "recorded by " + who : "", e.recorded_at && ukDay(e.recorded_at) !== ukDay(e.at) ? "on " + ukDay(e.recorded_at) : ""].filter(Boolean).join(" · ")));
+      }
+      card.appendChild(ul);
+    }
+    return card;
+  }
+  async function saveConsent(id, consent, card, problem) {
+    card.querySelectorAll("button, input").forEach((b) => (b.disabled = true));
+    try {
+      await api("clients/" + id, { body: { consent } });
+    } catch (err) {
+      if (err.message === "signed out") return;
+      card.querySelectorAll("button, input").forEach((b) => (b.disabled = false));
+      problem.textContent = "Not saved: " + err.message;
+      const box = card.querySelector("input[role=switch]");
+      if (box && !consent.yes) box.checked = true;
+      return;
+    }
+    consentAsking = false;
+    toast(consent.yes ? "Marketing: yes, recorded" : "Marketing: off, recorded");
+    openClient(id);
+  }
+
+  // Contact, notes and money (pounds). Only what changed is sent.
+  function clientForm(c) {
+    const form = el("form", "card cl-form");
+    form.dataset.key = "form";
+    form.dataset.sig = sig(c.id, c.name, c.email, c.phone, c.notes, c.outstanding, c.depositsPaid, c.invoiced);
+    form.autocomplete = "off";
+    form.appendChild(el("h3", "card-title", "Details"));
+    const grid = el("div", "cl-grid");
+    const field = (key, label, type, value, extra) => {
+      const row = el("label", "cl-field" + (type === "long" ? " cl-wide" : ""));
+      const input = el(type === "long" ? "textarea" : "input");
+      if (type === "long") input.rows = 3;
+      else input.type = type;
+      input.value = value || "";
+      input.dataset.field = key;
+      Object.assign(input, extra || {});
+      row.append(el("span", "", label), input);
+      grid.appendChild(row);
+    };
+    field("name", "Name", "text", c.name, { maxLength: 200, required: true });
+    field("email", "Email", "email", c.email, { maxLength: 200 });
+    field("phone", "Phone", "tel", c.phone, { maxLength: 40 });
+    field("notes", "Notes", "long", c.notes, { maxLength: 4000 });
+    for (const [key, label] of [["depositsPaid", "Deposits paid (£)"], ["invoiced", "Invoiced (£)"], ["outstanding", "Owes (£)"]]) field(key, label, "text", Number(c[key]) ? Number(c[key]).toFixed(2) : "", { inputMode: "decimal", placeholder: "0.00" });
+    form.appendChild(grid);
+    form.appendChild(el("p", "hint cl-small", "Money is typed in by hand for now, in pounds."));
+    const problem = el("p", "error cl-error");
+    problem.setAttribute("role", "alert");
+    const row = el("div", "actions");
+    const save = el("button", "btn small", "Save");
+    save.type = "submit";
+    row.appendChild(save);
+    form.append(row, problem);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      problem.textContent = "";
+      const body = {};
+      for (const input of form.querySelectorAll("[data-field]")) {
+        const key = input.dataset.field;
+        const money = key === "depositsPaid" || key === "invoiced" || key === "outstanding";
+        const value = money ? readPounds(input.value) : input.value.trim();
+        if (value === null) return (problem.textContent = "That isn't an amount in pounds (like 120 or 45.50)."), input.focus();
+        if (key === "name" && !value) return (problem.textContent = "They need a name."), input.focus();
+        const was = money ? Number(c[key] || 0).toFixed(2) : String(c[key] || "");
+        if (value !== was) body[key] = value;
+      }
+      if (!Object.keys(body).length) return toast("Nothing changed");
+      save.disabled = true;
+      try {
+        await api("clients/" + c.id, { body });
+      } catch (err) {
+        save.disabled = false;
+        if (err.message !== "signed out") problem.textContent = "Not saved: " + err.message;
+        return;
+      }
+      toast("Saved");
+      openClient(c.id);
+    });
+    return form;
+  }
+
+  function sessionsCard(sessions) {
+    const card = el("article", "card");
+    card.dataset.key = "sessions";
+    card.dataset.sig = sig(sessions);
+    const list = [...sessions].sort((a, b) => String(b.start).localeCompare(String(a.start)));
+    card.appendChild(el("h3", "card-title", list.length ? "Sessions (" + list.length + ")" : "Sessions"));
+    if (!list.length) {
+      card.appendChild(el("p", "hint cl-small", "No sessions on record yet."));
+      return card;
+    }
+    const now = new Date().toISOString();
+    const ul = el("ul", "cl-sessions");
+    for (const s of list) {
+      const li = el("li", "cl-session" + (s.status === "cancelled" ? " off" : ""));
+      li.appendChild(el("span", "cl-when", ukDay(s.start, true)));
+      li.appendChild(el("span", "cl-what", s.session || "Session"));
+      const extra = [s.price ? (isNaN(Number(s.price)) ? s.price : gbp(s.price)) : "", SESSION_SOURCES[s.source] || ""].filter(Boolean).join(" · ");
+      if (extra) li.appendChild(el("span", "card-meta", extra));
+      if (s.status === "cancelled") li.appendChild(el("span", "pill-stop", "Cancelled"));
+      else if (s.start > now) li.appendChild(el("span", "pill-draft", "Coming up"));
+      ul.appendChild(li);
+    }
+    card.appendChild(ul);
+    return card;
+  }
+
+  // ----- Search, filters and the buttons -----
+  $("clients-search").addEventListener("input", () => {
+    clearTimeout(clientSearchTimer);
+    clientSearchTimer = setTimeout(() => {
+      const next = $("clients-search").value.trim();
+      if (next === clientSearch) return;
+      clientSearch = next;
+      loadClients();
+    }, 250);
+  });
+  for (const chip of document.querySelectorAll("#clients-chips .chip")) {
+    chip.addEventListener("click", () => {
+      clientFilter = chip.dataset.filter;
+      for (const c of document.querySelectorAll("#clients-chips .chip")) {
+        const on = c === chip;
+        if (c.classList.contains("active") !== on) c.classList.toggle("active", on);
+        c.setAttribute("aria-pressed", on ? "true" : "false");
+      }
+      $("clients-since-row").hidden = clientFilter !== "lapsed";
+      loadClients();
+    });
+  }
+  $("clients-since").addEventListener("change", () => clientFilter === "lapsed" && $("clients-since").value && loadClients());
+  $("clients-back").addEventListener("click", () => goClient(null));
+
+  // Add a client by hand. Nova Bot refuses a duplicate and says which one it is: that one opens.
+  const showAddForm = (on) => {
+    $("clients-add-form").hidden = !on;
+    $("clients-add").setAttribute("aria-expanded", on ? "true" : "false");
+    if (on) {
+      $("clients-import").hidden = true;
+      $("clients-import-open").setAttribute("aria-expanded", "false");
+      $("add-name").focus();
+    }
+  };
+  $("clients-add").addEventListener("click", () => showAddForm($("clients-add-form").hidden));
+  $("add-cancel").addEventListener("click", () => showAddForm(false));
+  $("clients-add-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = $("clients-add-form");
+    const body = { name: $("add-name").value.trim(), email: $("add-email").value.trim(), phone: $("add-phone").value.trim(), notes: $("add-notes").value.trim() };
+    if (!body.name) return $("add-name").focus();
+    const button = form.querySelector("button[type=submit]");
+    button.disabled = true;
+    try {
+      const data = await api("clients", { body });
+      form.reset();
+      showAddForm(false);
+      toast("Added " + body.name);
+      if (data.client && data.client.id) goClient(data.client.id);
+      else loadClients();
+    } catch (err) {
+      if (err.message === "signed out") return;
+      const d = err.data || {};
+      const existing = d.id || d.existingId || (d.client && d.client.id);
+      if (existing) {
+        toast("They're already on the list");
+        showAddForm(false);
+        goClient(existing);
+      } else toast(err.message);
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  // Admins: sync with Acuity's calendar feed now
+  $("clients-sync").addEventListener("click", async () => {
+    const b = $("clients-sync");
+    b.disabled = true;
+    b.textContent = "Syncing…";
+    try {
+      const r = await api("clients/sync", { body: {} });
+      const c = r.clients || {};
+      const s = r.sessions || {};
+      toast(c.added || c.updated || s.added || s.updated ? "Synced: " + (c.added || 0) + " new clients, " + (s.added || 0) + " new sessions" : "Synced: already up to date");
+      loadClients();
+    } catch (err) {
+      if (err.message !== "signed out") toast("Couldn't sync: " + err.message);
+    } finally {
+      b.disabled = false;
+      b.textContent = "Sync with Acuity now";
+    }
+  });
+
+  // Admins: import Acuity's appointments or clients spreadsheet (a chosen file, or pasted)
+  $("clients-import-open").addEventListener("click", () => {
+    const on = $("clients-import").hidden;
+    $("clients-import").hidden = !on;
+    $("clients-import-open").setAttribute("aria-expanded", on ? "true" : "false");
+    if (on) showAddForm(false), $("clients-import").scrollIntoView({ block: "nearest", behavior: calm() ? "auto" : "smooth" });
+  });
+  $("import-cancel").addEventListener("click", () => {
+    $("clients-import").hidden = true;
+    $("clients-import-open").setAttribute("aria-expanded", "false");
+  });
+  $("import-file").addEventListener("change", () => {
+    const file = $("import-file").files[0];
+    importText = "";
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) return showImport([el("p", "error", "That file is too big (over 20 MB). Export a shorter date range from Acuity.")]);
+    const reader = new FileReader();
+    reader.onload = () => {
+      importText = String(reader.result || "");
+      showImport([el("p", "hint cl-small", "Chosen: " + file.name + " (" + Math.max(0, importText.split(/\r?\n/).filter((l) => l.trim()).length - 1) + " lines). Press Import.")]);
+    };
+    reader.onerror = () => showImport([el("p", "error", "Couldn't read that file.")]);
+    reader.readAsText(file);
+  });
+  // Pasting instead of a chosen file: the pasted text is what's imported
+  $("import-text").addEventListener("input", () => {
+    if (!importText) return;
+    importText = "";
+    $("import-file").value = "";
+  });
+  const showImport = (nodes) => $("import-result").replaceChildren(...nodes);
+  $("clients-import").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const csv = importText || $("import-text").value;
+    if (!csv.trim()) return showImport([el("p", "error", "Choose the CSV file, or paste it, first.")]);
+    const b = $("import-go");
+    b.disabled = true;
+    b.textContent = "Importing…";
+    showImport([]);
+    try {
+      const r = await api("clients/import", { body: { csv } });
+      const c = r.clients || {};
+      const s = r.sessions || {};
+      const lines = [
+        el("p", "cl-done", (r.kind === "clients" ? "Acuity's client list" : "Acuity's appointments") + " imported."),
+        el("p", "", "Clients: " + (c.added || 0) + " new, " + (c.updated || 0) + " updated." + (r.kind === "clients" ? "" : " Sessions: " + (s.added || 0) + " new, " + (s.updated || 0) + " updated.")),
+      ];
+      if (r.skipped) lines.push(el("p", "hint cl-small", r.skipped + (r.skipped === 1 ? " line was" : " lines were") + " skipped."));
+      if (r.problems && r.problems.length) {
+        const ul = el("ul", "cl-log");
+        for (const p of r.problems) ul.appendChild(el("li", "", typeof p === "string" ? p : (p.line ? "Line " + p.line + ": " : "") + (p.problem || p.error || p.message || JSON.stringify(p))));
+        lines.push(ul);
+      }
+      showImport(lines);
+      importText = "";
+      $("import-file").value = "";
+      $("import-text").value = "";
+      toast("Imported");
+      loadClients();
+    } catch (err) {
+      if (err.message !== "signed out") showImport([el("p", "error", "Not imported: " + err.message)]);
+    } finally {
+      b.disabled = false;
+      b.textContent = "Import";
+    }
+  });
+
+  // The list refreshes now and then while it's on screen (calmly: only changed cards are redrawn)
+  setInterval(() => !document.hidden && running && currentView === "clients" && !openClientId() && document.activeElement !== $("clients-search") && loadClients(), 60000);
 
   // ===== One enquiry: the conversation =====
   // Their message, then every reply, note and draft from Agent, oldest first. While it's open
