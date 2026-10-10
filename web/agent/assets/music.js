@@ -174,8 +174,8 @@
   setTimeout(nextQuote, (2 + Math.random() * 14) * 60000);
 
   // Put it in the welcome (and again if the welcome comes back after "New chat")
-  // The welcome in three content panels, each bordered: the hello (its heading and words), the
-  // suggestions, and Today in music
+  // The welcome in three content panels, each bordered: the suggestions, Today in music, and the
+  // hello (its heading and words) at the bottom, by the box you type in
   function place() {
     const w = document.getElementById("welcome");
     if (!w) return;
@@ -209,6 +209,9 @@
       }
     }
     if (!w.querySelector(".mworld")) w.append(build());
+    // "Give me a goal…" sits last, just above the box you type in
+    const intro = w.querySelector(":scope > .mw-intro");
+    if (intro && intro !== w.lastElementChild) w.append(intro);
     fit();
   }
 
