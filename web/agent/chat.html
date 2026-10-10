@@ -604,6 +604,7 @@
 <link rel="stylesheet" href="/agent/bar.css">
 <link rel="stylesheet" href="/agent/status.css">
 <link rel="stylesheet" href="/agent/glow.css">
+<link rel="stylesheet" href="/shared/install.css">
 <link rel="stylesheet" href="/agent/music.css">
 <link rel="stylesheet" href="/agent/touch.css">
 <script src="/shared/look.js"></script>
@@ -799,6 +800,7 @@
         <button type="button" class="chip" role="radio" data-top-mode="shown" data-sfx="tab">Always shown</button>
         <button type="button" class="chip" role="radio" data-top-mode="hidden" data-sfx="tab">Always hidden</button>
       </div>
+      <div class="bar-mode"><button type="button" class="chip" onclick="window.NovaInstall && NovaInstall.open()">Install or remove the apps</button><button type="button" class="chip" onclick="window.NovaInstall && NovaInstall.help()">App help</button></div>
       <!-- One theme for every panel, or each its own; and the colours of your planet (look.js, status.js) -->
       <div class="look-settings" id="look-settings">
         <div class="look-row look-themes" role="radiogroup" aria-label="Theme for all of Nova Agent"></div>
@@ -884,6 +886,7 @@
 <script src="/agent/bar.js"></script>
 <script src="/shared/status-data.js"></script>
 <script src="/agent/status.js"></script>
+<script src="/shared/install.js"></script>
 <script src="/agent/music-data.js"></script>
 <script src="/agent/music.js"></script>
 <script src="/agent/remember.js" defer></script>

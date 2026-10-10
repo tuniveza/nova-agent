@@ -389,6 +389,20 @@ needs a mouse, no frosted-glass blur or drifting sky. On a tablet showing the co
 bars hide and show with your swipes and a handle brings them back. The conversation's pages turn
 with a sideways swipe (`web/agent/assets/touch.css`).
 
+### Install or remove the apps (and help)
+
+An **App** button (the phone with an arrow, in the top bar of Nova Agent and of the Portal app,
+on Portal's sign-in screen, in the phone's gear menu and in the Panels window) opens one sheet:
+Nova Agent and Portal, each with **Install** and **Remove**, and the steps for exactly this device
+(it reads iPhone or iPad and its iOS version, Android phone or tablet and its version, and the
+browser). Android and computers get a real one-tap install when the browser offers it; iPhone and
+iPad can't be installed by a website, so it shows Safari's two taps. **Remove** wipes the app
+from the device (notifications off, signed out, saved data and offline files gone; shared notes
+and everything online stay safe), then shows the one step that deletes its icon. **Something not
+working?** covers the in-between problems: installed but can't find it, no install option, opens
+in the browser, no notifications, an old name or picture, signing in again, two copies, stuck or
+out of date, or a phone too old (`web/shared/install.js`, `install.css`).
+
 ### Ambient music
 
 Quiet, never-ending Novacane ambient music: slow warm pads, a soft bass, star-like bells, now and

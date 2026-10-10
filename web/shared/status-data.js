@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 214,
+ "build": 215,
  "date": "2026-10-10",
  "panels": {
   "chat": [
@@ -12,11 +12,11 @@ window.NOVA_STATUS = {
    "Phones and tablets detected from the device"
   ],
   "portal": [
+   "Portal as its own phone app",
    "Portal everywhere",
    "\"Chat\" is now \"Agent\" everywhere you see…",
    "Cosmic icons",
-   "Calmer, lusher sounds",
-   "Lush Novacane sounds"
+   "Calmer, lusher sounds"
   ],
   "calendar": [
    "\"Chat\" is now \"Agent\" everywhere you see…",
@@ -82,11 +82,11 @@ window.NOVA_STATUS = {
    "The Nova Manual is built from Nova…"
   ],
   "look": [
+   "Portal as its own phone app",
    "Portal everywhere",
    "more on screen",
    "\"Chat\" is now \"Agent\" everywhere you see…",
-   "Chat's content panels",
-   "Status line"
+   "Chat's content panels"
   ]
  },
  "areas": {
@@ -101,11 +101,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "portal",
-    "words": "Portal everywhere"
+    "words": "Portal as its own phone app"
    },
    {
     "panel": "portal",
-    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
+    "words": "Portal everywhere"
    },
    {
     "panel": "calendar",
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Portal as its own phone app",
   "pasted Markdown becomes formatting",
   "Portal everywhere",
   "only the categories that have projects show…",
   "more on screen",
   "Undo, the Manual keeps \"Nova Agent\"",
   "\"Chat\" is now \"Agent\" everywhere you see…",
-  "every day measured so nothing is cut…",
-  "new notes start Shared when signed in"
+  "every day measured so nothing is cut…"
  ]
 };
