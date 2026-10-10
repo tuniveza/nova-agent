@@ -155,8 +155,10 @@
   const CATS = ['All', 'Nova Agent', 'Games', 'Tools', 'Experiments'];
 
   function renderFilters() {
+    // Only the categories that have projects in them (and All)
     $('#filters').innerHTML = CATS.map((c) => {
       const n = c === 'All' ? D.projects.length : D.projects.filter((p) => p.category === c).length;
+      if (!n) return '';
       return `<button type="button" class="filter" data-cat="${esc(c)}" aria-pressed="${c === state.cat}">${esc(c)}<small>${n}</small></button>`;
     }).join('');
   }
