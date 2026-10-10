@@ -1,22 +1,22 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 212,
+ "build": 213,
  "date": "2026-10-10",
  "panels": {
   "chat": [
+   "Portal everywhere",
    "\"Chat\" is now \"Agent\" everywhere you see…",
    "Nova Agent reopens the app you had…",
    "One centre line",
-   "Phones and tablets detected from the device",
-   "The chat column's title is Chat"
+   "Phones and tablets detected from the device"
   ],
   "portal": [
+   "Portal everywhere",
    "\"Chat\" is now \"Agent\" everywhere you see…",
    "Cosmic icons",
    "Calmer, lusher sounds",
-   "Lush Novacane sounds",
-   "Admin lives in Portal"
+   "Lush Novacane sounds"
   ],
   "calendar": [
    "\"Chat\" is now \"Agent\" everywhere you see…",
@@ -26,32 +26,32 @@ window.NOVA_STATUS = {
    "size checks read the month's grid"
   ],
   "notes": [
+   "Portal everywhere",
    "new notes start Shared when signed in",
    "Every window size usable",
    "Cosmic icons",
-   "Shared and Local notes",
-   "Panels on phones"
+   "Shared and Local notes"
   ],
   "index": [
+   "Portal everywhere",
    "Cosmic icons",
    "Panels on phones",
    "Panels fit inside Nova Agent's viewer",
-   "Portal and Index",
-   "Plain names"
+   "Portal and Index"
   ],
   "quests": [
+   "Portal everywhere",
    "Plain names",
    "Nova Agent talks to Nova Bot at…",
    "Portal is Studio",
-   "Nova Missions",
-   "Nova Quests"
+   "Nova Missions"
   ],
   "missions": [
+   "Portal everywhere",
    "Plain names",
    "Nova Agent talks to Nova Bot at…",
    "Portal is Studio",
-   "Send the Nova Quest plan to Portal",
-   "self-healing browser helper for Acuity's admin pages"
+   "Send the Nova Quest plan to Portal"
   ],
   "lossless": [
    "Cosmic icons",
@@ -61,11 +61,11 @@ window.NOVA_STATUS = {
    "Lossless audio and Observatory as panels everywhere"
   ],
   "visualizer": [
+   "Portal everywhere",
    "\"Chat\" is now \"Agent\" everywhere you see…",
    "Today in music on the front page",
    "Cosmic icons",
-   "Shared and Local notes",
-   "Nova Agent on phones"
+   "Shared and Local notes"
   ],
   "observatory": [
    "only the categories that have projects show…",
@@ -75,37 +75,37 @@ window.NOVA_STATUS = {
    "Lossless audio and Observatory as panels everywhere"
   ],
   "manual": [
+   "Portal everywhere",
    "Undo, the Manual keeps \"Nova Agent\"",
    "Portal on phones",
    "Plain names",
-   "The Nova Manual is built from Nova…",
-   "Portal is Studio"
+   "The Nova Manual is built from Nova…"
   ],
   "look": [
+   "Portal everywhere",
    "more on screen",
    "\"Chat\" is now \"Agent\" everywhere you see…",
    "Chat's content panels",
-   "Status line",
-   "Nova Agent reopens the app you had…"
+   "Status line"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
+    "words": "Portal everywhere"
    },
    {
     "panel": "chat",
-    "words": "Nova Agent reopens the app you had…"
-   },
-   {
-    "panel": "portal",
     "words": "\"Chat\" is now \"Agent\" everywhere you see…"
    },
    {
     "panel": "portal",
-    "words": "Cosmic icons"
+    "words": "Portal everywhere"
+   },
+   {
+    "panel": "portal",
+    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
    },
    {
     "panel": "calendar",
@@ -117,37 +117,37 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "notes",
-    "words": "new notes start Shared when signed in"
+    "words": "Portal everywhere"
    },
    {
     "panel": "notes",
-    "words": "Every window size usable"
+    "words": "new notes start Shared when signed in"
+   },
+   {
+    "panel": "index",
+    "words": "Portal everywhere"
    },
    {
     "panel": "index",
     "words": "Cosmic icons"
-   },
-   {
-    "panel": "index",
-    "words": "Panels on phones"
    }
   ],
   "tasks": [
    {
     "panel": "quests",
-    "words": "Plain names"
+    "words": "Portal everywhere"
    },
    {
     "panel": "quests",
-    "words": "Nova Agent talks to Nova Bot at…"
-   },
-   {
-    "panel": "missions",
     "words": "Plain names"
    },
    {
     "panel": "missions",
-    "words": "Nova Agent talks to Nova Bot at…"
+    "words": "Portal everywhere"
+   },
+   {
+    "panel": "missions",
+    "words": "Plain names"
    }
   ],
   "tools": [
@@ -161,11 +161,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "visualizer",
-    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
+    "words": "Portal everywhere"
    },
    {
     "panel": "visualizer",
-    "words": "Today in music on the front page"
+    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
    }
   ],
   "helpers": [
@@ -179,22 +179,22 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "manual",
-    "words": "Undo, the Manual keeps \"Nova Agent\""
+    "words": "Portal everywhere"
    },
    {
     "panel": "manual",
-    "words": "Portal on phones"
+    "words": "Undo, the Manual keeps \"Nova Agent\""
    }
   ]
  },
  "everything": [
+  "Portal everywhere",
   "only the categories that have projects show…",
   "more on screen",
   "Undo, the Manual keeps \"Nova Agent\"",
   "\"Chat\" is now \"Agent\" everywhere you see…",
   "every day measured so nothing is cut…",
   "new notes start Shared when signed in",
-  "symbols on phones too",
-  "day words and symbols switch at sensible…"
+  "symbols on phones too"
  ]
 };

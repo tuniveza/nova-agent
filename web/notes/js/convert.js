@@ -122,6 +122,8 @@
     if ((tag === 'td' || tag === 'th') && +src.getAttribute('colspan') > 1) el.setAttribute('colspan', Math.min(20, +src.getAttribute('colspan')));
     if ((tag === 'td' || tag === 'th') && +src.getAttribute('rowspan') > 1) el.setAttribute('rowspan', Math.min(50, +src.getAttribute('rowspan')));
     if (tag === 'ol' && +src.getAttribute('start') > 1) el.setAttribute('start', +src.getAttribute('start'));
+    // A task heading's status (tasks.js): kept with the note
+    if (tag === 'h3' && /^(waiting|soon|working|longer|done)$/.test(src.getAttribute('data-task') || '')) el.setAttribute('data-task', src.getAttribute('data-task'));
     return el;
   }
 
@@ -333,6 +335,21 @@
     return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[+i]}</code>`);
   }
 
+  // Does this plain text look like Markdown? (headings, lists, quotes, code, bold, links, tables)
+  function looksLikeMarkdown(text) {
+    const t = String(text || '');
+    let score = 0;
+    if (/^#{1,6}\s+\S/m.test(t)) score += 2;
+    if (/^\s*([-*+]|\d+[.)])\s+\S/m.test(t)) score += 1;
+    if (/^\s*[-*+]\s+\[[ xX]\]\s/m.test(t)) score += 2;
+    if (/^>\s/m.test(t)) score += 1;
+    if (/^```/m.test(t)) score += 2;
+    if (/\*\*[^*\n]+\*\*|__[^_\n]+__/.test(t)) score += 1;
+    if (/\[[^\]\n]+\]\([^)\s]+\)/.test(t)) score += 1;
+    if (/^\|.+\|\s*$/m.test(t) && /^\|?\s*:?-{3,}/m.test(t)) score += 2;
+    return score >= 2;
+  }
+
   function fromMarkdown(md) {
     const lines = String(md || '').replace(/\r\n?/g, '\n').split('\n');
     // A single "# " at the very top is the note's Title, and "##" are its main headings
@@ -377,7 +394,9 @@
           out.push(`<p class="title">${inlineMd(m[2])}</p>`);
           continue;
         }
-        const level = Math.max(1, Math.min(3, m[1].length - (titleMode ? 1 : 0)));
+        let level = Math.max(1, Math.min(3, m[1].length - (titleMode ? 1 : 0)));
+        // "### …TASK…" is always a heading 3, so it's a task in the side panel (tasks.js)
+        if (m[1].length === 3 && /\btask\b/i.test(m[2])) level = 3;
         out.push(`<h${level}>${inlineMd(m[2])}</h${level}>`);
         continue;
       }
@@ -700,5 +719,5 @@ ${body}
 </head><body>${body}</body></html>`;
   }
 
-  NN.convert = { clean, fromMarkdown, toMarkdown, toText, exportDocument, wordDocument, palette, hex, esc };
+  NN.convert = { clean, fromMarkdown, looksLikeMarkdown, toMarkdown, toText, exportDocument, wordDocument, palette, hex, esc };
 })();

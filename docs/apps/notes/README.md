@@ -154,3 +154,14 @@ flowchart LR
 | Focus mode | <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd> |
 | Every shortcut | <kbd>Ctrl</kbd> <kbd>/</kbd> |
 
+## Tasks, and pasting Markdown
+
+- **Paste Markdown** (from a chat, a code editor or a .md file) and it becomes real formatting:
+  headings, lists, checklists, quotes, code, bold, links and tables.
+- **Tasks:** any **heading 3** with the word **TASK** in it shows up in the **Tasks** list at the top
+  of the side panel (a Markdown `### TASK …` line becomes one). Tap a task to jump to it; with
+  three or more, type to find one. Set how it's going: **Waiting**, **Soon**, **Working on it**,
+  **Taking longer than expected** or **Done**; the status shows beside the heading in the note and
+  is saved with it (shared notes too). **Chat** hands the task, with what's written under it, to
+  Agent to talk it through.
+- The outline shows every heading in full (long ones wrap); nothing is cut off.

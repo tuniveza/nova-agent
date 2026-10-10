@@ -1190,7 +1190,12 @@
       const text = dt.getData('text/plain');
       e.preventDefault();
       this.restore();
-      if (html) {
+      // Markdown (copied from a chat, a code editor or a .md file) becomes real formatting, unless
+      // the clipboard also holds a properly formatted page (then that's used, as before)
+      const richHtml = html && /<(h[1-6]|ul|ol|table|strong|em|blockquote)\b/i.test(html);
+      if (text && /\n/.test(text) && !richHtml && NN.convert.looksLikeMarkdown(text)) {
+        this.insertClean(NN.convert.clean(NN.convert.fromMarkdown(text), { paste: true }));
+      } else if (html) {
         this.insertClean(NN.convert.clean(html, { paste: true }));
       } else if (text) {
         if (!/\n/.test(text)) document.execCommand('insertText', false, text);

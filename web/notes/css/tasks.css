@@ -1,0 +1,47 @@
+/* Notes — tasks (tasks.js): the list at the top of the side panel, each task's status, and the
+   status on the heading itself in the note. The side panel scrolls as one, and nothing in it is
+   ever cut off. */
+.outline { overflow-y: auto; scrollbar-width: thin; }
+.outline .outline-list { overflow: visible; }
+@media (max-width: 1180px) { .outline { max-width: calc(100% - 16px); } }
+
+.tasks { display: grid; gap: 8px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.tasks-h { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.tasks-count { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; color: var(--hi); }
+.tasks-find { width: 100%; box-sizing: border-box; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 50%, transparent); color: var(--text); font: inherit; font-size: 13px; }
+.tasks-find:focus { outline: none; border-color: var(--hi); }
+.tasks-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tasks-empty { margin: 0; font-size: 12.5px; color: var(--muted); }
+.task { display: grid; gap: 5px; padding: 8px 9px; border-radius: 12px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 35%, transparent); }
+.task-go { width: 100%; padding: 0; border: 0; background: none; color: #fff; font: inherit; font-size: 13px; font-weight: 600; line-height: 1.35; cursor: pointer; white-space: normal; overflow-wrap: anywhere; }
+.task-go:hover { color: var(--soft); }
+.task-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
+.task-st, .task-chat { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--text); font: inherit; font-size: 11.5px; cursor: pointer; }
+.task-chat svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.task-chat:hover, .task-st:hover { border-color: var(--hi); color: #fff; }
+/* Each status has its own colour */
+.st-waiting { --st: #9C9CB6; }
+.st-soon { --st: #62B6FF; }
+.st-working { --st: #FFD166; }
+.st-longer { --st: #FF8A6B; }
+.st-done { --st: #5CFFC0; }
+.task .task-st { border-color: color-mix(in srgb, var(--st) 60%, transparent); color: var(--st); background: color-mix(in srgb, var(--st) 12%, transparent); }
+.task.st-done .task-go { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--st) 70%, transparent); }
+.task-menu { position: fixed; z-index: 80; display: grid; gap: 4px; padding: 6px; width: 232px; border-radius: 14px; border: 1px solid var(--line-strong, var(--line)); background: color-mix(in srgb, var(--panel) 97%, var(--void)); box-shadow: 0 18px 50px -16px #000; }
+.task-menu[hidden] { display: none; }
+.task-menu button { text-align: left; padding: 7px 10px; border-radius: 9px; border: 0; background: none; color: var(--st); font: inherit; font-size: 13px; cursor: pointer; }
+.task-menu button::before { content: "●"; margin-right: 8px; }
+.task-menu button:hover, .task-menu button[aria-checked="true"] { background: color-mix(in srgb, var(--st) 16%, transparent); }
+
+/* In the note: a task heading shows its status beside it (it isn't text, so it never prints or exports) */
+.page h3[data-task]::after { content: "Waiting"; display: inline-block; margin-left: 10px; padding: 2px 9px; border-radius: 999px; vertical-align: middle;
+  font-family: var(--f-body); font-size: 11px; font-weight: 600; letter-spacing: .02em; text-transform: none;
+  color: var(--st); border: 1px solid color-mix(in srgb, var(--st) 55%, transparent); background: color-mix(in srgb, var(--st) 12%, transparent); }
+.page h3[data-task="waiting"] { --st: #9C9CB6; }
+.page h3[data-task="soon"] { --st: #62B6FF; } .page h3[data-task="soon"]::after { content: "Soon"; }
+.page h3[data-task="working"] { --st: #FFD166; } .page h3[data-task="working"]::after { content: "Working on it"; }
+.page h3[data-task="longer"] { --st: #FF8A6B; } .page h3[data-task="longer"]::after { content: "Taking longer than expected"; }
+.page h3[data-task="done"] { --st: #5CFFC0; } .page h3[data-task="done"]::after { content: "Done"; }
+.page h3.task-flash { animation: task-flash 1.2s ease; }
+@keyframes task-flash { 30% { background: color-mix(in srgb, var(--hi) 22%, transparent); border-radius: 8px; } }
+@media print { .page h3[data-task]::after { display: none; } }
