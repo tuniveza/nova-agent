@@ -429,6 +429,19 @@
   .tl-card.quest.done { animation: none; opacity: .55; } .tl-card.quest.done::before, .tl-card.quest.done::after { animation: none; }
   .tl-card.quest.doing { box-shadow: 0 0 0 1px var(--hi), 0 0 30px -6px var(--hi); animation: quest-in .5s both, quest-breathe 2.4s ease-in-out infinite; }
   .tl-card.quest.risk { background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)) padding-box, linear-gradient(135deg, #FFB86B, color-mix(in srgb, #FFB86B 30%, transparent)) border-box; }
+  /* Each quest wears its mode's colour (Waiting, Soon, Working On It...: /shared/quest-modes.css,
+     tinted toward the theme): the card, its edge, its glow and its title */
+  .tl-card.quest.qm-tinted, .now-card.qm-tinted {
+    background:
+      radial-gradient(130% 140% at 0% 0%, color-mix(in oklab, var(--qm) 30%, transparent), transparent 65%) padding-box,
+      linear-gradient(120deg, color-mix(in oklab, var(--qm) 18%, var(--panel)), color-mix(in oklab, var(--qm) 6%, var(--panel))) padding-box,
+      linear-gradient(135deg, var(--qm), color-mix(in oklab, var(--qm) 30%, transparent)) border-box;
+    border: 1px solid transparent; box-shadow: 0 14px 34px -22px var(--qm); }
+  .tl-card.quest.qm-tinted::before { background: linear-gradient(180deg, var(--qm), color-mix(in oklab, var(--qm) 55%, var(--lilac)), var(--qm)); background-size: 100% 200%; }
+  .tl-card.quest.qm-tinted.doing { box-shadow: 0 0 0 1px var(--qm), 0 0 30px -8px var(--qm); }
+  .tl-card.quest.qm-tinted .tl-title, .now-card.qm-tinted .now-title { color: color-mix(in oklab, var(--qm) 30%, #fff); }
+  .now-card.qm-tinted .now-kicker { color: color-mix(in oklab, var(--qm) 70%, #fff); }
+  .mv-row.qm-tinted { background: linear-gradient(90deg, color-mix(in oklab, var(--qm) 18%, transparent), transparent 85%); box-shadow: inset 3px 0 0 var(--qm); border-radius: 10px; }
   .q-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .q-tag, .m-tag, .risk-tag, .m-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
   .q-tag { color: var(--on-accent); background: linear-gradient(120deg, var(--hi), var(--accent-2), var(--hi)); background-size: 200% 100%; box-shadow: 0 4px 14px -6px var(--hi); animation: tag-flow 4s linear infinite; }
@@ -1396,7 +1409,10 @@
   }
 
   // How a quest is going (Waiting, Soon, Working On It...): a coloured chip, tap to change (quest-modes.js)
-  const modeChip = (q) => (window.NovaQuestModes ? NovaQuestModes.chip(q.mode || (q.status === 'done' ? 'done' : q.status === 'doing' ? 'working' : 'waiting'), { 'data-qmode': q.id }) : '');
+  const modeOf = (q) => q.mode || (q.status === 'done' ? 'done' : q.status === 'doing' ? 'working' : 'waiting');
+  const modeChip = (q) => (window.NovaQuestModes ? NovaQuestModes.chip(modeOf(q), { 'data-qmode': q.id }) : '');
+  // The whole card wears the mode's colour (quest-modes.css + the .qm-tinted rules below)
+  const modeTint = (q) => ` qm-tinted qm-${modeOf(q)}`;
 
   function questButtons(q) {
     const b = [];
@@ -1458,12 +1474,12 @@
     const nowId = cur ? cur.id : st.next[0] ? st.next[0].id : '';
     if (cur) {
       const pct = cur.start && cur.end ? Math.max(0, Math.min(100, ((nowM - mins(cur.start)) / Math.max(1, mins(cur.end) - mins(cur.start))) * 100)) : 0;
-      html += `<div class="now-card"><div class="now-kicker">✦ Quest · ${cur.status === 'doing' ? 'In progress' : 'Happening now'} ${modeChip(cur)}</div><div class="now-title">${escH(cur.title)}</div>
+      html += `<div class="now-card${modeTint(cur)}"><div class="now-kicker">✦ Quest · ${cur.status === 'doing' ? 'In progress' : 'Happening now'} ${modeChip(cur)}</div><div class="now-title">${escH(cur.title)}</div>
         <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${dur(cur)}${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>${cur.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(cur.from)}</span></div>` : ''}
         <div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div>${questButtons(cur)}</div>`;
     } else if (st.next[0]) {
       const n = st.next[0];
-      html += `<div class="now-card"><div class="now-kicker">✦ Quest · Up next ${modeChip(n)}</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div>${n.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(n.from)}</span></div>` : ''}<div style="margin-top:10px">${questButtons(n)}</div></div>`;
+      html += `<div class="now-card${modeTint(n)}"><div class="now-kicker">✦ Quest · Up next ${modeChip(n)}</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div>${n.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(n.from)}</span></div>` : ''}<div style="margin-top:10px">${questButtons(n)}</div></div>`;
     }
 
     // One timeline row (a quest, blocked time or a calendar card). Compact rows show just the time
@@ -1476,7 +1492,7 @@
       if (it.kind === 'quest') {
         const q = it.q;
         html += `<div class="tl-item${past ? ' past' : ''}${q.id === nowId ? ' is-now' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
-          <div class="tl-card quest ${q.status}${q.atRisk ? ' risk' : ''}${q.ongoing ? ' ongoing' : ''}${fold}" style="--i:${questIndex++}">
+          <div class="tl-card quest ${q.status}${q.atRisk ? ' risk' : ''}${q.ongoing ? ' ongoing' : ''}${modeTint(q)}${fold}" style="--i:${questIndex++}">
           ${label ? `<div class="tl-label">${label}</div>` : ''}<div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Quest · repeat' : '✦ Quest'}</span>${modeChip(q)}${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${q.from ? `<span class="m-tag">✎ ${escH(q.from)}</span>` : ''}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
           <div class="tl-title">${escH(q.title)}</div>
           <div class="tl-meta"><span class="prio ${q.priority}">${q.priority}</span> · ${dur(q)}${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline && !q.ongoing ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
@@ -1613,7 +1629,7 @@
       const thisWeek = monday(st.now);
       const weeks = {};
       for (const q of open) (weeks[q.start ? monday(q.start) : 'zz'] = weeks[q.start ? monday(q.start) : 'zz'] || []).push(q);
-      const row = (q) => `<div class="mv-row${q.status === 'done' ? ' done' : ''}${q.atRisk ? ' risk' : ''}"><button class="tick${q.status === 'done' ? ' on' : ''}" data-q="${q.id}" data-a="${q.status === 'done' ? 'reopen' : 'done'}" aria-label="Done">✓</button><time>${q.start ? `${escH(shortDay(q.start))} ${hhmm(q.start)}` : 'Not planned yet'}</time><span class="t">${q.atRisk ? '⚠ ' : ''}${escH(q.title)} ${modeChip(q)}</span>${trackTag(q) || '<span></span>'}</div>`;
+      const row = (q) => `<div class="mv-row${q.status === 'done' ? ' done' : ''}${q.atRisk ? ' risk' : ''}${modeTint(q)}"><button class="tick${q.status === 'done' ? ' on' : ''}" data-q="${q.id}" data-a="${q.status === 'done' ? 'reopen' : 'done'}" aria-label="Done">✓</button><time>${q.start ? `${escH(shortDay(q.start))} ${hhmm(q.start)}` : 'Not planned yet'}</time><span class="t">${q.atRisk ? '⚠ ' : ''}${escH(q.title)} ${modeChip(q)}</span>${trackTag(q) || '<span></span>'}</div>`;
       for (const [wk, list] of Object.entries(weeks).sort()) {
         const label = wk === 'zz' ? 'Needs a slot' : wk === thisWeek ? 'This week' : wk < thisWeek ? 'Earlier' : `Week of ${shortDay(wk)}`;
         html += `<div class="mv-sub">${label} · ${list.length}</div><div class="mv-rows">${list.map(row).join('')}</div>`;
