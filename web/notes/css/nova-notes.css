@@ -687,3 +687,37 @@ html.embed .toolbar { flex-wrap: wrap; justify-content: center; row-gap: 2px; bo
 html.embed .page { min-height: max(320px, calc(100dvh - 250px)); padding: clamp(26px, 5vw, 72px) clamp(18px, 5.5vw, 84px) clamp(36px, 6vw, 90px); }
 html.embed .page-wrap { padding: 14px clamp(8px, 2vw, 18px) 90px; }
 @media (max-width: 640px) { html.embed .toolbar { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; } }
+
+/* ---------- THE PAGE STAYS PUT ----------
+   At every size the whole of Notes fits its window (or Nova Agent's frame): the bars stay on top,
+   the page sits whole in the space below, and nothing hangs off the side or the bottom. The only
+   thing that moves is what's written on the page: it scrolls inside the page (and the long lists
+   inside the side panels scroll inside theirs). Wide things on the page (tables, code, long links,
+   pictures) stay inside it too, sliding sideways in their own box when they can't wrap. When a
+   phone's keyboard is up, Notes is only as tall as the screen above it (--fit-h, from js/fit.js). */
+html { overflow: hidden; overscroll-behavior: none; }
+body { height: 100%; height: 100dvh; min-height: 0; overscroll-behavior: none; }
+.shell { height: var(--fit-h, 100%); min-height: 0; }
+.workspace { min-width: 0; }
+@media screen {
+  .desk { display: flex; flex-direction: column; overflow: hidden; overflow: clip; scroll-padding: 0; }
+  .page-wrap, html.embed .page-wrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding-bottom: 18px; }
+  html .shell .desk .page {
+    flex: 1 1 auto; height: auto; min-height: 0; max-height: 100%;
+    overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    scroll-padding: 40px 0; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent;
+  }
+  /* Find and replace sits over the page's corner (it used to ride along with the scrolling) */
+  .findbar { position: absolute; float: none; top: 12px; right: 12px; margin: 0; }
+
+  /* Wide things stay on the page */
+  .page table { display: block; max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
+  .page table:not(:has(> thead, > tfoot, > tr)) > tbody { display: table; width: 100%; }
+  .page pre { max-width: 100%; overflow-x: auto; overflow-wrap: anywhere; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
+  .page :is(img, video, iframe, svg, canvas) { max-width: 100%; }
+}
+@media screen and (max-width: 880px) { .page-wrap, html.embed .page-wrap { padding-bottom: 10px; } }
+@media screen and (max-width: 640px) { .page-wrap, html.embed .page-wrap { padding-bottom: 6px; } }
+@media print {
+  .page { height: auto; max-height: none; overflow: visible; }
+}

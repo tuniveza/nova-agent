@@ -192,6 +192,7 @@
     renderLibrary();
     scheduleSide(true);
     desk.scrollTop = 0;
+    editor.el.scrollTop = 0; // the page stays put; its writing scrolls inside it
     shell.classList.remove('show-library');
     hideBars();
   }
@@ -613,11 +614,12 @@
     $('imgbar').hidden = true;
     $('tablebar').hidden = true;
   }
+  // (capture: the writing scrolls inside the page, and wide tables inside the writing)
   desk.addEventListener('scroll', () => {
     if (editor.selImg) placeImageBar(editor.selImg);
     if (lastState && lastState.cell) placeTableBar(lastState.cell);
     if (openPop && openPop.id !== 'pop-link') closePops();
-  }, { passive: true });
+  }, { passive: true, capture: true });
   window.addEventListener('resize', () => {
     hideBars();
     closePops();
@@ -1032,8 +1034,10 @@
     toast(n ? `Replaced ${n} match${n === 1 ? '' : 'es'}` : 'Nothing to replace');
   });
   function reveal(rect) {
-    const d = desk.getBoundingClientRect();
-    if (rect.top < d.top + 90 || rect.bottom > d.bottom - 40) desk.scrollBy({ top: rect.top - d.top - d.height / 3, behavior: 'smooth' });
+    // The page stays put and its writing scrolls inside it (desk is the old scroller, kept as a fallback)
+    const box = editor.el.scrollHeight > editor.el.clientHeight + 1 ? editor.el : desk;
+    const d = box.getBoundingClientRect();
+    if (rect.top < d.top + 90 || rect.bottom > d.bottom - 40) box.scrollBy({ top: rect.top - d.top - d.height / 3, behavior: 'smooth' });
   }
 
   // ---------- DIALOGS ----------
