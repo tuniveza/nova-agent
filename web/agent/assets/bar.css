@@ -1,5 +1,12 @@
 /* Quick, lively motion: things come in with a small spring and leave quickly */
-:root { --spring: cubic-bezier(.34, 1.45, .64, 1); --quick-in: cubic-bezier(.5, 0, .9, .4); }
+:root { --spring: cubic-bezier(.34, 1.45, .64, 1); --quick-in: cubic-bezier(.5, 0, .9, .4);
+  /* The bars and sheets all move the same way: in over 0.24 s, settling softly (the faintest
+     overshoot), away in 0.2 s, picking up speed. bar.js waits the same 0.2 s (--away) before the
+     open panel takes back the room a bar gave up. */
+  --come: .24s; --come-ease: cubic-bezier(.22, .9, .3, 1.02); --away: .2s; --away-ease: cubic-bezier(.5, 0, .8, .35);
+  --bar-room-delay: 0s; --top-room-delay: 0s; }
+html.bar-tucked { --bar-room-delay: var(--away); }
+html.top-tucked { --top-room-delay: var(--away); }
 
 /* The panels bar showing and hiding itself (bar.js): html[data-bar="auto|shown|hidden"], and
    html.bar-tucked while it's out of the way. Only transform and opacity move, so it's smooth. */
@@ -15,8 +22,8 @@
   html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home {
     position: absolute; left: 10px; right: 10px; bottom: 8px; z-index: 20;
     box-shadow: 0 -12px 40px -18px rgba(0, 0, 0, .7), 0 0 0 1px var(--line);
-    transition: transform .34s var(--spring), opacity .18s ease; }
-  html.bar-tucked .main.viewing > .suite-home { transform: translateY(calc(100% + 24px)); opacity: 0; pointer-events: none; transition: transform .2s var(--quick-in), opacity .18s ease .04s; }
+    transition: transform var(--come) var(--come-ease), opacity .16s ease; }
+  html.bar-tucked .main.viewing > .suite-home { transform: translateY(calc(100% + 24px)); opacity: 0; pointer-events: none; transition: transform var(--away) var(--away-ease), opacity .16s ease .04s; }
   /* Always hidden: not on the home either (the PANELS button at the top still opens them all) */
   html[data-bar="hidden"].bar-tucked .main:not(.viewing) { grid-template-rows: minmax(0, 1fr); }
   html[data-bar="hidden"].bar-tucked .main:not(.viewing) > .suite-home { display: none; }
@@ -30,11 +37,13 @@
   html[data-bar="auto"] .shell:has(> .main.viewing) > .tabbar, html[data-bar="hidden"] .shell > .tabbar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0;
     box-shadow: 0 -10px 30px -14px rgba(0, 0, 0, .8);
-    transition: transform .32s var(--spring); }
-  html.bar-tucked .shell > .tabbar { transform: translateY(calc(100% + 2px)); pointer-events: none; transition: transform .2s var(--quick-in); }
+    transition: transform var(--come) var(--come-ease); }
+  html.bar-tucked .shell > .tabbar { transform: translateY(calc(100% + 2px)); pointer-events: none; transition: transform var(--away) var(--away-ease); }
   html.bar-tucked .toasts { bottom: calc(20px + env(safe-area-inset-bottom)); }
   html.bar-tucked .bar-peek { display: grid; place-items: center; left: 50%; bottom: 0; width: 96px; height: calc(22px + env(safe-area-inset-bottom)); margin-left: -48px; padding-bottom: env(safe-area-inset-bottom); }
-  html.bar-tucked .bar-peek > span { width: 44px; height: 5px; background: color-mix(in srgb, var(--hi) 55%, var(--muted)); box-shadow: 0 0 10px -2px var(--hi); opacity: .8; }
+  html.bar-tucked .bar-peek > span { width: 44px; height: 5px; background: color-mix(in srgb, var(--hi) 55%, var(--muted)); box-shadow: 0 0 10px -2px var(--hi); opacity: .8;
+    animation: peek-in .3s ease var(--away) backwards; }
+  @keyframes peek-in { from { opacity: 0; transform: translateY(4px); } }
   html.kb .bar-peek { display: none !important; }
 }
 
@@ -45,12 +54,12 @@
   html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
     position: absolute; top: max(12px, env(safe-area-inset-top)); left: 14px; right: 14px; z-index: 30;
     box-shadow: 0 12px 40px -18px rgba(0, 0, 0, .7), 0 0 0 1px var(--line);
-    transition: transform .34s var(--spring), opacity .18s ease; }
-  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 20px)); opacity: 0; pointer-events: none; transition: transform .2s var(--quick-in), opacity .16s ease .04s; }
+    transition: transform var(--come) var(--come-ease), opacity .16s ease; }
+  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 20px)); opacity: 0; pointer-events: none; transition: transform var(--away) var(--away-ease), opacity .16s ease .04s; }
   /* Typing on the home (Auto): the panels strip steps aside and the columns get the room */
   html[data-bar="auto"].bar-tucked .main:not(.viewing) { grid-template-rows: minmax(0, 1fr); }
   html[data-bar="auto"].bar-tucked .main:not(.viewing) > .suite-home { display: none; opacity: 0; translate: 0 18px; }
-  .main:not(.viewing) > .suite-home { transition: opacity .2s ease, translate .32s var(--spring), display .2s allow-discrete; }
+  .main:not(.viewing) > .suite-home { transition: opacity .2s ease, translate var(--come) var(--come-ease), display .2s allow-discrete; }
   @starting-style { .main:not(.viewing) > .suite-home { opacity: 0; translate: 0 18px; } }
 }
 @media (max-width: 980px), (max-height: 480px) {
@@ -58,8 +67,8 @@
   html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
     position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; z-index: 41;
     box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .8);
-    transition: transform .32s var(--spring); }
-  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 14px)); pointer-events: none; transition: transform .2s var(--quick-in); }
+    transition: transform var(--come) var(--come-ease); }
+  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 14px)); pointer-events: none; transition: transform var(--away) var(--away-ease); }
 }
 
 /* The choice in the Panels window */
@@ -73,15 +82,72 @@
 .bar-note.show { animation: bar-note 1.8s ease both; }
 @keyframes bar-note { 0% { opacity: 0; scale: .96; } 12%, 75% { opacity: 1; scale: 1; } 100% { opacity: 0; } }
 
-/* The tiles pop in one after another as the bar comes back (--i is each one's place, set by bar.js) */
+/* The tiles pop in one after another as the bar comes back (--i is each one's place, set by bar.js):
+   a quick ripple, all in within about a third of a second however many tiles there are */
 .main.viewing > .suite-home .suite-app, .main > .suite-home .suite-app, .tabbar [data-tab], .shell > .topbar .top-side > *, .shell > .topbar .brand {
   transition: transform .2s, scale .16s, border-color .2s, box-shadow .2s, color .2s, background-color .2s,
-    translate .36s var(--spring) calc(var(--i, 0) * 16ms), opacity .22s ease calc(var(--i, 0) * 16ms); }
+    translate var(--come) var(--come-ease) min(calc(var(--i, 0) * 10ms), 110ms), opacity .2s ease min(calc(var(--i, 0) * 10ms), 110ms); }
 html.bar-tucked .suite-home .suite-app, html.bar-tucked .tabbar [data-tab] { translate: 0 12px; opacity: 0; transition-delay: 0s; transition-duration: .12s; }
 html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar .brand { translate: 0 -8px; opacity: 0; transition-delay: 0s; transition-duration: .12s; }
 
+/* ---- The trail (bar.js): as the floating panels bar slides away or comes back, three soft
+   echoes of it in the theme's colours follow it along its path, with a faint glow down the way it
+   went, and fade within about 0.4 s. Under the bar, above the page; only moving and fading. ---- */
+.bar-trail { position: fixed; z-index: 19; pointer-events: none; contain: layout style; }
+.bar-trail.phone { z-index: 39; }
+.bar-trail > i, .bar-trail > b { position: absolute; inset: 0; border-radius: var(--r, 18px); opacity: 0; will-change: transform, opacity; }
+.bar-trail > i {
+  border-top: 1px solid color-mix(in srgb, var(--hi) 70%, transparent);
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 22%, transparent) 18%, color-mix(in srgb, var(--hi) 30%, transparent) 50%, color-mix(in srgb, var(--lilac) 22%, transparent) 82%, transparent),
+    linear-gradient(180deg, color-mix(in srgb, var(--hi) 22%, transparent), transparent 75%);
+  box-shadow: 0 -6px 22px -10px color-mix(in srgb, var(--hi) 75%, transparent);
+  animation: trail-echo .4s cubic-bezier(.25, .7, .35, 1) both; }
+.bar-trail > i:nth-of-type(1) { --a: .04; --b: .5; --o: .34; animation-delay: .02s; }
+.bar-trail > i:nth-of-type(2) { --a: .2; --b: .7; --o: .22; animation-delay: .06s; }
+.bar-trail > i:nth-of-type(3) { --a: .38; --b: .9; --o: .13; animation-delay: .1s; }
+/* Coming back: the echoes rise behind it from below and, as it settles, breathe out around it
+   as a fading halo of light (its afterglow) */
+.bar-trail.back > i { animation-name: trail-halo; animation-duration: .42s; }
+.bar-trail.back > i:nth-of-type(1) { --a: .6; --b: .12; --sx: 1.012; --sy: 1.1; --o: .4; animation-delay: 0s; }
+.bar-trail.back > i:nth-of-type(2) { --a: .8; --b: .2; --sx: 1.026; --sy: 1.2; --o: .26; animation-delay: .03s; }
+.bar-trail.back > i:nth-of-type(3) { --a: 1; --b: .3; --sx: 1.04; --sy: 1.32; --o: .16; animation-delay: .06s; }
+@keyframes trail-halo {
+  0% { opacity: 0; transform: translateY(calc(var(--travel, 100px) * var(--a))); }
+  40% { opacity: var(--o); transform: translateY(calc(var(--travel, 100px) * var(--b))); }
+  100% { opacity: 0; transform: translateY(0) scale(var(--sx), var(--sy)); } }
+@keyframes trail-echo {
+  0% { opacity: 0; transform: translateY(calc(var(--travel, 100px) * var(--a))) scale(.995); }
+  30% { opacity: var(--o); }
+  100% { opacity: 0; transform: translateY(calc(var(--travel, 100px) * var(--b))) scale(.97, .82); } }
+/* The glow down the path: from where the bar rests to the bottom edge, fading at the sides */
+.bar-trail > b { inset: 0 6% auto; height: var(--travel, 100px); border-radius: 40% 40% 0 0 / 30px 30px 0 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hi) 20%, transparent), color-mix(in srgb, var(--lilac) 12%, transparent) 45%, color-mix(in srgb, var(--accent) 7%, transparent) 75%, transparent);
+  -webkit-mask: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); mask: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+  transform-origin: 50% 0; animation: trail-glow .42s ease-out both; }
+.bar-trail.back > b { transform-origin: 50% 100%; animation-name: trail-glow-back; }
+@keyframes trail-glow { 0% { opacity: 0; transform: scaleY(.2); } 25% { opacity: .9; } 100% { opacity: 0; transform: scaleY(1); } }
+@keyframes trail-glow-back { 0% { opacity: 0; transform: scaleY(1); } 30% { opacity: .8; } 100% { opacity: 0; transform: scaleY(.15); } }
+
+/* ---- Windows and sheets (the Panels window and the other pop-ups; the phone's More and gear
+   sheets): they fade and lift in over 0.24 s and drop away in 0.18 s, the dimmed backdrop with
+   them, instead of blinking on and off ---- */
+dialog.rhythm, dialog.more-sheet {
+  transition: opacity .18s ease, translate var(--come) var(--come-ease), scale var(--come) var(--come-ease), overlay .18s allow-discrete, display .18s allow-discrete; }
+dialog.rhythm:not([open]), dialog.more-sheet:not([open]) { opacity: 0; transition-timing-function: ease, var(--away-ease), var(--away-ease); transition-duration: .16s, .18s, .18s; }
+dialog.rhythm:not([open]) { translate: 0 10px; scale: .985; }
+dialog.more-sheet:not([open]) { translate: 0 40%; }
+@starting-style {
+  dialog.rhythm[open] { opacity: 0; translate: 0 10px; scale: .985; }
+  dialog.more-sheet[open] { opacity: 0; translate: 0 40%; }
+}
+dialog.rhythm::backdrop, dialog.more-sheet::backdrop { transition: opacity .2s ease, overlay .2s allow-discrete, display .2s allow-discrete; }
+dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { opacity: 0; }
+@starting-style { dialog.rhythm[open]::backdrop, dialog.more-sheet[open]::backdrop { opacity: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
   html .main.viewing > .suite-home, html .shell > .tabbar, html .shell > .topbar, html .suite-app, html .tabbar [data-tab], html .topbar * { transition: none !important; }
+  .bar-trail { display: none !important; }
 }
 
 /* ---- The bar's look: a strip of Novacane night sky ----
@@ -184,13 +250,15 @@ html.top-tucked .shell > .topbar .top-side > *, html.top-tucked .shell > .topbar
    panel moves out of its way (with a margin), instead of the bar covering it. It eases back
    when they go. ---- */
 @media (min-width: 981px) and (min-height: 481px) {
-  html[data-bar="auto"] .main.viewing > .viewer, html[data-bar="hidden"] .main.viewing > .viewer { transition: margin .3s cubic-bezier(.2, .8, .2, 1); }
+  /* In one step, not sliding (resizing a panel every frame makes it stutter): at once when a bar
+     comes (it slides into the room), and only once it has gone when it goes */
+  html[data-bar="auto"] .main.viewing > .viewer, html[data-bar="hidden"] .main.viewing > .viewer { transition: margin-bottom 0s linear var(--bar-room-delay), margin-top 0s linear var(--top-room-delay); }
   html[data-bar="auto"]:not(.bar-tucked) .main.viewing > .viewer, html[data-bar="hidden"]:not(.bar-tucked) .main.viewing > .viewer { margin-bottom: var(--strip-room, 110px); }
   html[data-top="auto"]:not(.top-tucked) .shell:has(> .main.viewing) > .main > .viewer, html[data-top="hidden"]:not(.top-tucked) .shell:has(> .main.viewing) > .main > .viewer { margin-top: var(--top-room, 80px); }
   html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home { bottom: 4px; }
 }
 @media (max-width: 980px), (max-height: 480px) {
-  html[data-bar="auto"] .shell:has(> .main.viewing), html[data-top="auto"] .shell:has(> .main.viewing) { transition: padding .28s cubic-bezier(.2, .8, .2, 1); }
+  html[data-bar="auto"] .shell:has(> .main.viewing), html[data-top="auto"] .shell:has(> .main.viewing) { transition: padding-bottom 0s linear var(--bar-room-delay), padding-top 0s linear var(--top-room-delay); }
   html[data-bar="auto"]:not(.bar-tucked) .shell:has(> .main.viewing) { padding-bottom: calc(var(--bar-h, 126px) + 6px); }
   html[data-top="auto"]:not(.top-tucked) .shell:has(> .main.viewing) { padding-top: calc(var(--top-room, 64px) + max(8px, env(safe-area-inset-top))); }
 }
