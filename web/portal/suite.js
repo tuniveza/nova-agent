@@ -205,7 +205,7 @@
       const groups = data.groups || [];
       loaded = true;
       const at = data.checkedAt ? new Date(data.checkedAt) : null;
-      checked.textContent = at && !isNaN(at) ? "Checked " + at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "Not checked yet";
+      checked.textContent = at && !isNaN(at) ? "Checked " + at.toLocaleTimeString("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" }) : "Not checked yet";
       if (!groups.length) return message("No links yet.");
       // The links, then everything Nova Agent can do (app by app)
       groupsBox.replaceChildren(...groups.map(groupBlock), ...changelogBlocks(data.changelog || []), ...featureBlocks(data.features || []));

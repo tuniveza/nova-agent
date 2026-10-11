@@ -97,11 +97,11 @@
     if (s < 3600) return `${Math.max(1, Math.round(s / 60))} min ago`;
     if (s < 86400) return `${Math.round(s / 3600)} h ago`;
     if (s < 7 * 86400) return plural(Math.round(s / 86400), "day") + " ago";
-    return new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: s > 300 * 86400 ? "numeric" : undefined });
+    return new Date(ms).toLocaleDateString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: s > 300 * 86400 ? "numeric" : undefined });
   }
-  const monthYear = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : "");
-  const longDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) : "");
-  const fullDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
+  const monthYear = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { timeZone: "Europe/London", month: "long", year: "numeric" }) : "");
+  const longDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short" }) : "");
+  const fullDate = (when) => (toMs(when) ? new Date(toMs(when)).toLocaleDateString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "long", year: "numeric" }) : "");
 
   // Where to go after signing in: only a path on this site ("/admin"), never another website
   // ("//evil.example", "https://…", "/\evil") or anything odd. Portal itself (or its old

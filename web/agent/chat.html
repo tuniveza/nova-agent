@@ -1192,7 +1192,7 @@
   // ---- Files Nova Agent wrote: cards, the Files list, the viewer ----
   const escF = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const fsize = (b) => (b < 1000 ? `${b} B` : b < 1e6 ? `${(b / 1000).toFixed(1)} KB` : `${(b / 1e6).toFixed(1)} MB`);
-  const fwhen = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
+  const fwhen = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
   const known = new Map(); // id -> the latest card for it
   const toNotes = (f) => ['md', 'txt', 'html'].includes(f.type);
   function fileButtons(f, opts) {

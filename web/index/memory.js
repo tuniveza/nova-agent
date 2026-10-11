@@ -149,7 +149,7 @@
     if (s < 3600) return `${Math.max(1, Math.round(s / 60))} min ago`;
     if (s < 86400) return `${Math.round(s / 3600)} h ago`;
     if (s < 7 * 86400) return plural(Math.round(s / 86400), "day") + " ago";
-    return new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    return new Date(ms).toLocaleDateString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short" });
   }
 
   // Whose memory: an email, a staff id, or a website chat not yet tied to an email

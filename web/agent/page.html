@@ -270,7 +270,7 @@
 
     const time = document.createElement("span");
     time.className = "time";
-    time.textContent = new Date(event.time).toLocaleTimeString();
+    time.textContent = new Date(event.time).toLocaleTimeString("en-GB", { timeZone: "Europe/London" });
 
     const chip = document.createElement("span");
     chip.className = "chip nt-chip";
@@ -322,7 +322,7 @@
     const img = document.getElementById("shot");
     img.src = src;
     img.hidden = false;
-    document.getElementById("shot-caption").textContent = `${new Date(time).toLocaleTimeString()} · ${caption}`;
+    document.getElementById("shot-caption").textContent = `${new Date(time).toLocaleTimeString("en-GB", { timeZone: "Europe/London" })} · ${caption}`;
   }
 
   // Briefly highlight the part of the diagram that's working.
@@ -379,7 +379,7 @@
         key,
         `${entry.role} "${entry.name}"${entry.nth ? ` #${entry.nth}` : ""}`,
         `${entry.hits}×`,
-        new Date(entry.healedAt).toLocaleString(),
+        new Date(entry.healedAt).toLocaleString("en-GB", { timeZone: "Europe/London" }),
       ];
       cells.forEach((text, i) => {
         const td = document.createElement("td");

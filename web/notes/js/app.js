@@ -117,9 +117,9 @@
     const diff = (Date.now() - d) / 1000;
     if (diff < 60) return 'Just now';
     if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400 && d.getDate() === new Date().getDate()) return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    if (diff < 6 * 86400) return d.toLocaleDateString('en-GB', { weekday: 'long' });
-    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
+    if (diff < 86400 && d.getDate() === new Date().getDate()) return d.toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit' });
+    if (diff < 6 * 86400) return d.toLocaleDateString('en-GB', { timeZone: 'Europe/London', weekday: 'long' });
+    return d.toLocaleDateString('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
   }
 
   function renderLibrary() {

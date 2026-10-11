@@ -296,11 +296,13 @@ function skyChip(x) {
   return `<div class="skychip" title="${esc(x.title)}">${iconOf(presets().get(x.preset).icon)}<span>${esc(x.title)}</span></div>`;
 }
 
-// The day in words, with smaller forms for smaller days (the CSS shows the one that fits)
+// The day in words, with smaller forms for smaller days (the CSS shows the one that fits), always
+// written the British way whatever the browser's language: "Nineteenth Day October", "19 Oct",
+// "19/10", "19"
 const ORD = ["", "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth", "Eleventh", "Twelfth", "Thirteenth", "Fourteenth", "Fifteenth", "Sixteenth", "Seventeenth", "Eighteenth", "Nineteenth", "Twentieth", "Twenty-first", "Twenty-second", "Twenty-third", "Twenty-fourth", "Twenty-fifth", "Twenty-sixth", "Twenty-seventh", "Twenty-eighth", "Twenty-ninth", "Thirtieth", "Thirty-first"];
 function dayWords(d) {
   const day = Number(d.slice(8)), mon = Number(d.slice(5, 7));
-  return `<span class="n-long">${ORD[day]} Day ${MONTHS[mon - 1]}</span><span class="n-mid">${mon}month ${day}day</span><span class="n-short">${mon} ${day}</span><span class="n-min">${day}</span>`;
+  return `<span class="n-long">${ORD[day]} Day ${MONTHS[mon - 1]}</span><span class="n-mid">${day} ${MONTHS[mon - 1].slice(0, 3)}</span><span class="n-short">${day}/${mon}</span><span class="n-min">${day}</span>`;
 }
 function drawMonth() {
   const first = `${cursor.slice(0, 7)}-01`;

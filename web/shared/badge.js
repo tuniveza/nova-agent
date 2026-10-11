@@ -93,7 +93,7 @@
   const first = (name) => String(name || "").trim().split(/\s+/)[0] || "You";
   const since = (when) => {
     const t = Date.parse(when || "");
-    return Number.isNaN(t) ? "" : new Date(t).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    return Number.isNaN(t) ? "" : new Date(t).toLocaleDateString("en-GB", { timeZone: "Europe/London", month: "long", year: "numeric" });
   };
   const planetSrc = (s, size, animate) =>
     `${api}/staff/${encodeURIComponent(s.id)}/planet.svg?size=${size}${animate ? "&animate=1" : ""}&v=${encodeURIComponent(String(s.planet_seed || s.id) + (s.planet_overrides ? "." + JSON.stringify(s.planet_overrides).length : ""))}`;

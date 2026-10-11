@@ -14,7 +14,11 @@
   const PHONE = matchMedia("(max-width: 980px), (max-height: 480px)");
   if (!shell) return;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  const time12 = (d) => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true }).replace(/\s?([AP]M)$/i, (m, x) => " " + x.toLowerCase());
+  // Times and days are written the British way, in London time, whatever the browser's language
+  const UK = { timeZone: "Europe/London" };
+  const time12 = (d) => d.toLocaleTimeString("en-GB", { ...UK, hour: "numeric", minute: "2-digit", hour12: true }).replace(/\s?([AP]M)$/i, (m, x) => " " + x.toLowerCase()).replace(/\s/g, " ");
+  const weekday = (d, form = "short") => d.toLocaleDateString("en-GB", { ...UK, weekday: form });
+  const sameDay = (a, b) => a.toLocaleDateString("en-GB", UK) === b.toLocaleDateString("en-GB", UK);
   const ago = (t) => {
     const m = Math.round((Date.now() - t) / 60000);
     if (m < 1) return "now";
@@ -95,9 +99,9 @@
   const clock = line.querySelector(".sl-clock");
   function tick() {
     const d = new Date();
-    clock.textContent = `${d.toLocaleDateString([], { weekday: "short" })} ${time12(d)}`;
+    clock.textContent = `${weekday(d)} ${time12(d)}`;
     clock.dateTime = d.toISOString();
-    clock.title = d.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
+    clock.title = d.toLocaleDateString("en-GB", { ...UK, weekday: "long", day: "numeric", month: "long" });
   }
   tick();
   setTimeout(() => { tick(); setInterval(tick, 60000); }, (60 - new Date().getSeconds()) * 1000);
@@ -106,7 +110,7 @@
   const onEl = line.querySelector(".sl-on");
   const offEl = line.querySelector(".sl-off");
   const leftItem = line.querySelector(".sl-left");
-  const when = (t) => { const d = new Date(t); return d.toDateString() === new Date().toDateString() ? time12(d) : `${d.toLocaleDateString([], { weekday: "short" })} ${time12(d)}`; };
+  const when = (t) => { const d = new Date(t); return sameDay(d, new Date()) ? time12(d) : `${weekday(d)} ${time12(d)}`; };
   function drawSession() {
     const off = lastOff();
     onEl.textContent = `Here since ${time12(new Date(me.on))}`;
@@ -125,7 +129,7 @@
   }
   function drawList() {
     list.innerHTML = `<h5>Lately</h5>` + (activity.length ? `<ol>${activity.slice(0, 14).map((a) => `<li><span>${esc(a.text)}</span><time>${time12(new Date(a.t))}</time></li>`).join("")}</ol>` : `<p>Nothing yet.</p>`) +
-      `<h5>On and off</h5><ol>${sessions.slice(-6).reverse().map((x) => `<li><span>${new Date(x.on).toLocaleDateString([], { weekday: "short" })} ${time12(new Date(x.on))}</span><time>${x === me ? "now" : time12(new Date(x.off))}</time></li>`).join("")}</ol>`;
+      `<h5>On and off</h5><ol>${sessions.slice(-6).reverse().map((x) => `<li><span>${weekday(new Date(x.on))} ${time12(new Date(x.on))}</span><time>${x === me ? "now" : time12(new Date(x.off))}</time></li>`).join("")}</ol>`;
   }
   actBtn.addEventListener("click", () => {
     list.hidden = !list.hidden;

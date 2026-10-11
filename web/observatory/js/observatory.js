@@ -30,7 +30,7 @@
     for (const [lim, unit] of steps) if (Math.abs(s) < lim) return f.format(Math.round(s / div[unit]), unit);
     return '';
   }
-  const dateFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const dateFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   const when = (iso) => (iso ? dateFmt.format(new Date(iso)) : '—');
   const home = (p) => String(p || '').replace(/^\/home\/[^/]+/, '~');
 
