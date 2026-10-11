@@ -76,11 +76,16 @@ let bookings = [];
 let scrolledFor = "";
 
 // ---- Themes, the sky and artwork ----
-// The app theme is Nova Agent's (Options); a day card can wear its own
+// The app theme is Nova Agent's (Options); a day card can wear its own. Nova Agent's first six
+// themes have a twin here (Cosmic is Novacane, Ember is Solar Flare…); its spectrum themes and
+// Custom come from look.js, so a day card on "App theme" always matches the rest of Nova Agent.
+const TWINS = { cosmic: "novacane", ember: "solar", ocean: "pulsar", gold: "eclipse" };
 function appTheme() {
   const id = window.NovaThemes && window.NovaThemes.current ? window.NovaThemes.current() : "";
   const t = THEMES();
-  return t && t.list().some((x) => x.id === id) ? id : "novacane";
+  if (TWINS[id]) return TWINS[id];
+  if (t && t.list().some((x) => x.id === id)) return id;
+  return id && window.NovaLook && window.NovaLook.palette && window.NovaLook.palette(id) ? id : "novacane";
 }
 const dayTheme = (day) => (!day.theme || day.theme === "app" ? appTheme() : day.theme);
 const themeStyle = (id) => (THEMES() ? THEMES().style(id) : "");
@@ -404,7 +409,8 @@ function rowHtml(e) {
     e.type === "event" && e.item.repeat ? describeRepeat(e.item.repeat) : "",
     e.ro && e.type === "event" ? "Nova Agent's plan" : "",
     e.type === "booking" ? "Studio booking" : "",
-    e.type === "day" ? presets().get(e.item.preset).label : "",
+    // (its kind, unless the title already says it: "Studio Session" once, not twice)
+    e.type === "day" && presets().get(e.item.preset).label !== titleOf(e) ? presets().get(e.item.preset).label : "",
     where,
     e.type === "event" && !e.ro && e.item.author ? `by ${e.item.author}` : "",
   ].filter(Boolean).join(" · ");
@@ -414,7 +420,9 @@ function rowHtml(e) {
   }
   const when = e.allDay ? "All day" : `${fmtTime(e.start)}<br>${fmtTime(e.end)}`;
   const art = e.type === "event" && !e.ro;
-  return `<li><button type="button" class="row-item note${e.ro ? " ro" : ""}${art ? " has-art" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${art ? `<span class="art" data-art-note="${esc(e.item.id)}" data-date="${e.date}"></span>` : ""}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
+  // Quests and bookings have no picture: their symbol sits in its place, so every row's times line up
+  const lead = art ? `<span class="art" data-art-note="${esc(e.item.id)}" data-date="${e.date}"></span>` : `<span class="row-sym" aria-hidden="true">${iconOf(symbolOf(e))}</span>`;
+  return `<li><button type="button" class="row-item note has-art${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${lead}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
 }
 function dayPlanHtml(d) {
   // On a phone the chosen day sits below the month: it's drawn with the sky, a moment after the month
@@ -541,6 +549,12 @@ function drawTimeGrid(n) {
   view.innerHTML = `<div class="tg" style="--cols:${n};--hh:${hh}px">
     <div class="tg-head" style="grid-column:1/-1;display:grid;grid-template-columns:inherit"><span></span>${head}<div class="allday">${alldayCols}</div></div>
     <div class="hours">${hours}</div>${cols}</div>`;
+  // Cards squeezed narrow (several at once, or a phone's week) show just their title, wrapped,
+  // so it can still be read; too thin even for that, just their colour (tap one to read it)
+  for (const el of view.querySelectorAll(".col .ev")) {
+    el.classList.toggle("slim", el.offsetWidth < 76);
+    el.classList.toggle("thin", el.offsetWidth < 30);
+  }
   // Open at the working day (or just before now, today)
   const key = `${prefs.view}:${first}`;
   if (scrolledFor !== key) {
@@ -1467,6 +1481,10 @@ setInterval(() => document.visibilityState === "visible" && void loadBookings(),
 // The current-time line and "today" move on
 setInterval(() => !drag && $("sheet").hidden && render(), 60000);
 addEventListener("resize", () => {
+  if (!drag) render();
+});
+// Nova Agent's theme changed: day cards on "App theme" take the new colours straight away
+addEventListener("novathemechange", () => {
   if (!drag) render();
 });
 // The fonts change how much fits
