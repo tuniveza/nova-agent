@@ -38,6 +38,7 @@ import { chat } from "../chat";
 import { adoptChat, chatTurn, clearChat, readChat } from "../chats";
 import { ownerToSave, personFor, type Person } from "../person";
 import { whoAmI } from "../staff";
+import { drawPlanet } from "./planet";
 import { addBlock, addQuest, mayChange, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestMode, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
 import { createMission, refineMission } from "../quests/planner";
@@ -262,7 +263,14 @@ app.get("/staff/:id/planet.svg", async (c) => {
       }
     } catch {}
   }
-  return hit ? c.body(hit.body, 200, { "Content-Type": "image/svg+xml; charset=utf-8", "Cache-Control": "public, max-age=300" }) : c.text("Not found", 404);
+  if (hit) return c.body(hit.body, 200, { "Content-Type": "image/svg+xml; charset=utf-8", "Cache-Control": "public, max-age=300" });
+  // Nova Bot out of reach: drawn here from the id, and not kept, so the saved planet returns with Nova Bot
+  try {
+    const svg = await drawPlanet(c.req.param("id"), new URL(c.req.url).searchParams);
+    return c.body(svg, 200, { "Content-Type": "image/svg+xml; charset=utf-8", "Cache-Control": "no-store" });
+  } catch {
+    return c.text("Not found", 404);
+  }
 });
 
 // ---- Index's data, through Nova Agent's own key ----
