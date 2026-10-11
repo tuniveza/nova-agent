@@ -767,7 +767,7 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
     // Manual › Calendar › Guide (each step back is a link)
     crumbs(app) {
       const sep = '<span class="sep" aria-hidden="true">›</span>';
-      const home = this.app || this.query ? `<button type="button" data-app="">Manual</button>` : `<span aria-current="page">Manual</span>`;
+      const home = this.app || this.query ? `<button type="button" data-app="">Nova Manual</button>` : `<span aria-current="page">Nova Manual</span>`;
       let rest = "";
       if (this.query) rest = `${sep}<span aria-current="page">Search</span>`;
       else if (app) rest = `${sep}${this.tab === "guide" ? `<span>${esc(app.name)}</span>` : `<button type="button" data-app="${app.id}" data-tab="guide">${esc(app.name)}</button>`}${sep}<span aria-current="page">${esc(tabName(this.tab))}</span>`;
