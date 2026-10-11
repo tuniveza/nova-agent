@@ -675,3 +675,7 @@ html.embed .pv .admin-frame { min-height: calc(100dvh - 120px); }
   .btn.small, .pv .btn.small { padding: 0 16px 0 calc(16px + 0.1em); }
   .chip, .pv .chip, .chips .chip { padding: 0 13px 0 calc(13px + 0.1em); }
 }
+
+/* The groups row (tabbar.js) only shows with the tab bar on top (tabbar.css); elsewhere it's away */
+.tabs > .tg-row,
+.tabs > .tg-break { display: none; }

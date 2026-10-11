@@ -80,8 +80,93 @@
     edges();
   }).observe(bar, { subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
 
+  // ---- Two tidy rows (tabs on top): the groups, then that group's tabs ----
+  // Row 1 has a pill for each group (Today, Studio, Plans, You, Admin) with the total of its
+  // counts; row 2 shows the tabs of the group you're in, and tapping another group's pill shows
+  // its tabs (a group with one tab just opens it). The settings icons sit at the end of row 1.
+  // Only for the tab bar on a computer or tablet: the side menu and the phone's bar are as before.
+  const groups = []; // { key, name, label (the .tab-group), tabs: [] }
+  {
+    let current = null;
+    for (const el of [...bar.children]) {
+      if (el.classList.contains("tab-group")) {
+        const key = el.dataset.group || "";
+        current = { key, name: key === "today" ? "Today" : el.textContent.trim(), label: el, tabs: [] };
+        groups.push(current);
+      } else if (el.classList.contains("tab") && current) current.tabs.push(el);
+    }
+  }
+  const pillGroups = groups.filter((g) => g.key !== "settings");
+  const row = document.createElement("div");
+  row.className = "tg-row";
+  row.setAttribute("role", "group");
+  row.setAttribute("aria-label", "Sections");
+  bar.prepend(row);
+  // The settings icons sit at the end of row 1 (CSS order); this line break then starts row 2
+  const brk = document.createElement("div");
+  brk.className = "tg-break";
+  brk.setAttribute("aria-hidden", "true");
+  bar.append(brk);
+  for (const g of groups) if (g.key === "settings") for (const t of g.tabs) t.classList.add("tg-set");
+  let showing = null; // the group whose tabs row 2 shows (null: the chosen tab's group)
+  const groupOf = (tab) => groups.find((g) => g.tabs.includes(tab));
+  const shownTabs = (g) => g.tabs.filter((t) => !t.hidden);
+  function drawGroups() {
+    if (!topTabs()) {
+      for (const g of groups) for (const t of g.tabs) t.classList.toggle("tg-hide", false); // toggle: no write (and no observer loop) when already off
+      bar.classList.toggle("tg-solo", false);
+      return;
+    }
+    const active = bar.querySelector(".tab.active");
+    const activeGroup = active ? groupOf(active) : null;
+    const open = showing || activeGroup || pillGroups[0];
+    const pills = pillGroups.filter((g) => shownTabs(g).length).map((g) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "tg-pill" + (g === activeGroup ? " active" : "") + (g === open && g !== activeGroup ? " open" : "");
+      b.dataset.group = g.key;
+      // its first tab's icon, then the name
+      const icon = shownTabs(g)[0].querySelector("svg, img.tab-planet");
+      if (icon) b.append(icon.cloneNode(true));
+      const name = document.createElement("span");
+      name.textContent = g.name;
+      b.append(name);
+      const count = shownTabs(g).reduce((n, t) => { const badge = t.querySelector(".badge:not([hidden])"); return n + (badge ? Number(badge.textContent) || 0 : 0); }, 0);
+      if (count) {
+        const c = document.createElement("span");
+        c.className = "tg-count";
+        c.textContent = String(count);
+        b.append(c);
+      }
+      b.setAttribute("aria-pressed", String(g === open));
+      return b;
+    });
+    const sig = pills.map((p) => p.className + p.textContent).join("|");
+    if (row.dataset.sig !== sig) { row.replaceChildren(...pills); row.dataset.sig = sig; }
+    for (const g of groups) for (const t of g.tabs) t.classList.toggle("tg-hide", g.key !== "settings" && g !== open);
+    // A group with one tab (Today, You, Admin): its pill says it all, so no second row
+    bar.classList.toggle("tg-solo", shownTabs(open).length <= 1);
+  }
+  row.addEventListener("click", (e) => {
+    const pill = e.target.closest(".tg-pill");
+    if (!pill) return;
+    const g = groups.find((x) => x.key === pill.dataset.group);
+    const tabs = g ? shownTabs(g) : [];
+    if (!g || !tabs.length) return;
+    // One tab (Today, You, Admin): straight there; more: show them
+    if (tabs.length === 1) { showing = null; tabs[0].click(); }
+    else { showing = g; drawGroups(); measure(); }
+  });
+  // The chosen tab moved (or counts changed): row 2 follows the chosen tab's group
+  let lastActive = bar.querySelector(".tab.active");
+  new MutationObserver(() => {
+    const now = bar.querySelector(".tab.active");
+    if (now !== lastActive) { lastActive = now; showing = null; }
+    drawGroups();
+  }).observe(bar, { subtree: true, attributes: true, attributeFilter: ["class", "hidden"], childList: true, characterData: true });
+
   bar.addEventListener("scroll", edges, { passive: true });
-  const again = () => { measure(); edges(); reveal(bar.querySelector(".tab.active"), false); };
+  const again = () => { drawGroups(); measure(); edges(); reveal(bar.querySelector(".tab.active"), false); };
   addEventListener("resize", again);
   WIDE.addEventListener("change", again);
   // Options → Menu changed (tabs on top or the side menu)

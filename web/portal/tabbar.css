@@ -140,3 +140,77 @@
   .tabs > .tab-group,
   html.embed .tabs > .tab-group { margin-left: 12px; padding-left: 14px; }
 }
+
+/* ===================== Two tidy rows: the groups, then that group's tabs =====================
+   Row 1: a medium-large pill per group (with its counts); row 2: the tabs of the group you're in,
+   evenly spaced. The settings icons end row 1. Group labels step aside (the pills say it). */
+@media (min-width: 761px) {
+  .tabs,
+  html.embed .tabs { flex-wrap: wrap; justify-content: center; align-items: center; row-gap: 0; column-gap: 6px; padding: 10px 14px 10px; }
+  .tabs > .tab-group,
+  html.embed .tabs > .tab-group { display: none !important; }
+  .tabs > .tab.tg-hide,
+  html.embed .tabs > .tab.tg-hide { display: none !important; }
+  .tabs.tg-solo > .tab:not(.tg-set),
+  html.embed .tabs.tg-solo > .tab:not(.tg-set),
+  html nav.tabs.tg-solo > div.tg-break { display: none !important; }
+
+  html nav.tabs > div.tg-row,
+  html.embed nav.tabs > div.tg-row {
+    display: flex; flex: 0 1 auto; order: -1; flex-wrap: wrap; justify-content: center; gap: 8px;
+    padding: 2px 6px 2px 0;
+  }
+  /* The settings icons join row 1, after the pills; then a thin line starts row 2 */
+  .tabs > .tab.tg-set,
+  html.embed .tabs > .tab.tg-set { order: -1; }
+  html nav.tabs > div.tg-break,
+  html.embed nav.tabs > div.tg-break {
+    display: block; order: -1; flex: 1 0 100%; width: 100%; height: 1px; margin: 10px 0 8px;
+    background: var(--line);
+  }
+  .tg-pill {
+    position: relative; display: inline-flex; align-items: center; gap: 9px;
+    min-height: 46px; padding: 0 22px 0 18px; border-radius: 999px;
+    border: 1px solid var(--line); background: rgba(var(--panel-2-rgb), 0.45);
+    color: var(--text); font-family: var(--f-body, inherit); font-size: 15px; font-weight: 650; letter-spacing: 0.01em;
+    cursor: pointer; white-space: nowrap;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .tg-pill svg, .tg-pill img { width: 20px; height: 20px; flex: none; }
+  .tg-pill img { border-radius: 50%; }
+  .tg-pill:hover { border-color: var(--line-strong); background: rgba(var(--panel-2-rgb), 0.75); }
+  .tg-pill.open { border-color: rgba(var(--hi-rgb), 0.45); color: var(--bright); }
+  .tg-pill.active {
+    color: var(--bright); border-color: rgba(var(--hi-rgb), 0.55);
+    background: radial-gradient(120% 140% at 50% 0%, rgba(var(--hi-rgb), 0.3), rgba(var(--accent-2-rgb), 0.12) 65%, rgba(var(--panel-2-rgb), 0.5) 100%);
+    box-shadow: 0 0 22px -10px rgba(var(--hi-rgb), 0.8);
+  }
+  .tg-pill:focus-visible { outline: 2px solid rgb(var(--hi-rgb)); outline-offset: 2px; }
+  .tg-count {
+    min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; display: inline-grid; place-items: center;
+    font-size: 12px; font-weight: 700; color: var(--on-hi, #fff); background: var(--hi); box-shadow: 0 0 10px rgba(var(--glow-rgb), 0.55);
+  }
+
+  /* Row 2: the group's tabs, medium-large and evenly spaced */
+  .tabs > .tab,
+  html.embed .tabs > .tab { min-height: 44px; padding: 0 14px; gap: 8px; margin-top: 2px; }
+  .tabs > .tab > span:not(.badge) { font-size: 14.5px; }
+  .tabs > .tab svg { width: 20px; height: 20px; }
+}
+/* A bit snugger on a tablet, so a group's tabs stay on one line where they can */
+@media (min-width: 761px) and (max-width: 1180px) {
+  .tabs > .tab,
+  html.embed .tabs > .tab { padding: 0 10px; gap: 6px; }
+  .tabs, html.embed .tabs { column-gap: 4px; }
+  .tabs > .tab > span:not(.badge) { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .tg-pill { transition: none; } }
+/* Inside Nova Agent on a tablet (inside.js draws bordered mini pills there): the same tidy rows */
+@media (min-width: 761px) and (max-width: 980px) {
+  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs { row-gap: 4px; column-gap: 2px; padding: 10px 10px; }
+  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs > .tab {
+    min-height: 42px; padding: 0 9px; gap: 6px; border-color: transparent; border-radius: 12px;
+  }
+  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs > .tab > span:not(.badge) { font-size: 13.5px; }
+  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs > .tab svg { width: 18px; height: 18px; }
+}
