@@ -1,6 +1,6 @@
 // The status line: one line of small text under the panels bar (inside the bar on a phone), with
 //   Nova Agent's version and build,
-//   what changed lately, in a few still words, for the part of the bar you're on (Apps, Tasks,
+//   what changed lately, in a few still words, for the part of the bar you're on (Apps, Plans,
 //     Tools, Helpers, or the panel that's open),
 //   when you came on and when you were last off (remembered on this device),
 //   what you've been doing lately (tap for the list), and a 12-hour clock.
@@ -142,7 +142,7 @@
   setInterval(drawActivity, 60000);
 
   // ---- What's new, for the part of the bar you're on ----
-  const AREA_NAMES = { apps: "Apps", tasks: "Tasks", tools: "Tools", helpers: "Helpers" };
+  const AREA_NAMES = { apps: "Apps", tasks: "Plans", tools: "Tools", helpers: "Helpers" };
   // An area's news names the panel it's about (the simple words come after)
   const PANEL_NAMES = { chat: "Agent", portal: "Portal", calendar: "Calendar", notes: "Notes", index: "Index", quests: "Quests", missions: "Missions", lossless: "Lossless", visualizer: "Visualizer", observatory: "Observatory", manual: "Manual", look: "Look & sound" };
   const areaLabel = line.querySelector(".sl-area");

@@ -4,6 +4,8 @@
 // offline; changes made offline wait in a queue and go when the connection is back.
 // The latest change wins everywhere; when another device's change was later, it's shown.
 
+import { queued, stamped } from "./edits.js";
+
 const API = "/app/api/calendar/items";
 const CACHE = "nova-calendar/cloud-v1";
 const MIGRATED = "nova-calendar/migrated-v2";
@@ -147,11 +149,8 @@ async function fetchChanges() {
 
 function enqueue(op) {
   const id = op.op === "put" ? op.item.id : op.id;
-  // Only the latest change to each item needs to go (made to the version the first one was)
-  const replaced = state.queue.find((q) => q.op === "put" && q.item.id === id && q.item.base);
-  if (replaced && op.op === "put") op = { ...op, item: { ...op.item, base: replaced.item.base } };
-  state.queue = state.queue.filter((q) => (q.op === "put" ? q.item.id : q.id) !== id);
-  state.queue.push(op);
+  // Only the latest change to each item needs to go (made to the version the first one was: edits.js)
+  state.queue = queued(state.queue, op);
   writeCache();
   emit("change");
   void flush();
@@ -159,14 +158,11 @@ function enqueue(op) {
 
 // Save an event or day card (new or changed)
 export function save(item) {
-  const now = nowIso();
-  const out = { ...item, id: item.id || uid(), created: item.created || now, updated: now };
-  // The version this change was made to: if this device's clock is behind, Nova Bot still
-  // knows it's the newest change and keeps it
-  const base = state.items.get(out.id)?.updated;
-  delete out.base;
+  // The version this change was made to goes with it (`base`): if this device's clock is behind,
+  // Nova Bot still knows it's the newest change and keeps it (edits.js)
+  const { out, sent } = stamped(item, (id) => state.items.get(id), nowIso(), uid);
   state.items.set(out.id, out);
-  enqueue({ op: "put", item: base ? { ...out, base } : out });
+  enqueue({ op: "put", item: sent });
   return out;
 }
 // Delete one; returns the item (for Undo)

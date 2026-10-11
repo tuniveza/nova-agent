@@ -523,6 +523,20 @@
   .up-day li { font-size: 13px; color: var(--text); list-style: none; }
   .up-day ul { margin: 0; padding: 0; display: grid; gap: 3px; }
   .up-day time { display: inline-block; width: 48px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+  .up-day .src, .upcoming .src { color: var(--muted); font-size: 11.5px; }
+  /* Also coming up: Calendar's note cards with reminders this week, quiet under the plan */
+  .also { margin-top: 14px; padding: 10px 12px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 45%, transparent); }
+  .also h4 { margin: 0 0 6px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
+  .also ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+  .also-row { width: 100%; min-width: 0; display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px; align-items: center; padding: 6px 4px; border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+  .also-row:hover, .also-row:focus-visible { background: color-mix(in srgb, var(--hi) 8%, transparent); }
+  .also-when { display: grid; font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
+  .also-when b { font-size: 12px; font-weight: 600; color: var(--soft); }
+  .also-what { min-width: 0; display: grid; gap: 3px; }
+  .also-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+  .also-what small { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); font-size: 11.5px; }
+  .also-what .m-tag { padding: 1px 8px; font-size: 9px; }
+  .also-more { margin-top: 6px; padding: 4px 8px; border: 0; background: none; color: var(--muted); font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
   .mission-new { display: grid; gap: 10px; padding: 16px; border-radius: 20px; border: 1px solid transparent; margin-bottom: 18px;
     background: linear-gradient(color-mix(in srgb, var(--panel-2) 90%, transparent), color-mix(in srgb, var(--panel-2) 90%, transparent)) padding-box, var(--edge) border-box; }
@@ -928,7 +942,7 @@
         </div>
       </div>
       <div class="suite-group tools tasks">
-        <h4>Tasks</h4>
+        <h4>Plans</h4>
         <div class="suite-grid">
           <a class="suite-app" href="/agent/" data-pane="quests"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span><b>Quests</b><small>Today's plan, hour by hour</small></a>
           <a class="suite-app" href="/agent/" data-pane="missions"><span class="pico" data-p="missions" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-missions"/></svg></span><b>Missions</b><small>Your goals, planned into Quests</small></a>
@@ -1000,6 +1014,8 @@
 <script src="/agent/music.js"></script>
 <script src="/agent/remember.js" defer></script>
 <script src="/agent/chatpages.js"></script>
+<script src="/agent/plans.js"></script>
+<script src="/agent/filelinks.js"></script>
 <script>
 (function () {
   'use strict';
@@ -1138,27 +1154,20 @@
     return `<button type="button" class="mini go" data-fv="${escF(f.id)}">◎ Preview</button><a class="mini" href="${escF(f.url)}?download" download="${escF(f.name)}" data-fdl>⤓ Download</a>${toNotes(f) ? `<a class="mini" href="/notes/?open=${encodeURIComponent(f.url)}" target="_blank" rel="noopener">✎ Open in Notes</a>` : ''}<button type="button" class="mini" data-fcopy="${escF(f.id)}">⧉ Copy</button>${opts && opts.remove ? `<button type="button" class="mini" data-fdel="${escF(f.id)}">✕ Delete</button>` : ''}`;
   }
   // The safety net: a direct download link for a file whose card couldn't be drawn (found by its
-  // details, or by the name in "Wrote release-plan.md" from Nova Agent's list of files)
+  // details, or by the name in "Wrote release-plan.md" from Nova Agent's list of files). Which file
+  // and which link: /agent/filelinks.js (tested on its own)
   async function fileLinks(box, acts) {
+    const FL = window.NovaFileLinks;
     let list = null;
     for (const a of acts) {
-      let f = a.file && a.file.url ? a.file : null;
-      if (!f) {
-        const name = String(a.text || '').replace(/^(Wrote|Updated|Exported)\s+/i, '').trim();
-        if (!list) list = await fetch('/files/list', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : { files: [] })).then((d) => d.files || []).catch(() => []);
-        f = list.find((x) => x.name === name || x.title === name) || null;
-      }
+      if (!list && FL.needsList(a)) list = await fetch('/files/list', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : { files: [] })).then((d) => d.files || []).catch(() => []);
+      const l = FL.linkFor(FL.fileOf(a, list));
       const link = document.createElement('a');
       link.className = 'mini fallback-dl';
-      if (f) {
-        link.href = `${f.url}?download`;
-        link.setAttribute('download', f.name);
-        link.textContent = `⤓ Download ${f.name}`;
-      } else {
-        link.href = '#';
-        link.textContent = '▤ Open your files';
-        link.addEventListener('click', (e) => { e.preventDefault(); const b = document.getElementById('files-btn'); if (b) b.click(); });
-      }
+      link.href = l.href;
+      if (l.download) link.setAttribute('download', l.download);
+      link.textContent = l.text;
+      if (l.files) link.addEventListener('click', (e) => { e.preventDefault(); const b = document.getElementById('files-btn'); if (b) b.click(); });
       box.appendChild(link);
     }
   }
@@ -1759,6 +1768,10 @@
   const mins = (s) => { const [d, t] = s.split('T'); const [y, mo, da] = d.split('-').map(Number); const [h, mi] = t.split(':').map(Number); return Date.UTC(y, mo - 1, da, h, mi) / 60000; };
   const escH = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   let calNotes = [];
+  // Calendar's own repeat rules (/calendar/js/recur.js), so a repeating note card shows each time it
+  // happens in "Also coming up"; until they've loaded (or if they can't), one-off cards still show
+  let calTimes = null;
+  import('/calendar/js/recur.js').then((m) => { calTimes = m.occurrences; if (st && st.now) renderToday(true); }).catch(() => {});
 
   // The plan, fetched again whenever anything changes (live, see "Live" below). It's only drawn
   // again when something in it is different, never while a quest's mode or phones menu is open
@@ -1811,6 +1824,11 @@
   // A quest's workstream, in its mission's colour for it
   function trackColour(missionId, name) { const m = st.missions.find((x) => x.id === missionId); const t = m && m.tracks.find((x) => x.name === name); return t ? t.colour : 'var(--soft)'; }
   const trackTag = (q) => (q.track ? `<span class="t-tag" style="--c:${trackColour(q.missionId, q.track)}">${escH(q.track)}</span>` : '');
+  // Where each quest came from (its mission ◆, where it was made ✎ "Notes · Studio plan", or ✧ Agent): /agent/plans.js
+  const SRC_ICON = { mission: '◆', notes: '✎', from: '✎', agent: '✧' };
+  const sourceList = (q) => (window.NovaPlans ? NovaPlans.sources(q, missionName(q.missionId)) : []);
+  const sourceTags = (q) => sourceList(q).map((s) => `<span class="m-tag">${SRC_ICON[s.kind]} ${escH(s.label)}</span>`).join('');
+  const sourceText = (q) => { const l = sourceList(q); return l.length ? `<small class="src"> · ${l.map((s) => escH(s.label)).join(' · ')}</small>` : ''; };
 
   let todayTab = 'ahead';
   document.addEventListener('click', (e) => {
@@ -1855,11 +1873,11 @@
     if (cur) {
       const pct = cur.start && cur.end ? Math.max(0, Math.min(100, ((nowM - mins(cur.start)) / Math.max(1, mins(cur.end) - mins(cur.start))) * 100)) : 0;
       html += `<div class="now-card${modeTint(cur)}"><div class="now-kicker">✦ Quest · ${cur.status === 'doing' ? 'In progress' : 'Happening now'} ${modeChip(cur)}</div><div class="now-title">${escH(cur.title)}</div>
-        <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${dur(cur)}${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>${cur.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(cur.from)}</span></div>` : ''}
+        <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${dur(cur)}${missionName(cur.missionId) ? ` · ${escH(missionName(cur.missionId))}` : ''}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>${cur.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(cur.from)}</span></div>` : missionName(cur.missionId) ? '' : `<div class="now-from">${sourceTags(cur)}</div>`}
         <div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div>${questButtons(cur)}</div>`;
     } else if (st.next[0]) {
       const n = st.next[0];
-      html += `<div class="now-card${modeTint(n)}"><div class="now-kicker">✦ Quest · Up next ${modeChip(n)}</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div>${n.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(n.from)}</span></div>` : ''}<div style="margin-top:10px">${questButtons(n)}</div></div>`;
+      html += `<div class="now-card${modeTint(n)}"><div class="now-kicker">✦ Quest · Up next ${modeChip(n)}</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}${missionName(n.missionId) ? ` · ${escH(missionName(n.missionId))}` : ''}</div>${n.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(n.from)}</span></div>` : missionName(n.missionId) ? '' : `<div class="now-from">${sourceTags(n)}</div>`}<div style="margin-top:10px">${questButtons(n)}</div></div>`;
     }
 
     // One timeline row (a quest, blocked time or a calendar card). Compact rows show just the time
@@ -1873,12 +1891,12 @@
         const q = it.q;
         html += `<div class="tl-item${past ? ' past' : ''}${q.id === nowId ? ' is-now' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
           <div class="tl-card quest ${q.status}${q.atRisk ? ' risk' : ''}${q.ongoing ? ' ongoing' : ''}${modeTint(q)}${fold}" style="--i:${questIndex++}">
-          ${label ? `<div class="tl-label">${label}</div>` : ''}<div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Quest · repeat' : '✦ Quest'}</span>${modeChip(q)}${missionName(q.missionId) ? `<span class="m-tag">◆ ${escH(missionName(q.missionId))}</span>` : ''}${q.from ? `<span class="m-tag">✎ ${escH(q.from)}</span>` : ''}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
+          ${label ? `<div class="tl-label">${label}</div>` : ''}<div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Quest · repeat' : '✦ Quest'}</span>${modeChip(q)}${sourceTags(q)}${trackTag(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
           <div class="tl-title">${escH(q.title)}</div>
           <div class="tl-meta"><span class="prio ${q.priority}">${q.priority}</span> · ${dur(q)}${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline && !q.ongoing ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
           ${q.status === 'done' ? '' : questButtons(q)}</div></div>`;
       } else if (it.kind === 'block') {
-        html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card block${fold}"><div class="tl-title">Busy · ${escH(it.b.reason)}</div><div class="tl-meta">Blocked out · <button class="mini" data-unblock="${it.b.id}">Unblock</button></div></div></div>`;
+        html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card block${fold}"><div class="tl-title">Busy · ${escH(it.b.reason)}</div><div class="tl-meta">Blocked out · Agent · <button class="mini" data-unblock="${it.b.id}">Unblock</button></div></div></div>`;
       } else {
         html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card busy${fold}"><div class="tl-title">${escH(it.n.title || 'Note card')}</div><div class="tl-meta">From Calendar</div></div></div>`;
       }
@@ -1919,15 +1937,32 @@
     } else if (todayTab === 'done') {
       panel = `<div class="timeline">${finished.map((it) => row(it, true)).join('')}</div>`;
     } else if (todayTab === 'coming') {
-      panel = `<div class="upcoming">${keys.map((k) => `<div class="up-day"><h4>${escH(dayLong(k))}</h4><ul>${days[k].sort((a, b) => a.start.localeCompare(b.start)).map((q) => `<li><time>${hhmm(q.start)}</time>${q.atRisk ? '⚠ ' : ''}${escH(q.title)}</li>`).join('')}</ul></div>`).join('')}</div>`;
+      panel = `<div class="upcoming">${keys.map((k) => `<div class="up-day"><h4>${escH(dayLong(k))}</h4><ul>${days[k].sort((a, b) => a.start.localeCompare(b.start)).map((q) => `<li><time>${hhmm(q.start)}</time>${q.atRisk ? '⚠ ' : ''}${escH(q.title)}${sourceText(q)}</li>`).join('')}</ul></div>`).join('')}</div>`;
     } else if (todayTab === 'pulses') {
-      panel = `<div class="upcoming"><div class="up-day"><ul>${pulses.map((q) => `<li>\u221E ${escH(q.title)} \u00B7 ${dur(q)} <button class="mini" data-q="${q.id}" data-a="finish">Stop</button></li>`).join('')}</ul></div></div>`;
+      panel = `<div class="upcoming"><div class="up-day"><ul>${pulses.map((q) => `<li>\u221E ${escH(q.title)} \u00B7 ${dur(q)}${sourceText(q)} <button class="mini" data-q="${q.id}" data-a="finish">Stop</button></li>`).join('')}</ul></div></div>`;
     } else if (todayTab === 'unplanned') {
-      panel = `<div class="upcoming"><div class="up-day"><ul>${st.unplanned.map((q) => `<li>⚠ ${escH(q.title)} · ${dur(q)} ${modeChip(q)}</li>`).join('')}</ul></div></div>`;
+      panel = `<div class="upcoming"><div class="up-day"><ul>${st.unplanned.map((q) => `<li>⚠ ${escH(q.title)} · ${dur(q)}${sourceText(q)} ${modeChip(q)}</li>`).join('')}</ul></div></div>`;
     }
     html += `<div class="subpanel">${panel}</div>`;
+    html += alsoComingUp();
     $('view-today').innerHTML = html;
   }
+
+  // Also coming up: Calendar's note cards with reminders in the next 7 days (UK time), quietly
+  // under the plan. Tap one: Calendar opens on that day
+  function alsoComingUp() {
+    if (!window.NovaPlans) return '';
+    const list = NovaPlans.comingUp(calNotes, st.now, calTimes, 7);
+    if (!list.length) return '';
+    const shown = list.slice(0, 8);
+    const more = list.length - shown.length;
+    return `<section class="also" aria-label="Also coming up"><h4>Also coming up</h4><ul>${shown.map((e) => `<li><button type="button" class="also-row" data-calday="${escH(e.date)}" title="Open Calendar on ${escH(dayLong(e.date))}"><span class="also-when">${escH(shortDay(e.date))}<b>${e.allDay ? 'All day' : hhmm(e.start)}</b></span><span class="also-what"><span class="also-title">${escH(e.title)}</span><small><span class="m-tag">▦ Calendar</span> ⏰ ${escH(NovaPlans.remindWords(e.reminders[0]))}${e.reminders.length > 1 ? ` +${e.reminders.length - 1}` : ''}${e.location ? ` · ${escH(e.location)}` : ''}</small></span></button></li>`).join('')}</ul>${more ? `<button type="button" class="also-more" data-calday="${escH(shown[shown.length - 1].date)}">${more} more in Calendar</button>` : ''}</section>`;
+  }
+  document.getElementById('view-today').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-calday]');
+    if (!b || !window.NovaAgent) return;
+    window.NovaAgent.open(NovaPlans.calendarDay(b.dataset.calday));
+  });
 
   // The new-mission form opens in a pop-up, so the page never has to grow
   function showMissionForm(open) {

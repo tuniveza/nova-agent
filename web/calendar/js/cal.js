@@ -8,6 +8,7 @@
 import * as data from "./data.js";
 import { addDays, addMinutes, cleanRepeat, dayNumber, describeRepeat, endSeriesBefore, minutesBetween, occurrences, weekday } from "./recur.js";
 import { parseQuick } from "./quickadd.js";
+import { ruleChanged as rulesDiffer, whichTimes } from "./edits.js";
 
 const $ = (id) => document.getElementById(id);
 // The look's second half (sheet, banners, title styles, menus): added now, so it never holds up the first screen
@@ -65,6 +66,11 @@ const savePrefs = () => {
   } catch {}
 };
 let cursor = today();
+// Opened on a particular day (Quests' "Also coming up" opens /calendar/?day=2026-10-14)
+try {
+  const asked = new URLSearchParams(location.search).get("day") || "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(asked)) cursor = asked;
+} catch {}
 let query = "";
 let bookings = [];
 let scrolledFor = "";
@@ -1290,14 +1296,12 @@ form.addEventListener("submit", async (e) => {
   const it = editing.item;
   const was = editing.was;
   const date = editing.date;
-  const ruleChanged = it.repeat && JSON.stringify(cleanRepeat(it.repeat)) !== JSON.stringify(fields.repeat);
+  const ruleChanged = rulesDiffer(it, fields);
   // A repeating one: which times does this change? Asked with the editor still open, so
   // Cancel goes back to it with nothing lost. Only reminders changed: every time, no question.
-  let which = null;
-  if (it.repeat && !ruleChanged) {
-    which = onlyRemindersChanged(it, was || it.start, fields) ? "all" : await askWhich();
-    if (!which) return;
-  }
+  // (The rules: edits.js)
+  const which = (await whichTimes(it, was || it.start, fields, () => askWhich())) ?? null;
+  if (it.repeat && !ruleChanged && !which) return;
   closeSheet();
   sfx("done");
   // A repeating one whose rule was changed: the new rule is for the whole series
@@ -1310,17 +1314,7 @@ form.addEventListener("submit", async (e) => {
   }
   changeOccurrence(it, date || it.start.slice(0, 10), was || it.start, fields, "Saved", which);
 });
-// Nothing but the reminders (or which phones get them) differs from this time of the event
-function onlyRemindersChanged(it, was, fields) {
-  const same = (a, b) => JSON.stringify(a ?? "") === JSON.stringify(b ?? "");
-  const length = minutesBetween(it.start, it.end);
-  return (
-    fields.start === was &&
-    minutesBetween(fields.start, fields.end) === length &&
-    ["title", "location", "body", "color", "allDay"].every((k) => same(fields[k], k === "allDay" ? Boolean(it[k]) : it[k] || (k === "color" ? "violet" : ""))) &&
-    same(fields.art, it.art || fields.art)
-  );
-}
+// (Nothing but the reminders changed: onlyRemindersChanged, in edits.js)
 
 $("delete").addEventListener("click", async () => {
   if (!editing || !editing.item) return;
