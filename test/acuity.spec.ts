@@ -33,7 +33,7 @@ describe("Agent's Acuity tools (ACUITY_SOURCE=api)", () => {
 
   beforeEach(() => {
     process.env.NOVA_DATA_DIR = mkdtempSync(join(tmpdir(), "nova-acuity-"));
-    delete process.env.ACUITY_SOURCE;
+    process.env.ACUITY_SOURCE = "api"; // (not just deleted: a real .env may set it)
     vi.resetModules();
     seen = [];
     browser.listTask.mockReset().mockRejectedValue(new Error("the browser must not open"));
@@ -58,7 +58,7 @@ describe("Agent's Acuity tools (ACUITY_SOURCE=api)", () => {
     vi.doUnmock("../src/tasks");
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
-    delete process.env.ACUITY_SOURCE;
+    process.env.ACUITY_SOURCE = "api"; // (not just deleted: a real .env may set it)
   });
 
   const tool = async (name: string, actions: any[] = []) => {
@@ -161,7 +161,7 @@ const music = (nova: Awaited<ReturnType<typeof boot>>) => nova.calendar.readCale
 describe("Bookings as busy time for Quests", () => {
   afterEach(() => {
     shutdown();
-    delete process.env.ACUITY_SOURCE;
+    process.env.ACUITY_SOURCE = "api"; // (not just deleted: a real .env may set it)
   });
 
   it("bookings and Acuity's blocked times are taken time; cancelled bookings aren't", async () => {
@@ -235,7 +235,7 @@ describe("Music time", () => {
 describe("The bookings-changed signal", () => {
   afterEach(() => {
     shutdown();
-    delete process.env.ACUITY_SOURCE;
+    process.env.ACUITY_SOURCE = "api"; // (not just deleted: a real .env may set it)
   });
 
   it("a newer bookingsChanged refreshes the bookings and re-plans, with one calm music notice", async () => {
