@@ -72,7 +72,7 @@ html.embed .embed-head > .top { position: relative; top: auto; }
   html.embed .embed-head > .tabs > #tab-more { display: none; }
   html.embed .embed-head > .tabs > .tab svg, html.embed .embed-head > .tabs > .tab img { width: 18px; height: 18px; }
   html.embed .embed-head > .tabs > .tab > span:not(.badge) { font-size: 12.5px; }
-  html.embed .embed-head > .tabs > .tab.active { border-color: var(--hi); }
+  html.embed .embed-head > .tabs > .tab.active { border-color: var(--hi); background: radial-gradient(120% 140% at 50% 0%, rgba(var(--hi-rgb), 0.26), rgba(var(--accent-2-rgb), 0.1) 65%, transparent 100%); } /* the same soft pill as Portal's tab bar on a computer */
   html.embed .embed-head > .tabs > .tab.active::after { display: none; }
   html.embed .embed-head > .tabs .badge { position: static; margin-left: -2px; }
 }
