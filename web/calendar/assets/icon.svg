@@ -41,4 +41,6 @@
     <g transform="translate(372 290) scale(.62)"><circle r="12" fill="#C7A4FF" opacity=".8" filter="url(#soft)"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z"/></g>
     <g transform="translate(320 344) scale(.45)"><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" fill="#FFD1EA"/></g>
   </g>
+  <!-- The Nova mark: the same small sparkle, in the same corner, on every Nova app's icon -->
+  <g transform="translate(436 436)"><circle r="44" fill="#0A0614" opacity=".6"/><circle r="32" fill="#FF5FA8" opacity=".22"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" transform="scale(1.75)" fill="#FFF7EC"/></g>
 </svg>

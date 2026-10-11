@@ -3,4 +3,6 @@
   <path d="M20.19 6.26A10 10 0 0 1 6.26 20.19M3.81 17.74A10 10 0 0 1 17.74 3.81" stroke="#FFD1EA" stroke-width=".7" stroke-dasharray=".4 1.1"/>
   <path d="M3.9 20.1 11.3 7.5M12.5 8.3 13.5 16M14.7 16.5 20.1 3.9" stroke="#FF5FA8" stroke-width=".9"/>
   <g fill="#fff"><circle cx="3.9" cy="20.1" r="1"/><circle cx="11.3" cy="7.5" r=".9"/><circle cx="13.5" cy="16" r=".9"/><circle cx="20.1" cy="3.9" r="1.1"/></g>
+  <!-- The Nova mark: the same small sparkle, in the same corner, on every Nova app's icon -->
+  <g transform="translate(20.4 20.4)"><circle r="2.1" fill="#0A0614" opacity=".6"/><circle r="1.5" fill="#FF5FA8" opacity=".22"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" transform="scale(.082)" fill="#FFF7EC"/></g>
 </svg>

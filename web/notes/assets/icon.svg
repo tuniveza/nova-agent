@@ -40,4 +40,6 @@
     <path d="M0-20 3.4-3.4 20 0 3.4 3.4 0 20-3.4 3.4-20 0-3.4-3.4z" fill="#fff"/>
   </g>
   <g transform="translate(118 132) scale(.55)"><path d="M0-20 3.4-3.4 20 0 3.4 3.4 0 20-3.4 3.4-20 0-3.4-3.4z" fill="#FFD1EA" opacity=".9"/></g>
+  <!-- The Nova mark: the same small sparkle, in the same corner, on every Nova app's icon -->
+  <g transform="translate(436 436)"><circle r="44" fill="#0A0614" opacity=".6"/><circle r="32" fill="#FF5FA8" opacity=".22"/><path d="M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z" transform="scale(1.75)" fill="#FFF7EC"/></g>
 </svg>
