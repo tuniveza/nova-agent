@@ -133,7 +133,7 @@
   .suite-groups .suite-app.open::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
     box-shadow: 0 0 22px -4px var(--hi), inset 0 0 14px -6px var(--hi); opacity: .35; animation: tile-breathe 3.6s ease-in-out infinite; }
   @keyframes tile-breathe { 50% { opacity: 1; } }
-  .viewer iframe { animation: frame-in .45s cubic-bezier(.2,.8,.2,1) backwards; }
+  .viewer iframe { animation: frame-in .3s cubic-bezier(.2,.8,.2,1) backwards; }
   @keyframes frame-in { from { opacity: 0; } }
   .brand .mark { transition: transform .6s cubic-bezier(.2,.8,.2,1); }
   .brand:hover .mark { transform: rotate(-8deg) scale(1.05); }
@@ -196,7 +196,7 @@
   #view-today > .now-card .now-title { font-size: 16px; }
   #view-today > .subpanel { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
   /* An app opened inside Nova Agent takes the chat's place; the panels stay below it to switch */
-  .viewer { display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 24px; overflow: hidden; animation: quest-in .35s cubic-bezier(.2,.8,.2,1) both; }
+  .viewer { display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 24px; overflow: hidden; animation: quest-in .26s cubic-bezier(.2,.8,.2,1) both; }
   .viewer[hidden] { display: none; }
   .main.viewing > .chat, .main.viewing > .board { display: none; }
   .viewer-bar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
