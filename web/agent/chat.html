@@ -199,8 +199,30 @@
   .viewer { display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 24px; overflow: hidden; animation: quest-in .35s cubic-bezier(.2,.8,.2,1) both; }
   .viewer[hidden] { display: none; }
   .main.viewing > .chat, .main.viewing > .board { display: none; }
-  .viewer-bar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  /* The top of an open app: no separate bar, just its title centred at the top of the app,
+     with Back (←) and Reload tucked into the corners as small round buttons */
+  .viewer-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 10px 12px 6px; }
+  .viewer-bar > .viewer-back { justify-self: start; font-size: 17px; line-height: 1; }
+  /* One surface: the title sits on the app itself (the same dark as the app below it), not on a strip */
+  .viewer { background: var(--void); }
+  .viewer-bar { background: transparent; border: 0; }
+  .viewer-bar > .viewer-tools { justify-self: end; }
   .viewer-name { text-align: center; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 15px; color: #fff; }
+  /* The open panel's name, as a title: its icon, "Nova" soft, the app's name in the theme's
+     gradient with a gentle glow (the side panels' titles below match) */
+  .viewer-name { display: inline-flex; align-items: center; justify-content: center; justify-self: center; gap: 10px; min-width: 0; max-width: 100%; }
+  .viewer-name .vn-ico { flex: none; width: 34px; height: 34px; border-radius: 10px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 8px 22px -10px rgb(var(--hi-rgb)), 0 0 18px -6px rgb(var(--hi-rgb)); }
+  .viewer-name .vn-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-stretch: 125%; font-weight: 900; font-size: clamp(17px, 1.9vw, 22px); line-height: 1.1; letter-spacing: .03em; text-transform: uppercase; }
+  .viewer-name .vn-nova { color: rgba(255, 255, 255, .62); font-weight: 700; letter-spacing: .14em; font-size: .82em; }
+  .viewer-name .vn-app, .sec-title {
+    background: var(--title-grad);
+    background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 10px rgba(var(--hi-rgb), .38));
+    animation: vn-shimmer 12s linear infinite;
+  }
+  @keyframes vn-shimmer { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+  @media (prefers-reduced-motion: reduce) { .viewer-name .vn-app, .sec-title { animation: none; } }
   .viewer-tools { display: flex; gap: 6px; }
   .viewer-tools a.icon-btn { display: grid; place-items: center; text-decoration: none; color: var(--muted); font-size: 15px; }
   .viewer iframe { width: 100%; height: 100%; border: 0; background: var(--void); }
@@ -209,7 +231,7 @@
      has its own height. */
   @media (min-width: 981px) and (min-height: 481px) {
     .main.viewing { gap: 10px; }
-    .main.viewing .viewer-bar { padding: 5px 8px; }
+    .main.viewing .viewer-bar { padding: 8px 10px 4px; }
     .main.viewing .viewer-bar .icon-btn { width: 32px; height: 32px; }
     /* The panels strip: the same bar, the same groups and tiles, just smaller */
     .main.viewing > .suite-home .suite-body { padding: 5px 12px 6px; }
@@ -229,10 +251,12 @@
     .main.viewing { display: block; height: 100%; overflow: hidden; }
     .main.viewing > :not(.viewer) { display: none; }
     .main.viewing > .viewer { height: 100%; border-radius: 0; border: 0; background: var(--void); backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; }
-    .main.viewing .viewer-bar { min-height: 42px; padding: 3px 8px; }
+    .main.viewing .viewer-bar { min-height: 46px; padding: 4px 8px 2px; }
     .main.viewing .viewer-bar .icon-btn { width: 34px; height: 34px; }
     .viewer-name { cursor: pointer; }
-    .viewer-name::after { content: " ▾"; font-size: 11px; color: var(--muted); }
+    .viewer-name .vn-ico { width: 28px; height: 28px; border-radius: 9px; }
+    .viewer-name .vn-text { font-size: 16px; }
+    .viewer-name::after { content: "▾"; font-size: 11px; color: var(--muted); }
     body:has(.main.viewing) .nebula { animation: none; }
     /* The Manual's floating button would sit on the panel's own tab bar */
     body:has(.main.viewing) nova-manual[floating] { display: none; }
@@ -262,6 +286,7 @@
   .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--line); }
   /* Each section's title: Chat, Missions, Quests, Panels */
   .sec-title { margin: 0; display: inline-flex; align-items: center; gap: 9px; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; color: #fff; white-space: nowrap; }
+  .sec-title > .pico { box-shadow: 0 0 14px -4px rgba(var(--hi-rgb), .7); }
   .sec-title > span { color: var(--hi); text-shadow: 0 0 10px var(--hi); }
   .sec-title.gold > span { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
   .sec-title > .pico.sec-ico { width: 24px; height: 24px; border-radius: 8px; color: #fff; text-shadow: none; }
@@ -796,7 +821,7 @@
     <!-- A panel, opened inside Nova Agent (panels have no pages of their own: this is where they open) -->
     <section class="viewer glass" id="viewer" hidden aria-label="App">
       <div class="viewer-bar">
-        <button type="button" class="mini" id="viewer-close" data-sfx="close" title="Back to Nova Agent">← Nova Agent</button>
+        <button type="button" class="icon-btn viewer-back" id="viewer-close" data-sfx="close" title="Back to Nova Agent" aria-label="Back to Nova Agent">←</button>
         <span class="viewer-name" id="viewer-name" role="button" tabindex="0" title="Switch panel"></span>
         <span class="viewer-tools">
           <button type="button" class="icon-btn" id="viewer-reload" title="Reload" aria-label="Reload"><svg class="ico"><use href="#i-replan"/></svg></button>
@@ -2384,8 +2409,42 @@
   musicState();
 
   // ---- Opening the panels: always inside Nova Agent (they have no pages of their own) ----
+  // The panel's title: its icon (from its tile in the Panels window), then "Nova" and its name.
+  // Its text stays exactly the name ("Nova Notes"): other code reads it.
+  function setViewerName(name) {
+    const box = $('viewer-name');
+    const tile = [...document.querySelectorAll('.suite-app')].find((a) => shortName(a.querySelector('b').textContent) === shortName(name));
+    const ico = tile && tile.querySelector('.pico');
+    const parts = [];
+    if (ico) {
+      const copy = ico.cloneNode(true);
+      copy.classList.add('vn-ico');
+      parts.push(copy);
+    }
+    const text = document.createElement('span');
+    text.className = 'vn-text';
+    const m = /^Nova\s+(.+)$/.exec(name);
+    if (m) {
+      const nova = document.createElement('span');
+      nova.className = 'vn-nova';
+      nova.textContent = 'Nova';
+      const app = document.createElement('span');
+      app.className = 'vn-app';
+      app.textContent = m[1];
+      text.append(nova, document.createTextNode(' '), app);
+    } else {
+      const app = document.createElement('span');
+      app.className = 'vn-app';
+      app.textContent = name;
+      text.append(app);
+    }
+    parts.push(text);
+    box.replaceChildren(...parts);
+    box.setAttribute('aria-label', name + ' (switch panel)');
+  }
+
   function openInside(href, name) {
-    $('viewer-name').textContent = name;
+    setViewerName(name);
     $('viewer-frame').src = href;
     $('viewer').hidden = false;
     $('main').classList.add('viewing');

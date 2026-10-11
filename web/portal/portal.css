@@ -742,6 +742,24 @@ html.embed .pv .admin-frame { min-height: calc(100dvh - 120px); }
   .tabs::before, .tabs::after { transition: none; }
 }
 
+/* Every tab on screen: when they don't fit on one row they wrap onto a second, centred row
+   (nothing hides past the edge, so there's nothing to scroll and no fades) */
+@media (min-width: 761px) {
+  .tabs,
+  html.embed .tabs { flex-wrap: wrap; justify-content: center; row-gap: 4px; column-gap: 2px; overflow: visible; }
+  .tabs::before, .tabs::after { display: none; }
+  .tabs > .tab-group,
+  html.embed .tabs > .tab-group { margin-left: 6px; }
+}
+/* Medium windows: a little tighter, so two rows are usually enough */
+@media (min-width: 761px) and (max-width: 1180px) {
+  .tabs > .tab,
+  html.embed .tabs > .tab { padding: 0 11px; gap: 7px; min-height: 38px; }
+  .tabs > .tab > span:not(.badge) { font-size: 13px; }
+  .tabs > .tab-group,
+  html.embed .tabs > .tab-group { padding-left: 9px; }
+}
+
 /* ===================== The phone's bar: the same family ===================== */
 @media (max-width: 760px) {
   /* Short names on the bar along the bottom (the More list keeps "Nova Calendar"); the row of

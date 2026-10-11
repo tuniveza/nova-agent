@@ -711,3 +711,7 @@ body { height: 100%; height: 100dvh; min-height: 0; overscroll-behavior: none; }
 @media print {
   .page { height: auto; max-height: none; overflow: visible; }
 }
+
+/* Inside Nova Agent the app's title sits centred at the top of the panel (Nova Agent draws it),
+   so Notes' own title on the left steps aside: one title, never two */
+html.embed .topbar .brand { display: none; }
