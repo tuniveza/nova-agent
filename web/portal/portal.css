@@ -678,5 +678,5 @@ html.embed .pv .admin-frame { min-height: calc(100dvh - 120px); }
 }
 
 /* The groups row (tabbar.js) only shows with the tab bar on top (tabbar.css); elsewhere it's away */
-.tabs > .tg-row,
-.tabs > .tg-break { display: none; }
+.tabs > .tg-br,
+.tabs > .tg-div { display: none; }
