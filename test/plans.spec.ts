@@ -12,9 +12,9 @@ beforeAll(async () => {
 const card = (id: string, extra: Record<string, unknown> = {}) => ({ id, title: id, start: "2026-10-12T14:00", end: "2026-10-12T15:00", reminders: [15], ...extra });
 
 describe("where a quest came from", () => {
-  it("names its mission, where it was made, or Agent", () => {
-    expect(P.sources({ from: "" }, "")).toEqual([{ kind: "agent", label: "Agent" }]);
-    expect(P.sources({ from: "Notes · Studio plan" }, "")).toEqual([{ kind: "notes", label: "Notes · Studio plan" }]);
+  it("names its mission, where it was made, or Nova Agent", () => {
+    expect(P.sources({ from: "" }, "")).toEqual([{ kind: "agent", label: "Nova Agent" }]);
+    expect(P.sources({ from: "Notes · Studio plan" }, "")).toEqual([{ kind: "notes", label: "Nova Notes · Studio plan" }]);
     expect(P.sources({ from: "" }, "Release the EP")).toEqual([{ kind: "mission", label: "Release the EP" }]);
     expect(P.sources({ from: "Notes · Plan" }, "Release the EP").map((s: any) => s.kind)).toEqual(["mission", "notes"]);
   });

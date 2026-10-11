@@ -34,9 +34,9 @@
     if (!outline) return null;
     box = document.createElement('section');
     box.className = 'tasks';
-    box.setAttribute('aria-label', 'Quests');
+    box.setAttribute('aria-label', 'Nova Quests');
     box.innerHTML = `
-      <h2 class="lib-title tasks-h">Quests <b class="tasks-count"></b></h2>
+      <h2 class="lib-title tasks-h">Nova Quests <b class="tasks-count"></b></h2>
       <div class="tasks-tools">
         <button type="button" class="tasks-new" data-sfx="open">+ New quest</button>
         <input class="tasks-find" type="search" placeholder="Find a quest" aria-label="Find a quest">
@@ -137,9 +137,9 @@
         <button type="button" class="task-go" title="Go to this quest"></button>
         <div class="task-row">
           <button type="button" class="task-st qm-chip qm-${mode}" aria-haspopup="menu" title="How it's going (tap to change)">${nameOf(mode)}</button>
-          <button type="button" class="task-chat" title="Talk about this quest with Agent" aria-label="Talk about this quest with Agent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V15h.5A2.5 2.5 0 0 1 5 12.5z"/></svg>Agent</button>
+          <button type="button" class="task-chat" title="Talk about this quest with Nova Agent" aria-label="Talk about this quest with Nova Agent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V15h.5A2.5 2.5 0 0 1 5 12.5z"/></svg>Agent</button>
           <button type="button" class="task-phones" title="Which phones get its reminders" aria-label="Which phones get its reminders"${linked ? '' : ' hidden'}>📱</button>
-          <button type="button" class="task-off" title="Take it off Quests (the text stays in the note)" aria-label="Take it off Quests">✕</button>
+          <button type="button" class="task-off" title="Take it off Nova Quests (the text stays in the note)" aria-label="Take it off Nova Quests">✕</button>
         </div>
         <small class="task-link">${linked ? '✦ In Nova Quests' : '◌ On its way to Nova Quests'}</small>`;
       li.querySelector('.task-go').textContent = h.textContent.trim() || 'Untitled quest';

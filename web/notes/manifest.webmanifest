@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Notes",
-  "short_name": "Notes",
+  "name": "Nova Notes",
+  "short_name": "Nova Notes",
   "description": "A cosmic note editor from Nova Agent by Novacane Studios. Write, import, export and send to Google Docs.",
   "start_url": "./",
   "scope": "./",

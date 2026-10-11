@@ -179,7 +179,7 @@
   }
   async function restore(data) {
     const list = Array.isArray(data) ? data : Array.isArray(data && data.notes) ? data.notes : null;
-    if (!list) throw new Error("That file isn't a Notes backup.");
+    if (!list) throw new Error("That file isn't a Nova Notes backup.");
     let count = 0;
     for (const n of list) {
       if (n && typeof n === 'object' && typeof n.html === 'string') {

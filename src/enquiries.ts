@@ -85,7 +85,7 @@ export function threadText(t: { enquiry: any; messages: any[] }): string {
     e.details,
   ];
   for (const m of t.messages) {
-    const who = m.direction === "note" ? `Note by ${m.author_name || (m.created_by === "customer" ? "the system" : "staff")}` : m.created_by === "agent" ? "Reply drafted by Agent" : `Reply by ${m.author_name || "staff"}`;
+    const who = m.direction === "note" ? `Note by ${m.author_name || (m.created_by === "customer" ? "the system" : "staff")}` : m.created_by === "agent" ? "Reply drafted by Nova Agent" : `Reply by ${m.author_name || "staff"}`;
     lines.push("", `${who}, ${uk(m.created_at)}${m.direction === "out" ? ` [${m.status === "approved" ? "sending" : m.status}]` : ""}:`, m.body);
   }
   return lines.filter((l, i) => l !== "" || i > 0).join("\n");

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Observatory</title>
-<meta name="description" content="Observatory: every project in one sky. Where each one lives, what it's for, how big it is, and what it looks like.">
+<title>Nova Observatory</title>
+<meta name="description" content="Nova Observatory: every project in one sky. Where each one lives, what it's for, how big it is, and what it looks like.">
 <meta name="theme-color" content="#05030F">
 <link rel="icon" href="assets/sigil.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/observatory.css">
 <!-- Every button's look, last so it decides it (buttons.css; data-btn="soft": a plain .btn here is a quiet one) -->
 <link rel="stylesheet" href="/shared/buttons.css">
+<link rel="stylesheet" href="/shared/scrollbars.css"><!-- Scrollbars: easy to grab, in the theme's colours -->
 <script src="/shared/spectrum.js"></script>
 <script src="/shared/look.js"></script>
 </head>
@@ -25,7 +26,7 @@
 <div class="app">
   <header class="hero">
     <div class="hero-top">
-      <a class="brand" href="./" aria-label="Observatory home">
+      <a class="brand" href="./" aria-label="Nova Observatory home">
         <svg class="sigil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true">
           <path d="M20.19 6.26A10 10 0 0 1 6.26 20.19" stroke-width=".55" stroke-dasharray=".35 1.1"/>
           <path d="M3.81 17.74A10 10 0 0 1 17.74 3.81" stroke-width=".55" stroke-dasharray=".35 1.1"/>
@@ -37,7 +38,7 @@
         </svg>
         <span class="brand-text">
           <span class="kicker">Nova Agent · Novacane</span>
-          <span class="wordmark">Observatory</span>
+          <span class="wordmark">Nova Observatory</span>
         </span>
       </a>
       <div class="themes" id="themes" role="radiogroup" aria-label="Colour theme"></div>

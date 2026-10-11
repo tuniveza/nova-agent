@@ -13,7 +13,7 @@
   if (window.NovaInstall) return;
   const APPS = {
     agent: { name: "Nova Agent", icon: "/agent/icon-192.png?v=2", install: "/agent/?install=1", scope: "/agent/" },
-    portal: { name: "Portal", icon: "/portal/icon-192.png", install: "/portal/?app=1&install=1", scope: "/portal/" },
+    portal: { name: "Nova Portal", icon: "/portal/icon-192.png", install: "/portal/?app=1&install=1", scope: "/portal/" },
   };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -185,7 +185,7 @@
     if (view.mode === "list") {
       html += `<p class="ni-device">This is: <b>${esc(deviceLine)}</b></p>` + card(here) + card(here === "agent" ? "portal" : "agent") +
         `<button type="button" class="ni-btn wide help" data-ni="help:${here}">Something not working? Get help</button>` +
-        `<p class="ni-note">Both apps work on their own: Portal is also inside Nova Agent.</p>`;
+        `<p class="ni-note">Both apps work on their own: Nova Portal is also inside Nova Agent.</p>`;
     } else if (view.mode === "help") {
       html += `<p class="ni-device">This is: <b>${esc(deviceLine)}</b></p><p>What's happening?</p><div class="ni-problems">${PROBLEMS.map(([k, t]) => `<button type="button" class="ni-btn wide" data-ni="fix:${view.app}:${k}">${esc(t)}</button>`).join("")}</div>
         <div class="ni-which">For: ${Object.keys(APPS).map((id) => `<button type="button" class="ni-chip${id === view.app ? " on" : ""}" data-ni="help:${id}">${esc(APPS[id].name)}</button>`).join("")}</div>

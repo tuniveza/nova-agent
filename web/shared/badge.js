@@ -304,22 +304,22 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       else this.style.removeProperty("--planet-glow");
       let chip;
       if (d && d.loading) {
-        chip = `<button class="chip" type="button" aria-label="Portal" disabled><span class="orb"><span class="ghost"></span></span></button>`;
+        chip = `<button class="chip" type="button" aria-label="Nova Portal" disabled><span class="orb"><span class="ghost"></span></span></button>`;
       } else if (s) {
         const role = s.role;
-        chip = `<button class="chip" part="chip" type="button" aria-haspopup="dialog" aria-expanded="false" title="${esc(s.display_name)} · Portal">
+        chip = `<button class="chip" part="chip" type="button" aria-haspopup="dialog" aria-expanded="false" title="${esc(s.display_name)} · Nova Portal">
           <span class="orb"><img alt="" src="${planetSrc(s, 64, false)}" width="30" height="30"></span>
           <span class="words" part="words"><span class="name">${esc(first(s.display_name))}</span>${role ? `<span class="role ${role}">${role === "admin" ? "Admin" : "Staff"}</span>` : `<span class="role">Nova Agent</span>`}</span>
         </button>`;
       } else {
-        chip = `<button class="chip signin" part="chip" type="button" title="Sign in with Portal">
+        chip = `<button class="chip signin" part="chip" type="button" title="Sign in with Nova Portal">
           <span class="orb"><span class="ghost"></span><span class="spark"></span></span>
-          <span class="words" part="words"><span class="name">Sign in</span><span class="role">Portal</span></span>
+          <span class="words" part="words"><span class="name">Sign in</span><span class="role">Nova Portal</span></span>
         </button>`;
       }
       // The card opens in the browser's top layer (a popover), so a header with a blur or
       // clipping (like Nova Agent's glass bar) can't trap or cut it off
-      this.root.innerHTML = `${chip}<div class="card" role="dialog" aria-label="Portal" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
+      this.root.innerHTML = `${chip}<div class="card" role="dialog" aria-label="Nova Portal" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
       const btn = this.root.querySelector(".chip");
       // Signed out, the planet is a door to Portal: Portal is the one sign-in for everything
       const toPortal = !s && !(d && (d.loading || d.offline)) && mode !== "connect";
@@ -339,12 +339,12 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
         const profile = portalUrl + (mode === "connect" ? "?id=" + encodeURIComponent(s.id) : "?view=me");
         const links = [
           `<a class="main" data-open="/portal/?view=me" href="${profile}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.profile}<span>Your profile</span></a>`,
-          `<a data-open="/app/memory/" href="${index}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.index}<span>Your Index</span></a>`,
+          `<a data-open="/app/memory/" href="${index}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.index}<span>Your Nova Index</span></a>`,
           `<button type="button" class="quiet" data-act="out">${ICON.out}<span>${mode === "connect" ? "Disconnect" : mode === "agent" ? "Sign out" : "Sign out everywhere"}</span></button>`,
         ].join("");
         body = `
           <div class="big"><img alt="${esc(s.display_name)}'s planet" src="${planetSrc(s, 224, !still())}" width="112" height="112"></div>
-          <div class="kicker">Signed in with Portal</div>
+          <div class="kicker">Signed in with Nova Portal</div>
           <h3>${esc(s.display_name)}</h3>
           <div class="pills"><span class="pill role-${s.role}">${role}</span>${s.created_at ? `<span class="pill">Since ${esc(since(s.created_at))}</span>` : ""}</div>
           ${s.planet && s.planet.name ? `<p class="world">✦ ${esc(s.planet.name)}</p>` : ""}
@@ -356,16 +356,16 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
         const go = mode === "portal" ? `${portalUrl}?next=${encodeURIComponent(location.pathname + location.search)}` : mode === "agent" ? portalUrl : `${portalUrl}?connect=${back}`;
         body = `
           <div class="big"><span class="orb wide"><span class="ghost"></span><span class="spark"></span></span></div>
-          <div class="kicker">Portal</div>
-          <h3>${d.offline ? "Can't reach Portal" : "Who's here?"}</h3>
+          <div class="kicker">Nova Portal</div>
+          <h3>${d.offline ? "Can't reach Nova Portal" : "Who's here?"}</h3>
           <p class="note">${
             d.offline
               ? "Check the connection; it'll try again when you come back to this page."
               : mode === "connect"
-                ? "Connect this app to Portal to show your name, role and planet here. It can't see or change anything else."
-                : "Sign in once with Portal and every Nova app knows who you are."
+                ? "Connect this app to Nova Portal to show your name, role and planet here. It can't see or change anything else."
+                : "Sign in once with Nova Portal and every Nova app knows who you are."
           }</p>
-          <div class="links"><a class="main" data-open="/portal/" href="${go}">${ICON.profile}<span>${mode === "connect" ? "Connect with Portal" : "Sign in"}</span></a></div>
+          <div class="links"><a class="main" data-open="/portal/" href="${go}">${ICON.profile}<span>${mode === "connect" ? "Connect with Nova Portal" : "Sign in"}</span></a></div>
           <p class="foot">One sign-in for every Nova app</p>`;
       }
       card.innerHTML = `<div class="stars">${stars()}</div>${body}`;

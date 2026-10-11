@@ -1,7 +1,7 @@
 {
-  "name": "Portal",
-  "short_name": "Portal",
-  "description": "Portal for Novacane Studios (enquiries, chats, bookings, Quests and alerts), part of Nova Agent.",
+  "name": "Nova Portal",
+  "short_name": "Nova Portal",
+  "description": "Nova Portal for Novacane Studios (enquiries, chats, bookings, Quests and alerts), part of Nova Agent.",
   "start_url": "/app/",
   "scope": "/app/",
   "display": "standalone",

@@ -22,11 +22,11 @@ const WORKER = "https://novacane-worker.novacane-studio.workers.dev";
 const PC = "http://localhost:4545";
 const APPS = [
   { id: "agent", name: "Nova Agent", readme: "README.md", paths: ["src", "web/agent", "test", "scripts", "package.json"], colour: "#FF5FA8", glyph: "✦", where: "On the studio computer, and online for phones", links: [["Open Nova Agent", `${PC}/`]] },
-  { id: "portal", name: "Portal", readme: "docs/apps/portal/README.md", paths: ["web/portal", "docs/apps/portal"], joined: "as web/portal", colour: "#9DB4FF", glyph: "◉", where: "A Nova Agent panel; online on the staff phones", links: [["Open Portal", `${PC}/portal/`], ["Online", `${WORKER}/portal/`]] },
-  { id: "calendar", name: "Calendar", readme: "docs/apps/calendar/README.md", paths: ["web/calendar", "docs/apps/calendar"], joined: "as web/calendar", colour: "#F2D9A0", glyph: "◷", where: "A Nova Agent panel", links: [["Open Calendar", `${PC}/calendar/`]] },
-  { id: "notes", name: "Notes", readme: "docs/apps/notes/README.md", paths: ["web/notes", "docs/apps/notes"], joined: "as web/notes", colour: "#FF8CC6", glyph: "✎", where: "A Nova Agent panel", links: [["Open Notes", `${PC}/notes/`]] },
-  { id: "index", name: "Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel; online too", links: [["Open Index", `${PC}/app/memory/`]] },
-  { id: "observatory", name: "Observatory", readme: "docs/apps/observatory/README.md", paths: ["web/observatory", "docs/apps/observatory", "scripts/observatory"], joined: "as web/observatory", colour: "#FFB86B", glyph: "✧", where: "A Nova Agent panel", links: [["Open Observatory", `${PC}/observatory/`]] },
+  { id: "portal", name: "Nova Portal", readme: "docs/apps/portal/README.md", paths: ["web/portal", "docs/apps/portal"], joined: "as web/portal", colour: "#9DB4FF", glyph: "◉", where: "A Nova Agent panel; online on the staff phones", links: [["Open Nova Portal", `${PC}/portal/`], ["Online", `${WORKER}/portal/`]] },
+  { id: "calendar", name: "Nova Calendar", readme: "docs/apps/calendar/README.md", paths: ["web/calendar", "docs/apps/calendar"], joined: "as web/calendar", colour: "#F2D9A0", glyph: "◷", where: "A Nova Agent panel", links: [["Open Nova Calendar", `${PC}/calendar/`]] },
+  { id: "notes", name: "Nova Notes", readme: "docs/apps/notes/README.md", paths: ["web/notes", "docs/apps/notes"], joined: "as web/notes", colour: "#FF8CC6", glyph: "✎", where: "A Nova Agent panel", links: [["Open Nova Notes", `${PC}/notes/`]] },
+  { id: "index", name: "Nova Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel; online too", links: [["Open Nova Index", `${PC}/app/memory/`]] },
+  { id: "observatory", name: "Nova Observatory", readme: "docs/apps/observatory/README.md", paths: ["web/observatory", "docs/apps/observatory", "scripts/observatory"], joined: "as web/observatory", colour: "#FFB86B", glyph: "✧", where: "A Nova Agent panel", links: [["Open Nova Observatory", `${PC}/observatory/`]] },
   { id: "bot", name: "Nova Bot", repo: "nb/novacane-worker", colour: "#5CE1FF", glyph: "◎", where: "On the website and Cloudflare: Nova Agent's back end", links: [["Admin pages", `${WORKER}/admin`]] },
 ];
 
@@ -39,6 +39,13 @@ const BUILT = /^(how (it|the \w+) works?|run it|the build step|configuration|tes
 const OLD_NAME = new RegExp("\\b(?:Nova )?" + ["H", "ub"].join("") + "\\b", "g");
 const OLD_WORD = new RegExp("\\b" + ["h", "ub"].join("") + "\\b", "g");
 const portalName = (text) => String(text).replace(OLD_NAME, "Portal").replace(OLD_WORD, "portal").replace(/\bPortal (?:is part of|takes in|merged into) Portal\b/g, "One Portal");
+
+// Every app's name starts with "Nova" (Nova Portal, Nova Calendar, Nova Notes…): the READMEs' words
+// say so in the manual too. Only the words are changed, never tags, code or addresses, and a name
+// that already has its "Nova" (or is part of a longer word, like User-Agent) is left alone.
+const NOVA_APPS = /(?<![\w-]|Nova |Novacane )(Portal|Calendar|Notes|Index|Quests|Missions|Lossless|Visualizer|Observatory|Manual|Agent)\b(?![-\/.]\w)/g;
+const novaWords = (text) => String(text).replace(NOVA_APPS, "Nova $1");
+const novaNames = (html) => String(html).split(/(<code>[\s\S]*?<\/code>|<pre[\s\S]*?<\/pre>|<[^>]+>)/).map((part, i) => (i % 2 ? part : novaWords(part))).join("");
 
 const MAX_COMMITS = 120;
 const RECENT_DAYS = 7;
@@ -240,7 +247,7 @@ function history(repo, paths = [], joined = "") {
 
 function chapter(s, i) {
   const html = toHtml(s.md);
-  return { id: `${slug(s.title)}-${i}`, title: s.title, html, text: plain(html).slice(0, 4000) };
+  return { id: `${slug(s.title)}-${i}`, title: novaWords(s.title), html: novaNames(html), text: novaWords(plain(html).slice(0, 4000)) };
 }
 
 function build() {
@@ -266,8 +273,8 @@ function build() {
       links: app.links,
       repo: app.repo || "na",
       shared: "",
-      tagline: doc.tagline,
-      intro: doc.intro,
+      tagline: novaWords(doc.tagline),
+      intro: novaNames(doc.intro),
       guide: rest.filter((s) => !BUILT.test(s.title)).map(chapter),
       built: rest.filter((s) => BUILT.test(s.title)).map(chapter),
       news: news.map(chapter),

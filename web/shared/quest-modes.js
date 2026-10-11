@@ -98,7 +98,7 @@
         `<button type="button" role="menuitemcheckbox" class="qm-soon" data-phone="" aria-checked="${!picked.length}">Owner's phones</button>` +
         (phones.length
           ? phones.map((p) => `<button type="button" role="menuitemcheckbox" class="qm-nearly" data-phone="${esc(p.id)}" aria-checked="${picked.includes(p.id)}">${esc(p.name)}${p.who ? ` · ${esc(p.who)}` : ''}</button>`).join('')
-          : '<p class="qm-note">No phones have notifications on yet (Portal → Alerts → turn them on).</p>') +
+          : '<p class="qm-note">No phones have notifications on yet (Nova Portal → Alerts → turn them on).</p>') +
         '<button type="button" class="qm-done qm-ok" data-ok="1">Done</button>';
     };
     draw();

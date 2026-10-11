@@ -60,7 +60,7 @@ export async function signIn(body: Record<string, unknown>): Promise<{ status: n
   try {
     res = await worker("/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, client: "app" }) });
   } catch (err) {
-    return { status: 502, data: { error: "Can't reach Portal just now. Check the connection and try again." } };
+    return { status: 502, data: { error: "Can't reach Nova Portal just now. Check the connection and try again." } };
   }
   const data = (await res.json().catch(() => ({}))) as { ok?: boolean; token?: string; staff?: Session["staff"] };
   if (res.ok && data.token && data.staff) {
@@ -82,7 +82,7 @@ export async function signOut(): Promise<void> {
 // Pass a request on to Nova Bot as the signed-in person. Without a session: 401, like Nova Bot.
 export async function passOn(req: Request): Promise<Response> {
   const s = session();
-  if (!s) return Response.json({ error: "Sign in first (the Portal)", signedIn: false }, { status: 401 });
+  if (!s) return Response.json({ error: "Sign in first (Nova Portal)", signedIn: false }, { status: 401 });
   const url = new URL(req.url);
   const headers: Record<string, string> = { Authorization: `Bearer ${s.token}` };
   const type = req.headers.get("content-type");

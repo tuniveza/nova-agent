@@ -1216,7 +1216,7 @@ function openExisting(type, id, date) {
   setKind(editing.kind);
   if (ro) {
     form.querySelectorAll("input, select, textarea, .chips button, .colors button, .wd button").forEach((el) => (el.disabled = true));
-    $("readonly").textContent = "Part of Nova Agent's plan. Change it in Quests, or ask Agent.";
+    $("readonly").textContent = "Part of Nova Agent's plan. Change it in Nova Quests, or ask Nova Agent.";
     $("readonly").hidden = false;
     $("save").hidden = true;
     $("actions").hidden = true;
@@ -1240,7 +1240,7 @@ function openBooking(id) {
   setKind("event");
   $("sheet-title").textContent = "Studio booking";
   form.querySelectorAll("input, select, textarea, .chips button, .colors button, .wd button").forEach((el) => (el.disabled = true));
-  $("readonly").textContent = "A booking from the studio's diary. Change it in Acuity (or Portal → Calendar).";
+  $("readonly").textContent = "A booking from the studio's diary. Change it in Acuity (or Nova Portal → Nova Calendar).";
   $("readonly").hidden = false;
   $("save").hidden = true;
   $("actions").hidden = true;
@@ -1383,11 +1383,11 @@ $("import-file").addEventListener("change", async () => {
   try {
     parsed = JSON.parse(await file.text());
   } catch {
-    return toast("That file isn't a Calendar backup.");
+    return toast("That file isn't a Nova Calendar backup.");
   }
   const notes = Array.isArray(parsed && parsed.notes) ? parsed.notes : Array.isArray(parsed && parsed.items) ? parsed.items.filter((x) => x && x.kind !== "day") : [];
   const days = Array.isArray(parsed && parsed.days) ? parsed.days : Array.isArray(parsed && parsed.items) ? parsed.items.filter((x) => x && x.kind === "day") : [];
-  if (!notes.length && !days.length) return toast("That file isn't a Calendar backup.");
+  if (!notes.length && !days.length) return toast("That file isn't a Nova Calendar backup.");
   let n = 0;
   let d = 0;
   for (const it of notes) {

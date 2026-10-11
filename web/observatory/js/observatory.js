@@ -485,7 +485,7 @@
   bindSound();
   // Online, the projects are for the studio's staff: Nova Bot sends this instead until you sign in
   if (window.OBSERVATORY_LOCKED) {
-    $('#decks').innerHTML = `<div class="empty-data"><p>The projects are for the studio's staff.</p><p><a href="/portal/?next=${encodeURIComponent(location.pathname)}">Sign in with Portal</a> to see them.</p></div>`;
+    $('#decks').innerHTML = `<div class="empty-data"><p>The projects are for the studio's staff.</p><p><a href="/portal/?next=${encodeURIComponent(location.pathname)}">Sign in with Nova Portal</a> to see them.</p></div>`;
     return;
   }
   if (!D || !Array.isArray(D.projects)) {
@@ -497,6 +497,6 @@
   renderDecks();
   renderStarmap();
   bind();
-  $('#foot').innerHTML = `Observatory · part of Nova Agent · Novacane Studios<br>Scanned ${esc(when(D.generatedAt))} · refresh with <code>npm run build</code> (or <code>npm run scan</code> for numbers only)`;
+  $('#foot').innerHTML = `Nova Observatory · part of Nova Agent · Novacane Studios<br>Scanned ${esc(when(D.generatedAt))} · refresh with <code>npm run build</code> (or <code>npm run scan</code> for numbers only)`;
   if (location.hash.length > 1) openDetail(location.hash.slice(1), false);
 })();

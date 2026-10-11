@@ -78,7 +78,7 @@
     current.updated = new Date().toISOString();
     const ok = await S.notes.put(current);
     setSaveState(ok ? 'saved' : 'error');
-    document.title = `${current.title} · Notes`;
+    document.title = `${current.title} · Nova Notes`;
     renderLibrary();
   }
   document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && saveNow());
@@ -184,7 +184,7 @@
     current = n;
     editor.load(n.html);
     titleInput.value = n.named || n.title !== 'Untitled note' ? n.title : '';
-    document.title = `${n.title} · Notes`;
+    document.title = `${n.title} · Nova Notes`;
     settings.lastId = n.id;
     saveSettings();
     setSaveState('saved');
@@ -801,11 +801,11 @@
       { label: 'Google Docs set-up…', icon: 'drive', run: () => openGdocs(true) }
     ]],
     ['Help', () => [
-      { label: 'Install Notes as an app', icon: 'export', run: installApp },
+      { label: 'Install Nova Notes as an app', icon: 'export', run: installApp },
       { label: 'Keyboard shortcuts', icon: 'keys', kbd: 'Ctrl+/', run: showKeys },
       // Every Nova Agent address, live and testing (admins: in Portal → Admin, the one place for admin things)
       { label: '🔒 All Nova Agent links', icon: 'link', run: openAllLinks },
-      { label: 'About Notes', icon: 'info', run: () => $('dlg-about').showModal() }
+      { label: 'About Nova Notes', icon: 'info', run: () => $('dlg-about').showModal() }
     ]]
   ];
 
@@ -1107,7 +1107,7 @@
       ['Text', [['Bold', 'Ctrl B'], ['Italic', 'Ctrl I'], ['Underline', 'Ctrl U'], ['Strikethrough', 'Alt Shift 5'], ['Superscript', 'Ctrl .'], ['Subscript', 'Ctrl ,'], ['Bigger / smaller', 'Ctrl Shift . / ,'], ['Clear formatting', 'Ctrl \\'], ['Link', 'Ctrl K']]],
       ['Paragraphs', [['Normal text', 'Ctrl Alt 0'], ['Heading 1–3', 'Ctrl Alt 1–3'], ['Left / centre / right', 'Ctrl Shift L / E / R'], ['Justify', 'Ctrl Shift J'], ['Numbered list', 'Ctrl Shift 7'], ['Bulleted list', 'Ctrl Shift 8'], ['Checklist', 'Ctrl Shift 9'], ['Indent / outdent', 'Ctrl ] / ['], ['Page break', 'Ctrl Enter']]],
       ['As you type', [['Heading', '# then space'], ['Bulleted list', '- then space'], ['Numbered list', '1. then space'], ['Checklist', '[] then space'], ['Quote', '> then space'], ['Line across the page', '--- then Enter']]],
-      ['Notes', [['New note', 'Ctrl Alt N'], ['Save now', 'Ctrl S'], ['Import', 'Ctrl O'], ['Print / PDF', 'Ctrl P'], ['Find and replace', 'Ctrl H'], ['Word count', 'Ctrl Shift C'], ['Focus mode', 'Ctrl Shift F'], ['Undo / redo', 'Ctrl Z / Y'], ['These shortcuts', 'Ctrl /']]]
+      ['Nova Notes', [['New note', 'Ctrl Alt N'], ['Save now', 'Ctrl S'], ['Import', 'Ctrl O'], ['Print / PDF', 'Ctrl P'], ['Find and replace', 'Ctrl H'], ['Word count', 'Ctrl Shift C'], ['Focus mode', 'Ctrl Shift F'], ['Undo / redo', 'Ctrl Z / Y'], ['These shortcuts', 'Ctrl /']]]
     ];
     const keys = (s) => s.split(' ').map((k) => (/^[/–]$|then|space|Enter$/.test(k) && k !== 'Enter' ? ` ${k} ` : `<kbd>${k}</kbd>`)).join('');
     $('keys').innerHTML = groups.map(([g, rows]) => `<h3>${g}</h3>${rows.map(([what, k]) => `<div><span>${what}</span><span>${keys(k)}</span></div>`).join('')}`).join('');
@@ -1209,7 +1209,7 @@
   async function backupAll() {
     await saveNow();
     const data = await S.backup();
-    download(`Notes backup ${new Date().toISOString().slice(0, 10)}.json`, 'application/json', JSON.stringify(data, null, 2));
+    download(`Nova Notes backup ${new Date().toISOString().slice(0, 10)}.json`, 'application/json', JSON.stringify(data, null, 2));
     toast(`Backed up ${data.notes.length} note${data.notes.length === 1 ? '' : 's'}`);
   }
   async function printNote() {
@@ -1272,7 +1272,7 @@
         else if (ext === 'docx') html = await docxToHtml(f);
         else if (ext === 'txt' || f.type.startsWith('text/')) html = textToHtml(await f.text());
         else {
-          toast(`Notes can't read ${f.name} (try Word, HTML, Markdown or text)`);
+          toast(`Nova Notes can't read ${f.name} (try Word, HTML, Markdown or text)`);
           continue;
         }
         last = await createNote(html, f.name.replace(/\.[^.]+$/, ''), true, false);
@@ -1470,7 +1470,7 @@
       fn();
     };
     if (!e.shiftKey && !e.altKey) {
-      if (k === 's') return stop(() => saveNow().then(() => toast('Saved ✦ (Notes saves as you go)')));
+      if (k === 's') return stop(() => saveNow().then(() => toast('Saved ✦ (Nova Notes saves as you go)')));
       if (k === 'o') return stop(openImport);
       if (k === 'p') return stop(printNote);
       if (k === 'f' || k === 'h') return stop(openFind);
@@ -1504,7 +1504,7 @@
   window.addEventListener('appinstalled', () => {
     installPrompt = null;
     $('btn-install').hidden = true;
-    toast('Notes is installed ✦ Open it from your apps');
+    toast('Nova Notes is installed ✦ Open it from your apps');
   });
   async function installApp() {
     if (standalone()) return toast('You’re already using the installed app ✦');
@@ -1513,7 +1513,7 @@
       const { outcome } = await installPrompt.userChoice;
       installPrompt = null;
       $('btn-install').hidden = true;
-      if (outcome !== 'accepted') toast('No problem: Help → Install Notes whenever you like');
+      if (outcome !== 'accepted') toast('No problem: Help → Install Nova Notes whenever you like');
       return;
     }
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -1521,8 +1521,8 @@
       ios
         ? 'On iPhone or iPad: tap Share, then “Add to Home Screen”'
         : !NN.google.onHttp()
-          ? 'Open Notes from its web address to install it'
-          : 'Use your browser’s menu: “Install Notes” or “Add to Home screen”'
+          ? 'Open Nova Notes from its web address to install it'
+          : 'Use your browser’s menu: “Install Nova Notes” or “Add to Home screen”'
     );
   }
   $('btn-install').addEventListener('click', installApp);
@@ -1577,14 +1577,14 @@
 
   // ---------- WELCOME NOTE ----------
 
-  const WELCOME = `<p class="title">Welcome to Notes</p>
+  const WELCOME = `<p class="title">Welcome to Nova Notes</p>
 <p class="subtitle">Notes that write from the centre of the universe outwards.</p>
 <h1>Start anywhere</h1>
 <p>Everything you write lines up in the <b>middle of the page</b>, headings and all. Change it whenever you like with the alignment buttons, or <i>Format → Align</i>.</p>
 <h2>Write the way you do in Google Docs</h2>
 <ul><li>Paragraph styles: Title, Subtitle, three headings, quotes and code</li><li>Fonts, sizes, <span style="color: #ff5fa8">colours</span> and highlights</li><li>Lists, checklists, tables, pictures, links and page breaks</li><li>Find and replace, word count, an outline, and undo that remembers everything</li></ul>
 <h2>Today’s quests</h2>
-<ul class="nn-check"><li class="checked">Open Notes</li><li>Type <code>#</code> and a space for a heading, <code>-</code> for a list or <code>[]</code> for a checklist</li><li>Pick a colour theme from the swatches at the top</li><li>Send this note to Google Docs</li></ul>
+<ul class="nn-check"><li class="checked">Open Nova Notes</li><li>Type <code>#</code> and a space for a heading, <code>-</code> for a list or <code>[]</code> for a checklist</li><li>Pick a colour theme from the swatches at the top</li><li>Send this note to Google Docs</li></ul>
 <blockquote>Every note is a small star. Together they make a constellation.</blockquote>
 <h1>In and out</h1>
 <p><b>Import</b> Word documents, web pages, Markdown and text files with <i>File → Import</i>, or drop them onto the window.</p>
@@ -1607,7 +1607,7 @@
     applyPanels();
     notes = await S.notes.all();
     if (!notes.length) {
-      await createNote(WELCOME, 'Welcome to Notes', false, false);
+      await createNote(WELCOME, 'Welcome to Nova Notes', false, false);
     }
     const first = notes.find((n) => n.id === settings.lastId) || [...notes].sort((a, b) => b.updated.localeCompare(a.updated))[0];
     await openNote(first.id);

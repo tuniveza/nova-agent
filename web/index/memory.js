@@ -205,7 +205,7 @@
     try {
       res = await fetch(path, { method, credentials: "same-origin", headers, body: body === undefined ? undefined : JSON.stringify(body) });
     } catch (err) {
-      throw new Problem("Can't reach Index. Check the connection and try again.");
+      throw new Problem("Can't reach Nova Index. Check the connection and try again.");
     }
     let data = {};
     try {
@@ -1197,8 +1197,8 @@
   function renderPending(animate = false) {
     const box = $("pending-list");
     if (state.pendingLocked) {
-      const note = el("div", "empty", [el("strong", "", "Approvals need a sign-in"), el("span", "", "Customers' facts and the approval queue need a Portal sign-in, so they aren't shown until you sign in. You can also approve them in Index online.")]);
-      const go = el("a", "btn", "Open Index online ↗");
+      const note = el("div", "empty", [el("strong", "", "Approvals need a sign-in"), el("span", "", "Customers' facts and the approval queue need a Nova Portal sign-in, so they aren't shown until you sign in. You can also approve them in Index online.")]);
+      const go = el("a", "btn", "Open Nova Index online ↗");
       go.href = "https://novacane-worker.novacane-studio.workers.dev/app/memory/";
       go.target = "_blank";
       go.rel = "noopener";
@@ -1587,7 +1587,7 @@
   (async () => {
     try {
       const r = await api(API + "/stats");
-      if (!r.ok) throw new Problem(r.data.error || "Index couldn't load.");
+      if (!r.ok) throw new Problem(r.data.error || "Nova Index couldn't load.");
       state.stats = r.data;
       showApp();
       await loadAll();

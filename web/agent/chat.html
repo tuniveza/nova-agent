@@ -105,6 +105,17 @@
       linear-gradient(160deg, color-mix(in oklch, var(--tint) 32%, #0a0614), color-mix(in oklch, var(--accent-3) 70%, #000));
     box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tint) 50%, #fff 14%), inset 0 1px 0 rgba(255, 255, 255, .22), 0 8px 22px -10px var(--tint); }
   .pico svg { width: 92%; height: 92%; overflow: visible; filter: drop-shadow(0 0 1.5px color-mix(in oklch, var(--ig) 70%, transparent)); }
+  /* The Nova mark: every panel's icon carries the same small sparkle (the ✦ of Nova Agent's logo)
+     in its bottom-right corner, on a soft dark halo that glows in the theme's highlight, so the
+     icons read as one family on the bar, in the Panels window and beside the section titles.
+     It never gets smaller than 6px, so it stays a crisp star on the smallest icons too. */
+  .pico { position: relative; }
+  .pico::before, .pico::after { content: ""; position: absolute; pointer-events: none; }
+  .pico::before { right: 2%; bottom: 2%; width: 36%; height: 36%; min-width: 9px; min-height: 9px; border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in oklch, var(--ib) 55%, #0a0614) 0 36%, color-mix(in oklch, var(--hi) 34%, transparent) 50%, transparent 71%); }
+  .pico::after { right: 9%; bottom: 9%; width: 22%; height: 22%; min-width: 6px; min-height: 6px; background: var(--ic);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-17 -17 34 34'%3E%3Cpath d='M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-17 -17 34 34'%3E%3Cpath d='M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z'/%3E%3C/svg%3E") center / contain no-repeat; }
   .pico[data-p="chat"] { --own: var(--hi); }
   .pico[data-p="portal"] { --own: #ff5fae; }
   .pico[data-p="calendar"] { --own: #8c7dff; }
@@ -707,6 +718,7 @@
 <link rel="stylesheet" href="/agent/touch.css">
 <!-- Every button's look, last so it decides it (buttons.css; data-btn="soft": a plain .btn here is a quiet one) -->
 <link rel="stylesheet" href="/shared/buttons.css">
+<link rel="stylesheet" href="/shared/scrollbars.css"><!-- Scrollbars: easy to grab, in the theme's colours -->
 <script src="/shared/spectrum.js"></script>
 <script src="/shared/look.js"></script>
 </head>
@@ -794,21 +806,21 @@
     </section>
     <section class="board side glass" id="missions-panel" aria-labelledby="missions-title" data-sfx-theme="missions">
       <div class="side-head">
-        <h2 class="sec-title gold" id="missions-title"><span class="pico sec-ico" data-p="missions" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-missions"/></svg></span> Missions</h2>
+        <h2 class="sec-title gold" id="missions-title"><span class="pico sec-ico" data-p="missions" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-missions"/></svg></span> Nova Missions</h2>
         <button type="button" class="btn primary strip-btn" id="new-mission-btn" aria-haspopup="dialog" aria-controls="mission-dlg">✦ New mission</button>
       </div>
       <div class="view" id="view-missions"><div class="missions" id="missions"></div></div>
     </section>
-    <section class="chat glass" aria-label="Agent">
+    <section class="chat glass" aria-label="Nova Agent">
       <div class="chat-head">
-        <h2 class="sec-title"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span> Agent</h2>
+        <h2 class="sec-title"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span> Nova Agent</h2>
         <span style="display:flex;gap:6px"><button type="button" class="icon-btn" id="files-btn" title="Files Nova Agent wrote for you" aria-label="Your files"><svg class="ico"><use href="#i-file"/></svg></button><button type="button" class="icon-btn" id="clear" title="Start a new conversation" aria-label="Start a new conversation"><svg class="ico"><use href="#i-clear"/></svg></button></span>
       </div>
       <div class="log" id="log" aria-live="polite">
         <div class="welcome" id="welcome">
           <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
           <h3>Hey, I'm Nova Agent</h3>
-          <p>Give me a goal and I'll turn it into a Mission, plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's Acuity bookings.</p>
+          <p>Give me a goal and I'll turn it into a Mission, plan your days hour by hour, and keep you on track. I can also run Nova Calendar and check the studio's Acuity bookings.</p>
           <div class="suggest">
             <button type="button" class="chip">What should I do now?</button>
             <button type="button" class="chip">Plan a mission: finish the EP by 1 December</button>
@@ -831,9 +843,9 @@
 
     <section class="board side glass" id="quests-panel" aria-labelledby="quests-title" data-sfx-theme="quests">
       <div class="side-head">
-        <h2 class="sec-title" id="quests-title"><span class="pico sec-ico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span> Quests</h2>
+        <h2 class="sec-title" id="quests-title"><span class="pico sec-ico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span> Nova Quests</h2>
         <div class="strip-tools">
-          <button type="button" class="icon-btn" id="btn-calendar" title="Open Calendar" aria-label="Open Calendar"><svg class="ico"><use href="#i-cal"/></svg></button>
+          <button type="button" class="icon-btn" id="btn-calendar" title="Open Nova Calendar" aria-label="Open Nova Calendar"><svg class="ico"><use href="#i-cal"/></svg></button>
           <button type="button" class="icon-btn" id="btn-replan" title="Re-plan everything from now" aria-label="Re-plan everything from now"><svg class="ico"><use href="#i-replan"/></svg></button>
           <button type="button" class="icon-btn" id="btn-bell" title="Turn on pop-up reminders" aria-label="Turn on pop-up reminders"><svg class="ico"><use href="#i-bell"/></svg></button>
           <button type="button" class="icon-btn" id="btn-rhythm" title="Your daily rhythm: when you wake, work and sleep" aria-label="Your daily rhythm"><svg class="ico"><use href="#i-rhythm"/></svg></button>
@@ -888,7 +900,7 @@
   <div class="rh" style="position:relative">
     <button type="button" class="icon-btn suite-x" data-close aria-label="Close" style="right:16px;top:16px">✕</button>
     <h3 id="files-title">Your files</h3>
-    <p>Everything Nova Agent has written for you: preview it, download it to this computer, or open it in Notes. Ask Agent for any document, list, plan or spreadsheet.</p>
+    <p>Everything Nova Agent has written for you: preview it, download it to this computer, or open it in Nova Notes. Ask Nova Agent for any document, list, plan or spreadsheet.</p>
     <div class="files-list" id="files-list"></div>
   </div>
 </dialog>
@@ -922,7 +934,7 @@
       <!-- One theme for every panel, or each its own; and the colours of your planet (look.js, status.js) -->
       <div class="look-settings" id="look-settings">
         <div class="look-row look-themes" role="radiogroup" aria-label="Theme for all of Nova Agent"></div>
-        <label class="look-planet"><input type="checkbox" role="switch" id="look-planet" data-sfx="none"> Colour everything from my planet (Portal)</label>
+        <label class="look-planet"><input type="checkbox" role="switch" id="look-planet" data-sfx="none"> Colour everything from my planet (Nova Portal)</label>
         <label class="look-planet"><input type="checkbox" role="switch" id="look-center" data-sfx="none"> Centre all text</label>
       </div>
       <button type="button" class="icon-btn suite-x" id="suite-close" aria-label="Close">✕</button>
@@ -931,32 +943,32 @@
       <div class="suite-group apps">
         <h4>Apps</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/portal/" data-inside="/portal/"><span class="pico" data-p="portal" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-portal"/></svg></span><b>Portal</b><small>Enquiries, conversations, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
-          <a class="suite-app here" href="/agent/"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span><b>Agent</b><small>You're here: Agent, Missions, Quests, Acuity helper</small></a>
-          <a class="suite-app" href="/calendar/" data-inside="/calendar/"><span class="pico" data-p="calendar" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-calendar"/></svg></span><b>Calendar</b><small>The one Nova Agent plans into</small></a>
-          <a class="suite-app" href="/notes/" data-inside="/notes/"><span class="pico" data-p="notes" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-notes"/></svg></span><b>Notes</b><small>Notes and documents, Google Docs export</small></a>
-          <a class="suite-app" href="/app/memory/" data-inside="/app/memory/"><span class="pico" data-p="index" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-index"/></svg></span><b>Index</b><small>Everything Nova Agent remembers: browse, edit, approve</small></a>
+          <a class="suite-app" href="/portal/" data-inside="/portal/"><span class="pico" data-p="portal" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-portal"/></svg></span><b>Nova Portal</b><small>Enquiries, conversations, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
+          <a class="suite-app here" href="/agent/"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span><b>Nova Agent</b><small>You're here: the conversation, Nova Missions, Nova Quests, Acuity helper</small></a>
+          <a class="suite-app" href="/calendar/" data-inside="/calendar/"><span class="pico" data-p="calendar" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-calendar"/></svg></span><b>Nova Calendar</b><small>The one Nova Agent plans into</small></a>
+          <a class="suite-app" href="/notes/" data-inside="/notes/"><span class="pico" data-p="notes" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-notes"/></svg></span><b>Nova Notes</b><small>Notes and documents, Google Docs export</small></a>
+          <a class="suite-app" href="/app/memory/" data-inside="/app/memory/"><span class="pico" data-p="index" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-index"/></svg></span><b>Nova Index</b><small>Everything Nova Agent remembers: browse, edit, approve</small></a>
         </div>
       </div>
       <div class="suite-group tools tasks">
         <h4>Plans</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/agent/" data-pane="quests"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span><b>Quests</b><small>Today's plan, hour by hour</small></a>
-          <a class="suite-app" href="/agent/" data-pane="missions"><span class="pico" data-p="missions" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-missions"/></svg></span><b>Missions</b><small>Your goals, planned into Quests</small></a>
+          <a class="suite-app" href="/agent/" data-pane="quests"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span><b>Nova Quests</b><small>Today's plan, hour by hour</small></a>
+          <a class="suite-app" href="/agent/" data-pane="missions"><span class="pico" data-p="missions" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-missions"/></svg></span><b>Nova Missions</b><small>Your goals, planned into Nova Quests</small></a>
         </div>
       </div>
       <div class="suite-group tools">
         <h4>Tools</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="pico" data-p="lossless" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-lossless"/></svg></span><b>Lossless audio</b><small>Raw PCM between two devices, anywhere</small></a>
-          <a class="suite-app" href="/visualizer" data-inside="/visualizer"><span class="pico" data-p="visualizer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-visualizer"/></svg></span><b>Visualizer</b><small>Nova Agent's live steps and memory</small></a>
+          <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="pico" data-p="lossless" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-lossless"/></svg></span><b>Nova Lossless</b><small>Raw PCM between two devices, anywhere</small></a>
+          <a class="suite-app" href="/visualizer" data-inside="/visualizer"><span class="pico" data-p="visualizer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-visualizer"/></svg></span><b>Nova Visualizer</b><small>Nova Agent's live steps and memory</small></a>
         </div>
       </div>
       <div class="suite-group tools helpers">
         <h4>Helpers</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/observatory/" data-inside="/observatory/"><span class="pico" data-p="observatory" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-observatory"/></svg></span><b>Observatory</b><small>Every project, lines of code and the star map</small></a>
-          <a class="suite-app" href="/agent/" data-act="manual"><span class="pico" data-p="manual" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-manual"/></svg></span><b>Manual</b><small>How everything in Nova Agent works</small></a>
+          <a class="suite-app" href="/observatory/" data-inside="/observatory/"><span class="pico" data-p="observatory" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-observatory"/></svg></span><b>Nova Observatory</b><small>Every project, lines of code and the star map</small></a>
+          <a class="suite-app" href="/agent/" data-act="manual"><span class="pico" data-p="manual" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-manual"/></svg></span><b>Nova Manual</b><small>How everything in Nova Agent works</small></a>
         </div>
       </div>
     </div>
@@ -1071,10 +1083,10 @@
     pulse: { icon: '⚡', label: 'Pulse', hint: 'A quick repeat on its own exact timer', send: 'Start it', colour: '#5CE1FF' },
     block: { icon: '⛔', label: 'Blocked time', hint: 'Quests move out of the way', send: 'Block it', colour: '#FF8A8A' },
     update: { icon: '✓', label: 'Quest update', hint: 'Marks a quest done, started, skipped or moved', send: 'Update', colour: '#5CFFC0' },
-    calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Calendar', send: 'Add it', colour: '#9DB4FF' },
+    calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Nova Calendar', send: 'Add it', colour: '#9DB4FF' },
     studio: { icon: '♫', label: 'Studio bookings', hint: 'Looks at Acuity (read-only)', send: 'Check', colour: '#FFB86B' },
     ask: { icon: '?', label: 'Question', hint: 'Nova Agent answers, using your plan', send: 'Ask', colour: 'var(--soft)' },
-    chat: { icon: '✦', label: 'Agent', hint: 'Just talking to Nova Agent', send: 'Send', colour: 'var(--muted)' },
+    chat: { icon: '✦', label: 'Nova Agent', hint: 'Just talking to Nova Agent', send: 'Send', colour: 'var(--muted)' },
   };
   const DAYS = '(?:mon|tues|wednes|thurs|fri|satur|sun)day';
   const RX = {
@@ -1148,7 +1160,7 @@
   const known = new Map(); // id -> the latest card for it
   const toNotes = (f) => ['md', 'txt', 'html'].includes(f.type);
   function fileButtons(f, opts) {
-    return `<button type="button" class="mini go" data-fv="${escF(f.id)}">◎ Preview</button><a class="mini" href="${escF(f.url)}?download" download="${escF(f.name)}" data-fdl>⤓ Download</a>${toNotes(f) ? `<a class="mini" href="/notes/?open=${encodeURIComponent(f.url)}" target="_blank" rel="noopener">✎ Open in Notes</a>` : ''}<button type="button" class="mini" data-fcopy="${escF(f.id)}">⧉ Copy</button>${opts && opts.remove ? `<button type="button" class="mini" data-fdel="${escF(f.id)}">✕ Delete</button>` : ''}`;
+    return `<button type="button" class="mini go" data-fv="${escF(f.id)}">◎ Preview</button><a class="mini" href="${escF(f.url)}?download" download="${escF(f.name)}" data-fdl>⤓ Download</a>${toNotes(f) ? `<a class="mini" href="/notes/?open=${encodeURIComponent(f.url)}" target="_blank" rel="noopener">✎ Open in Nova Notes</a>` : ''}<button type="button" class="mini" data-fcopy="${escF(f.id)}">⧉ Copy</button>${opts && opts.remove ? `<button type="button" class="mini" data-fdel="${escF(f.id)}">✕ Delete</button>` : ''}`;
   }
   // The safety net: a direct download link for a file whose card couldn't be drawn (found by its
   // details, or by the name in "Wrote release-plan.md" from Nova Agent's list of files). Which file
@@ -1258,7 +1270,7 @@
     if (!$('files-dlg').open) $('files-dlg').showModal();
     try {
       const { files } = await (await fetch('/files/list', { cache: 'no-store' })).json();
-      $('files-list').innerHTML = files.length ? files.map((f) => fileCardHtml(f, { remove: true })).join('') : '<p>No files yet. Try “write me a release checklist as a file” in Agent.</p>';
+      $('files-list').innerHTML = files.length ? files.map((f) => fileCardHtml(f, { remove: true })).join('') : '<p>No files yet. Try “write me a release checklist as a file” in Nova Agent.</p>';
     } catch (e) { $('files-list').innerHTML = '<p>Couldn’t load your files.</p>'; }
   }
   $('files-btn').addEventListener('click', openFiles);
@@ -1295,7 +1307,7 @@
       <span class="dto">To ${escF(d.name)} &lt;${escF(d.email)}&gt;</span>
       <span class="dsubject">${escF('Re: ' + (d.subject || 'your enquiry to Novacane Studios'))}</span>
       <div class="dbody">${escF(d.body)}</div>
-      <div class="dfoot"><span class="dstate">Checking…</span><button type="button" class="mini go" data-approve hidden>✓ Approve &amp; send</button><a class="mini" data-open href="${escF(d.portalUrl || '/portal/?view=enquiries&enquiry=' + d.enquiryId)}" target="_blank" rel="noopener">↗ Open in Portal</a></div>`;
+      <div class="dfoot"><span class="dstate">Checking…</span><button type="button" class="mini go" data-approve hidden>✓ Approve &amp; send</button><a class="mini" data-open href="${escF(d.portalUrl || '/portal/?view=enquiries&enquiry=' + d.enquiryId)}" target="_blank" rel="noopener">↗ Open in Nova Portal</a></div>`;
     const state = card.querySelector('.dstate');
     const btn = card.querySelector('[data-approve]');
     const say = (text, cls) => { state.textContent = text; state.className = 'dstate' + (cls ? ' ' + cls : ''); };
@@ -1303,20 +1315,20 @@
     async function check() {
       let r;
       try { r = await fetch('/app/api/enquiries/thread?id=' + encodeURIComponent(d.enquiryId), { cache: 'no-store', credentials: 'same-origin' }); } catch { r = null; }
-      if (!r || r.status === 401 || r.status === 403) { btn.hidden = true; return say('Approve it in Portal (signed in). Nothing is sent until someone does.'); }
+      if (!r || r.status === 401 || r.status === 403) { btn.hidden = true; return say('Approve it in Nova Portal (signed in). Nothing is sent until someone does.'); }
       const t = await r.json().catch(() => null);
-      if (!t || !r.ok) { btn.hidden = true; return say(t && t.error ? t.error : 'Open it in Portal to approve it.'); }
+      if (!t || !r.ok) { btn.hidden = true; return say(t && t.error ? t.error : 'Open it in Nova Portal to approve it.'); }
       if (t.onlineUrl) card.querySelector('[data-open]').href = t.onlineUrl;
       const m = (t.messages || []).find((x) => x.id === d.id);
-      if (!m) { btn.hidden = true; return say('Discarded in Portal.'); }
+      if (!m) { btn.hidden = true; return say('Discarded in Nova Portal.'); }
       card.querySelector('.dbody').textContent = m.body;
       d.body = m.body;
       btn.hidden = true;
       if (m.status === 'sent') return say('Sent ✓' + (m.approver_name ? ' · approved by ' + m.approver_name : ''), 'sent');
       if (m.status === 'approved') return say('Sending…');
-      if (m.status === 'failed') return say('Didn’t send: ' + String(m.error || 'unknown reason').replace(/\.$/, '') + '. Retry it in Portal.', 'failed');
+      if (m.status === 'failed') return say('Didn’t send: ' + String(m.error || 'unknown reason').replace(/\.$/, '') + '. Retry it in Nova Portal.', 'failed');
       if (t.enquiry && t.enquiry.state === 'do-not-contact') return say('They’ve asked not to be contacted, so this can’t be sent.');
-      if (!t.canSend) return say('Approve it in Portal online (sending needs a browser sign-in).');
+      if (!t.canSend) return say('Approve it in Nova Portal online (sending needs a browser sign-in).');
       btn.hidden = false;
       say('Not sent. Read it, then approve it to email ' + d.name + '.');
     }
@@ -1328,7 +1340,7 @@
         const data = await r.json().catch(() => ({}));
         if (!r.ok) { say(data.error || 'Couldn’t send it.', 'failed'); btn.disabled = false; return; }
       } catch (err) {
-        say('Couldn’t reach Portal. Try again.', 'failed');
+        say('Couldn’t reach Nova Portal. Try again.', 'failed');
         btn.disabled = false;
         return;
       }
@@ -1369,7 +1381,7 @@
       <span class="bsum">${escF(a.summary)}</span>
       ${a.reason ? `<span class="bwhy">Why: ${escF(a.reason)}</span>` : ''}
       <div class="bedit" hidden></div>
-      <div class="dfoot"><span class="dstate">Checking…</span><button type="button" class="mini go" data-bok hidden>✓ Approve</button><button type="button" class="mini" data-bedit hidden>✎ Edit</button><button type="button" class="mini" data-bno hidden>✕ Reject</button><a class="mini" data-open href="${escF(portal)}" target="_blank" rel="noopener">↗ Open in Portal</a></div>`;
+      <div class="dfoot"><span class="dstate">Checking…</span><button type="button" class="mini go" data-bok hidden>✓ Approve</button><button type="button" class="mini" data-bedit hidden>✎ Edit</button><button type="button" class="mini" data-bno hidden>✕ Reject</button><a class="mini" data-open href="${escF(portal)}" target="_blank" rel="noopener">↗ Open in Nova Portal</a></div>`;
     const state = card.querySelector('.dstate');
     const ok = card.querySelector('[data-bok]');
     const edit = card.querySelector('[data-bedit]');
@@ -1407,11 +1419,11 @@
     async function check() {
       let r;
       try { r = await fetch('/app/api/booking-actions?status=all', { cache: 'no-store', credentials: 'same-origin' }); } catch { r = null; }
-      if (!r || r.status === 401 || r.status === 403) { buttons(false); return say('An admin approves this in Portal → Approvals. Nothing changes in Acuity until then.'); }
+      if (!r || r.status === 401 || r.status === 403) { buttons(false); return say('An admin approves this in Nova Portal → Approvals. Nothing changes in Acuity until then.'); }
       const t = await r.json().catch(() => null);
-      if (!t || !r.ok) { buttons(false); return say(t && t.error ? t.error : 'Open it in Portal to approve it.'); }
+      if (!t || !r.ok) { buttons(false); return say(t && t.error ? t.error : 'Open it in Nova Portal to approve it.'); }
       const now = (t.actions || []).find((x) => x.id === a.id);
-      if (!now) { buttons(false); return say('Open it in Portal to see where it’s up to.'); }
+      if (!now) { buttons(false); return say('Open it in Nova Portal to see where it’s up to.'); }
       Object.assign(a, now);
       card.querySelector('.bsum').textContent = a.summary;
       if (a.portalUrl) card.querySelector('[data-open]').href = a.portalUrl;
@@ -1422,7 +1434,7 @@
       if (a.status === 'approved') return say('Approved · going through to Acuity…');
       if (a.status === 'failed') { tag.textContent = 'Booking change · didn’t go through'; return say('Didn’t go through: ' + String(a.error || 'unknown reason').replace(/\.$/, '') + '. Nothing else was changed.', 'failed'); }
       if (a.status === 'rejected') { tag.textContent = 'Booking change · rejected'; return say('Rejected' + (a.decidedByName ? ' by ' + a.decidedByName : '') + '. Nothing was changed.'); }
-      if (!t.canDecide) return say('Waiting for an admin to approve it in Portal → Approvals. Nothing changes in Acuity until then.');
+      if (!t.canDecide) return say('Waiting for an admin to approve it in Nova Portal → Approvals. Nothing changes in Acuity until then.');
       buttons(true);
       say('Not done yet. Check it, then approve it to make the change in Acuity.');
     }
@@ -1435,7 +1447,7 @@
         if (!r.ok) say(data.error || 'That didn’t work.', 'failed');
         else { if (data.action) Object.assign(a, data.action); no.dataset.sure = ''; no.textContent = '✕ Reject'; edit.textContent = '✎ Edit'; }
       } catch (err) {
-        say('Couldn’t reach Portal. Try again.', 'failed');
+        say('Couldn’t reach Nova Portal. Try again.', 'failed');
       }
       for (const b of [ok, edit, no]) b.disabled = false;
       if (!/failed/.test(state.className)) check();
@@ -1493,7 +1505,7 @@
       <span class="cmeta"></span>
       <div class="dbody"></div>
       <div class="bedit" hidden></div>
-      <div class="dfoot"><span class="dstate">Checking…</span><button type="button" class="mini go" data-cok hidden>✓ Approve</button><button type="button" class="mini" data-cedit hidden>✎ Edit</button><button type="button" class="mini" data-cno hidden>✕ Reject</button><a class="mini" data-open href="${escF(portal)}" target="_blank" rel="noopener">↗ Open in Portal</a></div>`;
+      <div class="dfoot"><span class="dstate">Checking…</span><button type="button" class="mini go" data-cok hidden>✓ Approve</button><button type="button" class="mini" data-cedit hidden>✎ Edit</button><button type="button" class="mini" data-cno hidden>✕ Reject</button><a class="mini" data-open href="${escF(portal)}" target="_blank" rel="noopener">↗ Open in Nova Portal</a></div>`;
     const state = card.querySelector('.dstate');
     const ok = card.querySelector('[data-cok]');
     const edit = card.querySelector('[data-cedit]');
@@ -1534,11 +1546,11 @@
     async function check() {
       let r;
       try { r = await fetch('/app/api/campaigns', { cache: 'no-store', credentials: 'same-origin' }); } catch { r = null; }
-      if (!r || r.status === 401 || r.status === 403) { buttons(false, false); return say('An admin approves this in Portal → Campaigns. Nothing is sent until then.'); }
+      if (!r || r.status === 401 || r.status === 403) { buttons(false, false); return say('An admin approves this in Nova Portal → Campaigns. Nothing is sent until then.'); }
       const t = await r.json().catch(() => null);
-      if (!t || !r.ok) { buttons(false, false); return say(t && t.error ? t.error : 'Open it in Portal to approve it. Nothing is sent until an admin does.'); }
+      if (!t || !r.ok) { buttons(false, false); return say(t && t.error ? t.error : 'Open it in Nova Portal to approve it. Nothing is sent until an admin does.'); }
       const now = (t.campaigns || []).find((x) => x.id === c.id);
-      if (!now) { buttons(false, false); return say('Open it in Portal to see where it’s up to.'); }
+      if (!now) { buttons(false, false); return say('Open it in Nova Portal to see where it’s up to.'); }
       Object.assign(c, now);
       counts = t.audiences || null;
       if (counts && counts[c.audience] != null) count = counts[c.audience];
@@ -1555,9 +1567,9 @@
       if (c.status === 'approved') return say('Approved · going out now…');
       if (c.status === 'failed') return say('Didn’t send: ' + String(c.error || 'unknown reason').replace(/\.$/, '') + '. Nobody got it.', 'failed');
       if (c.status === 'rejected') return say('Rejected' + (c.decidedByName ? ' by ' + c.decidedByName : '') + (c.note ? ': “' + c.note + '”' : '') + '. Nothing was sent; an edit sends it back for approval.');
-      if (!t.canDecide) return say('Waiting for an admin to approve it in Portal → Campaigns (signed in in a browser). Nothing is sent until then.');
+      if (!t.canDecide) return say('Waiting for an admin to approve it in Nova Portal → Campaigns (signed in in a browser). Nothing is sent until then.');
       buttons(true, true);
-      say('Not sent. Read it (Open in Portal shows the whole email), then approve it to ' + (c.sendAt ? 'schedule it.' : 'send it now.'));
+      say('Not sent. Read it (Open in Nova Portal shows the whole email), then approve it to ' + (c.sendAt ? 'schedule it.' : 'send it now.'));
     }
     async function post(path, body, doing) {
       for (const b of [ok, edit, no]) b.disabled = true;
@@ -1569,7 +1581,7 @@
         if (!r.ok) say(data.error || 'That didn’t work.', 'failed');
         else { good = true; if (data.campaign) Object.assign(c, data.campaign); }
       } catch (err) {
-        say('Couldn’t reach Portal. Try again.', 'failed');
+        say('Couldn’t reach Nova Portal. Try again.', 'failed');
       }
       for (const b of [ok, edit, no]) b.disabled = false;
       ok.dataset.sure = no.dataset.sure = '';
@@ -1895,7 +1907,7 @@
       } else if (it.kind === 'block') {
         html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card block${fold}"><div class="tl-title">Busy · ${escH(it.b.reason)}</div><div class="tl-meta">Blocked out · Agent · <button class="mini" data-unblock="${it.b.id}">Unblock</button></div></div></div>`;
       } else {
-        html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card busy${fold}"><div class="tl-title">${escH(it.n.title || 'Note card')}</div><div class="tl-meta">From Calendar</div></div></div>`;
+        html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card busy${fold}"><div class="tl-title">${escH(it.n.title || 'Note card')}</div><div class="tl-meta">From Nova Calendar</div></div></div>`;
       }
       return html;
     };
@@ -1953,7 +1965,7 @@
     if (!list.length) return '';
     const shown = list.slice(0, 8);
     const more = list.length - shown.length;
-    return `<section class="also" aria-label="Also coming up"><h4>Also coming up</h4><ul>${shown.map((e) => `<li><button type="button" class="also-row" data-calday="${escH(e.date)}" title="Open Calendar on ${escH(dayLong(e.date))}"><span class="also-when">${escH(shortDay(e.date))}<b>${e.allDay ? 'All day' : hhmm(e.start)}</b></span><span class="also-what"><span class="also-title">${escH(e.title)}</span><small><span class="m-tag">▦ Calendar</span> ⏰ ${escH(NovaPlans.remindWords(e.reminders[0]))}${e.reminders.length > 1 ? ` +${e.reminders.length - 1}` : ''}${e.location ? ` · ${escH(e.location)}` : ''}</small></span></button></li>`).join('')}</ul>${more ? `<button type="button" class="also-more" data-calday="${escH(shown[shown.length - 1].date)}">${more} more in Calendar</button>` : ''}</section>`;
+    return `<section class="also" aria-label="Also coming up"><h4>Also coming up</h4><ul>${shown.map((e) => `<li><button type="button" class="also-row" data-calday="${escH(e.date)}" title="Open Nova Calendar on ${escH(dayLong(e.date))}"><span class="also-when">${escH(shortDay(e.date))}<b>${e.allDay ? 'All day' : hhmm(e.start)}</b></span><span class="also-what"><span class="also-title">${escH(e.title)}</span><small><span class="m-tag">▦ Nova Calendar</span> ⏰ ${escH(NovaPlans.remindWords(e.reminders[0]))}${e.reminders.length > 1 ? ` +${e.reminders.length - 1}` : ''}${e.location ? ` · ${escH(e.location)}` : ''}</small></span></button></li>`).join('')}</ul>${more ? `<button type="button" class="also-more" data-calday="${escH(shown[shown.length - 1].date)}">${more} more in Nova Calendar</button>` : ''}</section>`;
   }
   document.getElementById('view-today').addEventListener('click', (e) => {
     const b = e.target.closest('[data-calday]');
@@ -1975,7 +1987,7 @@
   $('mission-dlg').addEventListener('click', (e) => { if (e.target === $('mission-dlg')) showMissionForm(false); });
   function renderMissions() {
     const box = $('missions');
-    if (!st.missions.length) { box.innerHTML = '<div class="empty">No missions yet. Tap <b>✦ New mission</b>, or ask Agent.</div>'; return; }
+    if (!st.missions.length) { box.innerHTML = '<div class="empty">No missions yet. Tap <b>✦ New mission</b>, or ask Nova Agent.</div>'; return; }
     const order = { active: 0, paused: 1, done: 2 };
     box.innerHTML = [...st.missions].sort((a, b) => order[a.status] - order[b.status] || b.created.localeCompare(a.created)).map((m) => {
       const p = m.progress;
@@ -2334,9 +2346,17 @@
   window.addEventListener('focus', () => refresh(0));
 
   // ---- The Nova Agent section at the bottom of the page: the launcher's groups and tiles ----
+  // An app's short name for the bar: "Nova Notes" is "Notes" there
+  const shortName = (name) => String(name || '').replace(/^Nova /, '');
   $('suite-body').append($('suite').querySelector('.suite-groups').cloneNode(true));
-  // The row only has room for names, so each tile's description shows on hover
-  for (const a of document.querySelectorAll('#suite-body .suite-app')) a.title = `${a.querySelector('b').textContent}: ${a.querySelector('small').textContent}`;
+  // The row only has room for names, so each tile's description shows on hover (with the full
+  // name, "Nova Notes"); the bar itself keeps its short labels (Notes), like the phone's bar
+  for (const a of document.querySelectorAll('#suite-body .suite-app')) {
+    const b = a.querySelector('b');
+    a.title = `${b.textContent}: ${a.querySelector('small').textContent}`;
+    a.setAttribute('aria-label', b.textContent);
+    b.textContent = shortName(b.textContent);
+  }
 
   // ---- Sound effects: the switch in the header, and a chime when Nova Agent answers ----
   function sfxState() {
@@ -2371,7 +2391,7 @@
     $('main').classList.add('viewing');
     $('main').scrollTo({ top: 0 });
     // The suite's tiles light up the app that's open (and Nova Agent stops being "here")
-    document.querySelectorAll('.suite-app').forEach((a) => a.classList.toggle('open', a.querySelector('b').textContent === name));
+    document.querySelectorAll('.suite-app').forEach((a) => a.classList.toggle('open', shortName(a.querySelector('b').textContent) === shortName(name)));
     document.querySelectorAll('.suite-app.here').forEach((a) => a.classList.add('away'));
     if ($('suite').open) $('suite').close();
   }
@@ -2388,7 +2408,7 @@
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a.suite-app');
     if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
-    const name = a.querySelector('b')?.textContent || 'App';
+    const name = a.getAttribute('aria-label') || a.querySelector('b')?.textContent || 'App'; // the full name (the bar shows a short one)
     // Nova Agent itself: back to the chat, at the top of the page
     if (a.classList.contains('here')) { e.preventDefault(); closeViewer(); if ($('suite').open) $('suite').close(); $('main').scrollTo({ top: 0 }); return; }
     // Other websites (the studio's website, the code on GitHub) open in a new tab, as the link says
@@ -2466,8 +2486,8 @@
   const hint = input.placeholder;
   let state = 'ok';
   const words = {
-    off: 'Agent needs the studio computer — it’s off right now',
-    out: 'Sign in with Portal (top right) to use Agent',
+    off: 'Nova Agent needs the studio computer — it’s off right now',
+    out: 'Sign in with Nova Portal (top right) to use Nova Agent',
   };
   const css = document.createElement('style');
   css.textContent = '.pc-note{margin:10px;padding:12px 14px;border-radius:16px;border:1px dashed var(--line,#5a3d6e);color:var(--muted,#b997b5);font-size:13.5px;line-height:1.45;text-align:center}.pc-note button{margin-top:8px}';
@@ -2490,7 +2510,7 @@
       input.disabled = true;
       send.disabled = true;
       input.placeholder = words[next];
-      notes(next === 'off' ? 'Missions and Quests live on the studio computer, which is off right now. They’ll be back when it is.' : words.out + '.');
+      notes(next === 'off' ? 'Nova Missions and Nova Quests live on the studio computer, which is off right now. They’ll be back when it is.' : words.out + '.');
       $('status-text').textContent = next === 'off' ? 'PC off' : 'Signed out';
       $('status').title = next === 'off' ? 'The studio computer is off or offline' : 'Not signed in';
       return;

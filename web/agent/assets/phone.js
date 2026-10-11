@@ -240,7 +240,8 @@
     'pane:missions': () => item('pane:missions', 'Missions', pico('missions')),
     manual: () => item('manual', 'Manual', pico('manual')),
   };
-  const panelItem = (p) => (tile(p) ? item(p, nameOf(tile(p)).replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico')) : '');
+  // The bar keeps its short labels: "Nova Notes" in the launcher is "Notes" here
+  const panelItem = (p) => (tile(p) ? item(p, nameOf(tile(p)).replace(/^Nova /, '').replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico')) : '');
   const MORE_ORDER = ['pane:missions', '/app/memory/', '/lossless/', '/visualizer', '/observatory/', 'manual'];
   let moreKeys = [];
   function fillBar() {

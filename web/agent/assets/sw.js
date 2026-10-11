@@ -50,7 +50,7 @@ function novaAgentUrl(url) {
 
 // A notification has arrived
 self.addEventListener("push", (event) => {
-  const data = event.data ? event.data.json() : { title: "Nova Agent", body: "Something new in Portal" };
+  const data = event.data ? event.data.json() : { title: "Nova Agent", body: "Something new in Nova Portal" };
   // The plain version (what every phone shows, iPhones included)
   const plain = { body: data.body || "", icon: "/agent/icon-192.png", data: { url: panelUrl(data.url) } };
   // The rich version adds a buzz, a tag (a newer one replaces the older one) and staying on screen

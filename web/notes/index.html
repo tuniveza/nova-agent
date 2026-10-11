@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Notes</title>
-<meta name="description" content="Notes: a cosmic note editor from Nova Agent by Novacane Studios. Write, import, export and send to Google Docs.">
+<title>Nova Notes</title>
+<meta name="description" content="Nova Notes: a cosmic note editor from Nova Agent by Novacane Studios. Write, import, export and send to Google Docs.">
 <meta name="theme-color" content="#06040D">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/icon-192.png" type="image/png" sizes="192x192">
@@ -12,9 +12,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Notes">
+<meta name="apple-mobile-web-app-title" content="Nova Notes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="application-name" content="Notes">
+<meta name="application-name" content="Nova Notes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&display=swap">
@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="css/tasks.css">
 <!-- Every button's look, last so it decides it (buttons.css; data-btn="soft": a plain .btn here is a quiet one) -->
 <link rel="stylesheet" href="/shared/buttons.css">
+<link rel="stylesheet" href="/shared/scrollbars.css"><!-- Scrollbars: easy to grab, in the theme's colours -->
 <script src="/shared/spectrum.js"></script>
 <script src="/shared/look.js"></script>
 </head>
@@ -108,7 +109,7 @@
 
 <div class="splash" id="splash" aria-hidden="true">
   <svg class="splash-mark" viewBox="0 0 512 512"><use href="#i-mark"/></svg>
-  <span class="splash-name">Notes</span>
+  <span class="splash-name">Nova Notes</span>
   <span class="splash-kicker">Nova Agent · Novacane</span>
 </div>
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -119,11 +120,11 @@
   <!-- ===== TOP BAR ===== -->
   <header class="topbar glass">
     <button type="button" class="icon-btn only-narrow" id="btn-library" aria-label="Show notes" aria-controls="library"><svg class="ico"><use href="#i-sidebar"/></svg></button>
-    <a class="brand" href="./" aria-label="Notes">
+    <a class="brand" href="./" aria-label="Nova Notes">
       <svg class="app-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
       <span class="brand-text">
         <span class="brand-kicker">Nova Agent · Novacane</span>
-        <span class="wordmark">Notes</span>
+        <span class="wordmark">Nova Notes</span>
       </span>
     </a>
 
@@ -137,7 +138,7 @@
       <nova-manual compact></nova-manual>
       <nova-portal-badge></nova-portal-badge>
       <div class="themes" id="themes" role="radiogroup" aria-label="Colour theme"></div>
-      <button type="button" class="btn ghost sm" id="btn-install" hidden title="Install Notes as an app on this device"><svg class="ico"><use href="#i-export"/></svg><span>Install</span></button>
+      <button type="button" class="btn ghost sm" id="btn-install" hidden title="Install Nova Notes as an app on this device"><svg class="ico"><use href="#i-export"/></svg><span>Install</span></button>
       <button type="button" class="btn ghost sm hide-narrow" id="btn-import"><svg class="ico"><use href="#i-import"/></svg><span>Import</span></button>
       <button type="button" class="btn ghost sm hide-narrow" id="btn-export" aria-haspopup="menu"><svg class="ico"><use href="#i-export"/></svg><span>Export</span></button>
       <button type="button" class="btn primary sm" id="btn-gdocs" data-sfx="open"><svg class="ico"><use href="#i-doc"/></svg><span>Google Docs</span></button>
@@ -452,7 +453,7 @@
   <div class="dlg-inner">
     <div class="dlg-head">
       <svg class="app-mark lg" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
-      <div><span class="dlg-kicker">Nova Agent · Novacane Studios</span><h2 id="about-title">Notes</h2></div>
+      <div><span class="dlg-kicker">Nova Agent · Novacane Studios</span><h2 id="about-title">Nova Notes</h2></div>
       <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
     </div>
     <div class="dlg-body">

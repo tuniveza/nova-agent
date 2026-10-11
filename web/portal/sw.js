@@ -27,7 +27,7 @@ function portalUrl(url) {
 // A notification has arrived from Apple
 self.addEventListener("push", (event) => {
   // Unpack the title, text and where to go when it's tapped (or use plain defaults)
-  const data = event.data ? event.data.json() : { title: "Nova Agent", body: "Something new in Portal" };
+  const data = event.data ? event.data.json() : { title: "Nova Agent", body: "Something new in Nova Portal" };
   // The plain version: title, text, icon and where to go (what every phone shows, iPhones included)
   const plain = { body: data.body || "", icon: "/portal/icon-192.png", data: { url: portalUrl(data.url) } };
   // The rich version adds a buzz pattern, a tag (a newer one replaces the older one), and

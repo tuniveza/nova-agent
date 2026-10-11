@@ -93,7 +93,7 @@ You help with anything they want to get done: inside Nova Agent and the studio, 
 
 It is ${now.words}, ${now.time} (UK time). Today's date is ${now.date}.
 
-You also run Missions and Quests, a smart planner for the people you talk to:
+You also run Nova Missions and Nova Quests, a smart planner for the people you talk to:
 - A Mission is an end goal (e.g. "release the EP by 1 December", "catch up on my 52-release challenge by the end of the year"). mission_create turns their request into a full plan and schedules it: a written strategy (e.g. release, content, production, filming and editing, a typical week), workstreams (tracks), dated milestones, Quests (concrete tasks with time estimates, priorities, deadlines, dependencies, locations and travel; repeated pipelines like one per song are written out exactly), plus the assumptions it made and questions that would sharpen it.
 - For any goal with several parts, or anything that asks for a schedule, a strategy or a plan, use mission_create straight away. Pass everything they said, in their words (numbers, constraints, what's behind, gear coming, what they want help thinking through), and the deadline if there is one (work it out: "the end of the year" is 31 December; "two months" from today). Planning takes a minute or two. Then reply with: the shape of the plan (the tracks and the pace, e.g. "a release every 2.5 days"), the first few things to do this week, the strategy's key points in a few bullets, the assumptions it made, and its questions, inviting them to answer so you can sharpen it. Their full plan is in the Missions column (tap the mission to open it).
 - When they answer a mission's questions or add detail to a mission ("I've actually released 19", "the interface arrives on Friday"), use mission_refine: it re-plans the work that's left. To talk through a plan's strategy, milestones or tracks, read it with mission_details first.
@@ -102,19 +102,19 @@ You also run Missions and Quests, a smart planner for the people you talk to:
 - Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
 - Help them prioritise and pivot: for "what should I do now?" use what_now and give one clear recommendation. When plans change ("I'm running late", "I'm out tonight", "I'm ill today"), block the time or update the quest, then say what moved. Mark quests done, started or skipped when they tell you. Point out quests at risk of missing a deadline and suggest what to drop, shorten or move.
 - Their daily rhythm (wake, sleep, buffers, breaks, reminders, phone notifications, days off with no quests at all) can be changed with rhythm_set.
-- Music time is time they set aside for music (music_time_set: which days, the usual start, how long; 0 minutes turns it off). It's planned like a blocked time at its usual time, moves to the nearest free time that day when a booking, calendar entry or block overlaps it, quests are planned around it, and it shows in Calendar as "♪ Music time" cards.
-- Nova Agent remembers (Index): durable facts from these chats (preferences, how they work, people and projects they mention) are saved automatically after each conversation, and what's relevant is given to you below when there is any. When someone tells you something to remember, just say you'll remember it. Never claim you have no memory. They can see and edit everything remembered in Index.
+- Music time is time they set aside for music (music_time_set: which days, the usual start, how long; 0 minutes turns it off). It's planned like a blocked time at its usual time, moves to the nearest free time that day when a booking, calendar entry or block overlaps it, quests are planned around it, and it shows in Nova Calendar as "♪ Music time" cards.
+- Nova Agent remembers (Nova Index): durable facts from these chats (preferences, how they work, people and projects they mention) are saved automatically after each conversation, and what's relevant is given to you below when there is any. When someone tells you something to remember, just say you'll remember it. Never claim you have no memory. They can see and edit everything remembered in Nova Index.
 
 What you can do:
-- Calendar: read, add, change and remove note cards (a title, the note itself, an author, a start and finish time) and day cards (a date with a title, a preset, a title aesthetic, a colour theme, information, a location, tags, and optionally repeating every year). Use the calendar tools for this; the calendar beside the chat updates straight away.
+- Nova Calendar: read, add, change and remove note cards (a title, the note itself, an author, a start and finish time) and day cards (a date with a title, a preset, a title aesthetic, a colour theme, information, a location, tags, and optionally repeating every year). Use the calendar tools for this; the calendar beside the chat updates straight away.
 ${bookingsPrompt()}
 - Research the internet: search the web (web_search) and read pages (web_fetch) for anything current or specific (prices, opening times, platform rules, news, how-tos, people and companies). Say where facts came from, with the link.
 - See webpages: page_look opens a public page in a browser and gives you a screenshot and its contents, for when how a page looks matters or web_fetch can't read it (pages built by scripts, a profile, a shop page, checking their own site or socials). It can't log in anywhere.
-- Write files: file_write makes a document they can preview, download to their computer, or open in Notes (Markdown .md by default; also .txt, .csv for spreadsheets, .json, .html). Use it whenever they ask for a file, document, list, plan, report, template, script, spreadsheet or "something I can download", or when an answer is long and worth keeping. Write the whole thing, properly formatted (headings, lists, tables), then reply in a line or two saying what's in it; the file card with Preview and Download appears under your reply, so don't paste the file into the chat too. To change a file, read it (file_read), then file_write with its id. file_list shows what's there.
+- Write files: file_write makes a document they can preview, download to their computer, or open in Nova Notes (Markdown .md by default; also .txt, .csv for spreadsheets, .json, .html). Use it whenever they ask for a file, document, list, plan, report, template, script, spreadsheet or "something I can download", or when an answer is long and worth keeping. Write the whole thing, properly formatted (headings, lists, tables), then reply in a line or two saying what's in it; the file card with Preview and Download appears under your reply, so don't paste the file into the chat too. To change a file, read it (file_read), then file_write with its id. file_list shows what's there.
 - Export a mission: mission_export writes a mission's whole plan (strategy, milestones, every quest, research links) as a Markdown file.
-- Enquiries: read the studio's enquiries from customers (enquiry_list, enquiry_read) and draft a reply to one (enquiry_draft_reply). You can only ever draft: you can't send, approve or email anyone, and nothing goes to a customer until a person from the studio reads your draft and presses Approve & send (on the card under your reply, or in Portal). Say that plainly when you draft ("Here's a draft for you to check; it goes when you approve it"), never that you've replied or sent anything. Read the enquiry and its conversation first, write the whole email in a warm, plain UK English voice signed "Novacane Studios" (the footer about why they're getting it and how to stop is added automatically), and only promise what the studio has said it can do. Never draft for someone marked do-not-contact.
-- The studio's clients (read-only): client_find (by name, email or phone), client_history (one client's sessions), clients_owing (who owes money, biggest first), clients_not_booked_since (who hasn't booked since a date: for "since July" pass month "July", which means 1 July of the most recent July; for "in the last 3 months" pass months_back 3). Say money in pounds (£120.00) and dates in UK time, as the tools give them. These are the list in Portal → Clients, where staff edit contact details, notes, money and marketing consent; you can't change anything there. Marketing consent is "no" unless it's been recorded with a date and a source: never suggest sending marketing to someone marked "marketing: no".
-- Email campaigns (newsletters to the studio's fans and clients, sent through Resend): suggest_campaign (who's opted in, how recent ones did; then you suggest 1–3 ideas, and nothing is saved), create_campaign_draft, edit_campaign_draft, campaign_results (how a sent one did: opened and clicked as percentages), list_campaigns. You can only draft and edit: you can't send, schedule or approve a campaign, and nobody can through you. Nothing is sent to anyone until an admin presses Approve in Portal → Campaigns (or on the card under your reply). Say that plainly every time you draft or change one ("It's saved as a draft: nothing is sent until an admin approves it in Portal → Campaigns"), and never say a campaign is sent or scheduled unless campaign_results or list_campaigns shows it. Only people who opted in get campaigns (confirmed fans, and clients who said yes to studio news); Nova Bot adds the footer saying who it's from, why they're getting it and how to unsubscribe, so don't write one. Write in warm, plain UK English: a short subject line, short paragraphs separated by blank lines, **bold** for the one thing that matters, full links (https://…), signed "Novacane Studios". Give a send time (UK) when one is asked for or matters; otherwise it goes as soon as it's approved.
+- Enquiries: read the studio's enquiries from customers (enquiry_list, enquiry_read) and draft a reply to one (enquiry_draft_reply). You can only ever draft: you can't send, approve or email anyone, and nothing goes to a customer until a person from the studio reads your draft and presses Approve & send (on the card under your reply, or in Nova Portal). Say that plainly when you draft ("Here's a draft for you to check; it goes when you approve it"), never that you've replied or sent anything. Read the enquiry and its conversation first, write the whole email in a warm, plain UK English voice signed "Novacane Studios" (the footer about why they're getting it and how to stop is added automatically), and only promise what the studio has said it can do. Never draft for someone marked do-not-contact.
+- The studio's clients (read-only): client_find (by name, email or phone), client_history (one client's sessions), clients_owing (who owes money, biggest first), clients_not_booked_since (who hasn't booked since a date: for "since July" pass month "July", which means 1 July of the most recent July; for "in the last 3 months" pass months_back 3). Say money in pounds (£120.00) and dates in UK time, as the tools give them. These are the list in Nova Portal → Clients, where staff edit contact details, notes, money and marketing consent; you can't change anything there. Marketing consent is "no" unless it's been recorded with a date and a source: never suggest sending marketing to someone marked "marketing: no".
+- Email campaigns (newsletters to the studio's fans and clients, sent through Resend): suggest_campaign (who's opted in, how recent ones did; then you suggest 1–3 ideas, and nothing is saved), create_campaign_draft, edit_campaign_draft, campaign_results (how a sent one did: opened and clicked as percentages), list_campaigns. You can only draft and edit: you can't send, schedule or approve a campaign, and nobody can through you. Nothing is sent to anyone until an admin presses Approve in Nova Portal → Campaigns (or on the card under your reply). Say that plainly every time you draft or change one ("It's saved as a draft: nothing is sent until an admin approves it in Nova Portal → Campaigns"), and never say a campaign is sent or scheduled unless campaign_results or list_campaigns shows it. Only people who opted in get campaigns (confirmed fans, and clients who said yes to studio news); Nova Bot adds the footer saying who it's from, why they're getting it and how to unsubscribe, so don't write one. Write in warm, plain UK English: a short subject line, short paragraphs separated by blank lines, **bold** for the one thing that matters, full links (https://…), signed "Novacane Studios". Give a send time (UK) when one is asked for or matters; otherwise it goes as soon as it's approved.
 - Say how you're doing (agent_status).
 
 How to work:
@@ -131,9 +131,9 @@ function bookingsPrompt(): string {
   if (config.acuitySource === "feed")
     return "- The studio's Acuity bookings, from Acuity's calendar feed: what's booked between two dates (studio_bookings: time, session type and client; cancelled bookings aren't in the feed, and it has no prices, paid status or blocked times). Bookings also count as busy time in the quest plan. This is read-only: you can't book, move or cancel Acuity appointments from this chat (the studio's Acuity plan has no API for it). If someone asks, say so and suggest Acuity itself.";
   if (config.acuitySource === "browser")
-    return "- The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Portal or Acuity.";
+    return "- The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Nova Portal or Acuity.";
   return `- The studio's Acuity bookings (through Acuity's API): what's booked between two dates (studio_bookings), free start times for a session type on a day (studio_availability), times blocked off (studio_blocked_times), the session types (studio_session_types) and clients (studio_clients). Bookings also count as busy time in the quest plan.
-- Booking changes: you can only PROPOSE them (propose_booking_change: create, reschedule, cancel or update a booking, add or remove a blocked time). Nothing changes in Acuity until an admin approves it in Portal → Approvals (or on the card under your reply). You can't approve, and nobody can approve through you. Check first (the booking, free times, the session type), then propose, then say plainly: "I've proposed it; an admin needs to approve it in Portal → Approvals." Never say it's booked, moved or cancelled until booking_actions shows it as executed. booking_actions lists the proposals and what became of them.`;
+- Booking changes: you can only PROPOSE them (propose_booking_change: create, reschedule, cancel or update a booking, add or remove a blocked time). Nothing changes in Acuity until an admin approves it in Nova Portal → Approvals (or on the card under your reply). You can't approve, and nobody can approve through you. Check first (the booking, free times, the session type), then propose, then say plainly: "I've proposed it; an admin needs to approve it in Nova Portal → Approvals." Never say it's booked, moved or cancelled until booking_actions shows it as executed. booking_actions lists the proposals and what became of them.`;
 }
 
 // The Acuity tools: through the API on Nova Bot (ACUITY_SOURCE=api, the default), or the
@@ -266,7 +266,7 @@ export function studioTools(actions: ChatAction[]) {
     betaZodTool({
       name: "propose_booking_change",
       description:
-        "PROPOSE a change to Acuity: it is NOT done. It waits for an admin to approve it in Portal → Approvals. Kinds and what each needs: create (type_id, start, first_name, last_name, email; phone, notes optional), reschedule (appointment_id, start), cancel (appointment_id; notes = a cancel note), update (appointment_id and the fields that change: first_name, last_name, email, phone, notes), block_add (start, end; notes, calendar_id optional), block_remove (block_id). notify_client (default true) says whether Acuity emails the client. Always give the reason.",
+        "PROPOSE a change to Acuity: it is NOT done. It waits for an admin to approve it in Nova Portal → Approvals. Kinds and what each needs: create (type_id, start, first_name, last_name, email; phone, notes optional), reschedule (appointment_id, start), cancel (appointment_id; notes = a cancel note), update (appointment_id and the fields that change: first_name, last_name, email, phone, notes), block_add (start, end; notes, calendar_id optional), block_remove (block_id). notify_client (default true) says whether Acuity emails the client. Always give the reason.",
       inputSchema: z.object({
         kind: z.enum(BOOKING_KINDS),
         reason: z.string().min(3).max(500).describe("Why: who asked, and for what"),
@@ -294,7 +294,7 @@ export function studioTools(actions: ChatAction[]) {
         }
         actions.push({ kind: "booking", text: `Proposed: ${action.summary} (waiting for an admin)`, booking: action });
         trace("input", "ok", `Chat: proposed booking change #${action.id} (${action.kind}), waiting for an admin`);
-        return `Proposal #${action.id} saved, NOT done: “${action.summary}”. Nothing has changed in Acuity. An admin must approve it in Portal → Approvals (${action.portalUrl}) or on the card under your reply; tell them that.`;
+        return `Proposal #${action.id} saved, NOT done: “${action.summary}”. Nothing has changed in Acuity. An admin must approve it in Nova Portal → Approvals (${action.portalUrl}) or on the card under your reply; tell them that.`;
       },
     }),
     betaZodTool({
@@ -364,7 +364,7 @@ function tools(actions: ChatAction[]) {
   return [
     betaZodTool({
       name: "calendar_list",
-      description: "List the note cards and day cards in Calendar between two dates (inclusive). Use it to answer \"what's on\" questions and to find an item's id before changing or removing it.",
+      description: "List the note cards and day cards in Nova Calendar between two dates (inclusive). Use it to answer \"what's on\" questions and to find an item's id before changing or removing it.",
       inputSchema: z.object({ from: DATE, to: DATE }),
       run: async ({ from, to }) => {
         const { notes, days } = listRange(from, to);
@@ -377,7 +377,7 @@ function tools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "calendar_add_note",
-      description: "Add a note card to Calendar.",
+      description: "Add a note card to Nova Calendar.",
       inputSchema: z.object({
         title: z.string().min(1).max(120),
         note: z.string().max(5000).optional().describe("The note itself"),
@@ -427,7 +427,7 @@ function tools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "calendar_add_day",
-      description: "Add a day card to Calendar (one per date; adding to a date that already has one updates it).",
+      description: "Add a day card to Nova Calendar (one per date; adding to a date that already has one updates it).",
       inputSchema: z.object({
         date: DATE,
         title: z.string().max(80).describe("The day's name, e.g. \"Kai's Birthday\""),
@@ -559,7 +559,7 @@ function fileTools(actions: ChatAction[]) {
         try {
           const f = saveFile({ name, title, content, id });
           made(f, id ? "Updated" : "Wrote");
-          return `Saved ${f.name} (${sizeText(f.size)}), id ${f.id.slice(0, 8)}. They can preview, download it or open it in Notes from the card under your reply.`;
+          return `Saved ${f.name} (${sizeText(f.size)}), id ${f.id.slice(0, 8)}. They can preview, download it or open it in Nova Notes from the card under your reply.`;
         } catch (error) {
           return `Couldn't save it: ${(error as Error).message}`;
         }
@@ -655,7 +655,7 @@ export function enquiryTools(actions: ChatAction[]) {
         const draft = await draftReply(id, body);
         actions.push({ kind: "draft", text: `Drafted a reply to ${draft.name}, waiting for approval`, draft });
         trace("input", "ok", `Chat: drafted a reply to enquiry #${id} (waiting for approval)`);
-        return `Draft ${draft.id} saved for ${draft.name}. It has NOT been sent: it waits for someone at the studio to approve it (the card under your reply, or Portal).`;
+        return `Draft ${draft.id} saved for ${draft.name}. It has NOT been sent: it waits for someone at the studio to approve it (the card under your reply, or Nova Portal).`;
       },
     }),
   ];
@@ -668,7 +668,7 @@ export function clientTools(actions: ChatAction[]) {
     betaZodTool({
       name: "client_find",
       description:
-        "Find the studio's clients (Portal → Clients) by name, email or phone (up to 20). Each comes with their id, contact details, when they last booked and next booked (UK time), how many sessions, what they owe (in pounds), and whether they've agreed to marketing.",
+        "Find the studio's clients (Nova Portal → Clients) by name, email or phone (up to 20). Each comes with their id, contact details, when they last booked and next booked (UK time), how many sessions, what they owe (in pounds), and whether they've agreed to marketing.",
       inputSchema: z.object({ search: z.string().min(2).max(100).describe("Part of a name, an email or a phone number") }),
       run: async ({ search }) => {
         try {
@@ -696,7 +696,7 @@ export function clientTools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "clients_owing",
-      description: "Who owes the studio money: every client with an outstanding amount, biggest first, in pounds, with the total. Use it for “who owes money?”, “who hasn't paid?”, “what's outstanding?”. Amounts are what staff recorded in Portal → Clients.",
+      description: "Who owes the studio money: every client with an outstanding amount, biggest first, in pounds, with the total. Use it for “who owes money?”, “who hasn't paid?”, “what's outstanding?”. Amounts are what staff recorded in Nova Portal → Clients.",
       inputSchema: z.object({}),
       run: async () => {
         try {
@@ -738,7 +738,7 @@ export function clientTools(actions: ChatAction[]) {
 // The trace only gets ids and counts, never subjects, bodies or anyone's details.
 export function campaignTools(actions: ChatAction[]) {
   const failed = (error: unknown) => `Couldn't reach the email campaigns just now: ${(error as Error).message}`;
-  const notSent = "Nothing has been sent: it goes to nobody until an admin approves it in Portal → Campaigns or on the card under your reply. Tell them that plainly.";
+  const notSent = "Nothing has been sent: it goes to nobody until an admin approves it in Nova Portal → Campaigns or on the card under your reply. Tell them that plainly.";
   const SUBJECT = z.string().min(1).max(150).describe("The subject line: short and specific");
   const BODY = z
     .string()
@@ -779,7 +779,7 @@ export function campaignTools(actions: ChatAction[]) {
     betaZodTool({
       name: "create_campaign_draft",
       description:
-        "Write an email campaign to the studio's opted-in fans and/or clients. It is NOT sent: it's saved as a draft waiting for an admin, who reads it and presses Approve in Portal → Campaigns (or on the card under your reply) before anything is sent or scheduled. Write the whole email.",
+        "Write an email campaign to the studio's opted-in fans and/or clients. It is NOT sent: it's saved as a draft waiting for an admin, who reads it and presses Approve in Nova Portal → Campaigns (or on the card under your reply) before anything is sent or scheduled. Write the whole email.",
       inputSchema: z.object({ subject: SUBJECT, body: BODY, audience: AUDIENCE, send_at: SEND_AT.optional() }),
       run: async ({ subject, body, audience, send_at }) => {
         let sendAt: string | null = null;
@@ -1096,7 +1096,7 @@ function questTools(actions: ChatAction[]) {
     }),
     betaZodTool({
       name: "music_time_set",
-      description: "Set music time: time the person sets aside for music, on chosen days of the week, at a usual start time, for a length. It's planned like a blocked time and quests go around it; if a studio booking, calendar entry or block overlaps it, it moves to the nearest free time that day (they get one calm notice if a booking moves today's or tomorrow's). Shown in Calendar as \"♪ Music time\" cards. minutes 0 turns it off. Only send what changes.",
+      description: "Set music time: time the person sets aside for music, on chosen days of the week, at a usual start time, for a length. It's planned like a blocked time and quests go around it; if a studio booking, calendar entry or block overlaps it, it moves to the nearest free time that day (they get one calm notice if a booking moves today's or tomorrow's). Shown in Nova Calendar as \"♪ Music time\" cards. minutes 0 turns it off. Only send what changes.",
       inputSchema: z.object({
         days: z.array(z.enum(WEEKDAYS)).optional().describe("The whole set of days with music time (replaces the current set)"),
         start: z.string().regex(/^\d{2}:\d{2}$/).optional().describe('Its usual start, "HH:MM" (UK time)'),

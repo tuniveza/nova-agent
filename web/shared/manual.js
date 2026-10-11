@@ -403,11 +403,11 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
     }
 
     drawButton() {
-      this.root.innerHTML = `<button class="open" part="button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Manual (press ?)">
+      this.root.innerHTML = `<button class="open" part="button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Nova Manual (press ?)">
           <span class="orb">${ICON.book.replace("<svg", '<svg width="18" height="18"')}<span class="spark"></span></span>
-          <span class="label"><b>Manual</b><small>Nova Agent</small></span>
+          <span class="label"><b>Nova Manual</b><small>Nova Agent</small></span>
         </button>
-        <div class="panel" role="dialog" aria-modal="true" aria-label="Manual" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
+        <div class="panel" role="dialog" aria-modal="true" aria-label="Nova Manual" ${POPOVER ? 'popover="manual"' : "hidden"}></div>`;
       this.root.querySelector(".open").addEventListener("click", () => (this.isOpen ? this.close(true) : this.open()));
     }
     markNew(d) {
@@ -418,7 +418,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       const dot = btn.querySelector(".dot");
       if (newest > seen && Date.now() - newest < 3 * DAY) {
         if (!dot) btn.insertAdjacentHTML("beforeend", '<span class="dot" aria-hidden="true"></span>');
-        btn.title = "Manual: something's new (press ?)";
+        btn.title = "Nova Manual: something's new (press ?)";
       } else if (dot) dot.remove();
     }
 
@@ -429,7 +429,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       if (!this.isOpen) {
         panel.innerHTML = `<div class="sky">${"<i></i>".repeat(18)}</div>
           <header class="top">
-            <div class="brand"><span class="book">${ICON.book}</span><div><div class="kicker">Nova Agent</div><h2>Manual</h2></div></div>
+            <div class="brand"><span class="book">${ICON.book}</span><div><div class="kicker">Nova Agent</div><h2>Nova Manual</h2></div></div>
             <label class="search">${ICON.search}<input type="search" placeholder="Search every app's manual" aria-label="Search the manual" autocomplete="off" spellcheck="false"><kbd>/</kbd></label>
             <button class="x" type="button" aria-label="Close the manual">${ICON.x}</button>
           </header>
@@ -554,7 +554,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         })
         .join("");
       return `
-        <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">✺</span><div class="who"><div class="kicker">Manual</div><h1>The Nova Agent</h1><p>${esc((s && s.tagline) || "Every Nova app: how to use it, how it's built, its story so far and what's changing.")}</p>
+        <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">✺</span><div class="who"><div class="kicker">Nova Manual</div><h1>The Nova Agent</h1><p>${esc((s && s.tagline) || "Every Nova app: how to use it, how it's built, its story so far and what's changing.")}</p>
           <div class="pills"><span class="pill">${d.apps.length} apps</span><span class="pill">Updated ${esc(ago(d.built))}</span><span class="pill">Press <b>?</b> on any Nova app to open this</span></div></div></div>
         <div class="section-title">The apps</div>
         <div class="apps">${cards}</div>
@@ -620,7 +620,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
           day = d;
           out += `<div class="day">${esc(dayOf(c.date))}</div><div class="line">`;
         }
-        out += `<div class="commit" data-v="--i:${Math.min(i++, 12)};--app:${a.colour}"><div class="s">${esc(c.subject)}</div><div class="m">${showApp ? `<span class="tag" data-v="--c:${a.colour}">${esc(a.repo === "nb/novacane-worker" ? "Nova Bot & Portal" : a.name)}</span>` : ""}<span>${esc(timeOf(c.date))}</span><code>${esc(c.hash)}</code></div>${c.body ? `<details><summary>More about this change</summary><pre>${esc(c.body)}</pre></details>` : ""}</div>`;
+        out += `<div class="commit" data-v="--i:${Math.min(i++, 12)};--app:${a.colour}"><div class="s">${esc(c.subject)}</div><div class="m">${showApp ? `<span class="tag" data-v="--c:${a.colour}">${esc(a.repo === "nb/novacane-worker" ? "Nova Bot & Nova Portal" : a.name)}</span>` : ""}<span>${esc(timeOf(c.date))}</span><code>${esc(c.hash)}</code></div>${c.body ? `<details><summary>More about this change</summary><pre>${esc(c.body)}</pre></details>` : ""}</div>`;
       }
       return day ? out + "</div>" : out;
     }
@@ -662,7 +662,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         for (const c of a.news) add(a, "new", c, c.text, `${a.name} · What's new`);
         if (!repos.has(a.repo)) {
           repos.add(a.repo);
-          for (const c of a.history.commits) add(a, "history", { id: "", title: c.subject }, c.body || "", `${a.repo === "nb/novacane-worker" ? "Nova Bot & Portal" : a.name} · History · ${shortDay(c.date)}`);
+          for (const c of a.history.commits) add(a, "history", { id: "", title: c.subject }, c.body || "", `${a.repo === "nb/novacane-worker" ? "Nova Bot & Nova Portal" : a.name} · History · ${shortDay(c.date)}`);
         }
       }
       hits.sort((x, y) => y.rank - x.rank);

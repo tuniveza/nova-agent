@@ -168,7 +168,7 @@ export function readCalendar(): CalendarData {
     writeFileSync(`${file}.tmp`, JSON.stringify(good, null, 2));
     renameSync(`${file}.tmp`, file);
     trace("task", "error", `calendar.json was damaged: went back to the last good copy. The damaged one is kept as ${aside}.`);
-    void sendAlert("Calendar: calendar.json was damaged", `Nova Agent went back to the last good copy; the most recent change may need doing again. The damaged file is kept as ${aside}.`);
+    void sendAlert("Nova Calendar: calendar.json was damaged", `Nova Agent went back to the last good copy; the most recent change may need doing again. The damaged file is kept as ${aside}.`);
     return good;
   }
 }
