@@ -78,7 +78,7 @@
   .suite-top { position: relative; display: grid; justify-items: center; text-align: center; gap: 4px; }
   .suite-top p { margin: 0; }
   .suite-x { position: absolute; right: 0; top: 0; }
-  .suite-dlg .suite-groups { max-height: min(64vh, 640px); overflow-y: auto; padding: 4px; }
+  .suite-dlg .suite-groups { max-height: min(64vh, 640px); max-height: min(64dvh, 640px); overflow-y: auto; padding: 4px; }
   .suite-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
   /* Centred text (on unless switched off): in the Panels window a short row of tiles sits in the middle */
   @media (min-width: 600px) { :root[data-centred] #suite .suite-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 230px)); justify-content: center; } }
@@ -190,7 +190,7 @@
   /* Missions: compact cards, one under another */
   #missions .mission { padding: 10px 14px; border-radius: 16px; }
   #missions .m-badge { display: none; }
-  #missions .mission .sum { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12.5px; }
+  #missions .mission .sum { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12.5px; overflow-wrap: anywhere; }
   #missions .mission h4 { font-size: 15px !important; padding-right: 18px; }
   #missions .mission-top { gap: 12px; }
   #missions .ring { width: 42px; height: 42px; font-size: 10.5px; }
@@ -321,7 +321,8 @@
   .bubble strong { color: #fff; }
   .msg.user .bubble strong { color: inherit; }
   .bubble code { font-family: var(--f-mono); font-size: .88em; padding: .05em .35em; border-radius: 6px; background: rgba(0, 0, 0, .3); }
-  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+  .action { max-width: 100%; overflow-wrap: anywhere; } /* a long file name wraps inside its chip */
   .action { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong); background: color-mix(in srgb, var(--accent) 16%, transparent); font-family: var(--f-mono); font-size: 10.5px; color: var(--soft); }
   .action.removed { border-color: color-mix(in srgb, #E5484D 50%, transparent); background: color-mix(in srgb, #E5484D 12%, transparent); }
   .action.looked { border-color: var(--line); background: none; color: var(--muted); }
@@ -366,19 +367,19 @@
   .fcard { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center; padding: 10px 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); background: linear-gradient(120deg, color-mix(in srgb, var(--gold) 9%, var(--panel)), color-mix(in srgb, var(--panel-2) 60%, transparent)); animation: quest-in .4s cubic-bezier(.2,.8,.2,1) both; }
   .fcard .ficon { grid-row: span 2; width: 40px; height: 46px; border-radius: 8px 14px 8px 8px; display: grid; place-items: end center; padding-bottom: 6px; font-family: var(--f-mono); font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--deep); background: linear-gradient(160deg, #fff, var(--gold)); box-shadow: 0 6px 16px -8px var(--gold); position: relative; }
   .fcard .ficon::before { content: ""; position: absolute; top: 0; right: 0; width: 12px; height: 12px; border-radius: 0 12px 0 6px; background: color-mix(in srgb, var(--gold) 60%, #000); opacity: .45; }
-  .fcard .ftitle { min-width: 0; font-weight: 700; color: #fff; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .fcard .fmeta { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fcard .ftitle { min-width: 0; font-weight: 700; color: #fff; font-size: 14px; overflow-wrap: anywhere; } /* a long title wraps (all of it shows) */
+  .fcard .fmeta { min-width: 0; font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); overflow-wrap: anywhere; }
   .fcard .fbtns { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .fcard .fbtns a { text-decoration: none; }
   .files-dlg { width: min(720px, calc(100vw - 24px)); }
-  .files-list { display: grid; gap: 8px; max-height: min(62vh, 640px); overflow-y: auto; padding-right: 2px; }
+  .files-list { display: grid; gap: 8px; max-height: min(62vh, 640px); max-height: min(62dvh, 640px); overflow-y: auto; padding-right: 2px; }
   .fv-dlg { width: min(980px, calc(100vw - 24px)); }
   .fv-head { display: flex; align-items: center; gap: 12px; padding-right: 40px; flex-wrap: wrap; }
   .fv-head .fwords { flex: 1; min-width: 200px; }
   .fv-head .fbtns { display: flex; gap: 6px; flex-wrap: wrap; }
   .fv-head .fbtns a { text-decoration: none; }
-  .fv-body { max-height: min(70vh, 760px); overflow: auto; padding: 18px 22px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 55%, transparent); }
-  .fv-body iframe { width: 100%; height: min(66vh, 720px); border: 0; border-radius: 12px; background: #fff; }
+  .fv-body { max-height: min(70vh, 760px); max-height: min(70dvh, 760px); overflow: auto; padding: 18px 22px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 55%, transparent); }
+  .fv-body iframe { width: 100%; height: min(66vh, 720px); height: min(66dvh, 720px); border: 0; border-radius: 12px; background: #fff; }
   .doc { font-size: 14.5px; line-height: 1.62; color: var(--text); }
   .doc h1, .doc h2, .doc h3, .doc h4 { font-family: var(--f-display); color: #fff; line-height: 1.2; margin: 1.1em 0 .45em; }
   .doc h1 { font-size: 26px; font-stretch: 112%; font-weight: 900; margin-top: 0; }
@@ -679,7 +680,7 @@
 
   /* ===== The mission view: the whole plan ===== */
   dialog.rhythm.mission-view { width: min(1000px, calc(100vw - 24px)); }
-  .mv { position: relative; max-height: min(88vh, 900px); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 12px; padding: 18px 20px; }
+  .mv { position: relative; max-height: min(88vh, 900px); max-height: min(88dvh, 900px); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 12px; padding: 18px 20px; }
   .mv-head { display: flex; gap: 16px; align-items: center; padding-right: 40px; }
   .mv-head .ring { width: 64px; height: 64px; font-size: 13px; }
   .mv-head h3 { font-size: 21px; background: linear-gradient(100deg, #fff, var(--gold), #fff); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: quest-flow 6s linear infinite; }

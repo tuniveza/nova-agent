@@ -727,3 +727,9 @@ body { height: 100%; height: 100dvh; min-height: 0; overscroll-behavior: none; }
 /* Inside Nova Agent the app's title sits centred at the top of the panel (Nova Agent draws it),
    so Notes' own title on the left steps aside: one title, never two */
 html.embed .topbar .brand { display: none; }
+
+/* Everything fits (scripts/check-fit.mjs): a pop-up or menu taller than the screen (a phone with its
+   keyboard up) scrolls inside itself instead of running off the bottom; a long link in a note's
+   snippet breaks onto the next line */
+.pop, .menu-pop { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; }
+.lib-snip { overflow-wrap: anywhere; }

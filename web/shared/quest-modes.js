@@ -64,7 +64,7 @@
     const w = menu.offsetWidth, h = menu.offsetHeight;
     menu.style.left = `${Math.max(8, Math.min(W - w - 8, r.left))}px`;
     const top = r.bottom + 6 + h <= H - 8 ? r.bottom + 6 : r.top - 6 - h >= 8 ? r.top - 6 - h : H - 8 - h;
-    menu.style.top = `${Math.max(8, top)}px`;
+    menu.style.top = `${Math.max(8, Math.min(H - 8 - h, top))}px`; // (an anchor half out of view: still on screen)
   }
   function pick(anchor, current) {
     close();

@@ -59,7 +59,7 @@ html.embed .embed-head > .top { position: relative; top: auto; }
   html.embed { --tabs-h: 0px !important; --tabs-gap: 0px !important; }
   html.embed .embed-head > .tabs {
     position: static; inset: auto; transform: none; width: auto; max-width: none; height: auto; margin: 0;
-    display: flex; flex-wrap: nowrap; gap: 6px; padding: 6px 10px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
+    display: flex; flex-wrap: nowrap; justify-content: flex-start; gap: 6px; padding: 6px 10px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
     border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none;
     background: rgba(var(--deep-rgb), 0.97); backdrop-filter: none; -webkit-backdrop-filter: none;
   }

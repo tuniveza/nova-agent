@@ -556,6 +556,8 @@ function drawTimeGrid(n) {
   for (const el of view.querySelectorAll(".col .ev")) {
     el.classList.toggle("slim", el.offsetWidth < 76);
     el.classList.toggle("thin", el.offsetWidth < 30);
+    // As many lines of its title as fit its height (a short card can't show six)
+    if (el.classList.contains("slim")) el.style.setProperty("--lines", String(Math.max(1, Math.floor((el.clientHeight - 4) / 12.6))));
   }
   // Open at the working day (or just before now, today)
   const key = `${prefs.view}:${first}`;

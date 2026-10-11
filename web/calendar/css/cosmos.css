@@ -332,3 +332,13 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
 /* "What to show": the Note cards swatch is a plain square like the others (it shares its class name
    with the cards on the time grid, and used to take their position and look) */
 .pop .sw.ev { position: static; flex: none; min-height: 0; padding: 0; border: 0 !important; border-radius: 4px; box-shadow: none !important; background: var(--lilac) !important; cursor: inherit; }
+
+/* ================= Everything fits (scripts/check-fit.mjs) ================= */
+/* A long word (a link, a name with no spaces) breaks inside its card instead of being cut off at the side */
+.pill span, .pill > small, .ev strong, .daycard span, .row-item strong, .row-item small, .skychip span { overflow-wrap: anywhere; }
+/* A day card keeps its height in a busy day (it used to be squashed to a sliver under the cards) */
+.cell > .daycard, .cell > .num { flex-shrink: 0; }
+/* A short narrow card shows as many lines of its title as it has room for (set by cal.js), then … */
+.ev.slim strong { -webkit-line-clamp: var(--lines, 6); line-clamp: var(--lines, 6); }
+/* "What to show" (and any pop-up under the bar): on a short screen it scrolls inside instead of running off the bottom */
+.pop { max-height: calc(100vh - 76px); max-height: calc(100dvh - 76px); overflow-y: auto; overscroll-behavior: contain; }

@@ -599,7 +599,8 @@ html.embed .pv .hero { --stage: min(86vw, 400px, 40vh); }
   #alert-list .actions { margin-top: 8px; }
 
   /* Chats: two lines of the question at most */
-  #chat-list .card-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  /* The question wraps in full (it's never more than 120 letters), so its Enquiry pill always shows */
+  #chat-list .card-title { overflow-wrap: anywhere; }
   html[data-align="left"] #view-chats .hint { text-align: left; }
 
   /* You: a smaller planet, so the buttons are on the first screen */

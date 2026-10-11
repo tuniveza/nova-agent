@@ -384,6 +384,7 @@
     x = Math.max(8, Math.min(innerWidth - w - 8, x));
     let y = rect.bottom + gap;
     if (y + h > innerHeight - 8) y = Math.max(8, rect.top - h - gap);
+    y = Math.max(8, Math.min(y, innerHeight - h - 8)); // no room either side (a short screen): as low as it fits
     el.style.left = `${Math.round(x)}px`;
     el.style.top = `${Math.round(y)}px`;
   }
