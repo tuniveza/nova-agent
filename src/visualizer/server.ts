@@ -17,7 +17,7 @@
 // SSH tunnel:  ssh -L 4545:localhost:4545 your-vps
 
 import { fromOurPage, passOn, session, signIn, signOut } from "../signin";
-import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
@@ -310,6 +310,30 @@ app.use("/notes-api/*", async (c, next) => (fromOurPage(c.req.raw) ? next() : c.
 app.all("/notes-api/*", (c) => passOn(c.req.raw));
 // Nova Agent's front page: "Today in music" (the live charts and musicians' photos come from Nova Bot)
 app.get("/music-world", (c) => passOn(c.req.raw));
+
+// Which version of the pages this PC is serving (web/shared/update.js asks, like it asks Nova Bot
+// online): the newest change to any file in web/, so an open Nova Agent refreshes itself after an
+// update here too. Worked out at most every 30 seconds.
+let pageVersion = { at: 0, version: "" };
+function newestChange(dir: string): number {
+  let newest = 0;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
+    const full = resolve(dir, entry.name);
+    newest = Math.max(newest, entry.isDirectory() ? newestChange(full) : statSync(full).mtimeMs);
+  }
+  return newest;
+}
+app.get("/app-version", (c) => {
+  if (Date.now() - pageVersion.at > 30_000) {
+    try {
+      pageVersion = { at: Date.now(), version: `pc-${Math.round(newestChange(web("")))}` };
+    } catch {
+      pageVersion = { at: Date.now(), version: pageVersion.version || "pc" };
+    }
+  }
+  return c.json({ version: pageVersion.version }, 200, { "Cache-Control": "no-store" });
+});
 app.get("/music-world/*", (c) => passOn(c.req.raw));
 
 // ---- Admin, as a panel: Nova Bot's admin pages, as the person signed in on this computer ----

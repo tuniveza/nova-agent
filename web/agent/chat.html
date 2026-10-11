@@ -441,7 +441,7 @@
   .stats { display: flex; gap: 8px; flex-wrap: wrap; }
   .stat { padding: 6px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 55%, transparent); font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
   .stat b { display: block; font-family: var(--f-display); font-stretch: 112%; font-size: 17px; color: #fff; }
-  .stat.warn b { color: #FFB86B; }
+  .stat.warn b { color: var(--warn, #FFB86B); }
 
   .now-card { position: relative; margin: 0 0 18px; padding: 16px 18px; border-radius: 20px; border: 1px solid transparent;
     background: linear-gradient(color-mix(in srgb, var(--panel-2) 92%, transparent), color-mix(in srgb, var(--panel-2) 92%, transparent)) padding-box, var(--edge) border-box;
@@ -464,7 +464,7 @@
   .tl-card.done { opacity: .55; }
   .tl-card.done .tl-title { text-decoration: line-through; text-decoration-color: var(--hi); }
   .tl-card.doing { box-shadow: 0 0 0 1px var(--hi), 0 0 24px -8px var(--hi); }
-  .tl-card.risk { border-left-color: #FFB86B; }
+  .tl-card.risk { border-left-color: var(--warn, #FFB86B); }
   .tl-item.past .tl-card:not(.done):not(.doing) { opacity: .7; }
   .tl-title { font-weight: 600; color: #fff; }
   .tl-card { min-width: 0; overflow-wrap: anywhere; }
@@ -504,7 +504,7 @@
   .tl-card.quest:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -22px var(--hi); }
   .tl-card.quest.done { animation: none; opacity: .55; } .tl-card.quest.done::before, .tl-card.quest.done::after { animation: none; }
   .tl-card.quest.doing { box-shadow: 0 0 0 1px var(--hi), 0 0 30px -6px var(--hi); animation: quest-in .5s both, quest-breathe 2.4s ease-in-out infinite; }
-  .tl-card.quest.risk { background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)) padding-box, linear-gradient(135deg, #FFB86B, color-mix(in srgb, #FFB86B 30%, transparent)) border-box; }
+  .tl-card.quest.risk { background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)) padding-box, linear-gradient(135deg, var(--warn, #FFB86B), color-mix(in srgb, var(--warn, #FFB86B) 30%, transparent)) border-box; }
   /* Each quest wears its mode's colour (Waiting, Soon, Working On It...: /shared/quest-modes.css,
      tinted toward the theme): the card, its edge, its glow and its title */
   .tl-card.quest.qm-tinted, .now-card.qm-tinted {
@@ -522,7 +522,7 @@
   .q-tag, .m-tag, .risk-tag, .m-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
   .q-tag { color: var(--on-accent); background: linear-gradient(120deg, var(--hi), var(--accent-2), var(--hi)); background-size: 200% 100%; box-shadow: 0 4px 14px -6px var(--hi); animation: tag-flow 4s linear infinite; }
   .m-tag { color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent); background: color-mix(in srgb, var(--gold) 10%, transparent); letter-spacing: .08em; }
-  .risk-tag { color: #FFB86B; border: 1px solid #FFB86B88; animation: risk-pulse 1.6s ease-in-out infinite; }
+  .risk-tag { color: var(--warn, #FFB86B); border: 1px solid rgba(var(--warn-rgb, 255, 184, 107), .53); animation: risk-pulse 1.6s ease-in-out infinite; }
   .tl-card.quest .tl-title { font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 16.5px; letter-spacing: .01em; }
   .now-kicker { animation: tag-glow 2.4s ease-in-out infinite; }
   /* The current quest glows and breathes, with a light sweeping round its edge */
@@ -539,7 +539,7 @@
   .mission::after { content: "✦"; position: absolute; right: 16px; top: 12px; color: var(--gold); text-shadow: 0 0 12px var(--gold); animation: star-spin 8s linear infinite, tag-glow 3s ease-in-out infinite; }
   .mission h4 { font-size: 19px !important; background: linear-gradient(100deg, #fff, var(--gold), #fff); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent !important; animation: quest-flow 6s linear infinite; }
   .m-badge { margin-bottom: 10px; color: #1a1206; background: linear-gradient(120deg, var(--gold), #fff3d6, var(--gold)); background-size: 200% 100%; box-shadow: 0 4px 16px -6px var(--gold); animation: tag-flow 5s linear infinite; }
-  .mission.risk { box-shadow: 0 0 0 1px #FFB86B66, 0 18px 46px -24px #FFB86B; }
+  .mission.risk { box-shadow: 0 0 0 1px rgba(var(--warn-rgb, 255, 184, 107), .4), 0 18px 46px -24px var(--warn, #FFB86B); }
   .ring { animation: ring-fill 1.4s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes ring-fill { from { --p: 0; } }
   @keyframes quest-in { from { opacity: 0; transform: translateY(12px) scale(.98); } }
@@ -548,13 +548,13 @@
   @keyframes quest-breathe { 50% { box-shadow: 0 0 0 1px var(--hi), 0 0 44px -4px var(--hi); } }
   @keyframes tag-flow { to { background-position: 200% 0; } }
   @keyframes tag-glow { 50% { text-shadow: 0 0 14px var(--hi); filter: brightness(1.25); } }
-  @keyframes risk-pulse { 50% { box-shadow: 0 0 14px -2px #FFB86B; } }
+  @keyframes risk-pulse { 50% { box-shadow: 0 0 14px -2px var(--warn, #FFB86B); } }
   @keyframes sweep { to { --sweep: 360deg; } }
   .tl-meta { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
   .tl-meta .chip-m { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .06em; background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--soft); }
   .tl-card .row-btns { margin-top: 8px; }
   .prio { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
-  .prio.critical { color: #FF8A8A; } .prio.high { color: #FFB86B; } .prio.normal { color: var(--lilac); } .prio.low { color: var(--muted); }
+  .prio.critical { color: var(--bad, #FF8A8A); } .prio.high { color: var(--warn, #FFB86B); } .prio.normal { color: var(--lilac); } .prio.low { color: var(--muted); }
   .now-line { position: relative; height: 0; margin: 2px 0 2px 74px; border-top: 2px solid var(--hi); box-shadow: 0 0 10px var(--hi); }
   .now-line::before { content: "NOW"; position: absolute; left: -74px; top: -8px; width: 62px; text-align: right; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .2em; color: var(--hi); }
   .empty { padding: 24px; border-radius: 18px; border: 1px dashed var(--line); text-align: center; color: var(--muted); }
@@ -603,7 +603,7 @@
   .mission .sum { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
   .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .badge { padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
-  .badge.warn { border-color: #FFB86B88; color: #FFB86B; }
+  .badge.warn { border-color: rgba(var(--warn-rgb, 255, 184, 107), .53); color: var(--warn, #FFB86B); }
   .badge.ok { border-color: #5CFFC088; color: #5CFFC0; }
   .mission details { margin-top: 10px; }
   .mission summary { cursor: pointer; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--lilac); }
@@ -613,7 +613,7 @@
   .q-list .tick.on { background: var(--grad); border-color: transparent; color: #fff; }
   .q-list .when { font-family: var(--f-mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
   .q-list .done-t { color: var(--muted); text-decoration: line-through; }
-  .q-list .risk-t { color: #FFB86B; }
+  .q-list .risk-t { color: var(--warn, #FFB86B); }
 
   /* Pop-ups */
   .toasts { position: fixed; right: 18px; bottom: 18px; z-index: 50; display: grid; gap: 10px; width: min(380px, calc(100vw - 36px)); }
@@ -700,7 +700,7 @@
   .mv-rows { display: grid; gap: 6px; }
   .mv-row { display: grid; grid-template-columns: 22px 118px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 60%, transparent); font-size: 13.5px; }
   .mv-row.done { opacity: .55; } .mv-row.done .t { text-decoration: line-through; text-decoration-color: var(--gold); }
-  .mv-row.risk .t { color: #FFB86B; }
+  .mv-row.risk .t { color: var(--warn, #FFB86B); }
   .mv-row time { font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
   .mv-row .t { min-width: 0; color: #fff; }
   .mv-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
@@ -1127,10 +1127,10 @@
     quest: { icon: '✦', label: 'Quest', hint: 'One task, fitted into your day', send: 'Add quest', colour: 'var(--hi)' },
     repeat: { icon: '∞', label: 'Repeating quest', hint: 'Comes back each time it’s due, until you end it', send: 'Set it up', colour: 'var(--lilac)' },
     pulse: { icon: '⚡', label: 'Pulse', hint: 'A quick repeat on its own exact timer', send: 'Start it', colour: '#5CE1FF' },
-    block: { icon: '⛔', label: 'Blocked time', hint: 'Quests move out of the way', send: 'Block it', colour: '#FF8A8A' },
+    block: { icon: '⛔', label: 'Blocked time', hint: 'Quests move out of the way', send: 'Block it', colour: 'var(--bad, #FF8A8A)' },
     update: { icon: '✓', label: 'Quest update', hint: 'Marks a quest done, started, skipped or moved', send: 'Update', colour: '#5CFFC0' },
     calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Calendar', send: 'Add it', colour: '#9DB4FF' },
-    studio: { icon: '♫', label: 'Studio bookings', hint: 'Looks at Acuity (read-only)', send: 'Check', colour: '#FFB86B' },
+    studio: { icon: '♫', label: 'Studio bookings', hint: 'Looks at Acuity (read-only)', send: 'Check', colour: 'var(--warn, #FFB86B)' },
     ask: { icon: '?', label: 'Question', hint: 'Nova Agent answers, using your plan', send: 'Ask', colour: 'var(--soft)' },
     chat: { icon: '✦', label: 'Nova Agent', hint: 'Just talking to Nova Agent', send: 'Send', colour: 'var(--muted)' },
   };
@@ -1919,7 +1919,7 @@
     const atRisk = st.quests.filter((q) => q.atRisk && q.status !== 'done' && q.status !== 'skipped').length;
     const r = st.rhythm;
 
-    let html = `<div class="day-head"><div><div class="day-sub">TODAY · up ${r.wake} · sleep ${r.sleep}${r.paceLimits === false ? ' · <span style="color:#FFB86B">⚡ pace limits off</span>' : ''}</div><h3>${escH(dayLong(today)).replace(/^(\w+)/, '<span>$1</span>')}</h3></div>
+    let html = `<div class="day-head"><div><div class="day-sub">TODAY · up ${r.wake} · sleep ${r.sleep}${r.paceLimits === false ? ' · <span style="color:var(--warn, #FFB86B)">⚡ pace limits off</span>' : ''}</div><h3>${escH(dayLong(today)).replace(/^(\w+)/, '<span>$1</span>')}</h3></div>
       <div class="stats"><div class="stat"><b>${quests.length}</b>quests</div><div class="stat"><b>${(plannedMin / 60).toFixed(1)}h</b>planned</div><div class="stat"><b>${done}</b>done</div>${atRisk ? `<div class="stat warn"><b>${atRisk}</b>at risk</div>` : ''}</div></div>`;
 
     const cur = st.current;
