@@ -19,7 +19,12 @@
 // error|message|welcome|none".
 // Switched off and on with NovaSfx.setEnabled(false/true); remembered on the device.
 // The extras (scrolling, typing, sliders, dragging, hovering) are barely there and have their own
-// switch, NovaSfx.setExtraEnabled(false/true), also remembered on the device.
+// switch, NovaSfx.setExtraEnabled(false/true), also remembered on the device (off to begin with).
+// With it on come the gentle, tactile extras too: a velvety whisper while you keep scrolling
+// (or drag a scrollbar), soft fabric when the mouse arrives on a sheet, a soft brush sliding the
+// way a tab moved, a felt touch under switches, a shimmer when the theme changes and a warm
+// unfolding when a panel opens. Each one is varied a little every time, and they keep well apart
+// (at most 24 extras a minute).
 //   window.NovaSfx = { play(name), enabled(), setEnabled(on), toggle(),
 //                      extraEnabled(), setExtraEnabled(on), toggleExtra() }
 (() => {
@@ -95,6 +100,14 @@
     if (!AC) return null;
     if (!ctx) {
       ctx = new AC();
+      desk();
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+  // The mixing desk on the current sound maker (the live one, or an offline one for checks)
+  function desk() {
+    {
       // Everything meets in a gentle limiter, then the overall volume
       const limit = ctx.createDynamicsCompressor();
       limit.threshold.value = -20;
@@ -139,8 +152,6 @@
       echoOut.connect(limit);
       echoOut.connect(wet);
     }
-    if (ctx.state === "suspended") ctx.resume();
-    return ctx;
   }
 
   // Where a sound sits, left (-1) to right (1); old Safari has no panner, so it stays centred
@@ -505,6 +516,111 @@
     tidy(a, [a, b, bAmt, amp, out]);
   }
 
+  // ---- The gentle extras' own textures: soft, tactile, close-up (like ASMR), never a beep ----
+  // A little different every time: moved at random within a narrow range
+  const vary = (x, spread) => x * (1 + (Math.random() * 2 - 1) * spread);
+  function lowpass(freq, q = 0.5) {
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = freq;
+    f.Q.value = q;
+    return f;
+  }
+
+  // Soft fabric: a slow breath of low, filtered noise brushing past (a sheet drifting by, a tab
+  // sliding across), with an optional warm under-tone
+  function fabric(at, { gain = 0.01, length = 0.8, from = 300, to = 700, pan = 0, panTo = pan, under = 0, room: r = 0.5 } = {}) {
+    const t = ctx.currentTime + at;
+    length = vary(length, 0.12);
+    const out = place(pan, { room: r });
+    if (out.pan) { out.pan.setValueAtTime(pan, t); out.pan.linearRampToValueAtTime(panTo, t + length); }
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.Q.value = vary(0.7, 0.2);
+    bp.frequency.setValueAtTime(vary(Math.min(from, 1400), 0.1), t);
+    bp.frequency.exponentialRampToValueAtTime(vary(Math.min(to, 1400), 0.1), t + length);
+    const lp = lowpass(1400);
+    const amp = ctx.createGain();
+    amp.gain.value = 0;
+    ease(amp.gain, t, vary(gain, 0.15), length * 0.45, length * 0.55);
+    const n = noise();
+    n.loop = true;
+    n.connect(bp).connect(lp).connect(amp).connect(out);
+    n.start(t, Math.random());
+    n.stop(t + length * 1.8 + 0.1);
+    const nodes = [n, bp, lp, amp, out];
+    if (under) {
+      const o = ctx.createOscillator();
+      o.frequency.value = vary(under * jitter, 0.006);
+      const og = ctx.createGain();
+      og.gain.value = 0;
+      ease(og.gain, t, gain * 0.5, length * 0.5, length * 0.6);
+      o.connect(og).connect(out);
+      o.start(t);
+      o.stop(t + length * 1.8 + 0.1);
+      nodes.push(o, og);
+    }
+    tidy(n, nodes);
+  }
+
+  // A felt touch (switches): a muffled, soft "thock", like pressing a felt-covered key
+  function felt(at, { gain = 0.02, freq = 140, pan = 0 } = {}) {
+    const t = ctx.currentTime + at;
+    const out = place(pan, { room: 0.25 });
+    const lp = lowpass(vary(420, 0.12));
+    const amp = ctx.createGain();
+    amp.gain.value = 0;
+    ease(amp.gain, t, vary(gain, 0.15), 0.014, vary(0.09, 0.15));
+    const n = noise();
+    n.loop = true;
+    n.connect(lp).connect(amp).connect(out);
+    const body = ctx.createOscillator();
+    body.frequency.value = vary(freq * jitter, 0.04);
+    const bodyAmt = ctx.createGain();
+    bodyAmt.gain.value = 0;
+    ease(bodyAmt.gain, t, gain * 0.6, 0.02, 0.12);
+    body.connect(bodyAmt).connect(out);
+    n.start(t, Math.random());
+    body.start(t);
+    n.stop(t + 0.6);
+    body.stop(t + 0.6);
+    tidy(n, [n, lp, amp, body, bodyAmt, out]);
+  }
+
+  // A gentle shimmer (the theme changing): a few warm tones swelling in one after another, each
+  // softly glimmering, over a breath of air
+  let lastShimmer = -1;
+  function shimmer(at, { gain = 0.007, length = 2.6 } = {}) {
+    const chords = [[N.A4, N.Cs5, N.E5], [N.Fs4, N.A4, N.Cs5, N.E5], [N.D5, N.Fs5, N.A5], [N.B4, N.E5, N.Fs5], [N.E4, N.B4, N.Cs5, N.Fs5]];
+    let c = Math.floor(Math.random() * chords.length);
+    if (c === lastShimmer) c = (c + 1 + Math.floor(Math.random() * (chords.length - 1))) % chords.length;
+    lastShimmer = c;
+    const freqs = chords[c];
+    let when = at;
+    freqs.forEach((f, i) => {
+      const t = ctx.currentTime + when;
+      when += vary(0.18, 0.3);
+      const out = place((i / Math.max(1, freqs.length - 1) - 0.5) * 1.0, { room: 0.75, echo: 0.15 });
+      const amp = ctx.createGain();
+      amp.gain.value = 0;
+      ease(amp.gain, t, vary(gain, 0.15), vary(0.5, 0.25), length);
+      // The glimmer: the level breathes a little (after the swell, so it dies with it)
+      const glim = ctx.createGain();
+      glim.gain.value = 1;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = vary(5, 0.25);
+      const depth = ctx.createGain();
+      depth.gain.value = 0.25;
+      lfo.connect(depth).connect(glim.gain);
+      const o = ctx.createOscillator();
+      o.frequency.value = vary(f * jitter, 0.003);
+      o.connect(amp).connect(glim).connect(out);
+      for (const x of [o, lfo]) { x.start(t); x.stop(t + length * 1.6 + 0.3); }
+      tidy(o, [o, amp, glim, lfo, depth, out]);
+    });
+    fabric(at, { gain: 0.006, length: 1.4, from: 500, to: 1100, pan: -0.3, panTo: 0.3, room: 0.7 });
+  }
+
   // The notes: D lydian (D E F# G# A B C#), mostly in the middle-high range so nothing is shrill
   const N = { A4: 440, B4: 493.88, Cs5: 554.37, D5: 587.33, E5: 659.25, Fs5: 739.99, Gs5: 830.61, A5: 880, B5: 987.77, Cs6: 1108.73, D6: 1174.66, E6: 1318.51, Fs6: 1479.98, A6: 1760, D3: 146.83, E3: 164.81, A3: 220, B3: 246.94, Fs3: 185, D4: 293.66, E4: 329.63, Fs4: 369.99, Cs4: 277.18, Gs4: 415.3, D2: 73.42, A2: 110 };
   // Each button keeps its own note (v = 0, 1, 2…, worked out from what it's called), so different
@@ -609,6 +725,25 @@
       drop(steps[Math.round((1 - k) * (steps.length - 1))], 0, { gain: 0.012, length: 0.16 });
     },
     release: () => bell(N.A4, 0, { gain: 0.016, length: 0.6, attack: 0.05, glint: 0.1, warmth: 0.5 }),
+    // ---- The gentle extras (with the quiet extras' switch): soft, tactile, never twice the same ----
+    // Arriving on a sheet, dialog or menu with the mouse: soft fabric drifting by, a warm low hum
+    sheet: () => fabric(0, { gain: 0.006, length: 0.9, from: 260, to: 520, pan: wobble(), under: [N.D3, N.A2, N.E3][Math.floor(Math.random() * 3)] }),
+    // Switching tabs: a soft brush that slides the way you moved (k = −1 left, 1 right)
+    swish: (k) => {
+      const dir = k < 0 ? -1 : 1;
+      fabric(0, { gain: 0.01, length: 0.42, from: 520, to: 900, pan: -0.45 * dir, panTo: 0.45 * dir, room: 0.35 });
+    },
+    // A switch or tick box: a muffled felt touch under its tones (a little lower when off)
+    felt: (k) => felt(0, { gain: 0.024, freq: k === 0 ? 118 : 146, pan: wobble() }),
+    // The theme changing: a gentle shimmer
+    shimmer: () => shimmer(0),
+    // A panel opening: a warm, low unfolding and a breath of air
+    unfold: (k, v) => {
+      const root = at([N.D3, N.A2, N.E3, N.Fs3], v);
+      hum(root, 0, { gain: 0.006, length: 1.9 });
+      hum(root * 1.5, 0.12, { gain: 0.0035, length: 1.7 });
+      fabric(0.02, { gain: 0.006, length: 0.9, from: 280, to: 800, pan: -0.2, panTo: 0.2, room: 0.7 });
+    },
     // Hello (sound switched on): Novacane's chord, D–A–C♯–F♯, blooming over a soft swell
     welcome: () => {
       swell([N.D3, N.A3, N.Cs5], 0, { gain: 0.012, length: 2.4 });
@@ -765,34 +900,53 @@
     return h % 7;
   }
 
-  const EXTRAS = new Set(["scroll", "key", "slide", "lift", "nudge", "place", "hover"]);
-  const GAPS = { scroll: 260, key: 35, slide: 70, nudge: 60, hover: 120, scrub: 150 }; // the least time between two
+  const EXTRAS = new Set(["scroll", "key", "slide", "lift", "nudge", "place", "hover", "sheet", "swish", "felt", "shimmer", "unfold"]);
+  // The least time between two of the same (scrubbing a scrollbar: an occasional soft tone, never a run)
+  const GAPS = { scroll: 260, key: 35, slide: 70, nudge: 60, hover: 120, scrub: 1100, sheet: 4000, swish: 900, felt: 400, shimmer: 6000, unfold: 5000 };
+  // The gentle extras keep apart from each other too, and there's a cap on how many play in a
+  // minute (typing, sliders and nudges count a quarter each): calm, never chatty
+  const SOFT = new Set(["sheet", "swish", "felt", "shimmer", "unfold"]);
+  const SOFT_GAP = 350;
+  const PER_MINUTE = 24;
+  const extraLog = [];
+  let lastSoft = 0;
+  function allowExtra(name) {
+    const now = performance.now();
+    while (extraLog.length && now - extraLog[0].at > 60000) extraLog.shift();
+    if (SOFT.has(name) && now - lastSoft < SOFT_GAP) return false;
+    const w = name === "key" || name === "slide" || name === "nudge" ? 0.25 : 1;
+    if (extraLog.reduce((a, e) => a + e.w, 0) + w > PER_MINUTE) return false;
+    extraLog.push({ at: now, w });
+    if (SOFT.has(name)) lastSoft = now;
+    return true;
+  }
   const lastOf = {};
   const SMALL = new Set(["tap", "tab", "menu", "pick", "check", "uncheck", "nav"]);
   let lastSmall = 0;
   const lastVariant = {};
   let busy = 0;
   let busyAt = 0;
-  function play(name, arg, el) {
+  function play(name, arg, el, themeName) {
     if (!SOUNDS[name]) return;
     const extra = EXTRAS.has(name);
     if (extra ? !extraEnabled() : !enabled()) return;
     const now = performance.now();
     if (extra) {
       // Each extra keeps to its own pace, so it never turns into noise
-      if (now - (lastOf[name] || 0) < (GAPS[name] || 45)) return;
+      if (now - (lastOf[name] ?? -1e9) < (GAPS[name] || 45)) return;
       lastOf[name] = now;
       // Before the first real press, browsers keep sound off: don't wake it for these
       if (!ctx && name !== "lift" && name !== "place") return;
+      if (!allowExtra(name)) return;
     } else {
       // Never a pile-up of sounds from one press
       if (now - last < 45) return;
-      if (GAPS[name] && now - (lastOf[name] || 0) < GAPS[name]) return;
+      if (GAPS[name] && now - (lastOf[name] ?? -1e9) < GAPS[name]) return;
       if (GAPS[name]) lastOf[name] = now;
       // Calm, not chatty: the small sounds (taps, tabs, menus…) keep well apart, and the same
       // one doesn't come straight back
       if (SMALL.has(name)) {
-        if (now - lastSmall < 380 || now - (lastOf[name] || 0) < 1100) return;
+        if (now - lastSmall < 380 || now - (lastOf[name] ?? -1e9) < 1100) return;
         lastSmall = now;
         lastOf[name] = now;
       }
@@ -800,7 +954,7 @@
     }
     try {
       if (!ready()) return;
-      const theme = THEMES[themeOf(el)] || {};
+      const theme = THEMES[themeName || themeOf(el)] || {};
       // Never the same note twice running: each play moves to another of the button's notes
       let v = variantOf(el) + Math.floor(Math.random() * 7);
       if (v % 7 === lastVariant[name]) v += 1 + Math.floor(Math.random() * 3);
@@ -840,12 +994,24 @@
   }
 
   // Every press, anywhere (switches make their sound when they change, so they say on or off)
+  // Which way a tab moves: from the one chosen now to the one pressed (−1 left, 1 right)
+  function tabDirection(el) {
+    const group = el.closest('[role="tablist"], .tabs, .seg, .chips, nav, header, footer') || el.parentElement;
+    if (!group) return Math.random() < 0.5 ? -1 : 1;
+    const was = Array.from(group.querySelectorAll('[aria-selected="true"], [aria-pressed="true"], [aria-current="page"], [aria-current="true"], .active, .on')).find((x) => x !== el && !x.contains(el) && !el.contains(x));
+    if (!was) return Math.random() < 0.5 ? -1 : 1;
+    const a = was.getBoundingClientRect(), b = el.getBoundingClientRect();
+    return b.left + b.width / 2 < a.left + a.width / 2 ? -1 : 1;
+  }
   document.addEventListener(
     "click",
     (e) => {
       const el = e.target.closest('button, a[href], [role="button"], [role="tab"], [role="menuitem"], [role="menuitemradio"], [role="option"], summary, .chip, .tab, .theme-swatch');
       if (!el || el.disabled || el.matches('input[type="checkbox"], input[type="radio"]')) return;
-      play(soundFor(el), undefined, el);
+      const sound = soundFor(el);
+      play(sound, undefined, el);
+      // The gentle extras: a soft brush that slides the way the tab moved
+      if (sound === "tab" && extraEnabled()) play("swish", tabDirection(el), el);
     },
     true
   );
@@ -853,8 +1019,12 @@
     "change",
     (e) => {
       const el = e.target;
-      if (el.matches && el.matches('input[type="checkbox"], input[type="radio"]')) play(soundFor(el), undefined, el);
-      else if (el.matches && el.matches("select")) play("pick", undefined, el);
+      if (el.matches && el.matches('input[type="checkbox"], input[type="radio"]')) {
+        const sound = soundFor(el);
+        play(sound, undefined, el);
+        // The gentle extras: a felt touch under a switch or tick box
+        if (sound !== "none" && el.type === "checkbox") play("felt", el.checked ? 1 : 0, el);
+      } else if (el.matches && el.matches("select")) play("pick", undefined, el);
     },
     true
   );
@@ -891,8 +1061,70 @@
     { capture: true, passive: true }
   );
 
+  // ---- Scrolling: a velvety whisper that follows the scrolling ----
+  // Not a sound per step: one soft, continuous texture of warm filtered noise that only comes in
+  // once scrolling has gone on for a moment, swells gently with the speed, and fades away when
+  // the scrolling stops. Each panel tints it (Notes papery, Portal and the night sky deeper),
+  // and every run is a little different. Dragging a scrollbar's thumb makes it a touch fuller.
+  const TEXTURE = { notes: [1100, 1], calendar: [650, 0.8], portal: [420, 0.7], observatory: [360, 0.7], index: [700, 0.8], lossless: [520, 0.8] };
+  const VELVET = 0.016; // its level at full speed (before the overall volume): barely there
+  function velvetVoice(kind, theme, t) {
+    const [centre, q] = TEXTURE[theme] || [560, 0.8];
+    const n = noise();
+    n.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = vary(centre * (kind === "drag" ? 0.8 : 1), 0.1);
+    bp.Q.value = vary(q, 0.2);
+    const lp = lowpass(1500);
+    const amp = ctx.createGain();
+    amp.gain.value = 0;
+    const out = place((Math.random() - 0.5) * 0.4, { room: 0.35 });
+    n.connect(bp).connect(lp).connect(amp).connect(out);
+    n.start(t, Math.random() * 1.5);
+    return { n, bp, lp, amp, out, centre: bp.frequency.value, full: kind === "drag" ? 1.25 : 1, fed: 0 };
+  }
+  function velvetLevel(v, k, t) {
+    v.amp.gain.setTargetAtTime(k * VELVET * v.full * level, t, 0.18);
+    v.bp.frequency.setTargetAtTime(v.centre * (0.92 + 0.2 * k), t, 0.35);
+  }
+  function velvetFade(v, t) {
+    v.amp.gain.setTargetAtTime(0, t, 0.22);
+    v.n.stop(t + 1.6);
+    tidy(v.n, [v.n, v.bp, v.lp, v.amp, v.out]);
+  }
+  let velvet = null;
+  let velvetSince = 0;
+  let velvetLast = 0;
+  let velvetIdle = null;
+  function feelScroll(speed, el, kind) {
+    if (!ctx || !extraEnabled()) return;
+    const now = performance.now();
+    if (now - velvetLast > 250) velvetSince = now; // a new run of scrolling
+    velvetLast = now;
+    if (now - velvetSince < 300) return; // only sustained scrolling, never a flick's first moment
+    try {
+      if (!velvet) {
+        if (!allowExtra("scroll")) return; // one run counts as one extra sound
+        ready();
+        level = 1;
+        velvet = velvetVoice(kind, themeOf(el), ctx.currentTime);
+      }
+      if (now - velvet.fed > 60) {
+        velvet.fed = now;
+        velvetLevel(velvet, Math.pow(Math.min(1, speed / 2.5), 0.7), ctx.currentTime);
+      }
+    } catch (err) {
+      return;
+    }
+    clearTimeout(velvetIdle);
+    velvetIdle = setTimeout(() => {
+      if (velvet) { try { velvetFade(velvet, ctx.currentTime); } catch (err) {} velvet = null; }
+    }, 160);
+  }
+
   // ---- The extras, found by themselves ----
-  // Scrolling anywhere (the page or anything inside it): stronger the faster it moves
+  // Scrolling anywhere (the page or anything inside it): the velvet texture, fuller the faster
   const scrolled = new WeakMap();
   document.addEventListener(
     "scroll",
@@ -904,9 +1136,50 @@
       scrolled.set(el, { pos, at: performance.now() });
       if (!was) return;
       const speed = Math.abs(pos - was.pos) / Math.max(16, performance.now() - was.at); // px per ms
-      if (speed > 0.05) play("scroll", Math.min(1, speed / 3), el);
+      if (speed > 0.05) feelScroll(speed, el, grabbed === el ? "drag" : "scroll");
     },
     { capture: true, passive: true }
+  );
+  // Arriving on a sheet, dialog or menu with the mouse: soft fabric drifting by (once per sheet)
+  let onSheet = null;
+  document.addEventListener(
+    "pointerover",
+    (e) => {
+      if (e.pointerType !== "mouse" || !e.target.closest) return;
+      const el = e.target.closest('[role="dialog"], dialog[open], .sheet, .modal, .drawer, [role="menu"], [data-sheet]');
+      if (!el || el === onSheet) return;
+      onSheet = el;
+      play("sheet", undefined, el);
+    },
+    true
+  );
+  document.addEventListener("pointerout", (e) => { if (onSheet && !onSheet.contains(e.relatedTarget)) onSheet = null; }, true);
+  // The theme changing: a gentle shimmer
+  window.addEventListener("novathemechange", () => play("shimmer"));
+  // (and when the look for all of Nova Agent changes to another theme: look.js)
+  const lookOf = (d) => `${(d && d.theme) || ""}|${d && d.planet ? 1 : 0}`;
+  let lookWas = null;
+  try { lookWas = lookOf(JSON.parse(localStorage.getItem("nova-look") || "{}")); } catch (err) {}
+  window.addEventListener("novalookchange", (e) => {
+    const now = lookOf(e.detail);
+    if (now !== lookWas) play("shimmer");
+    lookWas = now;
+  });
+  // A panel opening (a panel's page loading in its frame, just after a press): a warm unfolding
+  let pressedAt = -1e9;
+  const pressed = () => (pressedAt = performance.now());
+  document.addEventListener("pointerdown", pressed, true);
+  document.addEventListener("keydown", pressed, true);
+  document.addEventListener(
+    "load",
+    (e) => {
+      const f = e.target;
+      if (!f || f.tagName !== "IFRAME" || performance.now() - pressedAt > 2500 || !f.getClientRects().length) return;
+      let path = "";
+      try { path = new URL(f.src, location.href).pathname; } catch (err) {}
+      play("unfold", undefined, f, themeFromPath(path));
+    },
+    true
   );
   // Typing in a box: one tiny touch per key (not for shortcuts or held keys)
   document.addEventListener(
@@ -962,5 +1235,49 @@
 
   // play(name) from a panel's own code sounds like that panel; play(name, undefined, element)
   // like the element's panel (and with that element's own note)
-  window.NovaSfx = { play, enabled, setEnabled, toggle: () => setEnabled(!enabled()), extraEnabled, setExtraEnabled, toggleExtra: () => setExtraEnabled(!extraEnabled()) };
+  // ---- Offline checks (scripts/audio-levels.mjs, test/audio-levels.spec.ts) ----
+  // Render one sound without a speaker and measure it: peak and loudness in dBFS. "velvet" is
+  // the scrolling texture, fed a run of scroll speeds (px per ms, one every 60 ms).
+  async function render(name, o = {}) {
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const rate = o.rate || 44100;
+    const seconds = o.seconds || 4;
+    const octx = new OAC(2, Math.ceil(rate * seconds), rate);
+    const saved = [ctx, dry, wet, echo, noiseBuf];
+    ctx = octx;
+    noiseBuf = null;
+    try {
+      desk();
+      level = 1;
+      jitter = 1 + (Math.random() - 0.5) * 0.008;
+      if (name === "velvet") {
+        const speeds = o.profile || [0.6, 1, 1.6, 2.4, 3, 3, 2.6, 2, 1.4, 1, 0.8, 0.6, 1.2, 2, 3.2, 3.6, 3, 2, 1, 0.5];
+        const v = velvetVoice(o.kind || "scroll", o.theme, 0.05);
+        speeds.forEach((s, i) => velvetLevel(v, Math.pow(Math.min(1, s / 2.5), 0.7), 0.05 + i * 0.06));
+        velvetFade(v, 0.05 + speeds.length * 0.06 + 0.16);
+      } else {
+        const theme = THEMES[o.theme] || {};
+        (theme[name] || SOUNDS[name])(typeof o.arg === "number" ? o.arg : undefined, o.variant || 0);
+      }
+    } finally {
+      [ctx, dry, wet, echo, noiseBuf] = saved;
+      level = 1;
+      jitter = 1;
+    }
+    const buf = await octx.startRendering();
+    let peak = 0;
+    let loud = 0;
+    const win = Math.floor(rate * 0.1);
+    const L = buf.getChannelData(0), R = buf.getChannelData(1);
+    for (let i = 0, w = 0, n = 0; i < L.length; i++) {
+      peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i]));
+      w += (L[i] * L[i] + R[i] * R[i]) / 2;
+      if (++n === win) { loud = Math.max(loud, w / n); w = 0; n = 0; }
+    }
+    const db = (x) => (x > 0 ? 20 * Math.log10(x) : -Infinity);
+    return { name, theme: o.theme || "agent", peakDb: db(peak), loudestDb: db(Math.sqrt(loud)), clipped: peak >= 1 };
+  }
+  const names = () => ({ sounds: Object.keys(SOUNDS), extras: Array.from(EXTRAS), soft: Array.from(SOFT), themes: Object.fromEntries(Object.entries(THEMES).map(([k, v]) => [k, Object.keys(v)])) });
+
+  window.NovaSfx = { play, enabled, setEnabled, toggle: () => setEnabled(!enabled()), extraEnabled, setExtraEnabled, toggleExtra: () => setExtraEnabled(!extraEnabled()), _render: render, _names: names };
 })();

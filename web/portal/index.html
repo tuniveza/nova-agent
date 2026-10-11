@@ -1162,9 +1162,13 @@
     <section class="option-group">
       <p class="kicker">Sound</p>
       <label class="option-switch"><span>Sound effects on taps, tabs and switches</span><input type="checkbox" role="switch" id="sfx-switch" data-sfx="none"></label>
-      <label class="option-switch"><span>Quiet extras: scrolling, typing, sliders, dragging and hovering</span><input type="checkbox" role="switch" id="sfx-extra-switch" data-sfx="none"></label>
+      <label class="option-switch"><span>Quiet extras: scrolling, typing, sliders, dragging and hovering (and gentle extra sounds: sheets, tabs, switches, theme changes, panels opening)</span><input type="checkbox" role="switch" id="sfx-extra-switch" data-sfx="none"></label>
       <label class="option-switch"><span>Ping and banner when an alert arrives (app open)</span><input type="checkbox" role="switch" data-option="pings"></label>
       <div class="option-row"><span>Ambient music volume</span><input type="range" min="0" max="100" step="1" data-option="volume" aria-label="Ambient music volume"></div>
+      <!-- Music variations (shared/ambient.js): every listen is made from a code; keep one you like, or play one again -->
+      <div class="option-row"><span>Music variation</span><div class="chips wrap"><output id="music-seed" class="chip seed-code" aria-label="This variation's code">—</output><button class="chip" type="button" id="music-new" data-sfx="tab" title="A new random variation">New</button></div><span class="seed-piece" id="music-piece"></span></div>
+      <label class="option-switch"><span>Keep this variation (it plays every time; off: a new one each session)</span><input type="checkbox" role="switch" id="music-keep"></label>
+      <form class="option-row" id="music-replay"><span>Play a variation again</span><div class="chips seed-row"><input id="music-code" class="seed-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="Code" aria-label="Variation code"><button class="chip" type="submit" data-sfx="tab">Play</button></div></form>
     </section>
 
     <section class="option-group">

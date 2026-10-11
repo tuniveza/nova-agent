@@ -943,6 +943,11 @@ select option:checked { background: var(--accent); color: var(--on-accent); }
 .option-row input[type="range"] { width: min(320px, 100%); accent-color: var(--hi); }
 .option-switch { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--glass); cursor: pointer; text-align: left; }
 .option-switch input { width: 44px; height: 26px; flex: none; accent-color: var(--hi); cursor: pointer; }
+/* Music variation: its code, and a box to type one back in */
+.seed-code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.12em; cursor: text; user-select: all; }
+.seed-piece { font-size: 13px; color: var(--muted); min-height: 1em; }
+.chips.seed-row { flex-wrap: nowrap; align-items: center; }
+.seed-input { width: 7.5em; min-width: 0; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--glass); color: var(--text); font: inherit; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.12em; text-transform: uppercase; text-align: center; }
 .chips.wrap { flex-wrap: wrap; justify-content: center; }
 .option-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
 .option-action { justify-content: center; width: 100%; }
