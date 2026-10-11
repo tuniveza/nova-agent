@@ -1,0 +1,81 @@
+/* Scrollbars, the same in every panel: easy to grab, quiet until you need them.
+   Linked by every panel's page next to /shared/buttons.css.
+
+   - Chrome, Edge, Safari: a 14px-wide grab area. The thumb you see is slim (about 6px) while
+     you're just reading, and fills most of the 14px when the pointer is on it or you drag it.
+     It is never shorter than 40px, so even a very long page has something to hold.
+   - Firefox: the browser's normal (wider) bar, coloured from the theme, a little brighter
+     while the pointer is over the area that scrolls. (Firefox can't grow a bar on hover
+     without the page jumping, so it stays one width.)
+   - Colours come from the theme: softer on the page, a touch lighter on cards, panels and
+     dialogs so the bar shows up against them. Hover and drag use the theme's highlight.
+   - Places that hide their bar on purpose (a row of chips that scrolls sideways, for
+     example: scrollbar-width: none plus ::-webkit-scrollbar { display: none }) keep it hidden.
+   - On touch screens the bar stays thin: fingers scroll the page itself, not the bar.
+   - Nothing here animates, so it is calm for people who ask for reduced motion too. */
+
+/* ---- The colours, from the theme ---- */
+:root {
+  /* On the page */
+  --sb-thumb: color-mix(in srgb, var(--muted, #b997b5) 34%, transparent);
+  --sb-track: color-mix(in srgb, var(--text, #ebd3e7) 4%, transparent);
+  /* Pointer on it, or dragging */
+  --sb-thumb-hover: color-mix(in srgb, var(--hi, #ff5fa8) 70%, var(--text, #ebd3e7));
+  /* Pointer over the area that scrolls (Firefox) */
+  --sb-thumb-near: color-mix(in srgb, var(--muted, #b997b5) 55%, transparent);
+}
+/* On cards, panels and dialogs: a touch lighter, so it reads against the lighter surface */
+:where(.glass, dialog, .card, .panel, .sheet, .modal, .board, .subpanel, .dlg, [role="dialog"]) {
+  --sb-thumb: color-mix(in srgb, var(--text, #ebd3e7) 30%, transparent);
+  --sb-track: color-mix(in srgb, var(--text, #ebd3e7) 6%, transparent);
+  --sb-thumb-near: color-mix(in srgb, var(--text, #ebd3e7) 48%, transparent);
+}
+
+/* ---- Chrome, Edge and Safari ----
+   (":root" in front makes these win over the older, simpler scrollbar rules some pages still
+   carry, without beating a place's own "::-webkit-scrollbar { display: none }".) */
+:root::-webkit-scrollbar, :root ::-webkit-scrollbar { width: 14px; height: 14px; background: transparent; }
+/* The track: a faint groove, inset so it lines up with the slim thumb */
+:root::-webkit-scrollbar-track, :root ::-webkit-scrollbar-track {
+  background-color: var(--sb-track); background-clip: padding-box;
+  border: 4px solid transparent; border-radius: 999px;
+}
+/* The thumb: transparent borders make it look slim while the whole 14px stays grabbable */
+:root::-webkit-scrollbar-thumb, :root ::-webkit-scrollbar-thumb {
+  background-color: var(--sb-thumb); background-image: none; background-clip: padding-box;
+  border: 4px solid transparent; border-radius: 999px;
+  min-height: 40px; min-width: 40px;
+}
+/* Pointer on the thumb, or dragging it: it fills out to about 12px in the highlight colour */
+:root::-webkit-scrollbar-thumb:hover, :root ::-webkit-scrollbar-thumb:hover,
+:root::-webkit-scrollbar-thumb:active, :root ::-webkit-scrollbar-thumb:active {
+  background-color: var(--sb-thumb-hover); border-width: 1px;
+}
+/* Where a sideways and an up-and-down bar meet */
+:root::-webkit-scrollbar-corner, :root ::-webkit-scrollbar-corner { background: transparent; }
+/* Touch screens: slim, no grab area to speak of (a finger scrolls the content) */
+@media (pointer: coarse) {
+  :root::-webkit-scrollbar, :root ::-webkit-scrollbar { width: 8px; height: 8px; }
+  :root::-webkit-scrollbar-track, :root ::-webkit-scrollbar-track,
+  :root::-webkit-scrollbar-thumb, :root ::-webkit-scrollbar-thumb { border-width: 2px; }
+}
+
+/* In Chrome (and newer Safari), any scrollbar-width or scrollbar-color on a box switches off the
+   look above for that box. Several panels set "thin" plus a colour on their scrolling areas;
+   here those go back to "auto", so every bar gets the grabbable one. Not in Firefox (it uses
+   those properties, below). A box that hides its bar on purpose stays hidden: its own
+   "::-webkit-scrollbar { display: none }" still applies, and the known ones are left alone too. */
+@supports not (-moz-appearance: none) {
+  :where(*):not(:where(.strip, .menubar, .toolbar, .tabs, .suggest, .filters, .stats, .admin-switch)) {
+    scrollbar-width: auto !important;
+    scrollbar-color: auto !important;
+  }
+}
+
+/* ---- Firefox ---- */
+@supports (-moz-appearance: none) {
+  /* (Zero-specificity, so a place's own scrollbar-width, such as "none", always wins) */
+  :where(*) { scrollbar-width: auto; scrollbar-color: var(--sb-thumb) var(--sb-track); }
+  :where(*):hover { scrollbar-color: var(--sb-thumb-near) var(--sb-track); }
+  @media (pointer: coarse) { :where(*) { scrollbar-width: thin; } }
+}
