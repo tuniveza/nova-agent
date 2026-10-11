@@ -154,6 +154,9 @@
       centerSheet.replaceSync(on ? CENTER : "");
     } catch (err) {}
     document.documentElement.toggleAttribute("data-centred", on);
+    // One switch for all of it: Portal's and Index's Options → Alignment show the same choice, and
+    // every panel's styles that look at data-align follow it too
+    document.documentElement.setAttribute("data-align", on ? "center" : "left");
   }
   function apply() {
     const { theme, planet, center: centred } = read();

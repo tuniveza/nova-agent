@@ -164,13 +164,28 @@
   const defaults = { align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "today", menu: "top" };
   const root = document.documentElement;
 
-  // The saved options, with anything missing filled in
+  // The saved options, with anything missing filled in. Alignment is the same switch as Nova Agent's
+  // "Centre all text" (look.js keeps it, under "nova-look"): centred unless that is switched off.
   function get() {
+    let o;
     try {
-      return { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || "{}") };
+      o = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || "{}") };
     } catch (err) {
-      return { ...defaults };
+      o = { ...defaults };
     }
+    try {
+      o.align = JSON.parse(localStorage.getItem("nova-look") || "{}").center === false ? "left" : "center";
+    } catch (err) {}
+    return o;
+  }
+  // Alignment chosen here goes to that one switch (so the Panels window, and every panel, follow)
+  function setAlign(align) {
+    const center = align !== "left";
+    if (window.NovaLook) return window.NovaLook.setCenter(center);
+    try {
+      const look = JSON.parse(localStorage.getItem("nova-look") || "{}");
+      localStorage.setItem("nova-look", JSON.stringify({ ...look, center }));
+    } catch (err) {}
   }
 
   // Put them on the page (as attributes the styles look at)
@@ -188,6 +203,7 @@
 
   // Change some, remember them, and tell anyone listening
   function set(changes) {
+    if ("align" in changes) setAlign(changes.align);
     const o = { ...get(), ...changes };
     try {
       localStorage.setItem(KEY, JSON.stringify(o));
@@ -201,6 +217,7 @@
     try {
       localStorage.removeItem(KEY);
     } catch (err) {}
+    setAlign("center");
     apply(defaults);
     window.dispatchEvent(new CustomEvent("novaoptionschange", { detail: { ...defaults } }));
     return { ...defaults };
@@ -208,6 +225,8 @@
 
   apply(get());
   // Changed in another tab or window: follow it
-  window.addEventListener("storage", (e) => e.key === KEY && apply(get()));
+  window.addEventListener("storage", (e) => (e.key === KEY || e.key === "nova-look") && apply(get()));
+  // "Centre all text" switched in Nova Agent's Panels window, on this page: follow it here too
+  window.addEventListener("novalookchange", () => apply(get()));
   window.NovaOptions = { get, set, reset, defaults: { ...defaults } };
 })();
