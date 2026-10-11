@@ -90,7 +90,7 @@
       <h4 class="mw-title">Today in music</h4>
       <div class="mw-row">
         <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art></span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
-        <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic mw-mosaic">${D.genres.slice(0, 3).map((g) => `<img alt="" loading="lazy" src="${cover(g.cover)}" title="${esc(g.name)}">`).join("")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
+        <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic mw-mosaic">${D.genres.slice(0, 3).map((g) => `<img alt="" loading="lazy" src="${cover(g.cover)}" title="${esc(g.name)}" onerror="this.parentElement.hidden = true">`).join("")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
         <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${gearPic(gear)}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
         <button type="button" class="mw-card" data-mw="song" data-sfx="open"><span class="mw-pic">${art(cover(song.cover))}${ico("song")}</span><span class="mw-k">Song of the day</span><span class="mw-line">${esc(song.title)} · ${esc(song.artist)}</span></button>
         <button type="button" class="mw-card" data-mw="money" data-sfx="open"><span class="mw-pic"><img class="mw-art" alt="" loading="lazy" src="/music-world/photo/Record_shop?v=5" onerror="this.parentElement.hidden = true"></span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
@@ -121,7 +121,7 @@
     const k = card.dataset.mw;
     let html = "";
     if (k === "top") {
-      html = `<h5>Top 10 worldwide</h5>` + (top.length ? `<ol class="mw-list">${top.map((s) => `<li><img alt="" loading="lazy" src="${cover(s.art.replace(/\d+x\d+bb/, "300x300bb"))}"><span><b>${esc(s.title)}</b><small>${esc(s.artist)}</small></span></li>`).join("")}</ol><p class="mw-src">Most played on Apple Music across 12 countries, updated through the day</p>` : `<p>The charts couldn't be reached just now. Try again in a bit.</p>`);
+      html = `<h5>Top 10 worldwide</h5>` + (top.length ? `<ol class="mw-list">${top.map((s) => `<li><img alt="" loading="lazy" src="${cover(s.art.replace(/\d+x\d+bb/, "300x300bb"))}" onerror="this.hidden = true"><span><b>${esc(s.title)}</b><small>${esc(s.artist)}</small></span></li>`).join("")}</ol><p class="mw-src">Most played on Apple Music across 12 countries, updated through the day</p>` : `<p>The charts couldn't be reached just now. Try again in a bit.</p>`);
     } else if (k === "genres") {
       html = `<h5>Popular around the world</h5><ul class="mw-list plain">${D.genres.map((g) => `<li>${art(cover(g.cover))}<span><b>${esc(g.name)}</b><small>${esc(g.line)}</small></span></li>`).join("")}</ul>`;
     } else if (k === "gear") {
