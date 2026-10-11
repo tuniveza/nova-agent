@@ -10,6 +10,9 @@
 //   Browse   every file, grouped by scope (studio, staff, customers) and owner; tap one to open it
 //   Live     the most recently changed files, newest first, refreshed every 20 seconds
 //   Approve  facts waiting for a person to approve them
+// Only people allowed can change a file (the listing says, per file: "editable"): their own
+// memory, or anything for an admin. Admins also get Tidy up (in Options): a check for empty
+// files, junk facts and repeats that shows what it would remove first, and the 30-day bin.
 // The site's security rules allow no scripts or styles written inside the page, so it's all here.
 (() => {
   "use strict";
@@ -60,6 +63,7 @@
     newKind: "studio",
     editingPending: new Set(),
     signedIn: false,
+    admin: false, // an admin signed in to Portal (Tidy up is theirs)
   };
 
   // A file's key: which memory, whose, and which file
@@ -257,6 +261,8 @@
   }
   async function loadStats() {
     state.stats = await must(API + "/stats");
+    state.admin = state.stats.admin === true;
+    $("tidy-group").hidden = !state.admin;
   }
   async function loadPending() {
     const data = await must(API + "/pending");
@@ -528,6 +534,7 @@
       description: file.description || "",
       aliases: aliasText(file.aliases),
       editing: -1,
+      confirmLine: -1,
       addTag: "stated",
       addText: "",
       confirm: false,
@@ -554,6 +561,16 @@
     }
   }
 
+  // May this person change the file? (The listing says; studio-wide memory is for admins,
+  // a staff member's memory for them and admins.) The server checks again on every write.
+  function canEdit(key) {
+    const listed = state.files.find((x) => keyOf(x) === key);
+    return !listed || listed.editable !== false;
+  }
+  function readOnlyNote(f) {
+    return f.scope === "studio" ? "Studio-wide memory: only an admin can change it." : "Only its owner or an admin can change this.";
+  }
+
   function editorFor(key) {
     const d = state.drafts.get(key);
     const box = el("div", "editor");
@@ -562,6 +579,15 @@
       return box;
     }
     const f = d.file;
+    if (!canEdit(key)) {
+      const list = el("ul", "facts");
+      if (!d.lines.length) list.append(el("li", "facts-empty", "No facts yet."));
+      d.lines.forEach((line) => list.append(el("li", "fact", [el("p", "fact-text", [tagPill(line.tag), document.createTextNode(line.fact)])])));
+      box.append(list);
+      box.append(el("p", "read-only", readOnlyNote(f)));
+      box.append(el("p", "file-info", `Last written by ${f.source_app || "someone"} · ${ago(f.updated_at)}`));
+      return box;
+    }
 
     // "Someone changed it since you opened it"
     if (d.conflict) box.append(conflictPanel(key, d));
@@ -633,7 +659,8 @@
     if (d.confirm) {
       box.append(
         el("div", "confirm", [
-          el("p", "", `Delete ${f.path}${ownerLabel(f.scope, f.owner_id) ? " for " + ownerLabel(f.scope, f.owner_id) : ""} and its ${plural(parseBody(f.body).length, "fact")}? This can't be undone.`),
+          el("p", "", `Delete ${f.path}${ownerLabel(f.scope, f.owner_id) ? " for " + ownerLabel(f.scope, f.owner_id) : ""} and its ${plural(parseBody(f.body).length, "fact")}?`),
+          el("p", "confirm-sub", "An admin can put it back from the bin for 30 days."),
           el("div", "actions", [
             button("btn small danger solid", "Delete file", () => removeFile(key)),
             button("btn small ghost", "Keep it", () => {
@@ -737,14 +764,33 @@
     }
     const row = el("li", "fact" + (changed ? " " + changed : ""));
     row.append(el("p", "fact-text", [tagPill(line.tag), document.createTextNode(line.fact)]));
+    // Delete: asked in the line itself first (then Save, as with every change)
+    if (d.confirmLine === i) {
+      row.classList.add("asking");
+      row.append(
+        el("div", "fact-confirm", [
+          el("span", "", "Remove this fact?"),
+          button("btn small danger", "Remove", () => {
+            d.lines.splice(i, 1);
+            if (d.editing > i) d.editing--;
+            d.confirmLine = -1;
+            redrawEditor(key);
+          }),
+          button("btn small ghost", "Keep", () => {
+            d.confirmLine = -1;
+            redrawEditor(key);
+          }, { "data-sfx": "close" }),
+        ])
+      );
+      return row;
+    }
     const edit = button("icon-btn", "", () => {
       d.editing = i;
       redrawEditor(key, ".edit-text");
     }, { "aria-label": "Edit this fact", title: "Edit" });
     edit.append(icon(ICONS.edit));
     const del = button("icon-btn del", "", () => {
-      d.lines.splice(i, 1);
-      if (d.editing > i) d.editing--;
+      d.confirmLine = i;
       redrawEditor(key);
     }, { "aria-label": "Delete this fact", title: "Delete" });
     del.append(icon(ICONS.del));
@@ -792,18 +838,19 @@
         redrawEditor(key);
         return;
       }
-      afterSave(key, r.data.file, d.lines.filter((l) => l.fact.trim()).length);
+      afterSave(key, r.data.file, d.lines.filter((l) => l.fact.trim()).length, r.data.note);
     } catch (err) {
       d.saving = false;
       d.error = err.message;
       redrawEditor(key);
     }
   }
-  async function afterSave(key, file, sent) {
+  async function afterSave(key, file, sent, note) {
     state.bodies.set(key, file);
     state.drafts.set(key, newDraft(file));
     const kept = parseBody(file.body).length;
-    if (kept < sent) toast(`Saved. ${plural(sent - kept, "line")} wasn't kept: memory never stores card, bank or ID numbers, or repeats.`, true);
+    // The server says which lines it left out and why (junk, repeats, card or bank numbers)
+    if (kept < sent) toast(note ? `Saved. ${note}` : `Saved. ${plural(sent - kept, "line")} wasn't kept: memory never stores junk, repeats, or card, bank or ID numbers.`, true);
     else toast("Saved");
     sfx("done");
     // The page's own save shouldn't light up Live as "new"
@@ -971,7 +1018,13 @@
     const slug = name.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
     const path = NAMED.includes(kind) ? `${kind}/${slug}` : kind;
     const fact = $("new-fact").value.trim();
-    const body = fact ? `- [${$("new-tag").value}] ${fact}` : "";
+    // An empty file is junk (Tidy up would remove it), so a new file starts with a fact
+    if (!fact) {
+      error.textContent = "Add its first fact, so the file isn't empty.";
+      $("new-fact").focus();
+      return;
+    }
+    const body = `- [${$("new-tag").value}] ${fact}`;
     const go = e.submitter || $("new-form").querySelector('button[type="submit"]');
     go.disabled = true;
     try {
@@ -1337,6 +1390,184 @@
     state.open = null;
     showLogin();
   });
+
+  // ===== Tidy up (admins): check first, then remove exactly what the check listed =====
+
+  const tidy = { report: null, result: null, busy: false, bin: null, error: "" };
+  const TIDY_KINDS = [
+    ["empty-file", "Empty files", "no facts in them"],
+    ["junk-file", "Files of nothing but junk", "every fact in them is junk"],
+    ["junk-line", "Junk facts", "placeholders, punctuation, cut-off lines"],
+    ["repeat-line", "Repeated facts", "the first copy in the file stays"],
+    ["junk-pending", "Junk waiting for approval", "never worth approving"],
+    ["repeat-pending", "Repeats waiting for approval", "the oldest stays, or it's already remembered"],
+  ];
+  const tidySheet = $("tidy-sheet");
+  const whereText = (i) => [SCOPE_NAMES[i.scope] || i.scope, ownerLabel(i.scope, i.owner_id), i.path].filter(Boolean).join(" · ");
+
+  function openTidy() {
+    closeOptions();
+    tidy.report = null;
+    tidy.result = null;
+    tidy.error = "";
+    tidySheet.hidden = false;
+    renderTidy();
+    loadBin();
+    $("tidy-close").focus();
+  }
+  function closeTidy() {
+    if (tidySheet.hidden) return;
+    tidySheet.hidden = true;
+    $("options").focus();
+  }
+
+  // 1. The check: a report of what would go (nothing changes)
+  async function runCheck() {
+    tidy.busy = true;
+    tidy.error = "";
+    tidy.result = null;
+    renderTidy();
+    try {
+      tidy.report = (await must(API + "/cleanup/check", { method: "POST", body: {} })).report;
+    } catch (err) {
+      tidy.error = err.message;
+    }
+    tidy.busy = false;
+    renderTidy();
+  }
+  // 2. The second press: exactly the report's entries (the server checks each one again)
+  async function applyTidy() {
+    const r = tidy.report;
+    if (!r || tidy.busy) return;
+    tidy.busy = true;
+    renderTidy();
+    try {
+      tidy.result = await must(API + "/cleanup/apply", { method: "POST", body: { report_id: r.id, ids: r.items.map((i) => i.id) } });
+      tidy.report = null;
+      sfx("done");
+      toast(`Removed ${plural(tidy.result.removed, "entry", "entries")}. They're in the bin for 30 days.`);
+      state.bodies.clear();
+      for (const [k, d] of state.drafts) if (!dirty(d)) state.drafts.delete(k);
+      await Promise.all([refreshAfterChange(), loadPending().then(() => renderPending()).catch(() => {}), loadBin()]);
+    } catch (err) {
+      tidy.error = err.message;
+    }
+    tidy.busy = false;
+    renderTidy();
+  }
+  async function loadBin() {
+    try {
+      tidy.bin = await must(API + "/cleanup/removed");
+    } catch (err) {
+      tidy.bin = { removed: [], runs: [], error: err.message };
+    }
+    renderBin();
+  }
+  async function putBack(item, b) {
+    b.disabled = true;
+    try {
+      await must(API + `/cleanup/removed/${encodeURIComponent(item.id)}/restore`, { method: "POST", body: {} });
+      sfx("done");
+      toast("Put back");
+      state.bodies.clear();
+      await Promise.all([refreshAfterChange(), loadPending().then(() => renderPending()).catch(() => {}), loadBin()]);
+    } catch (err) {
+      b.disabled = false;
+      toast(err.message, true);
+    }
+  }
+
+  function renderTidy() {
+    const box = $("tidy-report");
+    const parts = [];
+    if (tidy.error) parts.push(el("p", "error", tidy.error));
+    const r = tidy.report;
+    if (tidy.busy) {
+      parts.push(el("p", "hint", r ? "Removing…" : "Checking every file and every fact waiting for approval…"));
+    } else if (r && r.counts.total) {
+      parts.push(el("p", "tidy-lead", `${plural(r.counts.total, "entry", "entries")} would be removed`));
+      parts.push(el("p", "hint", r.keeps));
+      for (const [kind, title, help] of TIDY_KINDS) {
+        const items = r.items.filter((i) => i.kind === kind);
+        if (!items.length) continue;
+        const list = el("ul", "tidy-list", items.slice(0, 4).map(tidyItem));
+        const group = el("div", "tidy-group", [el("p", "tidy-title", [el("b", "", String(items.length)), " ", title, el("span", "tidy-help", " · " + help)]), list]);
+        if (items.length > 4) {
+          const more = el("details", "tidy-more", [el("summary", "", `${items.length - 4} more`), el("ul", "tidy-list", items.slice(4).map(tidyItem))]);
+          group.append(more);
+        }
+        parts.push(group);
+      }
+      if (r.more) parts.push(el("p", "hint", `${r.more} more weren't listed: check again after this.`));
+      parts.push(
+        el("div", "confirm", [
+          el("p", "", `Remove these ${plural(r.counts.total, "entry", "entries")}?`),
+          el("p", "confirm-sub", "Only what's listed above. Anything that's changed since the check stays. Each one can be put back for 30 days."),
+          el("div", "actions", [
+            button("btn small danger solid", "Remove them", applyTidy, { "data-sfx": "send" }),
+            button("btn small ghost", "Not now", () => {
+              tidy.report = null;
+              renderTidy();
+            }, { "data-sfx": "close" }),
+          ]),
+        ])
+      );
+    } else if (r) {
+      parts.push(el("p", "tidy-lead", "All tidy"));
+      parts.push(el("p", "hint", "No empty files, junk or repeats right now."));
+      parts.push(el("div", "actions", [button("btn small ghost", "Check again", runCheck)]));
+    } else {
+      if (tidy.result) {
+        const skipped = tidy.result.skipped || [];
+        parts.push(el("p", "tidy-lead", `Removed ${plural(tidy.result.removed, "entry", "entries")}`));
+        if (skipped.length) parts.push(el("p", "hint", `${plural(skipped.length, "entry", "entries")} stayed: ${skipped[0].why}${skipped.length > 1 ? ", and others" : ""}.`));
+      } else {
+        parts.push(el("p", "hint", "Looks through every file and every fact waiting for approval for empty files, junk (placeholders like \u201cn/a\u201d, lines of punctuation, cut-off sentences) and repeats in the same file. You'll see the list first."));
+      }
+      parts.push(el("div", "actions", [button("btn small", tidy.result ? "Check again" : "Check now", runCheck, { "data-sfx": "send" })]));
+    }
+    box.replaceChildren(...parts);
+  }
+  function tidyItem(i) {
+    return el("li", "tidy-item", [
+      el("p", "tidy-text", i.text || "(empty)"),
+      el("p", "tidy-why", [whereText(i), " · ", i.reason, i.kept ? el("span", "tidy-kept", ` · keeps \u201c${i.kept.replace(/^- \[\w+\] /, "")}\u201d`) : null]),
+    ]);
+  }
+  function renderBin() {
+    const box = $("tidy-bin");
+    const bin = tidy.bin || { removed: [], runs: [] };
+    const parts = [];
+    if (bin.error) parts.push(el("p", "error", bin.error));
+    const waiting = bin.removed || [];
+    if (!waiting.length) parts.push(el("p", "hint", "Nothing removed in the last 30 days."));
+    else {
+      const items = waiting.slice(0, 40).map((b) => {
+        const kind = b.kind === "file" ? "File" : b.kind === "pending" ? "Waiting fact" : "Fact";
+        const row = el("li", "tidy-item bin-item", [
+          el("div", "bin-words", [
+            el("p", "tidy-text", b.text || "(empty)"),
+            el("p", "tidy-why", `${kind} · ${whereText(b)} · ${b.reason} · removed by ${b.removed_by} ${ago(b.removed_at)}`),
+          ]),
+        ]);
+        if (b.restored_at) row.append(el("span", "bin-back", `Put back by ${b.restored_by}`));
+        else row.append(button("btn small ghost", "Put back", (e) => putBack(b, e.currentTarget)));
+        return row;
+      });
+      parts.push(el("ul", "tidy-list", items));
+      if (waiting.length > 40) parts.push(el("p", "hint", `and ${waiting.length - 40} more`));
+    }
+    const runs = (bin.runs || []).filter((r) => r.applied_at);
+    if (runs.length) {
+      parts.push(el("p", "kicker tidy-runs-title", "Cleanups"));
+      parts.push(el("ul", "tidy-runs", runs.map((r) => el("li", "", `${r.applied_by} removed ${plural(r.removed, "entry", "entries")} ${ago(r.applied_at)}${r.skipped ? ` (${r.skipped} skipped)` : ""} · checked by ${r.checked_by}`))));
+    }
+    box.replaceChildren(...parts);
+  }
+  $("tidy-open").addEventListener("click", openTidy);
+  $("tidy-close").addEventListener("click", closeTidy);
+  tidySheet.addEventListener("click", (e) => e.target === tidySheet && closeTidy());
+  document.addEventListener("keydown", (e) => e.key === "Escape" && closeTidy());
 
   // ===== A soft ripple where buttons are pressed =====
   document.addEventListener("pointerdown", (e) => {

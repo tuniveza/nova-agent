@@ -278,6 +278,8 @@ app.all("/app/api/memory/*", async (c) => {
   const query = new URL(c.req.url).search;
   if (route === "/pending") return c.json({ pending: [], locked: true });
   if (route.startsWith("/pending/")) return c.json({ error: "Approvals need a Portal sign-in" }, 403);
+  // Tidy up (the cleanup and its bin) is for an admin signed in to Portal, never this key
+  if (route === "/cleanup" || route.startsWith("/cleanup/")) return c.json({ error: "Cleaning up Index is for admins, signed in to Portal" }, 403);
   if (route === "/stats") {
     const { data } = await toEngine("/index");
     const by = new Map<string, { scope: string; files: number; facts: number }>();

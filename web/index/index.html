@@ -177,7 +177,7 @@
           <input id="new-desc" type="text" autocomplete="off" maxlength="200" placeholder="e.g. Kai: producer, books evening sessions">
         </div>
         <div class="field">
-          <label class="field-label" for="new-fact">First fact (optional)</label>
+          <label class="field-label" for="new-fact">First fact</label>
           <div class="fact-add">
             <select id="new-tag" aria-label="How we know it"><option value="stated">stated</option><option value="observed">observed</option><option value="inferred">inferred</option></select>
             <input id="new-fact" type="text" autocomplete="off" maxlength="240" placeholder="e.g. prefers evening sessions">
@@ -257,10 +257,38 @@
     <section class="option-group">
       <label class="option-switch"><span>Sound effects</span><input type="checkbox" role="switch" id="sfx-switch" data-sfx="none"></label>
     </section>
+    <!-- Admins only: find junk and repeats (a report first; nothing goes until you say so) -->
+    <section class="option-group" id="tidy-group" hidden>
+      <p class="kicker">Tidy up</p>
+      <p class="hint">Find empty files, junk facts and repeats. You see the list first; nothing is removed until you say so.</p>
+      <button id="tidy-open" class="btn ghost" type="button" data-sfx="open">Check for junk</button>
+    </section>
     <section class="option-group option-actions">
       <button id="refresh" class="btn ghost" type="button">Refresh everything</button>
       <a class="btn ghost" href="/portal/">Open Portal</a>
       <button id="logout" class="btn ghost" type="button">Sign out</button>
+    </section>
+  </div>
+</div>
+
+<!-- Tidy up (admins): the check's report, the second press that applies exactly it, and the 30-day bin -->
+<div id="tidy-sheet" class="sheet" hidden>
+  <div class="sheet-card tidy-card" role="dialog" aria-modal="true" aria-labelledby="tidy-title">
+    <div class="sheet-head">
+      <div>
+        <span class="kicker">Index · admins</span>
+        <h3 id="tidy-title">Tidy up</h3>
+      </div>
+      <button id="tidy-close" class="icon-btn" type="button" aria-label="Close" data-sfx="close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <section class="option-group tidy-body">
+      <div id="tidy-report" class="tidy-report" aria-live="polite"></div>
+    </section>
+    <section class="option-group tidy-body">
+      <p class="kicker">The bin · kept 30 days</p>
+      <div id="tidy-bin" class="tidy-bin"></div>
     </section>
   </div>
 </div>
