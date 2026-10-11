@@ -400,7 +400,7 @@
     if (!shown.length) {
       let message;
       if (!state.files.length) {
-        message = el("div", "empty", [el("strong", "", "Memory is empty"), el("span", "", "As the Nova apps talk to people, the facts worth keeping land here. You can add one yourself too.")]);
+        message = el("div", "empty", [el("strong", "", "Memory is empty"), el("span", "", "As Nova Agent and Nova Bot talk to people, the facts worth keeping land here. You can add one yourself too.")]);
         message.append(button("btn small", "+ New file", openNewForm, { "data-sfx": "open" }));
       } else if (q) {
         message = el("div", "empty", [el("strong", "", "Nothing matches"), el("span", "", `No file mentions “${state.query.trim()}”${state.scope === "all" ? "" : " in " + SCOPE_NAMES[state.scope]}.`)]);
@@ -1136,7 +1136,7 @@
     const feed = $("live-feed");
     const rows = state.files.slice(0, 40);
     if (!rows.length) {
-      feed.replaceChildren(el("li", "empty", [el("strong", "", "Quiet so far"), el("span", "", "When a Nova app learns something, it shows up here.")]));
+      feed.replaceChildren(el("li", "empty", [el("strong", "", "Quiet so far"), el("span", "", "When Nova Agent or Nova Bot learns something, it shows up here.")]));
       return;
     }
     feed.replaceChildren(

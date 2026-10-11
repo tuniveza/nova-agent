@@ -241,7 +241,7 @@
 
   // ----- 1. Setup (no one here yet) -----
   function showSetup() {
-    showAuthCard("setup-form", "One sign-in for every Nova app");
+    showAuthCard("setup-form", "One sign-in for all of Nova Agent");
     focusSoon($("setup-name"));
   }
   $("setup-form").addEventListener("submit", async (e) => {
@@ -285,7 +285,7 @@
   // ----- 2. Signing in -----
   function showLogin(sub) {
     const where = nextName(state.next);
-    showAuthCard("login-form", sub || (where ? `Sign in to carry on to ${where}` : "One sign-in for every Nova app"));
+    showAuthCard("login-form", sub || (where ? `Sign in to carry on to ${where}` : "One sign-in for all of Nova Agent"));
     setError("login-error", "");
     $("login-password").value = "";
     if (state.lastEmail && !$("login-email").value) $("login-email").value = state.lastEmail;
@@ -305,7 +305,7 @@
       if (r.ok && r.data.staff) {
         sfx("done");
         $("login-password").value = "";
-        return signedIn(r.data.staff, `Signed in to every Nova app. Hi, ${firstName(r.data.staff.display_name)}!`);
+        return signedIn(r.data.staff, `Signed in to all of Nova Agent. Hi, ${firstName(r.data.staff.display_name)}!`);
       }
       setError("login-error", r.data.error || `That didn't work (error ${r.status}). Try again.`, form);
       sfx("error");
@@ -661,8 +661,8 @@
     const first2 = firstName(person.display_name);
     $("memory-title").textContent = self ? "Your memory" : `${possessive(first2)} memory`;
     $("memory-hint").textContent = self
-      ? "What the Nova apps remember about you, and what the whole studio knows."
-      : `What the Nova apps remember about ${first2}, and what the whole studio knows.`;
+      ? "What Nova Agent remembers about you, and what the whole studio knows."
+      : `What Nova Agent remembers about ${first2}, and what the whole studio knows.`;
     $("open-index").href = `/app/memory/?scope=staff&owner=${encodeURIComponent(person.id)}`;
     $("open-index-label").textContent = self ? "Open my Index" : `Open ${possessive(first2)} Index`;
 
@@ -949,7 +949,7 @@
     try {
       await api("/auth/logout", { method: "POST", body: {} });
     } catch (err) {}
-    signedOut("Signed out of every Nova app.");
+    signedOut("Signed out of all of Nova Agent.");
   }
   $("sign-out").addEventListener("click", signOut);
 
@@ -984,7 +984,7 @@
     const line = {
       active: `Active. ${person.last_login_at ? "Last signed in " + ago(person.last_login_at) + "." : "Hasn't signed in yet."}`,
       invited: "Invited, hasn't joined yet.",
-      disabled: "Switched off. They can't sign in to any Nova app.",
+      disabled: "Switched off. They can't sign in to Nova Agent.",
     }[person.status] || person.status;
     $("status-line").textContent = line;
     drawStatusActions(person);
@@ -1007,7 +1007,7 @@
     const name = firstName(person.display_name);
     box.replaceChildren(
       el("div", "confirm", [
-        el("p", "", `Switch ${name} off? They'll be signed out of every Nova app straight away.`),
+        el("p", "", `Switch ${name} off? They'll be signed out of Nova Agent straight away.`),
         el("div", "actions", [
           button("btn small danger solid", "Switch off", () => patchPerson(person, { status: "disabled" }, `${name} is switched off and signed out everywhere.`), { "data-sfx": "remove" }),
           button("btn small ghost", "Keep them on", () => drawStatusActions(person), { "data-sfx": "close" }),
@@ -1082,7 +1082,7 @@
     const body = [
       `Hi ${name},`,
       "",
-      "You're invited to Portal: the staff app and one sign-in for every Nova app at Novacane Studios.",
+      "You're invited to Portal: the staff app and one sign-in for all of Nova Agent at Novacane Studios.",
       "",
       "Open this link to choose your password and meet your very own planet:",
       link,

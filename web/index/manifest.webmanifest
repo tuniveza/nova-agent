@@ -1,7 +1,7 @@
 {
   "name": "Index",
   "short_name": "Index",
-  "description": "Index, Nova Agent's shared memory: browse what every Nova app has learned, watch it grow, edit a line and approve new facts.",
+  "description": "Index, Nova Agent's shared memory: browse what every panel has learned, watch it grow, edit a line and approve new facts.",
   "id": "/app/memory/",
   "start_url": "/app/memory/",
   "scope": "/app/memory/",
