@@ -97,7 +97,7 @@ main { max-width: 1040px; margin: 0 auto; padding: 28px 20px 56px; }
 .activity .rollback { color: var(--warn); }
 
 /* The big picture */
-.zoom { max-width: min(96vw, 1400px); max-height: 94vh; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--deep); color: var(--text); }
+.zoom { min-width: min(320px, 92vw); max-width: min(96vw, 1400px); max-height: 94vh; max-height: 94dvh; overflow: auto; padding: 56px 14px 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--deep); color: var(--text); }
 .zoom::backdrop { background: color-mix(in srgb, var(--void) 80%, transparent); }
 .zoom img { display: block; max-width: 100%; max-height: 80vh; margin: 0 auto; border-radius: 12px; }
 .zoom-x { position: absolute; right: 10px; top: 10px; }
