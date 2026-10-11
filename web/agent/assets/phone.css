@@ -1,6 +1,6 @@
 /* Nova Agent on a phone (or a small window): one screen, no long scroll.
    The same header at the top and one bar along the bottom, always there, with every place in Nova
-   Agent on it, all at once (two rows when they don't fit in one; never a scroll). The home shows one thing at a time (Chat, Quests or
+   Agent on it, all at once (two rows when they don't fit in one; never a scroll). The home shows one thing at a time (Agent, Quests or
    Missions, picked on the bar); a panel opens between the header and the bar, so it feels like one
    app (panels with sections of their own show them as a row at their top, never a second bar).
    Sized to the visible part of the screen (--vv-h, set by phone.js from the visual viewport), so the
@@ -46,7 +46,7 @@
   .status.off .dot { background: #FF6B7A; box-shadow: 0 0 8px #FF6B7A; }
   .status.out .dot { background: var(--muted); box-shadow: none; }
 
-  /* The home: one pane (Chat, Quests or Missions, picked on the bar) filling the room */
+  /* The home: one pane (Agent, Quests or Missions, picked on the bar) filling the room */
   .main { overflow: hidden; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-auto-rows: auto; grid-template-areas: "pane"; gap: 8px; }
   .main > .chat, .main > #missions-panel, .main > #quests-panel { grid-area: pane; height: auto; min-height: 0; border-radius: 18px; }
   .main > .suite-home { display: none; }
@@ -58,7 +58,7 @@
   #view-today > .subpanel { overflow-y: auto; overscroll-behavior: contain; }
   .side-head { padding: 6px 8px 6px 12px; }
 
-  /* Chat: the conversation, a row of suggestions you can swipe, and the message box at the bottom */
+  /* Agent: the conversation, a row of suggestions you can swipe, and the message box at the bottom */
   .chat-head { display: none; }
   .chat { grid-template-rows: minmax(0, 1fr) auto; }
   .chat > .log { padding: 12px 10px 6px; gap: 10px; overscroll-behavior: contain; }

@@ -180,7 +180,7 @@
   const closePanel = () => { if (!viewer.hidden) $('viewer-close').click(); };
   const sfx = (name) => window.NovaSfx && window.NovaSfx.play && window.NovaSfx.play(name);
 
-  // ---- The home: Chat, Quests or Missions, one at a time (picked on the bar) ----
+  // ---- The home: Agent, Quests or Missions, one at a time (picked on the bar) ----
   const PANE_KEY = 'nova-agent/phone-pane';
   function setPane(pane) {
     main.dataset.pane = pane;

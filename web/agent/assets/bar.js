@@ -46,7 +46,7 @@
   let typing = false; // you're typing (Nova Agent's message box or a panel's): the bar steps aside
   // Each tile's place, so they pop in one after another (bar.css)
   // How much room the bars take while they're in view (bar.css makes the open panel give it up)
-  // The brand panel (top bar) is as wide as Chat below it (glow.css reads --chat-w)
+  // The brand panel (top bar) is as wide as Agent below it (glow.css reads --chat-w)
   const chatCol = document.querySelector(".main > .chat");
   if (chatCol) new ResizeObserver(() => root.style.setProperty("--chat-w", `${Math.round(chatCol.getBoundingClientRect().width)}px`)).observe(chatCol);
   function measure() {

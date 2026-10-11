@@ -194,9 +194,9 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
 .chat { grid-template-rows: auto minmax(0, 1fr) auto auto !important; }
 @media (max-width: 980px), (max-height: 480px) { .chat { grid-template-rows: minmax(0, 1fr) auto auto !important; } }
 
-/* ---- One centre line: Missions and Quests the same width, so Chat sits in the middle of the page,
+/* ---- One centre line: Missions and Quests the same width, so Agent sits in the middle of the page,
    lined up with the brand panel (top), the navigation panel and the status panel. On the home the
-   brand panel is as wide as Chat below it (never narrower than its own buttons need). ---- */
+   brand panel is as wide as Agent below it (never narrower than its own buttons need). ---- */
 @media (min-width: 981px) and (min-height: 481px) {
   html { --side-w: clamp(230px, 22vw, 400px); }
   .main:not(.viewing) { grid-template-columns: var(--side-w) minmax(340px, 1fr) var(--side-w) !important; }
@@ -232,7 +232,7 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
   .side-head > .sec-title, .side-head > :not(.sec-title) { grid-column: 1 !important; justify-self: center !important; }
 }
 
-/* Missions and Quests always stay inside their own columns (never under Chat) */
+/* Missions and Quests always stay inside their own columns (never under Agent) */
 @media (min-width: 981px) and (min-height: 481px) {
   .main:not(.viewing) > .side { min-width: 0 !important; width: 100%; max-width: 100%; justify-self: stretch; overflow: hidden; }
   .main:not(.viewing) > .chat { min-width: 0; }
