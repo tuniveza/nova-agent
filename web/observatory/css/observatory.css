@@ -3,14 +3,14 @@
    (Quasar by default here), Archivo wide for display, Saira for reading, Source Code Pro for labels. */
 
 :root {
-  --void: #05030F; --deep: #0B0719; --panel: #151030; --panel-2: #1C1640;
+  --void: #05030F; --bright: #F3EEFF; --bad: #FF5F7A; --deep: #0B0719; --panel: #151030; --panel-2: #1C1640;
   --text: #E2DDFB; --muted: #A49CCB;
   --accent: #5B3DF5; --accent-2: #B23AEE; --accent-3: #141047;
   --hi: #A98BFF; --soft: #E4DAFF; --gold: #FFE1F4; --lilac: #C7B8FF; --on-accent: #FFFFFF;
   --f-display: "Archivo", "Arial Black", sans-serif;
   --f-body: "Saira", "Jost", system-ui, sans-serif;
   --f-mono: "Source Code Pro", ui-monospace, monospace;
-  --ok: #4ADE9B; --warn: #FFC861; --live: #FF5F7A;
+  --ok: #4ADE9B; --warn: #FFC861; --live: var(--bad);
   color-scheme: dark;
 }
 :root, .themed {
@@ -79,12 +79,9 @@ a { color: var(--hi); }
 
 /* The links and the sound switch, side by side at the end of the header */
 .hero-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-/* Sound effects on/off: drawn like the "All links" pill next to it */
-.sound-toggle {
-  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid currentColor; border-radius: 999px;
-  background: none; font-size: 12px; letter-spacing: .08em; color: inherit; opacity: .85; cursor: pointer; transition: opacity .2s, color .2s;
-}
-.sound-toggle:hover { opacity: 1; }
+/* "All links" and the sound switch: two of the shared glass pills (buttons.css decides how they
+   look, hover and press; here only their size and lettering) */
+.hero-pill { padding: 6px 12px; font-size: 11px; white-space: nowrap; }
 .sound-toggle svg { width: 15px; height: 15px; flex: none; }
 .sound-toggle[aria-pressed="true"] svg { color: var(--hi); }
 .sound-toggle[aria-pressed="false"] { color: var(--muted); }
@@ -146,7 +143,7 @@ a { color: var(--hi); }
 .pill {
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
   font-family: var(--f-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #fff;
-  background: rgba(5, 3, 15, .62); border: 1px solid rgba(255, 255, 255, .14); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--void) 62%, transparent); border: 1px solid color-mix(in srgb, var(--bright) 14%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
 .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
 .pill.s-live i { background: var(--live); box-shadow: 0 0 8px var(--live); animation: pulse 1.8s ease-in-out infinite; }
@@ -154,7 +151,7 @@ a { color: var(--hi); }
 .pill.s-released i { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
 .pill.s-empty i { background: transparent; border: 1px solid var(--muted); }
 @keyframes pulse { 50% { opacity: .35; } }
-.play-hint { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(5, 3, 15, .6); border: 1px solid rgba(255, 255, 255, .2); backdrop-filter: blur(8px); transition: opacity .3s; }
+.play-hint { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: color-mix(in srgb, var(--void) 60%, transparent); border: 1px solid color-mix(in srgb, var(--bright) 20%, transparent); backdrop-filter: blur(8px); transition: opacity .3s; }
 .play-hint svg { width: 14px; height: 14px; fill: #fff; margin-left: 2px; }
 .deck.playing .play-hint { opacity: 0; }
 
@@ -187,8 +184,12 @@ a { color: var(--hi); }
 .sec-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 20px; margin-bottom: 14px; }
 .sec-title h2 { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: clamp(20px, 2.4vw, 26px); color: #fff; }
 .sec-title p { margin: 0; max-width: 70ch; color: var(--muted); font-size: 14px; }
+/* With Nova Agent's centred text (the default), the heading sits over its line, both in the middle */
+:root[data-centred] .sec-title { flex-direction: column; align-items: center; }
 .starmap { border-radius: 28px; border: 1px solid var(--line); background: radial-gradient(70% 70% at 50% 50%, color-mix(in srgb, var(--accent-3) 70%, transparent), color-mix(in srgb, var(--void) 70%, transparent)); overflow: hidden; }
 .starmap svg { display: block; width: 100%; height: auto; }
+/* No projects scanned yet: no map to draw, so no empty frame (the note above says what to do) */
+.starmap-wrap:has(.starmap:empty) { display: none; }
 .sm-edge { fill: none; stroke: color-mix(in srgb, var(--lilac) 28%, transparent); stroke-width: 1; }
 .sm-ring { fill: none; stroke: color-mix(in srgb, var(--lilac) 9%, transparent); stroke-dasharray: 2 6; }
 .sm-dir circle { fill: color-mix(in srgb, var(--soft) 55%, transparent); }
@@ -204,11 +205,12 @@ a { color: var(--hi); }
 
 /* ---------- DETAIL ---------- */
 dialog.detail { width: min(1240px, calc(100vw - 20px)); max-width: none; max-height: calc(100dvh - 20px); padding: 0; border: 0; background: transparent; color: var(--text); overflow: visible; }
-dialog.detail::backdrop { background: rgba(3, 2, 10, .78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+dialog.detail::backdrop { background: color-mix(in srgb, var(--void) 80%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 dialog.detail[open] .dt-inner { animation: rise .28s ease-out; }
 @keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.985); } }
 .dt-inner { position: relative; display: flex; flex-direction: column; max-height: calc(100dvh - 20px); border-radius: 28px; overflow: hidden; border: 1px solid transparent; background: linear-gradient(var(--deep), var(--deep)) padding-box, var(--edge) border-box; box-shadow: 0 50px 140px -30px #000, 0 0 90px -30px var(--accent); }
-.dt-close { position: absolute; top: 14px; right: 14px; z-index: 5; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .2); background: rgba(5, 3, 15, .6); backdrop-filter: blur(8px); cursor: pointer; }
+.dt-close { position: absolute; top: 14px; right: 14px; z-index: 5; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--bright) 20%, transparent); background: color-mix(in srgb, var(--void) 60%, transparent); color: var(--text); backdrop-filter: blur(8px); cursor: pointer; transition: border-color .2s, color .2s; }
+.dt-close:hover { border-color: var(--line-strong); color: var(--bright); }
 .dt-close svg { width: 18px; height: 18px; }
 .dt-body { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
 .dt-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
@@ -222,7 +224,7 @@ dialog.detail[open] .dt-inner { animation: rise .28s ease-out; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb:hover { opacity: 1; transform: translateY(-2px); }
 .thumb[aria-current="true"] { opacity: 1; border-color: var(--hi); box-shadow: 0 0 14px -2px var(--hi); }
-.thumb.vid::after { content: "▶ Video"; position: absolute; inset: 0; display: grid; place-items: center; background: rgba(5, 3, 15, .45); font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #fff; }
+.thumb.vid::after { content: "▶ Video"; position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--void) 45%, transparent); font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #fff; }
 .media-note { margin: 0; font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
 
 .dt-info { padding: 22px 22px 26px; display: grid; gap: 18px; align-content: start; border-top: 1px solid var(--line); }
@@ -283,8 +285,16 @@ dialog.detail[open] .dt-inner { animation: rise .28s ease-out; }
 /* ---------- FOOTER / TOAST ---------- */
 .foot { margin-top: 36px; text-align: center; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in srgb, var(--muted) 85%, transparent); line-height: 1.8; }
 .foot code { font-family: var(--f-mono); color: var(--soft); text-transform: none; letter-spacing: 0; }
-.empty-data { margin: 40px auto; max-width: 60ch; padding: 24px; border-radius: 20px; border: 1px dashed var(--line-strong); text-align: center; }
-.empty-data code { color: var(--soft); }
+/* Nothing to show yet (no scan, or not signed in): one calm glass note across the whole width */
+.empty-data {
+  grid-column: 1 / -1; justify-self: center; width: min(100%, 620px); margin: 28px auto; padding: 26px 24px; border-radius: 22px;
+  border: 1px dashed var(--line-strong); text-align: center; color: var(--muted); line-height: 1.6;
+  background: color-mix(in srgb, var(--panel) 55%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.empty-data p { margin: 0 0 8px; }
+.empty-data p:first-child { font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: var(--bright); }
+.empty-data p:last-child { margin-bottom: 0; }
+.empty-data code { font-family: var(--f-mono); font-size: .9em; padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 60%, transparent); color: var(--soft); white-space: nowrap; }
 .toast {
   position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 60; transform: translate(-50%, 20px);
   padding: 10px 18px; border-radius: 999px; background: var(--grad); color: var(--on-accent); font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em;
@@ -467,10 +477,10 @@ html.embed .stats { margin-top: 14px; }
   .spectrum { margin-top: 8px; }
   .lang-bar { height: 5px; }
   .controls { margin: 10px 0; flex-wrap: wrap; position: sticky; top: 4px; z-index: 6; padding: 6px; border-radius: 18px; background: color-mix(in srgb, var(--deep) 92%, transparent); border: 1px solid var(--line); }
-  .search { flex: 1 1 0; min-width: 0; }
+  /* The search box gets the whole first row (so what you type isn't cut short); sorting goes under it */
+  .search { flex: 1 1 100%; min-width: 0; }
   .search input { padding: 8px 0; }
-  .controls .sort { width: auto; flex: 0 1 auto; }
+  .controls .sort { width: 100%; flex: 1 1 100%; order: 1; }
+  .controls .sort select { flex: 1; padding: 6px 8px; max-width: none; }
   .filters { width: 100%; order: 2; }
-  .controls .sort { order: 1; }
-  .controls .sort select { padding: 6px 8px; max-width: 46vw; }
 }
