@@ -34,15 +34,18 @@ import { checkLogin, describeAppointments, listTask, readOnlyTour } from "../tas
 import { getRecentEvents, onTrace, trace } from "../trace";
 import { calendarEvents, readCalendar } from "../calendar/store";
 import { saveFromPage } from "../calendar/page";
-import { chat, type ChatTurn } from "../chat";
-import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestMode, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
+import { chat } from "../chat";
+import { adoptChat, chatTurn, clearChat, readChat } from "../chats";
+import { ownerToSave, personFor, type Person } from "../person";
+import { whoAmI } from "../staff";
+import { addBlock, addQuest, mayChange, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestMode, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
 import { createMission, refineMission } from "../quests/planner";
 import { startPortalSync } from "../quests/portalsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { startBookingRefresh } from "../quests/bookings";
-import { questEvents } from "../quests/store";
+import { questEvents, readQuests } from "../quests/store";
 import { missionMarkdown } from "../quests/export";
 import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile, saveFile } from "../files";
 import { registerFixerRoutes } from "../fixer/routes";
@@ -416,12 +419,27 @@ app.get("/status", (c) =>
 );
 
 // ---- Missions and Quests ----
-app.get("/quests/state", (c) => c.json(questState()));
-// Live: the plan changed, or a reminder / check-in is due
-app.get("/quests/events", (c) =>
-  streamSSE(c, async (stream) => {
+// Each person's own (who's asking: src/person.ts). ?who=everyone: everyone's, for admins and the
+// studio computer; ?who=notes: their own plus quests tied to a note (Notes, for shared notes).
+app.get("/quests/state", async (c) => {
+  const person = await personFor(c.req.raw);
+  const asked = c.req.query("who");
+  const everyone = asked === "everyone" && person.everyone;
+  return c.json({
+    ...questState({ id: person.id, everyone, notes: asked === "notes" }),
+    person: { id: person.id, name: person.name, role: person.role },
+    scope: everyone ? "everyone" : "mine",
+    canSeeEveryone: person.everyone,
+  });
+});
+// Live: the plan changed, or a reminder / check-in is due (only the person's own notices)
+app.get("/quests/events", async (c) => {
+  const person = await personFor(c.req.raw);
+  return streamSSE(c, async (stream) => {
     const changed = () => void stream.writeSSE({ event: "changed", data: String(Date.now()) });
-    const notice = (n: unknown) => void stream.writeSSE({ event: "notice", data: JSON.stringify(n) });
+    const notice = (n: { owner?: string }) => {
+      if (!n.owner || n.owner === person.id) void stream.writeSSE({ event: "notice", data: JSON.stringify(n) });
+    };
     questEvents.on("changed", changed);
     questEvents.on("notice", notice);
     stream.onAbort(() => {
@@ -432,8 +450,17 @@ app.get("/quests/events", (c) =>
       await stream.sleep(20_000);
       await stream.writeSSE({ event: "ping", data: "" });
     }
-  }),
-);
+  });
+});
+// Theirs to change? (anyone's for an admin or the PC; staff: their own, and quests tied to a note)
+function allowed(person: Person, kind: "quest" | "mission" | "block", id: string): void {
+  const data = readQuests();
+  const list: { id: string; owner: string; link?: string }[] = kind === "quest" ? data.quests : kind === "mission" ? data.missions : data.blocks;
+  const exact = list.find((x) => x.id === id);
+  const starts = list.filter((x) => x.id.startsWith(id));
+  const item = exact ?? (starts.length === 1 ? starts[0] : undefined);
+  if (item && !mayChange(item, person)) throw new Error(`That ${kind === "block" ? "blocked time" : kind} isn't yours to change.`);
+}
 const questAction = async (c: any, fn: () => unknown) => {
   try {
     return c.json({ ok: true, result: await fn() });
@@ -442,14 +469,17 @@ const questAction = async (c: any, fn: () => unknown) => {
   }
 };
 app.post("/actions/missions", async (c) => {
+  const person = await personFor(c.req.raw);
   const body = await c.req.json().catch(() => ({}));
   if (typeof body.request !== "string" || !body.request.trim()) return c.json({ ok: false, message: "Describe the mission first." }, 400);
-  return questAction(c, () => createMission(body.request, { deadline: body.deadline }));
+  return questAction(c, () => createMission(body.request, { deadline: body.deadline, owner: ownerToSave(person) }));
 });
 app.post("/actions/missions/:id", async (c) => {
+  const person = await personFor(c.req.raw);
   const body = await c.req.json().catch(() => ({}));
   const id = c.req.param("id");
   return questAction(c, () => {
+    allowed(person, "mission", id);
     if (body.remove) return removeMission(id);
     if (typeof body.milestone === "string") return setMilestone(id, body.milestone, body.done === true);
     return updateMission(id, { title: body.title, status: body.status, deadline: body.deadline });
@@ -480,8 +510,10 @@ app.post("/actions/files/:id/remove", (c) => {
   }
 });
 // A mission's whole plan as a Markdown file (exporting again updates the same file)
-app.post("/actions/missions/:id/export", (c) => {
+app.post("/actions/missions/:id/export", async (c) => {
+  const person = await personFor(c.req.raw);
   try {
+    allowed(person, "mission", c.req.param("id"));
     const doc = missionMarkdown(c.req.param("id"));
     const source = `mission:${doc.missionId}`;
     const before = listFiles().find((f) => f.source === source);
@@ -492,15 +524,25 @@ app.post("/actions/missions/:id/export", (c) => {
 });
 
 app.post("/actions/missions/:id/refine", async (c) => {
+  const person = await personFor(c.req.raw);
   const body = await c.req.json().catch(() => ({}));
   if (typeof body.detail !== "string" || !body.detail.trim()) return c.json({ ok: false, message: "Say what's new first." }, 400);
-  return questAction(c, () => refineMission(c.req.param("id"), body.detail, { deadline: body.deadline }));
+  return questAction(c, () => {
+    allowed(person, "mission", c.req.param("id"));
+    return refineMission(c.req.param("id"), body.detail, { deadline: body.deadline });
+  });
 });
-app.post("/actions/quests", async (c) => questAction(c, async () => addQuest(await c.req.json())));
+// A new quest is the asker's (from Notes: the person who wrote it in the note)
+app.post("/actions/quests", async (c) => {
+  const person = await personFor(c.req.raw);
+  return questAction(c, async () => addQuest(await c.req.json(), ownerToSave(person)));
+});
 app.post("/actions/quests/:id", async (c) => {
+  const person = await personFor(c.req.raw);
   const body = await c.req.json().catch(() => ({}));
   const id = c.req.param("id");
   return questAction(c, () => {
+    allowed(person, "quest", id);
     if (body.action === "done") return setQuestStatus(id, "done");
     if (body.action === "finish") return setQuestStatus(id, "done", true);
     if (body.action === "start") return setQuestStatus(id, "doing");
@@ -513,26 +555,51 @@ app.post("/actions/quests/:id", async (c) => {
   });
 });
 app.post("/actions/blocks", async (c) => {
+  const person = await personFor(c.req.raw);
   const body = await c.req.json().catch(() => ({}));
-  return questAction(c, () => (body.remove ? removeBlock(body.id) : addBlock(body.start, body.end, body.reason)));
+  return questAction(c, () => {
+    if (!body.remove) return addBlock(body.start, body.end, body.reason, ownerToSave(person));
+    allowed(person, "block", String(body.id || ""));
+    return removeBlock(body.id);
+  });
 });
-app.post("/actions/rhythm", async (c) => questAction(c, async () => setRhythm(await c.req.json())));
+// Their own rhythm (the PC's person's is the main one)
+app.post("/actions/rhythm", async (c) => {
+  const person = await personFor(c.req.raw);
+  return questAction(c, async () => setRhythm(await c.req.json(), ownerToSave(person)));
+});
 app.post("/actions/replan", (c) => questAction(c, () => {
   const r = replan();
   return { atRisk: r.atRisk, unplaced: r.unplaced };
 }));
 
 // ---- The chat ----
+// Each person's own conversation (src/chats.ts), kept here; the Agent knows who it's talking to
+app.get("/chat/history", async (c) => {
+  const person = await personFor(c.req.raw);
+  return c.json({ ok: true, person: { id: person.id, name: person.name, role: person.role, owner: person.pcOwner }, messages: readChat(person.id) }, 200, { "Cache-Control": "no-store" });
+});
+app.post("/actions/chat/clear", async (c) => {
+  clearChat((await personFor(c.req.raw)).id);
+  return c.json({ ok: true });
+});
+// The conversation this browser kept before (the PC's person's only, once, into an empty history)
+app.post("/actions/chat/adopt", async (c) => {
+  const person = await personFor(c.req.raw);
+  const body = await c.req.json().catch(() => ({}));
+  return c.json({ ok: true, ...adoptChat(person, body.messages) });
+});
 app.post("/actions/chat", async (c) => {
-  let messages: ChatTurn[] = [];
+  let body: { message?: unknown; messages?: unknown };
   try {
-    messages = (await c.req.json()).messages;
+    body = await c.req.json();
   } catch {
     return c.json({ ok: false, message: "Bad request" }, 400);
   }
-  if (!Array.isArray(messages)) return c.json({ ok: false, message: "Bad request" }, 400);
+  if (!body || (typeof body.message !== "string" && !Array.isArray(body.messages))) return c.json({ ok: false, message: "Bad request" }, 400);
   try {
-    return c.json({ ok: true, ...(await chat(messages)) });
+    const person = await personFor(c.req.raw);
+    return c.json({ ok: true, ...(await chatTurn(person, body, chat)) });
   } catch (error) {
     const message = (error as Error).message;
     trace("llm", "error", `Agent failed: ${message}`);
@@ -617,6 +684,8 @@ startPulses();
 // The studio's bookings as busy time for Quests (ACUITY_SOURCE=api): now, every 10 minutes, and on a change in Acuity
 startBookingRefresh();
 startPortalSync();
+// Who Nova Agent works for on this PC (owner of everything ownerless): asked once now
+void whoAmI().catch(() => {});
 // Online: Nova Bot passes staff members' requests to this server over a link the PC opens (src/relay.ts)
 startRelay(app.fetch);
 // The Fixer: hourly checks, fixes prepared for an admin's Approve (src/fixer/)

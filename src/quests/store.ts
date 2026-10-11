@@ -13,12 +13,16 @@
 //   Rhythm        how the days work: wake, sleep, wind-down, buffers, breaks,
 //                 reminders, and music time (time set aside for music)
 //
+// Each mission, quest and blocked time belongs to a person (`owner`, their staff id; "" = the
+// person Nova Agent works for on the PC, src/person.ts). People other than that one can have a
+// daily rhythm of their own (`rhythms`); everyone else's planning uses the main `rhythm`.
+//
 // Everything lives in data/quests.json. Times are local UK wall-clock times,
 // written like the calendar's: "2026-10-09T14:00" (with seconds when a quest
 // needs them: "2026-10-09T14:00:30").
 
 import { EventEmitter } from "node:events";
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { sendAlert } from "../alerts";
 import { config } from "../config";
@@ -81,6 +85,7 @@ export interface Finding {
 
 export interface Mission {
   id: string;
+  owner: string; // whose it is (staff id; "" = the person Nova Agent works for on the PC)
   title: string;
   request: string; // what the person asked for, in their words
   summary: string;
@@ -100,6 +105,7 @@ export interface Mission {
 
 export interface Quest {
   id: string;
+  owner: string; // whose it is (staff id; "" = the person Nova Agent works for on the PC)
   missionId: string; // "" for a quest on its own
   track: string; // the mission's workstream it belongs to ("" = none)
   title: string;
@@ -122,7 +128,7 @@ export interface Quest {
   mode: QuestMode; // how it's going (MODES)
   from: string; // where it was made, for people ("Notes · Studio plan"; "" = Nova Agent itself)
   link: string; // what it's tied to ("note:<note id>|<heading id>"), so a change in either place shows in both
-  phones: string[]; // which phones get its reminders (Nova Bot's phone ids); none = the studio owner's phones
+  phones: string[]; // which phones get its reminders (Nova Bot's phone ids); none = its owner's phones
   // Set by the planner
   start: string;
   end: string;
@@ -140,6 +146,7 @@ export interface Quest {
 
 export interface Block {
   id: string;
+  owner: string; // whose time it is ("" = the person Nova Agent works for on the PC)
   start: string;
   end: string;
   reason: string;
@@ -178,7 +185,9 @@ export interface MusicTime {
 
 export interface QuestData {
   version: 1;
-  rhythm: Rhythm;
+  rhythm: Rhythm; // the PC's person's (and anyone's without one of their own)
+  rhythms: Record<string, Rhythm>; // other people's own rhythms, by staff id
+  briefed: Record<string, { briefing: string; wrapUp: string }>; // other people's last morning plan and wrap-up
   missions: Mission[];
   quests: Quest[];
   blocks: Block[];
@@ -221,6 +230,8 @@ const length = (v: unknown, fallback: number) => {
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? Math.min(1_000_000, Math.max(MIN_MINUTES, Math.round(n * 60) / 60)) : fallback;
 };
+// A staff id ("" = none: the person Nova Agent works for on the PC)
+const ownerText = (v: unknown) => (typeof v === "string" ? v.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 64) : "");
 const stampOrEmpty = (v: unknown) => (isStamp(v) ? v : isDay(v) ? `${v}T23:59` : "");
 
 // A time someone typed (or Claude wrote), as the planner's UK wall-clock stamp.
@@ -245,7 +256,7 @@ export function readStamp(v: unknown, dayTime = "23:59"): string {
 // Tells the open Nova Agent page that the plan changed
 export const questEvents = new EventEmitter();
 
-function cleanRhythm(r: any): Rhythm {
+export function cleanRhythm(r: any): Rhythm {
   const d = DEFAULT_RHYTHM;
   return {
     wake: isHm(r?.wake) ? r.wake : d.wake,
@@ -282,6 +293,7 @@ export function cleanMusic(m: any): MusicTime {
 export function cleanQuest(q: any): Quest {
   return {
     id: text(q?.id, 64) || randomUUID(),
+    owner: ownerText(q?.owner),
     missionId: text(q?.missionId, 64),
     track: text(q?.track, 40),
     title: text(q?.title, 140) || "Untitled quest",
@@ -329,6 +341,7 @@ export function cleanMission(m: any): Mission {
     .slice(0, 8);
   return {
     id: text(m?.id, 64) || randomUUID(),
+    owner: ownerText(m?.owner),
     title: text(m?.title, 140) || "Untitled mission",
     request: text(m?.request, 4000),
     summary: text(m?.summary, 2000),
@@ -358,13 +371,25 @@ export function cleanMission(m: any): Mission {
 
 function cleanBlock(b: any): Block | null {
   if (!isStamp(b?.start) || !isStamp(b?.end) || b.end <= b.start) return null;
-  return { id: text(b?.id, 64) || randomUUID(), start: b.start, end: b.end, reason: text(b?.reason, 200) || "Busy" };
+  return { id: text(b?.id, 64) || randomUUID(), owner: ownerText(b?.owner), start: b.start, end: b.end, reason: text(b?.reason, 200) || "Busy" };
 }
 
 export function normaliseQuests(raw: any): QuestData {
   return {
     version: 1,
     rhythm: cleanRhythm(raw?.rhythm),
+    rhythms: Object.fromEntries(
+      Object.entries(raw?.rhythms && typeof raw.rhythms === "object" ? raw.rhythms : {})
+        .map(([id, r]) => [ownerText(id), cleanRhythm(r)] as const)
+        .filter(([id]) => id)
+        .slice(0, 200),
+    ),
+    briefed: Object.fromEntries(
+      Object.entries(raw?.briefed && typeof raw.briefed === "object" ? raw.briefed : {})
+        .map(([id, b]: [string, any]) => [ownerText(id), { briefing: text(b?.briefing, 20), wrapUp: text(b?.wrapUp, 20) }] as const)
+        .filter(([id]) => id)
+        .slice(0, 200),
+    ),
     missions: (Array.isArray(raw?.missions) ? raw.missions : []).map(cleanMission),
     quests: (Array.isArray(raw?.quests) ? raw.quests : []).map(cleanQuest),
     blocks: (Array.isArray(raw?.blocks) ? raw.blocks : []).map(cleanBlock).filter(Boolean) as Block[],
@@ -397,7 +422,25 @@ export function readQuests(): QuestData {
   }
 }
 
+// Before the first save with owners in it, the file as it was is kept, once, as
+// quests.json.pre-per-person (never overwritten). Going back: copy it over quests.json. (Nothing
+// needs rewriting: quests and missions with no owner are the PC's person's.)
+function keepCopyBeforeOwners(): void {
+  const copy = `${file}.pre-per-person`;
+  if (keptCopy || existsSync(copy) || !existsSync(file)) return void (keptCopy = true);
+  try {
+    const raw = JSON.parse(readFileSync(file, "utf8"));
+    const owned = [...(raw?.quests ?? []), ...(raw?.missions ?? [])].some((x: any) => x && typeof x === "object" && "owner" in x);
+    if (!owned) copyFileSync(file, copy);
+    keptCopy = true;
+  } catch (error) {
+    trace("task", "warn", `Couldn't keep a copy of quests.json before owners: ${(error as Error).message}`);
+  }
+}
+let keptCopy = false;
+
 export function writeQuests(data: QuestData): void {
+  keepCopyBeforeOwners();
   const json = JSON.stringify(normaliseQuests(data), null, 2);
   writeFileSync(`${file}.tmp`, json);
   renameSync(`${file}.tmp`, file);
@@ -405,4 +448,9 @@ export function writeQuests(data: QuestData): void {
   writeFileSync(`${file}.bak.tmp`, json);
   renameSync(`${file}.bak.tmp`, `${file}.bak`);
   questEvents.emit("changed");
+}
+
+// A person's daily rhythm: their own if they have one, else the main one (the PC's person's)
+export function rhythmFor(data: Pick<QuestData, "rhythm" | "rhythms">, owner: string, pcOwner: string): Rhythm {
+  return owner && owner !== pcOwner && data.rhythms[owner] ? data.rhythms[owner] : data.rhythm;
 }

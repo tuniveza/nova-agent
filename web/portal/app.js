@@ -2962,11 +2962,32 @@
   // A day's name: "Wednesday 7 October"
   const dayName = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 
+  // Whose quests: your own (the default), or everyone's (admins: the Mine / Everyone chips)
+  let questWho = "mine";
+  try {
+    if (localStorage.getItem("portal/quests-who") === "everyone") questWho = "everyone";
+  } catch (err) {}
+  // Someone else's: their name (Nova Agent sends whose each one is)
+  const ownerLabel = (x) => {
+    const st = lastQuests && lastQuests.state;
+    if (!x || !x.owner || !lastQuests || lastQuests.scope !== "everyone" || x.owner === lastQuests.me) return "";
+    const person = st && st.people && st.people[x.owner];
+    return (x.ownerName || (person && person.name) || "Someone") + "’s";
+  };
+  function drawWho() {
+    const box = $("quests-who");
+    if (!box) return;
+    box.hidden = !(lastQuests && lastQuests.canSeeEveryone);
+    const shown = lastQuests && lastQuests.scope === "everyone" ? "everyone" : "mine";
+    box.querySelectorAll("[data-quests-who]").forEach((c) => c.classList.toggle("active", c.dataset.questsWho === shown));
+  }
+
   // Get the plan and draw the open part
   async function loadQuests() {
     try {
-      const data = await api("quests");
+      const data = await api(questWho === "everyone" ? "quests?who=everyone" : "quests");
       lastQuests = data;
+      drawWho();
       drawQuests();
     } catch (err) {
       if (err.message !== "signed out" && currentView === "quests") emptyState($("quests-body"), err.message);
@@ -3025,6 +3046,9 @@
     tags.appendChild(el("span", "q-tag", (q.ongoing ? "∞ Quest · repeat" : "✦ Quest") + (big ? (q.status === "doing" ? " · in progress" : " · up next") : "")));
     if (mission) tags.appendChild(el("span", "m-tag", "◆ " + mission.title));
     if (q.from) tags.appendChild(el("span", "m-tag", "✎ " + q.from));
+    // Someone else's (an admin looking at everyone's): whose it is
+    const whose = ownerLabel(q);
+    if (whose) tags.appendChild(el("span", "m-tag", "◎ " + whose));
     if (q.atRisk && q.status !== "done") tags.appendChild(el("span", "risk-tag", "⚠ At risk"));
     // How it's going: a coloured chip (the same as in Notes and on Nova Agent's front page); tap to change
     if (window.NovaQuestModes) {
@@ -3121,7 +3145,7 @@
         const words = el("div", "mission-words");
         words.append(el("h3", "card-title", m.title), el("p", "quest-meta", m.summary || ""));
         head.append(ring, words);
-        card.append(el("span", "m-badge", "◆ Mission" + (m.status === "done" ? " · complete" : m.status === "paused" ? " · paused" : "")), head);
+        card.append(el("span", "m-badge", "◆ Mission" + (m.status === "done" ? " · complete" : m.status === "paused" ? " · paused" : "") + (ownerLabel(m) ? " · " + ownerLabel(m) : "")), head);
         if (p.atRisk) card.classList.add("risk");
         card.appendChild(el("p", "quest-meta", [m.deadline ? "Due " + m.deadline.replace("T", " ") : "", `${p.done}/${p.total} quests`, (p.minutesLeft / 60).toFixed(1) + " h left", p.atRisk ? `⚠ ${p.atRisk} at risk` : ""].filter(Boolean).join(" · ")));
         const row = el("div", "actions");
@@ -3151,6 +3175,16 @@
     reconcile(body, cards);
   }
 
+  document.querySelectorAll("[data-quests-who]").forEach((chip) =>
+    chip.addEventListener("click", () => {
+      questWho = chip.dataset.questsWho === "everyone" ? "everyone" : "mine";
+      try {
+        localStorage.setItem("portal/quests-who", questWho);
+      } catch (err) {}
+      document.querySelectorAll("[data-quests-who]").forEach((c) => c.classList.toggle("active", c === chip));
+      loadQuests();
+    })
+  );
   document.querySelectorAll("[data-quests]").forEach((chip) =>
     chip.addEventListener("click", () => {
       questTab = chip.dataset.quests;

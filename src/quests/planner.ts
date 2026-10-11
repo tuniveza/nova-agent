@@ -27,7 +27,9 @@ import { splitLong } from "./lengths";
 import { notifyMission } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
 import { nowMinutes, replan } from "./plan";
-import { cleanMission, cleanQuest, EVERY, PRIORITIES, readQuests, TIMES_OF_DAY, WEEKDAYS, type Finding, type Milestone, type Mission, type Quest, type QuestData } from "./store";
+import { cleanMission, cleanQuest, EVERY, PRIORITIES, readQuests, rhythmFor, TIMES_OF_DAY, WEEKDAYS, type Finding, type Milestone, type Mission, type Quest, type QuestData } from "./store";
+import { ownerOf } from "../person";
+import { pcOwnerId } from "../staff";
 
 const DateOrStamp = z.string().describe('"YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" (UK time), or "" for none');
 const MAX_ITEMS = 60;
@@ -128,9 +130,10 @@ Make the plan genuinely good:
 - Research: you can search the web and read pages. Do it when current, specific facts would make the plan genuinely better: how a platform works now (best posting times, format specs, distributor lead times before a release date), prices and where to buy, opening hours and booking rules for a place, entry deadlines, a course's syllabus. Don't search for general know-how you already have, and skip it entirely for small personal goals. Put what you used in research, each with the exact URL it came from, and build it into the strategy and quests.`;
 
 // The plan, from Claude (with the pages it looked at)
-async function askForPlan(data: QuestData, parts: { request: string; deadline?: string; context?: string }): Promise<{ plan: Plan; sources: Source[] }> {
+async function askForPlan(data: QuestData, parts: { request: string; deadline?: string; context?: string; owner: string }): Promise<{ plan: Plan; sources: Source[] }> {
   const now = nowMinutes();
-  const r = data.rhythm;
+  // Their rhythm, their other missions, what Nova Agent remembers about them
+  const r = rhythmFor(data, parts.owner, pcOwnerId());
   const until = parts.deadline ? stampOf(parts.deadline).slice(0, 10) : fromMin(now + 120 * 1440).slice(0, 10);
   const taken = readCalendar()
     .notes.filter((n) => !/^(quest|block|mile|music)-/.test(n.id) && !n.allDay)
@@ -140,9 +143,9 @@ async function askForPlan(data: QuestData, parts: { request: string; deadline?: 
     .slice(0, 80)
     .map((n) => `- ${n.start.replace("T", " ")} to ${n.end.slice(11)}: ${n.title}`)
     .join("\n");
-  const active = data.missions.filter((m) => m.status === "active").map((m) => `- ${m.title}${m.deadline ? ` (due ${m.deadline})` : ""}`).join("\n");
+  const active = data.missions.filter((m) => m.status === "active" && ownerOf(m) === parts.owner).map((m) => `- ${m.title}${m.deadline ? ` (due ${m.deadline})` : ""}`).join("\n");
   // What Nova Agent remembers about this person and the work (Index)
-  const memory = await memoryFor(parts.request);
+  const memory = await memoryFor(parts.request, parts.owner);
   const { answer, sources } = await askWithResearch({
     purpose: "plan a Mission",
     schema: PlanSchema,
@@ -242,7 +245,8 @@ function materialise(plan: Plan, mission: Mission, data: QuestData): { quests: Q
     ...plan.milestones.filter((m) => m.at).map((m) => ({ id: randomUUID(), title: m.title, at: stampOf(m.at).replace(/T23:59$/, "T12:00"), track: m.track, done: false })),
     ...fromSeries.flatMap((x) => x.milestones),
   ].sort((a, b) => a.at.localeCompare(b.at));
-  const quests = [...oneOffs, ...fromSeries.flatMap((x) => x.quests)].slice(0, MAX_QUESTS).flatMap((q) => splitLong(q, data.rhythm));
+  // The mission's quests are its owner's
+  const quests = [...oneOffs, ...fromSeries.flatMap((x) => x.quests)].slice(0, MAX_QUESTS).flatMap((q) => splitLong({ ...q, owner: mission.owner }, rhythmFor(data, ownerOf(mission), pcOwnerId())));
   return { quests, milestones };
 }
 
@@ -261,10 +265,16 @@ function applyPlanText(m: Mission, plan: Plan, milestones: Milestone[], findings
   });
 }
 
-// Days they said they can't work become days off in their rhythm (for everything, not just this mission)
-function takeDaysOff(data: QuestData, plan: Plan): void {
+// Days they said they can't work become days off in their rhythm (for everything, not just this
+// mission). Someone other than the PC's person gets a rhythm of their own for it.
+function takeDaysOff(data: QuestData, plan: Plan, owner: string): void {
   const days = plan.days_off.map((d) => WEEKDAYS.indexOf(d)).filter((d) => d >= 0);
-  if (days.length) data.rhythm.daysOff = [...new Set([...data.rhythm.daysOff, ...days])].sort().slice(0, 6);
+  if (!days.length) return;
+  const pc = pcOwnerId();
+  const r = rhythmFor(data, owner, pc);
+  const daysOff = [...new Set([...r.daysOff, ...days])].sort().slice(0, 6);
+  if (owner === pc) data.rhythm.daysOff = daysOff;
+  else data.rhythms[owner] = { ...r, daysOff };
 }
 
 function report(mission: Mission, data: QuestData, unplacedAll: { id: string; title: string; why: string }[], verb: "planned" | "re-planned") {
@@ -285,16 +295,18 @@ function report(mission: Mission, data: QuestData, unplacedAll: { id: string; ti
   };
 }
 
-export async function createMission(request: string, hints: { deadline?: string } = {}): Promise<{ mission: Mission; quests: Quest[]; atRisk: number; unplaced: string[] }> {
-  const { plan, sources } = await askForPlan(readQuests(), { request, deadline: hints.deadline });
+// `owner`: whose mission it is (the person who asked; "" = the PC's person)
+export async function createMission(request: string, hints: { deadline?: string; owner?: string } = {}): Promise<{ mission: Mission; quests: Quest[]; atRisk: number; unplaced: string[] }> {
+  const owner = hints.owner ?? "";
+  const { plan, sources } = await askForPlan(readQuests(), { request, deadline: hints.deadline, owner: owner || pcOwnerId() });
   // Read again after the (slow) planning, so nothing that changed meanwhile is lost
   const data = readQuests();
-  let mission = cleanMission({ title: plan.title, request, deadline: hints.deadline || plan.deadline });
+  let mission = cleanMission({ title: plan.title, request, deadline: hints.deadline || plan.deadline, owner });
   const { quests, milestones } = materialise(plan, mission, data);
   mission = applyPlanText(mission, plan, milestones, checkedFindings(plan, sources));
   data.missions.push(mission);
   data.quests.push(...quests);
-  takeDaysOff(data, plan);
+  takeDaysOff(data, plan, ownerOf(mission));
   const result = replan(data);
   return report(mission, result.data, result.unplaced, "planned");
 }
@@ -317,6 +329,7 @@ export async function refineMission(id: string, detail: string, hints: { deadlin
   const deadline = hints.deadline || m.deadline;
   const { plan, sources } = await askForPlan(before, {
     request: m.request,
+    owner: ownerOf(m),
     deadline,
     context: `This mission already has a plan, called "${m.title}". Plan again, from now, ONLY the work that's left, using everything below. Keep what was working; change what the new detail changes.
 ${m.assumptions.length ? `The last plan assumed:\n${m.assumptions.map((a) => `- ${a}`).join("\n")}\n` : ""}${m.questions.length ? `It asked:\n${m.questions.map((q) => `- ${q}`).join("\n")}\n` : ""}What they've told you since (oldest first):
@@ -337,7 +350,7 @@ ${m.research.length ? `Research from last time (${m.researched.slice(0, 10)}; on
   updated.updated = now;
   data.missions[data.missions.indexOf(current)] = updated;
   data.quests.push(...quests);
-  takeDaysOff(data, plan);
+  takeDaysOff(data, plan, ownerOf(updated));
   const result = replan(data);
   return report(updated, result.data, result.unplaced, "re-planned");
 }

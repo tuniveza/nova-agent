@@ -13,14 +13,15 @@ import { trace } from "./trace";
 const cache = new Map<string, { at: number; text: string }>();
 const CACHE_MS = 30_000;
 
-// The facts that matter for this turn, as a block for the system prompt ("" if none, or offline)
-export async function memoryFor(q: string): Promise<string> {
+// The facts that matter for this turn, as a block for the system prompt ("" if none, or offline).
+// `person`: whose staff facts (the person talking; none = the person Nova Agent works for on the PC)
+export async function memoryFor(q: string, person?: string): Promise<string> {
   if (!config.agentNovaKey) return "";
-  const key = q.slice(0, 200);
+  const key = `${person ?? ""}|${q.slice(0, 200)}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.text;
   try {
-    const who = await staffId();
+    const who = person || (await staffId());
     const url = `${config.workerUrl}/memory/context?scope=staff&owner_id=${encodeURIComponent(who)}&q=${encodeURIComponent(q.slice(0, 500))}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${config.agentNovaKey}` }, signal: AbortSignal.timeout(2500) });
     if (!res.ok) return "";
@@ -37,13 +38,13 @@ export async function memoryFor(q: string): Promise<string> {
 }
 
 // Hand a finished exchange to the worker to learn from (in the background; never waits)
-export function learnFrom(messages: { role: string; content: string }[], ref = ""): void {
+export function learnFrom(messages: { role: string; content: string }[], ref = "", person?: string): void {
   if (!config.agentNovaKey) return;
   const transcript = messages
     .slice(-6)
     .map((m) => `${m.role === "user" ? "Staff" : "Nova Agent"}: ${m.content.slice(0, 2000)}`)
     .join("\n");
-  staffId()
+  (person ? Promise.resolve(person) : staffId())
     .then((who) =>
       fetch(`${config.workerUrl}/memory/extract`, {
         method: "POST",

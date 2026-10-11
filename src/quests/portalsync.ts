@@ -14,8 +14,10 @@ import { questEvents } from "./store";
 let soon: NodeJS.Timeout | undefined;
 let lastProblem = "";
 
-// What the phone needs (recent and open quests only, to keep it small)
-function snapshot() {
+// What the phone needs (recent and open quests only, to keep it small). Everyone's, each with
+// its owner (staff id, never ""): Nova Bot shows each person their own, and admins everyone's.
+// `people`: each person's own "now" and "next".
+export function snapshot() {
   const st = questState();
   const cutoff = st.now.slice(0, 10);
   // Every quest (open first, then the most recently changed), so Portal shows them all, wherever
@@ -40,8 +42,16 @@ function snapshot() {
       .filter((d) => d.repeat === "yearly" || (d.date >= from && d.date <= to))
       .map((d) => ({ id: d.id, date: d.date, title: d.title, preset: d.preset, info: d.info.slice(0, 300), location: d.location, repeat: d.repeat })),
   };
+  const owners = [...new Set([...st.quests, ...st.missions].map((x) => x.owner))];
+  const people = Object.fromEntries(
+    owners.map((id) => {
+      const theirs = questState({ id });
+      return [id, { name: theirs.quests.find((q) => q.owner === id)?.ownerName ?? theirs.missions.find((m) => m.owner === id)?.ownerName ?? id, current: theirs.current && slim(theirs.current), next: theirs.next.map(slim) }];
+    }),
+  );
   return {
     now: st.now,
+    people,
     calendar,
     rhythm: { wake: st.rhythm.wake, sleep: st.rhythm.sleep, paceLimits: st.rhythm.paceLimits },
     missions: st.missions.map(({ request, strategy, refinements, ...m }) => m),

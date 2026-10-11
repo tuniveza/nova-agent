@@ -51,7 +51,10 @@ import { replan } from "./quests/plan";
 import { createMission, refineMission } from "./quests/planner";
 import { describeLength } from "./quests/lengths";
 import { isPulse } from "./quests/pulses";
-import { EVERY, MODES, MODE_NAMES, PRIORITIES, readQuests, TIMES_OF_DAY, WEEKDAYS, type Mission, type Quest } from "./quests/store";
+import { EVERY, MODES, MODE_NAMES, PRIORITIES, readQuests, rhythmFor, TIMES_OF_DAY, WEEKDAYS, type Mission, type Quest } from "./quests/store";
+import { mayChange } from "./quests/actions";
+import { localPerson, ownerOf, ownerToSave, personName, type Person } from "./person";
+import { pcOwnerId } from "./staff";
 import { currentMusic } from "./quests/plan";
 
 const DEFAULT_MODEL = "claude-opus-5-5";
@@ -85,9 +88,18 @@ function nowInUk() {
   return { date, time: `${get("hour")}:${get("minute")}`, words: longDate(date) };
 }
 
-function systemPrompt(): string {
+// Who you're talking to, for the system prompt
+export function personPrompt(person: Person): string {
+  const role = person.role === "admin" ? "an admin" : "a member of staff";
+  const where = person.online ? "signed in to Portal, using Nova Agent online" : "on the studio computer (Nova Agent works for them here)";
+  return `You're talking to ${person.name} (${role} at the studio, staff id ${person.id}), ${where}. Address them by name now and then, and act as them: missions, quests, blocked times, the rhythm and reminders you set up are theirs (reminders go to their phones), and "my", "me" and "I" mean ${person.name}. Your quest and mission tools show their own${person.everyone ? "; they can also see everyone's (pass everyone: true to quests_list), but change someone else's only when they clearly ask to" : ""}. This conversation is theirs alone: other people have their own.`;
+}
+
+export function systemPrompt(person: Person = localPerson()): string {
   const now = nowInUk();
   return `You are Nova Agent, the one app for Novacane Studios (a recording studio in Forest Hill, London). You run on the studio computer. People from the studio chat with you here.
+
+${personPrompt(person)}
 
 You help with anything they want to get done: inside Nova Agent and the studio, and just as much outside it, in their music careers, releases, content and socials, business, health, study and everyday life. Think and advise like an expert in whatever they bring you, and turn it into a plan they can follow.
 
@@ -356,7 +368,7 @@ export function bookingPayload(i: ProposalInput): Record<string, unknown> | stri
   }
 }
 
-function tools(actions: ChatAction[]) {
+function tools(actions: ChatAction[], person: Person = localPerson()) {
   const did = (kind: ChatAction["kind"], text: string) => {
     actions.push({ kind, text });
     trace("input", "ok", `Chat: ${text}`);
@@ -383,10 +395,10 @@ function tools(actions: ChatAction[]) {
         note: z.string().max(5000).optional().describe("The note itself"),
         start: STAMP,
         end: STAMP.optional().describe("When it finishes (defaults to one hour after the start)"),
-        author: z.string().max(60).optional(),
+        author: z.string().max(60).optional().describe("Who it's from (defaults to the person you're talking to)"),
         ...EVENT_EXTRAS,
       }),
-      run: async ({ title, note, start, end, author, ...extras }) => {
+      run: async ({ title, note, start, end, author = person.name.slice(0, 60), ...extras }) => {
         const finish = end ?? (() => {
           const d = new Date(`${start}:00Z`);
           d.setUTCHours(d.getUTCHours() + 1);
@@ -877,11 +889,24 @@ const noteAction = (actions: ChatAction[], kind: ChatAction["kind"], text: strin
   trace("input", "ok", `Chat: ${text}`);
 };
 
-function questTools(actions: ChatAction[]) {
+// Missions and quests for one person: what they make is theirs, and they see their own (an admin,
+// or the studio computer, can look at everyone's)
+export function questTools(actions: ChatAction[], person: Person = localPerson()) {
   const did = (kind: ChatAction["kind"], text: string) => {
     actions.push({ kind, text });
-    trace("input", "ok", `Chat: ${text}`);
+    trace("input", "ok", `Chat: ${person.online ? `${person.name}: ` : ""}${text}`);
   };
+  const owner = ownerToSave(person);
+  const mine = { id: person.id };
+  // Theirs to change? (anyone's for an admin or the PC; staff: their own and quests tied to a note)
+  // (Not found: the action itself says so, with the detail)
+  const check = <T extends { owner?: string; title: string; link?: string }>(x: T | undefined, what: string): T | undefined => {
+    if (x && !mayChange(x, person)) throw new Error(`“${x.title}” is ${personName(ownerOf(x))}'s ${what}, not yours to change.`);
+    return x;
+  };
+  const byId = <T extends { id: string }>(list: T[], id: string) => list.find((x) => x.id === id) ?? (list.filter((x) => x.id.startsWith(id)).length === 1 ? list.find((x) => x.id.startsWith(id)) : undefined);
+  const questById = (id: string) => byId(readQuests().quests, id);
+  const missionById = (id: string) => byId(readQuests().missions, id);
   const STAMP_OR_EMPTY = z.string().describe('"YYYY-MM-DDTHH:MM" (UK time, ":SS" seconds allowed), or "" for none');
   // Any length, from a second up: give it in whichever units fit (they're added together)
   const LENGTH = {
@@ -903,7 +928,7 @@ function questTools(actions: ChatAction[]) {
       description: "Create a Mission from what the person wants to achieve: it's broken into Quests and scheduled straight away. Pass their goal in their own words, with any constraints they mentioned.",
       inputSchema: z.object({ request: z.string().min(3), deadline: z.string().optional().describe('The mission deadline if they gave one: "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM"') }),
       run: async ({ request, deadline }) => {
-        const r = await createMission(request, { deadline });
+        const r = await createMission(request, { deadline, owner });
         did("added", `Mission “${r.mission.title}”: ${r.quests.length} quests planned`);
         return missionReport(r);
       },
@@ -913,6 +938,7 @@ function questTools(actions: ChatAction[]) {
       description: "Give a mission new detail or answers to its questions: the work that's left is planned again with it (done quests stay). Takes a minute or two.",
       inputSchema: z.object({ id: z.string(), detail: z.string().min(2).describe("What's new, in their words"), deadline: z.string().optional().describe('A new deadline if they changed it: "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM"') }),
       run: async ({ id, detail, deadline }) => {
+        check(missionById(id), "mission");
         const r = await refineMission(id, detail, { deadline });
         did("changed", `Re-planned “${r.mission.title}”: ${r.quests.length} quests to go`);
         return missionReport(r);
@@ -923,7 +949,7 @@ function questTools(actions: ChatAction[]) {
       description: "A mission's full plan: its strategy, tracks and their progress, milestones, assumptions, open questions and what they've added since.",
       inputSchema: z.object({ id: z.string() }),
       run: async ({ id }) => {
-        const m = questState().missions.find((x) => x.id === id || x.id.startsWith(id));
+        const m = questState({ ...mine, everyone: person.everyone }).missions.find((x) => x.id === id || x.id.startsWith(id));
         if (!m) return `No mission with id ${id}.`;
         return JSON.stringify({
           id: m.id.slice(0, 8),
@@ -946,7 +972,7 @@ function questTools(actions: ChatAction[]) {
       description: "The quest happening now, the next few, anything overdue or unplanned, missions at risk, and music time today and tomorrow. Use it for 'what should I do now?' and before giving advice on priorities.",
       inputSchema: z.object({}),
       run: async () => {
-        const st = questState();
+        const st = questState(mine);
         return JSON.stringify({
           now: st.now,
           current: st.current ? questLine(st.current) : null,
@@ -954,17 +980,18 @@ function questTools(actions: ChatAction[]) {
           overdue: st.overdue.map(questLine),
           unplanned: st.unplanned.map(questLine),
           missions: st.missions.filter((m) => m.status === "active").map((m) => `${m.id.slice(0, 8)} · ${m.title}${m.deadline ? ` · due ${m.deadline}` : ""} · ${m.progress.done}/${m.progress.total} done · ${m.progress.atRisk} at risk · ${Math.round(m.progress.minutesLeft / 60)} h left`),
-          music_time: currentMusic().slice(0, 2).map(musicLine),
+          music_time: currentMusic(person.id).slice(0, 2).map(musicLine),
         });
       },
     }),
     betaZodTool({
       name: "quests_list",
-      description: "Quests scheduled between two dates, or all quests of one mission. Use it to find a quest's id.",
-      inputSchema: z.object({ from: DATE.optional(), to: DATE.optional(), mission_id: z.string().optional() }),
-      run: async ({ from, to, mission_id }) => {
-        const qs = readQuests().quests.filter((q) => (mission_id ? q.missionId.startsWith(mission_id) : true) && (from ? q.start.slice(0, 10) >= from : true) && (to ? q.start && q.start.slice(0, 10) <= to : true));
-        return qs.length ? qs.sort((a, b) => (a.start || "z").localeCompare(b.start || "z")).map(questLine).join("\n") : "No quests found.";
+      description: `Quests scheduled between two dates, or all quests of one mission: the person's own${person.everyone ? " (everyone: true for everyone's, each with whose it is)" : ""}. Use it to find a quest's id.`,
+      inputSchema: z.object({ from: DATE.optional(), to: DATE.optional(), mission_id: z.string().optional(), everyone: z.boolean().optional().describe("Everyone's quests, not just theirs (admins only)") }),
+      run: async ({ from, to, mission_id, everyone }) => {
+        const all = everyone && person.everyone;
+        const qs = questState({ ...mine, everyone: all }).quests.filter((q) => (mission_id ? q.missionId.startsWith(mission_id) : true) && (from ? q.start.slice(0, 10) >= from : true) && (to ? q.start && q.start.slice(0, 10) <= to : true));
+        return qs.length ? qs.sort((a, b) => (a.start || "z").localeCompare(b.start || "z")).map((q) => `${questLine(q)}${all ? ` · ${q.ownerName}'s` : ""}`).join("\n") : everyone && !person.everyone ? "Only admins can see everyone's quests. No quests of theirs found." : "No quests found.";
       },
     }),
     betaZodTool({
@@ -983,8 +1010,8 @@ function questTools(actions: ChatAction[]) {
         notes: z.string().optional(),
       }),
       run: async (i) => {
-        const missionId = i.mission_id ? readQuests().missions.find((m) => m.id.startsWith(i.mission_id!))?.id ?? "" : "";
-        const q = addQuest({ title: i.title, minutes: totalMinutes(i) ?? 60, ongoing: i.ongoing, every: i.every, everyMinutes: i.every_minutes, missionId, priority: i.priority, deadline: i.deadline, fixedStart: i.fixed_start, location: i.location, travelMinutes: i.travel_minutes, timeOfDay: i.time_of_day, notes: i.notes });
+        const missionId = i.mission_id ? check(readQuests().missions.find((m) => m.id.startsWith(i.mission_id!)), "mission")?.id ?? "" : "";
+        const q = addQuest({ title: i.title, minutes: totalMinutes(i) ?? 60, ongoing: i.ongoing, every: i.every, everyMinutes: i.every_minutes, missionId, priority: i.priority, deadline: i.deadline, fixedStart: i.fixed_start, location: i.location, travelMinutes: i.travel_minutes, timeOfDay: i.time_of_day, notes: i.notes }, owner);
         did("added", `Quest “${q.title}”${q.start ? `: ${longDate(q.start.slice(0, 10))} ${hm(q.start)}` : ""}`);
         return `Added: ${questLine(q)}`;
       },
@@ -1004,9 +1031,10 @@ function questTools(actions: ChatAction[]) {
         time_of_day: z.enum(TIMES_OF_DAY).optional(),
         notes: z.string().optional(),
         mode: z.enum(MODES).optional(),
-        phones: z.array(z.string().regex(/^[0-9a-f]{12}$/)).max(10).optional().describe("Which phones get this quest's reminders (phone ids; [] = the studio owner's phones)"),
+        phones: z.array(z.string().regex(/^[0-9a-f]{12}$/)).max(10).optional().describe("Which phones get this quest's reminders (phone ids; [] = its owner's own phones)"),
       }),
       run: async ({ id, fixed_start, travel_minutes, time_of_day, seconds, minutes, hours, days, every_minutes, ...rest }) => {
+        check(questById(id), "quest");
         const q = updateQuest(id, { ...rest, everyMinutes: every_minutes, minutes: totalMinutes({ seconds, minutes, hours, days }), fixedStart: fixed_start, travelMinutes: travel_minutes, timeOfDay: time_of_day });
         did("changed", `Quest “${q.title}”${q.start ? `: now ${longDate(q.start.slice(0, 10))} ${hm(q.start)}` : ""}`);
         return `Updated: ${questLine(q)}`;
@@ -1017,6 +1045,7 @@ function questTools(actions: ChatAction[]) {
       description: "Mark a quest done, started (doing), skipped, or back to to-do; or remove it entirely. For an ongoing quest, done finishes this session and lines up the next; finish ends the ongoing quest for good.",
       inputSchema: z.object({ id: z.string(), status: z.enum(["done", "doing", "skipped", "todo", "remove", "finish"]) }),
       run: async ({ id, status }) => {
+        check(questById(id), "quest");
         if (status === "remove") {
           const q = removeQuest(id);
           did("removed", `Removed quest “${q.title}”`);
@@ -1032,6 +1061,7 @@ function questTools(actions: ChatAction[]) {
       description: "Not now: push a quest back by some minutes (if it's under way, gives it more time instead).",
       inputSchema: z.object({ id: z.string(), minutes: z.number().int().min(5).max(1440) }),
       run: async ({ id, minutes }) => {
+        check(questById(id), "quest");
         const q = snoozeQuest(id, minutes);
         did("changed", `Snoozed “${q.title}”${q.start ? ` to ${hm(q.start)}` : ""}`);
         return `Snoozed: ${questLine(q)}`;
@@ -1043,12 +1073,13 @@ function questTools(actions: ChatAction[]) {
       inputSchema: z.object({ start: STAMP.optional(), end: STAMP.optional(), reason: z.string().optional(), remove_id: z.string().optional() }),
       run: async ({ start, end, reason, remove_id }) => {
         if (remove_id) {
+          check(byId(readQuests().blocks.map((x) => ({ ...x, title: x.reason })), remove_id), "blocked time");
           const b = removeBlock(remove_id);
           did("removed", `Unblocked ${b.reason}`);
           return `Removed the block “${b.reason}”.`;
         }
         if (!start || !end) return "Give a start and end time.";
-        const b = addBlock(start, end, reason || "Busy");
+        const b = addBlock(start, end, reason || "Busy", owner);
         did("added", `Blocked ${longDate(start.slice(0, 10))} ${hm(start)}–${hm(end)}: ${b.reason}`);
         return `Blocked ${b.start}–${b.end} (${b.reason}), id ${b.id.slice(0, 8)}. Quests have moved around it.`;
       },
@@ -1058,6 +1089,7 @@ function questTools(actions: ChatAction[]) {
       description: "Rename a mission, change its deadline, pause or resume it, mark it done, or remove it (with its quests).",
       inputSchema: z.object({ id: z.string(), title: z.string().optional(), deadline: z.string().optional(), status: z.enum(["active", "paused", "done"]).optional(), remove: z.boolean().optional() }),
       run: async ({ id, remove, ...changes }) => {
+        check(missionById(id), "mission");
         if (remove) {
           const m = removeMission(id);
           did("removed", `Removed mission “${m.title}”`);
@@ -1089,7 +1121,7 @@ function questTools(actions: ChatAction[]) {
         days_off: z.array(z.enum(WEEKDAYS)).optional().describe("The whole set of days of the week with no quests at all (replaces the current set; [] for none)"),
       }),
       run: async (i) => {
-        const r = setRhythm({ wake: i.wake, sleep: i.sleep, windDownMinutes: i.wind_down_minutes, startUpMinutes: i.start_up_minutes, bufferMinutes: i.buffer_minutes, breakAfterMinutes: i.break_after_minutes, breakMinutes: i.break_minutes, maxQuestHoursPerDay: i.max_quest_hours_per_day, homeBase: i.home_base, remindMinutesBefore: i.remind_minutes_before, checkIns: i.check_ins, dailyBriefing: i.daily_briefing, phonePush: i.phone_push, paceLimits: i.pace_limits, daysOff: i.days_off?.map((d) => WEEKDAYS.indexOf(d)) });
+        const r = setRhythm({ wake: i.wake, sleep: i.sleep, windDownMinutes: i.wind_down_minutes, startUpMinutes: i.start_up_minutes, bufferMinutes: i.buffer_minutes, breakAfterMinutes: i.break_after_minutes, breakMinutes: i.break_minutes, maxQuestHoursPerDay: i.max_quest_hours_per_day, homeBase: i.home_base, remindMinutesBefore: i.remind_minutes_before, checkIns: i.check_ins, dailyBriefing: i.daily_briefing, phonePush: i.phone_push, paceLimits: i.pace_limits, daysOff: i.days_off?.map((d) => WEEKDAYS.indexOf(d)) }, owner);
         did("changed", `Rhythm: up ${r.wake}, sleep ${r.sleep}`);
         return `Rhythm now: ${JSON.stringify(r)}. Everything has been re-planned.`;
       },
@@ -1103,17 +1135,17 @@ function questTools(actions: ChatAction[]) {
         minutes: z.number().int().min(0).max(720).optional().describe("How long; 0 turns music time off"),
       }),
       run: async ({ days, start, minutes }) => {
-        const was = readQuests().rhythm.music;
+        const was = rhythmFor(readQuests(), person.id, pcOwnerId()).music;
         const music = { days: days ? days.map((d) => WEEKDAYS.indexOf(d)) : was.days, start: start ?? was.start, minutes: minutes ?? was.minutes };
         if (music.minutes > 0 && !music.days.length) return "Which days should music time be on? Nothing was changed.";
-        const r = setRhythm({ music });
+        const r = setRhythm({ music }, owner);
         if (!r.music.minutes) {
           did("changed", "Music time: off");
           return "Music time is off. Everything has been re-planned.";
         }
         const names = r.music.days.map((d) => WEEKDAYS[d][0].toUpperCase() + WEEKDAYS[d].slice(1, 3)).join(", ");
         did("changed", `Music time: ${names}, ${r.music.start}, ${r.music.minutes} min`);
-        const next = currentMusic().slice(0, 5);
+        const next = currentMusic(person.id).slice(0, 5);
         return `Music time set: ${names} at ${r.music.start} for ${r.music.minutes} minutes. Quests have been re-planned around it.${next.length ? ` Next: ${next.map(musicLine).join("; ")}` : ""}`;
       },
     }),
@@ -1130,8 +1162,10 @@ function questTools(actions: ChatAction[]) {
   ];
 }
 
-// One chat turn: the conversation so far in, Nova Agent's reply (and what it did) out
-export async function chat(history: ChatTurn[]): Promise<{ reply: string; actions: ChatAction[] }> {
+// One chat turn: the conversation so far in, Nova Agent's reply (and what it did) out. `person`:
+// who's talking (src/person.ts; none = the person Nova Agent works for on the PC). Their name and
+// role are in the system prompt, and what the tools make is theirs.
+export async function chat(history: ChatTurn[], person: Person = localPerson()): Promise<{ reply: string; actions: ChatAction[] }> {
   const messages: Anthropic.Beta.BetaMessageParam[] = history
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
     .slice(-MAX_HISTORY)
@@ -1144,13 +1178,13 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
   const model = config.novaModel || DEFAULT_MODEL;
   // What Nova Agent remembers that matters for this message (Index)
   const asked = String(messages[messages.length - 1].content);
-  const memory = await memoryFor(asked);
+  const memory = await memoryFor(asked, person.id);
   trace("llm", "start", `Chat: asking ${model}`);
   const runner = getClient().beta.messages.toolRunner({
     model,
     max_tokens: 16000,
-    system: memory ? `${systemPrompt()}\n\n${memory}` : systemPrompt(),
-    tools: [...tools(actions), ...questTools(actions), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...campaignTools(actions), ...webTools({ search: 5, fetch: 5 })],
+    system: memory ? `${systemPrompt(person)}\n\n${memory}` : systemPrompt(person),
+    tools: [...tools(actions, person), ...questTools(actions, person), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...campaignTools(actions), ...webTools({ search: 5, fetch: 5 })],
     messages,
     output_config: { effort: "low" },
     max_iterations: 16 + MAX_CONTINUATIONS,
@@ -1175,6 +1209,6 @@ export async function chat(history: ChatTurn[]): Promise<{ reply: string; action
     .trim();
   trace("llm", "ok", `Chat: answered (${final.usage.output_tokens} tokens)`);
   // The suite keeps learning from what's said here (in the background, on Nova Bot's worker)
-  learnFrom([...messages.map((m) => ({ role: m.role, content: String(m.content) })), { role: "assistant", content: reply }]);
+  learnFrom([...messages.map((m) => ({ role: m.role, content: String(m.content) })), { role: "assistant", content: reply }], "", person.id);
   return { reply: reply || (actions.length ? "Done ✦" : "I'm not sure what to say to that."), actions };
 }

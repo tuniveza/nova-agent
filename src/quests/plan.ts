@@ -3,16 +3,21 @@
 // milestone and each day's music time becomes a note card there, kept in step
 // automatically). Taken time is the calendar, blocked time, and (with
 // ACUITY_SOURCE=api) the studio's bookings and Acuity's blocked times (bookings.ts).
+// Each person's quests are planned in their own time: their own rhythm (or the main one), their
+// own blocked times and music time, around the studio's shared calendar and bookings. One
+// person's quests never take another person's time.
 
 import { noteOccurrences, readCalendar, writeCalendar, type NoteCard } from "../calendar/store";
 import { config } from "../config";
 import { bookingsBusy } from "./bookings";
-import { fromMin, planMusic, planQuests, toMin, type Busy, type MusicSlot } from "./scheduler";
+import { fromMin, planMusic, planQuests, toMin, type Busy, type MusicSlot, type PlanResult } from "./scheduler";
 import { nextSession } from "./lengths";
 import { sessionDelivery, sessionSettled } from "./deliveries";
 import { isPulse } from "./pulses";
 import { remindLate } from "./reminders";
-import { readQuests, writeQuests, type Quest, type QuestData } from "./store";
+import { readQuests, rhythmFor, writeQuests, type Quest, type QuestData } from "./store";
+import { ownerOf, personName } from "../person";
+import { pcOwnerId } from "../staff";
 
 const QUEST_NOTE = "quest-";
 const BLOCK_NOTE = "block-";
@@ -41,13 +46,17 @@ function calendarBusy(): Busy[] {
     .map((n) => ({ start: n.start, end: n.end, label: n.title }));
 }
 
-// Music time as last planned (for Calendar, and to tell when a booking moved it)
+// Music time as last planned (for Calendar, and to tell when a booking moved it): the PC's
+// person's, and anyone else's with music time in a rhythm of their own
 let lastMusic: MusicSlot[] = [];
-export const currentMusic = () => [...lastMusic];
+let othersMusic = new Map<string, MusicSlot[]>();
+export const currentMusic = (owner?: string) => (!owner || owner === pcOwnerId() ? [...lastMusic] : [...(othersMusic.get(owner) ?? [])]);
 
 // Plan everything again. Returns a short summary of what changed.
 export function replan(data: QuestData = readQuests()): { data: QuestData; atRisk: number; unplaced: { id: string; title: string; why: string }[]; music: MusicSlot[] } {
   const now = nowMinutes();
+  const pc = pcOwnerId();
+  const rhythmOf = (owner: string) => rhythmFor(data, owner, pc);
   // Repeats whose last session is over but whose ping hasn't got through yet: they stay put
   const waiting = new Set<string>();
   for (const q of data.quests) {
@@ -57,7 +66,7 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
     if (q.every === "interval" && q.status === "todo" && q.start && toMin(q.end) <= now) {
       // It went by without a ping (Nova Agent was off, the clocks went forward): one late
       // ping for it and any later slots already over, then wait for that to get through
-      if (!sessionDelivery(q.id, q.start)) tellMissed(q, slotsFrom(q, q.start, (t) => t + q.minutes <= now), data.rhythm.phonePush);
+      if (!sessionDelivery(q.id, q.start)) tellMissed(q, slotsFrom(q, q.start, (t) => t + q.minutes <= now), rhythmOf(ownerOf(q)).phonePush);
       if (!sessionSettled(sessionDelivery(q.id, q.start))) {
         waiting.add(q.id);
         continue;
@@ -68,7 +77,7 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
       const due = nextSession("interval", from, q.everyMinutes, now - q.minutes);
       q.earliest = due;
       // Slots jumped over are told about too, in one ping
-      tellMissed(q, slotsFrom(q, fromMin(toMin(from) + q.everyMinutes), (t) => fromMin(t) < due), data.rhythm.phonePush);
+      tellMissed(q, slotsFrom(q, fromMin(toMin(from) + q.everyMinutes), (t) => fromMin(t) < due), rhythmOf(ownerOf(q)).phonePush);
       q.start = q.end = q.travelStart = q.fixedStart = "";
       q.remindedFor = q.checkedFor = "";
       if (toMin(due) < now && !(q.deadline && due >= q.deadline)) q.fixedStart = due;
@@ -96,14 +105,32 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
   const paused = new Set(data.missions.filter((m) => m.status !== "active").map((m) => m.id));
   // Pulses run on their own timers (pulses.ts), not in the plan
   const planning = data.quests.filter((q) => !paused.has(q.missionId) && !isPulse(q) && !waiting.has(q.id));
-  const taken: Busy[] = [...calendarBusy(), ...data.blocks.map((b) => ({ start: b.start, end: b.end, label: b.reason })), ...bookingsBusy()];
-  // Music time goes in first, around everything already in the diary; then it's taken time too
-  const music = planMusic({ rhythm: data.rhythm, busy: taken, now });
+  // The studio's shared taken time: the calendar and the bookings
+  const shared: Busy[] = [...calendarBusy(), ...bookingsBusy()];
+  // Each person on their own: the PC's person always (their music time shows in Calendar), anyone
+  // else with quests to plan or a rhythm of their own
+  const owners = new Set<string>([pc, ...planning.map(ownerOf), ...Object.keys(data.rhythms)]);
+  const result: PlanResult = { placed: new Map(), unplaced: new Map() };
+  const music = { placed: [] as MusicSlot[] };
+  const others = new Map<string, MusicSlot[]>();
+  for (const owner of owners) {
+    const rhythm = rhythmOf(owner);
+    const theirs = planning.filter((q) => ownerOf(q) === owner);
+    const taken: Busy[] = [...shared, ...data.blocks.filter((b) => ownerOf(b) === owner).map((b) => ({ start: b.start, end: b.end, label: b.reason }))];
+    // Music time goes in first, around everything already in the diary; then it's taken time too
+    const theirMusic = planMusic({ rhythm, busy: taken, now });
+    if (owner === pc) music.placed = theirMusic.placed;
+    else if (theirMusic.placed.length) others.set(owner, theirMusic.placed);
+    if (!theirs.length) continue;
+    const busy: Busy[] = [...taken, ...theirMusic.placed.map((m) => ({ start: m.start, end: m.end, label: "Music time" }))];
+    const furthest = Math.max(0, ...theirs.filter((q) => q.status === "todo" || q.status === "doing").map((q) => Math.max(q.deadline ? toMin(q.deadline) : 0, q.earliest ? toMin(q.earliest) + 1440 : 0)));
+    const horizonDays = Math.min(MAX_HORIZON_DAYS, Math.max(rhythm.horizonDays, Math.ceil((furthest - now) / 1440) + 1));
+    const planned = planQuests({ rhythm: { ...rhythm, horizonDays }, quests: theirs, busy, now });
+    for (const [id, p] of planned.placed) result.placed.set(id, p);
+    for (const [id, why] of planned.unplaced) result.unplaced.set(id, why);
+  }
   lastMusic = music.placed;
-  const busy: Busy[] = [...taken, ...music.placed.map((m) => ({ start: m.start, end: m.end, label: "Music time" }))];
-  const furthest = Math.max(0, ...planning.filter((q) => q.status === "todo" || q.status === "doing").map((q) => Math.max(q.deadline ? toMin(q.deadline) : 0, q.earliest ? toMin(q.earliest) + 1440 : 0)));
-  const horizonDays = Math.min(MAX_HORIZON_DAYS, Math.max(data.rhythm.horizonDays, Math.ceil((furthest - now) / 1440) + 1));
-  const result = planQuests({ rhythm: { ...data.rhythm, horizonDays }, quests: planning, busy, now });
+  othersMusic = others;
 
   const unplaced: { id: string; title: string; why: string }[] = [];
   for (const q of data.quests) {
@@ -182,11 +209,12 @@ export function syncCalendar(data: QuestData, music: MusicSlot[] = lastMusic): v
   for (const b of data.blocks) {
     ours.push({ id: `${BLOCK_NOTE}${b.id}`, title: `Busy · ${b.reason}`.slice(0, 120), body: "Blocked out in Nova Agent", author: "Nova Agent", start: b.start, end: b.end, art: { seed: seed(b.id), subject: "auto" }, created: b.start, updated: b.start });
   }
-  // Music time: one card a day, saying when it moved and why
-  for (const m of music) {
+  // Music time: one card a day, saying when it moved and why (anyone else's with their name)
+  const everyonesMusic = [...music.map((m) => ({ ...m, owner: "" })), ...[...othersMusic].flatMap(([owner, slots]) => slots.map((m) => ({ ...m, owner })))];
+  for (const m of everyonesMusic) {
     ours.push({
-      id: `${MUSIC_NOTE}${m.day}`,
-      title: `♪ Music time${m.moved ? " (moved)" : ""}`,
+      id: `${MUSIC_NOTE}${m.owner ? `${m.owner}-` : ""}${m.day}`,
+      title: `♪ Music time${m.owner ? ` · ${personName(m.owner)}` : ""}${m.moved ? " (moved)" : ""}`,
       body: m.moved ? `Time set aside for music. Moved from ${m.usual.slice(11, 16)}: something else is on then.` : "Time set aside for music.",
       author: "Nova Agent",
       start: m.start,

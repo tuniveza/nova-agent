@@ -198,7 +198,7 @@
     if (!id || !M() || !M().pickPhones) return;
     let chosen = [];
     try {
-      const st = await api('GET', '/quests/state');
+      const st = await api('GET', '/quests/state?who=notes');
       chosen = ((st.quests || []).find((q) => q.id === id) || {}).phones || [];
     } catch (err) {}
     const phones = await M().pickPhones(btn, chosen);
@@ -242,7 +242,7 @@
     busy = true;
     let changed = false;
     try {
-      const state = await api('GET', '/quests/state');
+      const state = await api('GET', '/quests/state?who=notes');
       const quests = Array.isArray(state.quests) ? state.quests : [];
       const byId = new Map(quests.map((q) => [q.id, q]));
       const [, noteTitle, noteId] = NN.tasks._last;

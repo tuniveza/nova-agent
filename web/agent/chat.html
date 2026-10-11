@@ -898,6 +898,8 @@
           <button type="button" class="icon-btn" id="btn-replan" title="Re-plan everything from now" aria-label="Re-plan everything from now"><svg class="ico"><use href="#i-replan"/></svg></button>
           <button type="button" class="icon-btn" id="btn-bell" title="Turn on pop-up reminders" aria-label="Turn on pop-up reminders"><svg class="ico"><use href="#i-bell"/></svg></button>
           <button type="button" class="icon-btn" id="btn-rhythm" title="Your daily rhythm: when you wake, work and sleep" aria-label="Your daily rhythm"><svg class="ico"><use href="#i-rhythm"/></svg></button>
+          <!-- Yours, or everyone's (admins and the studio computer) -->
+          <button type="button" class="mini who-btn" id="btn-who" hidden aria-pressed="false" title="Showing your quests and missions: tap for everyone’s">Mine</button>
         </div>
       </div>
       <div class="view" id="view-today"></div>
@@ -1082,10 +1084,15 @@
   const $ = (id) => document.getElementById(id);
   const log = $('log');
   const input = $('input');
+  // Each person's conversation is their own, kept by Nova Agent on the studio computer for whoever
+  // is signed in (/chat/history). Before, it lived only in this browser (STORE): the person Nova
+  // Agent works for brings that over once (the browser's copy is kept as STORE-moved); nobody else
+  // sees it. A Nova Agent from before this (no /chat/history) uses the browser's copy, as before.
   const STORE = 'nova-agent/chat-v1';
   let history = [];
-  try { history = JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { history = []; }
-  const save = () => { try { localStorage.setItem(STORE, JSON.stringify(history.slice(-80))); } catch (e) {} };
+  let onServer = false;
+  const local = () => { try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { return []; } };
+  const save = () => { if (onServer) return; try { localStorage.setItem(STORE, JSON.stringify(history.slice(-80))); } catch (e) {} };
 
   // The calendar's theme colours the whole page, and the stars
   fetch('/calendar-api/data').then((r) => r.json()).then((d) => {
@@ -1735,11 +1742,36 @@
     return wrap;
   }
 
-  for (const m of history) bubble(m.role, m.content, m.actions);
+  async function loadChat() {
+    let data = null;
+    try {
+      const res = await fetch('/chat/history', { cache: 'no-store', headers: { Accept: 'application/json' } });
+      if (res.ok) data = await res.json();
+    } catch (e) {}
+    if (data && data.ok && Array.isArray(data.messages)) {
+      onServer = true;
+      history = data.messages;
+      const old = local();
+      if (!history.length && data.person && data.person.owner && old.length) {
+        try {
+          const r = await fetch('/actions/chat/adopt', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1' }, body: JSON.stringify({ messages: old }) }).then((x) => x.json());
+          if (r && r.adopted) {
+            history = old.slice(-80);
+            try { localStorage.setItem(STORE + '-moved', localStorage.getItem(STORE)); localStorage.removeItem(STORE); } catch (e) {}
+          }
+        } catch (e) {}
+      }
+    } else {
+      history = local();
+    }
+    for (const m of history) bubble(m.role, m.content, m.actions);
+  }
+  const chatReady = loadChat();
 
   async function send(text) {
     text = text.trim();
     if (!text) return;
+    await chatReady;
     input.value = '';
     fit();
     history.push({ role: 'user', content: text });
@@ -1758,7 +1790,8 @@
       const res = await fetch('/actions/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1' },
-        body: JSON.stringify({ messages: history.map((m) => ({ role: m.role, content: m.content })) })
+        // Nova Agent keeps the conversation (it knows who's asking): just the new message
+        body: JSON.stringify(onServer ? { message: text } : { messages: history.map((m) => ({ role: m.role, content: m.content })) })
       });
       const data = await res.json();
       typing.remove();
@@ -1791,6 +1824,7 @@
   $('clear').addEventListener('click', () => {
     history = [];
     save();
+    if (onServer) fetch('/actions/chat/clear', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1' }, body: '{}' }).catch(() => {});
     log.querySelectorAll('.msg').forEach((m) => m.remove());
     $('welcome').hidden = false;
     input.focus();
@@ -1838,6 +1872,27 @@
   // (it waits for the menu to close), and a hiccup keeps the last good plan on screen.
   let planKey = '', planWait = null, lastLoad = 0;
   const menuOpen = () => Boolean(document.querySelector('.qm-menu:not([hidden])'));
+  // Whose quests and missions: your own (the default), or everyone's (admins, and the studio
+  // computer): the button next to the rhythm, remembered in this browser
+  let questWho = 'mine';
+  try { if (localStorage.getItem('nova-agent/quests-who') === 'everyone') questWho = 'everyone'; } catch (e) {}
+  function drawWho() {
+    const b = $('btn-who');
+    if (!b || !st) return;
+    b.hidden = !st.canSeeEveryone;
+    const all = st.scope === 'everyone';
+    b.textContent = all ? 'Everyone’s' : 'Mine';
+    b.setAttribute('aria-pressed', String(all));
+    b.title = all ? 'Showing everyone’s quests and missions: tap for just yours' : 'Showing your quests and missions: tap for everyone’s';
+  }
+  $('btn-who').addEventListener('click', () => {
+    questWho = questWho === 'everyone' ? 'mine' : 'everyone';
+    try { localStorage.setItem('nova-agent/quests-who', questWho); } catch (e) {}
+    loadPlan();
+  });
+  // Someone else's (in the everyone view): their name on it
+  const whose = (x) => (st && st.person && x && x.owner && x.owner !== st.person.id ? `${x.ownerName || x.owner}’s` : '');
+
   // `quiet` (the live refreshes): only when something changed. Otherwise (after a tap here) always.
   async function loadPlan(quiet = false) {
     quiet = quiet === true;
@@ -1845,11 +1900,12 @@
     if (menuOpen()) { planWait = setTimeout(() => loadPlan(quiet), 600); return; }
     lastLoad = Date.now();
     try {
-      const [state, cal] = await Promise.all([fetch('/quests/state', { cache: 'no-store' }).then((r) => r.json()), fetch('/calendar-api/data', { cache: 'no-store' }).then((r) => r.json())]);
+      const [state, cal] = await Promise.all([fetch(questWho === 'everyone' ? '/quests/state?who=everyone' : '/quests/state', { cache: 'no-store' }).then((r) => r.json()), fetch('/calendar-api/data', { cache: 'no-store' }).then((r) => r.json())]);
       if (menuOpen()) { planWait = setTimeout(() => loadPlan(quiet), 600); return; }
       // The same plan (to the minute, for the now-line and progress): nothing to draw
       const key = JSON.stringify([{ ...state, now: String(state.now).slice(0, 16) }, cal.notes || []]);
       st = state;
+      drawWho();
       calNotes = (cal.notes || []).filter((n) => !/^(quest|block|mile|music)-/.test(n.id));
       if (quiet && key === planKey) return;
       planKey = key;
@@ -1885,8 +1941,11 @@
   function trackColour(missionId, name) { const m = st.missions.find((x) => x.id === missionId); const t = m && m.tracks.find((x) => x.name === name); return t ? t.colour : 'var(--soft)'; }
   const trackTag = (q) => (q.track ? `<span class="t-tag" style="--c:${trackColour(q.missionId, q.track)}">${escH(q.track)}</span>` : '');
   // Where each quest came from (its mission ◆, where it was made ✎ "Notes · Studio plan", or ✧ Agent): /agent/plans.js
-  const SRC_ICON = { mission: '◆', notes: '✎', from: '✎', agent: '✧' };
-  const sourceList = (q) => (window.NovaPlans ? NovaPlans.sources(q, missionName(q.missionId)) : []);
+  const SRC_ICON = { mission: '◆', notes: '✎', from: '✎', agent: '✧', person: '◎' };
+  const sourceList = (q) => {
+    const list = window.NovaPlans ? NovaPlans.sources(q, missionName(q.missionId)) : [];
+    return whose(q) ? [...list, { kind: 'person', label: whose(q) }] : list;
+  };
   const sourceTags = (q) => sourceList(q).map((s) => `<span class="m-tag">${SRC_ICON[s.kind]} ${escH(s.label)}</span>`).join('');
   const sourceText = (q) => { const l = sourceList(q); return l.length ? `<small class="src"> · ${l.map((s) => escH(s.label)).join(' · ')}</small>` : ''; };
 
@@ -2044,7 +2103,7 @@
       const p = m.progress;
       const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
       const nx = p.nextMilestone;
-      return `<article class="mission ${m.status}${p.atRisk ? ' risk' : ''}" data-mission="${m.id}" tabindex="0" role="button" aria-label="Open the plan for ${escH(m.title)}"><div class="mission-top"><div class="ring" style="--p:${pct}">${pct}%</div><div style="min-width:0;flex:1"><h4>${escH(m.title)}</h4><p class="sum">${escH(m.summary)}</p></div></div>
+      return `<article class="mission ${m.status}${p.atRisk ? ' risk' : ''}" data-mission="${m.id}" tabindex="0" role="button" aria-label="Open the plan for ${escH(m.title)}"><div class="mission-top"><div class="ring" style="--p:${pct}">${pct}%</div><div style="min-width:0;flex:1"><h4>${escH(m.title)}</h4>${whose(m) ? `<p class="sum">◎ ${escH(whose(m))}</p>` : ''}<p class="sum">${escH(m.summary)}</p></div></div>
         ${trackBars(p.tracks)}
         <div class="badges"><button type="button" class="mini" id="mv-export" title="The whole plan as a Markdown file">⤓ Export as Markdown</button>${m.deadline ? `<span class="badge">Due ${escH(shortDay(m.deadline))}</span>` : ''}<span class="badge">${p.done}/${p.total} quests</span><span class="badge">${(p.minutesLeft / 60).toFixed(1)}h left</span>${p.atRisk ? `<span class="badge warn">${p.atRisk} at risk</span>` : ''}${m.status === 'done' ? '<span class="badge ok">Mission complete</span>' : ''}${m.status === 'paused' ? '<span class="badge">Paused</span>' : ''}</div>
         ${nx ? `<div class="m-next">◆ Next: <b>${escH(nx.title)}</b> · ${escH(shortDay(nx.at))} ${hhmm(nx.at)}</div>` : ''}

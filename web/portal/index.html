@@ -506,6 +506,11 @@
           <button class="chip" data-quests="missions" type="button">Missions</button>
           <button class="chip" data-quests="all" type="button">All quests</button>
         </div>
+        <!-- Admins: just yours, or everyone's -->
+        <div class="chips" id="quests-who" role="group" aria-label="Whose quests" hidden>
+          <button class="chip active" data-quests-who="mine" type="button">Mine</button>
+          <button class="chip" data-quests-who="everyone" type="button">Everyone</button>
+        </div>
       </div>
       <p class="hint" id="quests-sync">Synced from Nova Agent on the studio computer.</p>
       <div id="quests-body" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>

@@ -9,7 +9,9 @@ import { nextSession, splitLong } from "./lengths";
 import { isPulse } from "./pulses";
 import { notifyMission, recentNotices } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
-import { cleanQuest, EVERY, MODES, PRIORITIES, readQuests, readStamp, TIMES_OF_DAY, writeQuests, type Block, type Mission, type Quest, type QuestData, type QuestMode, type Rhythm } from "./store";
+import { cleanQuest, cleanRhythm, EVERY, MODES, PRIORITIES, readQuests, readStamp, rhythmFor, TIMES_OF_DAY, writeQuests, type Block, type Mission, type Quest, type QuestData, type QuestMode, type Rhythm } from "./store";
+import { ownerOf, personName } from "../person";
+import { pcOwnerId } from "../staff";
 
 const stamp = () => fromMin(nowMinutes());
 
@@ -47,11 +49,19 @@ export interface QuestTap {
   tapId?: string; // the same tap handed over twice counts once
   session?: string; // the session (start) it was tapped on
   mode?: string; // for "mode": how it's going now (MODES)
+  by?: string; // who tapped (their staff id; taps from before this change don't say)
+  admin?: boolean; // ...and whether they're an admin
 }
 export function applyQuestTap(t: QuestTap): string {
   if (t.tapId && !firstTimeForTap(t.tapId)) {
     const item = t.kind === "mission" ? readQuests().missions.find((m) => m.id === t.id) : readQuests().quests.find((q) => q.id === t.id);
     return `${item?.title ?? t.id} (already counted)`;
+  }
+  // Staff tap their own quests and missions (admins anyone's)
+  if (t.by && !t.admin) {
+    const data = readQuests();
+    const item = t.kind === "mission" ? find(data.missions, t.id, "mission") : find(data.quests, t.id, "quest");
+    if (!mayChange(item, { id: t.by, everyone: false })) throw new Error(`“${item.title}” isn't theirs to change`);
   }
   if (t.kind === "mission") {
     if (t.action === "pause") return updateMission(t.id, { status: "paused" }).title;
@@ -69,25 +79,54 @@ export function applyQuestTap(t: QuestTap): string {
   throw new Error(`Quests can't "${t.action}"`);
 }
 
-export function questState() {
+// Who's looking, and at what: their own (the default), or everyone's (`everyone`, for admins and
+// the PC). `notes`: their own plus quests tied to a note (Notes keeps a shared note's quests in
+// step for whoever has it open).
+export interface Viewer {
+  id: string;
+  everyone?: boolean;
+  notes?: boolean;
+}
+type Owned = { owner?: string; link?: string };
+const sees = (x: Owned, v?: Viewer) => !v || v.everyone || ownerOf(x) === v.id || (v.notes === true && String(x.link || "").startsWith("note:"));
+// May this person change it? Their own; an admin (or the PC) anyone's; a quest tied to a note
+// whoever edits the note.
+export function mayChange(x: Owned, p: { id: string; everyone: boolean }): boolean {
+  return p.everyone || ownerOf(x) === p.id || String(x.link || "").startsWith("note:");
+}
+// Owners resolved ("" becomes the PC's person) and named, for the pages
+const named = <T extends { owner: string }>(x: T): T & { ownerName: string } => {
+  const owner = ownerOf(x);
+  return { ...x, owner, ownerName: personName(owner) };
+};
+
+// Everything the page needs, in one go: everyone's (no viewer: Portal's copy, the PC's own
+// bookkeeping), or what one person sees
+export function questState(viewer?: Viewer) {
   const data = readQuests();
   const now = nowMinutes();
   const nowStamp = fromMin(now);
-  const open = data.quests.filter((q) => q.status === "todo" || q.status === "doing");
-  const doing = data.quests.find((q) => q.status === "doing") || open.find((q) => q.start && q.start <= nowStamp && q.end > nowStamp) || null;
-  const next = open.filter((q) => !isPulse(q) && q.start && q.start > nowStamp && q.id !== doing?.id).sort((a, b) => a.start.localeCompare(b.start)).slice(0, 3);
+  const quests = data.quests.filter((q) => sees(q, viewer));
+  // "Now" and "next" are the viewer's own, even looking at everyone's
+  const own = viewer ? quests.filter((q) => ownerOf(q) === viewer.id) : quests;
+  const open = quests.filter((q) => q.status === "todo" || q.status === "doing");
+  const openOwn = own.filter((q) => q.status === "todo" || q.status === "doing");
+  const doing = own.find((q) => q.status === "doing") || openOwn.find((q) => q.start && q.start <= nowStamp && q.end > nowStamp) || null;
+  const next = openOwn.filter((q) => !isPulse(q) && q.start && q.start > nowStamp && q.id !== doing?.id).sort((a, b) => a.start.localeCompare(b.start)).slice(0, 3);
   return {
     now: nowStamp,
-    rhythm: data.rhythm,
-    missions: data.missions.map((m) => ({ ...m, progress: missionProgress(data, m) })),
-    quests: data.quests,
-    blocks: data.blocks,
-    current: doing,
-    next,
-    overdue: open.filter((q) => q.start && toMin(q.end) < now && q.status === "todo"),
-    unplanned: open.filter((q) => !q.start && !isPulse(q)),
-    pulses: open.filter(isPulse),
-    notices: recentNotices().slice(-10),
+    rhythm: viewer ? rhythmFor(data, viewer.id, pcOwnerId()) : data.rhythm,
+    missions: data.missions.filter((m) => sees(m, viewer && { ...viewer, notes: false })).map((m) => named({ ...m, progress: missionProgress(data, m) })),
+    quests: quests.map(named),
+    blocks: data.blocks.filter((b) => sees(b, viewer && { ...viewer, notes: false })).map(named),
+    current: doing && named(doing),
+    next: next.map(named),
+    overdue: open.filter((q) => q.start && toMin(q.end) < now && q.status === "todo").map(named),
+    unplanned: open.filter((q) => !q.start && !isPulse(q)).map(named),
+    pulses: open.filter(isPulse).map(named),
+    notices: recentNotices()
+      .filter((n) => !viewer || !n.owner || n.owner === viewer.id || viewer.everyone)
+      .slice(-10),
   };
 }
 
@@ -196,11 +235,18 @@ export function snoozeQuest(id: string, minutes = 15): Quest {
   return readQuests().quests.find((x) => x.id === q.id)!;
 }
 
-export function addQuest(input: Partial<Quest>): Quest {
+// `owner`: whose it is (the person who asked; "" = the PC's person). An owner in `input` (from a
+// page) is never taken: only the server says who's asking.
+export function addQuest(input: Partial<Quest>, owner = ""): Quest {
   const data = readQuests();
-  const q = cleanQuest({ ...input, id: randomUUID(), status: "todo", mode: (MODES as readonly string[]).includes(input.mode as string) && !["done", "working", "nearly", "longer"].includes(input.mode as string) ? input.mode : "waiting" });
+  // Tied to something that already has its quest (a shared note open in two places): that one
+  if (input.link) {
+    const twin = data.quests.find((x) => x.link && x.link === input.link);
+    if (twin) return twin;
+  }
+  const q = cleanQuest({ ...input, owner, id: randomUUID(), status: "todo", mode: (MODES as readonly string[]).includes(input.mode as string) && !["done", "working", "nearly", "longer"].includes(input.mode as string) ? input.mode : "waiting" });
   // A long quest becomes sessions; the last one keeps the id
-  data.quests.push(...splitLong(q, data.rhythm));
+  data.quests.push(...splitLong(q, rhythmFor(data, ownerOf(q), pcOwnerId())));
   writeQuests(data);
   replan();
   return readQuests().quests.find((x) => x.id === q.id)!;
@@ -267,14 +313,15 @@ export function updateQuest(id: string, changes: Partial<Quest>): Quest {
     merged.start = merged.end = merged.travelStart = "";
   }
   // Made longer than a session: it becomes sessions (the last one keeps the id)
-  data.quests.splice(data.quests.indexOf(q), 1, ...splitLong(merged, data.rhythm));
+  const rhythm = rhythmFor(data, ownerOf(q), pcOwnerId());
+  data.quests.splice(data.quests.indexOf(q), 1, ...splitLong(merged, rhythm));
   writeQuests(data);
   // Saved as asked? Read back from the file (before re-planning moves anything on).
   // A session split keeps the id; its length is then per session.
   const saved = readQuests().quests.find((x) => x.id === q.id);
   if (!saved) throw new Error(`The change to “${q.title}” didn't save: the quest is gone.`);
   for (const [key, value] of Object.entries(wanted)) {
-    if (key === "minutes" && splitLong(merged, data.rhythm).length > 1) continue;
+    if (key === "minutes" && splitLong(merged, rhythm).length > 1) continue;
     if (JSON.stringify((saved as any)[key]) !== JSON.stringify(value)) throw new Error(`The change to “${q.title}” didn't save (${key}). Try again, or tell me if it keeps happening.`);
   }
   replan();
@@ -321,13 +368,15 @@ export function removeMission(id: string): Mission {
   return m;
 }
 
-export function addBlock(start: string, end: string, reason: string): Block {
+// A blocked time is one person's (`owner`; "" = the PC's person): only their quests move for it
+export function addBlock(start: string, end: string, reason: string, owner = ""): Block {
   const data = readQuests();
   if (!(end > start)) throw new Error("The end has to be after the start.");
-  const block = { id: randomUUID(), start, end, reason: reason || "Busy" };
+  const block = { id: randomUUID(), owner, start, end, reason: reason || "Busy" };
   data.blocks.push(block);
-  // Quests pinned inside it lose their pin, so they can move
-  for (const q of data.quests) if (q.fixedStart && q.fixedStart >= start && q.fixedStart < end && q.status === "todo") q.fixedStart = "";
+  // Their quests pinned inside it lose their pin, so they can move
+  const whose = ownerOf(block);
+  for (const q of data.quests) if (q.fixedStart && q.fixedStart >= start && q.fixedStart < end && q.status === "todo" && ownerOf(q) === whose) q.fixedStart = "";
   writeQuests(data);
   replan();
   return block;
@@ -342,11 +391,16 @@ export function removeBlock(id: string): Block {
   return b;
 }
 
-export function setRhythm(changes: Partial<Rhythm>): Rhythm {
+// `owner`: whose rhythm (none, or the PC's person: the main one; anyone else gets their own,
+// starting from the main one)
+export function setRhythm(changes: Partial<Rhythm>, owner = ""): Rhythm {
   const data = readQuests();
-  data.rhythm = { ...data.rhythm, ...Object.fromEntries(Object.entries(changes).filter(([, v]) => v !== undefined)) } as Rhythm;
+  const wanted = Object.fromEntries(Object.entries(changes ?? {}).filter(([, v]) => v !== undefined));
+  const pc = pcOwnerId();
+  if (!owner || owner === pc) data.rhythm = { ...data.rhythm, ...wanted } as Rhythm;
+  else data.rhythms[owner] = cleanRhythm({ ...rhythmFor(data, owner, pc), ...wanted });
   writeQuests(data);
-  return replan().data.rhythm;
+  return rhythmFor(replan().data, owner || pc, pc);
 }
 
 // Old blocked times tidy themselves away

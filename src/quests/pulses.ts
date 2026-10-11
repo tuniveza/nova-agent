@@ -11,7 +11,12 @@ import { trace } from "../trace";
 import { nowMinutes } from "./plan";
 import { pulseBeat } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
-import { questEvents, readQuests, writeQuests, type Quest, type Rhythm } from "./store";
+import { questEvents, readQuests, rhythmFor, writeQuests, type Quest, type QuestData, type Rhythm } from "./store";
+import { ownerOf } from "../person";
+import { pcOwnerId } from "../staff";
+
+// A pulse keeps to its owner's rhythm (their waking hours, their phones setting)
+const rhythmOf = (data: QuestData, q: Quest) => rhythmFor(data, ownerOf(q), pcOwnerId());
 
 export const PULSE_BELOW_MINUTES = 5;
 export const isPulse = (q: Pick<Quest, "ongoing" | "every" | "everyMinutes">) => q.ongoing && q.every === "interval" && q.everyMinutes < PULSE_BELOW_MINUTES;
@@ -73,7 +78,7 @@ function schedule(): void {
       q.earliest = fromMin(Math.ceil(now * 60) / 60);
       changed = true;
     }
-    const beat = nextBeat(q, data.rhythm, now);
+    const beat = nextBeat(q, rhythmOf(data, q), now);
     if (beat === null) {
       // Past its deadline: finished
       q.status = "done";
@@ -94,10 +99,10 @@ function fire(id: string, beat: number): void {
     if (!q || !isPulse(q) || q.status === "done" || q.status === "skipped") return;
     if (beat > (lastBeat.get(id) ?? -Infinity) + 1e-6) {
       lastBeat.set(id, beat);
-      pulseBeat(q, data.rhythm.phonePush, fromMin(beat));
+      pulseBeat(q, rhythmOf(data, q).phonePush, fromMin(beat));
     }
     // The next one (no saving: nothing in the plan changes on a beat)
-    const next = nextBeat(q, data.rhythm, beat + q.everyMinutes / 2);
+    const next = nextBeat(q, rhythmOf(data, q), beat + q.everyMinutes / 2);
     if (next === null) {
       schedule(); // its deadline has come: schedule() marks it done
       return;

@@ -97,6 +97,22 @@ export async function whoAmI(force = false): Promise<Who> {
   return asking;
 }
 
+// Who Nova Agent works for on this PC, straight away (no waiting for Nova Bot): the last answer,
+// else what's saved, else "owner" (not known yet). Quests, missions and chats with no owner of
+// their own are this person's (src/person.ts).
+export function pcOwnerId(): string {
+  if (cache) return cache.who.staff.id;
+  const keep = saved();
+  return config.staffId || keep.connected || keep.last || "owner";
+}
+// ...and their name and role, when known
+export function pcOwner(): { id: string; name: string; role: string; linked: boolean } {
+  if (cache) return { id: cache.who.staff.id, name: cache.who.staff.display_name, role: cache.who.staff.role, linked: cache.who.linked };
+  const id = pcOwnerId();
+  const s = standIn(id).staff;
+  return { id, name: s.display_name, role: s.role, linked: false };
+}
+
 // Just the id (for Index's memory)
 export async function staffId(): Promise<string> {
   return (await whoAmI()).staff.id;

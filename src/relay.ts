@@ -12,6 +12,7 @@
 // Dropped connection (Nova Bot redeployed, network gone): it reconnects by itself.
 
 import { config } from "./config";
+import { markRelayed } from "./person";
 import { trace } from "./trace";
 
 type Handler = (request: Request) => Response | Promise<Response>;
@@ -26,6 +27,8 @@ type Frame =
 const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
   { methods: ["GET"], path: /^\/status$/ },
   { methods: ["GET"], path: /^\/quests\/(state|events)$/ },
+  { methods: ["GET"], path: /^\/chat\/history$/ },
+  { methods: ["POST"], path: /^\/actions\/chat\/(clear|adopt)$/ },
   { methods: ["POST"], path: /^\/actions\/(chat|missions|quests|blocks|rhythm|replan)$/ },
   { methods: ["POST"], path: /^\/actions\/(missions|quests)\/[\w-]+(\/(refine|export))?$/ },
   { methods: ["POST"], path: /^\/actions\/files\/[\w-]+\/remove$/ },
@@ -67,6 +70,17 @@ const PASS_HEADERS = ["accept", "content-type", "x-nova-visualizer", "x-nova-rev
 // A made-up host: relayed requests are never "from this computer" (see fromOurPage)
 const RELAY_ORIGIN = "http://online.nova-agent.invalid";
 
+// The request a relayed frame becomes, marked with who sent it (src/person.ts): the chat, quests
+// and missions it reaches are that person's
+export function relayedRequest(req: Pick<Extract<Frame, { t: "req" }>, "method" | "path" | "headers" | "staff">, body?: Buffer, signal?: AbortSignal): Request {
+  const headers = new Headers();
+  for (const h of PASS_HEADERS) if (req.headers?.[h]) headers.set(h, req.headers[h]);
+  headers.set("X-Nova-Online", req.staff?.name || req.staff?.id || "staff");
+  // (Nova Bot checked who it is; only admins reach the Fixer's addresses: src/fixer/routes.ts)
+  headers.set("X-Nova-Online-Role", req.staff?.role || "");
+  return markRelayed(new Request(RELAY_ORIGIN + req.path, { method: req.method, headers, body: body && body.length ? new Uint8Array(body) : undefined, signal }), req.staff);
+}
+
 export function startRelay(handle: Handler): void {
   if (!config.agentNovaKey) {
     console.log("Not linking Nova Agent online: set AGENT_NOVA_KEY in .env (the same as the worker's secret).");
@@ -106,15 +120,8 @@ export function startRelay(handle: Handler): void {
       },
     });
     try {
-      const headers = new Headers();
-      for (const h of PASS_HEADERS) if (req.headers?.[h]) headers.set(h, req.headers[h]);
-      headers.set("X-Nova-Online", req.staff?.name || req.staff?.id || "staff");
-      // (Nova Bot checked who it is; only admins reach the Fixer's addresses: src/fixer/routes.ts)
-      headers.set("X-Nova-Online-Role", req.staff?.role || "");
       if (req.method !== "GET" && req.method !== "HEAD") trace("input", "info", `Online, ${req.staff?.name || "someone"}: ${req.method} ${req.path.split("?")[0]}`);
-      const res = await handle(
-        new Request(RELAY_ORIGIN + req.path, { method: req.method, headers, body: body && body.length ? new Uint8Array(body) : undefined, signal: controller.signal }),
-      );
+      const res = await handle(relayedRequest(req, body, controller.signal));
       if (!running.has(id)) return void res.body?.cancel().catch(() => {});
       const out: Record<string, string> = {};
       res.headers.forEach((v, k) => (out[k] = v));
