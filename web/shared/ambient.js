@@ -1116,7 +1116,9 @@
 
   function tick() {
     if (!ctx || ctx.state !== 'running' || !engine) return;
-    engine.tick(ctx.currentTime, 1.5);
+    // Hidden (another window or app): plan 30 s ahead, since the browser only wakes us now and
+    // then, so the music carries on in the background as it always has
+    engine.tick(ctx.currentTime, document.hidden ? 30 : 1.5);
   }
 
   // ---- Context setup (lazy, inside a user gesture for iOS) --------------------
@@ -1186,7 +1188,9 @@
   document.addEventListener('pointerdown', wake, true);
   document.addEventListener('touchend', wake, { capture: true, passive: true });
   document.addEventListener('keydown', wake, true);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) pauseHidden(); else wake(); });
+  // The music keeps playing while Nova Agent is in the background (as before); back in view, it
+  // picks up straight away if the system had paused it
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
 
   function setPlaying(value) {
     if (playing === value) return;
@@ -1248,7 +1252,6 @@
     starting = false;
     setPlaying(true);
     tellSeed();
-    if (document.hidden) pauseHidden();
   }
 
   function stop() {
