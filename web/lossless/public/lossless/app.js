@@ -1,4 +1,4 @@
-// Nova Lossless Audio — peer logic.
+// Lossless audio — peer logic.
 //
 // input → capture worklet (Float32 frames) → header + PCM → RTCDataChannel
 //   → other device → parse → playback worklet (jitter buffer) → output

@@ -51,6 +51,8 @@
 .look-swatch i { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--b), var(--a) 55%, var(--c)); box-shadow: 0 0 10px -2px var(--b); }
 .look-swatch.active { border-color: var(--hi); color: #fff; background: color-mix(in srgb, var(--hi) 16%, transparent); }
 .look-planet { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
+/* The Panels window's tick boxes wear the theme (not the browser's own blue) */
+.look-planet input, .status-parts input { accent-color: var(--hi); }
 .tabbar > .status-line, .status-line { justify-content: center; }
 
 /* The status line's own choices (status.js): Auto hides it with the panels bar, Always hidden hides it,

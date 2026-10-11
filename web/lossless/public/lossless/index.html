@@ -43,6 +43,8 @@
     .meter .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
     .meter .head .nt-label { margin: 0; }
     .meter .head span:last-child { font-family: var(--f-mono); font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; }
+    /* Centred text (Nova Agent's "Centre all text", on unless switched off): a meter's name and level sit together in the middle */
+    :root[data-centred] .meter .head { justify-content: center; gap: 12px; }
     .warnbox { margin: 14px 0 0; padding: 10px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); color: var(--warn); font-size: 13px; }
     details { margin-top: 16px; font-size: 14px; }
     details ol { padding-left: 22px; margin: 4px 0 0; line-height: 1.6; }

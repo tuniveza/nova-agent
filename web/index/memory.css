@@ -185,6 +185,7 @@ input:focus, select:focus, textarea:focus {
 .brand:hover .brand-mark { transform: rotate(-6deg) scale(1.05); }
 .brand:active .brand-mark { transform: scale(0.94); }
 .brand-text { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; line-height: 1; }
+html[data-centred] .brand-text { align-items: center; }
 .suite-kicker { font-size: 8.5px; letter-spacing: 0.26em; margin-bottom: 4px; white-space: nowrap; }
 .brand .wordmark { white-space: nowrap; animation: text-flow 10s linear infinite; }
 @media (max-width: 380px) { .kicker-more { display: none; } }

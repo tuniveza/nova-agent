@@ -186,6 +186,10 @@ a { color: var(--hi); }
 .sec-title p { margin: 0; max-width: 70ch; color: var(--muted); font-size: 14px; }
 /* With Nova Agent's centred text (the default), the heading sits over its line, both in the middle */
 :root[data-centred] .sec-title { flex-direction: column; align-items: center; }
+/* ...and the header: the name, its buttons and the line under them in the middle */
+:root[data-centred] .hero-top { justify-content: center; }
+:root[data-centred] .hero-lede { margin-inline: auto; }
+:root[data-centred] .hero .themes { justify-self: center; }
 .starmap { border-radius: 28px; border: 1px solid var(--line); background: radial-gradient(70% 70% at 50% 50%, color-mix(in srgb, var(--accent-3) 70%, transparent), color-mix(in srgb, var(--void) 70%, transparent)); overflow: hidden; }
 .starmap svg { display: block; width: 100%; height: auto; }
 /* No projects scanned yet: no map to draw, so no empty frame (the note above says what to do) */
