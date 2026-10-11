@@ -246,6 +246,10 @@ html[data-centred] .menubar > :last-child { margin-right: auto; }
 .lib-name { font-weight: 600; color: #fff; font-size: 14px; line-height: 1.3; white-space: normal; overflow: visible; overflow-wrap: anywhere; word-break: normal; padding-right: 46px; }
 .lib-snip { font-size: 12.5px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .lib-time { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em; color: color-mix(in srgb, var(--muted) 80%, transparent); }
+/* Centred text (on unless switched off): the name sits in the middle of the note's row (room kept
+   on both sides for the pin and delete buttons), and its Shared / Local badge under it */
+html[data-centred] .lib-name { padding-inline: 46px; }
+html[data-centred] .lib-kind { justify-self: center; }
 .lib-acts { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
 .lib-item:hover .lib-acts, .lib-item:focus-within .lib-acts, .lib-item.pinned .lib-acts { opacity: 1; }
 .lib-acts button { width: 24px; height: 24px; display: grid; place-items: center; border: 0; border-radius: 7px; background: none; color: var(--muted); cursor: pointer; padding: 0; }

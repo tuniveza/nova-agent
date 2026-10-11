@@ -586,6 +586,9 @@
   .mission-new textarea { min-height: 84px; resize: vertical; }
   .mission-new textarea:focus, .field input:focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 20%, transparent); }
   .mission-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  /* Centred text (on unless switched off): the deadline and the button gather in the middle */
+  :root[data-centred] .mission-row { justify-content: center; }
+  :root[data-centred] .mission-row .spacer { flex: 0 0 4px; }
   .mission-row label { display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
   .mission-row input[type="date"] { width: auto; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text); }
   .missions { display: grid; gap: 12px; }
@@ -637,8 +640,10 @@
   .mission-dlg .mission-new { position: relative; margin: 0; }
   .days-off { display: flex; flex-wrap: wrap; gap: 6px; }
   .days-off label { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; cursor: pointer; }
-  .days-off label:has(input:checked) { border-color: #FF8A8A; background: color-mix(in srgb, #FF8A8A 14%, transparent); }
-  .days-off input { accent-color: #FF8A8A; }
+  .days-off label:has(input:checked) { border-color: var(--hi); background: color-mix(in srgb, var(--hi) 14%, transparent); }
+  .days-off input { accent-color: var(--hi); }
+  /* Centred text (on unless switched off): the tick boxes, the days off and the buttons sit in the middle */
+  :root[data-centred] :is(.checks label, .days-off, .rh-foot) { justify-content: center; }
   .mission-dlg .suite-x { position: absolute; right: 16px; top: 16px; }
   /* ===== The type cue: what you're typing will become, live, with what was picked out of it ===== */
   .composer { flex-wrap: wrap; }
@@ -679,6 +684,7 @@
   .mv-tabs { justify-self: start; }
   .mv-body { min-height: 0; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
   .mv-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  :root[data-centred] .mv-foot { justify-content: center; }
   .mv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
   .mv-card { padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 70%, transparent); animation: quest-in .4s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 50ms); }
   .mv-card h4 { margin: 0 0 6px; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 15px; color: #fff; }
