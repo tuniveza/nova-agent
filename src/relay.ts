@@ -34,7 +34,13 @@ const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
   { methods: ["GET"], path: /^\/calendar-api\/events$/ },
   { methods: ["GET"], path: /^\/(events|cache|tasks)$/, admin: true },
   { methods: ["POST"], path: /^\/actions\/(run\/[\w-]+|forget)$/, admin: true },
+  // The Fixer (src/fixer/routes.ts): admins only
+  { methods: ["GET"], path: /^\/fixer-api\/(state|jobs\/[\w-]+|shots\/[\w-]+\/[\w-]+\.png)$/, admin: true },
+  { methods: ["POST"], path: /^\/actions\/fixer\/(check|settings|quests|(quests|suggestions|issues|jobs)\/[\w-]+)$/, admin: true },
 ];
+
+// Whether the link is up right now (the Fixer's health check asks)
+export const relayLink = { up: false };
 
 export function plainPath(pathname: string): boolean {
   if (typeof pathname !== "string" || !pathname.startsWith("/") || pathname.length > 512) return false;
@@ -103,6 +109,8 @@ export function startRelay(handle: Handler): void {
       const headers = new Headers();
       for (const h of PASS_HEADERS) if (req.headers?.[h]) headers.set(h, req.headers[h]);
       headers.set("X-Nova-Online", req.staff?.name || req.staff?.id || "staff");
+      // (Nova Bot checked who it is; only admins reach the Fixer's addresses: src/fixer/routes.ts)
+      headers.set("X-Nova-Online-Role", req.staff?.role || "");
       if (req.method !== "GET" && req.method !== "HEAD") trace("input", "info", `Online, ${req.staff?.name || "someone"}: ${req.method} ${req.path.split("?")[0]}`);
       const res = await handle(
         new Request(RELAY_ORIGIN + req.path, { method: req.method, headers, body: body && body.length ? new Uint8Array(body) : undefined, signal: controller.signal }),
@@ -178,6 +186,7 @@ export function startRelay(handle: Handler): void {
     }
     ws = socket;
     socket.onopen = () => {
+      relayLink.up = true;
       delay = 1000;
       lastPong = Date.now();
       if (!wasUp) trace("llm", "ok", "Nova Agent is online: linked to Nova Bot, so it can be used from anywhere");
@@ -199,6 +208,7 @@ export function startRelay(handle: Handler): void {
     socket.onerror = () => {};
     socket.onclose = (event) => {
       if (ws !== socket) return;
+      relayLink.up = false;
       clearInterval(beat);
       stopAll();
       ws = null;

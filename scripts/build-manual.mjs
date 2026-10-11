@@ -27,6 +27,7 @@ const APPS = [
   { id: "notes", name: "Notes", readme: "docs/apps/notes/README.md", paths: ["web/notes", "docs/apps/notes"], joined: "as web/notes", colour: "#FF8CC6", glyph: "✎", where: "A Nova Agent panel", links: [["Open Notes", `${PC}/notes/`]] },
   { id: "index", name: "Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel; online too", links: [["Open Index", `${PC}/app/memory/`]] },
   { id: "observatory", name: "Observatory", readme: "docs/apps/observatory/README.md", paths: ["web/observatory", "docs/apps/observatory", "scripts/observatory"], joined: "as web/observatory", colour: "#FFB86B", glyph: "✧", where: "A Nova Agent panel", links: [["Open Observatory", `${PC}/observatory/`]] },
+  { id: "fixer", name: "Fixer", readme: "docs/apps/fixer/README.md", paths: ["src/fixer", "web/fixer", "docs/apps/fixer", "test/fixer.spec.ts"], colour: "#B3F26B", glyph: "✦", where: "A Nova Agent panel, for admins", links: [["Open the Fixer", `${PC}/fixer/`]] },
   { id: "bot", name: "Nova Bot", repo: "nb/novacane-worker", colour: "#5CE1FF", glyph: "◎", where: "On the website and Cloudflare: Nova Agent's back end", links: [["Admin pages", `${WORKER}/admin`]] },
 ];
 
