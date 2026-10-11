@@ -882,6 +882,8 @@ select option:checked { background: var(--accent); color: var(--on-accent); }
   .tab > span:not(.badge) { font-size: 14px; font-weight: 500; letter-spacing: 0.01em; }
   .tab.active { background: linear-gradient(90deg, rgba(var(--hi-rgb), 0.2), rgba(var(--accent-2-rgb), 0.08) 70%, transparent); }
   .tab.active::after { left: 0; top: 50%; bottom: auto; width: 3px; height: 20px; margin: -10px 0 0; }
+  /* Centred (the default): each section's icon and name sit in the middle of the side menu too */
+  html[data-align="center"] .tab { justify-content: center; }
   .tab:hover:not(.active) { background: rgba(var(--panel-2-rgb), 0.6); }
   .badge { position: static; margin-left: auto; box-shadow: 0 0 10px rgba(var(--glow-rgb), 0.6); }
   main {
@@ -891,9 +893,9 @@ select option:checked { background: var(--accent); color: var(--on-accent); }
     width: auto;
     padding: 30px 0 48px;
   }
-  .view-head { flex-direction: row; justify-content: space-between; align-items: center; text-align: left; }
-  .view > .hint { text-align: left; }
-  .auto-delete { justify-content: flex-start; }
+  html[data-align="left"] .view-head { flex-direction: row; justify-content: space-between; align-items: center; text-align: left; }
+  html[data-align="left"] .view > .hint { text-align: left; }
+  html[data-align="left"] .auto-delete { justify-content: flex-start; }
   /* Two columns of cards; day headings, the current quest and messages stay full width */
   #enquiry-list, #alert-list, #quests-body { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   #quests-body > .quest-day, #quests-body > .quest-card.now, #quests-body > .empty, #enquiry-list > .empty, #alert-list > .empty { grid-column: 1 / -1; }
@@ -1170,6 +1172,13 @@ html.embed .listening-bar { top: 0; }
 @media (max-width: 980px) {
   html.embed .embed-head > .tabs > .tab-group { display: block; flex: none; align-self: center; width: 1px; height: 22px; margin: 0 2px; overflow: hidden; font-size: 0; background: var(--line-strong); }
   html.embed .embed-head > .tabs > .tab-group[data-group="today"], html.embed .embed-head > .tabs > .tab-group[hidden] { display: none; }
+}
+/* On a phone most tabs live under More: a group whose tabs are all there has no line (so no
+   row of empty lines before More) */
+@media (max-width: 760px) {
+  html.embed .embed-head > .tabs > .tab-group:has(+ .tab-more, + .tab-group, + #tab-more) { display: none; }
+  /* ...and the chosen tab's glowing line sits under its name, not through it */
+  html.embed .embed-head > .tabs > .tab { padding-bottom: 5px; }
 }
 /* Inside Nova Agent on a computer: Voice, Music, Options and Apps share one row of icons at the
    foot of the side menu (their names are on hover), so the whole menu fits the panel */

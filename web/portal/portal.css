@@ -466,6 +466,7 @@ html:not([data-align="left"]) .pv .invite-new .field-help { text-align: center; 
 @media (min-width: 760px) {
     .pv .hero { --stage: 440px; }
   .pv .view-head { flex-direction: row; justify-content: space-between; text-align: left; }
+  html[data-align="center"] .pv .view-head { flex-direction: column; justify-content: center; text-align: center; }
   .pv .action-grid { display: flex; }
   .pv .action-grid .btn { flex: 1 1 0; }
   .pv .action-grid .btn { min-height: 54px; }
@@ -563,12 +564,17 @@ html.embed .pv .hero { --stage: min(86vw, 400px, 40vh); }
   .view-head h2 { font-size: 19px; }
   .view-head .chips .chip { min-height: 34px; padding: 0 12px; }
   main { padding-top: 12px; padding-left: max(10px, var(--safe-left)); padding-right: max(10px, var(--safe-right)); }
-  html[data-align] main { text-align: left; }
+  html[data-align="left"] main { text-align: left; }
   .list { gap: 8px; }
-  html[data-align] .card { text-align: left; padding: 12px 14px; border-radius: 16px; box-shadow: none; }
-  html[data-align] .card-top { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 10px; }
+  html[data-align] .card { padding: 12px 14px; border-radius: 16px; box-shadow: none; }
+  html[data-align="left"] .card { text-align: left; }
+  html[data-align="left"] .card-top { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 10px; }
   .card-title { font-size: 15.5px; min-width: 0; }
-  html[data-align] .actions { justify-content: flex-start; margin-top: 10px; }
+  html[data-align] .actions { margin-top: 10px; }
+  html[data-align="left"] .actions { justify-content: flex-start; }
+  /* Centred (the default): a heading and its buttons gather in the middle of their line */
+  html[data-align="center"] .view-head, html[data-align="center"] .auto-delete { justify-content: center; }
+  html[data-align="center"] .view-head > h2 { margin-inline: 0 !important; }
   .actions .btn.small { min-height: 40px; }
   /* An enquiry is one line (what, who, when) until tapped */
   .card.fold { cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -594,7 +600,7 @@ html.embed .pv .hero { --stage: min(86vw, 400px, 40vh); }
 
   /* Chats: two lines of the question at most */
   #chat-list .card-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  html[data-align] #view-chats .hint { text-align: left; }
+  html[data-align="left"] #view-chats .hint { text-align: left; }
 
   /* You: a smaller planet, so the buttons are on the first screen */
   html .pv .hero, html.embed .pv .hero { --stage: min(52vw, 200px, 26vh); }
@@ -618,6 +624,10 @@ html.embed nova-manual { display: none; }
 .tabs .tab[hidden] { display: none !important; }
 .pv .admin-switch { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 0 10px; }
 .pv .admin-switch::-webkit-scrollbar { display: none; }
+/* Centred (the default): the switch sits in the middle (the outer two push inwards, so it still
+   scrolls from the first when it doesn't fit) */
+html[data-align="center"] .pv .admin-switch > :first-child { margin-left: auto; }
+html[data-align="center"] .pv .admin-switch > :last-child { margin-right: auto; }
 .pv .admin-switch .chip {
   flex: none; min-height: 40px; padding: 0 16px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
   color: var(--text); border: 1px solid var(--line, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--panel, #1C1129) 70%, transparent);
