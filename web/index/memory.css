@@ -382,6 +382,40 @@ main {
 }
 .confirm p { margin: 0; color: var(--bright); font-weight: 600; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+.confirm .confirm-sub { color: var(--muted); font-weight: 400; font-size: 13px; }
+
+/* Deleting one fact: asked in its own line first */
+.fact.asking { grid-template-columns: 1fr; border-color: rgba(var(--bad-rgb), 0.45); background: rgba(var(--bad-rgb), 0.06); }
+.fact-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-bottom: 4px; }
+.fact-confirm > span { flex: 1 1 100%; color: var(--text); font-size: 13.5px; }
+
+/* A file this person may read but not change */
+.read-only { margin: 0; padding: 10px 14px; border-radius: 14px; border: 1px dashed var(--line); color: var(--muted); font-size: 13.5px; }
+
+/* ----- Tidy up (admins) ----- */
+.tidy-body { min-width: 0; }
+.tidy-report, .tidy-bin { display: grid; gap: 12px; min-width: 0; }
+.tidy-lead { margin: 0; color: var(--bright); font-weight: 700; font-size: 16px; }
+.tidy-group { display: grid; gap: 6px; min-width: 0; }
+.tidy-title { margin: 0; color: var(--text); font-size: 14px; }
+.tidy-title b { color: var(--bright); font-family: var(--f-mono); }
+.tidy-help { color: var(--muted); font-size: 12.5px; }
+.tidy-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
+.tidy-item { display: grid; gap: 2px; min-width: 0; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); }
+.tidy-text { margin: 0; color: var(--bright); font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+.tidy-why { margin: 0; color: var(--muted); font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.04em; line-height: 1.5; overflow-wrap: anywhere; }
+.tidy-kept { color: var(--ok); }
+.tidy-more summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 4px 0; }
+.tidy-more[open] summary { margin-bottom: 6px; }
+.bin-item { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.bin-words { display: grid; gap: 2px; min-width: 0; }
+.bin-back { color: var(--ok); font-size: 12px; text-align: right; }
+.tidy-runs-title { margin: 4px 0 0; }
+.tidy-runs { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+@media (max-width: 420px) {
+  .bin-item { grid-template-columns: 1fr; }
+  .bin-item .btn { justify-self: start; }
+}
 
 /* "Changed since you opened it": theirs and yours, side by side on a wide screen */
 .conflict {
