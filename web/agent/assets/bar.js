@@ -68,7 +68,8 @@
     const was = root.classList.contains("bar-tucked");
     if (tuck !== was) {
       movedAt = performance.now();
-      trail(tuck ? "away" : "back");
+      // (no trail when an app opens: the bar is just away, bar-instant)
+      if (!root.classList.contains("bar-instant")) trail(tuck ? "away" : "back");
     }
     root.classList.toggle("bar-tucked", tuck);
     const topTuck = topMode === "shown" ? false : viewing() && !topOut;
@@ -165,17 +166,24 @@
   function topShow() { clearTimeout(topReveal); topReveal = null; if (!topOut) { topOut = true; update(); } }
   function topTuck() { if (topOut && topMode !== "shown" && viewing() && !busy(topbar)) { topOut = false; update(); } }
 
-  // A panel opens or closes: the bar is in view to start with (it goes once you get to work)
+  // A panel opens: it starts full screen, with Nova Agent's bars already away (no hiding to
+  // watch: they're simply not there, and come back at the edge as usual; "Always shown" keeps
+  // them). A panel closes: the bars are back for Nova Agent's own page.
   let wasViewing = viewing();
   new MutationObserver(() => {
     const now = viewing();
     if (now === wasViewing) return;
     wasViewing = now;
-    out = true;
-    topOut = topMode !== "hidden";
+    out = !now;
+    topOut = now ? topMode === "shown" : topMode !== "hidden";
     peeking = false;
     typing = false;
     scrolled = 0;
+    if (now) {
+      // This one change happens without the slide (the next frame on, everything moves as normal)
+      root.classList.add("bar-instant");
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("bar-instant")));
+    }
     update();
   }).observe(main, { attributes: true, attributeFilter: ["class"] });
 

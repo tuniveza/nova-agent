@@ -11,6 +11,8 @@
   const bar = document.querySelector("nav.tabs");
   if (!bar) return;
   const WIDE = matchMedia("(min-width: 761px)");
+  // The tab bar is on (not the side menu: Options → Menu)
+  const topTabs = () => WIDE.matches && document.documentElement.getAttribute("data-menu") !== "side";
   const STILL = matchMedia("(prefers-reduced-motion: reduce)");
   const root = document.documentElement;
   const top = document.querySelector(".app > .top");
@@ -19,13 +21,13 @@
   function measure() {
     const h = top && getComputedStyle(top).display !== "none" ? top.offsetHeight : 0;
     root.style.setProperty("--top-h", `${h}px`);
-    root.style.setProperty("--htabs-h", `${WIDE.matches ? bar.offsetHeight : 0}px`);
+    root.style.setProperty("--htabs-h", `${topTabs() ? bar.offsetHeight : 0}px`);
   }
 
   // The fades: only on a side that has more tabs to scroll to
   function edges() {
     const room = bar.scrollWidth - bar.clientWidth;
-    const on = WIDE.matches && room > 2;
+    const on = topTabs() && room > 2;
     bar.classList.toggle("more-left", on && bar.scrollLeft > 2);
     bar.classList.toggle("more-right", on && bar.scrollLeft < room - 2);
   }
@@ -35,7 +37,7 @@
 
   // Bring a tab into view, without moving the page up or down
   function reveal(tab, smooth = true) {
-    if (!tab || !WIDE.matches) return;
+    if (!tab || !topTabs()) return;
     const left = tab.offsetLeft - 32;
     const right = tab.offsetLeft + tab.offsetWidth + 32 - bar.clientWidth;
     const to = bar.scrollLeft > left ? left : bar.scrollLeft < right ? right : null;
@@ -44,7 +46,7 @@
 
   // The wheel: up and down scroll the bar sideways (a sideways swipe on a trackpad just works)
   bar.addEventListener("wheel", (e) => {
-    if (!WIDE.matches || e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+    if (!topTabs() || e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
     const room = bar.scrollWidth - bar.clientWidth;
     if (room <= 2) return;
     const dy = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
@@ -56,7 +58,7 @@
 
   // The keyboard: arrows, Home and End between the tabs
   bar.addEventListener("keydown", (e) => {
-    if (!WIDE.matches || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (!topTabs() || e.altKey || e.ctrlKey || e.metaKey) return;
     const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1, Home: "first", End: "last" };
     if (!(e.key in keys) || !e.target.closest(".tab")) return;
     const tabs = usable();
@@ -82,6 +84,8 @@
   const again = () => { measure(); edges(); reveal(bar.querySelector(".tab.active"), false); };
   addEventListener("resize", again);
   WIDE.addEventListener("change", again);
+  // Options → Menu changed (tabs on top or the side menu)
+  addEventListener("novaoptionschange", again);
   if ("ResizeObserver" in window) {
     const ro = new ResizeObserver(() => { measure(); edges(); });
     ro.observe(bar);

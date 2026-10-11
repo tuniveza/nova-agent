@@ -262,3 +262,8 @@ dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { o
   html[data-bar="auto"]:not(.bar-tucked) .shell:has(> .main.viewing) { padding-bottom: calc(var(--bar-h, 126px) + 6px); }
   html[data-top="auto"]:not(.top-tucked) .shell:has(> .main.viewing) { padding-top: calc(var(--top-room, 64px) + max(8px, env(safe-area-inset-top))); }
 }
+
+/* An app opening: the bars are just away at once, no slide and no trail (bar.js, one frame) */
+html.bar-instant .shell > .tabbar, html.bar-instant .shell > .topbar, html.bar-instant .main > .suite-home,
+html.bar-instant .suite-home .suite-app, html.bar-instant .tabbar [data-tab], html.bar-instant .shell > .topbar *,
+html.bar-instant .status-line, html.bar-instant .bar-trail, html.bar-instant .main, html.bar-instant .viewer { transition: none !important; animation: none !important; }

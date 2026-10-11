@@ -1,0 +1,142 @@
+/* Portal's sections as a tab bar across the top (computer and tablet), the default menu.
+   Options → Menu → "Side menu" turns this whole file off (themes.js sets its media to
+   "not all"), and Portal's original side menu (app.css) takes over again. */
+/* ===================== The sections: a tab bar across the top (computer and tablet) ===================== */
+/* What was the side menu is one row of tabs under the header (inside Nova Agent, at the very top),
+   in its groups: Today · Studio · Plans · You · Admin · (inside Nova Agent) the settings icons.
+   A small label and a hairline start each group. The chosen tab is a soft pill with the same
+   glowing line under it as on the phone's bar, so the two look like one family. Counts sit in
+   the tab, after its name. When the tabs don't all fit, the row scrolls sideways (tabbar.js: the
+   wheel, arrow keys, soft fades at the edge that has more) with no scrollbar showing. */
+@media (min-width: 761px) {
+  /* The header first, then the tabs, then the page (the tabs come last in the page's code) */
+  .app > .top { order: -2; }
+  .app > nav.tabs { order: -1; }
+  .tabs,
+  html.embed .tabs {
+    position: sticky; z-index: 4; top: calc(var(--top-h, 61px) + 8px); left: auto; right: auto; bottom: auto; transform: none;
+    flex: none; align-self: center;
+    width: calc(100% - 32px); max-width: 1180px; height: auto; max-height: none; margin: 8px auto 0;
+    display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; align-content: normal; gap: 2px;
+    padding: 6px; border-radius: 20px;
+    overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-behavior: auto;
+    scrollbar-width: none; -ms-overflow-style: none;
+    background: linear-gradient(rgba(var(--deep-rgb), 0.95), rgba(var(--deep-rgb), 0.95)) padding-box, var(--edge) border-box;
+    box-shadow: 0 16px 34px -22px var(--shadow), 0 0 34px -26px var(--glow);
+  }
+  html.embed .tabs { top: 8px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs > *,
+  html.embed .tabs > * { flex: none; }
+
+  /* Each tab: icon and name side by side, a pill */
+  .tabs > .tab,
+  html.embed .tabs > .tab {
+    flex-direction: row; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 8px;
+    min-height: 40px; padding: 0 14px; border-radius: 999px;
+    color: var(--muted); white-space: nowrap;
+  }
+  .tabs > .tab > span:not(.badge) { font-size: 13.5px; font-weight: 550; letter-spacing: 0.01em; overflow: visible; }
+  .tabs > .tab svg { width: 19px; height: 19px; }
+  .tabs .tab .tab-planet { width: 22px; height: 22px; margin: 0; }
+  .tabs .tab-mark { width: 19px; height: 19px; }
+  .tabs > .tab:hover:not(.active) { color: var(--text); background: rgba(var(--panel-2-rgb), 0.6); }
+  .tabs > .tab.active {
+    color: var(--bright);
+    background: radial-gradient(120% 140% at 50% 0%, rgba(var(--hi-rgb), 0.26), rgba(var(--accent-2-rgb), 0.1) 65%, transparent 100%);
+    box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), 0.32);
+  }
+  /* The glowing line under the chosen tab (the phone's bar has the same one) */
+  .tabs > .tab.active::after,
+  html.embed .tabs > .tab.active::after {
+    display: block; left: 50%; top: auto; bottom: 3px; width: 18px; height: 3px; margin: 0 0 0 -9px; border-radius: 3px;
+  }
+  /* The settings icons inside Nova Agent: round icon buttons (their names show on hover) */
+  html.embed .tabs > .tab.embed-only { flex: none; width: 40px; min-width: 40px; padding: 0; gap: 0; }
+  html.embed .tabs > .tab.embed-only > span:not(.badge) { display: none; }
+  html.embed .tabs > .tab.embed-only.active::after { display: none; }
+  /* Counts: a little pill after the name, never on top of it */
+  .tabs .badge { position: static; margin: 0 0 0 2px; box-shadow: 0 0 10px rgba(var(--glow-rgb), 0.55); }
+  /* Booking tools' hint is for the More list; here its name says enough (and it's on hover) */
+  .tabs .tab-hint,
+  html:not(.embed) #nav-booking-tools .tab-hint { display: none; }
+  html:not(.embed) #nav-booking-tools { flex-wrap: nowrap; min-height: 40px; }
+
+  /* The groups: a small label after a hairline (Today needs none: it's first) */
+  .tabs > .tab-group,
+  html.embed .tabs > .tab-group {
+    display: flex; align-items: center; align-self: center; flex: none;
+    width: auto; height: 24px; margin: 0 2px 0 8px; padding: 0 6px 0 12px;
+    border-left: 1px solid var(--line-strong); background: none;
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--muted); white-space: nowrap; overflow: visible;
+  }
+  .tabs > .tab-group[data-group="today"],
+  .tabs > .tab-group[hidden],
+  html.embed .tabs > .tab-group[data-group="today"],
+  html.embed .tabs > .tab-group[hidden] { display: none; }
+  html:not(.embed) .tabs > .tab-group.embed-only { display: none !important; }
+
+  /* Soft edges where there are more tabs to scroll to: two thin shades that stay at the ends */
+  .tabs::before, .tabs::after {
+    content: ""; position: sticky; z-index: 1; flex: none; align-self: stretch;
+    width: 36px; margin: -6px 0; pointer-events: none; opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .tabs::before { left: 0; margin-right: -36px; border-radius: 20px 0 0 20px; background: linear-gradient(90deg, rgba(var(--deep-rgb), 1), rgba(var(--deep-rgb), 0)); }
+  .tabs::after { right: 0; margin-left: -36px; border-radius: 0 20px 20px 0; background: linear-gradient(270deg, rgba(var(--deep-rgb), 1), rgba(var(--deep-rgb), 0)); }
+  .tabs.more-left::before, .tabs.more-right::after { opacity: 1; }
+
+  /* The page: the whole width the side menu used to take, under the tabs */
+  main,
+  html.embed main { max-width: 1080px; margin-left: auto; margin-right: auto; width: 100%; padding-top: 22px; padding-bottom: 48px; }
+  .bot-form { bottom: 20px; }
+  .toast { bottom: 28px; }
+}
+@media (min-width: 1024px) {
+  main, html.embed main { margin-left: max(24px, calc((100% - 1080px) / 2)); margin-right: max(24px, calc((100% - 1080px) / 2)); width: auto; padding-top: 26px; }
+  /* The calendar's month stays in view under the header and the tabs */
+  #view-calendar > .cal,
+  html.embed #view-calendar > .cal { top: calc(var(--top-h, 61px) + var(--htabs-h, 52px) + 24px); }
+}
+@media (min-width: 761px) and (prefers-reduced-motion: reduce) {
+  .tabs::before, .tabs::after { transition: none; }
+}
+
+/* Every tab on screen: when they don't fit on one row they wrap onto a second, centred row
+   (nothing hides past the edge, so there's nothing to scroll and no fades) */
+@media (min-width: 761px) {
+  .tabs,
+  html.embed .tabs { flex-wrap: wrap; justify-content: center; row-gap: 4px; column-gap: 2px; overflow: visible; }
+  .tabs::before, .tabs::after { display: none; }
+  .tabs > .tab-group,
+  html.embed .tabs > .tab-group { margin-left: 6px; }
+}
+/* Medium windows: a little tighter, so two rows are usually enough */
+@media (min-width: 761px) and (max-width: 1180px) {
+  .tabs > .tab,
+  html.embed .tabs > .tab { padding: 0 11px; gap: 7px; min-height: 38px; }
+  .tabs > .tab > span:not(.badge) { font-size: 13px; }
+  .tabs > .tab-group,
+  html.embed .tabs > .tab-group { padding-left: 9px; }
+}
+
+
+/* Room to breathe: space between tabs, rows and groups */
+@media (min-width: 761px) {
+  .tabs,
+  html.embed .tabs { padding: 10px 16px; row-gap: 10px; column-gap: 8px; }
+  .tabs > .tab,
+  html.embed .tabs > .tab { min-height: 42px; padding: 0 14px; gap: 9px; }
+  .tabs > .tab-group,
+  html.embed .tabs > .tab-group {
+    height: 28px; margin: 0 4px 0 14px; padding: 0 2px 0 14px;
+    font-size: 10px; letter-spacing: 0.26em; color: rgba(var(--text-rgb, 230, 220, 240), 0.72);
+  }
+}
+@media (min-width: 761px) and (max-width: 1180px) {
+  .tabs > .tab,
+  html.embed .tabs > .tab { padding: 0 13px; gap: 8px; min-height: 40px; }
+  .tabs > .tab-group,
+  html.embed .tabs > .tab-group { margin-left: 12px; padding-left: 14px; }
+}

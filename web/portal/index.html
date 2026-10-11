@@ -26,6 +26,8 @@
 <link rel="stylesheet" href="/shared/themes.css">
 <link rel="stylesheet" href="/portal/app.css">
 <link rel="stylesheet" href="/portal/portal.css">
+<!-- The tab bar across the top (Options → Menu: "Side menu" switches it off) -->
+<link rel="stylesheet" href="/portal/tabbar.css" id="tabbar-css">
 <!-- The saved theme goes on before anything is drawn (no flash of the wrong colours) -->
 <script src="/shared/spectrum.js"></script>
 <script src="/shared/themes.js"></script>
@@ -1147,6 +1149,7 @@
       <p class="kicker">Text</p>
       <div class="option-row"><span>Alignment</span><div class="chips" data-option="align"><button class="chip" type="button" data-value="center">Centred</button><button class="chip" type="button" data-value="left">Left</button></div></div>
       <div class="option-row"><span>Size</span><div class="chips" data-option="size"><button class="chip" type="button" data-value="small">Small</button><button class="chip" type="button" data-value="normal">Normal</button><button class="chip" type="button" data-value="large">Large</button></div></div>
+      <div class="option-row"><span>Menu</span><div class="chips" data-option="menu"><button class="chip" type="button" data-value="top">Tabs on top</button><button class="chip" type="button" data-value="side">Side menu</button></div></div>
       <div class="option-row"><span>Times on alerts</span><div class="chips" data-option="times"><button class="chip" type="button" data-value="both">Exact + ago</button><button class="chip" type="button" data-value="ago">Just "ago"</button></div></div>
     </section>
 

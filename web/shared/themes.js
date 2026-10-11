@@ -161,7 +161,7 @@
 (() => {
   "use strict";
   const KEY = "nova-options";
-  const defaults = { align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "today" };
+  const defaults = { align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "today", menu: "top" };
   const root = document.documentElement;
 
   // The saved options, with anything missing filled in
@@ -179,6 +179,11 @@
     root.setAttribute("data-size", ["small", "large"].includes(o.size) ? o.size : "normal");
     root.setAttribute("data-motion", o.motion === false ? "calm" : "full");
     root.setAttribute("data-stars", o.stars === false ? "off" : "on");
+    // Portal's menu: tabs across the top (tabbar.css) or the side menu (that file switched off)
+    root.setAttribute("data-menu", o.menu === "side" ? "side" : "top");
+    const tabs = document.getElementById("tabbar-css");
+    if (tabs) tabs.media = o.menu === "side" ? "not all" : "all";
+    else if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => apply(get()), { once: true });
   }
 
   // Change some, remember them, and tell anyone listening

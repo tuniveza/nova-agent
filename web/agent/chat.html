@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en-GB" data-btn="soft">
 <head>
+<script>try { document.documentElement.dataset.agentIcon = localStorage.getItem("nova-agent-icon") === "chat" ? "chat" : "classic"; } catch (e) {}</script>
 <meta charset="utf-8">
 <script src="/shared/carry-over.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -136,6 +137,13 @@
   .viewer iframe { animation: frame-in .3s cubic-bezier(.2,.8,.2,1) backwards; }
   @keyframes frame-in { from { opacity: 0; } }
   .brand .mark { transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+  /* Nova Agent's icon: the classic mark, or the chat bubble (Panels window → Nova Agent icon) */
+  .brand .mark-alt { display: none; }
+  .brand .mark-alt > svg { width: 100%; height: 100%; }
+  html[data-agent-icon="chat"] .brand svg.mark { display: none; }
+  html[data-agent-icon="chat"] .brand .mark-alt { display: grid; }
+  /* Visually hidden, still read out */
+  .vh { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .brand:hover .mark { transform: rotate(-8deg) scale(1.05); }
   .suite-app.here { border-color: color-mix(in srgb, var(--hi) 55%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--hi) 30%, transparent), 0 0 30px -14px var(--hi); }
   .suite-app img, .suite-glyph { width: 52px; height: 52px; border-radius: 14px; box-shadow: 0 10px 26px -10px var(--hi); }
@@ -804,6 +812,7 @@
     </div>
     <a class="brand" href="/agent/" aria-label="Nova Agent">
       <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span class="pico mark mark-alt" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span>
       <span><span class="kicker">Novacane</span><span class="wordmark">Nova Agent</span></span>
     </a>
     <div class="top-side right">
@@ -838,7 +847,8 @@
     </section>
     <section class="chat glass" aria-label="Nova Agent">
       <div class="chat-head">
-        <h2 class="sec-title"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span> Nova Agent</h2>
+        <!-- (Nova Agent's name is already on the top banner: this title is for screen readers only) -->
+        <h2 class="sec-title vh"><span class="pico sec-ico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span> Nova Agent</h2>
         <span style="display:flex;gap:6px"><button type="button" class="icon-btn" id="files-btn" title="Files Nova Agent wrote for you" aria-label="Your files"><svg class="ico"><use href="#i-file"/></svg></button><button type="button" class="icon-btn" id="clear" title="Start a new conversation" aria-label="Start a new conversation"><svg class="ico"><use href="#i-clear"/></svg></button></span>
       </div>
       <div class="log" id="log" aria-live="polite">
@@ -961,6 +971,7 @@
         <div class="look-row look-themes" role="radiogroup" aria-label="Theme for all of Nova Agent"></div>
         <label class="look-planet"><input type="checkbox" role="switch" id="look-planet" data-sfx="none"> Colour everything from my planet (Portal)</label>
         <label class="look-planet"><input type="checkbox" role="switch" id="look-center" data-sfx="none"> Centre all text</label>
+        <div class="look-row look-icon" role="radiogroup" aria-label="Nova Agent's icon"><span class="look-icon-name">Nova Agent icon</span><button type="button" class="chip" data-agent-icon="classic" role="radio">Classic</button><button type="button" class="chip" data-agent-icon="chat" role="radio">Chat bubble</button></div>
       </div>
       <button type="button" class="icon-btn suite-x" id="suite-close" aria-label="Close">✕</button>
     </div>

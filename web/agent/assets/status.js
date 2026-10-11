@@ -313,3 +313,24 @@
   const fromHomeScreen = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
   if (fromHomeScreen && window.caches) caches.open("nova-home").then((c) => c.put("/home", new Response("agent"))).catch(() => {});
 })();
+
+// ---- Nova Agent's icon: the classic mark or the chat bubble (Panels window), kept on this device ----
+(() => {
+  "use strict";
+  const root = document.documentElement;
+  const row = document.querySelector(".look-icon");
+  const KEY = "nova-agent-icon";
+  const read = () => { try { return localStorage.getItem(KEY) === "chat" ? "chat" : "classic"; } catch (err) { return "classic"; } };
+  function show(v) {
+    root.dataset.agentIcon = v;
+    if (row) row.querySelectorAll("[data-agent-icon]").forEach((b) => { const on = b.dataset.agentIcon === v; b.classList.toggle("active", on); b.setAttribute("aria-checked", String(on)); });
+  }
+  if (row) row.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-agent-icon]");
+    if (!b) return;
+    try { localStorage.setItem(KEY, b.dataset.agentIcon); } catch (err) {}
+    show(b.dataset.agentIcon);
+  });
+  addEventListener("storage", (e) => e.key === KEY && show(read()));
+  show(read());
+})();
