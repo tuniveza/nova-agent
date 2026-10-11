@@ -163,6 +163,9 @@ button { cursor: pointer; }
 
 /* ---- The panel ---- */
 .panel {
+  /* Always clickable and seen, even while Nova Agent's top bar (where the button lives) is tucked
+     away with clicks off: the open manual sits above everything and doesn't inherit that */
+  pointer-events: auto; visibility: visible;
   position: fixed; inset: 0; margin: auto; width: min(1180px, calc(100vw - 32px)); height: min(860px, calc(100dvh - 32px)); max-width: none; max-height: none; padding: 0;
   display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; border-radius: 26px; color: var(--c-text); font-family: var(--f-b);
   border: 1px solid transparent;
@@ -214,8 +217,9 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
 .rail .planet { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; color: #fff;
   background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 50%, color-mix(in srgb, var(--c) 40%, #000)); box-shadow: 0 0 12px -3px var(--c); }
 .rail .words { display: grid; min-width: 0; line-height: 1.2; }
-.rail .words b { font-family: var(--f-d); font-weight: 800; font-size: 13px; color: var(--c-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rail .words small { font-size: 11px; color: var(--c-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rail .words b { font-family: var(--f-d); font-weight: 800; font-size: 13px; color: var(--c-bright); overflow-wrap: anywhere; }
+/* (whole words, wrapped onto a second line: nothing cut short with "…") */
+.rail .words small { font-size: 11px; line-height: 1.3; color: var(--c-muted); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .rail .here { margin-left: auto; flex: none; font-family: var(--f-m); font-size: 8.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 2px 6px; border-radius: 999px; color: var(--c-deep); background: var(--c); }
 .rail .fresh { margin-left: auto; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--c-ok); box-shadow: 0 0 8px var(--c-ok); }
 
@@ -411,10 +415,13 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
   .search input { font-size: 16px; }
   .search kbd { display: none; }
   .body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
-  .rail { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 8px 12px; gap: 6px; border-right: 0; border-bottom: 1px solid var(--c-line); scrollbar-width: none; }
+  /* Narrow screens: the apps wrap onto neat rows (none run off the edge) */
+  .rail { flex-direction: row; flex-wrap: wrap; justify-content: center; overflow: visible; padding: 8px 10px; gap: 5px; border-right: 0; border-bottom: 1px solid var(--c-line); scrollbar-width: none; }
   .rail::-webkit-scrollbar { display: none; }
   .rail .label { display: none; }
-  .rail button { width: auto; flex: none; padding: 5px 12px 5px 5px; border-radius: 999px; }
+  .rail button { width: auto; flex: none; gap: 7px; padding: 4px 11px 4px 4px; border-radius: 999px; }
+  .rail .planet { width: 24px; height: 24px; font-size: 11px; }
+  .rail .words b { font-size: 12px; white-space: nowrap; }
   .rail .words small, .rail .here, .rail .fresh { display: none; }
   .page { padding: 0 14px calc(40px + env(safe-area-inset-bottom, 0px)); }
   .layout { padding-top: 14px; }
@@ -598,6 +605,8 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
         document.addEventListener("keydown", this.onKey, true);
         sfx("open");
         // (straight to the search box with a keyboard; on a touch screen that would pop the keyboard up)
+        // (the keyboard comes here from an open app too, so Esc and / reach the manual)
+        try { window.focus(); } catch (err) {}
         if (matchMedia("(pointer: fine)").matches) setTimeout(() => input.focus({ preventScroll: true }), 60);
         else setTimeout(() => page.focus({ preventScroll: true }), 60);
       }
@@ -1127,12 +1136,31 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
   else start();
 
+  // Inside an app (a frame in Nova Agent), Esc closes Nova Agent's manual when it's the one open
+  // (the keys go to the app, not to Nova Agent, while you're in it). First, before the app's own Esc.
+  if (window.parent !== window) {
+    window.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      try {
+        const up = window.parent.NovaManual;
+        if (up && up.isOpen && up.isOpen()) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          up.close();
+        }
+      } catch (err) {} // (not Nova Agent's own page above)
+    }, true);
+  }
+
   window.NovaManual = {
     open(app, tab) {
       ensure().open(app, tab);
     },
     close() {
       for (const m of all) m.close(true);
+    },
+    isOpen() {
+      return [...all].some((m) => m.isOpen);
     },
   };
 })();
