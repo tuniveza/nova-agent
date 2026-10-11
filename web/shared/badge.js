@@ -185,6 +185,9 @@ button, a { font: inherit; color: inherit; }
 .role.admin, .role.staff { position: relative; overflow: hidden; padding: 1px 6px; border-radius: 999px; color: var(--c-on-accent); background: linear-gradient(90deg, var(--c-accent), var(--c-accent-2)); }
 .role.staff { background: color-mix(in srgb, var(--halo) 30%, var(--c-panel)); color: var(--c-bright); }
 .role.admin::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%); transform: translateX(-120%); animation: shimmer 3.6s ease-in-out infinite 1s; }
+/* Centred text (Nova Agent's "Centre all text", on unless switched off): the name and role too */
+:host([centred]) .words { text-align: center; }
+:host([centred]) .role { justify-self: center; }
 .signin .name { font-size: 13px; }
 .orb.wide { width: 96px; height: 96px; }
 .orb.wide .ghost { width: 90px; height: 90px; }
@@ -272,9 +275,14 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       this.onKey = (e) => e.key === "Escape" && this.close(true);
       this.onAway = (e) => !e.composedPath().includes(this) && this.close();
       this.onMove = () => this.place();
+      // Nova Agent's "centred text" setting (look.js puts data-centred on the page): followed here
+      this.onCentred = () => this.toggleAttribute("centred", document.documentElement.hasAttribute("data-centred"));
+      this.centredWatch = new MutationObserver(this.onCentred);
     }
     connectedCallback() {
       this.calm();
+      this.onCentred();
+      this.centredWatch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-centred"] });
       this.draw({ loading: true });
       whoAmI().then((d) => this.draw(d));
       this.onData = (e) => this.draw(e.detail);
@@ -285,6 +293,7 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       window.addEventListener("novaoptionschange", this.onCalm);
     }
     disconnectedCallback() {
+      this.centredWatch.disconnect();
       window.removeEventListener("novaportal", this.onData);
       document.removeEventListener("visibilitychange", this.onVisible);
       window.removeEventListener("novaoptionschange", this.onCalm);
@@ -351,7 +360,7 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
           ${s.planet && s.planet.description ? `<p class="desc">${esc(s.planet.description)}</p>` : ""}
           ${mode === "agent" ? `<p class="note">${d.offline ? "Nova Bot can't be reached just now; you're still signed in on this computer." : "Every panel in Nova Agent uses this sign-in. It stays until you sign out."}</p>` : ""}
           <div class="links">${links}</div>
-          <p class="foot">${mode === "connect" ? "Connected: name, role and planet only" : "One sign-in for every Nova app"}</p>`;
+          <p class="foot">${mode === "connect" ? "Connected: name, role and planet only" : "One sign-in for all of Nova Agent"}</p>`;
       } else {
         const go = mode === "portal" ? `${portalUrl}?next=${encodeURIComponent(location.pathname + location.search)}` : mode === "agent" ? portalUrl : `${portalUrl}?connect=${back}`;
         body = `
@@ -363,10 +372,10 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
               ? "Check the connection; it'll try again when you come back to this page."
               : mode === "connect"
                 ? "Connect this app to Portal to show your name, role and planet here. It can't see or change anything else."
-                : "Sign in once with Portal and every Nova app knows who you are."
+                : "Sign in once with Portal and every panel knows who you are."
           }</p>
           <div class="links"><a class="main" data-open="/portal/" href="${go}">${ICON.profile}<span>${mode === "connect" ? "Connect with Portal" : "Sign in"}</span></a></div>
-          <p class="foot">One sign-in for every Nova app</p>`;
+          <p class="foot">One sign-in for all of Nova Agent</p>`;
       }
       card.innerHTML = `<div class="stars">${stars()}</div>${body}`;
       if (POPOVER) card.showPopover();

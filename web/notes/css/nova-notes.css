@@ -144,6 +144,11 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border-radius: 
 /* Menu bar (File, Edit, View…) */
 .menubar { grid-area: menu; display: flex; gap: 2px; margin-left: -8px; overflow-x: auto; scrollbar-width: none; }
 .menubar::-webkit-scrollbar { display: none; }
+/* Centred text (Nova Agent's "Centre all text", on unless switched off): the menus sit in the
+   middle under the title (the outer two push inwards, so on a narrow screen it still scrolls from File) */
+html[data-centred] .menubar { margin-left: 0; }
+html[data-centred] .menubar > :first-child { margin-left: auto; }
+html[data-centred] .menubar > :last-child { margin-right: auto; }
 .menubar > button {
   padding: 4px 10px; border: 0; border-radius: 8px; background: none; cursor: pointer;
   font-family: var(--f-body); font-size: 13.5px; color: var(--text); white-space: nowrap;
@@ -412,6 +417,9 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border-radius: 
 .status-btn { border: 0; background: none; padding: 3px 8px; border-radius: 8px; color: inherit; font-family: inherit; font-size: inherit; letter-spacing: inherit; cursor: pointer; }
 .status-btn:hover { color: #fff; background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .status-dot { color: var(--hi); font-size: 9px; }
+/* ...and the status bar's words gather in the middle of it */
+html[data-centred] .statusbar { justify-content: center; }
+html[data-centred] .statusbar .spacer { flex: 0 0 6px; }
 
 /* ---------- POPOVERS & MENUS ---------- */
 .pop, .menu-pop, .floatbar {

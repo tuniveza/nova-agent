@@ -120,6 +120,10 @@ html[data-centred] .cell { align-items: stretch; text-align: center; }
 html[data-centred] .pill, html[data-centred] .pill b, html[data-centred] .pill span, html[data-centred] .pill > small { text-align: center !important; }
 html[data-centred] .wk-head span, html[data-centred] .tg-day { text-align: center; }
 html[data-centred] .cell .moonmark { position: absolute; top: 7px; right: 7px; }
+/* The chosen day beside the month: its name, the moon and its buttons in the middle too */
+html[data-centred] .dp-head { align-items: stretch; }
+html[data-centred] .dp-head > div:first-child { flex: 1; }
+html[data-centred] .dp-moon, html[data-centred] .dp-add { justify-content: center; }
 /* Each day shows what fits its own size: short days just titles (one line), taller ones two lines,
    the tallest the line about what it's for too (all of it is in the chosen day's list beside) */
 @media (min-width: 701px) {

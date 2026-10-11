@@ -164,7 +164,7 @@
     font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; cursor: pointer; white-space: nowrap; }
   .ico { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
-  /* Main: fits the screen (no scrolling). Missions | Chat | Quests, with the panels along the bottom */
+  /* Main: fits the screen (no scrolling). Missions | Agent | Quests, with the panels along the bottom */
   .main { width: min(100%, 1800px); justify-self: center; min-height: 0; overflow: hidden; display: grid; gap: 12px;
     grid-template-columns: minmax(270px, 1fr) minmax(380px, 1.35fr) minmax(270px, 1fr); grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "missions chat quests" "suite suite suite"; }
@@ -273,6 +273,8 @@
   .suite-groups { display: grid; gap: 18px; }
   .suite-group h4 { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
   .suite-group h4::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-strong), transparent); }
+  /* Centred text (on unless switched off): the heading sits in the middle, a line either side */
+  :root[data-centred] .suite-group h4::before { content: ""; flex: 1; height: 1px; background: linear-gradient(270deg, var(--line-strong), transparent); }
   .suite-body { min-width: 0; padding: 8px 14px 10px; }
   .suite-home .suite-groups { display: flex; gap: 16px; }
   .suite-home .suite-group { flex: 7; min-width: 0; } .suite-home .suite-group.tools { flex: 4; }
@@ -292,7 +294,7 @@
   .chat, .calendar { min-height: 0; min-width: 0; border-radius: 24px; overflow: hidden; }
   .chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
   .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--line); }
-  /* Each section's title: Chat, Missions, Quests, Panels */
+  /* Each section's title: Agent, Missions, Quests, Panels */
   .sec-title { margin: 0; display: inline-flex; align-items: center; gap: 9px; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; color: #fff; white-space: nowrap; }
   .sec-title > .pico { box-shadow: 0 0 14px -4px rgba(var(--hi-rgb), .7); }
   .sec-title > span { color: var(--hi); text-shadow: 0 0 10px var(--hi); }
@@ -825,7 +827,7 @@
     </div>
   </header>
 
-  <!-- Missions | Chat | Quests, with the panels along the bottom (all on one screen) -->
+  <!-- Missions | Agent | Quests, with the panels along the bottom (all on one screen) -->
   <main class="main" id="main">
     <!-- A panel, opened inside Nova Agent (panels have no pages of their own: this is where they open) -->
     <section class="viewer glass" id="viewer" hidden aria-label="App">

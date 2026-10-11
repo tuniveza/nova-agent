@@ -394,6 +394,13 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
 .hit mark { background: color-mix(in srgb, var(--c-gold) 30%, transparent); color: var(--c-bright); border-radius: 3px; padding: 0; box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-gold) 30%, transparent); }
 
 /* Phones (and narrow windows): the whole screen; the apps in a strip that slides sideways */
+/* Centred text (Nova Agent's "Centre all text", on unless switched off): the apps down the side,
+   "On this page", the search, the app cards, search results and the next and previous buttons
+   centre their words too */
+:host([centred]) :is(.rail, .rail .label, .rail .words, .toc-side, .toc-list, .toc-list button, .toc-box, .card-app, .hit, .pager button, .pager .next, .open .label, .search input) { text-align: center; }
+:host([centred]) .rail .words { flex: 1; }
+:host([centred]) :is(.card-app .top-row, .toc-box summary) { justify-content: center; }
+:host([centred]) .toc-box summary small { margin-left: 0; }
 @media (max-width: 760px) {
   .panel { width: 100%; height: 100%; border-radius: 0; border: 0; background-clip: padding-box; }
   .top { flex-wrap: wrap; padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 10px; gap: 8px 10px; }
@@ -835,8 +842,8 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
         })
         .join("");
       return `
-        <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">✺</span><div class="who"><div class="kicker">Manual</div><h1>The Nova Agent</h1><p>${esc((s && s.tagline) || "Every Nova app: how to use it, how it's built, its story so far and what's changing.")}</p>
-          <div class="pills"><span class="pill">${d.apps.length} apps</span><span class="pill">Updated ${esc(ago(d.built))}</span><span class="pill">Press <kbd>?</kbd> on any Nova app to open this</span></div></div></div>
+        <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">✺</span><div class="who"><div class="kicker">Manual</div><h1>The Nova Agent</h1><p>${esc((s && s.tagline) || "Every part of Nova Agent: how to use it, how it's built, its story so far and what's changing.")}</p>
+          <div class="pills"><span class="pill">${d.apps.length} apps</span><span class="pill">Updated ${esc(ago(d.built))}</span><span class="pill">Press <kbd>?</kbd> in any panel to open this</span></div></div></div>
         <div class="section-title">The apps</div>
         <div class="apps">${cards}</div>
         ${feed.length ? `<div class="section-title">This week across the suite</div>${this.timeline(feed.slice(0, 30), true)}` : ""}

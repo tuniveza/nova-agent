@@ -41,6 +41,12 @@
   .status.live::before { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
   .spacer { flex: 1; }
   .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* Centred text (Nova Agent's "Centre all text", on unless switched off): the title, the live
+     light, the buttons and each part's name sit in the middle */
+  :root[data-centred] header { justify-content: center; }
+  :root[data-centred] header .spacer { display: none; }
+  :root[data-centred] header .who { justify-items: center; }
+  :root[data-centred] .actions, :root[data-centred] .node .title { justify-content: center; }
   .nb-tool .actions button { min-height: 36px; padding: 7px 14px; border-radius: 999px; border: 1px solid transparent; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
   .nb-tool .actions button:disabled { cursor: wait; }
 
@@ -137,7 +143,7 @@
 <header class="nt-card">
   <div class="who">
     <span class="nt-kicker">Tools · Admin</span>
-    <h1 class="nt-title">Nova <span>Visualizer</span></h1>
+    <h1 class="nt-title"><span>Visualizer</span></h1>
   </div>
   <span id="status" class="status">connecting…</span>
   <span class="spacer"></span>
@@ -161,7 +167,7 @@
     <div class="anatomy">
       <div class="node" data-part="input" style="--c: var(--input)">
         <div class="title">Input <span class="count"></span></div>
-        <p>A request arrives: from these buttons now, from Novabot over HTTP later.</p>
+        <p>A request arrives: from these buttons now, from Nova Bot over HTTP later.</p>
       </div>
       <div class="arrow">↓</div>
       <div class="node" data-part="task" style="--c: var(--task)">
