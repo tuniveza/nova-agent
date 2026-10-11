@@ -66,7 +66,9 @@
   };
 
   const byId = Object.fromEntries(THEMES.map((t) => [t.id, t]));
-  const get = (id) => byId[id] || byId.novacane;
+  // A theme by id. Nova Agent's spectrum themes (and Custom) are known to look.js, so when one of
+  // those is the theme for all of Nova Agent, the star sky here takes its colours too.
+  const get = (id) => byId[id] || (window.NovaLook && window.NovaLook.palette(id)) || byId.novacane;
 
   // Inline style string, for a day card or a calendar cell that wears its own theme
   const style = (id) => {

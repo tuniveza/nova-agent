@@ -21,6 +21,7 @@ dialog.ni-sheet::backdrop { background: rgba(4, 2, 10, .65); }
 .ni-name small { font-size: 13px; color: var(--muted, #aaa); }
 .ni-actions { grid-column: 1 / -1; display: flex; gap: 8px; }
 .ni-actions .ni-btn { flex: 1; }
+/* (their colours, hover, press and focus ring: /shared/buttons.css, where the page links it) */
 .ni-btn { min-height: 44px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line, #444); background: color-mix(in srgb, var(--panel-2, #241640) 60%, transparent); color: var(--text, #eee); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
 .ni-btn.primary { border-color: transparent; color: #fff; background: linear-gradient(120deg, var(--accent, #b01d68), var(--accent-2, #7a1f86)); }
 .ni-btn.danger { border-color: #ff6b81; color: #fff; background: color-mix(in srgb, #ff6b81 28%, transparent); }

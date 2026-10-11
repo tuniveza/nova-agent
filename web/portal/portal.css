@@ -39,43 +39,31 @@
 @keyframes pv-text-flow { from { background-position: 0% center; } to { background-position: 200% center; } }
 
 /* ----- Buttons and fields ----- */
+/* Their size and lettering; how they look (fill, edge, glow, hover, press, focus ring, the ghost,
+   danger and disabled kinds) is the same as every panel's, in /shared/buttons.css */
 .pv .btn {
   position: relative; overflow: hidden;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 46px; padding: 0 20px;
-  border: 1px solid transparent; border-radius: 16px 22px 26px 6px;
-  background: var(--grad); color: var(--on-accent);
+  border: 1px solid transparent; border-radius: var(--nb-radius, 16px 22px 26px 6px);
   font-family: var(--f-display); font-stretch: 125%; font-weight: 900;
   font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
-  text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 10px 26px -12px var(--glow-accent), 0 0 0 1px rgba(var(--star-rgb), 0.06) inset;
-  transition: transform 0.18s ease, box-shadow 0.25s ease, border-color 0.2s ease, filter 0.25s ease;
+  text-decoration: none; cursor: pointer;
 }
-.pv .btn:hover { filter: brightness(1.06); box-shadow: 0 12px 28px -12px var(--glow-accent), 0 0 22px -6px rgba(var(--glow-rgb), 0.55); }
-.pv .btn:active { transform: scale(0.98); }
 .pv .btn svg { width: 17px; height: 17px; flex: none; }
-.pv .btn.ghost { background: rgba(var(--panel-2-rgb), 0.45); border-color: var(--line); color: var(--text); box-shadow: none; }
-.pv .btn.ghost:hover { border-color: var(--line-strong); color: #fff; box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.22); filter: none; }
 .pv .btn.small {
   min-height: 40px; padding: 0 15px; border-radius: 999px;
   font-family: var(--f-mono); font-stretch: 100%; font-weight: 600; font-size: 11px; letter-spacing: 0.1em;
 }
-.pv .btn.danger { background: rgba(var(--bad-rgb), 0.1); border-color: rgba(var(--bad-rgb), 0.5); color: var(--bad); box-shadow: none; }
-.pv .btn.danger:hover { color: #fff; border-color: var(--bad); box-shadow: 0 0 0 3px rgba(var(--bad-rgb), 0.2); }
-.pv .btn.danger.solid { background: var(--bad); border-color: transparent; color: #1a0508; }
-.pv .btn.ok { background: linear-gradient(120deg, rgba(var(--ok-rgb), 0.9), var(--hi)); color: var(--on-hi); }
-.pv .btn:disabled, .pv .btn.busy { filter: grayscale(0.6) brightness(0.7); cursor: not-allowed; transform: none; }
+.pv .btn.ok { background: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 55%), linear-gradient(120deg, rgba(var(--ok-rgb), 0.9), var(--hi)); color: var(--on-hi); }
+.pv .btn:disabled { cursor: not-allowed; }
 .pv .btn.busy { cursor: progress; }
 .pv .icon-btn {
   position: relative; overflow: hidden;
   display: inline-flex; align-items: center; justify-content: center; flex: none;
   width: 40px; height: 40px; padding: 0; border-radius: 50%;
-  border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.25); color: var(--text); cursor: pointer;
-  text-decoration: none; -webkit-tap-highlight-color: transparent;
-  transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.2s ease, color 0.2s ease;
+  border: 1px solid var(--line); cursor: pointer; text-decoration: none;
 }
-.pv .icon-btn:hover { color: #fff; border-color: var(--line-strong); box-shadow: 0 0 14px -4px var(--glow); }
-.pv .icon-btn:active { transform: scale(0.95); }
 .pv .icon-btn svg { width: 19px; height: 19px; }
 .pv input[type="password"], .pv input[type="text"], .pv input[type="email"], .pv input[type="url"] {
   width: 100%; min-width: 0;
@@ -118,13 +106,10 @@
   min-height: 40px; min-width: 76px; padding: 0 15px; border-radius: 999px;
   border: 1px solid transparent; background: none; color: var(--muted);
   font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
-  white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  transition: transform 0.18s ease, color 0.2s ease, background 0.25s ease;
+  white-space: nowrap; cursor: pointer;
 }
-.pv .chip:hover { color: #fff; }
-.pv .chip:active { transform: scale(0.97); }
-.pv .chip.active { background: var(--grad); color: var(--on-accent); box-shadow: 0 6px 18px -8px var(--glow-accent); }
-.pv .chip:disabled { cursor: progress; opacity: 0.7; }
+/* (hover, press and the chosen one's fill: /shared/buttons.css) */
+.pv .chip:disabled { cursor: progress; }
 
 /* Little labels: role and status */
 .pv .pill {

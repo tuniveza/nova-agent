@@ -72,31 +72,27 @@ body::before {
 }
 
 /* ----- Buttons and fields ----- */
+/* Buttons' size and lettering. How they look (the gradient fill, the ghost kind, hover, press,
+   focus ring, disabled) is the same in every panel: /shared/buttons.css */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-height: 46px; padding: 0 20px;
   border: 1px solid transparent;
-  border-radius: 16px 22px 26px 6px;
-  background: var(--grad);
-  color: var(--on-accent);
+  border-radius: var(--nb-radius, 16px 22px 26px 6px);
   font-family: var(--f-display); font-stretch: 125%; font-weight: 900;
   font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
   text-decoration: none; cursor: pointer;
-  box-shadow: 0 10px 26px -12px var(--glow-accent), 0 0 0 1px rgba(var(--star-rgb), 0.06) inset;
-}
-.btn.ghost {
-  background: rgba(var(--panel-2-rgb), 0.45); border-color: var(--line); color: var(--text); box-shadow: none;
 }
 /* Small buttons are pills with mono labels, like Nova Agent's */
 .btn.small {
   min-height: 40px; padding: 0 15px; border-radius: 999px;
   font-family: var(--f-mono); font-stretch: 100%; font-weight: 600; font-size: 11px; letter-spacing: 0.1em;
 }
-.btn:disabled { filter: grayscale(0.6) brightness(0.7); cursor: wait; }
+.btn:disabled { cursor: wait; }
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center; flex: none;
   width: 40px; height: 40px; padding: 0; border-radius: 50%;
-  border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.25); color: var(--text); cursor: pointer;
+  border: 1px solid var(--line); cursor: pointer;
 }
 .icon-btn svg { width: 19px; height: 19px; }
 input[type="password"], input[type="text"], select, textarea {
@@ -206,8 +202,8 @@ main {
   font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
   white-space: nowrap; cursor: pointer;
 }
-.chips .chip { border-color: transparent; background: none; color: var(--muted); padding: 0 13px; }
-.chip.active, .chips .chip.active { background: var(--grad); border-color: transparent; color: var(--on-accent); box-shadow: 0 6px 18px -8px var(--glow-accent); }
+.chips .chip { padding: 0 13px; }
+/* (a chip inside .chips sits in the well until chosen, then fills: /shared/buttons.css) */
 
 /* ----- Cards: glass, with a gradient hairline edge ----- */
 .list { display: grid; gap: 12px; }
@@ -748,16 +744,7 @@ select option:checked { background: var(--accent); color: var(--on-accent); }
 /* ----- Movement: a gentle glow on hover, a soft press on tap (titles stay still) ----- */
 .btn, .chip, .icon-btn, .tab, .cal-day { position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; }
 .card-delete { overflow: hidden; -webkit-tap-highlight-color: transparent; }
-.btn { transition: transform 0.18s ease, box-shadow 0.25s ease, border-color 0.2s ease, filter 0.25s ease; }
-.btn:hover { filter: brightness(1.06); box-shadow: 0 12px 28px -12px var(--glow-accent), 0 0 22px -6px rgba(var(--glow-rgb), 0.55); }
-.btn.ghost:hover { border-color: var(--line-strong); color: #fff; box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.22); filter: none; }
-.btn:active { transform: scale(0.98); }
-.chip { transition: transform 0.18s ease, border-color 0.2s ease, color 0.2s ease, background 0.25s ease; }
-.chip:hover { border-color: var(--line-strong); color: #fff; }
-.chip:active { transform: scale(0.97); }
-.icon-btn { transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.2s ease, color 0.2s ease; }
-.icon-btn:hover { color: #fff; border-color: var(--line-strong); box-shadow: 0 0 14px -4px var(--glow); }
-.icon-btn:active { transform: scale(0.95); }
+/* (buttons, chips and round buttons: their glow, hover and press are in /shared/buttons.css) */
 #refresh:active svg { transition: transform 0.5s ease; transform: rotate(-200deg); }
 .tab { transition: color 0.2s ease, background 0.25s ease; }
 /* (hover only where there's a real pointer: on a touch screen a tapped tab doesn't stay lit) */

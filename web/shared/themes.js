@@ -1,5 +1,7 @@
 // Portal themes: puts the chosen theme on the page, remembers it on this device, and draws
-// the theme picker (a swatch per theme) wherever the page has a <div id="theme-list">.
+// the theme picker wherever the page has a <div id="theme-list"> (or data-theme-list): with
+// spectrum.js loaded first, every theme as a swatch in rainbow order plus a Custom colour with
+// sliders; without it, the six original swatches.
 // Loaded in the <head>, before the page is drawn, so the right colours show from the very first
 // frame (the site's security rules don't allow scripts written inside the page itself).
 // Other pages on the site (the /admin pages) can load it too: window.NovaThemes = { list, current(), set(id) }.
@@ -15,6 +17,24 @@
     { id: "gold", name: "Gold", color: "#070605", preview: "radial-gradient(120% 90% at 20% 0%, #F0D08A 0%, #9C7A36 40%, #2B2316 70%, #070605 100%), #070605" },
     { id: "mono", name: "Mono", color: "#060607", preview: "radial-gradient(120% 90% at 20% 0%, #F2F2F5 0%, #6A6A74 35%, #1A1A20 70%, #060607 100%), #060607" },
   ];
+  // The original six's colours for the spectrum picker's swatches (the same as themes.css)
+  const ORBS = {
+    cosmic: { accent: "#B01D68", hi: "#FF5FA8", accent3: "#25194D", void: "#06040D" },
+    ember: { accent: "#D9381A", hi: "#FF7A3D", accent3: "#3B130B", void: "#0B0505" },
+    aurora: { accent: "#0B7A66", hi: "#3DF5B8", accent3: "#0B2A3A", void: "#030A0C" },
+    ocean: { accent: "#1B5FD9", hi: "#4CC9FF", accent3: "#0D1B3D", void: "#030713" },
+    gold: { accent: "#E2C27A", hi: "#F0D08A", accent3: "#2B2316", void: "#070605" },
+    mono: { accent: "#C9C9D2", hi: "#FFFFFF", accent3: "#1A1A20", void: "#060607" },
+  };
+  list.forEach((t) => (t.palette = ORBS[t.id]));
+  // The spectrum's themes (their colours are put on by look.js) and Custom, made from one hue
+  const SPECTRUM = window.NovaSpectrum || null;
+  const glowOf = (p) => `radial-gradient(120% 90% at 20% 0%, ${p.hi} 0%, ${p.accent} 40%, ${p.accent3} 70%, ${p.void} 100%), ${p.void}`;
+  if (SPECTRUM) {
+    SPECTRUM.themes.forEach((p) => list.push({ id: p.id, name: p.name, tag: p.tag, color: p.void, preview: glowOf(p), palette: p }));
+    const c = SPECTRUM.custom();
+    list.push({ id: "custom", name: "Custom", tag: "Your own colour", color: c.void, preview: glowOf(c), palette: c });
+  }
   const KEY = "nova-theme";
   const root = document.documentElement;
 
@@ -36,7 +56,8 @@
   function apply(id) {
     const theme = find(id);
     root.setAttribute("data-theme", theme.id);
-    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", theme.color));
+    const color = theme.id === "custom" && SPECTRUM ? SPECTRUM.custom().void : theme.color;
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", color));
     return theme.id;
   }
 
@@ -65,16 +86,36 @@
     return theme.id;
   }
 
+  // The theme you're looking at: the one chosen for all of Nova Agent (look.js, "nova-look"), when
+  // it's one of these, or else this page's own (so the picker never lights Cosmic while all of
+  // Nova Agent is Jade). look.js's names for the original four are different: mapped here.
+  const LOOK_NAMES = { novacane: "cosmic", solar: "ember", pulsar: "ocean", eclipse: "gold" };
+  function shown() {
+    try {
+      const v = JSON.parse(localStorage.getItem("nova-look") || "{}");
+      const id = v && !v.planet && v.theme ? LOOK_NAMES[v.theme] || v.theme : null;
+      if (id && list.some((t) => t.id === id)) return id;
+    } catch (err) {}
+    return current();
+  }
+
   // Show which swatch is chosen
   function markSwatches(id) {
-    document.querySelectorAll(".theme-swatch").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeId === id)));
+    document.querySelectorAll(".theme-swatch, .spectrum-swatch[data-theme-id]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeId === id)));
   }
 
   // Draw the swatches into every theme list on the page
   function drawPicker() {
     document.querySelectorAll("#theme-list, [data-theme-list]").forEach((box) => {
+      // The spectrum: every theme in rainbow order, then Custom (moving its sliders chooses it)
+      if (SPECTRUM) {
+        box.replaceChildren();
+        box.classList.add("has-spectrum");
+        SPECTRUM.draw(box, { items: list, attr: "themeId", onPick: set, onCustom: () => set("custom") });
+        return;
+      }
       box.replaceChildren(
-        ...list.map((t) => {
+        ...list.filter((t) => ORBS[t.id]).map((t) => {
           const b = document.createElement("button");
           b.type = "button";
           b.className = "theme-swatch";
@@ -92,7 +133,7 @@
         })
       );
     });
-    markSwatches(current());
+    markSwatches(shown());
   }
 
   // Right now (before the page is drawn): the saved theme
@@ -104,9 +145,12 @@
   window.addEventListener("storage", (e) => {
     if (e.key === KEY) {
       apply(e.newValue);
-      markSwatches(current());
+      markSwatches(shown());
     }
+    // The theme for all of Nova Agent changed (in the Panels window, or another panel)
+    if (e.key === "nova-look") markSwatches(shown());
   });
+  window.addEventListener("novalookchange", () => markSwatches(shown()));
 
   window.NovaThemes = { list: list.map(({ id, name, preview }) => ({ id, name, preview })), current, set };
 })();
