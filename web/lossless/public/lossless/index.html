@@ -43,8 +43,9 @@
     }
     button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
     button:disabled { opacity: .45; cursor: default; }
-    button.on { border-color: var(--good); color: var(--good); font-weight: 600; }
-    button.off { border-color: var(--bad); color: var(--bad); font-weight: 600; }
+    /* (body.nb-plain: stronger than the shared button look in /shared/buttons.css, so on and off keep their colours) */
+    body.nb-plain button.on { border-color: var(--good); color: var(--good); font-weight: 600; }
+    body.nb-plain button.off { border-color: var(--bad); color: var(--bad); font-weight: 600; }
     .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
     .controls select { grid-column: 1 / -1; }
     #status { font-weight: 600; }
@@ -76,9 +77,12 @@
       button { min-height: 44px; }
     }
   </style>
+<!-- Every button's look (buttons.css; body.nb-plain: plain buttons join in) -->
+<link rel="stylesheet" href="/shared/buttons.css">
+<script src="/shared/spectrum.js"></script>
 <script src="/shared/look.js"></script>
 </head>
-<body>
+<body class="nb-plain">
 <main>
   <h1>Nova Lossless Audio</h1>
   <p class="sub">Raw PCM between two devices over a WebRTC data channel. No Opus, no codec.</p>

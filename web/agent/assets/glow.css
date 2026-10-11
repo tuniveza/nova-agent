@@ -26,11 +26,10 @@
   linear-gradient(var(--deep), var(--deep)) padding-box, var(--edge-glow) border-box;
   box-shadow: 0 40px 120px -30px #000; }
 dialog.more-sheet { border-top: 1px solid transparent !important; background-image: radial-gradient(60% 60% at 0% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 65%); box-shadow: 0 -1px 0 color-mix(in srgb, var(--hi) 50%, transparent), 0 -14px 40px -20px var(--hi); }
-/* Buttons, chips and round buttons: the same soft glow when you're on them */
-.btn:hover, .icon-btn:hover, .chip:hover, .seg button:hover, .more-grid button:hover { box-shadow: var(--glow-soft); border-color: color-mix(in srgb, var(--hi) 45%, transparent); }
-.btn:focus-visible, .icon-btn:focus-visible, .chip:focus-visible, .seg button:focus-visible, a:focus-visible, button:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--hi) 70%, transparent), 0 0 18px -4px var(--hi); }
-.seg button.active, .seg button[aria-selected="true"], .chip.active { box-shadow: 0 0 16px -6px var(--hi); }
-.btn.primary { box-shadow: 0 8px 26px -10px var(--accent), 0 0 22px -10px var(--hi); }
+/* Buttons, chips and round buttons glow the same way in every panel (/shared/buttons.css);
+   the phone's menu tiles, links and any other button get the same soft light here */
+.more-grid button:hover { box-shadow: var(--glow-soft); border-color: color-mix(in srgb, var(--hi) 45%, transparent); }
+a:focus-visible:not(.btn, .chip, .mini), button:focus-visible:not(.btn, .icon-btn, .chip, .mini, .send, .spectrum-swatch, .seg > button, .subtabs > button) { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--hi) 70%, transparent), 0 0 18px -4px var(--hi); }
 /* Typing boxes light up the same way */
 .composer textarea:focus, .rh input:focus, .rh textarea:focus, .rh select:focus { border-color: color-mix(in srgb, var(--hi) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 18%, transparent), 0 0 24px -8px var(--hi); }
 /* Cards inside the columns (missions, quests, chat bubbles) get a hairline of the same light */

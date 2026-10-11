@@ -49,7 +49,7 @@
 .look-settings .look-row > span { font-family: var(--f-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
 .look-swatch { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--text); font-size: 12px; cursor: pointer; }
 .look-swatch i { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--b), var(--a) 55%, var(--c)); box-shadow: 0 0 10px -2px var(--b); }
-.look-swatch.active, .look-settings .chip.active { border-color: var(--hi); color: #fff; background: color-mix(in srgb, var(--hi) 16%, transparent); }
+.look-swatch.active { border-color: var(--hi); color: #fff; background: color-mix(in srgb, var(--hi) 16%, transparent); }
 .look-planet { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
 .tabbar > .status-line, .status-line { justify-content: center; }
 

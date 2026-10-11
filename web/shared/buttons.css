@@ -1,0 +1,351 @@
+/* Nova Agent's buttons: one look for every panel, in the theme's colours.
+   Linked last in each panel's <head> (after the panel's own styles), so it decides how buttons
+   look (their fill, edge, glow, hover, press, focus ring and disabled state) while each panel
+   keeps deciding their size, spacing and lettering. A panel's more specific rules (a button in a
+   particular place) still win, so special cases keep their own look.
+
+   The families, and the class names each panel already uses for them:
+     Primary   filled with the theme's gradient, a soft light along the top, a gentle glow on hover
+               .btn (Portal, Index), .btn.primary, .send, .mini.go, .add-btn, .save, .ni-btn.primary
+     Secondary glass with a hairline edge that lights up on hover
+               .btn.ghost, .btn on pages marked <html data-btn="soft"> (Nova Agent, Notes,
+               Observatory), .mini, .ni-btn, .which button, button.ghost (Calendar)
+     Quiet     just the words, in the highlight colour: .btn.quiet, .btn.text, Calendar's notices
+     Danger    red-tinted glass; .solid fills it: .btn.danger, button.danger, .ni-btn.danger
+               (a round .icon-btn.danger only turns red on hover)
+     Chips     small pills; chosen ones fill like Primary: .chip (buttons and links only),
+               .subtabs button, .ni-chip, Calendar's .chips/.wd buttons
+     Segments  choices inside one pill-shaped well; the chosen one fills like Primary:
+               .chips .chip (Portal, Index), .seg button, .views and .kinds buttons (Calendar)
+     Round     icon buttons: .icon-btn
+   Plain pages (Lossless, the Visualizer) mark their <body class="nb-plain">: their buttons are
+   Secondary, button.primary is Primary (a button made to look like a link, .link, is left alone).
+
+   Pressing gives a tiny squeeze (120 ms), nothing moves when motion is turned down, and every
+   button shows a clear ring when reached with the keyboard. Hover looks only apply where there's a
+   real pointer (@media (hover: hover)), so a tapped button on a phone doesn't stay lit.
+   The colours come from the theme (themes.css, look.js, or the panel's own); the fallbacks after
+   each name are Cosmic's, for pages that don't name that colour. They're read on the button itself,
+   so a card wearing its own theme colours its buttons to match. */
+
+/* ===== The spacing, shapes and speeds every button shares ===== */
+:root {
+  --nb-radius: 16px 22px 26px 6px; /* the house shape for big buttons: a comet's tail, bottom left */
+  --nb-pill: 999px;                /* small buttons and chips */
+  --nb-press: 0.97;                /* how far a press squeezes */
+  --nb-press-round: 0.94;
+  --nb-quick: 120ms;               /* the press */
+  --nb-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ===== Primary ===== */
+.btn, .send, .add-btn, .save,
+.btn.primary, .mini.go, .ni-btn.primary, .nb-plain button.primary:not(.link) {
+  border-color: transparent;
+  color: var(--on-accent, var(--accent-text, #FFFFFF));
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 55%),
+    linear-gradient(120deg, var(--accent, #B01D68) 0%, color-mix(in srgb, var(--accent, #B01D68) 50%, var(--accent-2, var(--accent, #7A1F86))) 55%, var(--accent-2, var(--accent, #7A1F86)) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    inset 0 -1px 0 rgb(0 0 0 / 0.14),
+    0 8px 22px -12px color-mix(in srgb, var(--accent, #B01D68) 90%, transparent);
+}
+@media (hover: hover) {
+  .btn:hover, .send:hover, .add-btn:hover, .save:hover,
+  .btn.primary:hover, .mini.go:hover, .ni-btn.primary:hover, .nb-plain button.primary:not(.link):hover:not(:disabled) {
+    filter: brightness(1.06);
+    border-color: transparent;
+    color: var(--on-accent, var(--accent-text, #FFFFFF));
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0) 55%),
+      linear-gradient(120deg, var(--accent, #B01D68) 0%, color-mix(in srgb, var(--accent, #B01D68) 50%, var(--accent-2, var(--accent, #7A1F86))) 55%, var(--accent-2, var(--accent, #7A1F86)) 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.24),
+      inset 0 -1px 0 rgb(0 0 0 / 0.14),
+      0 10px 26px -12px color-mix(in srgb, var(--accent, #B01D68) 95%, transparent),
+      0 0 22px -8px color-mix(in srgb, var(--hi, #FF5FA8) 55%, transparent);
+  }
+}
+.btn:active, .send:active, .add-btn:active, .save:active,
+.btn.primary:active, .mini.go:active, .ni-btn.primary:active { filter: brightness(0.96); }
+
+/* ===== Secondary ===== */
+/* (pages where a plain .btn is a quiet one say so with <html data-btn="soft">) */
+:where([data-btn="soft"]) .btn, .btn.ghost, .mini, .ni-btn, button.ghost:not(.icon-btn), .which button:not(.ghost), .nb-plain button:not(.link) {
+  border-color: color-mix(in srgb, var(--text, var(--ink, #EBD3E7)) 16%, transparent);
+  color: var(--text, var(--ink, #EBD3E7));
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0) 60%),
+    color-mix(in srgb, var(--panel-2, var(--card, var(--panel, #241640))) 55%, transparent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  filter: none;
+}
+@media (hover: hover) {
+  :where([data-btn="soft"]) .btn:hover, .btn.ghost:hover, .mini:hover, .ni-btn:hover, button.ghost:not(.icon-btn):hover, .which button:not(.ghost):hover,
+  .nb-plain button:not(.link):hover:not(:disabled) {
+    filter: none;
+    border-color: color-mix(in srgb, var(--hi, var(--accent, #FF5FA8)) 50%, transparent);
+    color: var(--bright, var(--text, var(--ink, #F6ECFF)));
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0) 60%),
+      color-mix(in srgb, var(--accent, #B01D68) 16%, color-mix(in srgb, var(--panel-2, var(--card, var(--panel, #241640))) 60%, transparent));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      0 0 0 3px color-mix(in srgb, var(--accent, #B01D68) 16%, transparent),
+      0 0 18px -8px color-mix(in srgb, var(--hi, var(--accent, #FF5FA8)) 60%, transparent);
+  }
+}
+/* Primary stays primary on those pages (more specific than the line above) */
+:where([data-btn="soft"]) .btn.primary { border-color: transparent; color: var(--on-accent, #FFFFFF); }
+
+/* ===== Quiet: just the words ===== */
+.btn.quiet, .btn.text, .status button, .toast button {
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+  color: var(--hi, var(--accent, #FF5FA8));
+}
+@media (hover: hover) {
+  .btn.quiet:hover, .btn.text:hover, .status button:hover, .toast button:hover {
+    filter: none;
+    border-color: transparent;
+    color: var(--soft, var(--hi, #FFD1EA));
+    background: color-mix(in srgb, var(--hi, var(--accent, #FF5FA8)) 10%, transparent);
+    box-shadow: none;
+  }
+}
+
+/* ===== Danger ===== */
+.btn.danger, button.danger:not(.icon-btn), .ni-btn.danger {
+  border-color: color-mix(in srgb, var(--bad, var(--danger, #FF6B81)) 50%, transparent);
+  color: color-mix(in srgb, var(--bad, var(--danger, #FF6B81)) 75%, #FFFFFF);
+  background: color-mix(in srgb, var(--bad, var(--danger, #FF6B81)) 12%, transparent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  filter: none;
+}
+@media (hover: hover) {
+  .btn.danger:hover, button.danger:not(.icon-btn):hover, .ni-btn.danger:hover {
+    filter: none;
+    border-color: var(--bad, var(--danger, #FF6B81));
+    color: #FFFFFF;
+    background: color-mix(in srgb, var(--bad, var(--danger, #FF6B81)) 22%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad, var(--danger, #FF6B81)) 18%, transparent), 0 0 18px -8px var(--bad, var(--danger, #FF6B81));
+  }
+}
+.btn.danger.solid {
+  border-color: transparent;
+  color: #1A0508;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 55%), var(--bad, var(--danger, #FF6B81));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 8px 22px -12px var(--bad, var(--danger, #FF6B81));
+}
+@media (hover: hover) {
+  .btn.danger.solid:hover { color: #1A0508; background: linear-gradient(180deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0) 55%), var(--bad, var(--danger, #FF6B81)); }
+  }
+
+  /* ===== Round icon buttons ===== */
+  .icon-btn {
+    border-color: color-mix(in srgb, var(--text, #EBD3E7) 16%, transparent);
+    color: var(--text, #EBD3E7);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0) 60%),
+      color-mix(in srgb, var(--panel-2, #241640) 45%, transparent);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  }
+  @media (hover: hover) {
+  .icon-btn:hover {
+    border-color: color-mix(in srgb, var(--hi, #FF5FA8) 50%, transparent);
+    color: var(--bright, var(--text, #F6ECFF));
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0) 60%),
+      color-mix(in srgb, var(--accent, #B01D68) 18%, color-mix(in srgb, var(--panel-2, #241640) 55%, transparent));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 0 16px -6px color-mix(in srgb, var(--hi, #FF5FA8) 70%, transparent);
+  }
+}
+@media (hover: hover) {
+  .icon-btn.danger:hover {
+    border-color: var(--bad, var(--danger, #FF6B81));
+    color: color-mix(in srgb, var(--bad, var(--danger, #FF6B81)) 60%, #FFFFFF);
+    background: color-mix(in srgb, var(--bad, var(--danger, #FF6B81)) 16%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad, var(--danger, #FF6B81)) 18%, transparent);
+  }
+}
+
+/* ===== Chips: small pills (only ones you can press; label chips keep their own look) ===== */
+:where(button, a, [role="button"], [role="radio"], [role="tab"], [role="switch"]).chip,
+.subtabs button, .ni-chip, .chips button, .wd button {
+  border-color: color-mix(in srgb, var(--text, #EBD3E7) 15%, transparent);
+  color: var(--text, #EBD3E7);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.04), rgb(255 255 255 / 0) 60%),
+    color-mix(in srgb, var(--panel-2, #241640) 50%, transparent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+@media (hover: hover) {
+  :where(button, a, [role="button"], [role="radio"], [role="tab"], [role="switch"]).chip:hover,
+  .subtabs button:hover, .ni-chip:hover, .chips button:hover, .wd button:hover {
+    border-color: color-mix(in srgb, var(--hi, #FF5FA8) 45%, transparent);
+    color: var(--bright, var(--text, #F6ECFF));
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0) 60%),
+      color-mix(in srgb, var(--accent, #B01D68) 18%, color-mix(in srgb, var(--panel-2, #241640) 50%, transparent));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 0 16px -8px color-mix(in srgb, var(--hi, #FF5FA8) 70%, transparent);
+  }
+}
+
+/* ===== Segments: choices inside one well (the well itself is the panel's) ===== */
+.chips :where(button, a, [role="button"], [role="radio"], [role="tab"], [role="switch"]).chip, .seg button, .views button, .kinds button {
+  border-color: transparent;
+  color: var(--muted, #B997B5);
+  background: none;
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .chips :where(button, a, [role="button"], [role="radio"], [role="tab"], [role="switch"]).chip:hover, .seg button:hover, .views button:hover, .kinds button:hover {
+    border-color: transparent;
+    color: var(--text, #EBD3E7);
+    background: color-mix(in srgb, var(--text, #EBD3E7) 7%, transparent);
+    box-shadow: none;
+  }
+}
+
+/* ===== Chosen: a chip or segment that's on fills like a Primary button ===== */
+:where(button, a, [role="button"], [role="radio"], [role="tab"], [role="switch"]).chip:is(.active, [aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]),
+.chips :where(button, a, [role="button"], [role="radio"], [role="tab"], [role="switch"]).chip.active, .ni-chip.on,
+.seg button:is(.active, [aria-selected="true"]), .subtabs button[aria-selected="true"],
+.views button[aria-selected="true"], .kinds button.on,
+.chips button[aria-pressed="true"], .wd button[aria-pressed="true"] {
+  border-color: transparent;
+  color: var(--on-accent, #FFFFFF);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 55%),
+    linear-gradient(120deg, var(--accent, #B01D68) 0%, color-mix(in srgb, var(--accent, #B01D68) 50%, var(--accent-2, var(--accent, #7A1F86))) 55%, var(--accent-2, var(--accent, #7A1F86)) 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 6px 18px -8px color-mix(in srgb, var(--accent, #B01D68) 90%, transparent), 0 0 14px -6px color-mix(in srgb, var(--hi, #FF5FA8) 50%, transparent);
+}
+/* Calendar's "Today" chip is a gentle tint, not a fill */
+.chip.today { border-color: color-mix(in srgb, var(--hi, #FF5FA8) 30%, transparent); color: var(--bright, var(--soft, #FFD1EA)); }
+
+/* ===== Every button: how it moves, the keyboard ring, and when it's switched off ===== */
+.btn, .send, .add-btn, .save, .mini, .ni-btn, .ni-chip, .icon-btn, .ghost, .danger, .chip,
+.subtabs button, .seg button, .views button, .kinds button, .chips button, .wd button, .which button,
+.status button, .toast button, .spectrum-swatch, .nb-plain button:not(.link) {
+  transition:
+    background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+    box-shadow 0.25s ease, filter 0.2s ease, opacity 0.2s ease,
+    scale var(--nb-quick) var(--nb-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+/* A press: a tiny squeeze (round buttons a touch more, as they're small) */
+.btn:active:not(:disabled), .send:active:not(:disabled), .add-btn:active, .save:active, .mini:active, .ni-btn:active:not(:disabled), .ni-chip:active,
+.chip:active, .subtabs button:active, .seg button:active, .views button:active, .kinds button:active, .chips button:active, .wd button:active,
+.which button:active, .ghost:active, .danger:active, .nb-plain button:not(.link):active:not(:disabled) { scale: var(--nb-press); }
+.icon-btn:active:not(:disabled), .spectrum-swatch:active { scale: var(--nb-press-round); }
+/* The keyboard ring: the highlight colour, a little way out from the edge */
+.btn:focus-visible, .send:focus-visible, .add-btn:focus-visible, .save:focus-visible, .mini:focus-visible, .ni-btn:focus-visible,
+.ni-chip:focus-visible, .icon-btn:focus-visible, .ghost:focus-visible, .danger:focus-visible, .chip:focus-visible,
+.subtabs button:focus-visible, .seg button:focus-visible, .views button:focus-visible, .kinds button:focus-visible,
+.chips button:focus-visible, .wd button:focus-visible, .which button:focus-visible, .status button:focus-visible,
+.toast button:focus-visible, .spectrum-swatch:focus-visible, .nb-plain button:not(.link):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--hi, var(--accent, #FF5FA8)) 85%, #FFFFFF);
+  outline-offset: 2px;
+}
+/* Switched off (or busy): faded, no glow, no squeeze */
+.btn:disabled, .send:disabled, .add-btn:disabled, .save:disabled, .mini:disabled, .ni-btn:disabled, .icon-btn:disabled,
+.chip:disabled, .ghost:disabled, .danger:disabled, .which button:disabled, .nb-plain button:not(.link):disabled,
+.btn[aria-disabled="true"], .btn.busy {
+  opacity: 0.5;
+  filter: saturate(0.7);
+  box-shadow: none;
+  scale: 1;
+}
+/* Motion turned down (the device's setting, or Portal's "Calm" option): colours still change, nothing moves */
+@media (prefers-reduced-motion: reduce) {
+  .btn, .send, .add-btn, .save, .mini, .ni-btn, .ni-chip, .icon-btn, .ghost, .danger, .chip,
+  .subtabs button, .seg button, .views button, .kinds button, .chips button, .wd button, .which button,
+  .status button, .toast button, .spectrum-swatch, .nb-plain button:not(.link) { transition-property: background-color, border-color, color, box-shadow, opacity; scale: none !important; }
+}
+:root[data-motion="calm"] :is(.btn, .send, .add-btn, .save, .mini, .ni-btn, .icon-btn, .chip, .seg button, .subtabs button, .spectrum-swatch):active { scale: none; }
+
+/* ===== The theme spectrum (drawn by spectrum.js in Portal's and Index's Options and the Panels window) ===== */
+.theme-list.has-spectrum { display: block; }
+.look-themes .spectrum { flex: 1 1 100%; }
+.spectrum { display: grid; gap: 12px; width: 100%; min-width: 0; }
+/* The themes as round orbs, in rainbow order */
+.spectrum-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px 4px; }
+.spectrum-swatch {
+  display: grid; justify-items: center; align-content: start; gap: 6px; min-width: 0;
+  padding: 8px 2px 7px; border-radius: 16px; border: 1px solid transparent; background: none;
+  color: var(--muted, #B997B5); font: inherit; cursor: pointer;
+}
+.spectrum-orb {
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
+  background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--orb-b) 70%, #FFFFFF) 0%, var(--orb-b) 16%, var(--orb-a) 50%, var(--orb-c) 82%, var(--orb-d) 100%);
+  box-shadow: inset 0 1px 1px rgb(255 255 255 / 0.25), 0 0 0 1px rgb(255 255 255 / 0.08), 0 4px 14px -6px var(--orb-b);
+  transition: box-shadow 0.25s ease, scale 0.2s var(--nb-ease);
+}
+.spectrum-name {
+  max-width: 100%; font-family: var(--f-mono, ui-monospace, monospace); font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.08em; line-height: 1.2; text-transform: uppercase; text-align: center; overflow-wrap: anywhere;
+}
+@media (hover: hover) {
+.spectrum-swatch:hover { color: var(--text, #EBD3E7); background: color-mix(in srgb, var(--text, #EBD3E7) 5%, transparent); }
+}
+@media (hover: hover) {
+.spectrum-swatch:hover .spectrum-orb { scale: 1.06; }
+}
+/* The chosen one: a ring of its own light round the orb */
+.spectrum-swatch:is([aria-pressed="true"], [aria-checked="true"], .active) {
+  color: var(--bright, var(--text, #F6ECFF));
+  border-color: color-mix(in srgb, var(--hi, #FF5FA8) 35%, transparent);
+  background: color-mix(in srgb, var(--accent, #B01D68) 12%, transparent);
+}
+.spectrum-swatch:is([aria-pressed="true"], [aria-checked="true"], .active) .spectrum-orb {
+  box-shadow: inset 0 1px 1px rgb(255 255 255 / 0.25), 0 0 0 2px var(--void, #06040D), 0 0 0 3.5px var(--orb-b), 0 0 18px -2px var(--orb-b);
+}
+/* Custom: its orb, then a hue slider over a rainbow and a vividness slider */
+.spectrum-custom {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px 14px;
+  padding: 8px 14px 8px 6px; border-radius: 18px; border: 1px solid var(--line, rgb(255 255 255 / 0.14));
+  background: color-mix(in srgb, var(--panel-2, #241640) 35%, transparent);
+}
+.spectrum-custom .spectrum-swatch { min-width: 62px; }
+.spectrum-sliders { display: grid; gap: 6px; min-width: 0; }
+.spectrum-slider {
+  display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 10px; min-width: 0; margin: 0;
+  font-family: var(--f-mono, ui-monospace, monospace); font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted, #B997B5); text-align: left !important;
+}
+.spectrum-slider input[type="range"] {
+  -webkit-appearance: none; appearance: none; width: 100%; min-width: 0; height: 28px; margin: 0; padding: 0;
+  border: 0; border-radius: 999px; background: transparent; cursor: pointer;
+}
+.spectrum-slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px; border-radius: 999px; background: var(--track, var(--line));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1), inset 0 1px 2px rgb(0 0 0 / 0.35);
+}
+.spectrum-slider input[type="range"]::-moz-range-track {
+  height: 8px; border-radius: 999px; background: var(--track, var(--line));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1), inset 0 1px 2px rgb(0 0 0 / 0.35);
+}
+.spectrum-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 20px; height: 20px; margin-top: -6px; border-radius: 50%;
+  border: 2px solid var(--void, #06040D); background: var(--bright, #FFFFFF);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.4), 0 2px 8px rgb(0 0 0 / 0.5);
+}
+.spectrum-slider input[type="range"]::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--void, #06040D); background: var(--bright, #FFFFFF);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.4), 0 2px 8px rgb(0 0 0 / 0.5);
+}
+/* (no box round the slider when it has the keyboard: just the ring below) */
+.spectrum-slider input[type="range"]:focus { border-color: transparent; box-shadow: none; }
+.spectrum-slider input[type="range"]:focus-visible { outline: 2px solid color-mix(in srgb, var(--hi, #FF5FA8) 85%, #FFFFFF); outline-offset: 2px; border-radius: 999px; }
+@media (max-width: 420px) {
+  .spectrum-grid { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
+  .spectrum-custom { grid-template-columns: minmax(0, 1fr); justify-items: stretch; padding: 8px 12px 10px; }
+  .spectrum-custom .spectrum-swatch { justify-self: center; }
+  .spectrum-slider { grid-template-columns: 70px minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spectrum-orb { transition: box-shadow 0.25s ease; }
+  .spectrum-swatch:hover .spectrum-orb { scale: none; }
+}

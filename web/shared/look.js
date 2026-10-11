@@ -3,6 +3,8 @@
 // with the colours of the planet you have in Portal, and all text is centred (unless switched off). Loaded early in every panel's <head> and in
 // Nova Agent's page. Saved on the device ("nova-look"); every open panel follows straight away.
 // When no theme is chosen, each panel keeps its own (as before).
+// The spectrum's extra themes and the Custom theme (made from one hue) come from spectrum.js,
+// loaded just before this; without it there are just the seven below.
 //   window.NovaLook = { themes, get(), setTheme(id | null), setPlanet(on), setCenter(on), refreshPlanet() }
 // What kind of device this is, from the device itself (not just the window's size), on <html> for
 // every page and panel: is-touch (a touch screen as the main pointer), is-phone, is-tablet
@@ -37,7 +39,14 @@
     {"id": "quasar", "name": "Quasar", "tag": "Ultraviolet", "void": "#05030F", "deep": "#0B0719", "panel": "#151030", "panel2": "#1C1640", "text": "#E2DDFB", "muted": "#A49CCB", "accent": "#5B3DF5", "accent2": "#B23AEE", "accent3": "#141047", "hi": "#A98BFF", "soft": "#E4DAFF", "gold": "#FFE1F4", "lilac": "#C7B8FF", "onAccent": "#FFFFFF"},
     {"id": "mono", "name": "Mono", "tag": "Silver & ink", "void": "#060607", "deep": "#0E0E11", "panel": "#18181C", "panel2": "#222228", "text": "#E6E6EA", "muted": "#9C9CA6", "accent": "#6A6A74", "accent2": "#4A4A52", "accent3": "#1A1A20", "hi": "#F2F2F5", "soft": "#E6E6EA", "gold": "#E8DFC8", "lilac": "#C9C9D1", "onAccent": "#FFFFFF"}
   ];
+  // The spectrum's themes join them (Crimson, Rose, Coral, Amber, Lime, Jade, Teal, Glacier,
+  // Indigo, Violet, Orchid), and "custom" is worked out from the hue saved on this device
+  const SPECTRUM = window.NovaSpectrum || null;
+  if (SPECTRUM) THEMES.push(...SPECTRUM.themes);
   const byId = Object.fromEntries(THEMES.map((t) => [t.id, t]));
+  const known = (id) => Boolean(byId[id]) || (id === "custom" && Boolean(SPECTRUM));
+  // A theme's colours by its id (Custom's are made fresh each time, from the saved hue)
+  const paletteOf = (id) => (id === "custom" && SPECTRUM ? SPECTRUM.custom() : byId[id]);
 
   // ---- Colour arithmetic (hex in, hex out) ----
   const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -49,7 +58,7 @@
   function read() {
     try {
       const v = JSON.parse(localStorage.getItem(KEY) || "{}");
-      return { theme: byId[v.theme] ? v.theme : null, planet: v.planet === true, center: v.center !== false };
+      return { theme: known(v.theme) ? v.theme : null, planet: v.planet === true, center: v.center !== false };
     } catch (err) {
       return { theme: null, planet: false, center: true };
     }
@@ -83,7 +92,7 @@
 
   // Every name the panels use for their colours (Calendar, Notes, Observatory and Nova Agent use
   // the first set; Portal and Index add the "-rgb" ones; Lossless audio and Visualizer their own)
-  function css(t) {
+  function vars(t) {
     const text = t.text, bright = mix(t.soft, "#ffffff", 0.5);
     const v = {
       "--void": t.void, "--deep": t.deep, "--panel": t.panel, "--panel-2": t.panel2, "--text": text, "--muted": t.muted,
@@ -96,7 +105,27 @@
       "--glow-rgb": csv(t.hi), "--glow-accent": t.accent, "--star-rgb": csv(mix(t.soft, "#ffffff", 0.6)),
       "--bg": t.void, "--card": t.panel, "--ink": text, "--accent-text": t.onAccent,
     };
-    return "html:root{" + Object.entries(v).map(([k, x]) => `${k}:${x} !important`).join(";") + "}";
+    return v;
+  }
+  function css(t) {
+    return "html:root{" + Object.entries(vars(t)).map(([k, x]) => `${k}:${x} !important`).join(";") + "}";
+  }
+
+  // Portal's and Index's own theme can be one of the spectrum's too (when "Each panel's own" is
+  // chosen). Those have no block in themes.css, so their colours are put on here, the same way
+  // themes.css does it: only while the page's data-theme says so, and without !important, so a
+  // panel that paints its own theme (Calendar, Notes, Observatory) still wins.
+  let ownSheet = null;
+  function putOwn() {
+    if (!SPECTRUM) return;
+    try {
+      if (!ownSheet) {
+        ownSheet = new CSSStyleSheet();
+        document.adoptedStyleSheets = [ownSheet, ...document.adoptedStyleSheets];
+      }
+      const all = [...SPECTRUM.themes, SPECTRUM.custom()];
+      ownSheet.replaceSync(all.map((t) => `html:root[data-theme="${t.id}"]{` + Object.entries(vars(t)).map(([k, x]) => `${k}:${x}`).join(";") + "}").join("\n"));
+    } catch (err) {}
   }
 
   // A constructed stylesheet (allowed even by panels whose security rules forbid inline styles)
@@ -130,7 +159,7 @@
     const { theme, planet, center: centred } = read();
     center(centred);
     const pal = planet ? planetPalette() : null;
-    const t = pal ? fromPlanet(pal, byId[theme]) : theme ? byId[theme] : null;
+    const t = pal ? fromPlanet(pal, paletteOf(theme)) : theme ? paletteOf(theme) : null;
     if (!t) {
       put("");
       document.documentElement.removeAttribute("data-look");
@@ -141,8 +170,16 @@
     document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", t.void));
     // The panels' moving star skies read their theme by name: give them the chosen one
     try {
-      if (theme && !pal && window.NT && NT.backdrop && NT.backdrop.init) NT.backdrop.init(theme);
-      if (theme && !pal && window.NN && NN.backdrop && NN.backdrop.init) NN.backdrop.init(theme);
+      // (started once; after that just recoloured, so dragging the Custom slider doesn't restart it)
+      for (const ns of [window.NT, window.NN]) {
+        const sky = ns && ns.backdrop;
+        if (!theme || pal || !sky || !sky.init) continue;
+        if (sky.lookStarted && sky.setTheme) sky.setTheme(theme);
+        else {
+          sky.init(theme);
+          sky.lookStarted = true;
+        }
+      }
     } catch (err) {}
   }
 
@@ -181,11 +218,12 @@
   // theme for all of Nova Agent. Only a theme you pick counts (right after a tap or a key), not a
   // panel putting on its own saved theme as it opens.
   const PANEL_IDS = { cosmic: "novacane", ember: "solar", ocean: "pulsar", gold: "eclipse", aurora: "aurora", mono: "mono" };
+  // (the spectrum's themes and Custom have the same id everywhere)
   let touched = 0;
   addEventListener("pointerdown", () => (touched = Date.now()), true);
   addEventListener("keydown", () => (touched = Date.now()), true);
   function picked(id) {
-    const look = byId[id] ? id : PANEL_IDS[id];
+    const look = known(id) ? id : PANEL_IDS[id];
     if (!look || Date.now() - touched > 1500) return;
     if (read().theme !== look) save({ theme: look });
   }
@@ -195,7 +233,18 @@
   // Another panel (or tab) changed it: follow
   window.addEventListener("storage", (e) => {
     if (e.key === KEY || e.key === PLANET) apply();
+    // The Custom colour changed: recolour (if Custom is showing) as the slider moves
+    if (SPECTRUM && e.key === SPECTRUM.CUSTOM_KEY) {
+      putOwn();
+      apply();
+    }
   });
+  // ...and the same when it changes on this page
+  window.addEventListener("novacustomchange", () => {
+    putOwn();
+    apply();
+  });
+  putOwn();
   apply();
   // Panels' own theme code may run after this: keep ours last
   document.addEventListener("DOMContentLoaded", apply);
@@ -203,10 +252,10 @@
   window.NovaLook = {
     themes: THEMES,
     get: read,
-    setTheme: (id) => save({ theme: byId[id] ? id : null }),
+    setTheme: (id) => save({ theme: known(id) ? id : null }),
     setCenter: (on) => save({ center: Boolean(on) }),
     setPlanet: (on) => { const next = save({ planet: Boolean(on) }); if (on) refreshPlanet(); return next; },
     refreshPlanet,
-    palette: (id) => byId[id],
+    palette: (id) => paletteOf(id),
   };
 })();

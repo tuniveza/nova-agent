@@ -223,8 +223,19 @@
   const look = $("look-settings");
   if (look && window.NovaLook) {
     const swatches = look.querySelector(".look-themes");
-    swatches.innerHTML = `<button type="button" class="chip look-own" data-look-theme="" role="radio">Each panel's own</button>` +
-      window.NovaLook.themes.map((t) => `<button type="button" class="look-swatch" role="radio" data-look-theme="${t.id}" title="${esc(t.name)}: ${esc(t.tag)}" style="--a:${t.accent};--b:${t.hi};--c:${t.accent3}"><i aria-hidden="true"></i><span>${esc(t.name)}</span></button>`).join("");
+    swatches.innerHTML = `<button type="button" class="chip look-own" data-look-theme="" role="radio">Each panel's own</button>`;
+    if (window.NovaSpectrum) {
+      // The spectrum (spectrum.js): every theme in rainbow order, then Custom with its sliders.
+      // Taps on a swatch are caught by the click handler below (they carry data-look-theme).
+      window.NovaSpectrum.draw(swatches, {
+        items: window.NovaLook.themes.map((t) => ({ id: t.id, name: t.name, tag: t.tag, palette: t })),
+        attr: "lookTheme",
+        role: "radio",
+        onCustom: () => { window.NovaLook.setTheme("custom"); showLook(); },
+      });
+    } else {
+      swatches.innerHTML += window.NovaLook.themes.map((t) => `<button type="button" class="look-swatch" role="radio" data-look-theme="${t.id}" title="${esc(t.name)}: ${esc(t.tag)}" style="--a:${t.accent};--b:${t.hi};--c:${t.accent3}"><i aria-hidden="true"></i><span>${esc(t.name)}</span></button>`).join("");
+    }
     const planet = look.querySelector("#look-planet");
     function showLook() {
       const v = window.NovaLook.get();
@@ -244,6 +255,8 @@
     const centerBox = look.querySelector("#look-center");
     if (centerBox) centerBox.addEventListener("change", () => { window.NovaLook.setCenter(centerBox.checked); showLook(); });
     addEventListener("novalookchange", showLook);
+    // Chosen inside a panel (Portal's or Index's Options): show it here too
+    addEventListener("storage", (e) => e.key === "nova-look" && showLook());
     showLook();
     // Keep the planet's colours fresh (a new planet in Portal shows up here)
     if (window.NovaLook.get().planet) window.NovaLook.refreshPlanet();

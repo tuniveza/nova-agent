@@ -276,8 +276,8 @@ dialog.detail[open] .dt-inner { animation: rise .28s ease-out; }
 .related { display: grid; gap: 6px; }
 .related .path span { direction: ltr; }
 
-.btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 50%, transparent); font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text); text-decoration: none; cursor: pointer; }
-.btn:hover { border-color: var(--line-strong); color: #fff; }
+/* A glass pill; how it looks, hovers and presses is the same in every panel: /shared/buttons.css */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; cursor: pointer; }
 .btn svg { width: 14px; height: 14px; }
 
 /* ---------- FOOTER / TOAST ---------- */
