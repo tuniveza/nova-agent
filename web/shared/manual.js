@@ -69,7 +69,8 @@
     if (p.startsWith("/app")) return "portal";
     if (p.startsWith("/portal")) return "portal";
     if (p.startsWith("/admin")) return "bot";
-    if (/^454\d$/.test(location.port)) return "agent";
+    // Nova Agent itself (online and on the studio computer), and its Visualizer
+    if (p.startsWith("/agent") || p.startsWith("/visualizer") || /^454\d$/.test(location.port)) return "agent";
     return "";
   }
 
@@ -79,6 +80,7 @@
     ["history", "History"],
     ["new", "What's new"],
   ];
+  const tabName = (id) => (TABS.find((t) => t[0] === id) || TABS[0])[1];
 
   const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const DAY = 864e5;
@@ -94,6 +96,10 @@
   const recent = (app, days) => app.history.commits.filter((c) => Date.now() - Date.parse(c.date) < days * DAY);
   const lastChange = (app) => (app.history.commits[0] ? app.history.commits[0].date : "");
 
+  /* How it looks. Like every Nova Agent panel: a deep sky, glass with a soft gradient edge in the
+     theme's colours, the display font for headings and small mono capitals for labels. The reading
+     column is kept to a comfortable width; long pages get an "On this page" list (beside the text on
+     a wide screen, folded up above it on a narrow one). */
   const CSS = `
 :host {
   --c-hi: var(--nm-hi, var(--hi, #FF5FA8));
@@ -108,6 +114,8 @@
   --c-gold: var(--nm-gold, var(--gold, #F2D9A0));
   --c-ok: var(--nm-ok, var(--ok, #5CFFC0));
   --c-on-accent: var(--nm-on-accent, var(--on-accent, #fff));
+  --c-line: var(--nm-line, color-mix(in srgb, var(--c-text) 14%, transparent));
+  --c-star: var(--nm-star, rgb(var(--star-rgb, 255, 255, 255)));
   --f-d: var(--nm-font-display, var(--f-display, "Archivo", "Arial Black", sans-serif));
   --f-b: var(--nm-font-body, var(--f-body, "Saira", system-ui, sans-serif));
   --f-m: var(--nm-font-mono, var(--f-mono, "Source Code Pro", ui-monospace, monospace));
@@ -122,6 +130,7 @@
 * { box-sizing: border-box; }
 button, a, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
+[hidden] { display: none !important; }
 
 /* ---- The button ---- */
 .open {
@@ -154,122 +163,192 @@ button { cursor: pointer; }
 
 /* ---- The panel ---- */
 .panel {
-  position: fixed; inset: 0; margin: auto; width: min(1120px, calc(100vw - 32px)); height: min(820px, calc(100dvh - 32px)); max-width: none; max-height: none; padding: 0;
-  display: grid; grid-template-rows: auto 1fr; overflow: hidden; border-radius: 26px; color: var(--c-text); font-family: var(--f-b);
+  position: fixed; inset: 0; margin: auto; width: min(1180px, calc(100vw - 32px)); height: min(860px, calc(100dvh - 32px)); max-width: none; max-height: none; padding: 0;
+  display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; border-radius: 26px; color: var(--c-text); font-family: var(--f-b);
+  border: 1px solid transparent;
   background:
-    radial-gradient(90% 60% at 15% -10%, color-mix(in srgb, var(--app) 26%, transparent), transparent 60%),
-    radial-gradient(70% 50% at 100% 110%, color-mix(in srgb, var(--c-accent-2) 30%, transparent), transparent 65%),
-    linear-gradient(180deg, color-mix(in srgb, var(--c-panel) 97%, transparent), color-mix(in srgb, var(--c-deep) 99%, transparent));
-  border: 1px solid color-mix(in srgb, var(--app) 35%, transparent);
-  box-shadow: 0 40px 100px -30px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.04) inset, 0 0 80px -40px var(--app);
-  animation: panel-in .5s cubic-bezier(.2,.9,.3,1.1) both; transition: border-color .4s;
+    radial-gradient(90% 60% at 15% -10%, color-mix(in srgb, var(--app) 22%, transparent), transparent 60%) padding-box,
+    radial-gradient(70% 50% at 100% 110%, color-mix(in srgb, var(--c-accent-2) 26%, transparent), transparent 65%) padding-box,
+    linear-gradient(180deg, var(--c-panel), var(--c-deep)) padding-box,
+    linear-gradient(135deg, color-mix(in srgb, var(--app) 60%, transparent), color-mix(in srgb, var(--c-accent-2) 28%, transparent) 50%, color-mix(in srgb, var(--c-hi) 35%, transparent)) border-box;
+  box-shadow: 0 40px 100px -30px rgba(0,0,0,.85), 0 0 80px -40px var(--app);
+  animation: panel-in .45s cubic-bezier(.2,.9,.3,1.05) both;
 }
 .panel[hidden], .panel[popover]:not(:popover-open) { display: none; }
 .panel:not([hidden]):not([popover]) { z-index: 2147483000; }
 .panel::backdrop { background: color-mix(in srgb, #000 55%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .panel.out { animation: panel-out .22s ease-in both; }
 .sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.sky i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; opacity: .18; animation: twinkle 3.4s ease-in-out infinite; }
+.sky i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: var(--c-star); opacity: .16; animation: twinkle 5s ease-in-out infinite; }
 
-.top { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px 18px 14px 22px; border-bottom: 1px solid color-mix(in srgb, var(--c-hi) 16%, transparent); }
+/* The header: the name, search, back and forward, close */
+.top { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 14px 16px 13px 20px; border-bottom: 1px solid var(--c-line); }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.book { position: relative; width: 42px; height: 42px; flex: none; border-radius: 14px; display: grid; place-items: center; color: var(--c-on-accent);
-  background: linear-gradient(135deg, var(--c-accent), var(--c-accent-2)); box-shadow: 0 10px 24px -10px var(--c-accent); }
-.book svg { width: 22px; height: 22px; }
-.kicker { font-size: 10px; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: var(--c-hi); }
-h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px; line-height: 1; color: var(--c-bright); letter-spacing: .01em; white-space: nowrap; }
-.search { flex: 1; display: flex; align-items: center; gap: 8px; max-width: 460px; margin-left: auto; height: 40px; padding: 0 12px; border-radius: 13px;
-  border: 1px solid color-mix(in srgb, var(--c-hi) 22%, transparent); background: color-mix(in srgb, var(--c-void) 55%, transparent); transition: border-color .2s, box-shadow .2s; }
+.book { position: relative; width: 40px; height: 40px; flex: none; border-radius: 13px; display: grid; place-items: center; color: var(--c-on-accent);
+  background: linear-gradient(135deg, var(--c-accent), var(--c-accent-2)); box-shadow: 0 10px 24px -10px var(--c-accent), inset 0 1px 0 rgba(255,255,255,.2); }
+.book svg { width: 21px; height: 21px; }
+.kicker { font-family: var(--f-m); font-size: 10px; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: var(--c-hi); }
+h2 { margin: 2px 0 0; font-family: var(--f-d); font-stretch: 125%; font-weight: 900; font-size: 19px; line-height: 1; color: var(--c-bright); letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+.search { flex: 1; display: flex; align-items: center; gap: 8px; max-width: 440px; margin-left: auto; height: 40px; padding: 0 12px; border-radius: 13px;
+  border: 1px solid var(--c-line); background: color-mix(in srgb, var(--c-void) 55%, transparent); transition: border-color .2s, box-shadow .2s; }
 .search:focus-within { border-color: var(--c-hi); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-hi) 18%, transparent); }
 .search svg { flex: none; color: var(--c-muted); }
 .search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; font-size: 14px; color: var(--c-bright); }
 .search input::placeholder { color: var(--c-muted); }
-.search kbd { font-family: var(--f-m); font-size: 11px; color: var(--c-muted); border: 1px solid color-mix(in srgb, var(--c-muted) 40%, transparent); border-radius: 6px; padding: 1px 6px; }
-.x { flex: none; width: 40px; height: 40px; border-radius: 13px; border: 1px solid color-mix(in srgb, var(--c-hi) 22%, transparent); background: color-mix(in srgb, var(--c-panel) 70%, transparent); display: grid; place-items: center; transition: transform .2s, border-color .2s; }
-.x:hover { transform: rotate(90deg); border-color: var(--c-hi); }
-.x:focus-visible, .rail button:focus-visible, .tabs button:focus-visible, .toc button:focus-visible, .page a:focus-visible, .card-app:focus-visible, .hit:focus-visible { outline: 2px solid var(--c-hi); outline-offset: 2px; }
+.search input::-webkit-search-cancel-button { filter: grayscale(1); }
+kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c-bright); border: 1px solid color-mix(in srgb, var(--c-muted) 45%, transparent); border-bottom-width: 2px; border-radius: 6px; padding: 0 6px; background: color-mix(in srgb, var(--c-void) 50%, transparent); }
+.search kbd { color: var(--c-muted); }
+.navs { display: flex; gap: 6px; flex: none; }
+.icon, .x { flex: none; width: 40px; height: 40px; padding: 0; border-radius: 13px; border: 1px solid var(--c-line); background: color-mix(in srgb, var(--c-panel) 70%, transparent); color: var(--c-text); display: grid; place-items: center; transition: border-color .2s, color .2s, background-color .2s, opacity .2s; }
+.icon:hover:not(:disabled), .x:hover { border-color: color-mix(in srgb, var(--c-hi) 55%, transparent); color: var(--c-bright); background: color-mix(in srgb, var(--c-hi) 10%, var(--c-panel)); }
+.icon:disabled { opacity: .35; cursor: default; }
+:is(button, a, summary):focus-visible { outline: 2px solid var(--c-hi); outline-offset: 2px; }
 
-.body { position: relative; display: grid; grid-template-columns: 236px 1fr; min-height: 0; }
-.rail { display: flex; flex-direction: column; gap: 4px; padding: 14px 10px 14px 14px; overflow-y: auto; scrollbar-width: thin; border-right: 1px solid color-mix(in srgb, var(--c-hi) 12%, transparent); }
-.rail .label { margin: 10px 8px 4px; font-size: 9.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--c-muted); }
-.rail button { --c: var(--c-hi); display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 14px; background: none; text-align: left; transition: background .2s, border-color .2s, transform .2s; animation: rise .45s cubic-bezier(.2,.9,.3,1.1) both; }
-.rail button:hover { background: color-mix(in srgb, var(--c) 10%, transparent); transform: translateX(2px); }
-.rail button[aria-current="true"] { background: color-mix(in srgb, var(--c) 16%, var(--c-panel)); border-color: color-mix(in srgb, var(--c) 45%, transparent); }
+/* The apps down the left */
+.body { position: relative; display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; }
+.rail { display: flex; flex-direction: column; gap: 3px; padding: 14px 10px 14px 14px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--c-accent-2) 70%, transparent) transparent; border-right: 1px solid var(--c-line); text-align: left; }
+.rail .label { margin: 12px 10px 4px; font-family: var(--f-m); font-size: 9.5px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--c-muted); }
+.rail button { --c: var(--c-hi); display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 14px; background: none; text-align: left; transition: background-color .2s, border-color .2s; animation: rise .45s cubic-bezier(.2,.9,.3,1.1) both; }
+.rail button:hover { background: color-mix(in srgb, var(--c) 10%, transparent); }
+.rail button[aria-current="true"] { background: color-mix(in srgb, var(--c) 15%, var(--c-panel)); border-color: color-mix(in srgb, var(--c) 45%, transparent); box-shadow: 0 8px 22px -16px var(--c); }
 .rail .planet { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; color: #fff;
   background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 50%, color-mix(in srgb, var(--c) 40%, #000)); box-shadow: 0 0 12px -3px var(--c); }
-.rail .words { display: grid; min-width: 0; line-height: 1.15; }
+.rail .words { display: grid; min-width: 0; line-height: 1.2; }
 .rail .words b { font-family: var(--f-d); font-weight: 800; font-size: 13px; color: var(--c-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rail .words small { font-size: 11px; color: var(--c-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rail .here { margin-left: auto; flex: none; font-size: 8.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; padding: 2px 6px; border-radius: 999px; color: var(--c-deep); background: var(--c); }
+.rail .here { margin-left: auto; flex: none; font-family: var(--f-m); font-size: 8.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 2px 6px; border-radius: 999px; color: var(--c-deep); background: var(--c); }
 .rail .fresh { margin-left: auto; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--c-ok); box-shadow: 0 0 8px var(--c-ok); }
 
-.page { position: relative; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 22px 28px 40px; scroll-behavior: smooth; }
-.loading, .empty { display: grid; place-items: center; gap: 10px; min-height: 60%; text-align: center; color: var(--c-muted); }
-.loading .ring { width: 46px; height: 46px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--c-hi) 25%, transparent); border-top-color: var(--c-hi); animation: spin 1s linear infinite; }
+/* The page: a reading column (and "On this page" beside it when there's room) */
+.page { position: relative; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--c-accent-2) 70%, transparent) transparent; padding: 0 28px 48px; scroll-behavior: smooth; container: page / inline-size; }
+.page:focus { outline: none; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; max-width: 720px; margin: 0 auto; padding-top: 18px; }
+.layout.wide { max-width: 1040px; }
+.read { min-width: 0; }
+.toc-side { display: none; }
+@container page (min-width: 860px) {
+  .layout.has-toc { max-width: 960px; grid-template-columns: minmax(0, 1fr) 210px; }
+  .layout.has-toc .toc-side { display: block; }
+  .layout.has-toc .toc-box { display: none; }
+}
+.loading, .empty { display: grid; place-items: center; gap: 12px; min-height: 50%; padding: 40px 20px; text-align: center; color: var(--c-muted); line-height: 1.6; }
+.loading .ring { width: 40px; height: 40px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--c-hi) 25%, transparent); border-top-color: var(--c-hi); animation: spin 1.2s linear infinite; }
+.empty b { color: var(--c-bright); }
 
-/* An app's page */
-.hero { position: relative; display: flex; gap: 20px; align-items: center; padding: 6px 0 18px; }
-.big { --c: var(--app); position: relative; flex: none; width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font-size: 34px; color: #fff;
+/* Where you are: Manual › an app › a tab */
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin: 0 0 6px; font-family: var(--f-m); font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--c-muted); }
+:host([centred]) .crumbs { justify-content: center; }
+.crumbs button { padding: 3px 6px; border: 0; border-radius: 8px; background: none; color: var(--c-hi); letter-spacing: inherit; text-transform: inherit; font-size: inherit; font-weight: inherit; }
+.crumbs button:hover { background: color-mix(in srgb, var(--c-hi) 12%, transparent); color: var(--c-bright); }
+.crumbs .sep { opacity: .5; }
+.crumbs [aria-current] { padding: 3px 0; color: var(--c-text); }
+
+/* An app's page: its planet, name and line, then its tabs */
+.hero { position: relative; display: flex; gap: 20px; align-items: center; padding: 8px 0 18px; }
+.big { --c: var(--app); position: relative; flex: none; width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font-size: 32px; color: #fff;
   background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--c) 65%, #fff), var(--c) 46%, color-mix(in srgb, var(--c) 35%, #000) 100%);
-  box-shadow: 0 0 40px -6px color-mix(in srgb, var(--c) 70%, transparent), inset -10px -12px 24px rgba(0,0,0,.35); animation: planet .8s cubic-bezier(.2,.9,.3,1.2) both, float 7s ease-in-out infinite .8s; }
-.big::before { content: ""; position: absolute; inset: -14px -22px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--c) 45%, transparent); transform: rotate(-18deg) scaleY(.32); }
-.big::after { content: ""; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--c-bright); box-shadow: 0 0 8px var(--c); top: 4px; left: 50%; transform-origin: 0 42px; animation: spin 5s linear infinite; }
+  box-shadow: 0 0 40px -6px color-mix(in srgb, var(--c) 70%, transparent), inset -10px -12px 24px rgba(0,0,0,.35); animation: planet .8s cubic-bezier(.2,.9,.3,1.2) both, float 9s ease-in-out infinite .8s; }
+.big::before { content: ""; position: absolute; inset: -12px -20px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--c) 45%, transparent); transform: rotate(-18deg) scaleY(.32); }
+.big::after { content: ""; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--c-bright); box-shadow: 0 0 8px var(--c); top: 4px; left: 50%; transform-origin: 0 38px; animation: spin 8s linear infinite; }
 .hero .who { min-width: 0; }
-.hero h1 { margin: 4px 0 6px; font-family: var(--f-d); font-weight: 900; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.02; color: var(--c-bright); letter-spacing: .005em; }
-.hero p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--c-text); max-width: 64ch; }
+.hero h1 { margin: 4px 0 6px; font-family: var(--f-d); font-stretch: 125%; font-weight: 900; font-size: clamp(24px, 3.2vw, 34px); line-height: 1.04; color: var(--c-bright); letter-spacing: .01em; text-transform: uppercase; overflow-wrap: anywhere; }
+.hero p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--c-text); max-width: 60ch; }
 .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--app) 35%, transparent); color: var(--c-text); background: color-mix(in srgb, var(--c-void) 35%, transparent); text-decoration: none; }
-.pill.go { border: 0; color: var(--c-on-accent); background: linear-gradient(90deg, var(--c-accent), var(--c-accent-2)); box-shadow: 0 6px 16px -8px var(--c-accent); transition: transform .2s; }
-.pill.go:hover { transform: translateY(-1px); }
-.pill.here { border-color: transparent; color: var(--c-deep); background: var(--app); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: 10px; }
+:host([centred]) .pills { justify-content: center; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; padding: 4px 11px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--app) 30%, transparent); color: var(--c-text); background: color-mix(in srgb, var(--c-void) 35%, transparent); text-decoration: none; }
+.pill.go { border: 0; color: var(--c-on-accent); background: linear-gradient(120deg, var(--c-accent), var(--c-accent-2)); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 6px 16px -8px var(--c-accent); transition: filter .2s; }
+.pill.go:hover { filter: brightness(1.08); }
+.pill.here { border-color: transparent; color: var(--c-deep); background: var(--app); font-family: var(--f-m); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; font-size: 10px; }
 
-.tabs { position: sticky; top: -22px; z-index: 2; display: flex; gap: 4px; padding: 10px 0; margin: 0 0 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--c-panel) 96%, transparent) 70%, transparent); overflow-x: auto; scrollbar-width: none; }
-.tabs button { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--app) 22%, transparent); background: color-mix(in srgb, var(--c-panel) 60%, transparent); font-size: 13px; font-weight: 600; color: var(--c-muted); transition: color .2s, background .2s, border-color .2s; }
-.tabs button:hover { color: var(--c-bright); }
-.tabs button[aria-selected="true"] { color: var(--c-on-accent); border-color: transparent; background: linear-gradient(90deg, color-mix(in srgb, var(--app) 70%, var(--c-accent)), var(--c-accent-2)); box-shadow: 0 8px 20px -12px var(--app); }
-.tabs .n { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--c-void) 45%, transparent); }
+/* The tabs: choices in one glass well that stays at the top as you scroll */
+.tabs { position: sticky; top: 8px; z-index: 3; display: flex; gap: 3px; width: max-content; max-width: 100%; padding: 4px; margin: 0 0 14px; border-radius: 999px; border: 1px solid var(--c-line);
+  background: color-mix(in srgb, var(--c-panel) 86%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 10px 26px -18px #000; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+:host([centred]) .tabs { margin-inline: auto; }
+.tabs button { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid transparent; background: none; font-size: 13px; font-weight: 600; color: var(--c-muted); transition: color .2s, background-color .2s, border-color .2s; }
+.tabs button:hover { color: var(--c-bright); background: color-mix(in srgb, var(--c-text) 7%, transparent); }
+.tabs button[aria-selected="true"] { color: var(--c-on-accent); border-color: transparent; background: linear-gradient(120deg, color-mix(in srgb, var(--app) 60%, var(--c-accent)), var(--c-accent-2)); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 8px 20px -12px var(--app); }
+.tabs .n { font-family: var(--f-m); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--c-void) 45%, transparent); }
 
-.toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; }
-.toc button { font-size: 12px; padding: 5px 11px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--app) 28%, transparent); background: none; color: var(--c-text); transition: background .2s, border-color .2s; }
-.toc button:hover { background: color-mix(in srgb, var(--app) 14%, transparent); border-color: var(--app); }
+/* "On this page": beside the text (wide) or folded above it (narrow) */
+.toc-side { position: sticky; top: 14px; align-self: start; max-height: min(72dvh, 680px); overflow-y: auto; scrollbar-width: thin; padding: 14px 0 0; text-align: left; }
+.toc-title { display: block; margin: 0 0 8px 12px; font-family: var(--f-m); font-size: 10px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--c-muted); }
+.toc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; text-align: left; }
+.toc-list button { display: block; width: 100%; padding: 6px 10px 6px 12px; border: 0; border-left: 2px solid var(--c-line); border-radius: 0 10px 10px 0; background: none; color: var(--c-muted); font-size: 13px; line-height: 1.35; text-align: left; transition: color .2s, background-color .2s, border-color .2s; }
+.toc-list button:hover { color: var(--c-bright); background: color-mix(in srgb, var(--app) 8%, transparent); }
+.toc-list button[aria-current="location"] { color: var(--c-text); border-left-color: color-mix(in srgb, var(--app) 50%, transparent); }
+.toc-list button[aria-current="true"] { color: var(--c-bright); background: color-mix(in srgb, var(--app) 12%, transparent); border-left-color: var(--app); }
+.toc-list .sub button { padding-left: 24px; font-size: 12.5px; }
+.toc-box { margin: 0 0 16px; border: 1px solid var(--c-line); border-radius: 16px; background: color-mix(in srgb, var(--c-void) 30%, transparent); text-align: left; }
+.toc-box summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; border-radius: inherit; font-family: var(--f-d); font-weight: 800; font-size: 13.5px; color: var(--c-bright); }
+.toc-box summary::-webkit-details-marker { display: none; }
+.toc-box summary::before { content: "▸"; color: var(--app); transition: rotate .2s; }
+.toc-box[open] summary::before { rotate: 90deg; }
+.toc-box summary small { margin-left: auto; font-family: var(--f-m); font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--c-muted); }
+.toc-box .toc-list { max-height: 50dvh; overflow-y: auto; padding: 0 10px 12px; }
 
-.chapter { position: relative; margin: 0 0 14px; padding: 18px 22px 10px; border-radius: 20px; border: 1px solid color-mix(in srgb, var(--app) 18%, transparent); background: color-mix(in srgb, var(--c-panel) 62%, transparent); animation: rise .5s cubic-bezier(.2,.9,.3,1.1) both; animation-delay: calc(var(--i, 0) * 45ms); scroll-margin-top: 64px; }
+/* The writing: one chapter per card */
+.chapter { position: relative; margin: 0 0 16px; padding: 22px 26px 12px; border-radius: 20px; border: 1px solid color-mix(in srgb, var(--app) 16%, var(--c-line)); background: color-mix(in srgb, var(--c-panel) 58%, transparent); box-shadow: inset 0 1px 0 rgba(255,255,255,.03); animation: rise .45s cubic-bezier(.2,.9,.3,1.1) both; animation-delay: calc(var(--i, 0) * 40ms); scroll-margin-top: 66px; }
 .chapter.flash { animation: flash 1.6s ease-out; }
-.chapter > h3 { margin: 0 0 10px; font-family: var(--f-d); font-weight: 900; font-size: 19px; color: var(--c-bright); display: flex; align-items: center; gap: 10px; }
+.chapter > h3 { margin: 0 0 12px; font-family: var(--f-d); font-weight: 900; font-size: 20px; line-height: 1.2; color: var(--c-bright); display: flex; align-items: center; gap: 10px; }
+:host([centred]) .chapter > h3 { justify-content: center; }
 .chapter > h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--app); box-shadow: 0 0 10px var(--app); flex: none; }
 .intro { margin: 0 0 16px; }
-.prose { font-size: 14.5px; line-height: 1.62; }
-.prose p { margin: 0 0 .75em; }
-.prose h4, .prose h5, .prose h6 { margin: 1.1em 0 .4em; font-family: var(--f-d); font-weight: 800; font-size: 15px; color: var(--c-bright); }
-.prose h5, .prose h6 { font-size: 13.5px; color: var(--c-gold); }
-.prose ul, .prose ol { margin: .2em 0 .8em; padding-left: 1.3em; }
-.prose li { margin: .25em 0; }
+.prose { font-size: 15.5px; line-height: 1.7; color: var(--c-text); overflow-wrap: break-word; }
+.prose p { margin: 0 0 .9em; }
+.prose h4 { margin: 1.5em 0 .5em; padding-top: 1em; border-top: 1px solid var(--c-line); font-family: var(--f-d); font-weight: 800; font-size: 16px; line-height: 1.3; color: var(--c-bright); scroll-margin-top: 66px; }
+.prose > h4:first-child { margin-top: .2em; padding-top: 0; border-top: 0; }
+.prose h4.flash { animation: glow 1.6s ease-out; }
+.prose h5, .prose h6 { margin: 1.1em 0 .4em; font-family: var(--f-d); font-weight: 800; font-size: 14px; color: var(--c-gold); }
+.prose ul, .prose ol { margin: .2em 0 .9em; padding-left: 1.3em; }
+:host([centred]) .prose :is(ul, ol) { padding-left: 0; list-style-position: inside; }
+.prose li { margin: .3em 0; }
 .prose li.sub { margin-left: 1.2em; }
 .prose li::marker { color: var(--app); }
-.prose strong { color: var(--c-bright); }
+.prose strong { color: var(--c-bright); font-weight: 650; }
 .prose a { color: var(--c-gold); text-decoration-color: color-mix(in srgb, var(--c-gold) 45%, transparent); text-underline-offset: 3px; }
-.prose code { font-family: var(--f-m); font-size: .86em; padding: 1px 5px; border-radius: 6px; background: color-mix(in srgb, var(--c-void) 60%, transparent); color: var(--c-bright); border: 1px solid color-mix(in srgb, var(--app) 16%, transparent); }
-.prose pre { margin: .4em 0 1em; padding: 12px 14px; border-radius: 14px; overflow-x: auto; background: color-mix(in srgb, var(--c-void) 75%, transparent); border: 1px solid color-mix(in srgb, var(--app) 18%, transparent); scrollbar-width: thin; }
-.prose pre code { padding: 0; border: 0; background: none; font-size: 12.5px; line-height: 1.55; white-space: pre; }
-.prose blockquote { margin: .4em 0 1em; padding: 8px 14px; border-left: 3px solid var(--app); border-radius: 0 12px 12px 0; background: color-mix(in srgb, var(--app) 8%, transparent); color: var(--c-text); }
-.prose .table { overflow-x: auto; margin: .4em 0 1em; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--app) 18%, transparent); }
-.prose table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.prose th { text-align: left; font-family: var(--f-d); font-weight: 800; font-size: 12px; letter-spacing: .02em; color: var(--c-bright); background: color-mix(in srgb, var(--app) 12%, transparent); }
-.prose th, .prose td { padding: 8px 12px; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--app) 10%, transparent); }
+.prose code { font-family: var(--f-m); font-size: .84em; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--c-void) 60%, transparent); color: var(--c-bright); border: 1px solid color-mix(in srgb, var(--app) 16%, var(--c-line)); overflow-wrap: anywhere; }
+.code { position: relative; margin: .4em 0 1em; }
+.prose pre { margin: 0; padding: 14px 16px; border-radius: 14px; overflow-x: auto; text-align: left; background: color-mix(in srgb, var(--c-void) 78%, transparent); border: 1px solid color-mix(in srgb, var(--app) 18%, var(--c-line)); scrollbar-width: thin; }
+.code pre { padding-right: 76px; }
+.prose pre code { padding: 0; border: 0; background: none; font-size: 12.5px; line-height: 1.6; white-space: pre; overflow-wrap: normal; }
+.copy { position: absolute; top: 8px; right: 8px; z-index: 1; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--c-line); background: color-mix(in srgb, var(--c-panel) 85%, transparent); font-family: var(--f-m); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--c-muted); opacity: .75; transition: opacity .2s, color .2s, border-color .2s; }
+.code:hover .copy, .copy:focus-visible { opacity: 1; }
+.copy:hover { color: var(--c-bright); border-color: color-mix(in srgb, var(--c-hi) 50%, transparent); }
+.prose blockquote { margin: .4em 0 1em; padding: 10px 16px; border-left: 3px solid var(--app); border-radius: 0 12px 12px 0; background: color-mix(in srgb, var(--app) 8%, transparent); color: var(--c-text); }
+.prose .table { overflow-x: auto; margin: .4em 0 1em; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--app) 18%, var(--c-line)); scrollbar-width: thin; }
+.prose table { width: 100%; border-collapse: collapse; font-size: 13.5px; line-height: 1.5; }
+.prose th { font-family: var(--f-m); font-weight: 600; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--c-bright); background: color-mix(in srgb, var(--app) 12%, transparent); }
+.prose th, .prose td { padding: 9px 12px; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--app) 10%, var(--c-line)); }
 .prose tr:last-child td { border-bottom: 0; }
+.prose tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--c-void) 18%, transparent); }
+
+/* Next and previous app, at the end of a page */
+.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 22px 0 6px; }
+.pager button { --c: var(--c-hi); display: grid; gap: 3px; padding: 12px 16px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--c) 28%, transparent); background: color-mix(in srgb, var(--c-panel) 55%, transparent); text-align: left; transition: border-color .2s, background-color .2s; }
+.pager button:hover { border-color: var(--c); background: color-mix(in srgb, var(--c) 10%, var(--c-panel)); }
+.pager .next { grid-column: 2; text-align: right; }
+.pager small { font-family: var(--f-m); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--c-muted); }
+.pager b { font-family: var(--f-d); font-weight: 800; font-size: 15px; color: var(--c-bright); }
+
+/* Back to the top of a long page */
+.to-top { position: absolute; right: 22px; bottom: 20px; z-index: 4; width: 42px; height: 42px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--c-hi) 40%, transparent); background: color-mix(in srgb, var(--c-panel) 88%, transparent); color: var(--c-bright); display: grid; place-items: center; box-shadow: 0 10px 26px -12px #000; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .25s, transform .25s, border-color .2s; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.to-top.show { opacity: 1; pointer-events: auto; transform: none; }
+.to-top:hover { border-color: var(--c-hi); }
 
 /* History: a timeline */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0 0 18px; }
-.stat { padding: 14px 16px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--app) 20%, transparent); background: color-mix(in srgb, var(--c-panel) 60%, transparent); animation: rise .45s cubic-bezier(.2,.9,.3,1.1) both; }
-.stat b { display: block; font-family: var(--f-d); font-weight: 900; font-size: 24px; color: var(--c-bright); line-height: 1.1; }
-.stat span { font-size: 11.5px; color: var(--c-muted); }
-.day { margin: 18px 0 6px 26px; font-family: var(--f-d); font-weight: 800; font-size: 13px; letter-spacing: .02em; color: var(--c-gold); }
+.stat { padding: 14px 16px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--app) 20%, var(--c-line)); background: color-mix(in srgb, var(--c-panel) 60%, transparent); animation: rise .45s cubic-bezier(.2,.9,.3,1.1) both; min-width: 0; }
+.stat b { display: block; font-family: var(--f-d); font-stretch: 125%; font-weight: 900; font-size: 22px; color: var(--c-bright); line-height: 1.1; overflow-wrap: anywhere; }
+.stat span { font-family: var(--f-m); font-size: 10px; font-weight: 600; letter-spacing: .06em; line-height: 1.5; text-transform: uppercase; color: var(--c-muted); }
+.day { margin: 18px 0 6px 26px; font-family: var(--f-m); font-weight: 600; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--c-gold); }
 .line { position: relative; padding-left: 26px; }
 .line::before { content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; border-radius: 2px; background: linear-gradient(180deg, var(--app), color-mix(in srgb, var(--app) 10%, transparent)); }
-.commit { position: relative; margin: 0 0 8px; padding: 10px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--app) 14%, transparent); background: color-mix(in srgb, var(--c-panel) 55%, transparent); animation: rise .4s cubic-bezier(.2,.9,.3,1.1) both; animation-delay: calc(var(--i, 0) * 30ms); }
+.commit { position: relative; margin: 0 0 8px; padding: 10px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--app) 14%, var(--c-line)); background: color-mix(in srgb, var(--c-panel) 55%, transparent); animation: rise .4s cubic-bezier(.2,.9,.3,1.1) both; animation-delay: calc(var(--i, 0) * 30ms); }
 .commit::before { content: ""; position: absolute; left: -23px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--c-deep); border: 2px solid var(--app); box-shadow: 0 0 8px color-mix(in srgb, var(--app) 60%, transparent); }
-.commit .s { font-size: 14px; font-weight: 600; color: var(--c-bright); line-height: 1.35; }
-.commit .m { margin-top: 3px; font-size: 11px; color: var(--c-muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.commit .s { font-size: 14px; font-weight: 600; color: var(--c-bright); line-height: 1.4; overflow-wrap: anywhere; }
+.commit .m { margin-top: 4px; font-size: 11px; color: var(--c-muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+:host([centred]) .commit .m { justify-content: center; }
 .commit .m code { font-family: var(--f-m); font-size: 10.5px; padding: 0 5px; border-radius: 5px; background: color-mix(in srgb, var(--c-void) 60%, transparent); }
 .commit .m .tag { font-weight: 700; color: var(--c-deep); background: var(--c, var(--app)); padding: 0 6px; border-radius: 999px; font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; }
 .commit details { margin-top: 6px; }
@@ -277,67 +356,94 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
 .commit summary::-webkit-details-marker { display: none; }
 .commit summary::before { content: "▸ "; }
 .commit details[open] summary::before { content: "▾ "; }
-.commit pre { margin: 6px 0 0; white-space: pre-wrap; font-family: var(--f-b); font-size: 12.5px; line-height: 1.5; color: var(--c-text); }
+.commit pre { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--f-b); font-size: 13px; line-height: 1.55; color: var(--c-text); }
 .wip { margin: 0 0 16px; padding: 16px 18px; border-radius: 20px; border: 1px dashed color-mix(in srgb, var(--c-gold) 55%, transparent); background: color-mix(in srgb, var(--c-gold) 6%, transparent); }
 .wip h3 { margin: 0 0 4px; font-family: var(--f-d); font-weight: 900; font-size: 17px; color: var(--c-gold); }
 .wip p { margin: 0 0 10px; font-size: 13px; color: var(--c-muted); }
 .files { display: flex; flex-wrap: wrap; gap: 6px; }
-.files span { font-family: var(--f-m); font-size: 11.5px; padding: 3px 8px; border-radius: 8px; background: color-mix(in srgb, var(--c-void) 55%, transparent); border: 1px solid color-mix(in srgb, var(--app) 14%, transparent); }
+:host([centred]) .files { justify-content: center; }
+.files span { font-family: var(--f-m); font-size: 11.5px; padding: 3px 8px; border-radius: 8px; background: color-mix(in srgb, var(--c-void) 55%, transparent); border: 1px solid color-mix(in srgb, var(--app) 14%, transparent); overflow-wrap: anywhere; }
 .files span.new { border-color: color-mix(in srgb, var(--c-ok) 50%, transparent); color: var(--c-ok); }
 .files span.removed { text-decoration: line-through; opacity: .7; }
-.note { font-size: 12.5px; color: var(--c-muted); margin: 0 0 14px; }
+.note { font-size: 13px; line-height: 1.55; color: var(--c-muted); margin: 0 0 14px; }
+.note code { font-family: var(--f-m); font-size: .9em; }
 
-/* Start here */
+/* Start here: one card for each app */
 .apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 12px; margin: 6px 0 22px; }
-.card-app { --c: var(--c-hi); position: relative; display: grid; gap: 6px; padding: 16px; border-radius: 20px; text-align: left; overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--c) 28%, transparent); background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--c) 18%, transparent), transparent 60%), color-mix(in srgb, var(--c-panel) 65%, transparent);
-  transition: transform .25s cubic-bezier(.2,.9,.3,1.2), border-color .25s, box-shadow .25s; animation: rise .5s cubic-bezier(.2,.9,.3,1.1) both; animation-delay: calc(var(--i, 0) * 50ms); }
-.card-app:hover { transform: translateY(-3px); border-color: var(--c); box-shadow: 0 16px 34px -18px var(--c); }
+.card-app { --c: var(--c-hi); position: relative; display: grid; align-content: start; gap: 6px; padding: 16px; border-radius: 20px; text-align: left; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--c) 28%, transparent); background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 60%), color-mix(in srgb, var(--c-panel) 65%, transparent);
+  transition: border-color .25s, box-shadow .25s, background-color .25s; animation: rise .5s cubic-bezier(.2,.9,.3,1.1) both; animation-delay: calc(var(--i, 0) * 45ms); }
+.card-app:hover { border-color: var(--c); box-shadow: 0 16px 34px -20px var(--c), 0 0 0 3px color-mix(in srgb, var(--c) 14%, transparent); }
 .card-app .top-row { display: flex; align-items: center; gap: 10px; }
-.card-app .planet { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 15px; background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 50%, color-mix(in srgb, var(--c) 40%, #000)); box-shadow: 0 0 14px -3px var(--c); }
+.card-app .planet { width: 34px; height: 34px; flex: none; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 15px; background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 50%, color-mix(in srgb, var(--c) 40%, #000)); box-shadow: 0 0 14px -3px var(--c); }
 .card-app b { font-family: var(--f-d); font-weight: 900; font-size: 16px; color: var(--c-bright); }
-.card-app p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--c-text); }
-.card-app small { font-size: 11px; color: var(--c-muted); }
-.section-title { margin: 22px 0 10px; font-family: var(--f-d); font-weight: 900; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: var(--c-hi); }
+.card-app p { margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--c-text); }
+.card-app small { font-family: var(--f-m); font-size: 10px; letter-spacing: .06em; color: var(--c-muted); }
+.section-title { display: flex; align-items: center; gap: 12px; margin: 24px 0 12px; font-family: var(--f-m); font-weight: 600; font-size: 10.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--c-hi); }
+.section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--c-line), transparent); }
+:host([centred]) .section-title::before { content: ""; flex: 1; height: 1px; background: linear-gradient(270deg, var(--c-line), transparent); }
+:host([centred]) .section-title::after { background: linear-gradient(90deg, var(--c-line), transparent); }
 
 /* Search */
 .hits { display: grid; gap: 8px; }
-.hit { --c: var(--c-hi); display: grid; gap: 4px; width: 100%; padding: 12px 16px; border-radius: 16px; text-align: left; border: 1px solid color-mix(in srgb, var(--c) 22%, transparent); background: color-mix(in srgb, var(--c-panel) 60%, transparent); transition: border-color .2s, transform .2s; animation: rise .3s ease both; animation-delay: calc(var(--i, 0) * 25ms); }
-.hit:hover { border-color: var(--c); transform: translateX(3px); }
-.hit .where { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
+.hit { --c: var(--c-hi); display: grid; gap: 4px; width: 100%; padding: 12px 16px; border-radius: 16px; text-align: left; border: 1px solid color-mix(in srgb, var(--c) 22%, transparent); background: color-mix(in srgb, var(--c-panel) 60%, transparent); transition: border-color .2s, background-color .2s; animation: rise .3s ease both; animation-delay: calc(var(--i, 0) * 25ms); }
+.hit:hover { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, var(--c-panel)); }
+.hit .where { font-family: var(--f-m); font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
 .hit b { font-family: var(--f-d); font-weight: 800; font-size: 15px; color: var(--c-bright); }
-.hit span { font-size: 13px; line-height: 1.45; color: var(--c-muted); }
-.hit mark { background: color-mix(in srgb, var(--c-gold) 30%, transparent); color: var(--c-bright); border-radius: 4px; padding: 0 2px; }
+.hit span { font-size: 13px; line-height: 1.5; color: var(--c-muted); }
+.hit mark { background: color-mix(in srgb, var(--c-gold) 30%, transparent); color: var(--c-bright); border-radius: 3px; padding: 0; box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-gold) 30%, transparent); }
 
+/* Phones (and narrow windows): the whole screen; the apps in a strip that slides sideways */
 @media (max-width: 760px) {
-  .panel { width: 100vw; height: 100dvh; border-radius: 0; border: 0; }
-  .top { flex-wrap: wrap; padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 10px; gap: 10px; }
-  .search { order: 3; flex-basis: 100%; max-width: none; }
+  .panel { width: 100%; height: 100%; border-radius: 0; border: 0; background-clip: padding-box; }
+  .top { flex-wrap: wrap; padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 10px; gap: 8px 10px; }
+  .book { width: 36px; height: 36px; border-radius: 12px; }
+  h2 { font-size: 17px; }
+  .navs { margin-left: auto; }
+  .search { order: 3; flex-basis: 100%; max-width: none; margin-left: 0; }
+  .search input { font-size: 16px; }
   .search kbd { display: none; }
-  .x { margin-left: auto; }
-  .body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-  .rail { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 10px 12px; border-right: 0; border-bottom: 1px solid color-mix(in srgb, var(--c-hi) 12%, transparent); scrollbar-width: none; }
+  .body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .rail { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 8px 12px; gap: 6px; border-right: 0; border-bottom: 1px solid var(--c-line); scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
   .rail .label { display: none; }
-  .rail button { width: auto; flex: none; padding: 6px 12px 6px 6px; }
+  .rail button { width: auto; flex: none; padding: 5px 12px 5px 5px; border-radius: 999px; }
   .rail .words small, .rail .here, .rail .fresh { display: none; }
-  .page { padding: 16px 16px calc(36px + env(safe-area-inset-bottom, 0px)); }
-  .hero { gap: 14px; }
-  .big { width: 64px; height: 64px; font-size: 24px; }
-  .big::after { transform-origin: 0 29px; }
-  .chapter { padding: 14px 16px 6px; }
+  .page { padding: 0 14px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .layout { padding-top: 14px; }
+  .hero { gap: 14px; padding-bottom: 12px; }
+  .big { width: 60px; height: 60px; font-size: 22px; }
+  .big::before { inset: -9px -14px; }
+  .big::after { transform-origin: 0 26px; }
+  .hero p { font-size: 14px; }
+  .chapter { padding: 16px 16px 8px; border-radius: 16px; }
+  .chapter > h3 { font-size: 18px; }
+  .prose { font-size: 15px; line-height: 1.65; }
+  .tabs button { padding: 0 11px; font-size: 12.5px; }
+  .pager { grid-template-columns: minmax(0, 1fr); }
+  .pager .next { grid-column: auto; }
+  .to-top { right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 420px) {
+  /* The four tabs as two rows of two, so none is cut off */
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; width: 100%; border-radius: 18px; }
+  .tabs button { justify-content: center; border-radius: 14px; }
+  .hero { flex-direction: column; text-align: center; }
+  .hero .pills { justify-content: center; }
 }
 
 @keyframes pop-in { from { opacity: 0; transform: translateY(10px) scale(.85); } }
-@keyframes panel-in { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+@keyframes panel-in { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 @keyframes panel-out { to { opacity: 0; transform: translateY(10px) scale(.97); } }
-@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes ring { to { transform: rotateX(70deg) rotateZ(360deg); } }
 @keyframes breathe { 50% { opacity: .5; transform: scale(.85); } }
-@keyframes twinkle { 50% { opacity: .85; } }
-@keyframes float { 50% { transform: translateY(-5px); } }
+@keyframes twinkle { 50% { opacity: .7; } }
+@keyframes float { 50% { transform: translateY(-4px); } }
 @keyframes planet { from { opacity: 0; transform: scale(.4) rotate(-90deg); } }
 @keyframes flash { 0% { box-shadow: 0 0 0 3px var(--app); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes glow { 0% { color: var(--app); } 100% { color: var(--c-bright); } }
 :host(.calm) *, :host(.calm) *::before, :host(.calm) *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 `;
@@ -347,6 +453,9 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
     search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
     x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
     go: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>',
+    back: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
+    forward: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+    up: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
   };
 
   // Per-item colours and delays are set from here, not as style="" (pages with strict
@@ -378,12 +487,23 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       this.tab = saved.app === this.app && saved.tab ? saved.tab : "guide";
       this.query = "";
       this.isOpen = false;
+      // Back and forward: where you've been in the manual since it opened, and where you came back from
+      this.past = [];
+      this.future = [];
+      // The "On this page" list for what's showing: [{ id, title, subs: [{ id, title }] }]
+      this.toc = null;
       this.onKey = (e) => this.key(e);
       this.onCalm = () => this.classList.toggle("calm", still());
+      // Nova Agent's "centred text" setting (look.js puts data-centred on the page): the manual
+      // follows it, and moves list bullets in beside their centred lines
+      this.onCentred = () => this.toggleAttribute("centred", document.documentElement.hasAttribute("data-centred"));
+      this.centredWatch = new MutationObserver(this.onCentred);
     }
     connectedCallback() {
       all.add(this);
       this.onCalm();
+      this.onCentred();
+      this.centredWatch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-centred"] });
       window.addEventListener("novaoptionschange", this.onCalm);
       this.drawButton();
       // A small green dot when something in the suite changed since you last looked. It needs the
@@ -398,6 +518,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
     }
     disconnectedCallback() {
       all.delete(this);
+      this.centredWatch.disconnect();
       window.removeEventListener("novaoptionschange", this.onCalm);
       this.close();
     }
@@ -423,24 +544,45 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
     }
 
     open(app, tab) {
+      // Already open and asked for another page (from code): Back comes here again
+      if (this.isOpen && (app !== undefined || tab) && this.d) {
+        this.past.push(this.snap());
+        this.future.length = 0;
+      }
       if (app !== undefined) this.app = app;
       if (tab) this.tab = tab;
       const panel = this.root.querySelector(".panel");
       if (!this.isOpen) {
+        this.past = [];
+        this.future = [];
+        this.query = "";
         panel.innerHTML = `<div class="sky">${"<i></i>".repeat(18)}</div>
           <header class="top">
             <div class="brand"><span class="book">${ICON.book}</span><div><div class="kicker">Nova Agent</div><h2>Nova Manual</h2></div></div>
             <label class="search">${ICON.search}<input type="search" placeholder="Search every app's manual" aria-label="Search the manual" autocomplete="off" spellcheck="false"><kbd>/</kbd></label>
-            <button class="x" type="button" aria-label="Close the manual">${ICON.x}</button>
+            <span class="navs">
+              <button class="icon" type="button" data-nav="back" aria-label="Back" title="Back (Alt + ←)" disabled>${ICON.back}</button>
+              <button class="icon" type="button" data-nav="forward" aria-label="Forward" title="Forward (Alt + →)" disabled>${ICON.forward}</button>
+            </span>
+            <button class="x" type="button" aria-label="Close the manual" title="Close (Esc)">${ICON.x}</button>
           </header>
-          <div class="body"><nav class="rail" aria-label="Apps"></nav><main class="page" tabindex="-1"><div class="loading"><span class="ring"></span>Opening the manual…</div></main></div>`;
+          <div class="body"><nav class="rail" aria-label="Apps"></nav><main class="page" tabindex="-1"><div class="loading"><span class="ring"></span>Opening the manual…</div></main>
+            <button class="to-top" type="button" data-nav="top" aria-label="Back to the top" title="Back to the top">${ICON.up}</button></div>`;
         panel.querySelector(".x").addEventListener("click", () => this.close(true));
         const input = panel.querySelector("input");
-        input.addEventListener("input", () => {
-          this.query = input.value.trim();
-          this.drawPage();
-        });
+        input.addEventListener("input", () => this.search(input.value.trim()));
         panel.addEventListener("click", (e) => this.click(e));
+        // As you read: the "On this page" list follows along, and the way back to the top appears
+        const page = panel.querySelector(".page");
+        let ticking = false;
+        page.addEventListener("scroll", () => {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(() => {
+            ticking = false;
+            this.spy();
+          });
+        }, { passive: true });
         if (POPOVER) panel.showPopover();
         else panel.hidden = false;
         panel.classList.remove("out");
@@ -448,7 +590,9 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         this.root.querySelector(".open").setAttribute("aria-expanded", "true");
         document.addEventListener("keydown", this.onKey, true);
         sfx("open");
-        setTimeout(() => input.focus({ preventScroll: true }), 60);
+        // (straight to the search box with a keyboard; on a touch screen that would pop the keyboard up)
+        if (matchMedia("(pointer: fine)").matches) setTimeout(() => input.focus({ preventScroll: true }), 60);
+        else setTimeout(() => page.focus({ preventScroll: true }), 60);
       }
       data()
         .then((d) => {
@@ -459,6 +603,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
           if (this.app && !d.apps.some((a) => a.id === this.app)) this.app = "";
           this.drawRail();
           this.drawPage();
+          this.drawNav();
         })
         .catch(() => {
           const page = this.root.querySelector(".page");
@@ -487,22 +632,92 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       if (withSound && btn) btn.focus({ preventScroll: true });
     }
     key(e) {
+      const input = this.root.querySelector(".search input");
       if (e.key === "Escape") {
-        const input = this.root.querySelector(".search input");
         e.preventDefault();
         e.stopPropagation();
         if (input && input.value) {
           input.value = "";
-          this.query = "";
-          this.drawPage();
+          this.search("");
         } else this.close(true);
-      } else if (e.key === "/" && this.root.activeElement !== this.root.querySelector(".search input")) {
+      } else if (e.key === "/" && this.root.activeElement !== input) {
         e.preventDefault();
-        this.root.querySelector(".search input").focus();
+        input.focus();
+      } else if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && !e.ctrlKey && !e.metaKey) {
+        // Alt + ← / → : back and forward in the manual (not the browser's own history)
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.key === "ArrowLeft") this.back();
+        else this.forward();
       }
     }
     remember() {
       store.set(PLACE_KEY, JSON.stringify({ app: this.app, tab: this.tab }));
+    }
+
+    // ---- Going places (and back again) ----
+    pageEl() {
+      return this.root.querySelector(".page");
+    }
+    snap() {
+      const page = this.pageEl();
+      return { app: this.app, tab: this.tab, query: this.query, scroll: page ? page.scrollTop : 0 };
+    }
+    // Show a place: { app, tab, query } (what's left out stays), at a scroll position or a heading
+    show(s, scroll, goto) {
+      if (s.app !== undefined) this.app = s.app;
+      if (s.tab) this.tab = s.tab;
+      if (s.query !== undefined) {
+        this.query = s.query;
+        const input = this.root.querySelector(".search input");
+        if (input && input.value.trim() !== s.query) input.value = s.query;
+      }
+      this.remember();
+      this.drawPage();
+      this.drawNav();
+      const page = this.pageEl();
+      if (page && scroll) {
+        page.style.scrollBehavior = "auto";
+        page.scrollTop = scroll;
+        page.style.scrollBehavior = "";
+        this.spy();
+      }
+      if (goto) this.goTo(goto);
+    }
+    go(next, goto) {
+      this.past.push(this.snap());
+      this.future.length = 0;
+      this.show(next, 0, goto);
+    }
+    back() {
+      const s = this.past.pop();
+      if (!s) return;
+      this.future.push(this.snap());
+      sfx("tap");
+      this.show(s, s.scroll);
+    }
+    forward() {
+      const s = this.future.pop();
+      if (!s) return;
+      this.past.push(this.snap());
+      sfx("tap");
+      this.show(s, s.scroll);
+    }
+    drawNav() {
+      const b = this.root.querySelector('[data-nav="back"]');
+      const f = this.root.querySelector('[data-nav="forward"]');
+      if (b) b.disabled = !this.past.length;
+      if (f) f.disabled = !this.future.length;
+    }
+    // Typing in the search box: the first letter keeps your place, so Back returns to it
+    search(q) {
+      if (q && !this.query) {
+        this.past.push(this.snap());
+        this.future.length = 0;
+      }
+      this.query = q;
+      this.drawPage();
+      this.drawNav();
     }
 
     drawRail() {
@@ -524,15 +739,81 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
     }
 
     drawPage() {
-      const page = this.root.querySelector(".page");
+      const page = this.pageEl();
       if (!page || !this.d) return;
       const app = this.d.apps.find((a) => a.id === this.app);
       const panel = this.root.querySelector(".panel");
       panel.style.setProperty("--app", app && !this.query ? app.colour : "var(--c-hi)");
       for (const b of this.root.querySelectorAll(".rail button")) b.setAttribute("aria-current", String(!this.query && b.dataset.app === this.app));
-      page.innerHTML = this.query ? this.searchPage() : app ? this.appPage(app) : this.startPage();
+      // The app showing in the strip along the top (phones) stays in view
+      const on = this.root.querySelector('.rail button[aria-current="true"]');
+      if (on && on.scrollIntoView && matchMedia("(max-width: 760px)").matches) on.scrollIntoView({ block: "nearest", inline: "nearest" });
+      this.toc = null;
+      const body = this.query ? this.searchPage() : app ? this.appPage(app) : this.startPage();
+      const wide = !app || this.query || this.tab === "history";
+      const toc = this.toc && this.toc.length > 1 ? this.toc : null;
+      page.innerHTML = `<div class="layout${wide && !toc ? " wide" : ""}${toc ? " has-toc" : ""}"><article class="read">${this.crumbs(app)}${body}</article>${
+        toc ? `<aside class="toc-side" aria-label="On this page"><span class="toc-title">On this page</span>${this.tocList(toc)}</aside>` : ""
+      }</div>`;
       paint(page);
-      if (!this.query) page.scrollTop = 0;
+      if (!this.query) {
+        page.style.scrollBehavior = "auto";
+        page.scrollTop = 0;
+        page.style.scrollBehavior = "";
+      }
+      this.spy();
+    }
+
+    // Manual › Calendar › Guide (each step back is a link)
+    crumbs(app) {
+      const sep = '<span class="sep" aria-hidden="true">›</span>';
+      const home = this.app || this.query ? `<button type="button" data-app="">Manual</button>` : `<span aria-current="page">Manual</span>`;
+      let rest = "";
+      if (this.query) rest = `${sep}<span aria-current="page">Search</span>`;
+      else if (app) rest = `${sep}${this.tab === "guide" ? `<span>${esc(app.name)}</span>` : `<button type="button" data-app="${app.id}" data-tab="guide">${esc(app.name)}</button>`}${sep}<span aria-current="page">${esc(tabName(this.tab))}</span>`;
+      else rest = `${sep}<span>Start here</span>`;
+      return `<nav class="crumbs" aria-label="Where you are">${home}${rest}</nav>`;
+    }
+
+    // The "On this page" list (beside the page, and folded up above it on a narrow screen)
+    tocList(toc) {
+      return `<ol class="toc-list">${toc
+        .map(
+          (c) =>
+            `<li><button type="button" data-goto="${c.id}">${c.title}</button></li>${c.subs.length > 1 ? c.subs.map((s) => `<li class="sub"><button type="button" data-goto="${s.id}" data-parent="${c.id}">${s.title}</button></li>`).join("") : ""}`,
+        )
+        .join("")}</ol>`;
+    }
+    tocBox(toc) {
+      return `<details class="toc-box"><summary>On this page<small>${toc.length} sections</small></summary>${this.tocList(toc)}</details>`;
+    }
+    // Which heading you're reading: lit in the list
+    spy() {
+      const page = this.pageEl();
+      if (!page) return;
+      const top = this.root.querySelector(".to-top");
+      if (top) top.classList.toggle("show", page.scrollTop > 600);
+      if (!this.toc) return;
+      const line = page.getBoundingClientRect().top + 90;
+      let cur = "";
+      let parent = "";
+      for (const c of this.toc) {
+        const el = this.root.getElementById(c.id);
+        if (!el || el.getBoundingClientRect().top > line) break;
+        cur = c.id;
+        parent = "";
+        for (const s of c.subs) {
+          const h = this.root.getElementById(s.id);
+          if (!h || h.getBoundingClientRect().top > line) break;
+          cur = s.id;
+          parent = c.id;
+        }
+      }
+      if (!cur && this.toc[0]) cur = this.toc[0].id;
+      for (const b of this.root.querySelectorAll(".toc-list button")) {
+        const v = b.dataset.goto === cur ? "true" : parent && b.dataset.goto === parent ? "location" : "false";
+        if (b.getAttribute("aria-current") !== v) b.setAttribute("aria-current", v);
+      }
     }
 
     startPage() {
@@ -555,7 +836,7 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
         .join("");
       return `
         <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">✺</span><div class="who"><div class="kicker">Nova Manual</div><h1>The Nova Agent</h1><p>${esc((s && s.tagline) || "Every Nova app: how to use it, how it's built, its story so far and what's changing.")}</p>
-          <div class="pills"><span class="pill">${d.apps.length} apps</span><span class="pill">Updated ${esc(ago(d.built))}</span><span class="pill">Press <b>?</b> on any Nova app to open this</span></div></div></div>
+          <div class="pills"><span class="pill">${d.apps.length} apps</span><span class="pill">Updated ${esc(ago(d.built))}</span><span class="pill">Press <kbd>?</kbd> on any Nova app to open this</span></div></div></div>
         <div class="section-title">The apps</div>
         <div class="apps">${cards}</div>
         ${feed.length ? `<div class="section-title">This week across the suite</div>${this.timeline(feed.slice(0, 30), true)}` : ""}
@@ -580,16 +861,39 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
       else if (this.tab === "built") body = `<p class="note">From ${esc(a.name)}'s own write-up, in <code>${esc(a.repo)}</code>.</p>${this.chapters(a.built, "")}`;
       else if (this.tab === "history") body = this.history(a);
       else body = this.news(a);
-      return `${hero}<div class="tabs" role="tablist" aria-label="${esc(a.name)}">${tabs}</div>${body}`;
+      return `${hero}<div class="tabs" role="tablist" aria-label="${esc(a.name)}">${tabs}</div>${body}${this.pager(a)}`;
+    }
+
+    // The app before and after this one in the list
+    pager(a) {
+      const apps = this.d.apps;
+      const i = apps.indexOf(a);
+      const prev = apps[i - 1];
+      const next = apps[i + 1];
+      const one = (x, cls, word) => `<button type="button" class="${cls}" data-app="${x.id}" data-v="--c:${x.colour}"><small>${word}</small><b>${cls === "prev" ? "← " : ""}${esc(x.name)}${cls === "next" ? " →" : ""}</b></button>`;
+      return prev || next ? `<nav class="pager" aria-label="Other apps">${prev ? one(prev, "prev", "Previous app") : ""}${next ? one(next, "next", "Next app") : ""}</nav>` : "";
     }
 
     chapters(list, intro) {
       if (!list.length && !intro) return `<div class="empty">Nothing written about this yet.</div>`;
-      const toc = list.length > 2 ? `<div class="toc">${list.map((c) => `<button type="button" data-goto="${c.id}">${esc(c.title)}</button>`).join("")}</div>` : "";
-      return `${intro ? `<div class="prose intro">${intro}</div>` : ""}${toc}${list.map((c, i) => this.chapter(c, i)).join("")}`;
+      const html = list.map((c, i) => this.chapter(c, i)).join("");
+      const toc = this.toc && this.toc.length > 1 ? this.tocBox(this.toc) : "";
+      return `${intro ? `<div class="prose intro">${intro}</div>` : ""}${toc}${html}`;
     }
+    // One chapter: its sub-headings get their own places (for the list), and code gets a Copy button
     chapter(c, i) {
-      return `<section class="chapter" id="${c.id}" data-v="--i:${Math.min(i, 8)}"><h3>${esc(c.title)}</h3><div class="prose">${c.html}</div></section>`;
+      const subs = [];
+      const html = c.html
+        .replace(/<h4>([\s\S]*?)<\/h4>/g, (m, inner) => {
+          const id = `${c.id}--${subs.length + 1}`;
+          subs.push({ id, title: inner.replace(/<[^>]+>/g, "") });
+          return `<h4 id="${id}">${inner}</h4>`;
+        })
+        .replace(/<pre>/g, '<div class="code"><button type="button" class="copy" aria-label="Copy this">Copy</button><pre>')
+        .replace(/<\/pre>/g, "</pre></div>");
+      if (!this.toc) this.toc = [];
+      this.toc.push({ id: c.id, title: esc(c.title), subs });
+      return `<section class="chapter" id="${c.id}" data-v="--i:${Math.min(i, 8)}"><h3>${esc(c.title)}</h3><div class="prose">${html}</div></section>`;
     }
 
     history(a) {
@@ -688,36 +992,72 @@ h2 { margin: 2px 0 0; font-family: var(--f-d); font-weight: 900; font-size: 21px
     }
 
     click(e) {
-      const el = e.target.closest("button[data-app], button[data-tab], button[data-goto]");
-      if (!el || !this.root.contains(el)) return;
-      const goto = el.dataset.goto;
-      if (el.dataset.app !== undefined && (el.closest(".rail") || el.classList.contains("card-app") || el.classList.contains("hit"))) {
-        // To an app (from the list, a card, or a search result)
-        const input = this.root.querySelector(".search input");
-        if (el.classList.contains("hit") || el.closest(".rail")) {
-          input.value = "";
-          this.query = "";
-        }
-        this.app = el.dataset.app;
-        this.tab = (el.classList.contains("hit") && el.dataset.tab) || "guide";
-        sfx("tap");
-        this.remember();
-        this.drawPage();
-        if (goto) this.goTo(goto);
+      const link = e.target.closest("a.pill.go");
+      if (link && this.root.contains(link)) {
+        this.follow(e, link);
         return;
       }
-      if (el.dataset.tab) {
-        this.tab = el.dataset.tab;
-        sfx("tap");
-        this.remember();
-        this.drawPage();
+      const el = e.target.closest("button");
+      if (!el || !this.root.contains(el) || el.classList.contains("x")) return;
+      const d = el.dataset;
+      if (d.nav === "back") return this.back();
+      if (d.nav === "forward") return this.forward();
+      if (d.nav === "top") {
+        this.pageEl().scrollTo({ top: 0, behavior: still() ? "auto" : "smooth" });
         return;
       }
-      if (goto) this.goTo(goto);
+      if (el.classList.contains("copy")) return this.copy(el);
+      if (d.app !== undefined) {
+        // To an app (from the list, a card, a search result, the trail or the next/previous app)
+        sfx("tap");
+        this.go({ app: d.app, tab: d.tab || "guide", query: "" }, d.goto);
+        return;
+      }
+      if (d.tab) {
+        sfx("tap");
+        this.go({ tab: d.tab });
+        return;
+      }
+      if (d.goto) {
+        // From "On this page": on a narrow screen the list folds away again so the text shows
+        const box = el.closest(".toc-box");
+        if (box) box.open = false;
+        this.goTo(d.goto);
+      }
+    }
+    // "Open Calendar" (and the like): inside Nova Agent, the panel opens right here instead of in a
+    // new tab (the links name the studio computer, which a phone online can't reach)
+    follow(e, a) {
+      let host = null;
+      try {
+        host = window.NovaAgent || (window.top !== window && window.top.NovaAgent) || null;
+      } catch (err) {}
+      if (!host || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const url = new URL(a.href, location.href);
+      const path = url.pathname + url.search + url.hash;
+      if (path === "/" || url.pathname.startsWith("/agent")) {
+        e.preventDefault();
+        this.close(true);
+        if (host.agent) host.agent();
+      } else if (host.open && host.open(path)) {
+        e.preventDefault();
+        this.close(true);
+      }
+    }
+    copy(btn) {
+      const pre = btn.nextElementSibling;
+      if (!pre || !navigator.clipboard) return;
+      navigator.clipboard.writeText(pre.textContent).then(
+        () => {
+          btn.textContent = "Copied";
+          setTimeout(() => (btn.textContent = "Copy"), 1400);
+        },
+        () => {},
+      );
     }
     goTo(id) {
       requestAnimationFrame(() => {
-        const target = this.root.getElementById(id);
+        const target = id && this.root.getElementById(id);
         if (!target) return;
         target.scrollIntoView({ block: "start", behavior: still() ? "auto" : "smooth" });
         target.classList.remove("flash");

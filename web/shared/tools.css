@@ -1,0 +1,187 @@
+/* The tools' look (Lossless audio, the Visualizer): the same family as Portal, Agent and Notes.
+   A deep sky behind everything, glass cards with a soft gradient edge in the theme's colours, the
+   display font for headings, small mono capitals for labels, and the same boxes, menus, sliders,
+   meters, tables, empty and loading states. Every colour is a theme token (themes.css, or look.js
+   when a theme is chosen), so a tool looks right in every theme, Custom included.
+   Use it on a page with <body class="nb-tool"> (and nb-plain, so buttons.css styles its buttons),
+   linked after themes.css and before buttons.css. Only things inside body.nb-tool are touched. */
+
+/* ===== The spacing scale every tool uses ===== */
+:root {
+  --nt-1: 4px; --nt-2: 8px; --nt-3: 12px; --nt-4: 16px; --nt-5: 22px; --nt-6: 32px;
+  --nt-radius: 22px;       /* cards */
+  --nt-radius-sm: 14px;    /* boxes, menus, inner panels */
+}
+
+/* ===== The page: a still, deep sky (a few fixed stars over the theme's nebula) ===== */
+body.nb-tool {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  color: var(--text); font-family: var(--f-body); font-size: 15px; line-height: 1.55;
+  background:
+    radial-gradient(1.2px 1.2px at 12% 18%, rgba(var(--star-rgb), .7), transparent 100%),
+    radial-gradient(1px 1px at 78% 9%, rgba(var(--star-rgb), .55), transparent 100%),
+    radial-gradient(1.4px 1.4px at 64% 42%, rgba(var(--star-rgb), .5), transparent 100%),
+    radial-gradient(1px 1px at 30% 66%, rgba(var(--star-rgb), .45), transparent 100%),
+    radial-gradient(1.2px 1.2px at 90% 74%, rgba(var(--star-rgb), .55), transparent 100%),
+    radial-gradient(1px 1px at 46% 90%, rgba(var(--star-rgb), .4), transparent 100%),
+    radial-gradient(1px 1px at 6% 82%, rgba(var(--star-rgb), .5), transparent 100%),
+    var(--nebula), var(--void);
+  background-attachment: fixed;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+.nb-tool *, .nb-tool *::before, .nb-tool *::after { box-sizing: border-box; }
+.nb-tool [hidden] { display: none !important; }
+.nb-tool :focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+.nb-tool ::selection { background: color-mix(in srgb, var(--hi) 35%, transparent); color: var(--bright); }
+.nb-tool a { color: var(--hi); text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--hi) 45%, transparent); }
+.nb-tool a:hover { color: var(--soft); }
+.nb-tool strong, .nb-tool b { color: var(--bright); font-weight: 600; }
+.nb-tool code, .nb-tool kbd {
+  font-family: var(--f-mono); font-size: .86em; padding: 1px 6px; border-radius: 6px;
+  background: color-mix(in srgb, var(--void) 60%, transparent); border: 1px solid var(--line); color: var(--bright);
+}
+.nb-tool pre {
+  margin: var(--nt-2) 0; padding: var(--nt-3); border-radius: var(--nt-radius-sm); border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--void) 70%, transparent); color: var(--text);
+  font: 12px/1.5 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent;
+}
+.nb-tool pre code { padding: 0; border: 0; background: none; }
+
+/* ===== Headings ===== */
+/* The page's title block: a small mono line, the name in the display font, a line about it */
+.nt-kicker { display: block; font-family: var(--f-mono); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--hi); }
+.nt-title {
+  margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase;
+  font-size: clamp(20px, 3.2vw, 28px); line-height: 1.05; letter-spacing: .01em;
+  background: var(--title-grad); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.nt-title span { color: transparent; }
+.nt-sub { margin: var(--nt-2) auto 0; color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 62ch; }
+/* A card's own title: the display font, small and wide, like Agent's section titles */
+.nt-h {
+  margin: 0 0 var(--nt-3); display: flex; align-items: center; gap: 9px;
+  font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 13px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--bright);
+}
+/* (with Nova Agent's centred text on, the default, card titles sit in the middle like Agent's) */
+:root[data-centred] .nt-h { justify-content: center; }
+.nt-h::before { content: ""; width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--hi); box-shadow: 0 0 10px var(--hi); }
+/* A label over a box or a number: small mono capitals */
+.nt-label, .nb-tool label.nt-label {
+  display: block; margin: 0 0 6px; font-family: var(--f-mono); font-size: 10px; font-weight: 600;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ===== Cards: glass with a soft gradient edge ===== */
+.nt-card {
+  position: relative; min-width: 0; padding: var(--nt-5); border-radius: var(--nt-radius);
+  border: 1px solid transparent;
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--hi) 7%, transparent), transparent 60%) padding-box,
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 94%, transparent), color-mix(in srgb, var(--deep) 94%, transparent)) padding-box,
+    var(--edge) border-box;
+  box-shadow: 0 24px 60px -40px var(--accent), inset 0 1px 0 rgb(255 255 255 / .04);
+}
+/* An inner box inside a card (quieter: a hairline, no glow) */
+.nt-well { padding: var(--nt-3) var(--nt-4); border-radius: var(--nt-radius-sm); border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); }
+
+/* ===== Boxes and menus ===== */
+.nb-tool :is(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  min-width: 0; padding: 10px 14px; border-radius: var(--nt-radius-sm); border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text);
+  font: inherit; font-size: 15px; line-height: 1.3;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.nb-tool :is(input, select, textarea)::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent); }
+.nb-tool :is(input:not([type="range"]), select, textarea):hover { border-color: color-mix(in srgb, var(--hi) 30%, transparent); }
+.nb-tool :is(input:not([type="range"]), select, textarea):focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 20%, transparent); }
+/* Menus: the theme's own arrow (two little gradients, so it takes the theme's colour) */
+.nb-tool select {
+  -webkit-appearance: none; appearance: none; padding-right: 38px; cursor: pointer;
+  text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--hi) 50%),
+    linear-gradient(135deg, var(--hi) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 52%, calc(100% - 15px) 52%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.nb-tool select option { background: var(--deep); color: var(--text); }
+.nb-tool :is(input, select, textarea):disabled { opacity: .55; cursor: default; }
+
+/* ===== Sliders (the same as the theme spectrum's) ===== */
+.nb-tool input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; margin: 0; background: transparent; cursor: pointer; }
+.nb-tool input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--hi)); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .1); }
+.nb-tool input[type="range"]::-moz-range-track { height: 8px; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--hi)); }
+.nb-tool input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -6px; border-radius: 50%; border: 2px solid var(--void); background: var(--bright); box-shadow: 0 0 0 1px rgb(255 255 255 / .4), 0 2px 8px rgb(0 0 0 / .5); }
+.nb-tool input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--void); background: var(--bright); }
+
+/* ===== Switches: a checkbox drawn as a sliding pill (<input type="checkbox" class="nt-switch">) ===== */
+.nb-tool input.nt-switch {
+  -webkit-appearance: none; appearance: none; position: relative; flex: none; width: 40px; height: 22px; margin: 0;
+  border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); cursor: pointer;
+  transition: background-color .2s ease, border-color .2s ease;
+}
+.nb-tool input.nt-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: translate .2s ease, background-color .2s ease; }
+.nb-tool input.nt-switch:checked { border-color: transparent; background: var(--grad); }
+.nb-tool input.nt-switch:checked::after { translate: 18px 0; background: var(--on-accent); }
+
+/* ===== Chips (labels, not buttons: buttons.css does the pressable ones) ===== */
+.nt-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c, var(--hi)) 35%, transparent);
+  background: color-mix(in srgb, var(--c, var(--hi)) 12%, transparent);
+  color: color-mix(in srgb, var(--c, var(--hi)) 70%, var(--bright));
+  font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+}
+
+/* ===== Level meters ===== */
+.nt-bar { height: 8px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--void) 70%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
+.nt-bar > div { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--hi)); box-shadow: 0 0 12px -2px var(--hi); transition: width 60ms linear; }
+
+/* ===== Numbers in two columns (a name, then its value) ===== */
+.nt-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; margin: 0; font-size: 14px; }
+.nt-facts dt { font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.nt-facts dd { margin: 0; min-width: 0; text-align: right; font-family: var(--f-mono); font-size: 13px; color: var(--bright); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+/* ===== Tables ===== */
+.nb-tool table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.nb-tool th { text-align: left; padding: 8px 14px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
+.nb-tool td { text-align: left; padding: 8px 14px; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--text) 7%, transparent); }
+.nb-tool tr:last-child td { border-bottom: 0; }
+
+/* ===== Fold-out help (<details>) ===== */
+.nb-tool details { border-radius: var(--nt-radius-sm); border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 35%, transparent); }
+.nb-tool summary { list-style: none; cursor: pointer; padding: 12px 16px; font-weight: 600; color: var(--bright); border-radius: inherit; }
+.nb-tool summary::-webkit-details-marker { display: none; }
+.nb-tool summary::before { content: "▸"; display: inline-block; margin-right: 8px; color: var(--hi); transition: rotate .2s ease; }
+.nb-tool details[open] > summary::before { rotate: 90deg; }
+.nb-tool summary:hover { background: color-mix(in srgb, var(--hi) 7%, transparent); }
+.nb-tool details > :not(summary) { margin-left: 16px; margin-right: 16px; }
+.nb-tool details[open] { padding-bottom: 12px; }
+
+/* ===== Empty and loading ===== */
+.nt-empty { padding: 28px 18px; border-radius: 18px; border: 1px dashed var(--line); text-align: center; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.nt-empty b { color: var(--text); }
+.nt-loading { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); }
+.nt-loading::before { content: ""; width: 16px; height: 16px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--hi) 25%, transparent); border-top-color: var(--hi); animation: nt-spin 1s linear infinite; }
+@keyframes nt-spin { to { rotate: 360deg; } }
+
+/* ===== Status words: good, careful, wrong ===== */
+.nb-tool .good { color: var(--ok); }
+.nb-tool .warn { color: var(--warn); }
+.nb-tool .bad { color: var(--bad); }
+
+/* ===== Small print ===== */
+.nt-note { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.nt-note strong { color: var(--text); }
+
+/* Scrollbars inside a tool: thin, in the theme's colour */
+.nb-tool, .nb-tool * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent-2) 80%, transparent) transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nt-loading::before { animation-duration: 3s; }
+  .nb-tool summary::before, .nt-bar > div { transition: none; }
+}
