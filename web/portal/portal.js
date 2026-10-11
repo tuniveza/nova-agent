@@ -121,7 +121,7 @@
 
   // A friendly name for where "next" goes
   function nextName(path) {
-    if (path.startsWith("/app/memory")) return "Nova Index";
+    if (path.startsWith("/app/memory")) return "Index";
     if (path.startsWith("/admin")) return "the admin pages";
     return "";
   }
@@ -172,7 +172,7 @@
     try {
       res = await fetch(path, { method, credentials: "same-origin", headers, body: body === undefined ? undefined : JSON.stringify(body) });
     } catch (err) {
-      throw new Problem("Can't reach Nova Portal. Check the connection and try again.");
+      throw new Problem("Can't reach Portal. Check the connection and try again.");
     }
     let data = {};
     try {
@@ -211,7 +211,7 @@
     $("auth-sub").textContent = sub;
     replay($(id), "screen-in");
     if (first) replay($("auth"), "screen-in");
-    document.title = "Nova Portal";
+    document.title = "Portal";
     stopChecks();
   }
   function focusSoon(node) {
@@ -256,7 +256,7 @@
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("setup-error", "Enter your email address.", form), $("setup-email").focus();
     if (password.length < MIN_PASSWORD) return setError("setup-error", "Type a password.", form), $("setup-password").focus();
     if (password !== $("setup-confirm").value) return setError("setup-error", "The two new passwords don't match.", form), $("setup-confirm").focus();
-    if (!studio) return setError("setup-error", "Enter the studio's shared password (from before Nova Portal).", form), $("setup-studio").focus();
+    if (!studio) return setError("setup-error", "Enter the studio's shared password (from before Portal).", form), $("setup-studio").focus();
     setError("setup-error", "");
     const go = form.querySelector('button[type="submit"]');
     try {
@@ -264,10 +264,10 @@
       if (r.ok && r.data.staff) {
         sfx("done");
         form.reset();
-        return signedIn(r.data.staff, `Nova Portal is ready. Welcome, ${firstName(r.data.staff.display_name)}!`, true);
+        return signedIn(r.data.staff, `Portal is ready. Welcome, ${firstName(r.data.staff.display_name)}!`, true);
       }
       if (r.status === 409) {
-        showLogin("Nova Portal is already set up. Sign in instead.");
+        showLogin("Portal is already set up. Sign in instead.");
         return;
       }
       setError("setup-error", r.data.error || `That didn't work (error ${r.status}). Try again.`, form);
@@ -523,7 +523,7 @@
     const route = currentRoute();
     closeNameForm();
     if (route.view === "work") {
-      document.title = "Nova Portal";
+      document.title = "Portal";
       return work() && work().show(route.tab);
     }
     markNav();
@@ -534,7 +534,7 @@
         return renderRoute();
       }
       showView("view-admin");
-      document.title = "Admin · Nova Portal";
+      document.title = "Admin · Portal";
       return showAdminPage(route.page);
     }
     if (route.view === "crew") {
@@ -545,7 +545,7 @@
       }
       showView("view-crew");
       showAdminPage("crew");
-      document.title = "The crew · Nova Portal";
+      document.title = "The crew · Portal";
       return loadCrew();
     }
     if (route.view === "me") {
@@ -604,7 +604,7 @@
     const self = person.id === state.me.id;
     const changedPerson = !state.person || state.person.id !== person.id;
     state.person = person;
-    document.title = self ? "Nova Portal" : `${person.display_name} · Nova Portal`;
+    document.title = self ? "Portal" : `${person.display_name} · Portal`;
 
     $("back-to-crew").hidden = self || !isAdmin();
     $("p-kicker").textContent = self ? "Your profile" : "Crew member";
@@ -664,7 +664,7 @@
       ? "What the Nova apps remember about you, and what the whole studio knows."
       : `What the Nova apps remember about ${first2}, and what the whole studio knows.`;
     $("open-index").href = `/app/memory/?scope=staff&owner=${encodeURIComponent(person.id)}`;
-    $("open-index-label").textContent = self ? "Open my Nova Index" : `Open ${possessive(first2)} Nova Index`;
+    $("open-index-label").textContent = self ? "Open my Index" : `Open ${possessive(first2)} Index`;
 
     // A group with nothing to show (Connections for someone else, Admin for staff) steps aside
     for (const group of document.querySelectorAll("#view-profile .panels > .group")) {
@@ -1078,11 +1078,11 @@
       } else toast("Couldn't copy. Select the link and copy it.", true);
     }, { "data-sfx": "none" });
     const until = longDate(expires);
-    const subject = "Your Nova Portal invite";
+    const subject = "Your Portal invite";
     const body = [
       `Hi ${name},`,
       "",
-      "You're invited to Nova Portal: the staff app and one sign-in for every Nova app at Novacane Studios.",
+      "You're invited to Portal: the staff app and one sign-in for every Nova app at Novacane Studios.",
       "",
       "Open this link to choose your password and meet your very own planet:",
       link,

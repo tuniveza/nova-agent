@@ -51,6 +51,6 @@ describe("Index's page", () => {
   });
 
   it("on the studio PC without a Portal sign-in, the cleanup is refused (Nova Agent's key never runs it)", () => {
-    expect(server).toMatch(/route === "\/cleanup" \|\| route\.startsWith\("\/cleanup\/"\)\) return c\.json\(\{ error: "Cleaning up Nova Index is for admins, signed in to Nova Portal" \}, 403\)/);
+    expect(server).toMatch(/route === "\/cleanup" \|\| route\.startsWith\("\/cleanup\/"\)\) return c\.json\(\{ error: "Cleaning up Index is for admins, signed in to Portal" \}, 403\)/);
   });
 });

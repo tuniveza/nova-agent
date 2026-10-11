@@ -21,11 +21,11 @@
   }
 
   // Where a quest came from: its mission and where it was made ("Notes · Studio plan" is saved;
-  // it shows as "Nova Notes · Studio plan"), or Nova Agent itself
+  // it shows as "Notes · Studio plan"), or Nova Agent itself
   function sources(q, missionTitle) {
     const out = [];
     if (missionTitle) out.push({ kind: 'mission', label: String(missionTitle) });
-    if (q && q.from) out.push({ kind: /^Notes\b/.test(q.from) ? 'notes' : 'from', label: String(q.from).replace(/^Notes\b/, 'Nova Notes') });
+    if (q && q.from) out.push({ kind: /^Notes\b/.test(q.from) ? 'notes' : 'from', label: String(q.from).replace(/^Notes\b/, 'Notes') });
     if (!out.length) out.push({ kind: 'agent', label: 'Nova Agent' });
     return out;
   }

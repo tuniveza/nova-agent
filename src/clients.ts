@@ -160,7 +160,7 @@ export function owingText(list: ClientSummary[]): string {
   const owing = list.filter(owes).sort((a, b) => Number(b.outstanding) - Number(a.outstanding));
   if (!owing.length) return "Nobody owes the studio anything (no outstanding amounts recorded).";
   const total = owing.reduce((n, c) => n + Math.round(Number(c.outstanding) * 100), 0) / 100;
-  return [`${owing.length} client${owing.length === 1 ? " owes" : "s owe"} ${pounds(total)} in all (amounts as recorded in Nova Portal → Clients):`, ...owing.map((c) => `${c.name} (#${c.id}) owes ${pounds(c.outstanding)}${c.lastBooked ? ` · last booked ${ukDateTime(c.lastBooked)}` : ""}${c.email ? ` · ${c.email}` : ""}${c.phone ? ` · ${c.phone}` : ""}`)].join("\n");
+  return [`${owing.length} client${owing.length === 1 ? " owes" : "s owe"} ${pounds(total)} in all (amounts as recorded in Portal → Clients):`, ...owing.map((c) => `${c.name} (#${c.id}) owes ${pounds(c.outstanding)}${c.lastBooked ? ` · last booked ${ukDateTime(c.lastBooked)}` : ""}${c.email ? ` · ${c.email}` : ""}${c.phone ? ` · ${c.phone}` : ""}`)].join("\n");
 }
 
 // Who hasn't booked since a day, longest-lapsed first

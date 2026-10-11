@@ -44,7 +44,7 @@ window.NOVA_STATUS = {
    "Plain names",
    "Nova Agent talks to Nova Bot at…",
    "Portal is Studio",
-   "Nova Missions"
+   "Missions"
   ],
   "missions": [
    "Portal everywhere",
@@ -79,7 +79,7 @@ window.NOVA_STATUS = {
    "Undo, the Manual keeps \"Nova Agent\"",
    "Portal on phones",
    "Plain names",
-   "The Nova Manual is built from Nova…"
+   "The Manual is built from Nova…"
   ],
   "look": [
    "An App button everywhere",

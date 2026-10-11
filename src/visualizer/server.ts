@@ -224,7 +224,7 @@ app.post("/auth/logout", async (c) => {
   return c.json({ ok: true });
 });
 // There's no shared password any more: everyone signs in with their own account in the Portal
-app.post("/app/api/login", (c) => c.json({ error: "On the studio computer, sign in with your own account in Nova Portal." }, 400));
+app.post("/app/api/login", (c) => c.json({ error: "On the studio computer, sign in with your own account in Portal." }, 400));
 app.post("/app/api/logout", async (c) => {
   await signOut();
   return c.json({ ok: true });
@@ -277,9 +277,9 @@ app.all("/app/api/memory/*", async (c) => {
   const route = c.req.path.slice("/app/api/memory".length);
   const query = new URL(c.req.url).search;
   if (route === "/pending") return c.json({ pending: [], locked: true });
-  if (route.startsWith("/pending/")) return c.json({ error: "Approvals need a Nova Portal sign-in" }, 403);
+  if (route.startsWith("/pending/")) return c.json({ error: "Approvals need a Portal sign-in" }, 403);
   // Tidy up (the cleanup and its bin) is for an admin signed in to Portal, never this key
-  if (route === "/cleanup" || route.startsWith("/cleanup/")) return c.json({ error: "Cleaning up Nova Index is for admins, signed in to Nova Portal" }, 403);
+  if (route === "/cleanup" || route.startsWith("/cleanup/")) return c.json({ error: "Cleaning up Index is for admins, signed in to Portal" }, 403);
   if (route === "/stats") {
     const { data } = await toEngine("/index");
     const by = new Map<string, { scope: string; files: number; facts: number }>();
@@ -317,7 +317,7 @@ app.get("/music-world/*", (c) => passOn(c.req.raw));
 async function admin(c: any) {
   if (!fromOurPage(c.req.raw)) return c.text("Only from Nova Agent's own pages", 403);
   const here = c.req.path + new URL(c.req.url).search;
-  if (!session()) return c.req.method === "GET" ? c.redirect("/portal/?next=" + encodeURIComponent(here)) : c.text("Sign in with Nova Portal first.", 401);
+  if (!session()) return c.req.method === "GET" ? c.redirect("/portal/?next=" + encodeURIComponent(here)) : c.text("Sign in with Portal first.", 401);
   const res = await passOn(c.req.raw);
   // Nova Bot's links back to itself (signing in, Portal) stay inside Nova Agent
   const where = res.headers.get("location");

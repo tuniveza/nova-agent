@@ -198,7 +198,7 @@
       const res = await fetch("/app/api/links" + (fresh ? "?recheck=1" : ""), { credentials: "same-origin", cache: "no-store" });
       if (res.status === 401) {
         checked.textContent = "";
-        return message("Sign in to Nova Portal to see the links.");
+        return message("Sign in to Portal to see the links.");
       }
       if (!res.ok) throw new Error("Couldn't load the links (" + res.status + ")");
       const data = await res.json();

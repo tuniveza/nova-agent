@@ -691,7 +691,7 @@
 <head>
 <meta charset="utf-8">
 <title>${esc(title)}</title>
-<meta name="generator" content="Nova Notes · Novacane Studios">
+<meta name="generator" content="Notes · Novacane Studios">
 <style>
   body { margin: 48pt auto; max-width: 640px; padding: 0 24px; font-family: 'Saira', Arial, sans-serif; color: ${p.ink}; background: #fff; }
   @import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Archivo+Black&family=Saira:wght@300..700&family=Source+Code+Pro:wght@400;600&family=Cormorant+Garamond:ital,wght@1,500&display=swap');

@@ -392,7 +392,7 @@ export function readQuests(): QuestData {
     writeFileSync(`${file}.tmp`, JSON.stringify(good, null, 2));
     renameSync(`${file}.tmp`, file);
     trace("task", "error", `quests.json was damaged: went back to the last good copy. The damaged one is kept as ${aside}.`);
-    void sendAlert("Nova Quests: quests.json was damaged", `Nova Agent went back to the last good copy; the most recent change may need doing again. The damaged file is kept as ${aside}.`);
+    void sendAlert("Quests: quests.json was damaged", `Nova Agent went back to the last good copy; the most recent change may need doing again. The damaged file is kept as ${aside}.`);
     return good;
   }
 }

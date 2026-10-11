@@ -26,7 +26,7 @@ export async function memoryFor(q: string): Promise<string> {
     if (!res.ok) return "";
     const { text } = (await res.json()) as { text?: string };
     const block = text
-      ? `WHAT NOVA AGENT REMEMBERS (Nova Index: facts learned earlier about the studio, its people and ${who === "owner" ? "the person you're talking to" : who}). Use them quietly to plan and answer better; don't recite them or mention this memory unless asked. If they conflict with what's said now, trust what's said now.\n${text}`
+      ? `WHAT NOVA AGENT REMEMBERS (Index: facts learned earlier about the studio, its people and ${who === "owner" ? "the person you're talking to" : who}). Use them quietly to plan and answer better; don't recite them or mention this memory unless asked. If they conflict with what's said now, trust what's said now.\n${text}`
       : "";
     cache.set(key, { at: Date.now(), text: block });
     if (cache.size > 100) cache.delete(cache.keys().next().value!);

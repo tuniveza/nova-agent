@@ -638,7 +638,7 @@
   let approvalPicked = null; // the ?action= one already pointed at
   const APPROVAL_KINDS = { create: "New booking", reschedule: "Move a booking", cancel: "Cancel a booking", update: "Booking details", block_add: "Block off time", block_remove: "Unblock time" };
   const APPROVAL_STATUS = { pending: ["pill-draft", "Waiting"], approved: ["pill-replied", "Approved"], executed: ["pill-done", "Done"], failed: ["pill-failed", "Didn't go through"], rejected: ["pill-stop", "Rejected"] };
-  const PROPOSERS = { agent: "Nova Agent", "staff-chat": "Nova Portal's staff chat" };
+  const PROPOSERS = { agent: "Nova Agent", "staff-chat": "Portal's staff chat" };
   // The simple fields each kind can have changed before it's approved
   const APPROVAL_FIELDS = {
     create: [["start", "When (UK time)", "when"], ["firstName", "First name"], ["lastName", "Last name"], ["email", "Email", "email"], ["phone", "Phone"], ["notes", "Notes", "long"], ["notifyClient", "Acuity emails the client", "tick"]],
@@ -854,7 +854,7 @@
     rejected: ["pill-stop", "Rejected"],
   };
   const AUDIENCE_NAMES = { fans: "Fans", clients: "Studio clients", everyone: "Everyone (fans and clients)" };
-  const CAMPAIGN_WRITERS = { agent: "Nova Agent", "staff-chat": "Nova Portal's staff chat" };
+  const CAMPAIGN_WRITERS = { agent: "Nova Agent", "staff-chat": "Portal's staff chat" };
   const CAMPAIGN_EVENTS = { created: "Written", edited: "Changed", submitted: "Sent for approval", approved: "Approved", rejected: "Rejected", sent: "Sent", scheduled: "Scheduled", failed: "Didn't send", stats: "Results updated" };
   const campaignWaiting = (c) => c.status === "pending_approval" || c.status === "draft";
   const people = (n) => (Number(n) || 0) + (Number(n) === 1 ? " person" : " people");
@@ -904,7 +904,7 @@
     setBadge("campaigns-badge", all.filter((c) => c.status === "pending_approval").length);
     syncCounts();
     if (currentView !== "campaigns") return;
-    setText("campaigns-hint", data.canDecide ? "Emails to fans and clients who opted in. Nothing is sent until you approve it." : "Emails to fans and clients who opted in. An admin approves these (signed in to Nova Portal in a browser); nothing is sent until then.");
+    setText("campaigns-hint", data.canDecide ? "Emails to fans and clients who opted in. Nothing is sent until you approve it." : "Emails to fans and clients who opted in. An admin approves these (signed in to Portal in a browser); nothing is sent until then.");
     const want = pickedCampaign();
     if (want && campaignPicked !== String(want)) campaignOpen.add(want);
     // The emails to show: every waiting one, and any that's been opened
@@ -1048,7 +1048,7 @@
       }
     }
     if (row.children.length) card.appendChild(row);
-    if (campaignWaiting(c) && !canDecide) card.appendChild(el("p", "card-foot", "An admin approves these, signed in to Nova Portal in a browser. Nothing is sent until then."));
+    if (campaignWaiting(c) && !canDecide) card.appendChild(el("p", "card-foot", "An admin approves these, signed in to Portal in a browser. Nothing is sent until then."));
     return card;
   }
 
@@ -1511,7 +1511,7 @@
         consentAsking = false;
         return drawClient();
       }
-      if (!box.checked && yes) saveConsent(c.id, { yes: false, source: "Switched off in Nova Portal" }, card, problem);
+      if (!box.checked && yes) saveConsent(c.id, { yes: false, source: "Switched off in Portal" }, card, problem);
     });
     if (consentAsking) {
       const form = el("div", "cl-grid cl-ask");
@@ -1941,7 +1941,7 @@
     }
     actions.appendChild(doneButton(q));
     card.appendChild(actions);
-    if (q.dial && !q.do_not_contact_at) card.appendChild(el("p", "card-foot", "WhatsApp, Call and Text use your own phone (or WhatsApp Web on a computer). Write a WhatsApp or text below and Nova Portal opens it ready to send, then adds it here."));
+    if (q.dial && !q.do_not_contact_at) card.appendChild(el("p", "card-foot", "WhatsApp, Call and Text use your own phone (or WhatsApp Web on a computer). Write a WhatsApp or text below and Portal opens it ready to send, then adds it here."));
     else if (q.phone && !q.do_not_contact_at) card.appendChild(el("p", "card-foot", "Their number isn't a mobile, so there's no WhatsApp or texts. Call still works."));
     // UK GDPR: why the studio may contact them
     card.appendChild(el("p", "card-foot", "Asked to be contacted: " + when(q.consent_at || q.created_at) + (q.consent_source ? " · " + q.consent_source : "")));
@@ -2019,7 +2019,7 @@
     if (m.status === "draft") {
       if (!blocked && thread.canSend) row.appendChild(button("Approve & send", "btn small", () => approve(m, card)));
       if (!blocked && !thread.canSend && thread.onlineUrl) {
-        const online = el("a", "btn small", "Approve in Nova Portal online");
+        const online = el("a", "btn small", "Approve in Portal online");
         online.href = thread.onlineUrl;
         online.target = "_blank";
         online.rel = "noopener";
@@ -2199,7 +2199,7 @@
     if (!note && blocked) hint = "They've asked not to be contacted, so replies can't be sent. Notes still work.";
     else if (threadMode === "whatsapp") hint = { phone: "Opens WhatsApp", web: "Opens WhatsApp Web", app: "Opens the WhatsApp app" }[waWhere()] + " with this filled in. Press send there, then come back and tap “Yes, it sent”.";
     else if (threadMode === "sms") hint = onPhone ? "Opens Messages with this filled in. Press send there, then come back and tap “Yes, it sent”." : "Shows the number and message to send from your phone (or Messages on this computer). Then tap “Yes, it sent”.";
-    else if (!note && cantSend) hint = "Sending needs Nova Portal open in a browser, signed in. Notes work here.";
+    else if (!note && cantSend) hint = "Sending needs Portal open in a browser, signed in. Notes work here.";
     else if (!note) hint = "Emailed from the studio. Their replies come to the studio inbox. Every email says why they're getting it and how to stop.";
     setText("thread-hint", hint);
     const online = !note && !phone && cantSend && !blocked;
@@ -2565,7 +2565,7 @@
   // One Calendar card or quest, in the Calendar tab
   function suiteCard(item) {
     const card = el("article", "card cal-card suite-item " + item.kind);
-    card.appendChild(el("span", "alert-kind " + (item.kind === "quest" ? "quest" : "other"), item.kind === "quest" ? "Quest" : item.kind === "day" ? "Nova Calendar · day" : "Nova Calendar"));
+    card.appendChild(el("span", "alert-kind " + (item.kind === "quest" ? "quest" : "other"), item.kind === "quest" ? "Quest" : item.kind === "day" ? "Calendar · day" : "Calendar"));
     if (item.time) card.appendChild(el("p", "cal-time", item.time));
     card.appendChild(el("h3", "card-title", item.title));
     if (item.sub) card.appendChild(el("p", "cal-session", item.sub));
@@ -2833,7 +2833,7 @@
     // Calendar's cards and Quests that day, after the bookings (as the filter says)
     const suite = suiteOn(calPicked).filter((i) => calFilter === "all" || (calFilter === "quests" ? i.kind === "quest" : calFilter === "notes" ? i.kind !== "quest" : false));
     if (calFilter !== "all" && calFilter !== "bookings") {
-      return put(...(suite.length ? suite.map(suiteCard) : [el("p", "empty", calFilter === "quests" ? "No quests this day." : "No Nova Calendar cards this day.")]));
+      return put(...(suite.length ? suite.map(suiteCard) : [el("p", "empty", calFilter === "quests" ? "No quests this day." : "No Calendar cards this day.")]));
     }
     // The bookings aren't here yet: hold their place (or say why they can't come)
     if (!list.length && calProblem) return put(el("p", "empty", calProblem), ...suite.map(suiteCard));
@@ -3721,7 +3721,7 @@
     // Remember what it's about
     box.dataset.tag = data.tag || "";
     // Its title and text
-    box.append(el("strong", "", data.title || "Nova Portal"), el("p", "", data.body || ""));
+    box.append(el("strong", "", data.title || "Portal"), el("p", "", data.body || ""));
     // Tapping it opens the Alerts tab
     box.addEventListener("click", () => {
       box.remove();
@@ -3800,12 +3800,12 @@
     let status = "Get a notification here for new enquiries and bookings.";
     // iPhone in a Safari tab: it has to be opened from the Home Screen first
     if (!canNotify && isIPhone && !fromHomeScreen) {
-      status = "On iPhone, notifications only work when Nova Portal is opened from its Home Screen icon. In Safari, tap Share, then Add to Home Screen, then open Nova Portal from there.";
+      status = "On iPhone, notifications only work when Portal is opened from its Home Screen icon. In Safari, tap Share, then Add to Home Screen, then open Portal from there.";
     }
     // Any other browser that can't do it
     else if (!canNotify) status = "This browser can't show notifications.";
     // He said no to the iPhone's question earlier: only Settings can change that now
-    else if (Notification.permission === "denied") status = "Notifications are blocked for this app. Turn them on in the iPhone's Settings, then Notifications, then Nova Portal (or Portal or Nova Agent, if you added it to the Home Screen before).";
+    else if (Notification.permission === "denied") status = "Notifications are blocked for this app. Turn them on in the iPhone's Settings, then Notifications, then Portal (or Portal or Nova Agent, if you added it to the Home Screen before).";
     // Already on
     else if (address) status = "Notifications are on for this phone.";
     // Put the message in the panel
@@ -4155,7 +4155,7 @@
     try {
       await openMic();
     } catch (err) {
-      return toast("Nova Portal can't use the microphone. Allow it in Settings.");
+      return toast("Portal can't use the microphone. Allow it in Settings.");
     }
     // The mic glows, and the panel shows
     $("voice").classList.add("on");
@@ -4218,7 +4218,7 @@
         // Still no: the microphone is blocked
         listeningBar("");
         looping = false;
-        return toast("Nova Portal can't use the microphone. Allow it in Settings.");
+        return toast("Portal can't use the microphone. Allow it in Settings.");
       }
     }
     // The volume meter is paused until a tap (iPhone rule): wait for one

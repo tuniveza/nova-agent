@@ -96,7 +96,7 @@ export function notifyMission(what: "planned" | "complete", title: string, messa
 // A booking change moved today's or tomorrow's music time: one calm notice, said once
 // (`key` is what moved, so the same move is never told twice)
 export function notifyMusicMoved(lines: string[], key: string): void {
-  notify({ kind: "music", title: "Music time moved", message: `${lines.join(" · ")} (a studio booking is on then). Nova Calendar shows the new time.`, questId: "music" }, readQuests().rhythm.phonePush, key);
+  notify({ kind: "music", title: "Music time moved", message: `${lines.join(" · ")} (a studio booking is on then). Calendar shows the new time.`, questId: "music" }, readQuests().rhythm.phonePush, key);
 }
 
 export const recentNotices = () => [...recent];

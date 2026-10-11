@@ -2,7 +2,7 @@
   "id": "/agent/",
   "name": "Nova Agent",
   "short_name": "Nova Agent",
-  "description": "The studio's one app: Nova Agent, Nova Missions and Nova Quests, with Nova Portal, Nova Calendar, Nova Notes, Nova Index, Nova Observatory and Nova Lossless inside it.",
+  "description": "The studio's one app: Nova Agent, Missions and Quests, with Portal, Calendar, Notes, Index, Observatory and Lossless inside it.",
   "start_url": "/agent/",
   "scope": "/",
   "display": "standalone",
@@ -59,8 +59,8 @@
       ]
     },
     {
-      "name": "Nova Portal",
-      "short_name": "Nova Portal",
+      "name": "Portal",
+      "short_name": "Portal",
       "description": "Enquiries, chats, bookings and alerts",
       "url": "/agent/?open=%2Fportal%2F",
       "icons": [
@@ -82,7 +82,7 @@
       ]
     },
     {
-      "name": "Nova Calendar",
+      "name": "Calendar",
       "short_name": "Calendar",
       "url": "/agent/?open=%2Fcalendar%2F",
       "icons": [

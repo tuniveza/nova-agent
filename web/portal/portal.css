@@ -762,9 +762,8 @@ html.embed .pv .admin-frame { min-height: calc(100dvh - 120px); }
 
 /* ===================== The phone's bar: the same family ===================== */
 @media (max-width: 760px) {
-  /* Short names on the bar along the bottom (the More list keeps "Nova Calendar"); the row of
+  /* Short names on the bar along the bottom (the More list keeps the full names); the row of
      sections inside Nova Agent has room for the full name */
-  html:not(.embed) .tabs .nova-pre { display: none; }
   /* The chosen tab: the same soft pill and edge as on the tab bar above */
   .tabs > .tab.active { box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), 0.28); }
 }

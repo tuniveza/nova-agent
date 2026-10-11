@@ -64,6 +64,10 @@ html.embed .embed-head > .top { position: relative; top: auto; }
     background: rgba(var(--deep-rgb), 0.97); backdrop-filter: none; -webkit-backdrop-filter: none;
   }
   html.embed .embed-head > .tabs::-webkit-scrollbar { display: none; }
+}
+/* Tablet widths: every tab stays on screen, wrapping onto a second centred row (phones keep the sliding row) */
+@media (min-width: 761px) and (max-width: 980px) {
+  html.embed .embed-head > .tabs { flex-wrap: wrap; justify-content: center; row-gap: 4px; overflow: visible; scroll-snap-type: none; }
   html.embed .embed-head > .tabs > .tab {
     flex: 0 0 auto; flex-direction: row; gap: 6px; min-height: 36px; padding: 0 12px; overflow: visible;
     border-radius: 999px; border: 1px solid var(--line); scroll-snap-align: start;

@@ -212,7 +212,7 @@ export function resultsText(c: Campaign): string {
   if (c.status === "scheduled") return `${head} is approved and scheduled for ${c.sendAt ? ukWhen(c.sendAt) : "later"} (UK time), so there are no results yet.`;
   if (c.status === "failed") return `${head} didn't send${c.error ? `: ${c.error}` : ""}. There are no results.`;
   if (c.status === "rejected") return `${head} was rejected${c.decidedByName ? ` by ${c.decidedByName}` : ""}${c.note ? ` (“${c.note}”)` : ""}, so it wasn't sent.`;
-  return `${head} hasn't been sent: it's ${STATUS_WORDS[c.status] || c.status}. Nothing is sent until an admin approves it in Nova Portal → Campaigns.`;
+  return `${head} hasn't been sent: it's ${STATUS_WORDS[c.status] || c.status}. Nothing is sent until an admin approves it in Portal → Campaigns.`;
 }
 
 // What suggest_campaign gives Claude: who's opted in, how the recent ones did, and what to do next
@@ -224,8 +224,8 @@ export function contextText(ctx: CampaignContext): string {
   } else lines.push("", "No campaigns yet: this would be the first.");
   lines.push(
     "",
-    "Nothing has been saved. Suggest 1–3 campaign ideas in your reply (for each: a subject line, who it's for and how many that is, when to send it in UK time, and why now), drawing on the dates, the studio's news and what did well before. When they pick one, write it with create_campaign_draft; it then waits for an admin to approve it in Nova Portal → Campaigns before anything is sent."
+    "Nothing has been saved. Suggest 1–3 campaign ideas in your reply (for each: a subject line, who it's for and how many that is, when to send it in UK time, and why now), drawing on the dates, the studio's news and what did well before. When they pick one, write it with create_campaign_draft; it then waits for an admin to approve it in Portal → Campaigns before anything is sent."
   );
-  if (!ctx.audiences.everyone) lines.push("Nobody has opted in yet, so a campaign would reach no one: suggest sharing the fan sign-up link (in Nova Portal → Campaigns) first.");
+  if (!ctx.audiences.everyone) lines.push("Nobody has opted in yet, so a campaign would reach no one: suggest sharing the fan sign-up link (in Portal → Campaigns) first.");
   return lines.join("\n");
 }

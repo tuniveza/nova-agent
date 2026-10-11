@@ -103,7 +103,7 @@ describe("Agent's email campaign tools", () => {
     // (then the audience's size for the card, read-only)
     expect(seen.slice(1).map((s) => s.path)).toEqual(["/nova-agent/campaigns/context"]);
     expect(said).toContain("NOT sent");
-    expect(said).toMatch(/Nothing has been sent: it goes to nobody until an admin approves it in Nova Portal → Campaigns/);
+    expect(said).toMatch(/Nothing has been sent: it goes to nobody until an admin approves it in Portal → Campaigns/);
     expect(said.replace(/Nothing has been sent/g, "")).not.toMatch(/\b(has been|was|is) (sent|scheduled)\b/i);
     expect(actions).toEqual([{ kind: "campaign", text: expect.stringContaining("waiting for an admin"), campaign: expect.objectContaining({ id: 12, status: "pending_approval", audienceCount: 42, portalUrl: expect.stringContaining("view=campaigns&campaign=12") }) }]);
   });
@@ -214,7 +214,7 @@ describe("Agent's email campaign tools", () => {
 
   it("the system prompt tells Agent nothing is sent until an admin approves", async () => {
     const src = (await import("node:fs")).readFileSync(join(__dirname, "../src/chat.ts"), "utf8");
-    expect(src).toContain("Nothing is sent to anyone until an admin presses Approve in Nova Portal → Campaigns");
+    expect(src).toContain("Nothing is sent to anyone until an admin presses Approve in Portal → Campaigns");
     expect(src).toContain("...campaignTools(actions)");
   });
 });
