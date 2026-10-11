@@ -19,8 +19,10 @@
   }
 
   // Open and close (like Nova Agent sheet)
+  let showMusic = () => {};
   function open() {
     show();
+    showMusic();
     sheet.hidden = false;
     opener.setAttribute("aria-expanded", "true");
     $("options-close").focus();
@@ -82,6 +84,47 @@
     show();
     extra.addEventListener("change", () => window.NovaSfx.setExtraEnabled(extra.checked));
     window.addEventListener("novasfxchange", show);
+  }
+
+  // Music variations (shared/ambient.js): this one's code and piece, a new one, keep it, or play
+  // one again from its code
+  const seedOut = $("music-seed");
+  const keep = $("music-keep");
+  const replay = $("music-replay");
+  if (seedOut && keep && replay) {
+    const amb = () => (window.NovaAmbient && window.NovaAmbient.seed ? window.NovaAmbient : null);
+    showMusic = () => {
+      const a = amb();
+      const s = a && a.seed();
+      seedOut.textContent = s || "—";
+      keep.checked = Boolean(s && a.keptSeed() === s);
+      keep.disabled = !s;
+      const p = a && a.isPlaying() && a.piece();
+      $("music-piece").textContent = p ? `Playing: ${p.name}` : "";
+    };
+    $("music-new").addEventListener("click", () => {
+      const a = amb();
+      if (a) a.newSeed();
+      showMusic();
+    });
+    keep.addEventListener("change", () => {
+      const a = amb();
+      if (a) a.keepSeed(keep.checked);
+      showMusic();
+    });
+    replay.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const a = amb();
+      const code = $("music-code");
+      if (a && code.value.trim()) {
+        a.setSeed(code.value);
+        code.value = "";
+      }
+      showMusic();
+    });
+    window.addEventListener("novaambientseed", showMusic);
+    window.addEventListener("novaambientchange", showMusic);
+    showMusic();
   }
 
   // The music starts at the saved volume

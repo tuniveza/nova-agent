@@ -1,0 +1,74 @@
+// Measures Nova Agent's music and sound effects offline (headless Chromium, OfflineAudioContext)
+// across many random seeds, and checks the calm rules: the loudest moments around −27 dBFS or
+// lower at the default music volume, nothing near clipping even at full volume, and the gentle
+// extras far quieter than that.
+//   node scripts/audio-levels.mjs [seeds=12] [seconds=40]
+// Exits with 1 if anything breaks the rules.
+import { openLab } from "./audio-lab.mjs";
+
+const SEEDS = Number(process.argv[2] || 12);
+const SECONDS = Number(process.argv[3] || 40);
+const MUSIC_PEAK = -26.5; // dBFS at the default volume (40): "around −27 or lower"
+const FULL_GAIN_DB = 20 * Math.log10(1 / 0.4); // from the default volume to full volume
+const EXTRA_PEAK = -36; // dBFS: the gentle extras sit well under everything
+const SOUND_PEAK = -27;
+
+const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+const seed = () => Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+const f = (x) => x.toFixed(1).padStart(6);
+let bad = 0;
+
+const lab = await openLab();
+const names = await lab.names();
+console.log(`Music: ${SEEDS} seeds x ${SECONDS} s per piece, default volume (dBFS)`);
+console.log("piece      worst peak  median peak  worst loudest-0.4s  at full volume");
+for (const piece of names.pieces) {
+  const peaks = [];
+  let loud = -Infinity;
+  for (let i = 0; i < SEEDS; i++) {
+    const r = await lab.music({ seed: seed(), piece, seconds: SECONDS });
+    peaks.push(r.peakDb);
+    loud = Math.max(loud, r.loudestDb);
+    if (r.clipped || r.peakDb > MUSIC_PEAK) { bad++; console.log(`  too loud: ${piece} ${r.seed} ${r.peakDb.toFixed(1)}`); }
+  }
+  peaks.sort((a, b) => a - b);
+  console.log(`${piece.padEnd(10)} ${f(peaks[peaks.length - 1])}      ${f(peaks[Math.floor(peaks.length / 2)])}       ${f(loud)}            ${f(peaks[peaks.length - 1] + FULL_GAIN_DB)}`);
+}
+// The whole programme: pieces taking turns, crossfading
+for (let i = 0; i < Math.max(2, Math.round(SEEDS / 4)); i++) {
+  const r = await lab.music({ seed: seed(), seconds: 200, pieceSeconds: 40, fadeSeconds: 14 });
+  const repeats = r.pieces.some((p, k) => k && p === r.pieces[k - 1]);
+  if (repeats || r.peakDb > MUSIC_PEAK) bad++;
+  console.log(`programme ${r.seed}: ${r.pieces.join(" > ")}  peak ${r.peakDb.toFixed(1)}  loudest ${r.loudestDb.toFixed(1)}${repeats ? "  REPEATED A PIECE" : ""}`);
+}
+
+console.log(`\nSound effects: worst of 10 renders each (dBFS)`);
+const soft = new Set([...names.soft, "velvet"]);
+for (const name of [...names.sounds, "velvet"]) {
+  let peak = -Infinity;
+  let loud = -Infinity;
+  const seen = new Set();
+  for (let i = 0; i < 10; i++) {
+    const r = await lab.sound(name, { arg: i % 2, variant: i, theme: name === "velvet" ? ["agent", "notes", "portal", "calendar"][i % 4] : undefined, kind: i % 3 ? "scroll" : "drag" });
+    peak = Math.max(peak, r.peakDb);
+    loud = Math.max(loud, r.loudestDb);
+    seen.add(r.peakDb.toFixed(3));
+  }
+  const limit = soft.has(name) ? EXTRA_PEAK : SOUND_PEAK;
+  const ok = peak <= limit;
+  if (!ok) bad++;
+  console.log(`${(soft.has(name) ? "* " : "  ") + name.padEnd(9)} peak ${f(peak)}  loudest-0.1s ${f(loud)}  ${seen.size}/10 different${ok ? "" : "  TOO LOUD"}`);
+}
+let worst = { peakDb: -Infinity };
+for (const [theme, list] of Object.entries(names.themes))
+  for (const name of list) {
+    const r = await lab.sound(name, { theme, arg: 1 });
+    if (r.peakDb > worst.peakDb) worst = { ...r, theme };
+  }
+if (worst.peakDb > SOUND_PEAK) bad++;
+console.log(`  loudest panel sound: ${worst.theme}/${worst.name} ${worst.peakDb.toFixed(1)}`);
+console.log("(* = the gentle extras, off unless 'Quiet extras' is on)");
+if (lab.errors.length) { bad++; console.log("Page errors:", lab.errors); }
+await lab.close();
+console.log(bad ? `\n${bad} problem(s)` : "\nAll within the calm limits.");
+process.exit(bad ? 1 : 0);
