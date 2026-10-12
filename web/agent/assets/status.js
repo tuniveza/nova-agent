@@ -3,7 +3,10 @@
 //   what changed lately, in a few still words, for the part of the bar you're on (Apps, Plans,
 //     Tools, Helpers, or the panel that's open),
 //   when you came on and when you were last off (remembered on this device),
-//   what you've been doing lately (tap for the list), and a 12-hour clock.
+//   what you've been doing lately (tap for the list), the date and a 12-hour clock.
+// With a panel open (an app, a plan, a tool or a helper) it moves into the panel's frame: a slim
+// strip along its bottom, with that panel's news, so it's there on every panel (the panel gives up
+// that bit of height, so nothing in it is covered).
 // The words come from web/shared/status-data.js (made by scripts/build-status.mjs).
 // Also here: the look settings in the Panels window (theme for everything, planet colours, top bar).
 (() => {
@@ -66,6 +69,7 @@
     left: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
     act: '<path d="M3 12h4l3-7 4 14 3-7h4"/>',
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    date: '<rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
   };
   const ico = (k) => `<svg class="sl-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
   line.innerHTML = `
@@ -74,6 +78,7 @@
     <span class="sl-item sl-sess" title="When you came on, and when you last left (on this device)">${ico("here")}<span class="sl-on"></span></span>
     <span class="sl-item sl-left">${ico("left")}<span class="sl-off"></span></span>
     <button type="button" class="sl-item sl-act" data-sfx="open" aria-haspopup="true" aria-expanded="false" title="What you've been doing (tap for the list)">${ico("act")}<span class="sl-act-text"></span></button>
+    <span class="sl-item sl-date" title="Today's date">${ico("date")}<time class="sl-day"></time></span>
     <span class="sl-item sl-time">${ico("clock")}<time class="sl-clock"></time></span>`;
   const list = document.createElement("div");
   list.className = "sl-list";
@@ -82,28 +87,45 @@
   list.setAttribute("aria-label", "What you've been doing");
   document.body.append(list);
 
-  // Where it goes: under the panels strip (computer), inside the phone's bar (so they move together)
+  // Where it goes: with a panel open, a strip along the bottom of the panel's frame (on a computer
+  // and a phone alike); otherwise under the panels strip (computer), or inside the phone's bar (so
+  // they move together). Only the line moves (moving a panel's frame would reload it).
+  const viewer = $("viewer");
+  const inPanel = () => Boolean(viewer && !viewer.hidden && $("main") && $("main").classList.contains("viewing"));
   function place() {
     const bar = $("tabbar");
-    if (PHONE.matches && bar) { if (line.parentElement !== bar) bar.append(line); }
+    const panel = inPanel();
+    line.classList.toggle("sl-in-panel", panel);
+    if (panel) { if (line.parentElement !== viewer) viewer.append(line); }
+    else if (PHONE.matches && bar) { if (line.parentElement !== bar) bar.append(line); }
     else if (line.parentElement !== shell) shell.append(line);
   }
   place();
   PHONE.addEventListener("change", place);
-  // The phone's bar redraws itself now and then: keep the line in it
+  // A panel opens or closes: follow it
+  if ($("main")) new MutationObserver(place).observe($("main"), { attributes: true, attributeFilter: ["class"] });
+  if (viewer) new MutationObserver(place).observe(viewer, { attributes: true, attributeFilter: ["hidden"] });
+  // The phone's bar redraws itself now and then: keep the line in it (when no panel is open)
   const barNow = $("tabbar");
-  if (barNow) new MutationObserver(() => PHONE.matches && !barNow.contains(line) && barNow.append(line)).observe(barNow, { childList: true });
+  if (barNow) new MutationObserver(() => PHONE.matches && !inPanel() && !barNow.contains(line) && barNow.append(line)).observe(barNow, { childList: true });
 
 
-  // The clock
+  // The date ("Mon 12 Oct") and the clock ("5:45 pm"); with the date switched off, the clock keeps
+  // the day ("Mon 5:45 pm") as before
   const clock = line.querySelector(".sl-clock");
+  const day = line.querySelector(".sl-day");
   function tick() {
     const d = new Date();
-    clock.textContent = `${weekday(d)} ${time12(d)}`;
+    const noDate = (line.dataset.hide || "").split(" ").includes("date");
+    day.textContent = d.toLocaleDateString("en-GB", { ...UK, weekday: "short", day: "numeric", month: "short" });
+    day.dateTime = d.toLocaleDateString("en-CA", UK);
+    clock.textContent = noDate ? `${weekday(d)} ${time12(d)}` : time12(d);
     clock.dateTime = d.toISOString();
-    clock.title = d.toLocaleDateString("en-GB", { ...UK, weekday: "long", day: "numeric", month: "long" });
+    clock.title = day.title = d.toLocaleDateString("en-GB", { ...UK, weekday: "long", day: "numeric", month: "long", year: "numeric" });
   }
   tick();
+  // (the date switched on or off in the settings)
+  new MutationObserver(tick).observe(line, { attributes: true, attributeFilter: ["data-hide"] });
   setTimeout(() => { tick(); setInterval(tick, 60000); }, (60 - new Date().getSeconds()) * 1000);
 
   // On / off
@@ -275,7 +297,7 @@
   const line = document.getElementById("status-line");
   if (!line) return;
   const MODES = { auto: "Auto", shown: "Always shown", hidden: "Always hidden" };
-  const PARTS = { ver: "Version", news: "What's new", sess: "Here since", left: "Last left", act: "Activity", time: "Clock" };
+  const PARTS = { ver: "Version", news: "What's new", sess: "Here since", left: "Last left", act: "Activity", date: "Date", time: "Clock" };
   const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (err) { return d; } };
   const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (err) {} };
   let mode = load("nova-status", "auto");

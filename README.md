@@ -324,9 +324,13 @@ you're done or the mouse goes to the bottom.
 **The status line** runs under the panels bar (inside the bar on a phone), one line tall: the
 version and build, the latest change in a few still words (for the group or panel you point at,
 or the one that's open), when you came on and were last off, what
-you've done lately (tap it for the list) and a 12-hour clock (`web/agent/assets/status.js`;
-the words come from `web/shared/status-data.js`, made by `npm run status`, which `npm run manual`
-runs too).
+you've done lately (tap it for the list), the date ("Mon 12 Oct") and a 12-hour clock
+(`web/agent/assets/status.js`; the words come from `web/shared/status-data.js`, made by
+`npm run status`, which `npm run manual` runs too). With a panel open (an app, a plan, a tool or a
+helper) the same line sits as a slim strip along the bottom of the panel, with that panel's news;
+the panel gives up that height, so nothing in it is covered. Narrow windows drop the version, the
+times and the activity first; the panel's name, the date and the clock stay. Always hidden hides it
+everywhere; each part (the date too) can be switched off in the Panels window.
 
 **The icons** are little glowing scenes of space, each on its own small Novacane nebula (its own
 colour mixed with the theme's): the Novacane sigil in an orbiting orb (Agent), a ringed planet and
