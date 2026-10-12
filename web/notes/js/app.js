@@ -802,6 +802,7 @@
       { label: 'Google Docs set-up…', icon: 'drive', run: () => openGdocs(true) }
     ]],
     ['Help', () => [
+      { label: 'Welcome guide', icon: 'spark', run: () => openGuide() },
       { label: 'Install Notes as an app', icon: 'export', run: installApp },
       { label: 'Keyboard shortcuts', icon: 'keys', kbd: 'Ctrl+/', run: showKeys },
       // Every Nova Agent address, live and testing (admins: in Portal → Admin, the one place for admin things)
@@ -1114,6 +1115,83 @@
     $('keys').innerHTML = groups.map(([g, rows]) => `<h3>${g}</h3>${rows.map(([what, k]) => `<div><span>${what}</span><span>${keys(k)}</span></div>`).join('')}`).join('');
     $('dlg-keys').showModal();
   }
+
+  // ---------- THE WELCOME GUIDE ----------
+  // A page you can click through (Help → Welcome guide), shown once, the first time Notes opens
+  // in this browser. Topics along the top jump to their part; each part's buttons try it out.
+  const guide = $('dlg-guide');
+  const guideBody = $('guide-body');
+  function openGuide(topic) {
+    closeMenus();
+    if (!guide.open) guide.showModal();
+    guideBody.scrollTop = 0;
+    if (topic) gotoGuide(topic);
+    markGuide();
+  }
+  function gotoGuide(id) {
+    const sec = $(id);
+    if (!sec) return;
+    guideBody.scrollTo({ top: sec.offsetTop - guideBody.offsetTop - 8 });
+    sec.classList.remove('flash');
+    void sec.offsetWidth;
+    sec.classList.add('flash');
+  }
+  // The topic you're reading is lit up along the top
+  function markGuide() {
+    const top = guideBody.scrollTop + guideBody.offsetTop + 40;
+    let at = null;
+    for (const sec of guideBody.querySelectorAll('.guide-sec')) if (sec.offsetTop <= top) at = sec.id;
+    for (const b of guide.querySelectorAll('[data-goto]')) b.setAttribute('aria-current', String(b.dataset.goto === (at || 'g-start')));
+  }
+  guideBody.addEventListener('scroll', markGuide, { passive: true });
+  guide.querySelector('.guide-toc').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-goto]');
+    if (b) gotoGuide(b.dataset.goto);
+  });
+  const shown = (el) => Boolean(el && el.offsetParent !== null);
+  const menuButton = (name) => [...$('menubar').children].find((b) => b.textContent === name);
+  const GUIDE_ACTIONS = {
+    new: () => newNote(),
+    library: () => toggleLibrary(),
+    outline: () => toggleOutline(),
+    find: () => openFind(),
+    focus: () => toggleFocus(),
+    keys: () => showKeys(),
+    import: () => openImport(),
+    gdocs: () => openGdocs(),
+    export: () => {
+      if (shown($('btn-export'))) openMenu($('btn-export'), exportItems());
+      else if (menuButton('File')) menuButton('File').click();
+    },
+    theme: () => {
+      const t = $('themes');
+      if (shown(t)) {
+        t.scrollIntoView({ block: 'nearest', inline: 'center' });
+        t.classList.remove('flash');
+        void t.offsetWidth;
+        t.classList.add('flash');
+        const on = t.querySelector('[aria-checked="true"]') || t.querySelector('button');
+        if (on) on.focus();
+      } else if (menuButton('Tools')) menuButton('Tools').click();
+    },
+    'scope-shared': () => showScope('shared'),
+    'scope-local': () => showScope('local'),
+    'scope-all': () => showScope('all')
+  };
+  function showScope(k) {
+    const b = document.querySelector(`#lib-scope [data-scope="${k}"]`);
+    if (b) b.click();
+    if (narrow.matches) shell.classList.add('show-library');
+    else if (!settings.library) toggleLibrary();
+  }
+  guide.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-guide]');
+    if (!b) return;
+    const act = GUIDE_ACTIONS[b.dataset.guide];
+    if (!act) return;
+    guide.close();
+    setTimeout(act, 60); // once the guide has stepped aside
+  });
 
   // ---------- GOOGLE DOCS ----------
 
@@ -1576,7 +1654,11 @@
     }
   }
 
-  // ---------- WELCOME NOTE ----------
+  // ---------- THE OLD WELCOME NOTE ----------
+  // Notes used to make this note whenever it found no notes, and a new browser finds none before
+  // the team's shared notes arrive, so copies piled up in Shared. The Welcome guide (Help →
+  // Welcome guide) took its place. Copies nobody changed are tidied away, quietly and everywhere
+  // (the normal delete, so other devices hear); a copy someone changed is kept.
 
   const WELCOME = `<p class="title">Welcome to Notes</p>
 <p class="subtitle">Notes that write from the centre of the universe outwards.</p>
@@ -1594,6 +1676,23 @@
 <hr>
 <p><i>Your notes stay in this browser. Nothing leaves it unless you export it.</i></p>`;
 
+  const textOf = (html) => new DOMParser().parseFromString(String(html || ''), 'text/html').body.textContent.replace(/\s+/g, ' ').trim();
+  const WELCOME_TEXT = textOf(WELCOME);
+  function tidy() {
+    const copies = notes.filter((n) => n.title === 'Welcome to Notes' && textOf(n.html) === WELCOME_TEXT);
+    if (!copies.length) return;
+    for (const n of copies) {
+      const i = notes.indexOf(n);
+      if (i >= 0) notes.splice(i, 1); // in place: js/shared.js keeps the same list
+      S.notes.remove(n.id).catch(() => {});
+    }
+    if (current && copies.some((n) => n.id === current.id)) {
+      const next = [...notes].sort((a, b) => b.updated.localeCompare(a.updated))[0];
+      if (next) openNote(next.id);
+      else createNote();
+    } else if (current) renderLibrary();
+  }
+
   // ---------- START ----------
 
   async function start() {
@@ -1607,14 +1706,32 @@
     setZoom(settings.zoom || 1);
     applyPanels();
     notes = await S.notes.all();
+    // A new browser, signed in: the team's shared notes may not have arrived yet, so give them a
+    // moment before deciding there are none
+    if (!notes.length && NN.shared && NN.shared.signedIn !== false) {
+      await Promise.race([Promise.resolve(NN.shared.sync && NN.shared.sync()).catch(() => {}), new Promise((r) => setTimeout(r, 4000))]);
+      notes = await S.notes.all();
+    }
+    tidy();
+    // Still none: one blank note, kept in this browser only (Local) until you move it
     if (!notes.length) {
-      await createNote(WELCOME, 'Welcome to Notes', false, false);
+      const now = new Date().toISOString();
+      const blank = S.notes.clean({ id: S.notes.newId(), title: 'Untitled note', html: '', named: false, created: now, updated: now });
+      blank.shared = false;
+      await S.notes.put(blank);
+      notes.push(blank);
     }
     const first = notes.find((n) => n.id === settings.lastId) || [...notes].sort((a, b) => b.updated.localeCompare(a.updated))[0];
     await openNote(first.id);
     $('btn-new').addEventListener('click', newNote);
     await handleLaunch();
     registerOffline();
+    // The Welcome guide, once: the first time Notes opens in this browser
+    if (!settings.guided) {
+      settings.guided = true;
+      saveSettings();
+      setTimeout(() => openGuide(), 1000);
+    }
     // Let the launch screen finish its moment, then fade into the app
     // (at least 0.9 s after the script started, so the N and the name are seen)
     const waited = performance.now() - scriptStart;
@@ -1627,5 +1744,5 @@
   start();
 
   // For the README's screenshots and for checking things by hand in the console
-  NN.app = { editor, run, openNote, newNote, importFiles, exportAs, setTheme, setPage, notes: () => notes };
+  NN.app = { editor, run, openNote, newNote, importFiles, exportAs, setTheme, setPage, notes: () => notes, tidy, openGuide };
 })();

@@ -449,6 +449,98 @@
   </div>
 </dialog>
 
+<!-- The Welcome guide: a page you can click through (Help → Welcome guide; shown once, the first time) -->
+<dialog class="dlg wide guide" id="dlg-guide" aria-labelledby="guide-title">
+  <div class="dlg-inner">
+    <div class="dlg-head">
+      <svg class="app-mark lg" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
+      <div><span class="dlg-kicker">Welcome guide</span><h2 id="guide-title">Welcome to Notes</h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </div>
+    <nav class="guide-toc" aria-label="In this guide">
+      <button type="button" data-goto="g-start">Start</button>
+      <button type="button" data-goto="g-write">Writing</button>
+      <button type="button" data-goto="g-look">The look</button>
+      <button type="button" data-goto="g-shared">Shared · Local</button>
+      <button type="button" data-goto="g-io">In and out</button>
+      <button type="button" data-goto="g-keys">Shortcuts</button>
+    </nav>
+    <div class="dlg-body guide-body" id="guide-body">
+      <p class="guide-lede">Notes that write from the centre of the universe outwards. Tap a topic above, or a button to try it.</p>
+
+      <section class="guide-sec" id="g-start">
+        <h3>Start anywhere</h3>
+        <p>Everything you write lines up in the middle of the page, headings and all. Your notes are listed on the left; the outline of the open note is on the right.</p>
+        <div class="guide-try">
+          <button type="button" class="btn primary sm" data-guide="new"><svg class="ico"><use href="#i-plus"/></svg><span>Start a new note</span></button>
+          <button type="button" class="btn ghost sm" data-guide="library"><svg class="ico"><use href="#i-sidebar"/></svg><span>Show or hide the list</span></button>
+          <button type="button" class="btn ghost sm" data-guide="outline"><svg class="ico"><use href="#i-outline"/></svg><span>Show or hide the outline</span></button>
+        </div>
+      </section>
+
+      <section class="guide-sec" id="g-write">
+        <h3>Write the way you do in Google Docs</h3>
+        <ul>
+          <li>Title, subtitle, three headings, quotes and code (<i>Format → Paragraph style</i>)</li>
+          <li>Fonts, sizes, colours and highlights from the toolbar</li>
+          <li>Lists, checklists, tables, pictures, links and page breaks (<i>Insert</i>)</li>
+        </ul>
+        <p>As you type: <kbd>#</kbd> then space for a heading, <kbd>-</kbd> for a list, <kbd>[]</kbd> for a checklist, <kbd>&gt;</kbd> for a quote.</p>
+        <div class="guide-try">
+          <button type="button" class="btn ghost sm" data-guide="find"><svg class="ico"><use href="#i-search"/></svg><span>Find and replace</span></button>
+          <button type="button" class="btn ghost sm" data-guide="focus"><svg class="ico"><use href="#i-spark"/></svg><span>Focus mode</span></button>
+        </div>
+      </section>
+
+      <section class="guide-sec" id="g-look">
+        <h3>Make it yours</h3>
+        <p>Pick a colour theme from the swatches at the top (or <i>Tools → Colour theme</i>), and a page style and zoom from the toolbar.</p>
+        <div class="guide-try">
+          <button type="button" class="btn ghost sm" data-guide="theme"><svg class="ico"><use href="#i-color"/></svg><span>Show me the themes</span></button>
+        </div>
+      </section>
+
+      <section class="guide-sec" id="g-shared">
+        <h3>Shared and Local</h3>
+        <p><b>Shared</b> notes are the team's: signed in, everyone sees and edits them on every device. <b>Local</b> notes stay in this browser only. The button by “Saved” moves the open note between the two.</p>
+        <div class="guide-try">
+          <button type="button" class="btn ghost sm" data-guide="scope-shared"><span>Show Shared notes</span></button>
+          <button type="button" class="btn ghost sm" data-guide="scope-local"><span>Show Local notes</span></button>
+          <button type="button" class="btn ghost sm" data-guide="scope-all"><span>Show all</span></button>
+        </div>
+      </section>
+
+      <section class="guide-sec" id="g-io">
+        <h3>In and out</h3>
+        <p><b>Import</b> Word documents, web pages, Markdown and text files, or drop them onto the window. <b>Export</b> to Word, a web page, Markdown, plain text or PDF, or send the note to <b>Google Docs</b> with its styling.</p>
+        <div class="guide-try">
+          <button type="button" class="btn ghost sm" data-guide="import"><svg class="ico"><use href="#i-import"/></svg><span>Import a file</span></button>
+          <button type="button" class="btn ghost sm" data-guide="export"><svg class="ico"><use href="#i-export"/></svg><span>Export</span></button>
+          <button type="button" class="btn ghost sm" data-guide="gdocs"><svg class="ico"><use href="#i-doc"/></svg><span>Google Docs</span></button>
+        </div>
+      </section>
+
+      <section class="guide-sec" id="g-keys">
+        <h3>Shortcuts</h3>
+        <table class="nn-table guide-keys"><tbody>
+          <tr><td>Heading 1, 2, 3</td><td><kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>1–3</kbd></td></tr>
+          <tr><td>Bulleted list</td><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>8</kbd></td></tr>
+          <tr><td>Add a link</td><td><kbd>Ctrl</kbd> <kbd>K</kbd></td></tr>
+          <tr><td>Find and replace</td><td><kbd>Ctrl</kbd> <kbd>H</kbd></td></tr>
+          <tr><td>New note</td><td><kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>N</kbd></td></tr>
+        </tbody></table>
+        <div class="guide-try">
+          <button type="button" class="btn ghost sm" data-guide="keys"><svg class="ico"><use href="#i-keys"/></svg><span>Every shortcut</span></button>
+        </div>
+      </section>
+      <p class="guide-foot-note">This guide is always in <i>Help → Welcome guide</i>.</p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn primary" data-close>Start writing</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog class="dlg small" id="dlg-about" aria-labelledby="about-title">
   <div class="dlg-inner">
     <div class="dlg-head">

@@ -733,3 +733,34 @@ html.embed .topbar .brand { display: none; }
    snippet breaks onto the next line */
 .pop, .menu-pop { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; }
 .lib-snip { overflow-wrap: anywhere; }
+
+/* ---------- The Welcome guide (Help → Welcome guide; shown once, the first time) ----------
+   A page you can click through: topics along the top jump to their part, and each part has
+   buttons to try it. The box stays on screen; only its contents scroll. */
+dialog.dlg.guide .dlg-inner { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); }
+dialog.dlg.guide .dlg-body { flex: 1 1 auto; min-height: 0; overscroll-behavior: contain; scroll-behavior: smooth; text-align: center; }
+.guide-toc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.guide-toc button {
+  min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--void) 40%, transparent); color: var(--muted, var(--text));
+  font: 600 13px/1 var(--f-body, inherit); cursor: pointer; transition: border-color .2s ease, color .2s ease, background-color .2s ease;
+}
+.guide-toc button:hover, .guide-toc button[aria-current="true"] { color: #fff; border-color: var(--hi); background: color-mix(in srgb, var(--hi) 16%, transparent); }
+.guide-toc button:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+.guide-lede { margin: 0; font-size: 15px; color: var(--muted, var(--text)); overflow-wrap: anywhere; }
+.guide-sec { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--void) 30%, transparent); scroll-margin-top: 8px; }
+.guide-sec h3 { margin: 0; font-family: var(--f-display); font-stretch: 115%; font-weight: 800; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: #fff; }
+.guide-sec p, .guide-sec ul { margin: 0; line-height: 1.55; overflow-wrap: anywhere; }
+.guide-sec ul { list-style: none; padding: 0; display: grid; gap: 4px; }
+.guide-sec ul li::before { content: "✦ "; color: var(--hi); }
+.guide-sec.flash { animation: guide-flash 1.2s ease-out; }
+@keyframes guide-flash { from { border-color: var(--hi); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 30%, transparent); } }
+.guide-try { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 2px; }
+.guide-try .btn { max-width: 100%; }
+.guide-keys { width: 100%; max-width: 440px; margin: 0 auto; border-collapse: collapse; }
+.guide-keys td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.guide-keys td:last-child { text-align: right; white-space: nowrap; }
+.guide-foot-note { margin: 0; font-size: 13px; color: var(--muted, var(--text)); }
+dialog.dlg.guide .dlg-foot { justify-content: center; }
+@media (prefers-reduced-motion: reduce) { dialog.dlg.guide .dlg-body { scroll-behavior: auto; } .guide-sec.flash { animation: none; } }
+.themes.flash { animation: guide-flash 1.2s ease-out; border-radius: 999px; }

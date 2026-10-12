@@ -360,6 +360,7 @@
       Object.assign(n, fresh);
       if (raw.id === open && (words || raw.id === reload)) NN.app.openNote(raw.id);
     }
+    if (NN.app.tidy) NN.app.tidy(); // untouched copies of the old Welcome note (js/app.js)
     rerender();
     decorate();
   }
@@ -522,6 +523,7 @@
     n.shared = toShared;
     if (!toShared) delete n.rev;
     await NN.store.notes.put(n);
+    if (NN.app.tidy) NN.app.tidy(); // untouched copies of the old Welcome note (js/app.js)
     rerender();
     decorate();
     tellUndo(toShared ? `“${n.title}” is shared with the team.` : `“${n.title}” is now only on this device (taken out of the team's notes).`, 'Undo', async () => {
