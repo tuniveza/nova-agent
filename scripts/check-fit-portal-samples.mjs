@@ -674,6 +674,35 @@ const moneyInvoiceBody = (id) => ({
 });
 
 // ----- Router -----
+// ----- Test stuff (admins): Nova Bot's list and the PC's -----
+const TS_KINDS = ["Enquiry", "Website chat", "Chat booking", "Client", "Index page", "Shared note", "Social post", "Invoice"];
+const tsItem = (i, side) => ({
+  key: (side === "pc" ? "quest:" : "chat:") + "ts" + i,
+  kind: side === "pc" ? "quest" : "chat",
+  kindName: side === "pc" ? ["Quest", "Calendar note", "Fixer job", "File"][i % 4] : TS_KINDS[i % TS_KINDS.length],
+  id: "ts" + i,
+  title: i === 0 ? "“" + LONGWORD + LONGWORD2 + "”" : i % 3 ? "Sensual Shagger: 2026-10-08 13:00 " + PARA(1).slice(0, 40) : "“How much is a studio session?”",
+  confidence: i % 4 === 3 ? "maybe" : "likely",
+  reasons: [
+    { text: "Uses " + ME_NAME + "'s own email", strong: true },
+    { text: "Rude or joke words: “" + LONGWORD + "”", strong: true },
+    ...(i % 2 ? [{ text: "Starts the same way as 4 other chats minutes apart", strong: false }] : []),
+  ],
+  linked: i % 3 === 0 ? [{ key: "booking:1", kind: "booking", kindName: "Chat booking", label: "Bollard Baxter: 2026-12-01 10:00 " + LONGWORD }, { key: "index:f" + i, kind: "index", kindName: "Index page", label: "Index page “topics/" + LONGWORD2 + "”" }] : [],
+  side,
+  where: side === "pc" ? "Quests" : "Conversations (website bot)",
+  open: side === "pc" ? "/portal/?view=quests" : "/portal/?view=chats",
+  created: iso(3 + (i % 5), 9 + i),
+  by: i % 2 ? "The website bot" : LONGWORD,
+  ...(i === 5 ? { locked: true, note: "It has sessions, money or consent records, so it can't be deleted here." } : {}),
+});
+const tsRecent = (side) => [0, 1, 2].map((i) => ({ binId: side + "-b" + i, key: "chat:x" + i, kind: "chat", kindName: "Website chat", title: i ? "“record your mum” " + LONGWORD : "Fart 💨", deletedBy: ME_NAME, deletedAt: iso(10, 9 + i), restoredBy: i === 2 ? ME_NAME : null, restoredAt: i === 2 ? iso(11, 9) : null, ...(i === 1 && side === "pc" ? { noRestore: true } : {}) }));
+const tsReal = (side) => [{ key: "chat:r" + side, kind: "chat", kindName: "Website chat", title: "“I want to do work experience here” " + LONGWORD, markedBy: ME_NAME, markedAt: iso(9, 12) }];
+function tidyBody(side) {
+  const items = Array.from({ length: side === "pc" ? 4 : 9 }, (_, i) => tsItem(i + (side === "pc" ? 20 : 0), side));
+  return { items, recent: tsRecent(side), real: tsReal(side), counts: { likely: items.filter((i) => i.confidence === "likely").length, maybe: items.filter((i) => i.confidence === "maybe").length } };
+}
+
 export function portalMock(pathWithQuery, method = "GET") {
   let raw = String(pathWithQuery || "");
   try {
@@ -722,6 +751,8 @@ export function portalMock(pathWithQuery, method = "GET") {
   hit = /^social\/(\d+)$/.exec(path);
   if (hit) return { post: SOCIAL_POSTS.find((p) => p.id === Number(hit[1])) || SOCIAL_POSTS[0], log: ["created", "submitted", "approved", "posting", "posted"].map((event, i) => ({ at: iso(1 + i, 10), event, byName: ME_NAME, detail: i % 2 ? LONGWORD : "" })) };
   if (path === "money") return moneyBody();
+  if (path === "tidy") return tidyBody("bot");
+  if (path === "tidy-api/state") return tidyBody("pc");
   hit = /^money\/invoices\/(\d+)$/.exec(path);
   if (hit) return moneyInvoiceBody(Number(hit[1]));
   if (path === "clients") return clientsBody(query);

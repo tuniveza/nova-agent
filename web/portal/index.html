@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="/portal/app.css">
 <link rel="stylesheet" href="/portal/portal.css">
 <link rel="stylesheet" href="/portal/money.css">
+<link rel="stylesheet" href="/portal/teststuff.css">
 <!-- The tab bar across the top (Options → Menu: "Side menu" switches it off) -->
 <link rel="stylesheet" href="/portal/tabbar.css" id="tabbar-css">
 <link rel="stylesheet" href="/portal/social.css">
@@ -299,6 +300,8 @@
             <button class="t-tile" type="button" data-go="money"><span class="t-num" id="t-money">–</span><span class="t-label">Invoices overdue</span></button>
           </div>
           <button id="today-booking-tools" class="chip today-tools" type="button">Booking tools · week at a glance and free slots</button>
+          <!-- Admins: what looks like test stuff (teststuff.js; hidden when there's nothing) -->
+          <button id="today-tests" class="chip today-tools" type="button" hidden><span id="today-tests-n">Things look like tests</span> · look</button>
         </section>
         <section class="group" aria-labelledby="today-plans-head">
           <h3 class="group-head" id="today-plans-head">Plans</h3>
@@ -603,6 +606,42 @@
         <button class="chip" type="button" data-mn="year" aria-pressed="false">Tax year</button>
       </div>
       <div id="money-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
+    </section>
+
+    <!-- Test stuff (admins): things that look like tests or copies, with why, where, when, by whom and
+         what goes with them; Delete (a copy goes in the bin for 30 days) or Not a test (teststuff.js;
+         Nova Bot's src/tidy.js and the studio PC's src/tidy.ts) -->
+    <section id="view-tests" class="view ts" aria-labelledby="tests-title" hidden>
+      <div class="view-head">
+        <h2 id="tests-title">Test stuff</h2>
+        <button id="tests-refresh" class="chip" type="button">Check again</button>
+      </div>
+      <p class="hint">Things that look like tests or copies. Check each one, then delete it or keep it. Anything deleted can be put back for 30 days.</p>
+      <p id="tests-summary" class="ts-summary" tabindex="-1" aria-live="polite">Loading…</p>
+      <p id="tests-note" class="hint ts-offline" role="note" hidden></p>
+      <div id="tests-live" class="ts-live" role="status" aria-live="polite" hidden></div>
+      <div id="tests-filters" class="chips wrap ts-filters" role="group" aria-label="Show"></div>
+      <div class="ts-all">
+        <button id="tests-delete-all" class="btn danger" type="button" hidden>Delete all likely</button>
+        <p id="tests-delete-all-hint" class="hint" hidden>Press again to delete them all (each can be put back for 30 days). Esc to cancel.</p>
+      </div>
+      <section id="tests-likely-group" class="group" aria-labelledby="tests-likely-head" hidden>
+        <h3 class="group-head" id="tests-likely-head">Likely tests</h3>
+        <div id="tests-likely" class="list" aria-busy="true"><div class="skeleton"></div></div>
+      </section>
+      <section id="tests-maybe-group" class="group" aria-labelledby="tests-maybe-head" hidden>
+        <h3 class="group-head" id="tests-maybe-head">Maybe</h3>
+        <div id="tests-maybe" class="list"></div>
+      </section>
+      <p id="tests-empty" class="empty" hidden></p>
+      <details id="tests-recent-wrap" class="ts-more" hidden>
+        <summary>Recently deleted · <span id="tests-recent-count">0</span></summary>
+        <ul id="tests-recent" class="ts-rows"></ul>
+      </details>
+      <details id="tests-real-wrap" class="ts-more" hidden>
+        <summary>Marked as real · <span id="tests-real-count">0</span></summary>
+        <ul id="tests-real" class="ts-rows"></ul>
+      </details>
     </section>
 
     <!-- Clients: everyone who's booked through Acuity, sent an enquiry, been imported from Acuity's
@@ -1106,6 +1145,11 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="M9.5 12h5M12 9.5v5"/></svg>
       <span>Admin</span>
     </button>
+    <!-- Test stuff (admins only): what looks like tests or copies, to check and delete -->
+    <button class="tab tab-more" id="nav-tests" data-view="tests" type="button" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/><path d="M7.5 14h9"/></svg>
+      <span>Test stuff</span><span id="tests-badge" class="badge" hidden></span>
+    </button>
     <!-- Inside Nova Agent only (Portal's own top bar steps aside): its buttons, here -->
     <span class="tab-group embed-only" data-group="settings" aria-hidden="true">Settings</span>
     <button class="tab tab-more embed-only" id="nav-voice" type="button" title="Voice command">
@@ -1384,6 +1428,7 @@
 <script src="/portal/app.js"></script>
 <script src="/portal/social.js"></script>
 <script src="/portal/money.js"></script>
+<script src="/portal/teststuff.js"></script>
 <script src="/portal/portal.js"></script>
 <script src="/portal/tabbar.js"></script>
 <script src="/shared/badge.js" defer></script>

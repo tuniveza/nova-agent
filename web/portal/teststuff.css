@@ -1,0 +1,85 @@
+/* Portal → Test stuff (teststuff.js): calm cards, reasons in words, big buttons. Colour only ever
+   repeats what the words say ("Likely a test", "Maybe a test"). */
+
+.ts .view-head { gap: 10px; }
+.ts .view-head .chip { min-height: 44px; }
+.ts-summary { margin: 4px 0 12px; font-size: 17px; font-weight: 600; color: var(--bright); text-align: center; overflow-wrap: anywhere; }
+.ts-summary:focus-visible, .ts-title:focus-visible { outline: 3px solid var(--hi); outline-offset: 4px; border-radius: 8px; }
+.ts-offline { margin: 0 0 12px; padding: 10px 14px; border: 1px dashed var(--line-strong); border-radius: 14px; }
+
+/* What just happened, with Put back */
+.ts-live {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px;
+  margin: 0 0 14px; padding: 10px 14px; border-radius: 16px; border: 1px solid var(--line);
+  background: rgba(var(--panel-2-rgb), 0.55); color: var(--bright); font-size: 15px; overflow-wrap: anywhere;
+}
+.ts-live[hidden] { display: none; }
+
+.ts-filters { justify-content: center; margin: 0 0 12px; }
+.ts-filters .chip { min-height: 44px; }
+
+.ts-all { display: grid; justify-items: center; gap: 6px; margin: 0 0 16px; }
+.ts-all .btn { min-height: 48px; max-width: 100%; white-space: normal; text-align: center; }
+.ts-all .hint { margin: 0; text-align: center; }
+
+/* A card: what it is (in words), why, what goes with it, then the buttons */
+.ts-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+.ts-card > * { min-width: 0; }
+.ts-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.ts-pill, .ts-kind {
+  display: inline-flex; align-items: center; min-height: 26px; padding: 2px 10px; border-radius: 999px;
+  font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.ts-pill-likely { border: 1px solid rgba(var(--bad-rgb), 0.55); color: var(--bright); background: rgba(var(--bad-rgb), 0.14); }
+.ts-pill-maybe { border: 1px dashed var(--line-strong); color: var(--text); }
+.ts-kind { border: 1px solid var(--line); color: var(--muted); }
+.ts-title { margin: 0; font-size: 17px; line-height: 1.35; color: var(--bright); overflow-wrap: anywhere; }
+/* (in words, readable: not the small capitals card-meta uses elsewhere, and it wraps) */
+.ts .ts-meta { margin: 0; white-space: normal; font-family: inherit; font-size: 14px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--muted); overflow-wrap: anywhere; }
+
+.ts-why { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.ts-why-label { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.ts-reasons { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; min-width: 0; }
+.ts-reason {
+  padding: 4px 10px; border-radius: 12px; border: 1px solid var(--line);
+  background: rgba(var(--void-rgb), 0.35); color: var(--text); font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; min-width: 0;
+}
+/* (a strong reason reads a little bolder: the words already say what it is) */
+.ts-reason.strong { color: var(--bright); font-weight: 600; border-color: var(--line-strong); }
+.ts-note { margin: 0; }
+
+.ts-linked { display: grid; gap: 6px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.25); min-width: 0; }
+.ts-linked-head { margin: 0; font-size: 14px; color: var(--muted); }
+.ts-linked-list { margin: 0; padding-left: 18px; font-size: 14.5px; color: var(--text); overflow-wrap: anywhere; }
+.ts-check { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-size: 15px; color: var(--bright); cursor: pointer; }
+.ts-check input { width: 22px; height: 22px; margin: 0; accent-color: var(--hi); flex: none; }
+.ts-check input:focus-visible { outline: 3px solid var(--hi); outline-offset: 3px; }
+
+.ts-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.ts .btn.small { min-height: 44px; padding: 0 18px; font-size: 12px; }
+
+/* Recently deleted, and what's marked as real */
+.ts-more { margin: 14px 0 0; border: 1px solid var(--line); border-radius: 16px; background: rgba(var(--void-rgb), 0.2); }
+.ts-more > summary {
+  display: flex; align-items: center; min-height: 48px; padding: 0 16px; cursor: pointer; list-style: none;
+  font-family: var(--f-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text);
+}
+.ts-more > summary::-webkit-details-marker { display: none; }
+.ts-more > summary::before { content: "▸"; margin-right: 10px; }
+.ts-more[open] > summary::before { content: "▾"; }
+.ts-more > summary:focus-visible { outline: 3px solid var(--hi); outline-offset: 2px; border-radius: 14px; }
+.ts-rows { display: grid; gap: 8px; margin: 0; padding: 0 12px 12px; list-style: none; }
+.ts-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 12px; border-radius: 14px;
+  border: 1px solid var(--line); background: rgba(var(--panel-2-rgb), 0.35); min-width: 0;
+}
+.ts-row-text { flex: 1 1 220px; min-width: 0; color: var(--bright); font-size: 15px; overflow-wrap: anywhere; }
+.ts-row-when { color: var(--muted); font-size: 13.5px; overflow-wrap: anywhere; }
+
+@media (max-width: 480px) {
+  .ts-actions .btn { flex: 1 1 auto; }
+  .ts-row .btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ts-card, .ts-live { transition: none; animation: none; }
+}

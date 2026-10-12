@@ -1,4 +1,4 @@
-// Portal's work tabs: enquiries, conversations, the calendar, clients, money (money.js), approvals, campaigns, quests, alerts, the Website bot,
+// Portal's work tabs: enquiries, conversations, the calendar, clients, money (money.js), approvals, campaigns, quests, alerts, the Website bot, test stuff (teststuff.js),
 // push and voice. All data comes from /app/api/ (a Portal sign-in is needed). Everything from
 // the server is shown as plain text, never as HTML.
 // portal.js runs the page (signing in, the address, the You tab); it starts these tabs with
@@ -10,9 +10,9 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot", "tests"];
   // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
-  const MORE = ["clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot"];
+  const MORE = ["clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot", "tests"];
   let currentView = "today";
   let running = false;
   let sessions = null; // session types for booking links
@@ -213,6 +213,8 @@
     if (window.PortalSocial) window.PortalSocial.load();
     // The Money badge (invoices waiting for an admin, and overdue ones): money.js
     if (window.PortalMoney) window.PortalMoney.load();
+    // Admins: what looks like test stuff (the Test stuff badge and Today's line): teststuff.js
+    if (window.PortalTests) window.PortalTests.load();
     // Light the bell up if this phone already gets notifications
     updateNotifyPanel();
     // Hands-free voice: the mic glows, and listening starts
@@ -271,6 +273,7 @@
     if (view === "clients") loadClients();
     // (Today's "Invoices overdue" too)
     if ((view === "money" || view === "today") && window.PortalMoney) window.PortalMoney.load();
+    if ((view === "tests" || view === "today") && window.PortalTests) window.PortalTests.load();
     // Every section keeps the Alerts badge up to date; the Alerts tab also shows the list
     loadAlerts();
     if (view === "bot") setTimeout(() => $("bot-input").focus({ preventScroll: true }), 50);
@@ -5197,7 +5200,7 @@
   // ===== Start: portal.js starts the tabs once someone's signed in =====
   // (openOptions: Nova Agent's gear opens Portal's Options when Portal is the panel showing;
   //  showOnly: portal.js shows its own views the same way)
-  // kit: the helpers Social (social.js) and Money (money.js) draw with
+  // kit: the helpers Social (social.js), Money (money.js) and Test stuff (teststuff.js) draw with
   const kit = { api, el, reconcile, redraw, setText, setBadge, syncCounts, emptyState, sig, when, ukWhen, ukLocal, ukToIso, calm, toast, goView, get running() { return running; }, get view() { return currentView; } };
   window.PortalApp = { VIEWS, start, stop, show, showOnly, openOptions, kit, get view() { return currentView; } };
 })();

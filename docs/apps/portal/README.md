@@ -228,6 +228,19 @@ Agent's money tools: `money_summary`, `list_invoices`, `draft_invoice`, `edit_in
 
 Setting it up: invoices are emailed with Nova Bot's own Resend key (`RESEND_API_KEY`) from `INVOICE_FROM` (or the enquiry replies' from address). Card payments use the Stripe keys Nova Bot already has (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`); the same webhook records invoice payments. The tables come from Nova Bot's `migrations/0029_money.sql`.
 
+## Test stuff
+
+Portal → **Test stuff** (in Admin; admins only) lists things that look like tests or copies, so they can be cleared in a few taps. Today shows a quiet line ("3 things look like tests · look") when there are any, and the tab has a count of the likely ones.
+
+- **Where it looks:** on Nova Bot, enquiries, website chats, chat bookings (and their booking jobs), clients, Index pages, shared notes, and drafts that haven't gone anywhere (social posts, one-to-one emails, invoices, expenses). On the studio PC, quests, missions, calendar notes, Fixer jobs and Agent's files. PC off: Nova Bot's list still shows, and it says the PC's part isn't checked.
+- **Why it thinks so,** in words on each card: a staff member's own email or a TV and film phone number (07700 900…) used as a customer; test, rude or joke words, or a name from the studio's own tests (the list is `src/tidy-words.js` in Nova Bot and `src/tidy-words.ts` here: change both); keyboard mashing; the same first message in several chats minutes apart; Claude's test chats; chat bookings that never reached Acuity; Index pages whose chat is gone; the same facts, note, draft or file twice (the newest stays); copies of a quest (the one in progress stays); quests seconds long, made and finished within minutes (reminder tests); Fixer fixes for a problem that's gone or was fixed another way. One strong reason, or two weaker ones, makes it **Likely a test**; one weaker one makes it **Maybe**. A real client (sessions, money, consent, invoices) is never listed unless a strong sign says so, and then only as Maybe, and it can't be deleted here.
+- **Each card:** what it is and where, when it was made and by whom, the reasons, what goes with it (a test chat's bookings, enquiry and Index pages: **Delete these too** is ticked), and **Delete**, **Not a test** and **Open**.
+- **Delete all likely:** pressed twice; the second press says how many. Esc cancels.
+- **Safe:** everything deleted can be put back for 30 days (**Put back** right after, or under **Recently deleted**). Index pages go through Index's own bin; shared notes and expenses are deleted the way their apps do it, so every copy follows; quests, calendar notes and files go through their own delete, so the calendar's sync tells Nova Bot too. A Fixer job is only cleared (the Fixer's Reject), so it can't come back. **Not a test** is remembered (under **Marked as real**, with Undo). Every delete and put-back is logged with ids and kinds only.
+- **Accessible:** every button is at least 44 px tall and works from the keyboard; after a delete the focus moves to the next card; what happened is read out; reasons and confidence are words, not colours.
+
+Agent can read the list (`test_stuff_list`) but has nothing that deletes. Nova Bot's side is `src/tidy.js` (tables from `migrations/0031_tidy.sql`: `tidy_bin`, `tidy_real`, `tidy_log`); the PC's side is `src/tidy.ts` (its bin and "Not a test" list are in `data/tidy.json`), at `/tidy-api/state` and `/actions/tidy/*`, relayed online for admins only.
+
 ## The API (on Nova Bot's worker)
 
 | | |

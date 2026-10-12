@@ -276,6 +276,21 @@ const APPS = {
       out.push(["money: invoice form", money(['[data-mn="invoices"]', "#money-new", "#mn-inv-add-line"])]);
       out.push(["money: expense form", money(["#money-expense-new"])]);
       out.push(["money: details and a payment", money(['[data-mn="invoices"]', '[data-key="mn-3"] .actions .btn:last-child', '[data-key="mn-4"] .actions .btn'])]);
+      // Test stuff: its bin and "marked as real" open, and "Delete all likely" asking again
+      const tests = (steps) => async () => f.evaluate(async (steps) => {
+        document.documentElement.removeAttribute("data-menu");
+        document.querySelector('.tab[data-view="tests"]').click();
+        await new Promise((r) => setTimeout(r, 500));
+        for (const s of steps) {
+          const node = document.querySelector(s);
+          if (node && node.tagName === "DETAILS") node.open = true;
+          else if (node) node.click();
+          await new Promise((r) => setTimeout(r, 250));
+        }
+        scrollTo(0, 0);
+      }, steps);
+      out.push(["tests: deleted and marked as real", tests(["#tests-recent-wrap", "#tests-real-wrap"])]);
+      out.push(["tests: delete all, asking again", tests(["#tests-delete-all"])]);
       return out;
     },
     dialogs: true,
@@ -373,7 +388,7 @@ async function newTab(w, h) {
   const tab = await ctx.newPage();
   await tab.route(/\/__fit\.html/, (r) => r.fulfill({ contentType: "text/html", body: FRAME(new URL(r.request().url()).searchParams.get("src")) }));
   // Nova Bot's answers for Portal (signed in as an admin, with long lists), from the samples file
-  await tab.route(/\/(app\/api|auth|staff)\b/, (r) => {
+  await tab.route(/\/(app\/api|auth|staff|tidy-api)\b/, (r) => {
     const u = new URL(r.request().url());
     const body = portalMock(u.pathname + u.search, r.request().method());
     return body ? r.fulfill({ contentType: "application/json", body: JSON.stringify(body) }) : r.fallback();

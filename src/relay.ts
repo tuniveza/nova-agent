@@ -40,6 +40,9 @@ const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
   { methods: ["GET"], path: /^\/calendar-api\/events$/ },
   { methods: ["GET"], path: /^\/(events|cache|tasks)$/, admin: true },
   { methods: ["POST"], path: /^\/actions\/(run\/[\w-]+|forget)$/, admin: true },
+  // Test stuff on the PC (src/tidy.ts): admins only
+  { methods: ["GET"], path: /^\/tidy-api\/state$/, admin: true },
+  { methods: ["POST"], path: /^\/actions\/tidy\/(delete|restore|real|unreal)$/, admin: true },
   // The Fixer (src/fixer/routes.ts): admins only
   { methods: ["GET"], path: /^\/fixer-api\/(state|jobs\/[\w-]+|shots\/[\w-]+\/[\w-]+\.png)$/, admin: true },
   { methods: ["POST"], path: /^\/actions\/fixer\/(check|settings|quests|(quests|suggestions|issues|jobs)\/[\w-]+)$/, admin: true },

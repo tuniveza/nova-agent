@@ -52,6 +52,7 @@ import { missionMarkdown } from "../quests/export";
 import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile, saveFile } from "../files";
 import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, receipts } from "../receipts";
 import { registerFixerRoutes } from "../fixer/routes";
+import { registerTidyRoutes } from "../tidy-routes";
 import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
 import { currentFixer, startFixer } from "../fixer/service";
 
@@ -194,6 +195,8 @@ serveFolder("/app/memory", "index/", "Index is missing from web/index.");
 // The Fixer: Nova Agent's caretaker (its addresses: src/fixer/routes.ts)
 serveFolder("/fixer", "fixer/", "The Fixer is missing from web/fixer.");
 registerFixerRoutes(app, currentFixer);
+// Test stuff: quests, calendar notes, Fixer jobs and files that look like tests (admins: src/tidy.ts)
+registerTidyRoutes(app, currentFixer);
 // Where Index was for a day
 app.get("/index/*", (c) => c.redirect("/app/memory/" + c.req.path.slice("/index/".length)));
 

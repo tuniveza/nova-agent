@@ -50,7 +50,7 @@
   const isAdmin = () => Boolean(state.me && state.me.role === "admin");
   // The work tabs (app.js)
   const work = () => window.PortalApp;
-  const WORK = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot"];
+  const WORK = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot", "tests"];
   // Tell the top-right badge (and other panels) that who's signed in has changed
   const changed = () => window.NovaPortal && window.NovaPortal.changed && window.NovaPortal.changed();
 
@@ -436,6 +436,7 @@
     $("open-admin").hidden = !isAdmin();
     $("nav-admin").hidden = !isAdmin();
     $("nav-admin-group").hidden = !isAdmin();
+    $("nav-tests").hidden = !isAdmin();
     // (the crew page's "+ Invite someone" was never shown: admins get it)
     $("invite-toggle").hidden = !isAdmin();
   }
