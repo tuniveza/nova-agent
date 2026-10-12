@@ -1,27 +1,26 @@
-/* Nova Ambient: Novacane's quiet, never-ending ambient music for all of Nova Agent.
-   Everything is made live with the Web Audio API: no audio files, no libraries,
-   no network. Slow warm pads, a soft bass, little star-like bells, now and then a
-   short soft electric-piano phrase, a faint ocean of air, all washed in a big
-   reverb and kept low so it sits behind everything. Never the same twice: the chords
-   wander (each next one chosen from those that follow well, the recent ones less
-   likely), every few minutes the mood changes (sparser, starrier, stiller, brighter),
-   and the piano's little melodies are made up fresh each time.
+/* Nova Ambient: Novacane's never-ending late-night studio music for all of Nova Agent.
+   Everything is made live with the Web Audio API: no audio files, no libraries, no network.
+   Warm and calm, but always moving: a small studio band on a gentle pulse (68–86 bpm) plays
+   soulful 7th and 9th chords that change every bar or two, a round bass line that walks with
+   them, a melody of short motifs that come back and get answered, and (often, very quietly)
+   soft swung lo-fi drums. It develops in sections: an intro, A and B, and now and then a
+   breakdown. Kept low so it sits behind everything, warm (no bright highs), never the same twice.
 
-   Pieces: that first music ("Glow") is one of seven pieces that take turns, each for a
-   few minutes, crossfading slowly into the next (never the same piece twice running):
-     Glow          the original: pads, soft bass, stars, little piano phrases, air
-     Warm keys     a soft electric piano (Rhodes-like), slowly rolled chords, swaying
-     Slow drone    a low drone whose soft overtones breathe, with colour notes drifting in
-     Tape chords   warm chords that waver a little, like an old tape, faint hiss
-     Distant air   breathy, airy chords made of tuned wind, far away
-     Low strings   low, lush string-like swells that open and close
-     Night rain    soft rain and a distant rumble under a slow night pad
+   Pieces: seven take turns, each for a few minutes, crossfading slowly into the next (never the
+   same piece twice running):
+     Glow            Novacane's own: dreamy pads and Rhodes, vibraphone melody, stars and air
+     Warm keys       a neo-soul Rhodes trio: syncopated chords, a melodic bass, the piano sings
+     Tape beat       lo-fi: wobbly tape keys, swung boom-bap drums, a breathy flute, tape hiss
+     Late night      ambient R&B: pads and Rhodes, a hummed melody, slow kick, soft rain
+     Night trio      a late-night jazz trio: walking bass, brushes, vibraphone
+     Whisper garage  2-step at a whisper: skippy drums, plucked stabs, a muted synth lead
+     Afro glow       a warm afro groove: shaker, rolling bass, plucks, a flute melody
    All of them are in or next to D lydian (the sound effects' key), so they always fit.
 
    Seeds: every listen is generated from a seed (a short code like "K7M2QX"). The seed
-   chooses the order of the pieces, each piece's key and mode, its pace, its chords and
-   how they're voiced, its tone colours and filters, the size of the reverb and the echo,
-   and its textures. A new random seed each session; a liked one can be kept (it then
+   chooses the order of the pieces, each piece's key and mode, its tempo and swing, its
+   progressions, motifs and bass lines, when the drums play, the size of the reverb and
+   the echo, and its textures. A new random seed each session; a liked one can be kept (it then
    plays every time) or typed back in to hear that variation again.
      NovaAmbient.seed()            the seed playing now
      NovaAmbient.setSeed("K7M2QX") play that variation (crossfades)
@@ -121,53 +120,7 @@
   }
   const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
-  // ---- Musical material (Glow, the first piece) -----------------------------------
-  // Chords in D major with a dreamy lydian tint. MIDI numbers (60 = middle C).
-  // Upper notes are voiced close together so moving between chords is smooth.
-  const CH = {
-    D:  { bass: 38, notes: [50, 57, 61, 64, 66] }, // Dmaj9
-    Bm: { bass: 35, notes: [50, 54, 57, 61, 64] }, // Bm11
-    G:  { bass: 31, notes: [50, 54, 59, 61, 66] }, // Gmaj7#11
-    A:  { bass: 33, notes: [52, 57, 59, 61, 64] }, // Aadd9
-    Em: { bass: 40, notes: [52, 55, 59, 62, 66] }, // Em9
-    Fsm: { bass: 42, notes: [52, 54, 57, 61, 64] }, // F#m11
-    E:  { bass: 40, notes: [52, 56, 59, 61, 66] }  // E6/9 (the bright, lydian colour)
-  };
-  // Never the same tune twice: instead of a fixed round of chords, each next chord is chosen from
-  // the ones that follow it well, with the ones heard lately less likely. So it wanders, slowly,
-  // and the same stretch rarely comes back.
-  const MOVES = {
-    D: ['Bm', 'G', 'A', 'Em', 'Fsm', 'E'],
-    Bm: ['G', 'Em', 'A', 'D', 'Fsm'],
-    G: ['A', 'D', 'Em', 'Bm', 'E'],
-    A: ['D', 'Bm', 'Fsm', 'G'],
-    Em: ['G', 'A', 'D', 'Bm'],
-    Fsm: ['Bm', 'G', 'D', 'E'],
-    E: ['A', 'D', 'G']
-  };
-  // Moods: every few minutes the music changes its feel (how many stars, how often the piano
-  // speaks, how bright the pads are, how long each chord lasts), never the same mood twice running
-  const MOODS = {
-    glow:   { stars: 1,   phrases: 1,    bright: 1,    len: [16, 24] },
-    drift:  { stars: 1.7, phrases: 1.6,  bright: 0.8,  len: [20, 28] },
-    starry: { stars: 0.6, phrases: 1.2,  bright: 1.12, len: [14, 22] },
-    still:  { stars: 2.4, phrases: 0,    bright: 0.72, len: [24, 32] },
-    tender: { stars: 1.2, phrases: 0.65, bright: 0.9,  len: [16, 22] }
-  };
-  // High D major pentatonic notes for the twinkling "stars".
-  const STARS = [74, 76, 78, 81, 83, 86, 88, 90];
-  // Novacane's little phrases for the soft electric piano (D lydian), one every half a minute or so
-  const PHRASES = [
-    [62, 69, 73, 78],      // D A C# F#: the same signature as the "hello" sound
-    [66, 64, 61, 62],
-    [69, 71, 73, 69, 66],
-    [73, 71, 69, 64],
-    [62, 64, 66, 68, 69],  // up through the bright G#
-    [78, 76, 73, 69]
-  ];
-  const SCALE = [62, 64, 66, 68, 69, 71, 73, 74, 76, 78, 81];
-
-  // ---- Keys and chords for the other pieces ------------------------------------------
+  // ---- Keys and chords -----------------------------------------------------------------
   // Every key is one of the three note-sets around D lydian (A major's notes; D major's, one
   // note away; E major's, one note away the other side), so the sound effects always fit.
   const MAJOR = [0, 2, 4, 5, 7, 9, 11];
@@ -264,9 +217,9 @@
   // =====================================================================================
   // The engine: one seed's music on one audio context (the live one, or an offline one for checks)
   // =====================================================================================
-  const PIECE_NAMES = { glow: 'Glow', keys: 'Warm keys', drone: 'Slow drone', tape: 'Tape chords', air: 'Distant air', strings: 'Low strings', rain: 'Night rain' };
+  const PIECE_NAMES = { glow: 'Glow', keys: 'Warm keys', tape: 'Tape beat', late: 'Late night', trio: 'Night trio', garage: 'Whisper garage', afro: 'Afro glow' };
   // How loud each piece sits, so they all match Glow (measured: scripts/audio-levels.mjs)
-  const TRIM = { glow: 1, keys: 1.4, drone: 1.4, tape: 1.3, air: 2, strings: 4.5, rain: 2.1 };
+  const TRIM = { glow: 1, keys: 0.92, tape: 0.8, late: 0.82, trio: 0.98, garage: 0.98, afro: 0.98 };
 
   function Engine(ctx, dest, seed, opts) {
     opts = opts || {};
@@ -275,6 +228,7 @@
     let tone = opts.tone || 0;      // −1 warm theme … +1 cool theme
     const bright = () => 1 + 0.05 * tone;
     const held = new Set();          // long-running sources, stopped when the engine goes
+    const stats = { lead: 0, bass: 0, chord: 0, drum: 0 }; // notes played, per player (for checks)
 
     // ---- Small helpers --------------------------------------------------------
     function gain(value) { const g = ctx.createGain(); g.gain.value = value; return g; }
@@ -442,7 +396,7 @@
       const r = (label) => S('p' + i + ':' + name + ':' + label);
       const line = lines[i % 2];
       const trim = TRIM[name] || 1;
-      const p = { id: name, name: PIECE_NAMES[name], i, t0: t, end, r, schedule: () => {} };
+      const p = { id: name, name: PIECE_NAMES[name], i, t0: t, end, fadeAt: end - fadeOut, r, line, schedule: () => {} };
       p.ins = [gain(0), gain(0), gain(0)];
       p.ins[0].connect(comp); p.ins[1].connect(reverbIn); p.ins[2].connect(line.input);
       for (const g of p.ins) {
@@ -478,559 +432,525 @@
       return p;
     }
 
-    // ================= Glow (the first piece: Novacane's own) =================
-    function glow(p) {
-      const rc = p.r('chords'), rs = p.r('stars'), rp = p.r('phrases'), rm = p.r('mood'), rv = p.r('voices');
-      const rand = (a, b) => rr(rv, a, b);
-      const padBus = p.layer(0.45, 0.9, 0);
-      const bassBus = p.layer(1, 0.2, 0);
-      const starBus = p.layer(0.6, 0.6, 1);
-      const keysBus = p.layer(0.5, 0.7, 0.45);
-      const airBus = p.layer(1, 1, 0);
+    // ================= The band: every piece is a small studio band on a gentle pulse =================
+    // Each piece is a groove (68–86 bpm, chosen by the seed) with four players:
+    //   chords  rich 7th and 9th chords (a Rhodes-like piano, warm pads or soft plucks) changing every
+    //           bar or two, in soulful progressions, voiced so they move smoothly
+    //   bass    a warm, round bass line that follows the chords: roots, fifths, octaves, a little
+    //           syncopation and a passing note leading into each next chord (never a drone)
+    //   lead    a melody made of short motifs (two bars) that come back with small changes and are
+    //           answered, with rests in between, in a soft voice (vibraphone, Rhodes, breathy flute,
+    //           a hummed "mm", a muted synth)
+    //   drums   very quiet lo-fi percussion (a soft kick, a rim, a brush, a shaker), swung, often
+    //           resting; never in the breakdowns
+    // The music develops in sections: a short intro, then A and B (two progressions, each with its
+    // own motif) and now and then a breakdown (pads, long bass notes, a lone phrase).
 
-      const recent = [];
-      let chordName = pk(rc, ['D', 'G', 'Bm', 'A', 'Em']);
-      function nextChord() {
-        const options = MOVES[chordName];
-        const weights = options.map((n) => 1 / (1 + 2 * recent.filter((x) => x === n).length));
-        chordName = weighted(rc, options, weights);
-        recent.push(chordName);
-        if (recent.length > 6) recent.shift();
-        return CH[chordName];
-      }
-      let mood = MOODS.glow, moodName = 'glow', moodUntil = 0;
-      function maybeChangeMood(now) {
-        if (now < moodUntil) return;
-        const names = Object.keys(MOODS).filter((n) => n !== moodName);
-        moodName = pk(rm, names);
-        mood = MOODS[moodName];
-        moodUntil = now + rr(rm, 150, 300);
-      }
+    // Progressions as scale steps (0 = the key's home chord), four chords each
+    const PROGS = {
+      bright: [[3, 2, 5, 5], [0, 5, 1, 4], [1, 4, 0, 0], [0, 3, 5, 4], [3, 4, 2, 5], [5, 3, 0, 4], [0, 2, 3, 4], [3, 0, 1, 4]],
+      dark: [[0, 3, 0, 4], [0, 6, 5, 4], [0, 5, 3, 4], [3, 4, 0, 0], [5, 6, 0, 0], [0, 2, 3, 6], [0, 3, 6, 2]]
+    };
+    // Melody rhythms: [beat, length in beats] across two bars (8 beats), with room to breathe
+    const RHYTHMS = [
+      [[0, 1], [1, 0.5], [1.5, 1.5], [4, 1], [5, 2]],
+      [[0.5, 0.5], [1, 0.5], [1.5, 1], [2.5, 1.5], [4.5, 0.5], [5, 2.5]],
+      [[0, 1.5], [1.5, 0.5], [2, 2], [4, 0.5], [4.5, 0.5], [5, 1], [6, 1.5]],
+      [[1, 0.5], [1.5, 0.5], [2, 1], [3, 2], [6, 0.5], [6.5, 1]],
+      [[0, 2], [2, 1], [3, 3], [6, 1.5]],
+      [[0.5, 1], [1.5, 0.5], [2, 1.5], [4, 1], [5, 0.5], [5.5, 2]]
+    ];
+    // Which two-bar slots of a section have a phrase: c the motif (the call), c2 the motif with a new
+    // ending, a the answer (turned the other way, coming home), - a rest
+    const SLOTS = {
+      intro: [['-', '-']],
+      A: [['c', '-', 'c2', 'a'], ['c', 'a', 'c', 'a'], ['-', 'c', '-', 'a'], ['c', '-', 'a', '-'], ['c', 'c2', 'a', '-']],
+      B: [['c', 'a', 'c2', 'a'], ['-', 'c', 'c2', 'a'], ['c', '-', 'c2', 'a']],
+      break: [['-', 'c'], ['c', '-'], ['-', 'a']]
+    };
+    // Bass lines, one bar each: [beat, what, length in beats]. R root, 5 fifth, 3 third, 8 octave,
+    // A a passing note into the next chord's root
+    const BASS = {
+      glow: [[[0, 'R', 2.5], [2.5, '5', 1], [3.5, 'A', 0.5]], [[0, 'R', 1.5], [2, '8', 1], [3, '5', 1]], [[0, 'R', 3], [3, 'A', 1]]],
+      neo: [[[0, 'R', 1.5], [1.5, 'R', 0.5], [2.5, '5', 1], [3.5, 'A', 0.5]], [[0, 'R', 1], [1.5, '8', 0.5], [2, '5', 1.5], [3.5, 'A', 0.5]], [[0, 'R', 2], [2.5, '3', 0.5], [3, '5', 1]]],
+      lofi: [[[0, 'R', 1], [1.5, 'R', 1], [3, '5', 0.5], [3.5, 'A', 0.5]], [[0, 'R', 1.5], [2, '5', 1], [3.5, 'A', 0.5]], [[0, 'R', 0.5], [0.5, 'R', 1], [2.5, '8', 0.5], [3, '5', 1]]],
+      rnb: [[[0, 'R', 2.5], [2.75, '5', 0.75], [3.5, 'A', 0.5]], [[0, 'R', 1.75], [2, '3', 1], [3, '5', 1]], [[0, 'R', 3.25], [3.5, 'A', 0.5]]],
+      walk: [[[0, 'R', 1], [1, '3', 1], [2, '5', 1], [3, 'A', 1]], [[0, 'R', 1], [1, '5', 1], [2, '8', 1], [3, 'A', 1]], [[0, 'R', 1], [1, 'R', 1], [2, '3', 1], [3, 'A', 1]]],
+      garage: [[[0, 'R', 0.75], [1.5, 'R', 0.5], [2.75, '5', 0.5], [3.5, 'A', 0.5]], [[0, 'R', 1], [1.75, '8', 0.25], [2.5, '5', 0.75], [3.5, 'A', 0.5]]],
+      afro: [[[0, 'R', 1], [1.5, '5', 0.5], [2, '8', 0.5], [3, 'R', 0.5], [3.5, 'A', 0.5]], [[0, 'R', 0.75], [0.75, 'R', 0.75], [2, '5', 1], [3.5, 'A', 0.5]]]
+    };
+    // How the chords are played in a bar: [beat, length in beats] (len 'bar': the whole chord)
+    const COMP = {
+      glow: [[[0, 'bar']]],
+      neo: [[[0, 1.75], [2.5, 0.5], [3.5, 0.5]], [[0, 1.5], [1.5, 2]], [[0, 2.5], [3.5, 0.5]]],
+      lofi: [[[0, 2], [2.5, 1]], [[0, 1], [1.5, 2.5]], [[0, 1.5], [3, 1]]],
+      soft: [[[0, 'bar']], [[0, 2], [2.5, 1.5]]],
+      jazz: [[[0, 1], [1.5, 1]], [[0, 0.5], [2.5, 1.5]], [[1.5, 1], [3, 1]]],
+      stab: [[[0.5, 0.25], [2.75, 0.25]], [[0.75, 0.25], [1.5, 0.25], [3.25, 0.25]]],
+      pluck: [[[0.5, 0.25], [1.5, 0.25], [2.75, 0.25], [3.5, 0.25]], [[0.75, 0.25], [1.75, 0.25], [2.5, 0.25], [3.25, 0.25]]]
+    };
+    // Drum kits, in sixteenths of a bar (0–15)
+    const KITS = {
+      glow: { kick: [0], rim: [12], shaker: [] },
+      neo: { kick: [0, 7, 8], rim: [4, 12], shaker: [2, 6, 10, 14] },
+      lofi: { kick: [0, 8, 11], rim: [4, 12], shaker: [0, 2, 4, 6, 8, 10, 12, 14] },
+      rnb: { kick: [0, 9], rim: [12], shaker: [6, 14] },
+      brush: { kick: [0, 8], brush: [0, 4, 8, 12], rim: [12] },
+      garage: { kick: [0, 10], rim: [4, 12], shaker: [2, 6, 10, 14, 15] },
+      afro: { kick: [0, 6, 8], rim: [3, 10, 14], shaker: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
+    };
+    // The pieces
+    const BANDS = {
+      glow: { modes: ['lydian', 'ionian', 'lydian'], bpm: [68, 74], swing: [0.5, 0.55], chordBars: [2], comp: 'glow', keysStyle: 'open', pad: true, bass: 'glow', lead: 'vibes', drums: 0.3, kit: 'glow', extras: ['stars', 'air'] },
+      keys: { modes: ['ionian', 'dorian', 'lydian', 'mixolydian'], bpm: [72, 82], swing: [0.54, 0.6], chordBars: [1, 2], comp: 'neo', keysStyle: 'close', bass: 'neo', lead: 'rhodes', drums: 0.75, kit: 'neo' },
+      tape: { modes: ['dorian', 'aeolian', 'ionian'], bpm: [70, 80], swing: [0.58, 0.64], chordBars: [1], comp: 'lofi', keysStyle: 'shell', wobble: true, bass: 'lofi', lead: 'flute', drums: 0.9, kit: 'lofi', extras: ['hiss'] },
+      late: { modes: ['aeolian', 'dorian'], bpm: [68, 74], swing: [0.52, 0.58], chordBars: [2], comp: 'soft', keysStyle: 'eleven', pad: true, bass: 'rnb', lead: 'hum', drums: 0.6, kit: 'rnb', extras: ['rain'] },
+      trio: { modes: ['dorian', 'ionian', 'mixolydian'], bpm: [76, 86], swing: [0.6, 0.66], chordBars: [1], comp: 'jazz', keysStyle: 'shell', bass: 'walk', lead: 'vibes', drums: 0.85, kit: 'brush' },
+      garage: { modes: ['aeolian', 'dorian'], bpm: [68, 72], grid16: true, swing: [0.56, 0.62], chordBars: [2], comp: 'stab', keysStyle: 'close', pad: true, bass: 'garage', lead: 'muted', drums: 0.85, kit: 'garage' },
+      afro: { modes: ['ionian', 'mixolydian', 'dorian'], bpm: [80, 86], grid16: true, swing: [0.52, 0.56], chordBars: [1, 2], comp: 'pluck', keysStyle: 'close', pad: true, bass: 'afro', lead: 'flute', drums: 0.85, kit: 'afro' }
+    };
 
-      // Air / ocean bed: filtered noise that slowly breathes
-      (function air() {
-        const src = noiseSource('white');
-        const hp = filter('highpass', 120, 0.3);
-        const lp = filter('lowpass', 550, 0.3);
-        const level = gain(0.012);
-        // Slow swell of the volume (like distant waves) ...
-        const swell = osc('sine', 0.045);
-        const swellAmt = gain(0.009);
-        swell.connect(swellAmt).connect(level.gain);
-        // ... and an even slower drift of the tone.
-        const drift = osc('sine', 0.018);
-        const driftAmt = gain(220);
-        drift.connect(driftAmt).connect(lp.frequency);
-        src.connect(hp).connect(lp).connect(level).connect(airBus);
-        p.hold(src); p.hold(swell); p.hold(drift);
-      })();
-
-      // Pads: one voice = two detuned saws (filtered) + a pure sine
-      function padVoice(midi, t, hold, pan) {
-        const f = mtof(midi);
-        const out = gain(0);
-        const place = panner(pan);
-        out.connect(place).connect(padBus);
-        // Warm low-pass with its own slow wobble.
-        const lp = filter('lowpass', rand(750, 1300) * mood.bright * bright(), 0.4);
-        lp.connect(out);
-        const lfo = osc('sine', rand(0.03, 0.08));
-        const lfoAmt = gain(rand(200, 400));
-        lfo.connect(lfoAmt).connect(lp.frequency);
-        const sawA = osc('sawtooth', f), sawB = osc('sawtooth', f);
-        sawA.detune.value = rand(-9, -5);
-        sawB.detune.value = rand(5, 9);
-        sawA.connect(lp); sawB.connect(lp);
-        const sine = osc('sine', f);
-        const sineAmt = gain(0.7);
-        sine.connect(sineAmt).connect(out);
-        const end = envelope(out, t, 0.02, rand(4, 6), hold, rand(5, 6.5));
-        for (const s of [lfo, sawA, sawB, sine]) { s.start(t); s.stop(end); }
-        disposeWhenDone(sawA, [out, place, lp, lfo, lfoAmt, sawA, sawB, sine, sineAmt]);
-      }
-      // Bass: a quiet sine, plus its octave so phone speakers can hear it
-      function bassNote(midi, t, hold) {
-        const f = mtof(midi);
-        const out = gain(0);
-        out.connect(bassBus);
-        const sub = osc('sine', f);
-        const upper = osc('sine', f * 2);
-        const upperAmt = gain(0.35);
-        sub.connect(out);
-        upper.connect(upperAmt).connect(out);
-        const end = envelope(out, t, 0.056, 4, hold, 5);   // (a little lighter than at first: calmer peaks)
-        sub.start(t); upper.start(t);
-        sub.stop(end); upper.stop(end);
-        disposeWhenDone(sub, [out, sub, upper, upperAmt]);
-      }
-      // A whole chord: pads spread across the stereo field + bass
-      function playChord(chord, t, length) {
-        const notes = chord.notes.slice();
-        // Now and then leave out an inner note so the texture breathes.
-        if (rv() < 0.3) notes.splice(1 + Math.floor(rv() * (notes.length - 2)), 1);
-        notes.forEach((m, i) => {
-          const pan = (i / (notes.length - 1) - 0.5) * 1.1 + rand(-0.1, 0.1);
-          padVoice(m, t + rand(0, 0.6), length, pan);
-        });
-        bassNote(chord.bass, t, length);
-      }
-      // Stars: a soft bell (sine + quieter triangle an octave up)
-      function playStar(t) {
-        const f = mtof(pk(rs, STARS));
-        const place = panner(rr(rs, -0.7, 0.7));
-        place.connect(starBus);
-        const body = gain(0);
-        body.gain.setValueAtTime(0, t);
-        body.gain.linearRampToValueAtTime(0.024, t + 0.01);   // (a touch softer than at first: calm)
-        body.gain.setTargetAtTime(0, t + 0.012, rr(rs, 0.6, 1.2));
-        const shine = gain(0);
-        shine.gain.setValueAtTime(0, t);
-        shine.gain.linearRampToValueAtTime(0.0065, t + 0.006);
-        shine.gain.setTargetAtTime(0, t + 0.008, 0.25);
-        const a = osc('sine', f);
-        const b = osc('triangle', f * 2);
-        a.connect(body).connect(place);
-        b.connect(shine).connect(place);
-        const end = t + 7;
-        a.start(t); b.start(t);
-        a.stop(end); b.stop(end);
-        disposeWhenDone(a, [a, b, body, shine, place]);
-      }
-      // Keys: a soft electric piano (FM: a sine "tine" that mellows as it rings)
-      function keyNote(midi, t, pan, level) {
-        const f = mtof(midi);
-        const place = panner(pan);
-        place.connect(keysBus);
-        const amp = gain(0);
-        amp.gain.setValueAtTime(0, t);
-        amp.gain.linearRampToValueAtTime(level, t + 0.012);
-        amp.gain.setTargetAtTime(0, t + 0.02, rr(rp, 0.9, 1.5));
-        amp.connect(place);
-        const carrier = osc('sine', f);
-        const mod = osc('sine', f);
-        const depth = gain(0);
-        depth.gain.setValueAtTime(f * 1.1, t);
-        depth.gain.setTargetAtTime(f * 0.05, t, 0.35);
-        mod.connect(depth).connect(carrier.frequency);
-        // A gentle wobble, like a Rhodes' tremolo
-        const trem = osc('sine', 4.2);
-        const tremAmt = gain(level * 0.25);
-        trem.connect(tremAmt).connect(amp.gain);
-        carrier.connect(amp);
-        const end = t + 7;
-        for (const o of [carrier, mod, trem]) { o.start(t); o.stop(end); }
-        disposeWhenDone(carrier, [carrier, mod, depth, trem, tremAmt, amp, place]);
-      }
-      // A new little melody each time: a few notes moving mostly by step through the scale, ending
-      // on a note of the chord underneath. Now and then (rarely) one of Novacane's own phrases instead.
-      function newPhrase() {
-        if (rp() < 0.12) return pk(rp, PHRASES);
-        const count = 3 + Math.floor(rp() * 3);
-        let i = 2 + Math.floor(rp() * 6);
-        const notes = [];
-        for (let n = 0; n < count; n++) {
-          notes.push(SCALE[i]);
-          const leap = rp() < 0.2 ? 2 : 1;
-          i = Math.max(0, Math.min(SCALE.length - 1, i + (rp() < 0.5 ? -leap : leap)));
-        }
-        // End on a note of the chord (moved into the melody's range)
-        const tones = CH[chordName].notes.map((m) => (m < 62 ? m + 12 : m));
-        const end = notes[notes.length - 1];
-        notes[notes.length - 1] = tones.reduce((a, b) => (Math.abs(b - end) < Math.abs(a - end) ? b : a));
-        return notes;
-      }
-      function playPhrase(t) {
-        const notes = newPhrase();
-        let at = t;
-        notes.forEach((m, i) => {
-          keyNote(m, at, -0.4 + (0.8 * i) / Math.max(1, notes.length - 1), rr(rp, 0.016, 0.024));
-          at += rr(rp, 0.45, 0.9);
-        });
-        // Sometimes the last note gets a soft lower partner
-        if (rp() < 0.5) keyNote(notes[notes.length - 1] - 12, at - 0.2, 0, 0.012);
-      }
-
-      let nextChordAt = p.t0 + 0.1, nextStarAt = p.t0 + 3, nextPhraseAt = p.t0 + rr(rp, 10, 18);
-      p.schedule = (now, horizon) => {
-        // If we fell far behind (e.g. after a pause), start fresh instead of piling up.
-        if (nextChordAt < now - 0.5) nextChordAt = now + 0.1;
-        if (nextStarAt < now - 0.5) nextStarAt = now + rr(rs, 1, 3);
-        if (nextPhraseAt < now - 0.5) nextPhraseAt = now + rr(rp, 12, 25);
-        maybeChangeMood(Math.max(now, p.t0));
-        while (nextChordAt < horizon && p.alive(nextChordAt)) {
-          maybeChangeMood(nextChordAt);
-          const length = rr(rc, mood.len[0], mood.len[1]);
-          playChord(nextChord(), nextChordAt, length);
-          nextChordAt += length;
-        }
-        while (nextStarAt < horizon && p.alive(nextStarAt)) {
-          playStar(nextStarAt);
-          // Sometimes a second star answers the first.
-          if (rs() < 0.3) playStar(nextStarAt + rr(rs, 0.2, 0.45));
-          nextStarAt += rr(rs, 2, 7) * mood.stars;
-        }
-        while (nextPhraseAt < horizon && p.alive(nextPhraseAt)) {
-          if (mood.phrases) playPhrase(nextPhraseAt);
-          nextPhraseAt += rr(rp, 26, 48) * (mood.phrases || 1.5);
-        }
-      };
+    // ---- The instruments (shared by every piece) ------------------------------------------
+    // One short burst of noise, made once, for the drums and breaths (each hit starts somewhere else in it)
+    let burst = null;
+    function noiseBurst() {
+      if (burst) return burst;
+      const rate = ctx.sampleRate, len = Math.floor(rate * 2);
+      burst = ctx.createBuffer(1, len, rate);
+      const d = burst.getChannelData(0), r = S('burst');
+      for (let i = 0; i < len; i++) d[i] = r() * 2 - 1;
+      return burst;
+    }
+    function noiseHit(r) {
+      const s = ctx.createBufferSource();
+      s.buffer = noiseBurst();
+      return { src: s, offset: rr(r, 0, 1.5) };
     }
 
-    // A quiet sine bass with its octave (shared by the newer pieces)
-    function softBass(bus, midi, t, hold, peak, attack, release) {
+    // A soft electric piano (Rhodes-like FM: a sine tine that mellows as it rings). wobble: an old
+    // tape's slow waver.
+    function rhodes(bus, midi, t, len, level, pan, wobble) {
+      stats.chord++;
       const f = mtof(midi);
-      const out = gain(0);
-      out.connect(bus);
-      const sub = osc('sine', f);
-      const upper = osc('sine', f * 2);
-      const upperAmt = gain(0.3);
-      sub.connect(out);
-      upper.connect(upperAmt).connect(out);
-      const end = envelope(out, t, peak, attack, hold, release);
-      sub.start(t); upper.start(t); sub.stop(end); upper.stop(end);
-      disposeWhenDone(sub, [out, sub, upper, upperAmt]);
-    }
-    // A chord-led piece: every chord_len seconds, the next chord, voiced and handed to play()
-    function chordLoop(p, r, key, H, o, play) {
-      let next = p.t0 + 0.2, prev = null;
-      p.schedule = (now, horizon) => {
-        if (next < now - 0.5) next = now + 0.2;
-        if (o.extra) o.extra(now, horizon);
-        while (next < horizon && p.alive(next)) {
-          const d = H.next();
-          const len = rr(r, o.len[0], o.len[1]);
-          const notes = voice(key, d, o.style, o.center, prev);
-          prev = notes;
-          play(d, notes, next, len);
-          next += len;
-        }
-      };
-    }
-
-    // ================= Warm keys: a soft Rhodes-like electric piano =================
-    function keys(p) {
-      const r = p.r('keys'), rh = p.r('harmony');
-      const key = makeKey(rh, ['ionian', 'lydian', 'dorian', 'mixolydian', 'lydian']);
-      const H = Harmony(key, rh);
-      const pace = rr(r, 0.85, 1.3);
-      const decay = rr(r, 1.6, 2.6), index = rr(r, 0.45, 0.85) * bright();
-      // The bus: a warm filter, then a slow stereo sway like an old suitcase piano
-      const bus = gain(1);
-      const lp = filter('lowpass', rr(r, 1900, 2600) * bright(), 0.4);
-      const sway = panner(0);
-      bus.connect(lp).connect(sway).connect(p.layer(0.5, 0.8, rr(r, 0.25, 0.5)));
-      if (sway.pan) {
-        const lfo = osc('sine', rr(r, 2.8, 4.6));
-        const amt = gain(rr(r, 0.25, 0.5));
-        lfo.connect(amt).connect(sway.pan);
-        p.hold(lfo);
+      const place = panner(pan);
+      place.connect(bus);
+      const amp = gain(0);
+      amp.gain.setValueAtTime(0, t);
+      amp.gain.linearRampToValueAtTime(level, t + 0.01);
+      amp.gain.setTargetAtTime(level * 0.55, t + 0.02, 0.6);
+      amp.gain.setTargetAtTime(0, t + Math.max(0.08, len), 0.18);
+      amp.connect(place);
+      const carrier = osc('sine', f), mod = osc('sine', f), depth = gain(0);
+      depth.gain.setValueAtTime(f * 0.9, t);
+      depth.gain.setTargetAtTime(f * 0.06, t, 0.3);
+      mod.connect(depth).connect(carrier.frequency);
+      const trem = osc('sine', 4.5), tremAmt = gain(level * 0.18);
+      trem.connect(tremAmt).connect(amp.gain);
+      const nodes = [carrier, mod, depth, trem, tremAmt, amp, place];
+      if (wobble) {
+        const w = osc('sine', 0.55), wAmt = gain(7);
+        w.connect(wAmt).connect(carrier.detune);
+        w.start(t); w.stop(t + len + 1.6);
+        nodes.push(w, wAmt);
       }
-      const bassBus = p.layer(1, 0.25, 0);
-      function ep(midi, t, level, idx) {
-        const f = mtof(midi);
-        const amp = gain(0);
+      carrier.connect(amp);
+      const end = t + Math.max(0.08, len) + 1.5;
+      for (const o of [carrier, mod, trem]) { o.start(t); o.stop(end); }
+      disposeWhenDone(carrier, nodes);
+    }
+    // A warm pad: two detuned saws, softly filtered, with a pure sine under them
+    function pad(bus, midi, t, len, level, pan, r) {
+      stats.chord++;
+      const f = mtof(midi);
+      const out = gain(0), place = panner(pan);
+      out.connect(place).connect(bus);
+      const lp = filter('lowpass', rr(r, 800, 1200) * bright(), 0.4);
+      lp.connect(out);
+      const a = osc('sawtooth', f), b = osc('sawtooth', f), s = osc('sine', f), sAmt = gain(0.8);
+      a.detune.value = rr(r, -9, -5); b.detune.value = rr(r, 5, 9);
+      a.connect(lp); b.connect(lp); s.connect(sAmt).connect(out);
+      const end = envelope(out, t, level, rr(r, 0.8, 1.4), len, 1.6);
+      for (const o of [a, b, s]) { o.start(t); o.stop(end); }
+      disposeWhenDone(a, [a, b, s, sAmt, lp, out, place]);
+    }
+    // A soft muted pluck (like a nylon guitar played with the thumb)
+    function pluck(bus, midi, t, level, pan) {
+      stats.chord++;
+      const f = mtof(midi);
+      const place = panner(pan), amp = gain(0), lp = filter('lowpass', 1500 * bright(), 0.5);
+      amp.gain.setValueAtTime(0, t);
+      amp.gain.linearRampToValueAtTime(level, t + 0.004);
+      amp.gain.setTargetAtTime(0, t + 0.01, 0.12);
+      const a = osc('triangle', f), b = osc('sine', f * 2), bAmt = gain(0.25);
+      a.connect(lp); b.connect(bAmt).connect(lp);
+      lp.connect(amp).connect(place).connect(bus);
+      const end = t + 1;
+      a.start(t); b.start(t); a.stop(end); b.stop(end);
+      disposeWhenDone(a, [a, b, bAmt, lp, amp, place]);
+    }
+    // The bass: a round sine, a soft filtered triangle for body and its octave so laptop speakers
+    // hear it; a gentle attack, a little sustain, and a soft let-go
+    function bassNote(bus, midi, t, len, level) {
+      stats.bass++;
+      const f = mtof(midi);
+      const amp = gain(0), lp = filter('lowpass', 420 * bright(), 0.6);
+      amp.gain.setValueAtTime(0, t);
+      amp.gain.linearRampToValueAtTime(level, t + 0.018);
+      amp.gain.setTargetAtTime(level * 0.7, t + 0.03, 0.35);
+      amp.gain.setTargetAtTime(0, t + Math.max(0.1, len), 0.07);
+      const sub = osc('sine', f), body = osc('triangle', f), bodyAmt = gain(0.45), up = osc('sine', f * 2), upAmt = gain(0.16);
+      sub.connect(amp);
+      body.connect(bodyAmt).connect(lp);
+      up.connect(upAmt).connect(lp);
+      lp.connect(amp);
+      amp.connect(bus);
+      const end = t + Math.max(0.1, len) + 0.6;
+      for (const o of [sub, body, up]) { o.start(t); o.stop(end); }
+      disposeWhenDone(sub, [sub, body, bodyAmt, up, upAmt, lp, amp]);
+    }
+    // The lead voices
+    function lead(kind, bus, midi, t, len, level, pan, r) {
+      if (kind === 'rhodes') {
+        // The piano itself plays the tune (a little brighter, in the middle)
+        rhodes(bus, midi, t, len, level, pan, false);
+        stats.chord--; stats.lead++;
+        return;
+      }
+      stats.lead++;
+      const f = mtof(midi);
+      const place = panner(pan);
+      place.connect(bus);
+      const amp = gain(0);
+      amp.connect(place);
+      const nodes = [amp, place];
+      const srcs = [];
+      let end;
+      if (kind === 'vibes') {
+        // A vibraphone: a pure bar, a quieter fourth partial that fades fast, a slow shimmer
+        const a = osc('sine', f), b = osc('sine', f * 4), bAmt = gain(0);
+        bAmt.gain.setValueAtTime(level * 0.12, t);
+        bAmt.gain.setTargetAtTime(0, t, 0.08);
+        a.connect(amp); b.connect(bAmt).connect(amp);
         amp.gain.setValueAtTime(0, t);
-        amp.gain.linearRampToValueAtTime(level, t + 0.02);
-        amp.gain.setTargetAtTime(0, t + 0.03, decay);
-        const car = osc('sine', f), mod = osc('sine', f), depth = gain(0);
-        depth.gain.setValueAtTime(f * idx, t);
-        depth.gain.setTargetAtTime(f * 0.03, t, 0.3);
-        mod.connect(depth).connect(car.frequency);
-        car.connect(amp).connect(bus);
-        const end = t + decay * 6 + 0.1;
-        car.start(t); mod.start(t); car.stop(end); mod.stop(end);
-        disposeWhenDone(car, [car, mod, depth, amp]);
+        amp.gain.linearRampToValueAtTime(level, t + 0.006);
+        amp.gain.setTargetAtTime(0, t + 0.01, Math.min(1.4, 0.45 + len * 0.4));
+        const trem = osc('sine', 5.2), tremAmt = gain(level * 0.22);
+        trem.connect(tremAmt).connect(amp.gain);
+        end = t + 4;
+        srcs.push(a, b, trem); nodes.push(bAmt, tremAmt);
+      } else if (kind === 'flute') {
+        // A breathy flute: a sine with a little triangle, a gentle swell, vibrato that comes in late,
+        // and a soft breath of air at the start
+        const a = osc('sine', f), b = osc('triangle', f), bAmt = gain(0.22), lp = filter('lowpass', 2200 * bright(), 0.4);
+        a.connect(amp); b.connect(bAmt).connect(lp).connect(amp);
+        const vib = osc('sine', rr(r, 4.6, 5.4)), vibAmt = gain(0);
+        vibAmt.gain.setValueAtTime(0, t);
+        vibAmt.gain.linearRampToValueAtTime(f * 0.006, t + Math.min(0.8, len));
+        vib.connect(vibAmt); vibAmt.connect(a.frequency); vibAmt.connect(b.frequency);
+        amp.gain.setValueAtTime(0, t);
+        amp.gain.linearRampToValueAtTime(level, t + 0.07);
+        amp.gain.setTargetAtTime(level * 0.8, t + 0.08, 0.4);
+        amp.gain.setTargetAtTime(0, t + len, 0.09);
+        const { src, offset } = noiseHit(r), bp = filter('bandpass', f * 2, 1.4), breath = gain(0);
+        breath.gain.setValueAtTime(0, t);
+        breath.gain.linearRampToValueAtTime(level * 0.35, t + 0.03);
+        breath.gain.setTargetAtTime(0, t + 0.05, 0.08);
+        src.connect(bp).connect(breath).connect(amp);
+        src.start(t, offset, 0.6);
+        end = t + len + 0.8;
+        srcs.push(a, b, vib); nodes.push(bAmt, lp, vibAmt, src, bp, breath);
+      } else if (kind === 'hum') {
+        // A hummed "mm": a soft saw through two vowel-like bands, a slow swell and a little vibrato
+        const a = osc('sawtooth', f), f1 = filter('bandpass', 380, 3), f2 = filter('bandpass', 950, 4), f2Amt = gain(0.4), lp = filter('lowpass', 1600, 0.3);
+        a.connect(f1).connect(lp); a.connect(f2).connect(f2Amt).connect(lp);
+        const s = osc('sine', f), sAmt = gain(0.5);
+        s.connect(sAmt).connect(amp);
+        lp.connect(amp);
+        const vib = osc('sine', rr(r, 4.2, 5)), vibAmt = gain(f * 0.005);
+        vib.connect(vibAmt); vibAmt.connect(a.frequency); vibAmt.connect(s.frequency);
+        amp.gain.setValueAtTime(0, t);
+        amp.gain.linearRampToValueAtTime(level, t + 0.14);
+        amp.gain.setTargetAtTime(0, t + len, 0.14);
+        end = t + len + 1;
+        srcs.push(a, s, vib); nodes.push(f1, f2, f2Amt, lp, sAmt, vibAmt);
+      } else {
+        // muted: a soft synth lead, rounded off, with a little glide into each note
+        const a = osc('triangle', f), b = osc('sine', f), lp = filter('lowpass', 1300 * bright(), 0.6);
+        a.frequency.setValueAtTime(f * 0.985, t);
+        a.frequency.exponentialRampToValueAtTime(f, t + 0.06);
+        a.connect(lp).connect(amp); b.connect(amp);
+        amp.gain.setValueAtTime(0, t);
+        amp.gain.linearRampToValueAtTime(level, t + 0.025);
+        amp.gain.setTargetAtTime(level * 0.6, t + 0.03, 0.3);
+        amp.gain.setTargetAtTime(0, t + len, 0.1);
+        end = t + len + 0.8;
+        srcs.push(a, b); nodes.push(lp);
       }
-      const o = { len: [14 * pace, 24 * pace], style: pk(r, ['open', 'shell', 'close', 'wide']), center: rr(r, 59, 65) };
-      chordLoop(p, r, key, H, o, (d, notes, t, len) => {
-        const gap = rr(r, 0.07, 0.2);
-        const order = r() < 0.3 ? notes.slice().reverse() : notes;
-        order.forEach((m, i) => ep(m, t + i * gap + rr(r, 0, 0.03), rr(r, 0.01, 0.014), index));
-        // A softer second touch later on (two of its notes)
-        if (r() < 0.7 && notes.length > 2) {
-          const at = t + len * rr(r, 0.45, 0.65);
-          const a = notes[1 + Math.floor(r() * (notes.length - 1))], b = notes[Math.floor(r() * notes.length)];
-          ep(a, at, rr(r, 0.006, 0.009), index * 0.8);
-          if (b !== a) ep(b, at + gap * 1.6, rr(r, 0.005, 0.008), index * 0.8);
-        }
-        // Now and then two or three slow notes of melody above
-        if (r() < 0.35) {
-          let n = 9 + Math.floor(r() * 4), at = t + rr(r, 3, 7);
-          const top = notes[notes.length - 1];
-          const count = 2 + Math.floor(r() * 2);
-          for (let k = 0; k < count; k++) {
-            let m = tonicNear(key, 0) + semi(key, n);
-            while (m < top + 2) m += 12;
-            while (m > 79) m -= 12;
-            ep(m, at, rr(r, 0.005, 0.008), index * 0.7);
-            n += r() < 0.5 ? -1 : 1;
-            at += rr(r, 0.9, 1.6);
-          }
-        }
-        softBass(bassBus, bassOf(key, d, 31), t, len, 0.05, 3, 5);
-      });
+      for (const o of srcs) { o.start(t); o.stop(end); }
+      disposeWhenDone(srcs[0], [...srcs, ...nodes]);
     }
+    // The drums: all soft, warm and low
+    function kick(bus, t, level) {
+      stats.drum++;
+      const o = osc('sine', 110), amp = gain(0), lp = filter('lowpass', 180, 0.5);
+      o.frequency.setValueAtTime(110, t);
+      o.frequency.exponentialRampToValueAtTime(46, t + 0.11);
+      amp.gain.setValueAtTime(0, t);
+      amp.gain.linearRampToValueAtTime(level, t + 0.004);
+      amp.gain.setTargetAtTime(0, t + 0.01, 0.085);
+      o.connect(lp).connect(amp).connect(bus);
+      o.start(t); o.stop(t + 0.7);
+      disposeWhenDone(o, [o, lp, amp]);
+    }
+    function noiseDrum(bus, t, level, pan, r, o) {
+      stats.drum++;
+      const { src, offset } = noiseHit(r);
+      const f = filter(o.type, o.freq, o.q), lp = filter('lowpass', o.top || 5200, 0.3), amp = gain(0), place = panner(pan);
+      amp.gain.setValueAtTime(0, t);
+      amp.gain.linearRampToValueAtTime(level, t + o.attack);
+      amp.gain.setTargetAtTime(0, t + o.attack + 0.002, o.decay);
+      src.connect(f).connect(lp).connect(amp).connect(place).connect(bus);
+      src.start(t, offset, o.decay * 8 + 0.05);
+      disposeWhenDone(src, [src, f, lp, amp, place]);
+    }
+    const rim = (bus, t, level, pan, r) => noiseDrum(bus, t, level, pan, r, { type: 'bandpass', freq: 1300, q: 1.6, attack: 0.002, decay: 0.035, top: 3200 });
+    const shaker = (bus, t, level, pan, r) => noiseDrum(bus, t, level, pan, r, { type: 'highpass', freq: 2600, q: 0.5, attack: 0.008, decay: 0.035, top: 6000 });
+    const brushHit = (bus, t, level, pan, r) => noiseDrum(bus, t, level, pan, r, { type: 'bandpass', freq: 1900, q: 0.6, attack: 0.03, decay: 0.12, top: 4500 });
 
-    // ================= Slow drone: a low root whose soft overtones breathe =================
-    function drone(p) {
-      const r = p.r('drone');
-      const key = makeKey(r, ['lydian', 'dorian', 'ionian', 'aeolian', 'mixolydian']);
-      const minor = semi(key, 2) === 3;
-      const root = tonicNear(key, Math.round(rr(r, 36, 43)));
-      const f0 = mtof(root);
-      const bus = p.layer(0.55, 0.8, 0);
-      const lp = filter('lowpass', rr(r, 800, 1400) * bright(), 0.5);
-      lp.connect(bus);
-      const drift = osc('sine', rr(r, 0.006, 0.015));
-      const driftAmt = gain(rr(r, 150, 300));
-      drift.connect(driftAmt).connect(lp.frequency);
-      p.hold(drift);
-      // Each overtone with its own slow breathing
-      const partials = minor ? [[1, 1], [2, 1], [3, 1], [4, 1], [6, 1], [8, 1], [1.5, 0.4], [3, 0.3]] : [[1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [8, 1], [1.5, 0.4]];
-      const base = rr(r, 0.04, 0.05);
-      partials.forEach(([n, w], k) => {
-        const o = osc('sine', f0 * n);
-        if (k) o.detune.value = rr(r, -4, 4);
-        const a = (base * w) / Math.pow(n, 1.15);
-        const g = gain(a * 0.6);
-        const l = osc('sine', rr(r, 0.01, 0.05));
-        const la = gain(a * 0.4);
-        l.connect(la).connect(g.gain);
-        o.connect(g).connect(lp);
-        p.hold(o); p.hold(l);
-      });
-      // A slow chorus on the octave: the same note a few cents apart, gently beating
-      const ch = osc('sine', f0 * 2);
-      ch.detune.value = rr(r, 3, 6);
-      const chAmt = gain(base * 0.25);
-      ch.connect(chAmt).connect(lp);
-      p.hold(ch);
-      // Colour notes drifting in and out above it
-      const colourBus = p.layer(0.3, 1, 0.3);
-      const colours = [2, 4, 8, 9, 11];
-      if (key.mode === 'lydian') colours.push(3, 10);
-      if (key.mode === 'dorian') colours.push(5, 12);
-      let next = p.t0 + rr(r, 4, 9), lastC = -1;
-      p.schedule = (now, horizon) => {
-        if (next < now - 0.5) next = now + 1;
+    // ---- Textures for some pieces ---------------------------------------------------------
+    function stars(p, key, bus, r) {
+      // High notes of the key's pentatonic, now and then, like little stars
+      const tonic = tonicNear(key, 76);
+      const notes = [0, 1, 2, 4, 5, 7, 8, 9].map((n) => tonic + semi(key, n)).filter((m) => m >= 72 && m <= 90);
+      let next = p.t0 + rr(r, 3, 6);
+      return (now, horizon) => {
+        if (next < now - 0.5) next = now + rr(r, 1, 3);
         while (next < horizon && p.alive(next)) {
-          let c = pk(r, colours);
-          if (c === lastC) c = colours[(colours.indexOf(c) + 1) % colours.length];
-          lastC = c;
-          let m = tonicNear(key, 60) + semi(key, c);
-          while (m < 62) m += 12;
-          while (m > 79) m -= 12;
-          const f = mtof(m);
-          const out = gain(0);
-          const place = panner(rr(r, -0.6, 0.6));
-          out.connect(place).connect(colourBus);
-          const a = osc('sine', f), b = osc('sine', f * 2), bAmt = gain(0.12);
-          a.connect(out); b.connect(bAmt).connect(out);
-          const end = envelope(out, next, rr(r, 0.008, 0.012), rr(r, 5, 10), rr(r, 8, 16), rr(r, 8, 14));
-          a.start(next); b.start(next); a.stop(end); b.stop(end);
-          disposeWhenDone(a, [a, b, bAmt, out, place]);
-          next += rr(r, 10, 22);
+          const f = mtof(pk(r, notes)), place = panner(rr(r, -0.7, 0.7)), body = gain(0);
+          body.gain.setValueAtTime(0, next);
+          body.gain.linearRampToValueAtTime(0.014, next + 0.01);
+          body.gain.setTargetAtTime(0, next + 0.012, rr(r, 0.6, 1.1));
+          const a = osc('sine', f);
+          a.connect(body).connect(place).connect(bus);
+          a.start(next); a.stop(next + 6);
+          disposeWhenDone(a, [a, body, place]);
+          next += rr(r, 5, 12);
         }
       };
     }
-
-    // ================= Tape chords: warm chords that waver like an old tape =================
-    function tape(p) {
-      const r = p.r('tape'), rh = p.r('harmony');
-      const key = makeKey(rh, ['ionian', 'mixolydian', 'dorian', 'lydian', 'aeolian']);
-      const H = Harmony(key, rh);
-      const pace = rr(r, 0.9, 1.3);
-      // Wow (slow) and flutter (fast, tiny): pitch wobbles shared by every note
-      const wow = osc('sine', rr(r, 0.18, 0.42)), wowAmt = gain(rr(r, 4, 9));
-      const flutter = osc('sine', rr(r, 5.2, 7)), flAmt = gain(rr(r, 0.8, 1.6));
-      wow.connect(wowAmt); flutter.connect(flAmt);
-      p.hold(wow); p.hold(flutter);
-      // Tape: driven a little into a soft curve for warmth, then a gentle top roll-off
-      const bus = gain(1), pre = gain(6), sat = ctx.createWaveShaper(), post = gain(1 / 6);
-      sat.curve = tapeCurve();
-      const roll = filter('lowpass', rr(r, 2600, 3600) * bright(), 0.5);
-      bus.connect(pre).connect(sat).connect(post).connect(roll).connect(p.layer(0.5, 0.85, rr(r, 0.1, 0.3)));
-      // A whisper of hiss
-      const hiss = noiseSource('pink', r);
-      const hhp = filter('highpass', 500, 0.5), hlp = filter('lowpass', 2500, 0.5), hl = gain(rr(r, 0.0012, 0.002));
-      hiss.connect(hhp).connect(hlp).connect(hl).connect(p.layer(1, 0.3, 0));
-      p.hold(hiss);
-      const bassBus = p.layer(1, 0.2, 0);
-      function voiceNote(m, t, len) {
-        const f = mtof(m);
-        const tri = osc('triangle', f), saw = osc('sawtooth', f), sawAmt = gain(0.35);
-        saw.detune.value = rr(r, 3, 7) * (r() < 0.5 ? -1 : 1);
-        const lp = filter('lowpass', rr(r, 700, 1200) * bright(), 0.5);
-        const amp = gain(0), place = panner(rr(r, -0.55, 0.55));
-        tri.connect(lp); saw.connect(sawAmt).connect(lp);
-        lp.connect(amp).connect(place).connect(bus);
-        const links = [];
-        for (const o of [tri, saw]) { wowAmt.connect(o.detune); flAmt.connect(o.detune); links.push([wowAmt, o.detune], [flAmt, o.detune]); }
-        const end = envelope(amp, t, rr(r, 0.01, 0.014), rr(r, 2, 4), len, rr(r, 4, 7));
-        tri.start(t); saw.start(t); tri.stop(end); saw.stop(end);
-        disposeWhenDone(tri, [tri, saw, sawAmt, lp, amp, place], links);
-      }
-      function bassNote(m, t, len) {
-        const o = osc('triangle', mtof(m)), lp = filter('lowpass', 260, 0.5), amp = gain(0);
-        o.connect(lp).connect(amp).connect(bassBus);
-        const end = envelope(amp, t, 0.05, 3, len, 5);
-        o.start(t); o.stop(end);
-        disposeWhenDone(o, [o, lp, amp]);
-      }
-      const o = { len: [12 * pace, 22 * pace], style: pk(r, ['close', 'open', 'shell']), center: rr(r, 57, 63) };
-      chordLoop(p, r, key, H, o, (d, notes, t, len) => {
-        // Now and then just a part of the chord, so it breathes
-        const use = notes.length > 3 && r() < 0.3 ? notes.filter((_, i) => i !== 1 + Math.floor(r() * (notes.length - 2))) : notes;
-        use.forEach((m) => voiceNote(m, t + rr(r, 0, 0.8), len));
-        bassNote(bassOf(key, d, 33), t, len);
-      });
+    function bed(p, kind, bus, r) {
+      // air: a far ocean of air; hiss: an old tape's hiss; rain: soft rain on the window
+      const src = noiseSource(kind === 'air' ? 'white' : 'pink', r);
+      const hp = filter('highpass', kind === 'rain' ? 500 : kind === 'hiss' ? 1800 : 120, 0.3);
+      const lp = filter('lowpass', kind === 'rain' ? 2600 : kind === 'hiss' ? 5200 : 550, 0.3);
+      const level = gain(kind === 'rain' ? 0.009 : kind === 'hiss' ? 0.0028 : 0.01);
+      const swell = osc('sine', rr(r, 0.03, 0.06)), swellAmt = gain(kind === 'hiss' ? 0.0006 : 0.004);
+      swell.connect(swellAmt).connect(level.gain);
+      src.connect(hp).connect(lp).connect(level).connect(bus);
+      p.hold(src); p.hold(swell);
     }
 
-    // ================= Distant air: breathy chords made of tuned wind =================
-    function airy(p) {
-      const r = p.r('air'), rh = p.r('harmony');
-      const key = makeKey(rh, ['lydian', 'ionian', 'dorian', 'aeolian', 'mixolydian']);
-      const H = Harmony(key, rh);
-      const pace = rr(r, 0.9, 1.3);
-      const bus = p.layer(0.25, 1.1, rr(r, 0.1, 0.3));
-      const subBus = p.layer(1, 0.3, 0);
-      const q1 = rr(r, 14, 26), q2 = rr(r, 10, 18);
-      function breath(m, t, len) {
-        const f = mtof(m);
-        const src = noiseSource('pink', r);
-        const bp1 = filter('bandpass', f, q1), bp2 = filter('bandpass', f, q2);
-        const amp = gain(0), place = panner(rr(r, -0.75, 0.75));
-        // A faint pure tone inside the breath, so the pitch is clear
-        const tone = osc('sine', f), toneAmt = gain(0.12);
-        src.connect(bp1).connect(bp2).connect(amp);
-        tone.connect(toneAmt).connect(amp);
-        amp.connect(place).connect(bus);
-        // Narrow bands of noise are quiet: make up for how narrow (measured)
-        const make = 2.2 * Math.sqrt(q1 * q2 / 300) * Math.sqrt(440 / f);
-        const end = envelope(amp, t, rr(r, 0.007, 0.01) * make, rr(r, 5, 9), len * 0.85, rr(r, 7, 11));
-        const toneEnd = end;
-        src.start(t, rr(r, 0, 5)); tone.start(t);
-        src.stop(end); tone.stop(toneEnd);
-        disposeWhenDone(src, [src, bp1, bp2, amp, place, tone, toneAmt]);
-      }
-      const o = { len: [20 * pace, 34 * pace], style: pk(r, ['wide', 'open', 'eleven']), center: rr(r, 62, 68) };
-      chordLoop(p, r, key, H, o, (d, notes, t, len) => {
-        notes.forEach((m) => breath(m, t + rr(r, 0, 2.5), len));
-        softBass(subBus, bassOf(key, d, 33), t, len, 0.03, 6, 8);
-      });
-    }
+    // ---- A piece: the band plays ------------------------------------------------------------
+    function band(p) {
+      const cfg = BANDS[p.id];
+      const r = p.r('groove'), rh = p.r('harmony'), rm = p.r('melody'), rb = p.r('bass'), rd = p.r('drums'), rv = p.r('voices'), rf = p.r('form');
+      const key = makeKey(rh, cfg.modes);
+      const minorish = quality(key, 0) === 'min';
+      const fix = (d) => (quality(key, d) === 'dim' ? (d + 2) % 7 : d);
+      const bpm = rr(r, cfg.bpm[0], cfg.bpm[1]);
+      const beat = 60 / bpm;
+      const swing = rr(r, cfg.swing[0], cfg.swing[1]);
+      // A beat position (0, 0.5, 2.75...) in a bar starting at t0, swung
+      const at = (t0, pos) => {
+        const whole = Math.floor(pos + 1e-9), f = pos - whole;
+        let g = f;
+        if (cfg.grid16) { if (Math.abs(f - 0.25) < 1e-6) g = 0.5 * swing; else if (Math.abs(f - 0.75) < 1e-6) g = 0.5 + 0.5 * swing; }
+        else if (Math.abs(f - 0.5) < 1e-6) g = swing;
+        return t0 + (whole + g) * beat;
+      };
+      const loose = () => rr(rv, -0.007, 0.007);
+      // The echo follows the beat (a dotted eighth)
+      if (p.line) p.line.input.delayTime.setValueAtTime(Math.min(1.9, beat * 0.75), p.t0);
 
-    // ================= Low strings: lush, low string-like swells =================
-    function strings(p) {
-      const r = p.r('strings'), rh = p.r('harmony');
-      const key = makeKey(rh, ['aeolian', 'dorian', 'ionian', 'lydian']);
-      const H = Harmony(key, rh);
-      const pace = rr(r, 0.9, 1.25);
-      // Two slightly different vibratos, shared out between the players
-      const vibs = [0, 1].map((k) => {
-        const v = osc('sine', k ? rr(r, 5.1, 5.5) : rr(r, 4.6, 5));
-        const a = gain(rr(r, 2.5, 4));
-        v.connect(a); p.hold(v);
-        return a;
-      });
-      const bus = p.layer(0.4, 0.95, 0);
-      const bassBus = p.layer(0.8, 0.4, 0);
-      function bowed(m, t, len, peak, top) {
-        const f = mtof(m);
-        const lp = filter('lowpass', 230, 0.6), amp = gain(0), place = panner(rr(r, -0.6, 0.6));
-        lp.connect(amp).connect(place).connect(bus);
-        const attack = rr(r, 5, 9);
-        lp.frequency.setValueAtTime(rr(r, 200, 260), t);
-        lp.frequency.linearRampToValueAtTime(top * bright(), t + attack);
-        lp.frequency.setTargetAtTime(320, t + attack + len * 0.3, len * 0.3);
-        const saws = [rr(r, -11, -7), rr(r, -2, 2), rr(r, 7, 11)].map((c, k) => {
-          const s = osc('sawtooth', f);
-          s.detune.value = c;
-          s.connect(lp);
-          return s;
+      const chordBus = p.layer(0.6, 0.5, 0.12);
+      const padBus = p.layer(0.4, 0.9, 0);
+      const bassBus = p.layer(1, 0.08, 0);
+      const leadBus = p.layer(0.55, 0.6, 0.35);
+      const drumBus = p.layer(0.9, 0.12, 0);
+      const fxBus = p.layer(0.6, 0.8, 0.4);
+      const chordTone = filter('lowpass', rr(r, 2100, 2800) * bright(), 0.4);
+      chordTone.connect(chordBus);
+
+      // Progressions: A and B, different
+      const family = minorish ? PROGS.dark : PROGS.bright;
+      const progA = pk(rh, family).map(fix);
+      let progB = pk(rh, family).map(fix);
+      for (let i = 0; i < 6 && progB.join() === progA.join(); i++) progB = pk(rh, family).map(fix);
+      const chordBars = pk(r, cfg.chordBars);
+
+      // The form
+      let section = null, sectionBar = 0;
+      const kinds = [];
+      const motifs = {};
+      function makeMotif() {
+        const rhythm = pk(rm, RHYTHMS);
+        const steps = rhythm.slice(1).map(() => weighted(rm, [-2, -1, 1, 2, 0], [0.12, 0.36, 0.34, 0.1, 0.08]));
+        return { rhythm, steps };
+      }
+      function newSection() {
+        const prev = section ? section.kind : null;
+        let kind;
+        if (!prev) kind = 'intro';
+        else if (prev === 'intro' || prev === 'break') kind = 'A';
+        else {
+          const breakOk = !kinds.slice(-3).includes('break');
+          kind = weighted(rf, ['A', 'B', 'break'], [prev === 'A' ? 0.7 : 1.4, prev === 'B' ? 0.25 : 1.3, breakOk ? 0.6 : 0]);
+        }
+        kinds.push(kind);
+        const part = kind === 'B' ? 'B' : 'A';
+        // The motif comes back each time (so it's remembered), freshened now and then
+        if (!motifs[part] || (kind !== 'break' && rm() < 0.3)) motifs[part] = makeMotif();
+        section = {
+          kind,
+          bars: kind === 'intro' ? 4 : kind === 'break' ? 4 : 8,
+          prog: kind === 'B' ? progB : progA,
+          drums: (kind === 'A' || kind === 'B') && rd() < cfg.drums,
+          slots: pk(rm, SLOTS[kind]),
+          motif: motifs[part]
+        };
+        sectionBar = 0;
+      }
+      const chordAt = (bar) => section.prog[Math.floor(bar / chordBars) % section.prog.length];
+
+      // Melody: scale steps from the tonic near D4, kept in a warm range
+      const melBase = tonicNear(key, 62);
+      const melMidi = (ix) => melBase + semi(key, ix);
+      const isTone = (ix, d, withSeventh) => { const k = (((ix - d) % 7) + 7) % 7; return k === 0 || k === 2 || k === 4 || (withSeventh && k === 6); };
+      function nearestTone(ix, d, withSeventh) {
+        for (const o of [0, -1, 1, -2, 2, -3, 3]) if (isTone(ix + o, d, withSeventh)) return ix + o;
+        return ix;
+      }
+      function inRange(ix) {
+        while (melMidi(ix) > (cfg.top || 79)) ix -= 7;
+        while (melMidi(ix) < 62) ix += 7;
+        return ix;
+      }
+      let melIx = 4 + Math.floor(rm() * 3);
+      const leadLevel = cfg.lead === 'hum' ? 0.03 : cfg.lead === 'flute' ? 0.028 : cfg.lead === 'muted' ? 0.026 : cfg.lead === 'rhodes' ? 0.024 : 0.03;
+      function phrase(variant, t0, d0, d1) {
+        const m = section.motif;
+        let steps = m.steps.slice();
+        if (variant === 'a') steps = steps.map((s) => -s);
+        if (variant === 'c2' && steps.length) steps[steps.length - 1] = steps[steps.length - 1] > 0 ? -1 : 2;
+        const chordFor = (pos) => (pos < 4 ? d0 : d1);
+        let ix = nearestTone(melIx, chordFor(m.rhythm[0][0]), false);
+        const pan = rr(rv, -0.25, 0.25);
+        m.rhythm.forEach(([pos, dur], i) => {
+          if (i) ix += steps[i - 1];
+          const strong = Math.abs(pos - Math.round(pos)) < 1e-6 && Math.round(pos) % 2 === 0;
+          const last = i === m.rhythm.length - 1;
+          if (strong) ix = nearestTone(ix, chordFor(pos), true);
+          if (last) ix = variant === 'a' ? nearestTone(ix, 0, false) : nearestTone(ix, chordFor(pos), false);
+          ix = inRange(ix);
+          const t = at(t0, pos) + loose();
+          if (p.alive(t)) lead(cfg.lead, leadBus, melMidi(ix), t, dur * beat * 0.92, leadLevel * rr(rv, 0.85, 1.05), pan, rv);
         });
-        const links = saws.map((s, k) => { const v = vibs[k % 2]; v.connect(s.detune); return [v, s.detune]; });
-        const end = envelope(amp, t, peak, attack, len, rr(r, 6, 10));
-        for (const s of saws) { s.start(t); s.stop(end); }
-        disposeWhenDone(saws[0], [...saws, lp, amp, place], links);
+        melIx = ix;
       }
-      const o = { len: [18 * pace, 30 * pace], style: pk(r, ['open', 'wide', 'shell']), center: rr(r, 50, 57) };
-      chordLoop(p, r, key, H, o, (d, notes, t, len) => {
-        const top = rr(r, 650, 1100);
-        notes.forEach((m) => bowed(m, t + rr(r, 0, 1.5), len, rr(r, 0.0045, 0.006), top));
-        bowed(bassOf(key, d, 31), t, len, 0.0055, 260);
-      });
-    }
 
-    // ================= Night rain: soft rain and a distant rumble under a night pad =================
-    function rain(p) {
-      const r = p.r('rain'), rh = p.r('harmony');
-      const key = makeKey(rh, ['aeolian', 'dorian', 'aeolian', 'lydian', 'mixolydian']);
-      const H = Harmony(key, rh);
-      const pace = rr(r, 0.9, 1.3);
-      // The rain: pink noise, softly filtered, breathing slowly
-      const wash = noiseSource('pink', r);
-      const hp = filter('highpass', rr(r, 250, 400), 0.4);
-      const lp = filter('lowpass', rr(r, 1300, 2000) * bright(), 0.4);
-      const level = gain(rr(r, 0.012, 0.018));
-      const lfo = osc('sine', rr(r, 0.01, 0.03)), lfoAmt = gain(rr(r, 150, 300));
-      lfo.connect(lfoAmt).connect(lp.frequency);
-      const sw = osc('sine', rr(r, 0.02, 0.05)), swAmt = gain(level.gain.value * 0.35);
-      sw.connect(swAmt).connect(level.gain);
-      wash.connect(hp).connect(lp).connect(level).connect(p.layer(0.9, 0.35, 0));
-      p.hold(wash); p.hold(lfo); p.hold(sw);
-      // A distant rumble
-      const rumble = noiseSource('brown', r);
-      const rlp = filter('lowpass', rr(r, 120, 180), 0.5), rl = gain(rr(r, 0.03, 0.05));
-      rumble.connect(rlp).connect(rl).connect(p.layer(1, 0.1, 0));
-      p.hold(rumble);
-      // The night pad: sines and a soft triangle
-      const padBus = p.layer(0.35, 1, 0);
-      function padNote(m, t, len) {
-        const f = mtof(m);
-        const a = osc('sine', f), b = osc('triangle', f), bAmt = gain(0.25);
-        const plp = filter('lowpass', 900 * bright(), 0.4), amp = gain(0), place = panner(rr(r, -0.6, 0.6));
-        a.connect(plp); b.connect(bAmt).connect(plp);
-        plp.connect(amp).connect(place).connect(padBus);
-        const end = envelope(amp, t, rr(r, 0.008, 0.011), rr(r, 7, 11), len, rr(r, 8, 12));
-        a.start(t); b.start(t); a.stop(end); b.stop(end);
-        disposeWhenDone(a, [a, b, bAmt, plp, amp, place]);
-      }
-      // Now and then a far-off drop in still water (some nights have none)
-      const dripBus = p.layer(0.4, 0.9, 0.6);
-      const drips = r() < 0.6;
-      let tones = [];
-      let nextDrip = p.t0 + rr(r, 8, 16);
-      function drip(t) {
-        if (!tones.length) return;
-        let m = pk(r, tones);
-        while (m < 69) m += 12;
-        while (m > 81) m -= 12;
-        const o = osc('sine', mtof(m)), dl = filter('lowpass', 1500, 0.4), amp = gain(0), place = panner(rr(r, -0.8, 0.8));
-        o.connect(dl).connect(amp).connect(place).connect(dripBus);
-        amp.gain.setValueAtTime(0, t);
-        amp.gain.linearRampToValueAtTime(rr(r, 0.0035, 0.0055), t + 0.04);
-        amp.gain.setTargetAtTime(0, t + 0.045, rr(r, 0.35, 0.6));
-        o.start(t); o.stop(t + 4);
-        disposeWhenDone(o, [o, dl, amp, place]);
-      }
-      const o = {
-        len: [24 * pace, 40 * pace], style: pk(r, ['open', 'wide']), center: rr(r, 58, 64),
-        extra: (now, horizon) => {
-          if (nextDrip < now - 0.5) nextDrip = now + rr(r, 4, 10);
-          while (nextDrip < horizon && p.alive(nextDrip)) {
-            if (drips && r() < 0.6) drip(nextDrip);
-            nextDrip += rr(r, 5, 16);
+      // Chords, bass and drums for one bar
+      let prevVoicing = null, prevDeg = null;
+      let voicing = null;
+      function chordsBar(t0, d, changed, barsLeft) {
+        if (changed || !voicing) { voicing = voice(key, d, cfg.keysStyle, 61, prevVoicing); prevVoicing = voicing; }
+        const pattern = section.kind === 'break' || section.kind === 'intro' ? [[0, 'bar']] : pk(rv, COMP[cfg.comp]);
+        const comp = cfg.comp === 'stab' || cfg.comp === 'pluck' ? (section.kind === 'break' || section.kind === 'intro' ? null : 'pluck') : 'keys';
+        if (comp) {
+          for (const [pos, len] of pattern) {
+            if (len === 'bar' && !changed) continue;
+            const hold = len === 'bar' ? beat * 4 * barsLeft - 0.1 : len * beat * 0.95;
+            const t = at(t0, pos) + loose();
+            if (!p.alive(t)) continue;
+            voicing.forEach((m, i) => {
+              const pan = (i / Math.max(1, voicing.length - 1) - 0.5) * 0.8;
+              const roll = comp === 'keys' && pos === 0 ? i * rr(rv, 0.008, 0.025) : 0;
+              if (comp === 'pluck') pluck(chordTone, m, t + roll, 0.011, pan);
+              else rhodes(chordTone, m, t + roll, hold, len === 'bar' ? 0.011 : 0.013, pan, cfg.wobble);
+            });
           }
         }
+        // Pads under it all, at each change (and in breakdowns, for every piece)
+        if ((cfg.pad || section.kind === 'break') && changed) {
+          const notes = voice(key, d, 'open', 57, null);
+          notes.forEach((m, i) => pad(padBus, m, t0 + rr(rv, 0, 0.3), beat * 4 * barsLeft - 0.4, cfg.pad ? 0.0085 : 0.006, (i / Math.max(1, notes.length - 1) - 0.5) * 1, rv));
+        }
+      }
+      function bassBar(t0, d, next) {
+        if (section.kind === 'intro' && sectionBar < 2) return;
+        const lo = 33;
+        const root = bassOf(key, d, lo);
+        const pattern = section.kind === 'break' ? [[0, 'R', 3.5]] : pk(rb, BASS[cfg.bass]);
+        const interval = (k) => semi(key, d + k) - semi(key, d);
+        pattern.forEach(([pos, what, len]) => {
+          let m = root;
+          if (what === '5') m = root + interval(4);
+          else if (what === '3') m = root + interval(2);
+          else if (what === '8') m = root + 12;
+          else if (what === 'A') {
+            let nr = bassOf(key, next, lo);
+            if (Math.abs(nr - root) > 6) nr += nr > root ? -12 : 12;
+            const below = semi(key, next) - semi(key, next - 1), above = semi(key, next + 1) - semi(key, next);
+            m = rb() < 0.25 ? nr + (rb() < 0.5 ? -1 : 1) : rb() < 0.55 ? nr - below : nr + above;
+            if (next === d) m = root + interval(4);
+          }
+          while (m > 52) m -= 12;
+          while (m < 31) m += 12;
+          // Now and then a note is left out, so the line breathes
+          if (pos > 0 && rb() < 0.1) return;
+          const t = at(t0, pos) + loose();
+          if (p.alive(t)) bassNote(bassBus, m, t, len * beat * 0.9, 0.05 * rr(rv, 0.9, 1.05));
+        });
+      }
+      const kit = KITS[cfg.kit];
+      function drumsBar(t0) {
+        // (none while the piece fades out: the next one comes in gently, without them)
+        if (!section.drums || t0 > p.fadeAt - 1) return;
+        const step = (s) => at(t0, s / 4) + loose();
+        for (const s of kit.kick || []) if (s === 0 || rd() > 0.12) kick(drumBus, step(s), s === 0 ? 0.05 : 0.036);
+        for (const s of kit.rim || []) if (rd() > 0.08) rim(drumBus, step(s), 0.011 * rr(rd, 0.8, 1.1), 0.15, rd);
+        for (const s of kit.brush || []) brushHit(drumBus, step(s), 0.0065 * rr(rd, 0.7, 1.1), -0.2, rd);
+        for (const s of kit.shaker || []) if (rd() > 0.15) shaker(drumBus, step(s), (s % 2 ? 0.0028 : 0.0045) * rr(rd, 0.7, 1.1), 0.35, rd);
+      }
+
+      const extras = (cfg.extras || []).map((x) => (x === 'stars' ? stars(p, key, fxBus, p.r('stars')) : (bed(p, x, fxBus, p.r(x)), null))).filter(Boolean);
+
+      let nextBar = p.t0 + 0.15;
+      newSection();
+      p.schedule = (now, horizon) => {
+        if (nextBar < now - 0.5) nextBar = now + 0.15;
+        for (const x of extras) x(now, horizon);
+        while (nextBar < horizon && p.alive(nextBar)) {
+          if (sectionBar >= section.bars) newSection();
+          const t0 = nextBar;
+          const d = chordAt(sectionBar);
+          const changed = sectionBar % chordBars === 0 || d !== prevDeg;
+          const barsLeft = changed ? Math.min(chordBars, section.bars - sectionBar) : 1;
+          const nextD = sectionBar + 1 < section.bars ? chordAt(sectionBar + 1) : section.prog[0];
+          chordsBar(t0, d, changed, barsLeft);
+          bassBar(t0, d, nextD);
+          drumsBar(t0);
+          if (sectionBar % 2 === 0) {
+            const slot = section.slots[Math.floor(sectionBar / 2)] || '-';
+            if (slot !== '-') phrase(slot, t0, d, sectionBar + 1 < section.bars ? chordAt(sectionBar + 1) : d);
+          }
+          prevDeg = d;
+          sectionBar++;
+          nextBar += beat * 4;
+        }
       };
-      chordLoop(p, r, key, H, o, (d, notes, t, len) => {
-        tones = notes;
-        notes.forEach((m) => padNote(m, t + rr(r, 0, 2), len));
-      });
     }
 
-    const BUILD = { glow, keys, drone, tape, air: airy, strings, rain };
+    const BUILD = Object.fromEntries(Object.keys(BANDS).map((id) => [id, band]));
 
     // ---- Lookahead scheduling ----------------------------------------------------------
     function tick(now, ahead) {
@@ -1055,6 +975,7 @@
       tick,
       current,
       history,
+      stats,
       fadeIn(seconds) { glide(fader.gain, 1, seconds); },
       fadeOut(seconds) { glide(fader.gain, 0, seconds); },
       setTone(t) {
@@ -1356,7 +1277,7 @@
       if (n === win) { loud = Math.max(loud, w / n); w = 0; n = 0; }
     }
     const db = (x) => (x > 0 ? 20 * Math.log10(x) : -Infinity);
-    return {
+    const out = {
       seed: eng.seed,
       pieces: eng.history.map((h) => h.id),
       room: eng.roomSize,
@@ -1364,8 +1285,40 @@
       peakAt,
       rmsDb: db(Math.sqrt(sum / L.length)),
       loudestDb: db(Math.sqrt(loud)),   // the loudest 0.4 s, as RMS
-      clipped: peak >= 1
+      clipped: peak >= 1,
+      notes: { ...eng.stats }           // how many notes each player played
     };
+    if (o.analyse || o.wav) {
+      // How much of the sound is bass (under 150 Hz, a two-pole low-pass), and the longest quiet gap
+      const k = Math.exp(-2 * Math.PI * 150 / rate);
+      let y1 = 0, y2 = 0, lowSum = 0, gap = 0, longest = 0, wsum = 0, wn = 0;
+      const gw = Math.floor(rate * 0.1);
+      for (let i = 0; i < L.length; i++) {
+        const x = (L[i] + R[i]) / 2;
+        y1 = (1 - k) * x + k * y1; y2 = (1 - k) * y1 + k * y2;
+        lowSum += y2 * y2;
+        wsum += x * x; wn++;
+        if (wn === gw) { if (Math.sqrt(wsum / wn) < 3e-4) { gap += 0.1; longest = Math.max(longest, gap); } else gap = 0; wsum = 0; wn = 0; }
+      }
+      out.lowShare = lowSum / Math.max(1e-12, L.reduce((a, x, i) => a + ((x + R[i]) / 2) ** 2, 0));
+      out.longestGap = longest;
+    }
+    if (o.wav) {
+      // A 16-bit WAV of it, as base64 (scripts/music-previews.mjs saves these)
+      const n = L.length, bytes = new Uint8Array(44 + n * 4), v = new DataView(bytes.buffer);
+      const str = (at, t) => { for (let i = 0; i < t.length; i++) bytes[at + i] = t.charCodeAt(i); };
+      str(0, 'RIFF'); v.setUint32(4, 36 + n * 4, true); str(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 2, true);
+      v.setUint32(24, rate, true); v.setUint32(28, rate * 4, true); v.setUint16(32, 4, true); v.setUint16(34, 16, true); str(36, 'data'); v.setUint32(40, n * 4, true);
+      const gainUp = o.wavGain || 1;
+      for (let i = 0; i < n; i++) {
+        v.setInt16(44 + i * 4, Math.max(-1, Math.min(1, L[i] * gainUp)) * 32767, true);
+        v.setInt16(46 + i * 4, Math.max(-1, Math.min(1, R[i] * gainUp)) * 32767, true);
+      }
+      let bin = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      out.wav = btoa(bin);
+    }
+    return out;
   }
 
   const api = {

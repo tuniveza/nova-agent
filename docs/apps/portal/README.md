@@ -163,9 +163,14 @@ four functions) and set `SOCIAL_MEDIA_BASE` (where the VPS serves `<id>.<ext>`) 
 - **Quests from Nova Agent** (`src/agent-nova.js`): Nova Agent sends its plan here every
   time it changes, and picks up taps within about a second.
 - **Ambient music** (`web/shared/ambient.js`, moved from `web/portal/`): Novacane's quiet,
-  never-ending soundtrack made live with the Web Audio API (no audio files), now with a soft
-  electric-piano phrase now and then. Inside Nova Agent, Portal's music button works the one
-  player in Nova Agent's main page, so the music carries on across panels.
+  never-ending late-night studio music, made live with the Web Audio API (no audio files): a
+  small band on a gentle pulse with soulful 7th/9th chords, a warm moving bass line, a melody of
+  short motifs that come back and get answered, and very soft swung lo-fi drums, in sections
+  (intro, A, B, breakdowns). Seven pieces take turns (Glow, Warm keys, Tape beat, Late night,
+  Night trio, Whisper garage, Afro glow); a seed picks keys, tempos, progressions and motifs.
+  Previews and measurements: `node scripts/music-previews.mjs`. Inside Nova Agent, Portal's
+  music button works the one player in Nova Agent's main page, so the music carries on across
+  panels.
 - **Sound effects** (`web/shared/sfx.js`): Novacane's glass bells, warm under-tones and soft
   breaths of air for taps, tabs, switches, sends and deletes, all in the music's key, and a
   two-note chime when NovaBot answers.

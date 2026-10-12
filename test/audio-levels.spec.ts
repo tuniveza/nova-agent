@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 // @ts-ignore: a plain JavaScript helper (scripts/audio-lab.mjs)
 import { openLab } from "../scripts/audio-lab.mjs";
 
-interface Level { seed?: string; pieces?: string[]; peakDb: number; loudestDb: number; clipped: boolean }
+interface Level { seed?: string; pieces?: string[]; peakDb: number; loudestDb: number; clipped: boolean; notes?: { lead: number; bass: number; chord: number; drum: number }; lowShare?: number; longestGap?: number }
 interface Lab {
   errors: string[];
   music(o: Record<string, unknown>): Promise<Level>;
@@ -29,7 +29,7 @@ afterAll(async () => {
 });
 
 describe("ambient music levels", () => {
-  const PIECES = ["glow", "keys", "drone", "tape", "air", "strings", "rain"];
+  const PIECES = ["glow", "keys", "tape", "late", "trio", "garage", "afro"];
   for (const piece of PIECES) {
     it(`${piece}: quiet at the default volume and far from clipping at full volume, across seeds`, async () => {
       expect(names.pieces).toContain(piece);
@@ -41,6 +41,19 @@ describe("ambient music levels", () => {
         expect(r.peakDb + FULL).toBeLessThan(-12);
         expect(r.loudestDb).toBeGreaterThan(-60); // and it does play
       }
+    }, 120000);
+  }
+
+  // Not just held notes: every piece has a moving bass line, a melody and changing chords
+  for (const piece of PIECES) {
+    it(`${piece}: a bass line, a melody and chords that move`, async () => {
+      const r = await lab!.music({ seed: "K7M2QX", piece, seconds: 45, analyse: true });
+      const perMin = (n: number) => (n / 45) * 60;
+      expect(perMin(r.notes!.bass)).toBeGreaterThan(20);
+      expect(perMin(r.notes!.lead)).toBeGreaterThan(6);
+      expect(perMin(r.notes!.chord)).toBeGreaterThan(20);
+      expect(r.lowShare!).toBeGreaterThan(0.2); // the bass is there
+      expect(r.longestGap!).toBeLessThan(6);    // never silent for long
     }, 120000);
   }
 
