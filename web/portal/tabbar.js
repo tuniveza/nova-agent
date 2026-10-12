@@ -12,7 +12,10 @@
   if (!bar) return;
   const WIDE = matchMedia("(min-width: 761px)");
   // The tab bar is on (not the side menu: Options → Menu)
-  const topTabs = () => WIDE.matches && document.documentElement.getAttribute("data-menu") !== "side";
+  // The side menu only fits from 1024px wide: narrower than that the tabs go on top whatever's
+  // chosen (themes.js switches tabbar.css on for those widths too), never a squashed row
+  const SIDE_FITS = matchMedia("(min-width: 1024px)");
+  const topTabs = () => WIDE.matches && (document.documentElement.getAttribute("data-menu") !== "side" || !SIDE_FITS.matches);
   const STILL = matchMedia("(prefers-reduced-motion: reduce)");
   const root = document.documentElement;
   const top = document.querySelector(".app > .top");
@@ -174,6 +177,7 @@
   const again = () => { pack(); measure(); edges(); reveal(bar.querySelector(".tab.active"), false); };
   addEventListener("resize", again);
   WIDE.addEventListener("change", again);
+  SIDE_FITS.addEventListener("change", again);
   // Options → Menu changed (tabs on top or the side menu)
   addEventListener("novaoptionschange", again);
   if ("ResizeObserver" in window) {

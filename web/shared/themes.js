@@ -197,7 +197,8 @@
     // Portal's menu: tabs across the top (tabbar.css) or the side menu (that file switched off)
     root.setAttribute("data-menu", o.menu === "side" ? "side" : "top");
     const tabs = document.getElementById("tabbar-css");
-    if (tabs) tabs.media = o.menu === "side" ? "not all" : "all";
+    // (the side menu only fits from 1024px wide: narrower than that the tabs stay on top)
+    if (tabs) tabs.media = o.menu === "side" ? "(max-width: 1023px)" : "all";
     else if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => apply(get()), { once: true });
   }
 

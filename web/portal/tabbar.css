@@ -1,6 +1,7 @@
 /* Portal's sections as a tab bar across the top (computer and tablet), the default menu.
-   Options → Menu → "Side menu" turns this whole file off (themes.js sets its media to
-   "not all"), and Portal's original side menu (app.css) takes over again. */
+   Options → Menu → "Side menu" turns this file off from 1024px wide (themes.js sets its media to
+   "(max-width: 1023px)"), and Portal's original side menu (app.css) takes over there; narrower
+   than that the side menu doesn't fit, so the tabs stay on top (tabbar.js does the same). */
 /* ===================== The sections: a tab bar across the top (computer and tablet) ===================== */
 /* What was the side menu is one row of tabs under the header (inside Nova Agent, at the very top),
    in its groups: Today · Studio · Plans · You · Admin · (inside Nova Agent) the settings icons.

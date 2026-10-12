@@ -67,7 +67,7 @@ html.embed .embed-head > .top { position: relative; top: auto; }
 }
 /* Tablet widths: every tab stays on screen, wrapping onto a second centred row (phones keep the sliding row) */
 @media (min-width: 761px) and (max-width: 980px) {
-  html.embed:not([data-menu="side"]) .embed-head > .tabs { flex-wrap: wrap; justify-content: center; row-gap: 10px; column-gap: 8px; padding: 10px 14px; overflow: visible; scroll-snap-type: none; }
+  html.embed .embed-head > .tabs { flex-wrap: wrap; justify-content: center; row-gap: 10px; column-gap: 8px; padding: 10px 14px; overflow: visible; scroll-snap-type: none; }
   html.embed .embed-head > .tabs > .tab {
     flex: 0 0 auto; flex-direction: row; gap: 6px; min-height: 36px; padding: 0 12px; overflow: visible;
     border-radius: 999px; border: 1px solid var(--line); scroll-snap-align: start;

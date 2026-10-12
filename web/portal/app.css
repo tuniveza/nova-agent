@@ -451,6 +451,15 @@ main {
   .tab > span:not(.badge) { font-size: 9.5px; letter-spacing: 0; }
   .tab svg { width: 21px; height: 21px; }
 }
+/* A narrow phone: Conversations says "Chats" on the bar, so no name is cut short (the button's
+   aria-label keeps its full name for screen readers) */
+@media (max-width: 480px) {
+  .tab[data-view="chats"] > span:not(.badge) { font-size: 0 !important; }
+  .tab[data-view="chats"] > span:not(.badge)::after { content: "Chats"; font-size: 10.5px; }
+}
+@media (max-width: 359px) {
+  .tab[data-view="chats"] > span:not(.badge)::after { font-size: 9.5px; }
+}
 
 /* ----- Sheets (booking link, notifications, Nova Agent) ----- */
 .sheet {

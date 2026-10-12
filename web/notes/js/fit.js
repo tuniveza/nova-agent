@@ -19,7 +19,10 @@
       // Inside Nova Agent's frame: the keyboard covers Nova Agent's window, not ours
       const frame = window.frameElement;
       const top = window.parent && window.parent.visualViewport;
-      if (frame && top && window.parent === window.top) {
+      // (only while something covers part of Nova Agent's window, a keyboard: otherwise where the
+      // frame sits doesn't matter, and measuring it while Nova Agent's bars slide in and out left
+      // Notes a little short of its frame until the next resize)
+      if (frame && top && window.parent === window.top && top.height < window.parent.innerHeight - 1) {
         const r = frame.getBoundingClientRect();
         const bottom = Math.min(r.bottom, top.offsetTop + top.height);
         h = Math.min(h, bottom - r.top - (frame.clientTop || 0));
