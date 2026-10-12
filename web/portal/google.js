@@ -74,6 +74,12 @@
     else if (data.hasKey) line.textContent = "Key saved ✓ · One step left: Connect Google.";
     else line.textContent = "Not set up yet. It takes about 5 minutes, one step at a time.";
     card.append(line);
+    // Google turned the saved connection down: nothing syncs until someone connects again
+    if (data.connected && data.needsReconnect) {
+      const warn = el("p", "gg-missing gg-problem", "Google stopped Nova Agent's connection, so nothing is syncing. Press Connect again (about a minute).");
+      warn.setAttribute("role", "status");
+      card.append(warn, button("Connect again", "btn big", connect));
+    }
     if (data.connected && data.missing.length) {
       const miss = el("p", "gg-missing", `Connect again to switch on: ${data.missing.join(", ")}.`);
       card.append(miss, button("Connect again", "btn", connect));
@@ -219,7 +225,10 @@
       li.append(label, el("p", "gg-help", p.allowed ? p.help : `${p.help} (Needs Connect again: Google hasn't given this permission.)`));
       const st = data.status[SYNCABLE[p.id]] || (p.id === "bookings" || p.id === "calendarPlan" ? null : data.status[p.id]);
       if (st && p.on) {
-        li.append(el("p", st.ok ? "gg-note" : "gg-note gg-problem", st.ok ? `${st.note} · ${ago(st.at)}` : `Last try ${ago(st.at)}: ${st.note}`));
+        const text = st.running ? "Syncing now…" : st.ok ? `${st.note} · ${ago(st.at)}` : `Last try ${ago(st.at)}: ${st.note}`;
+        const note = el("p", st.ok || st.running ? "gg-note" : "gg-note gg-problem", text);
+        if (st.running) note.setAttribute("aria-live", "polite");
+        li.append(note);
       }
       if (SYNCABLE[p.id] && p.on && p.allowed) {
         const key = SYNCABLE[p.id];
@@ -262,13 +271,27 @@
     await load();
   }
 
+  // Sync now: Nova Bot starts it and answers straight away; this page then looks every few seconds
+  // until the part says how it went (a minute at most)
   async function syncNow(key, b) {
     busy.add(key);
     b.disabled = true;
     b.textContent = "Working…";
     try {
       const res = await K().api("google/sync", { body: { part: key } });
-      K().toast(res.note ? `Done: ${res.note}` : "Done");
+      if (res.started) {
+        await load();
+        for (let i = 0; i < 20; i++) {
+          await new Promise((r) => setTimeout(r, 3000));
+          if (!K().running) break;
+          await load();
+          const st = data && data.status && data.status[key];
+          if (st && !st.running) {
+            K().toast(st.ok ? `Done: ${st.note}` : st.note);
+            break;
+          }
+        }
+      } else K().toast(res.note ? `Done: ${res.note}` : "Done");
     } catch (err) {
       if (err.message !== "signed out") K().toast(err.message);
     }
