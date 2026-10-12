@@ -90,19 +90,19 @@
     };
   }
 
-  // A chosen colour with the planet in it: the colour you picked leads (its accent, highlight and
-  // backgrounds stay yours, so picking a colour always shows), and the planet tints it: its sky in
-  // the backgrounds, its streaks and nebula in the second accent and the soft lights.
+  // A chosen colour with the planet in it: the planet's own look stays (its backgrounds, soft lights
+  // and text, as when no colour is chosen), and the colour you picked takes the buttons, glows and
+  // highlights, with a touch of it in the backgrounds, so every colour choice clearly shows.
   function tinted(t, p) {
-    const sky = mix(p.sky || t.accent3, "#000000", 0.25);
-    const streak = p.streak || p.glow;
-    const accent2 = mix(t.accent2, p.nebula0 || streak, 0.4);
+    const base = fromPlanet(p, t);
+    const accent = mix(t.accent, base.accent, 0.2);
     return {
-      ...t,
+      ...base,
       id: t.id,
-      void: mix(t.void, sky, 0.12), deep: mix(t.deep, sky, 0.18), panel: mix(t.panel, sky, 0.22), panel2: mix(t.panel2, sky, 0.22),
-      accent: mix(t.accent, streak, 0.18), accent2, accent3: mix(t.accent3, sky, 0.35),
-      hi: mix(t.hi, p.glow, 0.15), lilac: mix(t.lilac, p.nebula2 || p.glow, 0.35),
+      void: mix(base.void, t.void, 0.3), deep: mix(base.deep, t.deep, 0.35), panel: mix(base.panel, t.panel, 0.4), panel2: mix(base.panel2, t.panel2, 0.4),
+      accent, accent2: mix(t.accent2, base.accent2, 0.25), accent3: mix(base.accent3, t.accent3, 0.5),
+      hi: mix(t.hi, base.hi, 0.2), lilac: mix(base.lilac, t.lilac, 0.45), soft: mix(base.soft, t.soft, 0.3),
+      onAccent: lum(accent) > 0.55 ? "#140F06" : "#FFFFFF",
     };
   }
 
