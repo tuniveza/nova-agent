@@ -691,7 +691,7 @@
   }
   // All links: Portal → Admin, inside Nova Agent (or Nova Agent opened there, from Notes on its own)
   function openAllLinks() {
-    const page = '/portal/?view=admin&page=' + encodeURIComponent('/admin/links');
+    const page = '/portal/?view=manage&page=' + encodeURIComponent('/admin/links');
     try {
       if (window.top !== window && window.top.NovaAgent && window.top.NovaAgent.open) return window.top.NovaAgent.open(page);
     } catch (err) {}

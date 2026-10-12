@@ -461,7 +461,8 @@
     const p = new URLSearchParams(location.search);
     const view = p.get("view") || "";
     if (view === "crew") return { view: "crew" };
-    if (view === "admin") return { view: "admin", page: safeAdminPage(p.get("page")) };
+    // (the address says "manage": ad blockers block "view=ad…"; an old "admin" one still works)
+    if (view === "manage" || view === "admin") return { view: "admin", page: safeAdminPage(p.get("page")) };
     const id = p.get("id");
     if (id && (!state.me || id !== state.me.id)) return { view: "person", id };
     if (view === "me" || view === "you" || id) return { view: "me" };
@@ -512,7 +513,7 @@
       sfx("tab");
       for (const id of ["suite-sheet", "more-sheet"]) $(id).hidden = true;
       $("brand").setAttribute("aria-expanded", "false");
-      go("/portal/?view=admin&page=" + encodeURIComponent(safeAdminPage(url.pathname)));
+      go("/portal/?view=manage&page=" + encodeURIComponent(safeAdminPage(url.pathname)));
       return true;
     }
     try {
@@ -594,7 +595,7 @@
     chip.addEventListener("click", () => {
       sfx("tab");
       const page = chip.dataset.admin;
-      go(page === "crew" ? "/portal/?view=crew" : "/portal/?view=admin&page=" + encodeURIComponent(page), { replace: true });
+      go(page === "crew" ? "/portal/?view=crew" : "/portal/?view=manage&page=" + encodeURIComponent(page), { replace: true });
     });
   }
 

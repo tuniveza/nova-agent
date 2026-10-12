@@ -411,7 +411,7 @@
     if (act === 'status') { if (window.NovaStatus) window.NovaStatus.next(); return; }
     if (act === 'sfx-extra') { if (window.NovaSfx) window.NovaSfx.toggleExtra(); return; }
     // Admin things live in Portal → Admin
-    if (act === 'links') return window.NovaAgent && window.NovaAgent.open('/portal/?view=admin&page=' + encodeURIComponent('/admin/links'));
+    if (act === 'links') return window.NovaAgent && window.NovaAgent.open('/portal/?view=manage&page=' + encodeURIComponent('/admin/links'));
     if (act === 'install') { const i = $('install'); if (i) i.click(); return; }
     if (act === 'reload') location.reload();
   });

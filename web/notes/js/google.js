@@ -161,7 +161,7 @@
   // "Open Admin → Google": in Portal → Admin (the one place for admin things), inside Nova Agent
   document.addEventListener('click', (e) => {
     if (!e.target.closest || !e.target.closest('#gd-admin')) return;
-    const page = '/portal/?view=admin&page=' + encodeURIComponent('/admin/google/setup');
+    const page = '/portal/?view=manage&page=' + encodeURIComponent('/admin/google/setup');
     try {
       if (window.top !== window && window.top.NovaAgent && window.top.NovaAgent.open) return window.top.NovaAgent.open(page);
     } catch (err) {}

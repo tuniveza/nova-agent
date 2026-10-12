@@ -294,7 +294,7 @@
     if (view === "calendar") return openCalendar();
     // Conversations from the menu starts at the list
     if (view === "chats" && currentView !== "chats") openChatId = null;
-    return window.PortalPage && window.PortalPage.go("/portal/?view=" + view, { replace: VIEWS.includes(view) });
+    return window.PortalPage && window.PortalPage.go("/portal/?view=" + (view === "admin" ? "manage" : view), { replace: VIEWS.includes(view) });
   };
   document.querySelectorAll(".tabs .tab[data-view]").forEach((tab) => tab.addEventListener("click", () => goView(tab.dataset.view)));
 

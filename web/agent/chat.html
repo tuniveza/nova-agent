@@ -2557,6 +2557,9 @@
 
   function openInside(href, name) {
     setViewerName(name);
+    // Ad blockers block any address with "view=ad…" in it (they take it for an advert), so Portal's
+    // Admin is "view=manage"; old links and remembered places still say "admin"
+    href = String(href).replace(/([?&]view=)admin\b/, '$1manage');
     $('viewer-frame').src = href;
     $('viewer').hidden = false;
     $('main').classList.add('viewing');
