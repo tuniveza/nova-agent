@@ -54,7 +54,7 @@ const SUBJECTS = [
   "Urgent: lost my session files from 3 weeks ago, do you keep backups?",
   "Collaboration / sync licensing opportunity for a TV advert campaign — brief attached via link " + LONG_URL,
 ];
-const STATUSES = ["new", "new", "replied", "new", "done", "new", "replied", "new", "done", "new", "replied", "new"];
+const STATUSES = ["new", "open", "replied", "new", "done", "spam", "replied", "new", "done", "open", "replied", "new"];
 
 const ENQUIRIES = PEOPLE.map((p, i) => ({
   id: 101 + i,
@@ -76,13 +76,31 @@ const ENQUIRIES = PEOPLE.map((p, i) => ({
   consent_source: i % 2 ? "Ticked 'Contact me about this enquiry' in NovaBot's chat on " + LONG_URL : "Asked NovaBot to send the enquiry",
   do_not_contact_at: i === 7 ? iso(10, 14) : null,
   do_not_contact_by: i === 7 ? "customer" : null,
+  // The inbox (Nova Bot's src/inbox.js): a label, who's on it, why it's in Spam
+  label: i % 3 === 0 ? (i === 3 ? "Podcast " + LONGWORD.slice(0, 26) : "Mixing") : null,
+  assigned_to: i % 2 ? "crew-" + (i % 3) : null,
+  assigned_name: i % 2 ? "Penelope Wigglesworth-Fanshawe-Cholmondeley" : null,
+  spam_reason: STATUSES[i] === "spam" ? "Likely spam: 4 links; a throwaway email address (mailinator.com); spam words (\"seo services\", \"backlinks\", \"" + LONGWORD + "\")" : null,
 }));
+const TEAM = [
+  { id: "crew-0", name: "Dom" },
+  { id: "crew-1", name: "Penelope Wigglesworth-Fanshawe-Cholmondeley" },
+  { id: "crew-2", name: LONGWORD },
+];
 
 function enquiriesBody(query) {
-  const all = query.get("show") === "all";
-  const list = all ? ENQUIRIES : ENQUIRIES.filter((q) => q.status === "new");
-  return { enquiries: list, newCount: ENQUIRIES.filter((q) => q.status === "new").length };
+  const box = query.get("box");
+  const q = (query.get("q") || "").toLowerCase();
+  let list = box ? ENQUIRIES.filter((e) => e.status === box) : query.get("show") === "all" ? ENQUIRIES.filter((e) => e.status !== "spam") : ENQUIRIES.filter((e) => e.status === "new");
+  if (q) list = list.filter((e) => (e.name + e.email + e.subject + e.details + (e.label || "")).toLowerCase().includes(q));
+  const counts = Object.fromEntries(["new", "open", "replied", "done", "spam"].map((s) => [s, ENQUIRIES.filter((e) => e.status === s).length]));
+  return { enquiries: list, newCount: counts.new + counts.open, counts, team: TEAM, labels: ["Mixing", "Podcast " + LONGWORD.slice(0, 26)] };
 }
+const SAVED = [
+  { id: 1, title: "Prices", body: "Hi {name},\n\nOur rates: £40 an hour for recording with an engineer, £180 for a 5-hour block, and mixing from £90 a track. " + LONG_URL },
+  { id: 2, title: "Opening times and how to find us — " + LONGWORD, body: "We're open 10am to 11pm, seven days a week. " + PARA(2) },
+  { id: 3, title: "How to book", body: "You can book any session here: " + LONG_URL },
+];
 
 function threadBody(id) {
   const q = ENQUIRIES.find((e) => e.id === id) || ENQUIRIES[0];
@@ -111,7 +129,7 @@ function threadBody(id) {
     stuck: false,
     ...m,
   }));
-  return { enquiry, messages, canSend: true, onlineUrl: "https://novacane.example/portal/?view=enquiries&enquiry=" + enquiry.id };
+  return { enquiry, messages, team: TEAM, canSend: true, onlineUrl: "https://novacane.example/portal/?view=enquiries&enquiry=" + enquiry.id };
 }
 
 // ----- Conversations (NovaBot website chats) -----
@@ -121,6 +139,8 @@ const CONVERSATIONS = ENQUIRIES.slice(0, 12).map((q, i) => ({
   enquiries: i % 3 === 0 ? 1 : 0,
   started: iso(11 - (i % 4), 8 + i, 5),
   messages: 2 + i * 3,
+  ticket: i % 4 === 1 ? "needs-person" : i % 4 === 2 ? "done" : null,
+  assigned_name: i % 4 === 1 ? "Penelope Wigglesworth-Fanshawe-Cholmondeley" : null,
 }));
 function conversationBody(chatId) {
   const msgs = [];
@@ -556,7 +576,8 @@ export function portalMock(pathWithQuery, method = "GET") {
 
   if (path === "enquiries") return enquiriesBody(query);
   if (path === "enquiries/thread") return threadBody(Number(query.get("id")) || ENQUIRIES[0].id);
-  if (path === "conversations") return query.get("chat") ? conversationBody(query.get("chat")) : { conversations: CONVERSATIONS };
+  if (path === "conversations") return query.get("chat") ? { ...conversationBody(query.get("chat")), ticket: { state: "needs-person", assigned_to: "crew-1", assigned_name: "Penelope Wigglesworth-Fanshawe-Cholmondeley" } } : { conversations: CONVERSATIONS, needsPerson: CONVERSATIONS.filter((c) => c.ticket === "needs-person").length };
+  if (path === "inbox/saved") return { saved: SAVED };
   if (path === "calendar") return { setUp: true, bookings: BOOKINGS };
   if (path === "sessions") return { sessions: SESSIONS_NAMES.map((name, i) => ({ id: 12345670 + i, name, price: ["£540.00", "£45.00", "£120.00", "£1,250.00", "£80.00", "£360.00"][i] })) };
   if (path === "booking-actions") return { actions: ACTIONS, canDecide: true };

@@ -312,15 +312,41 @@
     </section>
 
     <!-- Enquiries -->
-    <section id="view-enquiries" class="view">
+    <section id="view-enquiries" class="view ib">
       <div class="view-head">
         <h2 id="enq-title">Enquiries</h2>
-        <div class="chips" role="tablist" id="enq-chips">
+        <!-- The inbox: every enquiry is in one of these places (Spam is a folder: nothing is deleted) -->
+        <div class="chips wrap" role="tablist" id="enq-chips" aria-label="Show">
           <button class="chip active" data-show="all" type="button">All</button>
-          <button class="chip" data-show="new" type="button">New</button>
+          <button class="chip" data-show="new" type="button">New <span class="ib-n" data-count="new"></span></button>
+          <button class="chip" data-show="open" type="button">Open <span class="ib-n" data-count="open"></span></button>
+          <button class="chip" data-show="replied" type="button" title="Replied: waiting on them">Waiting on them <span class="ib-n" data-count="replied"></span></button>
+          <button class="chip" data-show="done" type="button">Done</button>
+          <button class="chip" data-show="spam" type="button">Spam <span class="ib-n" data-count="spam"></span></button>
         </div>
         <button id="enq-back" class="chip" type="button" hidden>&larr; All enquiries</button>
       </div>
+      <!-- Search, and the team's saved replies to routine questions -->
+      <div id="enq-tools" class="ib-tools">
+        <input id="enq-search" type="search" placeholder="Search name, email, message or label" aria-label="Search enquiries" autocomplete="off" enterkeyhint="search">
+        <button id="saved-open" class="btn small ghost" type="button" aria-expanded="false" aria-controls="saved-panel">Saved replies</button>
+      </div>
+      <div id="saved-panel" class="card ib-saved" hidden>
+        <h3 class="card-title">Saved replies</h3>
+        <p class="hint">Short answers to routine questions (prices, opening times, how to book). Pick one when replying to fill the box; it still only goes when you press Send.</p>
+        <div id="saved-list" class="ib-saved-list"></div>
+        <form id="saved-form" class="ib-saved-form" autocomplete="off">
+          <label class="sr-only" for="saved-title">Name</label>
+          <input id="saved-title" type="text" maxlength="80" placeholder="Name, e.g. Prices" required>
+          <label class="sr-only" for="saved-body">Reply</label>
+          <textarea id="saved-body" rows="4" maxlength="4000" placeholder="The reply…" required></textarea>
+          <div class="actions">
+            <button id="saved-cancel" class="btn small ghost" type="button" hidden>Cancel</button>
+            <button id="saved-save" class="btn small" type="submit">Add saved reply</button>
+          </div>
+        </form>
+      </div>
+      <datalist id="enq-labels"></datalist>
       <div id="enquiry-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
       <!-- One enquiry open: its details, the conversation (their message, replies, notes, Agent's drafts) and the reply box -->
       <div id="enquiry-thread" class="thread" hidden>
@@ -334,6 +360,9 @@
               <button class="chip" data-mode="sms" type="button" aria-pressed="false" hidden>Text</button>
               <button class="chip" data-mode="note" type="button" aria-pressed="false">Note</button>
             </div>
+            <!-- A saved reply fills the box (it's still sent only by pressing Send) -->
+            <label class="sr-only" for="thread-saved">Use a saved reply</label>
+            <select id="thread-saved" class="ib-pick" hidden><option value="">Saved replies…</option></select>
             <span id="thread-to" class="card-meta"></span>
           </div>
           <label class="sr-only" for="thread-input">Your reply</label>
@@ -355,6 +384,12 @@
         <button id="chats-back" class="chip" type="button" hidden>&larr; All conversations</button>
       </div>
       <p class="hint" id="chats-hint">What customers asked NovaBot. Kept for 90 days.</p>
+      <!-- Chats as tickets: one that needs a person, and ones that are done -->
+      <div class="ib-chat-chips"><div class="chips wrap" role="tablist" id="chats-chips" aria-label="Show">
+        <button class="chip active" data-chats="all" type="button">All</button>
+        <button class="chip" data-chats="needs-person" type="button">Needs a person <span class="ib-n" id="chats-needs-n"></span></button>
+        <button class="chip" data-chats="done" type="button">Done</button>
+      </div></div>
       <div id="chat-list" class="list" aria-busy="true"><div class="skeleton short"></div><div class="skeleton short"></div><div class="skeleton short"></div></div>
     </section>
 

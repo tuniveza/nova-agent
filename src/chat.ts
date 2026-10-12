@@ -42,7 +42,7 @@ import { getRecentEvents, trace } from "./trace";
 import { lookAt, lookResult, webTools } from "./web";
 import { fileCard, FILE_TYPES, findFile, listFiles, readFileText, removeFile, saveFile, sizeText } from "./files";
 import { missionMarkdown } from "./quests/export";
-import { draftReply, listEnquiries, readEnquiry, threadText, type DraftCard } from "./enquiries";
+import { draftReply, listEnquiries, readEnquiry, savedReplies, sortEnquiry, threadText, type DraftCard } from "./enquiries";
 import { actionLine, appointmentsText, availability, BOOKING_KINDS, feedBookingsText, findClients, listActions, listAppointments, listBlocks, listFeedBookings, proposeChange, sessionTypes, ukWhen, type BookingAction, type BookingKind } from "./acuity-api";
 import { AUDIENCES, campaignContext, campaignLine, CAMPAIGN_STATUSES, contextText, createDraft, editDraft, listCampaigns, readCampaign, resultsText, ukToUtc, type Audiences, type CampaignCard, type CampaignChanges } from "./campaigns";
 import { draftOutreach, editOutreach, listOutreach, outreachLine, OUTREACH_STATUSES, type Outreach, type OutreachFields } from "./outreach";
@@ -126,7 +126,7 @@ ${bookingsPrompt()}
 - See webpages: page_look opens a public page in a browser and gives you a screenshot and its contents, for when how a page looks matters or web_fetch can't read it (pages built by scripts, a profile, a shop page, checking their own site or socials). It can't log in anywhere.
 - Write files: file_write makes a document they can preview, download to their computer, or open in Notes (Markdown .md by default; also .txt, .csv for spreadsheets, .json, .html). Use it whenever they ask for a file, document, list, plan, report, template, script, spreadsheet or "something I can download", or when an answer is long and worth keeping. Write the whole thing, properly formatted (headings, lists, tables), then reply in a line or two saying what's in it; the file card with Preview and Download appears under your reply, so don't paste the file into the chat too. To change a file, read it (file_read), then file_write with its id. file_list shows what's there.
 - Export a mission: mission_export writes a mission's whole plan (strategy, milestones, every quest, research links) as a Markdown file.
-- Enquiries: read the studio's enquiries from customers (enquiry_list, enquiry_read) and draft a reply to one (enquiry_draft_reply). You can only ever draft: you can't send, approve or email anyone, and nothing goes to a customer until a person from the studio reads your draft and presses Approve & send (on the card under your reply, or in Portal). Say that plainly when you draft ("Here's a draft for you to check; it goes when you approve it"), never that you've replied or sent anything. Read the enquiry and its conversation first, write the whole email in a warm, plain UK English voice signed "Novacane Studios" (the footer about why they're getting it and how to stop is added automatically), and only promise what the studio has said it can do. Never draft for someone marked do-not-contact.
+- Enquiries: read the studio's enquiries from customers (enquiry_list, enquiry_read), sort them in the inbox (enquiry_set_state: new, open, waiting, done, or spam for junk; it only sorts, never sends), read the team's saved replies to routine questions (saved_replies_list: use their facts and wording for prices, opening times, how to book), and draft a reply to one (enquiry_draft_reply). You can only ever draft: you can't send, approve or email anyone, and nothing goes to a customer until a person from the studio reads your draft and presses Approve & send (on the card under your reply, or in Portal). Say that plainly when you draft ("Here's a draft for you to check; it goes when you approve it"), never that you've replied or sent anything. Read the enquiry and its conversation first, write the whole email in a warm, plain UK English voice signed "Novacane Studios" (the footer about why they're getting it and how to stop is added automatically), and only promise what the studio has said it can do. Never draft for someone marked do-not-contact.
 - The studio's clients (read-only): client_find (by name, email or phone), client_history (one client's sessions), clients_owing (who owes money, biggest first), clients_not_booked_since (who hasn't booked since a date: for "since July" pass month "July", which means 1 July of the most recent July; for "in the last 3 months" pass months_back 3). Say money in pounds (£120.00) and dates in UK time, as the tools give them. These are the list in Portal → Clients, where staff edit contact details, notes, money and marketing consent; you can't change anything there. Marketing consent is "no" unless it's been recorded with a date and a source: never suggest sending marketing to someone marked "marketing: no".
 - Email campaigns (newsletters to the studio's fans and clients, sent through Resend): suggest_campaign (who's opted in, how recent ones did; then you suggest 1–3 ideas, and nothing is saved), create_campaign_draft, edit_campaign_draft, campaign_results (how a sent one did: opened and clicked as percentages), list_campaigns. You can only draft and edit: you can't send, schedule or approve a campaign, and nobody can through you. Nothing is sent to anyone until an admin presses Approve in Portal → Campaigns (or on the card under your reply). Say that plainly every time you draft or change one ("It's saved as a draft: nothing is sent until an admin approves it in Portal → Campaigns"), and never say a campaign is sent or scheduled unless campaign_results or list_campaigns shows it. Only people who opted in get campaigns (confirmed fans, and clients who said yes to studio news); Nova Bot adds the footer saying who it's from, why they're getting it and how to unsubscribe, so don't write one. Write in warm, plain UK English: a short subject line, short paragraphs separated by blank lines, **bold** for the one thing that matters, full links (https://…), signed "Novacane Studios". Give a send time (UK) when one is asked for or matters; otherwise it goes as soon as it's approved.
 - One-to-one emails (a personal email to one person: a venue, label, brand, promoter, journalist or other business; a studio client; or someone who wrote to the studio): draft_outreach_email, edit_outreach_email, list_outreach_emails. Personalise it: look them up first when it helps (client_find and client_history for a client; web_search, web_fetch or page_look for a business, to get the right person, address and something specific to say). You can only draft and edit: nothing is sent until an admin presses Approve in Portal → Campaigns (One-to-one emails); say that plainly every time ("It's a draft: nothing goes until an admin approves it"). Who can be emailed is checked by Nova Bot (UK law): a business only at a work address (not Gmail, Hotmail and the like), a client only about their own booking unless they said yes to studio news, a reply only to someone who wrote in, and never anyone who said no. If it refuses, tell them why in a line. Nova Bot adds the footer (who it's from, why, and how to stop these emails), so don't write one. Short, warm, plain UK English, one clear ask, signed "Novacane Studios".
@@ -640,8 +640,8 @@ export function enquiryTools(actions: ChatAction[]) {
   return [
     betaZodTool({
       name: "enquiry_list",
-      description: "List the studio's enquiries from customers (newest first): id, who, subject, state (new, replied, closed, do-not-contact), the start of their message, and how many drafts are waiting.",
-      inputSchema: z.object({ show: z.enum(["open", "new", "all"]).optional().describe("open = new or replied (default); new = not answered yet; all = everything") }),
+      description: "List the studio's enquiries from customers (newest first): id, who, subject, state (new, open, replied = waiting on them, closed, spam, do-not-contact), label, the start of their message, and how many drafts are waiting.",
+      inputSchema: z.object({ show: z.enum(["open", "new", "all", "spam"]).optional().describe("open = new, open or waiting on them (default); new = not looked at yet; all = everything but Spam; spam = the Spam folder") }),
       run: async ({ show }) => {
         const list = await listEnquiries(show ?? "open");
         if (!list.length) return "No enquiries there.";
@@ -671,6 +671,32 @@ export function enquiryTools(actions: ChatAction[]) {
         actions.push({ kind: "draft", text: `Drafted a reply to ${draft.name}, waiting for approval`, draft });
         trace("input", "ok", `Chat: drafted a reply to enquiry #${id} (waiting for approval)`);
         return `Draft ${draft.id} saved for ${draft.name}. It has NOT been sent: it waits for someone at the studio to approve it (the card under your reply, or Portal).`;
+      },
+    }),
+    betaZodTool({
+      name: "enquiry_set_state",
+      description:
+        "Sort an enquiry in the studio's inbox: new, open (being worked on), waiting (replied, waiting on them), done, or spam (the Spam folder; nothing is deleted, and 'new' takes it back out). Optionally give it a short label. This only sorts: it never sends anything to anyone.",
+      inputSchema: z.object({
+        id: z.number().int().positive().describe("The enquiry's id"),
+        state: z.enum(["new", "open", "waiting", "done", "spam"]),
+        label: z.string().max(40).optional().describe("A short label, e.g. 'Mixing' or 'Price question' (empty clears it)"),
+      }),
+      run: async ({ id, state, label }) => {
+        const e = await sortEnquiry(id, state, label);
+        noteAction(actions, "changed", `Moved enquiry #${id} to ${state}`);
+        trace("input", "ok", `Chat: sorted enquiry #${id} (${state})`);
+        return `Enquiry #${e.id} is now ${e.status === "replied" ? "waiting on them" : e.status}${e.label ? `, labelled "${e.label}"` : ""}. Nothing was sent.`;
+      },
+    }),
+    betaZodTool({
+      name: "saved_replies_list",
+      description: "The team's saved replies to routine questions (prices, opening times, how to book...). Use them as the facts and wording when drafting a reply to a routine question.",
+      inputSchema: z.object({}),
+      run: async () => {
+        const saved = await savedReplies();
+        noteAction(actions, "looked", `Looked at ${saved.length} saved repl${saved.length === 1 ? "y" : "ies"}`);
+        return saved.length ? JSON.stringify(saved) : "There are no saved replies yet (staff add them in Portal → Enquiries → Saved replies).";
       },
     }),
   ];

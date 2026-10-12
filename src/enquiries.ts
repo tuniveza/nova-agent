@@ -5,6 +5,8 @@
 //   POST /nova-agent/enquiries             { show }  -> the list
 //   POST /nova-agent/enquiries/:id         {}        -> one enquiry and its conversation
 //   POST /nova-agent/enquiries/:id/drafts  { body }  -> a draft reply
+//   POST /nova-agent/inbox/sort            { id, state, label? } -> sort one (or move it to Spam)
+//   POST /nova-agent/inbox/saved           {}        -> the team's saved replies
 //
 // That's all the key can do. There is deliberately no send or approve here: a draft only
 // goes to the customer when a signed-in person presses Approve & send (in Portal, or on the
@@ -20,6 +22,8 @@ export interface EnquirySummary {
   email: string;
   subject: string | null;
   state: string;
+  label?: string | null;
+  spam_reason?: string;
   details: string;
   drafts_waiting: number;
   replies_sent: number;
@@ -53,8 +57,8 @@ async function call<T>(path: string, body: unknown = {}): Promise<T> {
   return data as T;
 }
 
-// The enquiries: "open" (new or replied, still fine to contact), "new" or "all"
-export async function listEnquiries(show: "open" | "new" | "all" = "open"): Promise<EnquirySummary[]> {
+// The enquiries: "open" (new, open or replied, still fine to contact), "new", "all" (but Spam) or "spam"
+export async function listEnquiries(show: "open" | "new" | "all" | "spam" = "open"): Promise<EnquirySummary[]> {
   return (await call<{ enquiries: EnquirySummary[] }>("/nova-agent/enquiries", { show })).enquiries;
 }
 
@@ -89,4 +93,22 @@ export function threadText(t: { enquiry: any; messages: any[] }): string {
     lines.push("", `${who}, ${uk(m.created_at)}${m.direction === "out" ? ` [${m.status === "approved" ? "sending" : m.status}]` : ""}:`, m.body);
   }
   return lines.filter((l, i) => l !== "" || i > 0).join("\n");
+}
+
+// Sort an enquiry into the inbox's places (new, open, waiting, done, spam), optionally with a
+// label. Only sorting: nothing is sent, and who's on it is for people to choose.
+export async function sortEnquiry(id: number, state: string, label?: string): Promise<{ id: number; status: string; label: string | null }> {
+  const r = await call<{ enquiry: { id: number; status: string; label: string | null } }>("/nova-agent/inbox/sort", { id, state, ...(label !== undefined ? { label } : {}) });
+  return r.enquiry;
+}
+
+export interface SavedReply {
+  id: number;
+  title: string;
+  body: string;
+}
+
+// The team's saved replies to routine questions (prices, opening times, how to book)
+export async function savedReplies(): Promise<SavedReply[]> {
+  return (await call<{ saved: SavedReply[] }>("/nova-agent/inbox/saved")).saved;
 }

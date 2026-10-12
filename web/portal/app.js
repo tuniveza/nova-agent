@@ -411,20 +411,45 @@
       loadEnquiries();
     })
   );
+  // Search: as you type (a moment after the last key)
+  let enquirySearch = "";
+  let searchTimer = null;
+  $("enq-search").addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      enquirySearch = $("enq-search").value.trim();
+      loadEnquiries();
+    }, 300);
+  });
+
+  // What each inbox place is empty of
+  const INBOX_EMPTY = {
+    all: "No enquiries yet.",
+    new: "No new enquiries. They appear here when a customer asks NovaBot to send one.",
+    open: "Nothing open. Tap Open on an enquiry when you start on it.",
+    replied: "Nobody to wait on: enquiries you've replied to wait here for their answer.",
+    done: "Nothing done yet.",
+    spam: "No spam. Likely spam lands here by itself (with the reason), and never pings anyone.",
+  };
+  let inboxTeam = []; // the team, for "who's on it"
 
   async function loadEnquiries() {
     // An enquiry open (?enquiry=ID in the address): its conversation; otherwise the list
     const openId = Number(new URLSearchParams(location.search).get("enquiry"));
     if (Number.isInteger(openId) && openId > 0) return openThread(openId);
     closeThread();
+    loadSaved();
     const list = $("enquiry-list");
     try {
-      const data = await api("enquiries" + (enquiryFilter === "all" ? "?show=all" : ""));
+      const params = new URLSearchParams(enquiryFilter === "all" ? { show: "all" } : { box: enquiryFilter });
+      if (enquirySearch) params.set("q", enquirySearch);
+      const data = await api("enquiries?" + params);
       if (threadId) return; // an enquiry was opened meanwhile
       lastEnquiries = data.enquiries;
       setBadge("new-badge", data.newCount);
+      inboxCounts(data);
       if (!data.enquiries.length) {
-        return emptyState(list, enquiryFilter === "all" ? "No enquiries yet." : "No new enquiries. They appear here when a customer asks NovaBot to send one.");
+        return emptyState(list, enquirySearch ? "Nothing matches “" + enquirySearch + "”." : INBOX_EMPTY[enquiryFilter] || INBOX_EMPTY.all);
       }
       reconcile(list, data.enquiries.map(enquiryCard));
     } catch (err) {
@@ -432,15 +457,27 @@
     }
   }
 
+  // The counts on the inbox chips, the team and the labels already used
+  function inboxCounts(data) {
+    const counts = data.counts || {};
+    document.querySelectorAll("#enq-chips [data-count]").forEach((n) => (n.textContent = counts[n.dataset.count] ? String(counts[n.dataset.count]) : ""));
+    if (data.team) inboxTeam = data.team;
+    if (data.labels) $("enq-labels").replaceChildren(...data.labels.map((l) => Object.assign(el("option"), { value: l })));
+  }
+
   // Open one enquiry (the address changes, so Back returns to the list)
   const goEnquiry = (id) => window.PortalPage && window.PortalPage.go("/portal/?view=enquiries" + (id ? "&enquiry=" + id : ""));
 
-  // The enquiry's state as a pill: New, Replied, Done, Don't contact (and drafts waiting)
+  // The enquiry's state as a pill: New, Open, Replied, Done, Spam, Don't contact (and its label,
+  // and drafts waiting)
   function statePills(title, q) {
-    if (q.do_not_contact_at) title.appendChild(el("span", "pill-stop", "Don't contact"));
+    if (q.status === "spam") title.appendChild(el("span", "pill-spam", "Spam"));
+    else if (q.do_not_contact_at) title.appendChild(el("span", "pill-stop", "Don't contact"));
     else if (q.status === "new") title.appendChild(el("span", "pill-new", "New"));
+    else if (q.status === "open") title.appendChild(el("span", "pill-open", "Open"));
     else if (q.status === "replied") title.appendChild(el("span", "pill-replied", "Replied"));
     else title.appendChild(el("span", "pill-done", "Done"));
+    if (q.label) title.appendChild(el("span", "pill-label", q.label));
     if (q.drafts) title.appendChild(el("span", "pill-draft", q.drafts === 1 ? "Draft to approve" : q.drafts + " drafts to approve"));
     if (q.failed) title.appendChild(el("span", "pill-failed", "Didn't send"));
   }
@@ -564,12 +601,12 @@
   });
 
   function enquiryCard(q) {
-    const card = el("article", "card fold" + (q.status === "done" ? " done" : ""));
+    const card = el("article", "card fold" + (q.status === "done" || q.status === "spam" ? " done" : ""));
     card.dataset.key = "e" + q.id;
-    card.dataset.sig = sig(q);
+    card.dataset.sig = sig(q, inboxTeam.length);
     // On a phone an enquiry is one line (what, who, when) until it's tapped
     card.addEventListener("click", (e) => {
-      if (e.target.closest("a, button")) return;
+      if (e.target.closest("a, button, select, input, label")) return;
       card.classList.toggle("open");
     });
     const top = el("div", "card-top");
@@ -578,7 +615,8 @@
     top.append(title, el("span", "card-meta", when(q.created_at)));
     card.append(top, el("p", "card-who", q.name + " · " + q.email + (q.phone ? " · " + q.phone : "")));
     card.appendChild(el("p", "details", q.details));
-    card.appendChild(el("p", "card-foot", [q.page ? "From " + q.page : "", q.emailed ? "Email copy sent" : "", q.replies ? q.replies + (q.replies === 1 ? " reply sent" : " replies sent") : ""].filter(Boolean).join(" · ")));
+    if (q.status === "spam" && q.spam_reason) card.appendChild(el("p", "ib-why", q.spam_reason));
+    card.appendChild(el("p", "card-foot", [q.assigned_name ? q.assigned_name + "'s on it" : "", q.page ? "From " + q.page : "", q.emailed ? "Email copy sent" : "", q.replies ? q.replies + (q.replies === 1 ? " reply sent" : " replies sent") : ""].filter(Boolean).join(" · ")));
 
     const actions = el("div", "actions");
     // The conversation: reply from here, see drafts and notes
@@ -601,28 +639,181 @@
       });
       actions.appendChild(chat);
     }
-    actions.appendChild(doneButton(q));
     card.appendChild(actions);
+    card.appendChild(sortRow(q));
     return card;
   }
 
-  // Mark done / Move to new
-  function doneButton(q) {
-    const done = el("button", "btn small ghost", q.status === "done" ? "Move to new" : "Mark done");
-    done.type = "button";
-    done.addEventListener("click", async () => {
-      done.disabled = true;
-      try {
-        await api("enquiries/status", { body: { id: q.id, status: q.status === "done" ? "new" : "done" } });
-        toast(q.status === "done" ? "Moved back to new" : "Marked done");
-        loadEnquiries();
-      } catch (err) {
-        toast(err.message);
-        done.disabled = false;
-      }
-    });
-    return done;
+  // ===== The inbox: where an enquiry is, who's on it, its label (one press each) =====
+  const SORT_PLACES = [
+    ["new", "New"],
+    ["open", "Open"],
+    ["replied", "Waiting"],
+    ["done", "Done"],
+  ];
+  const SORT_SAID = { new: "Moved to New", open: "Open: it's being worked on", replied: "Waiting on them", done: "Marked done", spam: "Moved to Spam (nothing's deleted)" };
+
+  async function sortEnquiry(q, changes, said) {
+    try {
+      await api("inbox/sort", { body: { id: q.id, ...changes } });
+      toast(said);
+    } catch (err) {
+      toast(err.message);
+    }
+    if (threadId) loadThread();
+    else loadEnquiries();
   }
+
+  function sortRow(q) {
+    const row = el("div", "ib-sort");
+    if (q.status === "spam") {
+      row.appendChild(button("Not spam", "btn small", () => sortEnquiry(q, { state: "new" }, "Back in New")));
+      return row;
+    }
+    const places = el("div", "chips ib-places");
+    places.setAttribute("role", "group");
+    places.setAttribute("aria-label", "Move to");
+    for (const [state, name] of SORT_PLACES) {
+      const b = button(name, "chip" + (q.status === state ? " active" : ""), () => q.status !== state && sortEnquiry(q, { state }, SORT_SAID[state]));
+      b.setAttribute("aria-pressed", String(q.status === state));
+      if (state === "replied") b.title = "Replied: waiting on them";
+      places.appendChild(b);
+    }
+    row.appendChild(places);
+    // Who's on it
+    const who = el("select", "ib-pick");
+    who.setAttribute("aria-label", "Who's on it");
+    who.appendChild(Object.assign(el("option", "", "Nobody's on it"), { value: "" }));
+    for (const p of inboxTeam) who.appendChild(Object.assign(el("option", "", p.name + "'s on it"), { value: p.id }));
+    who.value = q.assigned_to || "";
+    who.addEventListener("change", () => sortEnquiry(q, { assignedTo: who.value || null }, who.value ? who.selectedOptions[0].textContent : "Nobody's on it"));
+    row.appendChild(who);
+    // Its label: tap, type (or pick one used before), Enter
+    const label = el("input", "ib-label");
+    label.type = "text";
+    label.maxLength = 40;
+    label.placeholder = "Label";
+    label.value = q.label || "";
+    label.setAttribute("list", "enq-labels");
+    label.setAttribute("aria-label", "Label");
+    label.enterKeyHint = "done";
+    const saveLabel = () => label.value.trim() !== (q.label || "") && sortEnquiry(q, { label: label.value.trim() }, label.value.trim() ? "Labelled “" + label.value.trim() + "”" : "Label cleared");
+    label.addEventListener("keydown", (e) => e.key === "Enter" && (e.preventDefault(), label.blur()));
+    label.addEventListener("change", saveLabel);
+    row.appendChild(label);
+    row.appendChild(button("Spam", "btn small ghost", () => sortEnquiry(q, { state: "spam" }, SORT_SAID.spam)));
+    return row;
+  }
+
+  // ===== Saved replies: the team's answers to routine questions =====
+  // Picking one in an enquiry fills the reply box ({name} becomes their first name); it still
+  // only goes when someone presses Send, like any reply.
+  let savedReplies = [];
+  let savedEditing = null; // the saved reply being changed, or null for a new one
+  let savedLoaded = 0;
+
+  async function loadSaved(force) {
+    if (!force && Date.now() - savedLoaded < 60000) return;
+    try {
+      savedReplies = (await api("inbox/saved")).saved || [];
+      savedLoaded = Date.now();
+      drawSaved();
+    } catch (err) {
+      if (err.message !== "signed out" && !$("saved-panel").hidden) toast(err.message);
+    }
+  }
+
+  function drawSaved() {
+    const list = $("saved-list");
+    if (!savedReplies.length) list.replaceChildren(el("p", "hint", "None yet. Add the answers you give most often."));
+    else
+      list.replaceChildren(
+        ...savedReplies.map((r) => {
+          const item = el("div", "ib-saved-item");
+          item.append(el("strong", "", r.title), el("p", "", r.body));
+          const actions = el("div", "actions");
+          actions.appendChild(
+            button("Change", "btn small ghost", () => {
+              savedEditing = r.id;
+              $("saved-title").value = r.title;
+              $("saved-body").value = r.body;
+              setText("saved-save", "Save changes");
+              $("saved-cancel").hidden = false;
+              $("saved-title").focus();
+            })
+          );
+          // Two presses, so one slip doesn't lose it
+          actions.appendChild(
+            button("Remove", "btn small ghost", async (b) => {
+              if (!b.dataset.sure) {
+                b.dataset.sure = "1";
+                b.textContent = "Sure? Remove";
+                setTimeout(() => {
+                  delete b.dataset.sure;
+                  b.textContent = "Remove";
+                }, 4000);
+                return;
+              }
+              try {
+                savedReplies = (await api("inbox/saved/remove", { body: { id: r.id } })).saved;
+                toast("Removed");
+                drawSaved();
+              } catch (err) {
+                toast(err.message);
+              }
+            })
+          );
+          item.appendChild(actions);
+          return item;
+        })
+      );
+    // The picker in the reply box
+    const pick = $("thread-saved");
+    pick.replaceChildren(Object.assign(el("option", "", "Saved replies…"), { value: "" }), ...savedReplies.map((r) => Object.assign(el("option", "", r.title), { value: String(r.id) })));
+    pick.hidden = !savedReplies.length;
+  }
+
+  function resetSavedForm() {
+    savedEditing = null;
+    $("saved-form").reset();
+    setText("saved-save", "Add saved reply");
+    $("saved-cancel").hidden = true;
+  }
+  $("saved-open").addEventListener("click", () => {
+    const open = $("saved-panel").hidden;
+    $("saved-panel").hidden = !open;
+    $("saved-open").setAttribute("aria-expanded", String(open));
+    if (open) loadSaved(true);
+  });
+  $("saved-cancel").addEventListener("click", resetSavedForm);
+  $("saved-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const save = $("saved-save");
+    save.disabled = true;
+    try {
+      const body = { title: $("saved-title").value, body: $("saved-body").value, ...(savedEditing ? { id: savedEditing } : {}) };
+      savedReplies = (await api("inbox/saved", { body })).saved;
+      toast(savedEditing ? "Saved" : "Added");
+      resetSavedForm();
+      drawSaved();
+    } catch (err) {
+      toast(err.message);
+    }
+    save.disabled = false;
+  });
+  // In an enquiry: fill the box with one (added after anything already written)
+  $("thread-saved").addEventListener("change", () => {
+    const r = savedReplies.find((x) => String(x.id) === $("thread-saved").value);
+    $("thread-saved").value = "";
+    if (!r) return;
+    const first = thread && thread.enquiry ? thread.enquiry.name.split(/\s+/)[0] : "";
+    const text = r.body.replace(/\{name\}/gi, first || "there");
+    const box = $("thread-input");
+    box.value = box.value.trim() ? box.value.replace(/\s+$/, "") + "\n\n" + text : text;
+    box.dispatchEvent(new Event("input", { bubbles: true }));
+    box.focus();
+    toast("Filled in: check it, then Send");
+  });
 
   // The enquiry list refreshes itself while it's on screen (only what changed is redrawn)
   setInterval(() => !document.hidden && running && currentView === "enquiries" && !threadId && loadEnquiries(), 20000);
@@ -2227,6 +2418,7 @@
     $("enquiry-thread").hidden = true;
     $("enquiry-list").hidden = false;
     $("enq-chips").hidden = false;
+    $("enq-tools").hidden = false;
     $("enq-back").hidden = true;
     setText("enq-title", "Enquiries");
     $("thread-input").value = "";
@@ -2239,12 +2431,16 @@
       threadId = id;
       $("enquiry-list").hidden = true;
       $("enq-chips").hidden = true;
+      $("enq-tools").hidden = true;
+      $("saved-panel").hidden = true;
+      $("saved-open").setAttribute("aria-expanded", "false");
       $("enq-back").hidden = false;
       $("enquiry-thread").hidden = false;
       $("thread-head").replaceChildren();
       $("thread-list").replaceChildren(el("div", "skeleton"));
       delete $("thread-head").dataset.sig;
       setMode("reply");
+      loadSaved();
       threadTimer = setInterval(() => !document.hidden && running && currentView === "enquiries" && loadThread(), THREAD_POLL_MS);
       window.scrollTo(0, 0);
     }
@@ -2259,6 +2455,7 @@
       const data = await api("enquiries/thread?id=" + id);
       if (threadId !== id) return;
       thread = data;
+      if (data.team) inboxTeam = data.team;
       drawThread();
     } catch (err) {
       if (err.message !== "signed out" && threadId === id && !thread) emptyState($("thread-list"), err.message);
@@ -2271,7 +2468,7 @@
     const q = thread.enquiry;
     setText("enq-title", q.name);
     // The details card (redrawn only when it changes)
-    redraw($("thread-head"), sig(q, thread.canSend), [threadHead(q)]);
+    redraw($("thread-head"), sig(q, thread.canSend, inboxTeam.length), [threadHead(q)]);
     // The conversation: their message first, then each message, then presses still on their way
     const nodes = [customerMessage(q)];
     for (const m of thread.messages) nodes.push(editing.has(m.id) ? keepEditing(m) : messageCard(m));
@@ -2284,7 +2481,7 @@
 
   // Name, how to reach them (email, call, text), consent, Don't contact
   function threadHead(q) {
-    const card = el("article", "card thread-head" + (q.status === "done" ? " done" : ""));
+    const card = el("article", "card thread-head" + (q.status === "done" || q.status === "spam" ? " done" : ""));
     const top = el("div", "card-top");
     const title = el("h3", "card-title", q.subject || "Enquiry");
     statePills(title, q);
@@ -2306,8 +2503,9 @@
       });
       actions.appendChild(chat);
     }
-    actions.appendChild(doneButton(q));
     card.appendChild(actions);
+    if (q.status === "spam" && q.spam_reason) card.appendChild(el("p", "ib-why", q.spam_reason));
+    card.appendChild(sortRow(q));
     if (q.dial && !q.do_not_contact_at) card.appendChild(el("p", "card-foot", "WhatsApp, Call and Text use your own phone (or WhatsApp Web on a computer). Write a WhatsApp or text below and Portal opens it ready to send, then adds it here."));
     else if (q.phone && !q.do_not_contact_at) card.appendChild(el("p", "card-foot", "Their number isn't a mobile, so there's no WhatsApp or texts. Call still works."));
     // UK GDPR: why the studio may contact them
@@ -2768,28 +2966,75 @@
   let openChatId = null;
   let openChatName = "";
 
+  // Chats as tickets: "Needs a person" (someone should follow it up) or "Done"
+  let chatsFilter = "all";
+  document.querySelectorAll("[data-chats]").forEach((chip) =>
+    chip.addEventListener("click", () => {
+      chatsFilter = chip.dataset.chats;
+      document.querySelectorAll("[data-chats]").forEach((c) => c.classList.toggle("active", c === chip));
+      loadChats();
+    })
+  );
+  async function markChat(chatId, state, said) {
+    try {
+      await api("inbox/chat", { body: { chatId, state, ...(state === "needs-person" ? { assignedTo: "me" } : {}) } });
+      toast(said);
+    } catch (err) {
+      toast(err.message);
+    }
+    if (openChatId === chatId) openChat(chatId, openChatName);
+    else loadChats();
+  }
+  // The buttons for a chat's mark (the one it has is lit; pressing it again clears it)
+  function chatMarks(chatId, ticket) {
+    const row = el("div", "chips ib-places");
+    row.setAttribute("role", "group");
+    row.setAttribute("aria-label", "Mark this chat");
+    for (const [state, name, said] of [
+      ["needs-person", "Needs a person", "Marked: needs a person (you're on it)"],
+      ["done", "Done", "Marked done"],
+    ]) {
+      const b = button(name, "chip" + (ticket === state ? " active" : ""), (btn) => {
+        btn.disabled = true;
+        markChat(chatId, ticket === state ? null : state, ticket === state ? "Mark cleared" : said);
+      });
+      b.setAttribute("aria-pressed", String(ticket === state));
+      row.appendChild(b);
+    }
+    return row;
+  }
+
   async function loadChats() {
     openChatId = null;
     $("chats-back").hidden = true;
+    $("chats-chips").parentElement.hidden = false;
     setText("chats-title", "Conversations");
     $("chats-hint").hidden = false;
     const list = $("chat-list");
     try {
       const data = await api("conversations");
       if (openChatId) return; // a conversation was opened meanwhile
-      if (!data.conversations.length) return emptyState(list, "No conversations yet.");
+      setText("chats-needs-n", data.needsPerson ? String(data.needsPerson) : "");
+      const shown = data.conversations.filter((c) => chatsFilter === "all" || c.ticket === chatsFilter);
+      if (!shown.length) return emptyState(list, chatsFilter === "needs-person" ? "No chats waiting for a person." : chatsFilter === "done" ? "No chats marked done yet." : "No conversations yet.");
       reconcile(
         list,
-        data.conversations.map((c) => {
-          const card = el("article", "card tappable");
+        shown.map((c) => {
+          const card = el("article", "card tappable" + (c.ticket === "done" ? " done" : ""));
           card.dataset.key = "c" + c.chat_id;
           card.dataset.sig = sig(c);
           const top = el("div", "card-top");
           const title = el("h3", "card-title", (c.first_question || "(no question)").slice(0, 120));
           if (c.enquiries) title.appendChild(el("span", "pill-new", "Enquiry"));
+          if (c.ticket === "needs-person") title.appendChild(el("span", "pill-open", "Needs a person"));
+          if (c.ticket === "done") title.appendChild(el("span", "pill-done", "Done"));
           top.append(title, el("span", "card-meta", when(c.started)));
-          card.append(top, el("p", "card-foot", c.messages + (c.messages === 1 ? " message" : " messages")));
-          card.addEventListener("click", () => openChat(c.chat_id));
+          card.append(top, el("p", "card-foot", [c.messages + (c.messages === 1 ? " message" : " messages"), c.assigned_name ? c.assigned_name + "'s on it" : ""].filter(Boolean).join(" · ")));
+          card.appendChild(chatMarks(c.chat_id, c.ticket));
+          card.addEventListener("click", (e) => {
+            if (e.target.closest("button")) return;
+            openChat(c.chat_id);
+          });
           return card;
         })
       );
@@ -2803,6 +3048,7 @@
     openChatId = chatId;
     openChatName = name || "";
     $("chats-back").hidden = false;
+    $("chats-chips").parentElement.hidden = true;
     $("chats-hint").hidden = true;
     setText("chats-title", name ? "Conversation with " + name.split(/\s+/)[0] : "Conversation");
     const list = $("chat-list");
@@ -2810,6 +3056,13 @@
       const data = await api("conversations?chat=" + encodeURIComponent(chatId));
       if (openChatId !== chatId) return; // moved on meanwhile
       if (!data.messages.length) return emptyState(list, "This conversation has been deleted (conversations are kept for 90 days).");
+      // Its mark (needs a person / done), above the chat
+      const ticket = data.ticket ? data.ticket.state : null;
+      const bar = el("article", "card ib-chat-bar");
+      bar.dataset.key = "ticket:" + chatId;
+      bar.dataset.sig = sig(data.ticket);
+      bar.appendChild(el("p", "card-foot", ticket === "needs-person" ? "Needs a person" + (data.ticket.assigned_name ? ": " + data.ticket.assigned_name + "'s on it" : "") : ticket === "done" ? "Done" : "Does this chat need someone from the studio to follow it up?"));
+      bar.appendChild(chatMarks(chatId, ticket));
       const card = el("article", "card");
       card.dataset.key = "chat:" + chatId;
       card.dataset.sig = sig(data.messages);
@@ -2821,7 +3074,7 @@
         line.appendChild(p);
         card.appendChild(line);
       });
-      reconcile(list, [card]);
+      reconcile(list, [bar, card]);
       if (fresh) window.scrollTo(0, 0);
     } catch (err) {
       if (err.message !== "signed out") emptyState(list, err.message);

@@ -1319,3 +1319,52 @@ html.embed .listening-bar { top: 0; }
 /* A busy day's dots stay inside its square on a phone */
 .cal-dots { gap: 2px; max-width: 100%; flex-wrap: wrap; justify-content: center; height: auto; min-height: 7px; row-gap: 2px; }
 .cal-dots i { flex: none; }
+
+/* ----- The inbox: enquiries sorted like tickets, Spam, saved replies, chats marked (Enquiries, Conversations) ----- */
+/* How many are in each place, on its chip */
+.ib-n:empty { display: none; }
+.ib-n { min-width: 18px; padding: 1px 6px; border-radius: 999px; background: rgba(var(--void-rgb), 0.55); color: var(--bright); font-size: 10px; letter-spacing: 0.04em; }
+.chip.active .ib-n { background: rgba(0, 0, 0, 0.25); color: inherit; }
+/* Search and Saved replies, under the chips */
+.ib-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; min-width: 0; }
+.ib-tools input[type="search"] { flex: 1 1 220px; }
+.ib-tools .btn { flex: none; }
+.ib-tools input[type="search"], .ib-saved-form input, .ib-saved-form textarea, .ib-label, .ib-pick {
+  min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px;
+  background: rgba(var(--void-rgb), 0.6); color: var(--bright); font-size: 16px; /* stops phones zooming in */
+}
+.ib-saved { margin: 0 0 14px; display: grid; gap: 10px; }
+.ib-saved .hint { margin: 0; }
+.ib-saved-list { display: grid; gap: 8px; }
+.ib-saved-item { padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); min-width: 0; }
+.ib-saved-item strong { color: var(--bright); font-size: 14.5px; }
+.ib-saved-item p { margin: 4px 0 0; color: var(--text); font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 7.5em; overflow: auto; }
+.ib-saved-item .actions { margin-top: 8px; }
+.ib-saved-form { display: grid; gap: 8px; }
+.ib-saved-form textarea { resize: vertical; min-height: 88px; }
+/* One enquiry's place, who's on it, its label, Spam: one row that wraps */
+.ib-sort { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); min-width: 0; }
+.ib-places .chip { min-height: 34px; padding: 0 12px; }
+.ib-pick { flex: 0 1 auto; width: auto; max-width: min(100%, 280px); padding: 7px 10px; font-size: 14px; text-overflow: ellipsis; }
+.ib-label { flex: 1 1 110px; max-width: 200px; padding: 7px 10px; font-size: 14px; }
+.thread-form-top .ib-pick { margin-left: auto; }
+/* (and the "To" line beside it wraps a long address instead of pushing the box wide) */
+.thread-form-top { min-width: 0; }
+#thread-to { white-space: normal; overflow-wrap: anywhere; min-width: 0; }
+/* Why it's in Spam */
+.ib-why { margin: 8px 0 0; padding: 8px 10px; border-radius: 12px; border: 1px dashed var(--line-strong); color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.pill-open, .pill-spam, .pill-label {
+  display: inline-block; margin-left: 8px; padding: 2px 9px; border-radius: 999px; vertical-align: 3px;
+  font-family: var(--f-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+}
+.pill-open { border: 1px solid rgba(var(--glow-rgb), 0.6); color: var(--bright); }
+.pill-spam { border: 1px solid rgba(var(--bad-rgb), 0.45); color: var(--muted); }
+.pill-label { border: 1px solid var(--line); color: var(--lilac); letter-spacing: 0.08em; text-transform: none; font-size: 10.5px; }
+/* Conversations: the chips, and the marks on each chat */
+.ib-chat-chips { display: flex; justify-content: center; margin: 0 0 12px; }
+.card.tappable .ib-places { margin-top: 10px; }
+.ib-chat-bar .card-foot { margin: 0 0 8px; }
+@media (max-width: 420px) {
+  .ib-label { max-width: none; }
+  .ib-places .chip { padding: 0 10px; }
+}

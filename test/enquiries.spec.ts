@@ -24,6 +24,8 @@ beforeEach(() => {
     if (path === "/nova-agent/enquiries/7/drafts")
       return Response.json({ ok: true, draft: { id: 31, enquiryId: 7, body: body.body, status: "draft" }, enquiry: { name: "Jordan Test", email: "jordan@example.com", subject: "EP mixing" }, portalUrl: "https://worker.test/portal/?view=enquiries&enquiry=7" });
     if (path === "/nova-agent/enquiries/8/drafts") return Response.json({ error: "They've asked not to be contacted, so don't draft a reply." }, { status: 409 });
+    if (path === "/nova-agent/inbox/sort") return Response.json({ ok: true, enquiry: { id: body.id, status: body.state === "waiting" ? "replied" : body.state, label: body.label ?? null } });
+    if (path === "/nova-agent/inbox/saved") return Response.json({ saved: [{ id: 1, title: "Prices", body: "£40 an hour" }] });
     return Response.json({ error: "Not found" }, { status: 404 });
   });
   vi.spyOn(console, "log").mockImplementation(() => {});
@@ -68,10 +70,10 @@ describe("Talking to Nova Bot about enquiries", () => {
 });
 
 describe("Agent's enquiry tools", () => {
-  it("are list, read and draft only: no tool sends or approves", async () => {
+  it("are list, read, draft, sort and saved replies only: no tool sends or approves", async () => {
     const { enquiryTools } = await import("../src/chat");
     const names = enquiryTools([]).map((t: any) => t.name);
-    expect(names).toEqual(["enquiry_list", "enquiry_read", "enquiry_draft_reply"]);
+    expect(names).toEqual(["enquiry_list", "enquiry_read", "enquiry_draft_reply", "enquiry_set_state", "saved_replies_list"]);
     expect(names.filter((n: string) => /send|approve/.test(n))).toEqual([]);
   });
 
@@ -86,5 +88,24 @@ describe("Agent's enquiry tools", () => {
     ]);
     // It only ever reached the drafts address
     expect(seen.map((s) => new URL(s.url).pathname)).toEqual(["/nova-agent/enquiries/7/drafts"]);
+  });
+
+  it("sorting moves an enquiry (spam too) and says nothing was sent; only the state and label go to Nova Bot", async () => {
+    const { enquiryTools } = await import("../src/chat");
+    const actions: any[] = [];
+    const tool: any = enquiryTools(actions).find((t: any) => t.name === "enquiry_set_state");
+    expect(await tool.run({ id: 7, state: "waiting", label: "Mixing" })).toBe('Enquiry #7 is now waiting on them, labelled "Mixing". Nothing was sent.');
+    expect(await tool.run({ id: 7, state: "spam" })).toBe("Enquiry #7 is now spam. Nothing was sent.");
+    expect(seen.map((s) => [new URL(s.url).pathname, s.body])).toEqual([
+      ["/nova-agent/inbox/sort", { id: 7, state: "waiting", label: "Mixing" }],
+      ["/nova-agent/inbox/sort", { id: 7, state: "spam" }],
+    ]);
+    expect(actions.map((a) => a.text)).toEqual(["Moved enquiry #7 to waiting", "Moved enquiry #7 to spam"]);
+  });
+
+  it("reads the saved replies", async () => {
+    const { enquiryTools } = await import("../src/chat");
+    const tool: any = enquiryTools([]).find((t: any) => t.name === "saved_replies_list");
+    expect(JSON.parse(await tool.run({}))).toEqual([{ id: 1, title: "Prices", body: "£40 an hour" }]);
   });
 });
