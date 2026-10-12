@@ -259,7 +259,7 @@ Agent can read the list (`test_stuff_list`) but has nothing that deletes. Nova B
 Portal → **Google** (in Admin; admins only) connects the studio's Google account and keeps it in step with Nova Agent. Everyone else just sees the results (events in Calendar, replies in Enquiries, the Money sheet, Docs from Notes).
 
 **Setting it up (about 5 minutes, once):** the page shows one step at a time: a sentence, a button that opens the right Google page, and **Copy** buttons for exactly what to paste.
-1. **Switch on Google's features**: Calendar, Gmail, Drive, People (Contacts), Sheets and Docs, in a Google Cloud project called Nova Agent.
+1. **Switch on Google's features**: Calendar, Gmail, Drive, People (Contacts), Sheets, Docs, Tasks and YouTube, in a Google Cloud project called Nova Agent.
 2. **Google's permission screen**: app name Nova Agent, audience External.
 3. **Publish it** (otherwise Google stops the connection every 7 days).
 4. **Make the key**: a Web application, with Nova Bot's address and `http://localhost:4545` as its web addresses and `<Nova Bot>/admin/google/callback` to come back to.
@@ -279,9 +279,22 @@ A connection made before a feature existed shows **Connect again to switch on: �
 - **Nightly backups:** all of Index (the last 14 nights kept) and the PC's files, about 3am.
 - **Money in Google Sheets:** one live sheet (Invoices, Payments, Expenses) for the accountant, brought up to date hourly and when someone presses **Open in Google Sheets** in Money → Tax year.
 
+- **Gmail as Enquiries' inbox.** Every 15 minutes, new customer emails to the studio's Gmail (its Primary inbox) come into Enquiries like the website's form; newsletters, notifications, mailing lists and other automatic mail stay out, and likely spam goes to Enquiries' Spam folder. With the Gmail permission each gets a **Nova** label in Gmail, and one marked **Done** is archived in Gmail (back in the inbox if it's opened again). Nothing is sent from here.
+- **Google Meet links.** Tick **Google Meet link** on an event in Calendar and Google makes the link at the next sync (it then shows on the event, on Today and in Agent's what_now); online-session bookings get one too.
+- **Quests in Google Tasks.** The PC's person's quests (not repeating ones) are kept in a **Nova quests** list every 10 minutes; ticking one off in Google Tasks marks it done in Nova.
+- **Notes kept in Google Docs.** A shared note ticked **Keep in Google Docs** (Notes → File) stays in step with its Doc both ways every 15 minutes; when both changed, the newer wins and the other is kept as a copy. **Open a Google Doc** (Notes → File) brings a Doc from the studio's Drive into Notes; one Nova didn't make only comes in (Google lets Nova change only its own Docs).
+- **Files and invoices in Drive.** Agent's files are kept in "Nova Agent/Files" as they're saved, and each sent invoice is a Doc in "Nova Agent/Invoices" (download it as a PDF from Drive), updated when it's paid or cancelled.
+- **YouTube.** The channel's subscribers (Social → at a glance) and each video's views, likes and comments, and YouTube as a place to post in Social: one video per post, its first line the title, uploaded only after an admin's Approve. Google keeps uploads from a new Google Cloud project private until YouTube has checked it: make each one public in YouTube Studio till then.
+- **Today:** Portal → Today shows today's calendar (Nova's events and Google Calendar's, with Meet links).
+- **Google Contacts search:** Campaigns' one-to-one email form has **Find in Google Contacts**, which fills in the name and email.
+
+**Within the free Workers plan:** each part works in small steps (a few Google calls and database trips a run), saves where it got to and carries on at the next free minute ("… the rest next run"). Google busy or briefly down holds that part 5, 10, 20… minutes (2 hours at most). Google turning the connection down shows **Connect again** here and pings the admins once a day. **Sync now** starts in the background and this page shows how it went.
+
+**Later:** Google reviews (Business Profile) need Google to approve the studio for its Business Profile API first (Google's access request form, project nova-agent).
+
 Notes' **Send to Google Docs** is one tap once Google is connected: the note becomes a Google Doc in the Nova Agent folder and opens (not connected: the old dialog).
 
-Agent can look but not touch: `google_calendar_busy`, `gmail_search` (who, subject, when and a snippet) and `google_contacts_find`. There's no tool that sends, books or changes anything in Google.
+Agent can look but not touch: `google_calendar_busy`, `gmail_search` (who, subject, when and a snippet), `google_contacts_find`, `google_drive_search`, `google_doc_read`, `google_tasks_list` and `youtube_stats`, and what_now includes today's calendar. There's no tool that sends, books, posts, uploads or changes anything in Google; a YouTube video is a Social draft that an admin approves.
 
 Built in Nova Bot's `src/google/` (`calendar.js`, `gmail.js`, `contacts.js`, `drive.js`, `sheets.js`; `index.js` runs one part a minute at most on the cron, within the free Workers plan's limit of 50 calls a run; links between Nova's things and Google's are in `google_links`, `migrations/0032_google.sql`), and here in `src/google.ts` (copies to Drive, the nightly file backup), `src/google-agent.ts` and `web/portal/google.js`.
 

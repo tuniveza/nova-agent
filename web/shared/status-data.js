@@ -1,36 +1,36 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 303,
+ "build": 312,
  "date": "2026-10-12",
  "panels": {
   "chat": [
+   "Google round two on the PC and…",
+   "Portal's Admin address is view=manage",
    "Google, Portal → Admin → Google",
    "Portal → Test stuff",
-   "Money, invoices",
-   "Social, Quest 4)",
-   "Portal inbox"
+   "Money, invoices"
   ],
   "portal": [
-   "Google, Portal → Admin → Google",
-   "Portal → Test stuff",
-   "Portal tabs",
-   "Money, invoices",
-   "Social, Quest 4)"
+   "Google round two on the PC and…",
+   "Sizing, Portal's tabs never squash or cut…",
+   "Portal's Admin address is view=manage",
+   "Portal → Google",
+   "Portal → Conversations"
   ],
   "calendar": [
+   "Google round two on the PC and…",
    "Everything fits",
    "Centred text reaches the last left-aligned corners",
    "Dates and times written the British way",
-   "Plain app names again",
-   "Nova first in every app name"
+   "Plain app names again"
   ],
   "notes": [
+   "Google round two on the PC and…",
+   "Sizing, Portal's tabs never squash or cut…",
+   "Portal's Admin address is view=manage",
    "Google, Portal → Admin → Google",
-   "a clickable Welcome guide instead of a…",
-   "P0-4, chats",
-   "Everything fits",
-   "Centred text in Notes' list and Nova…"
+   "a clickable Welcome guide instead of a…"
   ],
   "index": [
    "Centred text in Index's header",
@@ -40,11 +40,11 @@ window.NOVA_STATUS = {
    "Nova first in every app name"
   ],
   "quests": [
+   "Google round two on the PC and…",
    "P0-4, chats",
    "Plain app names again",
    "Nova first in every app name",
-   "Quest 2",
-   "Quest 1"
+   "Quest 2"
   ],
   "missions": [
    "Quest 1",
@@ -61,11 +61,11 @@ window.NOVA_STATUS = {
    "Themes, a colour spectrum with a Custom…"
   ],
   "visualizer": [
+   "Google round two on the PC and…",
    "Fixer, one problem wherever it's seen",
    "Google, Portal → Admin → Google",
    "Portal → Test stuff",
-   "Money, invoices",
-   "Social, Quest 4)"
+   "Money, invoices"
   ],
   "observatory": [
    "Everything fits",
@@ -82,46 +82,46 @@ window.NOVA_STATUS = {
    "Nova Manual"
   ],
   "look": [
+   "Portal's Admin address is view=manage",
+   "Music, a calm late-night studio band",
    "Status line on every panel",
    "Look, with the planet on",
-   "Look, a chosen colour shows with the…",
-   "Fixer, undo “Nova Agent at 1280px",
-   "Fixer, Nova Agent at 1280px"
+   "Look, a chosen colour shows with the…"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "Google, Portal → Admin → Google"
+    "words": "Google round two on the PC and…"
    },
    {
     "panel": "chat",
-    "words": "Portal → Test stuff"
+    "words": "Portal's Admin address is view=manage"
    },
    {
     "panel": "portal",
-    "words": "Google, Portal → Admin → Google"
+    "words": "Google round two on the PC and…"
    },
    {
     "panel": "portal",
-    "words": "Portal → Test stuff"
+    "words": "Sizing, Portal's tabs never squash or cut…"
+   },
+   {
+    "panel": "calendar",
+    "words": "Google round two on the PC and…"
    },
    {
     "panel": "calendar",
     "words": "Everything fits"
    },
    {
-    "panel": "calendar",
-    "words": "Centred text reaches the last left-aligned corners"
+    "panel": "notes",
+    "words": "Google round two on the PC and…"
    },
    {
     "panel": "notes",
-    "words": "Google, Portal → Admin → Google"
-   },
-   {
-    "panel": "notes",
-    "words": "a clickable Welcome guide instead of a…"
+    "words": "Sizing, Portal's tabs never squash or cut…"
    },
    {
     "panel": "index",
@@ -135,11 +135,11 @@ window.NOVA_STATUS = {
   "tasks": [
    {
     "panel": "quests",
-    "words": "P0-4, chats"
+    "words": "Google round two on the PC and…"
    },
    {
     "panel": "quests",
-    "words": "Plain app names again"
+    "words": "P0-4, chats"
    },
    {
     "panel": "missions",
@@ -161,11 +161,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "visualizer",
-    "words": "Fixer, one problem wherever it's seen"
+    "words": "Google round two on the PC and…"
    },
    {
     "panel": "visualizer",
-    "words": "Google, Portal → Admin → Google"
+    "words": "Fixer, one problem wherever it's seen"
    }
   ],
   "helpers": [
@@ -188,13 +188,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
-  "Fixer, one problem wherever it's seen",
-  "Google, Portal → Admin → Google",
-  "Status line on every panel",
-  "Portal → Test stuff",
-  "Portal tabs",
-  "Look, with the planet on",
-  "Look, a chosen colour shows with the…",
-  "Fixer, undo “Nova Agent at 1280px"
+  "Google round two on the PC and…",
+  "Sizing, Portal's tabs never squash or cut…",
+  "Portal's Admin address is view=manage",
+  "Portal → Google",
+  "Portal → Conversations",
+  "Music, a calm late-night studio band",
+  "Google, the Connect step shows the key's…",
+  "Fixer, one problem wherever it's seen"
  ]
 };
