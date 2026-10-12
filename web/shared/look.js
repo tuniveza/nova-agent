@@ -72,7 +72,7 @@
   }
 
   // A planet's colours made into a whole theme: its glow is the highlight, its streaks the accent,
-  // its sky the deep background
+  // its sky the deep background (when no colour is chosen: "Each panel's own" with no page theme)
   function fromPlanet(p, base) {
     const b = base || byId.novacane;
     const hi = lum(p.glow) < 0.35 ? mix(p.glow, "#ffffff", 0.35) : p.glow;
@@ -88,6 +88,31 @@
       accent, accent2: p.nebula0 || mix(accent, hi, 0.3), accent3, hi, soft: p.light || mix(hi, "#ffffff", 0.7), gold: b.gold,
       lilac: p.nebula2 || mix(hi, "#ffffff", 0.3), onAccent: lum(accent) > 0.55 ? "#140F06" : "#FFFFFF",
     };
+  }
+
+  // A chosen colour with the planet in it: the colour you picked leads (its accent, highlight and
+  // backgrounds stay yours, so picking a colour always shows), and the planet tints it: its sky in
+  // the backgrounds, its streaks and nebula in the second accent and the soft lights.
+  function tinted(t, p) {
+    const sky = mix(p.sky || t.accent3, "#000000", 0.25);
+    const streak = p.streak || p.glow;
+    const accent2 = mix(t.accent2, p.nebula0 || streak, 0.4);
+    return {
+      ...t,
+      id: t.id,
+      void: mix(t.void, sky, 0.12), deep: mix(t.deep, sky, 0.18), panel: mix(t.panel, sky, 0.22), panel2: mix(t.panel2, sky, 0.22),
+      accent: mix(t.accent, streak, 0.18), accent2, accent3: mix(t.accent3, sky, 0.35),
+      hi: mix(t.hi, p.glow, 0.15), lilac: mix(t.lilac, p.nebula2 || p.glow, 0.35),
+    };
+  }
+
+  // The page's own theme (Portal's and Index's Options, Calendar's, Notes'...) as one of ours, so
+  // "Colour from my planet" tints the colour picked there too. Their four original names differ.
+  const PAGE_NAMES = { cosmic: "novacane", ember: "solar", ocean: "pulsar", gold: "eclipse" };
+  function pageTheme() {
+    const id = document.documentElement.getAttribute("data-theme") || "";
+    const ours = PAGE_NAMES[id] || id;
+    return known(ours) ? ours : null;
   }
 
   // Every name the panels use for their colours (Calendar, Notes, Observatory and Nova Agent use
@@ -162,7 +187,9 @@
     const { theme, planet, center: centred } = read();
     center(centred);
     const pal = planet ? planetPalette() : null;
-    const t = pal ? fromPlanet(pal, paletteOf(theme)) : theme ? paletteOf(theme) : null;
+    // The colour: the one chosen for all of Nova Agent, or (with the planet on) this page's own
+    const chosen = theme || (pal ? pageTheme() : null);
+    const t = pal ? (chosen ? tinted(paletteOf(chosen), pal) : fromPlanet(pal, null)) : theme ? paletteOf(theme) : null;
     if (!t) {
       put("");
       document.documentElement.removeAttribute("data-look");
@@ -176,10 +203,10 @@
       // (started once; after that just recoloured, so dragging the Custom slider doesn't restart it)
       for (const ns of [window.NT, window.NN]) {
         const sky = ns && ns.backdrop;
-        if (!theme || pal || !sky || !sky.init) continue;
-        if (sky.lookStarted && sky.setTheme) sky.setTheme(theme);
+        if (!chosen || !sky || !sky.init) continue;
+        if (sky.lookStarted && sky.setTheme) sky.setTheme(chosen);
         else {
-          sky.init(theme);
+          sky.init(chosen);
           sky.lookStarted = true;
         }
       }

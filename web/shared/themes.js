@@ -93,7 +93,7 @@
   function shown() {
     try {
       const v = JSON.parse(localStorage.getItem("nova-look") || "{}");
-      const id = v && !v.planet && v.theme ? LOOK_NAMES[v.theme] || v.theme : null;
+      const id = v && v.theme ? LOOK_NAMES[v.theme] || v.theme : null;
       if (id && list.some((t) => t.id === id)) return id;
     } catch (err) {}
     return current();
