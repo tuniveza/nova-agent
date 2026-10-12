@@ -83,14 +83,14 @@
     edges();
   }).observe(bar, { subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
 
-  // ---- Every section at once (tabs on top): each group on its own line ----
-  // Today · Studio · Plans · You · Admin · (inside Nova Agent) the settings icons: one line each,
-  // in that order, the group's name in a narrow column on the left and its tabs after it, so the
-  // lines line up like a list. A group with one tab keeps the column's room but shows no name (its
-  // tab says it). A group wider than its line splits into two even halves, the second lined up
-  // under the first (.tg-mid, then .tg-indent). The whole block sits in the middle of the bar
-  // (--tg-inset). Only for the tab bar on a computer or tablet: the side menu and the phone's bar
-  // are as before.
+  // ---- Every section at once (tabs on top): lanes ----
+  // The groups with one tab (Today · You · Admin) share the first lane; then a lane each for the
+  // groups with several (Studio · Plans · the settings icons inside Nova Agent), with a soft line
+  // between lanes (.tg-br). Each group's name is a small chip; in the lanes the chips are all one
+  // width, so the tabs line up. A lane wider than the bar splits into two even halves, the second
+  // lined up under the first (.tg-mid, then .tg-indent). The whole block sits in the middle of the
+  // bar (--tg-inset). Only for the tab bar on a computer or tablet: the side menu and the phone's
+  // bar are as before.
   if (!bar.id) bar.id = "portal-tabs";
   const groups = []; // { label (the .tab-group), tabs: [], br, mid }
   {
@@ -108,41 +108,62 @@
     for (const el of [g.br, g.mid]) el.setAttribute("aria-hidden", "true");
     g.label.before(g.br);
   }
-  // Only write a class when it changes (so the observer below doesn't go round and round)
+  // Only write a class or an order when it changes (so the observer below doesn't go round and round)
   const set = (el, cls, on) => { if (el.classList.contains(cls) !== on) el.classList.toggle(cls, on); };
+  const place = (el, n) => { const v = n === null ? "" : String(n); if (el.style.order !== v) el.style.order = v; };
   const seen = (el) => !el.hidden && el.offsetParent !== null && getComputedStyle(el).display !== "none";
   function pack() {
     const on = topTabs();
     set(bar, "tg-rows", on);
-    if (!on) { bar.style.removeProperty("--tg-inset"); return; }
-    for (const g of groups) set(g.label, "tg-quiet", g.tabs.filter((t) => !t.hidden).length <= 1);
+    if (!on) {
+      bar.style.removeProperty("--tg-inset");
+      for (const g of groups) for (const el of [g.br, g.label, ...g.tabs, g.mid]) place(el, null);
+      return;
+    }
     const cs = getComputedStyle(bar);
     const pad = parseFloat(cs.getPropertyValue("--tg-pad")) || 12;
     const room = bar.clientWidth - 2 * pad - 1;
     const gap = parseFloat(cs.columnGap) || 0;
     const lab = parseFloat(cs.getPropertyValue("--tg-lab")) || 0;
-    let first = true;
+    const apart = parseFloat(cs.getPropertyValue("--tg-apart")) || 0;
+    const shown = groups.map((g) => ({ g, tabs: g.tabs.filter(seen) })).filter((x) => x.tabs.length);
+    for (const g of groups) if (!shown.some((x) => x.g === g)) { set(g.br, "on", false); set(g.mid, "on", false); }
+    const singles = shown.filter((x) => x.tabs.length === 1);
+    const lanes = shown.filter((x) => x.tabs.length > 1);
     let widest = 0;
-    for (const g of groups) {
-      const tabs = g.tabs.filter(seen);
-      if (!tabs.length) { set(g.br, "on", false); set(g.mid, "on", false); for (const t of g.tabs) set(t, "tg-indent", false); continue; }
-      set(g.br, "on", !first);
-      first = false;
+    // The first lane: the one-tab groups side by side
+    let w1 = 0;
+    singles.forEach((x, i) => {
+      for (const el of [x.g.br, x.g.label, ...x.g.tabs, x.g.mid]) place(el, 0);
+      set(x.g.br, "on", false);
+      set(x.g.mid, "on", false);
+      set(x.g.label, "tg-apart", i > 0);
+      for (const t of x.g.tabs) set(t, "tg-indent", false);
+      w1 += (i ? apart : 0) + lab + gap + x.tabs[0].getBoundingClientRect().width + (i ? gap : 0);
+    });
+    widest = Math.min(w1, room);
+    // Then a lane each
+    lanes.forEach((x, i) => {
+      const { g, tabs } = x;
+      for (const el of [g.br, g.label, ...g.tabs, g.mid]) place(el, i + 1);
+      set(g.label, "tg-apart", false);
+      set(g.br, "on", singles.length > 0 || i > 0);
       const widths = tabs.map((t) => t.getBoundingClientRect().width);
-      const line = (a, b) => widths.slice(a, b).reduce((n, x) => n + x, 0) + gap * Math.max(0, b - a - 1);
+      const line = (a, b) => widths.slice(a, b).reduce((n, v) => n + v, 0) + gap * Math.max(0, b - a - 1);
       const all = line(0, tabs.length);
       let split = -1;
-      if (lab + gap + all > room && tabs.length > 1) {
+      if (lab + gap + all > room) {
         let run = 0;
-        for (let i = 0; i < tabs.length; i++) { run += widths[i] + gap; if (run >= all / 2) { split = Math.min(Math.max(i + 1, 1), tabs.length - 1); break; } }
+        for (let j = 0; j < tabs.length; j++) { run += widths[j] + gap; if (run >= all / 2) { split = Math.min(j + 1, tabs.length - 1); break; } }
       }
       if (split > 0 && g.mid.nextElementSibling !== tabs[split]) tabs[split].before(g.mid);
       set(g.mid, "on", split > 0);
       for (const t of g.tabs) set(t, "tg-indent", split > 0 && t === tabs[split]);
       const w = lab + gap + (split > 0 ? Math.max(line(0, split), line(split, tabs.length)) : all);
       widest = Math.max(widest, Math.min(w, room));
-    }
-    const inset = `${Math.max(0, Math.floor((room - widest) / 2))}px`;
+    });
+    // (a little room to spare, so a lane never wraps over a pixel or two of rounding)
+    const inset = `${Math.max(0, Math.floor((room - widest) / 2) - 10)}px`;
     if (bar.style.getPropertyValue("--tg-inset") !== inset) bar.style.setProperty("--tg-inset", inset);
   }
   // Tabs shown or hidden (Admin after signing in), counts changing their width: pack again
