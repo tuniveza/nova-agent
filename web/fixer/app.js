@@ -16,7 +16,7 @@
     ready: "Needs you", failed: "Couldn't be prepared", approved: "Approved: going live", landing: "Going live: merging and deploying",
     restarting: "Going live: Nova Agent is restarting", verifying: "Live: checking nothing got worse", done: "Live",
     blocked: "Approved, but couldn't go live (nothing changed)", "rolling-back": "Undoing", "rolled-back": "Undone by itself (things got worse)",
-    undone: "Undone", rejected: "Rejected",
+    undone: "Undone", rejected: "Rejected", closed: "Closed: the problem went away by itself",
   };
   const KIND = { bug: "Bug", glitch: "Glitch", change: "Change" };
 
@@ -208,7 +208,7 @@
       ? s.issues
           .map((i) => {
             const job = i.jobId ? [...s.needsYou, ...s.working, ...s.done].find((j) => j.id === i.jobId) : null;
-            const open = job && !["failed", "rejected", "done", "rolled-back", "undone"].includes(job.status);
+            const open = job && !["failed", "rejected", "done", "rolled-back", "undone", "closed"].includes(job.status);
             return `<article class="nt-card item">
               <div class="chips-row"><span class="nt-chip ${i.severity === "serious" ? "bad" : "warn"}">${i.severity === "serious" ? "Serious" : "Small"}</span><span class="nt-chip">${esc(i.area)}</span></div>
               <h3>${esc(i.title)}</h3>
@@ -225,7 +225,7 @@
       ? s.quests
           .map((q) => {
             const job = q.jobId ? [...s.needsYou, ...s.working, ...s.done].find((j) => j.id === q.jobId) : null;
-            const busyJob = job && !["failed", "rejected", "done", "rolled-back", "undone"].includes(job.status);
+            const busyJob = job && !["failed", "rejected", "done", "rolled-back", "undone", "closed"].includes(job.status);
             return `<article class="nt-card item">
               <div class="chips-row"><span class="nt-chip">${esc(KIND[q.kind])}</span><span class="nt-chip ${q.priority === "critical" || q.priority === "high" ? "warn" : ""}">${esc(q.priority)}</span><span class="nt-chip ${q.status === "done" ? "ok" : ""}">${esc(q.status === "working" ? "being worked on" : q.status)}</span></div>
               <h3>${esc(q.title)}</h3>

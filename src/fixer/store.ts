@@ -34,6 +34,7 @@ export interface Issue {
   seenCount: number;
   notified: boolean; // admins were told about it (once, ever)
   jobId: string; // the fix being prepared or prepared for it ("" = none)
+  blip: boolean; // Nova Bot or the link not answering (rules.ts isBlip): never gets a fix prepared
 }
 
 export interface FixerQuest {
@@ -73,7 +74,8 @@ export type JobStatus =
   | "rolling-back" // undoing it (it made things worse, or an admin tapped Undo)
   | "rolled-back" // undone by itself because things got worse
   | "undone" // undone by an admin
-  | "rejected";
+  | "rejected"
+  | "closed"; // its problem went away by itself (fixed another way, or only a blip): nothing to do
 
 export const OPEN_STATUSES: JobStatus[] = ["queued", "preparing", "checking"];
 
@@ -196,6 +198,7 @@ function cleanIssue(i: any): Issue | null {
     seenCount: num(i?.seenCount, 1, 1, 1e9),
     notified: bool(i?.notified, false),
     jobId: text(i?.jobId, 64),
+    blip: bool(i?.blip, false),
   };
 }
 
@@ -217,7 +220,7 @@ export function cleanQuest(q: any): FixerQuest | null {
   };
 }
 
-const STATUSES: JobStatus[] = ["queued", "preparing", "checking", "ready", "failed", "approved", "landing", "restarting", "verifying", "done", "blocked", "rolling-back", "rolled-back", "undone", "rejected"];
+const STATUSES: JobStatus[] = ["queued", "preparing", "checking", "ready", "failed", "approved", "landing", "restarting", "verifying", "done", "blocked", "rolling-back", "rolled-back", "undone", "rejected", "closed"];
 
 function cleanLanding(l: any): Landing | null {
   return l && typeof l.before === "string" && typeof l.after === "string" ? { before: l.before.slice(0, 64), after: l.after.slice(0, 64) } : null;

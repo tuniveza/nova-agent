@@ -9,7 +9,7 @@ import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 import { type Actor, type Deps, Fixer, type Paths } from "../src/fixer/fixer";
 import { actorFor, registerFixerRoutes } from "../src/fixer/routes";
-import { isTrivial, looksLikeDevWork, mergeIssues, offLimits, shouldRollBack, suggestions } from "../src/fixer/rules";
+import { groupFindings, isTrivial, looksLikeDevWork, mergeIssues, offLimits, placesText, shouldRollBack, suggestions } from "../src/fixer/rules";
 import { claudeArgs } from "../src/fixer/claude";
 import type { RunOptions } from "../src/fixer/runner";
 import { FixerStore, normaliseFixer, type FileChange } from "../src/fixer/store";
@@ -667,5 +667,133 @@ describe("fixer.json: old, odd or damaged files are safe", () => {
     expect(w.fixer.jobDetails("j9").status).toBe("blocked");
     expect(wentLive(w.log)).toEqual([]);
     expect(existsSync(w.paths.jobsDir)).toBe(false);
+  });
+});
+
+// ---- The same problem in several places is one problem ----
+describe("one problem, wherever it's seen", () => {
+  const seen = (place: string, panel: string, width: number): Finding => ({
+    fingerprint: "sweep:asset:a file didn't load: /staff/x/planet.svg (#)",
+    area: "sweep",
+    severity: "serious",
+    title: `${place} at ${width}px: a file didn't load: /staff/x/planet.svg (404)`,
+    detail: "",
+    panel,
+    panels: [panel],
+    place: `${place} at ${width}px`,
+    problem: "a file didn't load: /staff/x/planet.svg (404)",
+    aliases: [`sweep:${panel}:${width}:asset:a file didn't load: /staff/x/planet.svg (#)`],
+  });
+  const three = [seen("Notes", "/notes/", 390), seen("Index", "/app/memory/", 390), seen("Observatory", "/observatory/", 390)];
+
+  it("grouped into one finding that says where it was seen", () => {
+    const g = groupFindings(three);
+    expect(g).toHaveLength(1);
+    expect(g[0].title).toBe("a file didn't load: /staff/x/planet.svg (404) · on Notes, Index and Observatory at 390px");
+    expect(g[0].panels).toEqual(["/notes/", "/app/memory/", "/observatory/"]);
+    expect(g[0].aliases).toHaveLength(3);
+    expect(placesText(["Notes at 390px", "Index at 390px", "Notes at 1280px"])).toBe("Notes and Index at 390px; Notes at 1280px");
+  });
+
+  it("the hourly check makes one issue and prepares one fix for it", async () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    const sweep = w.deps.sweep;
+    w.deps.sweep = async (base, opts) => (opts?.shotsDir ? sweep(base, opts) : { findings: groupFindings(three), shots: [] });
+    await w.fixer.check("full");
+    await idle(w.fixer);
+    expect(w.fixer.state().issues).toHaveLength(1);
+    expect(w.fixer.state().needsYou).toHaveLength(1);
+    expect(w.notes.filter((n) => /problem/.test(n.title))).toHaveLength(1);
+  });
+
+  it("issues saved one per place (older fingerprints) carry on as the grouped one: same id, same fix, not told again", () => {
+    const now = new Date("2026-10-11T10:00:00Z");
+    const before = mergeIssues([], three.map((f) => ({ ...f, fingerprint: f.aliases![0], title: f.title })), ["sweep"], now);
+    before.issues.forEach((i) => (i.notified = true));
+    before.issues[0].jobId = "job-1";
+    const after = mergeIssues(before.issues, groupFindings(three), ["sweep"], now);
+    expect(after.fresh).toHaveLength(0);
+    expect(after.issues).toHaveLength(1);
+    expect(after.issues[0]).toMatchObject({ id: before.issues[0].id, jobId: "job-1", notified: true });
+    expect(after.cleared).toHaveLength(2);
+  });
+
+  it("a fix whose problem has gone is closed by itself, not left blocked", async () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    w.store.update((d) => {
+      d.jobs.push(normaliseFixer({ jobs: [{ id: "jb", status: "blocked", target: { type: "issue", id: "gone-issue", title: "Notes at 390px: a file didn't load" }, error: "main has changed" }] }).jobs[0]);
+      d.jobs.push(normaliseFixer({ jobs: [{ id: "jq", status: "ready", target: { type: "quest", id: "q1", title: "A fixer quest" } }] }).jobs[0]);
+    });
+    await w.fixer.check("full");
+    expect(w.fixer.jobDetails("jb").status).toBe("closed");
+    expect(w.fixer.state().done.some((j) => j.id === "jb")).toBe(true);
+    expect(w.fixer.state().working.some((j) => j.id === "jb")).toBe(false);
+    // a fixer quest's fix isn't touched (it's not about a problem the check sees)
+    expect(w.fixer.jobDetails("jq").status).toBe("ready");
+    expect(wentLive(w.log)).toEqual([]);
+  });
+});
+
+// ---- Nova Bot blips ----
+describe("Nova Bot not answering for a moment isn't a problem", () => {
+  const down: Finding = { fingerprint: "health:nova-bot", area: "health", severity: "serious", title: "Nova Bot isn't answering", detail: "fetch failed" };
+  const gateway: Finding = { fingerprint: "sweep:asset:a file didn't load: /music-world/img (#)", area: "sweep", severity: "serious", title: "Nova Agent at 1280px: a file didn't load: /music-world/img (502)", detail: "", panel: "/agent/", panels: ["/agent/"], blip: true };
+
+  it("seen once, then answering again: no problem, no ping, no fix", async () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    let calls = 0;
+    w.deps.health = async (restarts) => ({ findings: calls++ === 0 ? [down] : [], restarts });
+    const sweep = w.deps.sweep;
+    const looked: unknown[] = [];
+    let sweeps = 0;
+    w.deps.sweep = async (base, opts) => {
+      if (opts?.shotsDir) return sweep(base, opts);
+      looked.push(opts?.screens);
+      return { findings: sweeps++ === 0 ? [gateway] : [], shots: [] };
+    };
+    const slept: number[] = [];
+    w.deps.sleep = async (ms) => void slept.push(ms);
+    await w.fixer.check("full");
+    await idle(w.fixer);
+    expect(w.fixer.state().issues).toHaveLength(0);
+    expect(w.notes).toHaveLength(0);
+    expect(w.fixer.state().working).toHaveLength(0);
+    // checked again after a wait, only the panel where it was seen
+    expect(slept.length).toBeGreaterThanOrEqual(1);
+    expect(looked[1]).toEqual([{ name: "Nova Agent", path: "/agent/" }]);
+  });
+
+  it("still down after every try: a problem (told once), but never a fix prepared", async () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    w.healthFindings = [down];
+    const sweep = w.deps.sweep;
+    w.deps.sweep = async (base, opts) => (opts?.shotsDir ? sweep(base, opts) : { findings: [gateway], shots: [] });
+    let tries = 0;
+    w.deps.sleep = async () => void tries++;
+    await w.fixer.check("full");
+    await idle(w.fixer);
+    expect(tries).toBe(3);
+    const issues = w.fixer.state().issues;
+    expect(issues.map((i) => i.fingerprint).sort()).toEqual([gateway.fingerprint, down.fingerprint].sort());
+    expect(issues.every((i) => i.blip)).toBe(true);
+    expect(w.fixer.state().working).toHaveLength(0);
+    expect(w.fixer.state().needsYou).toHaveLength(0);
+    // and gone at the next check that passes
+    w.healthFindings = [];
+    w.deps.sweep = async (base, opts) => (opts?.shotsDir ? sweep(base, opts) : { findings: [], shots: [] });
+    await w.fixer.check("full");
+    expect(w.fixer.state().issues).toHaveLength(0);
+  });
+
+  it("a missing file (404) is a real problem straight away: no waiting", async () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    w.fixer.setSettings({ autoPrepare: false }, ADMIN);
+    const sweep = w.deps.sweep;
+    w.deps.sweep = async (base, opts) => (opts?.shotsDir ? sweep(base, opts) : { findings: [{ ...gateway, blip: false, title: "Nova Agent at 1280px: a file didn't load: /x.png (404)" }], shots: [] });
+    let tries = 0;
+    w.deps.sleep = async () => void tries++;
+    await w.fixer.check("full");
+    expect(tries).toBe(0);
+    expect(w.fixer.state().issues).toHaveLength(1);
   });
 });

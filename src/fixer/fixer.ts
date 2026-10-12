@@ -22,7 +22,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { briefText, claudeArgs, readAnswer } from "./claude";
 import { commandFindings } from "./health";
-import { affectedScreens, type Finding, isTrivial, mergeIssues, offLimits, recommend, SCREENS, sensitiveLines, shouldRollBack, suggestions, type Suggestion } from "./rules";
+import { affectedScreens, type Finding, isBlip, isTrivial, mergeIssues, offLimits, recommend, SCREENS, sensitiveLines, shouldRollBack, suggestions, type Suggestion } from "./rules";
 import type { Run } from "./runner";
 import type { Sweep } from "./sweep";
 import { addActivity, type Card, type Check, cleanQuest, cleanSettings, type FileChange, type FixerData, type FixerQuest, FixerStore, type Issue, type Job, type QuestKind, type Settings } from "./store";
@@ -84,6 +84,11 @@ const ukDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe
 const short = (s: string, n = 160) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 const COAUTHOR = "Co-Authored-By: Claude <noreply@anthropic.com>";
 const LIVE: Job["status"][] = ["approved", "landing", "restarting", "verifying", "rolling-back"];
+// Fixes that are closed when their problem goes away (not ones being prepared or going live)
+const CLOSABLE: Job["status"][] = ["queued", "ready", "failed", "blocked"];
+// Nova Bot blips: checked again this many times, this far apart (about two minutes in all)
+const BLIP_TRIES = 3;
+const BLIP_WAIT_MS = 40_000;
 
 export class Fixer {
   private running: string | null = null; // the job being prepared
@@ -144,7 +149,7 @@ export class Fixer {
       suggestions: this.suggestions(data),
       needsYou: data.jobs.filter((j) => j.status === "ready").sort(byNew).map(view),
       working: data.jobs.filter((j) => ["queued", "preparing", "checking", "blocked", ...LIVE].includes(j.status)).sort(byNew).map(view),
-      done: data.jobs.filter((j) => ["done", "rolled-back", "undone", "rejected", "failed"].includes(j.status)).sort(byNew).slice(0, 60).map(view),
+      done: data.jobs.filter((j) => ["done", "rolled-back", "undone", "rejected", "failed", "closed"].includes(j.status)).sort(byNew).slice(0, 60).map(view),
       activity: [...data.activity].reverse().slice(0, 150),
     };
   }
@@ -269,6 +274,7 @@ export class Fixer {
         const h = await this.deps.health(restartsSeen);
         findings.push(...h.findings);
         if (h.restarts !== restartsSeen) this.store.update((d) => void (d.restarts = h.restarts));
+        await this.recheckBlips(findings);
       }
       const merged = this.store.update((d) => {
         const m = mergeIssues(d.issues, findings, areas, this.now());
@@ -276,6 +282,7 @@ export class Fixer {
         if (kind !== "audio") d.lastCheck = kind === "full" ? { at: this.now().toISOString(), took: Date.now() - started, serious: m.issues.filter((i) => i.severity === "serious").length, minor: m.issues.filter((i) => i.severity === "minor").length } : d.lastCheck;
         for (const i of m.fresh) this.note(d, "issue", `New ${i.severity === "serious" ? "serious problem" : "small problem"}: ${i.title}`);
         for (const i of m.cleared) this.note(d, "issue", `Gone: ${i.title}`);
+        this.closeGoneJobs(d);
         if (kind === "full") this.note(d, "check", `Hourly check: ${m.issues.length ? `${m.issues.length} open problem${m.issues.length === 1 ? "" : "s"}` : "all clear"}`);
         return m;
       });
@@ -283,6 +290,39 @@ export class Fixer {
       return { findings, fresh: merged.fresh };
     } finally {
       if (kind !== "quick") this.checking = false;
+    }
+  }
+
+  // Nova Bot blips: a problem that looks like Nova Bot (or the link to it) not answering for a moment
+  // is checked again, a few times over a couple of minutes, and only counts if it's there every time.
+  // Health is asked again; the sweep looks again only at the panels where it was seen.
+  private async recheckBlips(findings: Finding[]) {
+    for (let attempt = 0; attempt < BLIP_TRIES && findings.some(isBlip); attempt++) {
+      await this.deps.sleep(BLIP_WAIT_MS);
+      const again: Finding[] = [];
+      const h = await this.deps.health(this.store.read().restarts).catch(() => ({ findings: [] as Finding[], restarts: 0 }));
+      again.push(...h.findings);
+      const panels = new Set(findings.filter((f) => f.area === "sweep" && isBlip(f)).flatMap((f) => f.panels || (f.panel ? [f.panel] : [])));
+      if (panels.size) {
+        const screens = SCREENS.filter((x) => panels.has(x.path)).map((x) => ({ name: x.name, path: x.path }));
+        const swept = await this.deps.sweep(this.opts.pcBase, { screens }).catch(() => ({ findings: [] as Finding[], shots: [] }));
+        again.push(...swept.findings);
+      }
+      const still = new Set(again.filter(isBlip).map((f) => f.fingerprint));
+      for (let i = findings.length - 1; i >= 0; i--) if (isBlip(findings[i]) && !still.has(findings[i].fingerprint)) findings.splice(i, 1);
+    }
+  }
+
+  // A fix whose problem has gone (fixed another way, or it was only a blip) is closed, instead of
+  // sitting "blocked" or "waiting" for a problem that isn't there any more
+  private closeGoneJobs(d: FixerData) {
+    const open = new Set(d.issues.map((i) => i.id));
+    for (const job of d.jobs) {
+      if (job.target.type !== "issue" || open.has(job.target.id) || !CLOSABLE.includes(job.status)) continue;
+      Object.assign(job, { status: "closed", error: "Its problem went away by itself (fixed another way, or it was only a moment when Nova Bot didn't answer). Nothing was changed.", finishedAt: this.now().toISOString(), updated: this.now().toISOString() });
+      this.note(d, "job", `Closed (the problem's gone): ${job.target.title}`);
+      const copy = { ...job };
+      queueMicrotask(() => void this.cleanUp(copy).catch(() => {}));
     }
   }
 
@@ -295,8 +335,8 @@ export class Fixer {
       const first = tell[0];
       await this.deps.notify(tell.length === 1 ? "Found a problem" : `Found ${tell.length} problems`, `${short(first.title, 200)}${tell.length > 1 ? ` (and ${tell.length - 1} more)` : ""}. ${data.settings.autoPrepare && !this.opts.dry ? "A fix is being prepared; it waits for your approval." : "Open the Fixer to look."}`, `issue-${first.id}`);
     }
-    // (Not for health problems: a network, disk or Nova Bot outage isn't something code changes fix)
-    if (data.settings.autoPrepare && !this.opts.dry) for (const i of fresh.filter((x) => x.area !== "health")) this.enqueue({ type: "issue", id: i.id }, null);
+    // (Not for health problems or blips: a network, disk or Nova Bot outage isn't something code changes fix)
+    if (data.settings.autoPrepare && !this.opts.dry) for (const i of fresh.filter((x) => x.area !== "health" && !x.blip)) this.enqueue({ type: "issue", id: i.id }, null);
   }
 
   async hourly(): Promise<void> {
@@ -321,7 +361,7 @@ export class Fixer {
     const job = this.store.update((d) => {
       const target = t.type === "issue" ? d.issues.find((i) => i.id === t.id) : d.quests.find((q) => q.id === t.id);
       if (!target) throw new Error(t.type === "issue" ? "That problem has gone." : "There's no such fixer quest.");
-      const open = target.jobId ? d.jobs.find((j) => j.id === target.jobId && !["failed", "rejected", "done", "rolled-back", "undone"].includes(j.status)) : null;
+      const open = target.jobId ? d.jobs.find((j) => j.id === target.jobId && !["failed", "rejected", "done", "rolled-back", "undone", "closed"].includes(j.status)) : null;
       if (open) return open;
       const at = this.now().toISOString();
       const id = `${at.slice(0, 10).replace(/-/g, "")}-${randomUUID().slice(0, 8)}`;

@@ -211,6 +211,78 @@ export interface Finding {
   title: string;
   detail: string;
   panel?: string;
+  // A sweep problem: where it was seen ("Notes at 390px"), the problem without the place, every
+  // panel it was seen on, and the fingerprints it had when each place was its own problem
+  place?: string;
+  problem?: string;
+  panels?: string[];
+  aliases?: string[];
+  // Probably Nova Bot (or the link to it) answering slowly for a moment, not the code: a 502/503/504,
+  // a dropped connection, "fetch failed". Checked again before it counts (see isBlip).
+  blip?: boolean;
+}
+
+// ---- Nova Bot blips ----
+// Nova Bot not answering, the online link down, or a file that failed because the server behind it
+// didn't answer: seen once, it's checked again (a few tries over a couple of minutes) before it
+// becomes a problem, and it never has a fix prepared (it's not something code changes fix).
+export const BLIP_PRINTS = ["health:nova-bot", "health:relay"];
+export function isBlip(f: Pick<Finding, "fingerprint" | "blip">): boolean {
+  return f.blip === true || BLIP_PRINTS.includes(f.fingerprint);
+}
+// A status or a browser error that means "the server didn't answer", not "the file is missing"
+export const blipStatus = (status: number) => status === 502 || status === 503 || status === 504;
+export const blipError = (text: string) => /ERR_(CONNECTION_\w+|EMPTY_RESPONSE|TIMED_OUT|NETWORK_\w+|INTERNET_DISCONNECTED|NAME_NOT_RESOLVED)|fetch failed|Failed to fetch|NetworkError|Load failed/i.test(text);
+
+// ---- The same problem in several places: one problem ----
+// A sweep finds a file that didn't load on Notes, Index and Observatory, at 390px and 1280px: that's
+// one problem (one fingerprint, the place left out), so it gets one issue and one fix. Its title
+// says where it was seen ("a file didn't load: /x.svg (404) · on Notes, Index and Observatory at 390px").
+const listOf = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+export function placesText(places: string[]): string {
+  // "Notes at 390px", "Index at 390px", "Notes at 1280px" -> "Notes and Index at 390px; Notes at 1280px"
+  const byWidth = new Map<string, string[]>();
+  const other: string[] = [];
+  for (const p of places) {
+    const m = /^(.*) at (\d+px)$/.exec(p);
+    if (!m) {
+      other.push(p);
+      continue;
+    }
+    const names = byWidth.get(m[2]) || [];
+    if (!names.includes(m[1])) names.push(m[1]);
+    byWidth.set(m[2], names);
+  }
+  return [...[...byWidth].map(([w, names]) => `${listOf(names)} at ${w}`), ...other].join("; ");
+}
+export function groupFindings(findings: Finding[]): Finding[] {
+  const groups = new Map<string, Finding[]>();
+  for (const f of findings) {
+    const g = groups.get(f.fingerprint);
+    if (g) g.push(f);
+    else groups.set(f.fingerprint, [f]);
+  }
+  const out: Finding[] = [];
+  for (const g of groups.values()) {
+    const first = g[0];
+    const places = [...new Set(g.map((f) => f.place).filter((x): x is string => !!x))];
+    if (g.length === 1 || !first.problem || places.length <= 1) {
+      out.push(first);
+      continue;
+    }
+    const panels = [...new Set(g.flatMap((f) => f.panels || (f.panel ? [f.panel] : [])))];
+    out.push({
+      ...first,
+      title: `${first.problem} · on ${placesText(places)}`,
+      detail: [`Seen on: ${placesText(places)}.`, ...new Set(g.map((f) => f.detail).filter(Boolean))].join("\n\n").slice(0, 4000),
+      severity: g.some((f) => f.severity === "serious") ? "serious" : "minor",
+      panel: panels[0] || first.panel,
+      panels,
+      aliases: [...new Set(g.flatMap((f) => f.aliases || []))],
+      blip: g.every((f) => f.blip === true),
+    });
+  }
+  return out;
 }
 
 // Merge a check's findings into the known issues. Each problem is kept once (by fingerprint) and
@@ -222,11 +294,16 @@ export function mergeIssues(issues: Issue[], findings: Finding[], areas: Issue["
   for (const f of findings) if (!byPrint.has(f.fingerprint)) byPrint.set(f.fingerprint, f);
   const kept: Issue[] = [];
   const cleared: Issue[] = [];
+  // A problem that used to be one issue per place (an older fingerprint) carries on as the grouped
+  // one: same id, same fix, already told about
+  const byAlias = new Map<string, Finding>();
+  for (const f of byPrint.values()) for (const a of f.aliases || []) if (!byAlias.has(a)) byAlias.set(a, f);
   for (const issue of issues) {
-    const f = byPrint.get(issue.fingerprint);
+    const exact = byPrint.get(issue.fingerprint);
+    const f = exact || (byAlias.has(issue.fingerprint) && byPrint.has(byAlias.get(issue.fingerprint)!.fingerprint) ? byAlias.get(issue.fingerprint) : undefined);
     if (f) {
-      kept.push({ ...issue, lastSeen: at, seenCount: issue.seenCount + 1, detail: f.detail || issue.detail, severity: f.severity, title: f.title });
-      byPrint.delete(issue.fingerprint);
+      kept.push({ ...issue, fingerprint: f.fingerprint, lastSeen: at, seenCount: issue.seenCount + 1, detail: f.detail || issue.detail, severity: f.severity, title: f.title.slice(0, 300), panel: f.panel || issue.panel, blip: isBlip(f) });
+      byPrint.delete(f.fingerprint);
     } else if (areas.includes(issue.area)) cleared.push(issue);
     else kept.push(issue);
   }
@@ -243,6 +320,7 @@ export function mergeIssues(issues: Issue[], findings: Finding[], areas: Issue["
     seenCount: 1,
     notified: false,
     jobId: "",
+    blip: isBlip(f),
   }));
   return { issues: [...kept, ...fresh], fresh, cleared };
 }

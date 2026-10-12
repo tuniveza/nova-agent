@@ -23,6 +23,7 @@ import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { sweepWriteBlocked } from "../fixer/sweep-guard";
 import { streamSSE } from "hono/streaming";
 import cron from "node-cron";
 import { config } from "../config";
@@ -85,6 +86,10 @@ const TASKS: Record<string, { label: string; run: () => Promise<string> }> = {
 };
 
 const app = new Hono();
+
+// The Fixer's hourly sweep only looks: anything from its browser that would change something is
+// turned away (src/fixer/sweep-guard.ts), so a sweep can't make notes, calendar items or quests
+app.use("*", async (c, next) => sweepWriteBlocked(c.req.raw) || next());
 
 // Buttons on the page send this header. Other websites can't add custom
 // headers to requests to this server, so they can't press our buttons.
