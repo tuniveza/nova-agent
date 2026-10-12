@@ -678,7 +678,7 @@
   }
   function exportItems() {
     return [
-      { label: 'Google Docs…', icon: 'doc', run: openGdocs },
+      { label: 'Google Docs…', icon: 'doc', run: sendToDocs },
       { sep: true },
       { label: 'Word document (.doc)', icon: 'export', sfx: 'send', run: () => exportAs('doc') },
       { label: 'Web page (.html)', icon: 'export', sfx: 'send', run: () => exportAs('html') },
@@ -704,7 +704,7 @@
       { sep: true },
       { label: 'Import…', icon: 'import', kbd: 'Ctrl+O', run: openImport },
       { label: 'Download', icon: 'export', sub: exportItems },
-      { label: 'Send to Google Docs…', icon: 'doc', run: openGdocs },
+      { label: 'Send to Google Docs…', icon: 'doc', run: sendToDocs },
       { sep: true },
       { label: 'Back up all notes (.json)', icon: 'export', sfx: 'send', run: backupAll },
       { label: 'Restore a backup…', icon: 'import', run: openImport },
@@ -1158,7 +1158,7 @@
     focus: () => toggleFocus(),
     keys: () => showKeys(),
     import: () => openImport(),
-    gdocs: () => openGdocs(),
+    gdocs: () => sendToDocs(),
     export: () => {
       if (shown($('btn-export'))) openMenu($('btn-export'), exportItems());
       else if (menuButton('File')) menuButton('File').click();
@@ -1211,7 +1211,35 @@
   function exported() {
     return NN.convert.exportDocument(editor.html(), { title: current ? current.title : 'Notes', theme: NN.themes.get(settings.theme) });
   }
-  $('btn-gdocs').addEventListener('click', () => openGdocs());
+  $('btn-gdocs').addEventListener('click', () => sendToDocs());
+
+  // One tap: with the studio's Google connected (Portal → Admin → Google), Nova Bot makes the note a
+  // Google Doc in the Nova Agent folder and it opens. Not connected (or offline): the dialog, as before.
+  async function sendToDocs() {
+    const tab = window.open('about:blank', '_blank');
+    let data = null;
+    try {
+      await saveNow();
+      const { body } = exported();
+      const res = await fetch('/app/api/google/docs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ title: current ? current.title : 'Notes', html: body }),
+      });
+      data = res.ok ? await res.json() : null;
+    } catch (err) {
+      data = null;
+    }
+    if (!data || !data.url) {
+      if (tab) tab.close();
+      openGdocs();
+      return;
+    }
+    if (tab) tab.location.href = data.url;
+    else window.open(data.url, '_blank', 'noopener');
+    toast('In Google Docs ✦ (the Nova Agent folder)');
+  }
   $('gd-copy').addEventListener('click', async () => {
     await saveNow();
     const { body } = exported();

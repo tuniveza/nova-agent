@@ -703,6 +703,52 @@ function tidyBody(side) {
   return { items, recent: tsRecent(side), real: tsReal(side), counts: { likely: items.filter((i) => i.confidence === "likely").length, maybe: items.filter((i) => i.confidence === "maybe").length } };
 }
 
+// ----- Google (Portal → Admin → Google) -----
+function googleBody() {
+  const origin = "https://novacane-worker.novacane-studio.workers.dev";
+  const parts = [
+    ["calendar", "Calendar", "Nova's Calendar and Google Calendar, both ways.", true, true],
+    ["calendarPlan", "Quests and music time in Google Calendar", "Also put Nova Agent's plan into the Novacane Studio calendar.", false, true],
+    ["bookings", "Bookings in Google Calendar", "Copies of Acuity's bookings (they're still booked in Acuity).", true, true],
+    ["send", "Send approved emails from Gmail", "Replies, one-to-one emails, invoices and reminders go from the studio's Gmail, so they're in its Sent folder.", true, true],
+    ["replies", "Customers' replies into Enquiries", "Replies to those emails land back in the right enquiry.", true, true],
+    ["contacts", "Clients in Google Contacts", "Under a \"Novacane clients\" label, both ways.", true, false],
+    ["drive", "Pictures, videos and receipts in Google Drive", "In a \"Nova Agent\" folder, so posts go out even with the studio PC off.", true, true],
+    ["backups", "Nightly backups to Google Drive", "Index and the PC's files, every night.", true, true],
+    ["sheets", "Money in Google Sheets", "A live sheet of invoices, payments and expenses for the accountant.", true, true],
+  ];
+  return {
+    sandbox: false,
+    canManage: true,
+    hasKey: true,
+    keyFrom: "app",
+    keyShort: "1234567890-abc…",
+    connected: true,
+    account: LONGWORD.toLowerCase() + "@gmail.com",
+    connectedAt: iso(11, 10),
+    missing: ["Clients in Google Contacts"],
+    options: Object.fromEntries(parts.map(([id, , , on]) => [id, on])),
+    parts: parts.map(([id, label, help, on, allowed]) => ({ id, label, help, on, allowed })),
+    status: {
+      calendar: { at: iso(12, 9), ok: true, note: "128 events in step (3 in, 2 out just now)" },
+      replies: { at: iso(12, 8), ok: false, note: "That Google feature isn't switched on in Google Cloud yet: step 1 of the setup, then try again. " + LONGWORD },
+      sheets: { at: iso(12, 7), ok: true, note: "Up to date · 12 invoices, 9 payments, 30 expenses in the sheet" },
+      backups: { at: iso(11, 3), ok: true, note: "Index backed up (37 pages), 2026-10-12" },
+    },
+    folderUrl: "https://drive.google.com/drive/folders/" + LONGWORD,
+    sheetUrl: "https://docs.google.com/spreadsheets/d/" + LONGWORD + "/edit",
+    steps: [
+      { title: "Switch on Google's features", text: "Press the button, pick (or make) a project called Nova Agent, then press Next and Enable.", open: { href: "https://console.cloud.google.com/flows/enableapi", label: "Open Google Cloud" }, copy: [] },
+      { title: "Set up Google's permission screen", text: "Press Get started. App name: Nova Agent. Pick your own email for both email boxes. Audience: External. Then Create.", open: { href: "https://console.cloud.google.com/auth/overview", label: "Open the sign-in screen" }, copy: ["Nova Agent"] },
+      { title: "Keep it working", text: "Press Publish app, then Confirm.", open: { href: "https://console.cloud.google.com/auth/audience", label: "Open Audience" }, copy: [] },
+      { title: "Make the key", text: "Type: Web application. Name: Nova Agent. Add the two web addresses under Authorised JavaScript origins and the last one under Authorised redirect URIs, then press Create.", open: { href: "https://console.cloud.google.com/auth/clients/create", label: "Make the key" }, copy: [origin, "http://localhost:4545", origin + "/admin/google/callback"] },
+      { title: "Paste the key here", text: "Google shows a Client ID and a Client secret. Copy each one into the boxes below.", key: true, copy: [] },
+      { title: "Connect the studio's Google account", text: "Press Connect Google and pick the studio's Google account. Tick every box.", connect: true, copy: [] },
+    ],
+    connectUrl: origin + "/admin/google?popup=1",
+  };
+}
+
 export function portalMock(pathWithQuery, method = "GET") {
   let raw = String(pathWithQuery || "");
   try {
@@ -752,6 +798,7 @@ export function portalMock(pathWithQuery, method = "GET") {
   if (hit) return { post: SOCIAL_POSTS.find((p) => p.id === Number(hit[1])) || SOCIAL_POSTS[0], log: ["created", "submitted", "approved", "posting", "posted"].map((event, i) => ({ at: iso(1 + i, 10), event, byName: ME_NAME, detail: i % 2 ? LONGWORD : "" })) };
   if (path === "money") return moneyBody();
   if (path === "tidy") return tidyBody("bot");
+  if (path === "google") return googleBody();
   if (path === "tidy-api/state") return tidyBody("pc");
   hit = /^money\/invoices\/(\d+)$/.exec(path);
   if (hit) return moneyInvoiceBody(Number(hit[1]));

@@ -1,0 +1,57 @@
+/* Portal → Admin → Google (google.js): calm cards, one step at a time, big buttons, words not colours. */
+
+.gg .view-head { gap: 10px; }
+.gg .view-head .chip { min-height: 44px; }
+.gg-body { display: grid; gap: 14px; min-width: 0; }
+.gg-body > .card { display: grid; gap: 10px; min-width: 0; justify-items: center; text-align: center; }
+.gg-body > .card > * { max-width: 100%; }
+
+.gg-big { margin: 0; font-size: 18px; font-weight: 600; color: var(--bright); overflow-wrap: anywhere; }
+.gg-big:focus-visible, .gg-step-title:focus-visible { outline: 3px solid var(--hi); outline-offset: 4px; border-radius: 8px; }
+.gg-missing { margin: 0; padding: 8px 12px; border: 1px dashed var(--line-strong); border-radius: 12px; color: var(--text); overflow-wrap: anywhere; }
+.gg-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 10px; }
+.gg-row .btn, .gg-row .chip, .gg-body .btn { min-height: 44px; }
+.gg-body .btn.big { min-height: 52px; padding: 0 26px; font-size: 16px; }
+.gg-body .btn.small { min-height: 40px; }
+
+/* The steps */
+.gg-steps .kicker { margin: 0; }
+.gg-step-title { margin: 0; font-size: 19px; color: var(--bright); }
+.gg-text { margin: 0; max-width: 60ch; line-height: 1.5; color: var(--text); overflow-wrap: anywhere; }
+.gg-copy { display: flex; align-items: center; gap: 8px; width: min(100%, 640px); flex-wrap: wrap; justify-content: center; }
+.gg-copy code {
+  flex: 1 1 260px; min-width: 0; padding: 10px 12px; border-radius: 12px; overflow-wrap: anywhere; text-align: left;
+  background: rgba(var(--panel-2-rgb), 0.6); border: 1px solid var(--line); color: var(--bright); font-size: 13px;
+}
+.gg-key { display: grid; gap: 10px; width: min(100%, 520px); text-align: left; }
+.gg-key label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.gg-key input {
+  min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(var(--panel-2-rgb), 0.6);
+  color: var(--bright); font: inherit; width: 100%; min-width: 0;
+}
+.gg-key input:focus-visible { outline: 3px solid var(--hi); outline-offset: 2px; }
+.gg-key .btn { justify-self: center; }
+.gg-nav { display: flex; justify-content: space-between; gap: 10px; width: min(100%, 520px); margin-top: 4px; }
+
+/* What's kept in step */
+.gg-h { margin: 0; font-size: 16px; color: var(--bright); }
+.gg-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; width: min(100%, 680px); }
+.gg-part {
+  display: grid; justify-items: center; gap: 6px; padding: 12px 14px; border-radius: 16px;
+  border: 1px solid var(--line); background: rgba(var(--panel-2-rgb), 0.35); min-width: 0;
+}
+.gg-switch { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.gg-switch input { width: 22px; height: 22px; accent-color: var(--hi); flex: none; }
+.gg-switch input:focus-visible { outline: 3px solid var(--hi); outline-offset: 3px; }
+.gg-switch input:disabled + .gg-label { opacity: 0.6; }
+.gg-label { font-weight: 600; color: var(--bright); overflow-wrap: anywhere; }
+.gg-help, .gg-note { margin: 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; max-width: 60ch; }
+.gg-note { color: var(--text); }
+.gg-problem { padding: 6px 10px; border-radius: 10px; border: 1px dashed var(--line-strong); }
+.gg-part .chip { min-height: 44px; }
+.gg-links { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 8px 10px; }
+
+@media (max-width: 520px) {
+  .gg-nav .btn { flex: 1; }
+  .gg-big { font-size: 16px; }
+}

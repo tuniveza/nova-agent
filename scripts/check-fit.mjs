@@ -291,6 +291,21 @@ const APPS = {
       }, steps);
       out.push(["tests: deleted and marked as real", tests(["#tests-recent-wrap", "#tests-real-wrap"])]);
       out.push(["tests: delete all, asking again", tests(["#tests-delete-all"])]);
+      // Google: the setup steps open again, at the step with the addresses to copy
+      out.push(["google: the setup steps", async () => f.evaluate(async () => {
+        document.documentElement.removeAttribute("data-menu");
+        document.querySelector('.tab[data-view="google"]').click();
+        await new Promise((r) => setTimeout(r, 500));
+        const show = [...document.querySelectorAll("#google-body .chip")].find((b) => /setup steps/.test(b.textContent));
+        if (show) show.click();
+        await new Promise((r) => setTimeout(r, 200));
+        for (let i = 0; i < 2; i++) {
+          const back = [...document.querySelectorAll(".gg-nav .btn")].find((b) => b.textContent === "Back");
+          if (back) back.click();
+          await new Promise((r) => setTimeout(r, 150));
+        }
+        scrollTo(0, 0);
+      })]);
       return out;
     },
     dialogs: true,

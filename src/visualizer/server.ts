@@ -54,6 +54,7 @@ import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, receipts } from "../receipts";
 import { registerFixerRoutes } from "../fixer/routes";
 import { registerTidyRoutes } from "../tidy-routes";
 import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
+import { backupFilesToDrive, copyToDriveLater, dropFromDriveLater } from "../google";
 import { currentFixer, startFixer } from "../fixer/service";
 
 // Everything Nova Agent shows lives in web/: its own page (web/agent) and each panel
@@ -511,6 +512,8 @@ app.post("/actions/social-media", async (c) => {
   try {
     const entry = mediaStore.save(bytes, { name: c.req.query("name"), by: person?.id || "" });
     trace("input", "ok", `Social: ${person?.online ? `${person.name} ` : ""}added a ${entry.kind} (${Math.round(entry.size / 1000)} KB)`);
+    // A copy in the studio's Google Drive, so posts go out with this computer off (google.ts)
+    copyToDriveLater("media", entry.id, entry.name, MEDIA_TYPES[entry.ext], bytes);
     return c.json({ ok: true, media: mediaCard(entry) });
   } catch (error) {
     return c.json({ ok: false, message: (error as Error).message }, 400);
@@ -519,7 +522,9 @@ app.post("/actions/social-media", async (c) => {
 app.post("/actions/social-media/:id/remove", (c) => {
   const id = c.req.param("id");
   if (!MEDIA_ID.test(id)) return c.json({ ok: false, message: "No such file" }, 404);
-  return mediaStore.remove(id) ? c.json({ ok: true }) : c.json({ ok: false, message: "No such file" }, 404);
+  if (!mediaStore.remove(id)) return c.json({ ok: false, message: "No such file" }, 404);
+  dropFromDriveLater("media", id);
+  return c.json({ ok: true });
 });
 app.on(["GET", "HEAD"], "/social-media/:file", (c) => {
   const m = /^([a-f0-9]{32})\.(jpg|png|webp|gif|mp4|mov)$/.exec(c.req.param("file"));
@@ -581,7 +586,10 @@ app.post("/actions/receipts", async (c) => {
   if (Number(c.req.header("Content-Length") || 0) > MAX_RECEIPT_BYTES) return c.json({ ok: false, message: "That's too big for a receipt (20 MB at most)." }, 413);
   try {
     const bytes = new Uint8Array(await c.req.arrayBuffer());
-    return c.json({ ok: true, receipt: receipts.save(bytes, type) });
+    const receipt = receipts.save(bytes, type);
+    // A copy in the studio's Google Drive, so Portal shows it with this computer off (google.ts)
+    copyToDriveLater("receipt", receipt.id, receipt.id, type, bytes);
+    return c.json({ ok: true, receipt });
   } catch (error) {
     return c.json({ ok: false, message: (error as Error).message }, 400);
   }
@@ -758,6 +766,17 @@ cron.schedule(
   { timezone: config.timezone },
 );
 console.log(`Daily healthcheck scheduled: "${config.healthcheckSchedule}" (${config.timezone})`);
+
+// Every night at 3:15: this computer's files into Google Drive's Backups (when Google is connected)
+cron.schedule(
+  "15 3 * * *",
+  () => {
+    backupFilesToDrive()
+      .then((n) => n && trace("task", "ok", `Google Drive: ${n} file${n === 1 ? "" : "s"} backed up`))
+      .catch((error) => trace("task", "warn", `Backup to Google Drive failed: ${(error as Error).message}`));
+  },
+  { timezone: config.timezone },
+);
 
 startCollectingJobs();
 

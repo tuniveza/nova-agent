@@ -241,6 +241,37 @@ Portal → **Test stuff** (in Admin; admins only) lists things that look like te
 
 Agent can read the list (`test_stuff_list`) but has nothing that deletes. Nova Bot's side is `src/tidy.js` (tables from `migrations/0031_tidy.sql`: `tidy_bin`, `tidy_real`, `tidy_log`); the PC's side is `src/tidy.ts` (its bin and "Not a test" list are in `data/tidy.json`), at `/tidy-api/state` and `/actions/tidy/*`, relayed online for admins only.
 
+## Google
+
+Portal → **Google** (in Admin; admins only) connects the studio's Google account and keeps it in step with Nova Agent. Everyone else just sees the results (events in Calendar, replies in Enquiries, the Money sheet, Docs from Notes).
+
+**Setting it up (about 5 minutes, once):** the page shows one step at a time: a sentence, a button that opens the right Google page, and **Copy** buttons for exactly what to paste.
+1. **Switch on Google's features**: Calendar, Gmail, Drive, People (Contacts), Sheets and Docs, in a Google Cloud project called Nova Agent.
+2. **Google's permission screen**: app name Nova Agent, audience External.
+3. **Publish it** (otherwise Google stops the connection every 7 days).
+4. **Make the key**: a Web application, with Nova Bot's address and `http://localhost:4545` as its web addresses and `<Nova Bot>/admin/google/callback` to come back to.
+5. **Paste the key** (Client ID and Client secret: the secret is kept encrypted on Nova Bot).
+6. **Connect Google**: Google's page opens in a small window; pick the studio's account and tick every box. ("This app isn't verified": press Advanced, then Go to Nova Agent. That's expected.)
+
+A connection made before a feature existed shows **Connect again to switch on: …**; pressing it adds the new permissions.
+
+**What's kept in step** (each has a switch, how it last went in plain words, and **Sync now**):
+- **Calendar, both ways.** Nova's Calendar events and day cards go into a "Novacane Studio" calendar in Google (made on the first sync); events from the studio's own Google Calendar come into Nova's Calendar, and so count as busy time for quests. A change or a deletion on either side is made on the other (the later change wins). Every 5 minutes.
+  - **Bookings in Google Calendar:** copies of Acuity's bookings (60 days ahead). Bookings are only ever made, moved or cancelled in Acuity: nothing books from Google.
+  - **Quests and music time in Google Calendar** (off unless switched on): Nova Agent's plan too.
+- **Send approved emails from Gmail.** Enquiry replies, one-to-one emails, invoices and their reminders go from the studio's Gmail once an admin has approved them (so they're in its Sent folder), each joining its own thread. Gmail off or saying no: Resend sends them, as before. Campaigns always go through Resend (it handles unsubscribes).
+- **Customers' replies into Enquiries.** Every hour, replies to those emails (and emails from people with open enquiries) land in the right enquiry as their reply, without the quoted email under it, and the enquiry goes back to Open; a reply about a one-to-one email or an invoice starts a new enquiry. Gmail is only read, never changed.
+- **Clients in Google Contacts,** both ways, under a "Novacane clients" label. A contact given the label in Google becomes a client (with no marketing consent: that stays Nova's alone, with its date and source, and is never sent to Google). Nobody is made twice: the same email links the two. Hourly.
+- **Pictures, videos and receipts in Google Drive,** in a "Nova Agent" folder. Each social post picture or video and each receipt saved on the studio PC gets a copy there, so posts go out (and Portal shows receipts) with the studio PC off. Nova Agent only sees the files it made itself.
+- **Nightly backups:** all of Index (the last 14 nights kept) and the PC's files, about 3am.
+- **Money in Google Sheets:** one live sheet (Invoices, Payments, Expenses) for the accountant, brought up to date hourly and when someone presses **Open in Google Sheets** in Money → Tax year.
+
+Notes' **Send to Google Docs** is one tap once Google is connected: the note becomes a Google Doc in the Nova Agent folder and opens (not connected: the old dialog).
+
+Agent can look but not touch: `google_calendar_busy`, `gmail_search` (who, subject, when and a snippet) and `google_contacts_find`. There's no tool that sends, books or changes anything in Google.
+
+Built in Nova Bot's `src/google/` (`calendar.js`, `gmail.js`, `contacts.js`, `drive.js`, `sheets.js`; `index.js` runs one part a minute at most on the cron, within the free Workers plan's limit of 50 calls a run; links between Nova's things and Google's are in `google_links`, `migrations/0032_google.sql`), and here in `src/google.ts` (copies to Drive, the nightly file backup), `src/google-agent.ts` and `web/portal/google.js`.
+
 ## The API (on Nova Bot's worker)
 
 | | |

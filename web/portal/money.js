@@ -547,6 +547,13 @@
       }
       exp.appendChild(row);
     } else exp.appendChild(k.el("p", "card-foot", "An admin downloads these, signed in to Portal in a browser."));
+    // The same, live in Google Sheets (once Google is connected: Portal → Admin → Google; google.js)
+    if (window.PortalGoogle) {
+      const sheet = k.el("button", "btn small", "Open in Google Sheets ↗");
+      sheet.type = "button";
+      sheet.addEventListener("click", () => window.PortalGoogle.openSheet());
+      exp.appendChild(sheet);
+    }
     nodes.push(exp);
     nodes.push(settingsCard());
     return nodes;
