@@ -103,3 +103,11 @@ export async function passOn(req: Request): Promise<Response> {
   }
   return new Response(res.body, { status: res.status, headers: out });
 }
+
+// A picture from Nova Bot (the music front page's photos and covers): when Nova Bot can't be
+// reached, the same quiet "no photo" Nova Bot gives, so the page just shows none
+export async function passOnPicture(req: Request): Promise<Response> {
+  const res = await passOn(req);
+  if (res.status !== 502) return res;
+  return new Response("No photo", { status: 404, headers: { "Cache-Control": "no-store" } });
+}

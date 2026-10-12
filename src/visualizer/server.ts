@@ -16,7 +16,7 @@
 // client names and the AI prompts. To view it from the VPS later, use an
 // SSH tunnel:  ssh -L 4545:localhost:4545 your-vps
 
-import { fromOurPage, passOn, session, signIn, signOut } from "../signin";
+import { fromOurPage, passOn, passOnPicture, session, signIn, signOut } from "../signin";
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -350,7 +350,7 @@ app.get("/app-version", (c) => {
   }
   return c.json({ version: pageVersion.version }, 200, { "Cache-Control": "no-store" });
 });
-app.get("/music-world/*", (c) => passOn(c.req.raw));
+app.get("/music-world/*", (c) => passOnPicture(c.req.raw));
 
 // ---- Admin, as a panel: Nova Bot's admin pages, as the person signed in on this computer ----
 // (Online they're Nova Bot's own, at the same address.) Signed out: Portal, then back here.

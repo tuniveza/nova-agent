@@ -71,6 +71,20 @@ describe("signing in in the Portal", () => {
     expect(seen).toHaveLength(0);
   });
 
+  it("a music photo with Nova Bot out of reach is a quiet 'no photo', not a failure", async () => {
+    const s = await load();
+    await s.signIn({ email: "d@novacane.co.uk", password: "right" });
+    answer = () => {
+      throw new Error("timed out");
+    };
+    expect((await s.passOn(page("/music-world/photo/Nina_Simone"))).status).toBe(502);
+    expect((await s.passOnPicture(page("/music-world/photo/Nina_Simone"))).status).toBe(404);
+    answer = () => new Response("img", { headers: { "content-type": "image/jpeg" } });
+    const ok = await s.passOnPicture(page("/music-world/photo/Nina_Simone"));
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("content-type")).toBe("image/jpeg");
+  });
+
   it("only Nova Agent's own pages can use it: not another website, not a look-alike address", async () => {
     const s = await load();
     expect(s.fromOurPage(page("/app/api/enquiries"))).toBe(true);
