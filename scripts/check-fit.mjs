@@ -306,6 +306,16 @@ const APPS = {
         }
         scrollTo(0, 0);
       })]);
+      // Conversations: one chat open, with someone from the studio live in it and the reply box
+      out.push(["chats: a live chat open", async () => f.evaluate(async () => {
+        document.documentElement.removeAttribute("data-menu");
+        document.querySelector('.tab[data-view="chats"]').click();
+        await new Promise((r) => setTimeout(r, 500));
+        const card = document.querySelector("#chat-list .card.tappable");
+        if (card) card.click();
+        await new Promise((r) => setTimeout(r, 500));
+        scrollTo(0, 0);
+      })]);
       return out;
     },
     dialogs: true,

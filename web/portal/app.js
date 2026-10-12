@@ -265,7 +265,15 @@
     if (view === "today") loadToday();
     if (view === "quests") loadQuests();
     if (view === "enquiries") loadEnquiries();
-    if (view === "chats") (openChatId ? openChat(openChatId, openChatName) : loadChats());
+    if (view === "chats") {
+      // (?chat=ID, from a phone ping about a chat: open that one, once)
+      const wanted = new URLSearchParams(location.search).get("chat");
+      if (wanted && wanted !== pickedChat) {
+        pickedChat = wanted;
+        openChatId = wanted;
+      }
+      openChatId ? openChat(openChatId, openChatName) : loadChats();
+    }
     if (view === "calendar") loadCalendar();
     if (view === "approvals") loadApprovals();
     if (view === "campaigns") loadCampaigns();
@@ -2975,6 +2983,7 @@
 
   // The conversation open in the Conversations tab (a refresh keeps it open), or null for the list
   let openChatId = null;
+  let pickedChat = null; // the ?chat= one already opened
   let openChatName = "";
 
   // Chats as tickets: "Needs a person" (someone should follow it up) or "Done"
@@ -3037,6 +3046,7 @@
           const top = el("div", "card-top");
           const title = el("h3", "card-title", (c.first_question || "(no question)").slice(0, 120));
           if (c.enquiries) title.appendChild(el("span", "pill-new", "Enquiry"));
+          if (c.live === "staff") title.appendChild(el("span", "pill-new", "Live" + (c.live_name ? " · " + c.live_name : "")));
           if (c.ticket === "needs-person") title.appendChild(el("span", "pill-open", "Needs a person"));
           if (c.ticket === "done") title.appendChild(el("span", "pill-done", "Done"));
           top.append(title, el("span", "card-meta", when(c.started)));
@@ -3078,18 +3088,104 @@
       card.dataset.key = "chat:" + chatId;
       card.dataset.sig = sig(data.messages);
       data.messages.forEach((m) => {
-        const line = el("div", "line " + (m.role === "user" ? "visitor" : "bot"));
-        line.appendChild(el("span", "who", (m.role === "user" ? "Customer" : "NovaBot") + " · " + when(m.created_at) + (m.page ? " · " + m.page : "")));
+        if (m.role === "note") {
+          card.appendChild(el("p", "line note", m.content + " · " + when(m.created_at)));
+          return;
+        }
+        const line = el("div", "line " + (m.role === "user" ? "visitor" : m.role === "staff" ? "staff" : "bot"));
+        const who = m.role === "user" ? "Customer" : m.role === "staff" ? (m.sender || "Someone") + " (studio)" : "NovaBot";
+        line.appendChild(el("span", "who", who + " · " + when(m.created_at) + (m.page ? " · " + m.page : "")));
         const p = el("p");
         linkify(p, m.content);
         line.appendChild(p);
         card.appendChild(line);
       });
-      reconcile(list, [bar, card]);
+      reconcile(list, [bar, card, liveBox(chatId, data.live || { mode: "bot" })]);
       if (fresh) window.scrollTo(0, 0);
+      watchChat(chatId, data.live);
     } catch (err) {
       if (err.message !== "signed out") emptyState(list, err.message);
     }
+  }
+
+  // ----- Live: someone from the studio typing straight to the visitor (Nova Bot's src/livechat.js) -----
+  // Take over pauses NovaBot for this chat and tells the visitor who's here; replying takes it over
+  // too. Hand back gives it back to NovaBot. While a chat is open here it's checked every few
+  // seconds (sooner while someone has it), so the visitor's new messages show up by themselves.
+  let chatTimer = 0;
+  function watchChat(chatId, live) {
+    clearTimeout(chatTimer);
+    const gap = live && live.mode === "staff" ? 4000 : 10000;
+    chatTimer = setTimeout(() => {
+      if (openChatId === chatId && currentView === "chats" && !document.hidden) openChat(chatId, openChatName);
+      else if (openChatId === chatId) watchChat(chatId, live);
+    }, gap);
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && openChatId && currentView === "chats") openChat(openChatId, openChatName);
+  });
+
+  async function chatLive(chatId, action, extra, said) {
+    const data = await api("conversations/live", { body: { chatId, action, ...extra } });
+    if (said) toast(said);
+    if (openChatId === chatId) openChat(chatId, openChatName);
+    return data;
+  }
+
+  // The box under the chat: who has it, Take over / Hand back, and the reply. It keeps what's being
+  // typed while the chat refreshes (its key and sig stay the same until who has the chat changes).
+  function liveBox(chatId, live) {
+    const mine = live.mode === "staff";
+    const box = el("article", "card lc-box" + (mine ? " lc-live" : ""));
+    box.dataset.key = "live:" + chatId;
+    box.dataset.sig = sig([live.mode, live.staffName]);
+    const head = el("div", "lc-head");
+    head.appendChild(el("p", "card-foot lc-who", mine ? (live.staffName || "Someone") + " from the studio has this chat. NovaBot is paused." : "NovaBot is answering this chat. Reply below (or Take over) to answer the visitor yourself."));
+    const toggle = button(mine ? "Hand back to NovaBot" : "Take over", "chip lc-toggle", async (b) => {
+      b.disabled = true;
+      try {
+        await chatLive(chatId, mine ? "handback" : "takeover", {}, mine ? "NovaBot has the chat again" : "You have the chat. The visitor sees you joined.");
+      } catch (err) {
+        toast(err.message);
+        b.disabled = false;
+      }
+    });
+    head.appendChild(toggle);
+    box.appendChild(head);
+    const form = el("form", "lc-form");
+    form.setAttribute("aria-label", "Reply to the visitor");
+    const input = el("textarea", "lc-input");
+    input.rows = 2;
+    input.maxLength = 1500;
+    input.placeholder = mine ? "Write to the visitor…" : "Write to the visitor (this takes the chat over)…";
+    input.setAttribute("aria-label", "Your reply to the visitor");
+    const send = el("button", "btn lc-send", "Send");
+    send.type = "submit";
+    form.append(input, send);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text || send.disabled) return;
+      send.disabled = true;
+      try {
+        await chatLive(chatId, "reply", { text });
+        input.value = "";
+      } catch (err) {
+        toast(err.message);
+      }
+      send.disabled = false;
+      input.focus();
+    });
+    // Enter sends, Shift+Enter makes a new line
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    box.appendChild(form);
+    box.appendChild(el("p", "hint lc-hint", "The visitor sees your first name. Replies here go straight to them (no approval needed: they started the chat)."));
+    return box;
   }
 
   $("chats-back").addEventListener("click", loadChats);

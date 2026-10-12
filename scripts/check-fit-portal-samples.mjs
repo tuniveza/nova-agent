@@ -141,6 +141,8 @@ const CONVERSATIONS = ENQUIRIES.slice(0, 12).map((q, i) => ({
   messages: 2 + i * 3,
   ticket: i % 4 === 1 ? "needs-person" : i % 4 === 2 ? "done" : null,
   assigned_name: i % 4 === 1 ? "Penelope Wigglesworth-Fanshawe-Cholmondeley" : null,
+  live: i % 4 === 1 ? "staff" : null,
+  live_name: i % 4 === 1 ? "Penelope" : null,
 }));
 function conversationBody(chatId) {
   const msgs = [];
@@ -163,7 +165,11 @@ function conversationBody(chatId) {
           ][(i - 1) / 2],
     });
   }
-  return { messages: msgs, chat: chatId };
+  // Someone from the studio took it over (live chat): a note, their reply, the visitor answering
+  msgs.push({ id: 100, role: "note", sender: "Penelope", created_at: iso(11, 10, 0), content: "Penelope from the studio has joined the chat." });
+  msgs.push({ id: 101, role: "staff", sender: "Penelope", created_at: iso(11, 10, 1), content: "Hi! It's Penelope from the studio. Thursday at 18:30 is yours if you want it: " + LONG_URL + " " + LONGWORD });
+  msgs.push({ id: 102, role: "user", created_at: iso(11, 10, 2), page: "/", content: "Amazing, yes please " + LONGWORD2 });
+  return { messages: msgs, chat: chatId, live: { mode: "staff", staffId: "crew-1", staffName: "Penelope", since: iso(11, 10, 0), visitorAt: iso(11, 10, 2) } };
 }
 
 // ----- Calendar (Acuity feed) -----

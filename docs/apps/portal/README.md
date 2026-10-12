@@ -83,7 +83,7 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
 | Tab | What it does |
 |---|---|
 | **Enquiries** | Every enquiry NovaBot took, sorted like a ticket inbox: New, Open, Waiting on them, Done and Spam (one press moves it; likely spam lands in Spam by itself, with the reason, and nothing is ever deleted). Who's on it, a label, search, and the team's saved replies for routine questions. Email, call, make a booking link with the customer's details filled in, read the chat it came from. Details: Nova Bot's README-ENQUIRIES.md. |
-| **Chats** | What customers asked NovaBot on the website (kept for 90 days). Mark a chat **Needs a person** (you're put on it) or **Done**, and filter by either, so follow-ups don't get lost. |
+| **Chats** | What customers asked NovaBot on the website (kept for 90 days). Mark a chat **Needs a person** (you're put on it) or **Done**, and filter by either, so follow-ups don't get lost. Open a chat to answer the visitor yourself: see [Live chat](#live-chat). |
 | **Clients** | Everyone who has booked or enquired: their sessions, money (deposits, invoiced, owed) and marketing consent with its date and source. Admins can import Acuity's spreadsheet; Agent can look people up. |
 | **Money** | Invoices (sent only after an admin's Approve), payments and expenses. See [Money](#money). |
 | **Calendar** | Every booking in Acuity's diary, as a month you can swipe, with Calendar's cards and planned quests alongside. See [the smart calendar](#the-smart-calendar). |
@@ -284,6 +284,18 @@ Notes' **Send to Google Docs** is one tap once Google is connected: the note bec
 Agent can look but not touch: `google_calendar_busy`, `gmail_search` (who, subject, when and a snippet) and `google_contacts_find`. There's no tool that sends, books or changes anything in Google.
 
 Built in Nova Bot's `src/google/` (`calendar.js`, `gmail.js`, `contacts.js`, `drive.js`, `sheets.js`; `index.js` runs one part a minute at most on the cron, within the free Workers plan's limit of 50 calls a run; links between Nova's things and Google's are in `google_links`, `migrations/0032_google.sql`), and here in `src/google.ts` (copies to Drive, the nightly file backup), `src/google-agent.ts` and `web/portal/google.js`.
+
+## Live chat
+
+Someone from the studio can answer a website chat themselves, in Portal → **Conversations**.
+
+- **Open a chat.** Under it: who has it, **Take over** (or **Hand back to NovaBot**), and a reply box. Enter sends, Shift+Enter makes a new line.
+- **Take over** (or just reply): NovaBot stops answering that chat and the visitor sees "Sam from the studio has joined the chat." Your messages show in their chat with your first name. **Hand back** gives it back to NovaBot, which reads what you said.
+- **Live both ways:** the visitor's chat checks for your messages every few seconds while it's open (a quick look, nothing held open); an open chat in Portal checks for theirs every 4 seconds (10 while NovaBot has it). The list shows **Live · Sam** on chats someone has.
+- **Phones:** a visitor asking for a person ("can I talk to someone?") marks the chat **Needs a person** and pings the team quietly (once per half hour per chat); a visitor writing in a chat you have pings you (once every two minutes at most). The ping opens that chat.
+- **Rules:** these are replies to someone who started the conversation (a service, not marketing), so they need no approval. Only a person signed in to Portal can write as the studio: NovaBot's AI never does, and Agent has no tool for it.
+
+Nova Bot's side is `src/livechat.js` (`POST /chat/live` for the website's chat; `POST /app/api/conversations/live` for Portal), with `migrations/0033_live_chat.sql` (a `sender` column on `chat_messages`, and `chat_live`).
 
 ## The API (on Nova Bot's worker)
 
