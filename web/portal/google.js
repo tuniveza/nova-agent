@@ -120,6 +120,8 @@
     if (s.connect) {
       const p = el("p", "gg-text", data.connected ? `Connected as ${data.account} ✓` : "");
       if (p.textContent) card.append(p);
+      // No key saved yet: Connect can't work, so the key's boxes come here too (not a dead button)
+      if (!data.hasKey && !s.key) card.append(el("p", "gg-text gg-need", "First paste the key from Google (Client ID and Client secret) and press Save. Then Connect Google lights up."), keyForm());
       card.append(button(data.connected ? "Connect again" : "Connect Google", "btn big", connect, { disabled: !data.hasKey }));
     }
     const nav = el("div", "gg-nav");
