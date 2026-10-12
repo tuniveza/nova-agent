@@ -1553,6 +1553,25 @@
   };
   // The start of the email as plain words (no **)
   const shortPreview = (body) => { const t = String(body || '').replace(/\*\*(.+?)\*\*/g, '$1').trim(); return t.length > 420 ? t.slice(0, 420).replace(/\s+\S*$/, '') + '…' : t; };
+  // A one-to-one email Agent drafted: who it's to, the subject and the start of it. It's approved in
+  // Portal → Campaigns (One-to-one emails), where the email shows in full with its footer.
+  function outreachCard(o) {
+    const card = document.createElement('div');
+    card.className = 'dcard ccard';
+    card.dataset.outreach = String(o.id);
+    const portal = o.portalUrl || '/portal/?view=campaigns&outreach=' + encodeURIComponent(o.id);
+    const waiting = o.status === 'pending_approval' || o.status === 'draft';
+    card.innerHTML = `<span class="dtag"></span><span class="dsubject"></span><span class="cmeta"></span><div class="dbody"></div>
+      <div class="dfoot"><span class="dstate"></span><a class="mini" data-open href="${escF(portal)}" target="_blank" rel="noopener">↗ ${waiting ? 'Check & approve in Portal' : 'Open in Portal'}</a></div>`;
+    card.querySelector('.dtag').textContent = 'One-to-one email' + (waiting ? ' · waiting for an admin' : '');
+    card.querySelector('.dsubject').textContent = o.subject || '';
+    const to = [o.toName, o.organisation].filter(Boolean).join(', ');
+    card.querySelector('.cmeta').textContent = 'To ' + (to ? to + ' · ' : '') + o.toEmail + (o.kind === 'client' && o.aboutBooking ? ' · about their booking' : '');
+    card.querySelector('.dbody').textContent = shortPreview(o.body);
+    card.querySelector('.dstate').textContent = waiting ? 'Not sent: an admin approves it first' : o.status === 'sent' ? 'Sent' : o.status === 'rejected' ? 'Rejected' : o.status === 'failed' ? 'Didn’t send' : 'Approved';
+    return card;
+  }
+
   function campaignCard(c) {
     const card = document.createElement('div');
     card.className = 'dcard ccard';
@@ -1689,7 +1708,7 @@
       for (const a of actions) {
         const chip = document.createElement('span');
         chip.className = `action ${a.kind}`;
-        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : a.kind === 'draft' ? '✉' : a.kind === 'booking' ? '◷' : a.kind === 'campaign' ? '✉' : '✦'} ${a.text}`;
+        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : a.kind === 'draft' ? '✉' : a.kind === 'booking' ? '◷' : a.kind === 'campaign' ? '✉' : a.kind === 'outreach' ? '✉' : '✦'} ${a.text}`;
         row.appendChild(chip);
       }
       wrap.appendChild(row);
@@ -1734,6 +1753,14 @@
         const box = document.createElement('div');
         box.className = 'dcards';
         for (const a of campaigns) box.appendChild(campaignCard(a.campaign));
+        wrap.appendChild(box);
+      }
+      // Each one-to-one email it drafted or changed: the email, with a link to check and approve it in Portal
+      const outreach = actions.filter((a) => a.kind === 'outreach' && a.outreach && a.outreach.id);
+      if (outreach.length) {
+        const box = document.createElement('div');
+        box.className = 'dcards';
+        for (const a of outreach) box.appendChild(outreachCard(a.outreach));
         wrap.appendChild(box);
       }
     }

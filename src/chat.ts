@@ -45,6 +45,7 @@ import { missionMarkdown } from "./quests/export";
 import { draftReply, listEnquiries, readEnquiry, threadText, type DraftCard } from "./enquiries";
 import { actionLine, appointmentsText, availability, BOOKING_KINDS, feedBookingsText, findClients, listActions, listAppointments, listBlocks, listFeedBookings, proposeChange, sessionTypes, ukWhen, type BookingAction, type BookingKind } from "./acuity-api";
 import { AUDIENCES, campaignContext, campaignLine, CAMPAIGN_STATUSES, contextText, createDraft, editDraft, listCampaigns, readCampaign, resultsText, ukToUtc, type Audiences, type CampaignCard, type CampaignChanges } from "./campaigns";
+import { draftOutreach, editOutreach, listOutreach, outreachLine, OUTREACH_STATUSES, type Outreach, type OutreachFields } from "./outreach";
 import { clientHistory, clientsLapsed, clientsOwing, clientsText, findClients as findStudioClients, historyText, lapsedText, MONTH_NAMES, owingText, sinceDate } from "./clients";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
@@ -66,12 +67,13 @@ export interface ChatTurn {
   content: string;
 }
 export interface ChatAction {
-  kind: "added" | "changed" | "removed" | "looked" | "file" | "draft" | "booking" | "campaign";
+  kind: "added" | "changed" | "removed" | "looked" | "file" | "draft" | "booking" | "campaign" | "outreach";
   text: string;
   file?: ReturnType<typeof fileCard>; // for "file": the card to preview and download it
   draft?: DraftCard; // for "draft": a reply to an enquiry, waiting for a person's Approve & send
   booking?: BookingAction; // for "booking": a proposed booking change, waiting for an admin's Approve
   campaign?: CampaignCard; // for "campaign": an email campaign draft, waiting for an admin's Approve
+  outreach?: Outreach; // for "outreach": a one-to-one email, waiting for an admin's Approve
 }
 
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("A date, YYYY-MM-DD (UK)");
@@ -127,6 +129,7 @@ ${bookingsPrompt()}
 - Enquiries: read the studio's enquiries from customers (enquiry_list, enquiry_read) and draft a reply to one (enquiry_draft_reply). You can only ever draft: you can't send, approve or email anyone, and nothing goes to a customer until a person from the studio reads your draft and presses Approve & send (on the card under your reply, or in Portal). Say that plainly when you draft ("Here's a draft for you to check; it goes when you approve it"), never that you've replied or sent anything. Read the enquiry and its conversation first, write the whole email in a warm, plain UK English voice signed "Novacane Studios" (the footer about why they're getting it and how to stop is added automatically), and only promise what the studio has said it can do. Never draft for someone marked do-not-contact.
 - The studio's clients (read-only): client_find (by name, email or phone), client_history (one client's sessions), clients_owing (who owes money, biggest first), clients_not_booked_since (who hasn't booked since a date: for "since July" pass month "July", which means 1 July of the most recent July; for "in the last 3 months" pass months_back 3). Say money in pounds (£120.00) and dates in UK time, as the tools give them. These are the list in Portal → Clients, where staff edit contact details, notes, money and marketing consent; you can't change anything there. Marketing consent is "no" unless it's been recorded with a date and a source: never suggest sending marketing to someone marked "marketing: no".
 - Email campaigns (newsletters to the studio's fans and clients, sent through Resend): suggest_campaign (who's opted in, how recent ones did; then you suggest 1–3 ideas, and nothing is saved), create_campaign_draft, edit_campaign_draft, campaign_results (how a sent one did: opened and clicked as percentages), list_campaigns. You can only draft and edit: you can't send, schedule or approve a campaign, and nobody can through you. Nothing is sent to anyone until an admin presses Approve in Portal → Campaigns (or on the card under your reply). Say that plainly every time you draft or change one ("It's saved as a draft: nothing is sent until an admin approves it in Portal → Campaigns"), and never say a campaign is sent or scheduled unless campaign_results or list_campaigns shows it. Only people who opted in get campaigns (confirmed fans, and clients who said yes to studio news); Nova Bot adds the footer saying who it's from, why they're getting it and how to unsubscribe, so don't write one. Write in warm, plain UK English: a short subject line, short paragraphs separated by blank lines, **bold** for the one thing that matters, full links (https://…), signed "Novacane Studios". Give a send time (UK) when one is asked for or matters; otherwise it goes as soon as it's approved.
+- One-to-one emails (a personal email to one person: a venue, label, brand, promoter, journalist or other business; a studio client; or someone who wrote to the studio): draft_outreach_email, edit_outreach_email, list_outreach_emails. Personalise it: look them up first when it helps (client_find and client_history for a client; web_search, web_fetch or page_look for a business, to get the right person, address and something specific to say). You can only draft and edit: nothing is sent until an admin presses Approve in Portal → Campaigns (One-to-one emails); say that plainly every time ("It's a draft: nothing goes until an admin approves it"). Who can be emailed is checked by Nova Bot (UK law): a business only at a work address (not Gmail, Hotmail and the like), a client only about their own booking unless they said yes to studio news, a reply only to someone who wrote in, and never anyone who said no. If it refuses, tell them why in a line. Nova Bot adds the footer (who it's from, why, and how to stop these emails), so don't write one. Short, warm, plain UK English, one clear ask, signed "Novacane Studios".
 - Say how you're doing (agent_status).
 
 How to work:
@@ -884,6 +887,97 @@ export function campaignTools(actions: ChatAction[]) {
   ];
 }
 
+// One-to-one emails (Portal → Campaigns → One-to-one emails on Nova Bot): DRAFT, edit and list. There is
+// no send, approve or test-send tool, on purpose: an admin approves every email with their own Portal
+// sign-in before it goes, and Nova Bot checks the person may be emailed at all. The trace only gets
+// ids and counts, never addresses, subjects or bodies.
+export function outreachTools(actions: ChatAction[]) {
+  const notSent = "Nothing has been sent: it goes to nobody until an admin approves it in Portal → Campaigns (One-to-one emails). Tell them that plainly.";
+  const FIELDS = {
+    to_email: z.string().min(3).max(200).describe("Their email address (for a business: a work address at that organisation)"),
+    to_name: z.string().max(100).optional().describe("Their name, if known (used in the To line)"),
+    organisation: z.string().max(120).optional().describe("The business or organisation (needed for kind business)"),
+    kind: z.enum(["business", "client", "reply"]).describe("business = a work address at an organisation (B2B); client = a studio client (from client_find); reply = someone who sent the studio an enquiry"),
+    client_id: z.number().int().positive().optional().describe("For kind client: their id from client_find"),
+    about_booking: z.boolean().optional().describe("For kind client: true when it's about their own booking (a service email). Studio news to a client needs their marketing consent."),
+    subject: z.string().min(1).max(150).describe("A short, specific subject line"),
+    body: z.string().min(10).max(10000).describe("The whole email: greeting, short paragraphs separated by a blank line, one clear ask, signed Novacane Studios. No footer: Nova Bot adds who it's from and how to stop these emails."),
+  };
+  const toFields = (i: { to_email?: string; to_name?: string; organisation?: string; kind?: OutreachFields["kind"]; client_id?: number; about_booking?: boolean; subject?: string; body?: string }): OutreachFields => {
+    const f: OutreachFields = {};
+    if (i.kind !== undefined) f.kind = i.kind;
+    if (i.to_email !== undefined) f.toEmail = i.to_email;
+    if (i.to_name !== undefined) f.toName = i.to_name;
+    if (i.organisation !== undefined) f.organisation = i.organisation;
+    if (i.client_id !== undefined) f.clientId = i.client_id;
+    if (i.about_booking !== undefined) f.aboutBooking = i.about_booking;
+    if (i.subject !== undefined) f.subject = i.subject;
+    if (i.body !== undefined) f.body = i.body;
+    return f;
+  };
+  return [
+    betaZodTool({
+      name: "draft_outreach_email",
+      description:
+        "Write a personal email to one person (a business, a studio client, or someone who wrote in). It is NOT sent: it's saved waiting for an admin, who reads it and presses Approve in Portal → Campaigns (One-to-one emails). Nova Bot refuses people the studio may not email, with the reason. Write the whole email.",
+      inputSchema: z.object(FIELDS),
+      run: async (i) => {
+        let o: Outreach;
+        try {
+          o = await draftOutreach(toFields(i));
+        } catch (error) {
+          return `Not saved: ${(error as Error).message} Nothing was sent.`;
+        }
+        actions.push({ kind: "outreach", text: `Drafted an email to ${o.toName || o.organisation || "one person"}, waiting for an admin's approval`, outreach: o });
+        trace("input", "ok", `Chat: drafted one-to-one email #${o.id} (waiting for approval)`);
+        return `Email #${o.id} saved as a draft, NOT sent: ${outreachLine(o)}. ${notSent}`;
+      },
+    }),
+    betaZodTool({
+      name: "edit_outreach_email",
+      description: "Change a one-to-one email that hasn't gone yet (who it's to, the subject, the email). It goes back to waiting for an admin's approval (any approval is cleared) and is NOT sent. Find it with list_outreach_emails first.",
+      inputSchema: z.object({
+        id: z.number().int().positive().describe("The email's id"),
+        to_email: FIELDS.to_email.optional(),
+        to_name: FIELDS.to_name,
+        organisation: FIELDS.organisation,
+        kind: FIELDS.kind.optional(),
+        client_id: FIELDS.client_id,
+        about_booking: FIELDS.about_booking,
+        subject: FIELDS.subject.optional(),
+        body: FIELDS.body.optional(),
+      }),
+      run: async ({ id, ...rest }) => {
+        const changes = toFields(rest);
+        if (!Object.keys(changes).length) return "Say what to change: who it's to, the subject or the email.";
+        let o: Outreach;
+        try {
+          o = await editOutreach(id, changes);
+        } catch (error) {
+          return `Couldn't change email #${id}: ${(error as Error).message} Nothing was changed or sent.`;
+        }
+        actions.push({ kind: "outreach", text: `Changed an email to ${o.toName || o.organisation || "one person"}, waiting for an admin's approval`, outreach: o });
+        trace("input", "ok", `Chat: edited one-to-one email #${id} (waiting for approval)`);
+        return `Email #${id} changed and back to waiting for approval: ${outreachLine(o)}. ${notSent}`;
+      },
+    }),
+    betaZodTool({
+      name: "list_outreach_emails",
+      description: "The studio's one-to-one emails, newest first (waiting ones first): who to, subject, status (waiting for approval, sent, rejected, didn't send) and when (UK time). Read-only. Use it before writing to someone again.",
+      inputSchema: z.object({ status: z.enum(OUTREACH_STATUSES).optional().describe("Only those with this status (leave out for all)") }),
+      run: async ({ status }) => {
+        try {
+          const list = await listOutreach(status);
+          noteAction(actions, "looked", `Looked at ${list.length} one-to-one email${list.length === 1 ? "" : "s"}`);
+          return list.length ? list.map(outreachLine).join("\n") : status ? "None with that status." : "No one-to-one emails yet.";
+        } catch (error) {
+          return `Couldn't reach the one-to-one emails just now: ${(error as Error).message}`;
+        }
+      },
+    }),
+  ];
+}
+
 const noteAction = (actions: ChatAction[], kind: ChatAction["kind"], text: string) => {
   actions.push({ kind, text });
   trace("input", "ok", `Chat: ${text}`);
@@ -1184,7 +1278,7 @@ export async function chat(history: ChatTurn[], person: Person = localPerson()):
     model,
     max_tokens: 16000,
     system: memory ? `${systemPrompt(person)}\n\n${memory}` : systemPrompt(person),
-    tools: [...tools(actions, person), ...questTools(actions, person), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...campaignTools(actions), ...webTools({ search: 5, fetch: 5 })],
+    tools: [...tools(actions, person), ...questTools(actions, person), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...campaignTools(actions), ...outreachTools(actions), ...webTools({ search: 5, fetch: 5 })],
     messages,
     output_config: { effort: "low" },
     max_iterations: 16 + MAX_CONTINUATIONS,

@@ -844,6 +844,14 @@
   let campaignPicked = null; // the ?campaign= one already pointed at
   const campaignOpen = new Set(); // sent or decided ones whose email is showing
   const campaignDetail = new Map(); // id -> { updatedAt, previewHtml, log } (fetched once per version)
+  // The one-to-one emails under the campaigns (their own block below); the badge counts both kinds
+  let campaignsWaitingN = 0;
+  let outreachWaitingN = 0;
+  let outreachEditing = null; // the email whose fields are open, or null
+  let outreachRejecting = null; // the email whose "why" box is open, or null
+  let outreachPicked = null; // the ?outreach= one already pointed at
+  const outreachOpen = new Set(); // sent or decided ones whose email is showing
+  const outreachDetail = new Map(); // id -> { updatedAt, email, log } (fetched once per version)
   const CAMPAIGN_STATUS = {
     draft: ["pill-draft", "Draft"],
     pending_approval: ["pill-draft", "Waiting for approval"],
@@ -893,6 +901,7 @@
 
   async function loadCampaigns() {
     const list = $("campaigns-list");
+    loadOutreach();
     let data;
     try {
       data = await api("campaigns");
@@ -901,7 +910,8 @@
       return;
     }
     const all = data.campaigns || [];
-    setBadge("campaigns-badge", all.filter((c) => c.status === "pending_approval").length);
+    campaignsWaitingN = all.filter((c) => c.status === "pending_approval").length;
+    setBadge("campaigns-badge", campaignsWaitingN + outreachWaitingN);
     syncCounts();
     if (currentView !== "campaigns") return;
     setText("campaigns-hint", data.canDecide ? "Emails to fans and clients who opted in. Nothing is sent until you approve it." : "Emails to fans and clients who opted in. An admin approves these (signed in to Portal in a browser); nothing is sent until then.");
@@ -1279,9 +1289,366 @@
   });
 
   // Campaigns refresh while they're on screen (not while one's fields are open, or one's being written); the badge every minute
-  const campaignBusy = () => campaignEditing !== null || campaignRejecting !== null || !$("campaigns-form").hidden;
+  const campaignBusy = () => campaignEditing !== null || campaignRejecting !== null || !$("campaigns-form").hidden || outreachBusy();
   setInterval(() => !document.hidden && running && currentView === "campaigns" && !campaignBusy() && loadCampaigns(), 20000);
   setInterval(() => !document.hidden && running && currentView !== "campaigns" && loadCampaigns(), 60000);
+
+  // ===== One-to-one emails (under Campaigns) =====
+  // A personal email to one person: a venue, label, brand or other business (at a work address), a
+  // studio client, or someone who wrote to the studio. Agent (and anyone signed in, with Write one)
+  // only DRAFTS them; Nova Bot checks the person may be emailed at all (UK law: never anyone who said
+  // no, a client only about their booking unless they said yes to studio news) and adds the footer
+  // with a "don't email me again" link. Nothing is sent until an admin presses Approve here, with
+  // their own sign-in; Nova Bot sends exactly what was approved, once. Waiting ones first (the
+  // email as it goes, footer and all), then sent and rejected ones. Someone who replies "no thanks"
+  // can be recorded below the list. ?view=campaigns&outreach=<id> points at one.
+  const OUTREACH_STATUS = {
+    draft: ["pill-draft", "Draft"],
+    pending_approval: ["pill-draft", "Waiting for approval"],
+    approved: ["pill-replied", "Approved · sending"],
+    sent: ["pill-done", "Sent"],
+    failed: ["pill-failed", "Didn't send"],
+    rejected: ["pill-stop", "Rejected"],
+  };
+  const OUTREACH_KINDS = { business: "A business", client: "A studio client", reply: "Someone who wrote in" };
+  const OUTREACH_EVENTS = { created: "Written", edited: "Changed", submitted: "Sent for approval", approved: "Approved", rejected: "Rejected", sent: "Sent", failed: "Didn't send" };
+  const outreachWaiting = (o) => o.status === "pending_approval" || o.status === "draft";
+  const pickedOutreach = () => Number(new URLSearchParams(location.search).get("outreach")) || null;
+  const outreachBusy = () => outreachEditing !== null || outreachRejecting !== null || !$("outreach-form").hidden;
+  const outreachTo = (o) => [o.toName, o.organisation].filter(Boolean).join(", ");
+
+  // The email as it goes (with its footer) and its history, once per version
+  async function outreachDetails(o) {
+    const have = outreachDetail.get(o.id);
+    if (have && have.updatedAt === o.updatedAt) return have;
+    const d = await api("outreach/" + o.id);
+    const got = { updatedAt: o.updatedAt, email: String(d.email || ""), log: d.log || [] };
+    outreachDetail.set(o.id, got);
+    return got;
+  }
+
+  async function loadOutreach() {
+    const list = $("outreach-list");
+    let data;
+    try {
+      data = await api("outreach");
+    } catch (err) {
+      if (currentView === "campaigns" && err.message !== "signed out") emptyState(list, "Couldn't load the one-to-one emails: " + err.message);
+      return;
+    }
+    const all = data.outreach || [];
+    outreachWaitingN = all.filter((o) => o.status === "pending_approval").length;
+    setBadge("campaigns-badge", campaignsWaitingN + outreachWaitingN);
+    syncCounts();
+    if (currentView !== "campaigns") return;
+    setText("outreach-hint", data.canDecide ? "A personal email to one person. Nothing is sent until you approve it." : "A personal email to one person. An admin approves these (signed in to Portal in a browser); nothing is sent until then.");
+    const want = pickedOutreach();
+    if (want && outreachPicked !== String(want)) outreachOpen.add(want);
+    await Promise.allSettled(all.filter((o) => outreachWaiting(o) || outreachOpen.has(o.id)).map(outreachDetails));
+    if (currentView !== "campaigns") return;
+    const by = (key) => (a, b) => String(b[key] || b.updatedAt || "").localeCompare(String(a[key] || a.updatedAt || ""));
+    const waiting = all.filter(outreachWaiting).sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+    const sent = all.filter((o) => o.status === "sent" || o.status === "failed" || o.status === "approved").sort(by("sentAt")).slice(0, 20);
+    const rejected = all.filter((o) => o.status === "rejected").sort(by("decidedAt")).slice(0, 10);
+    const card = (o) => outreachCard(o, data);
+    const nodes = waiting.length ? waiting.map(card) : [el("p", "empty", "No one-to-one emails waiting.")];
+    if (sent.length) nodes.push(el("h3", "group-head", "Sent one-to-one"), ...sent.map(card));
+    if (rejected.length) nodes.push(el("h3", "group-head", "Not sent"), ...rejected.map(card));
+    reconcile(list, nodes);
+    if (want && outreachPicked !== String(want)) {
+      const node = list.querySelector('[data-key="or-' + CSS.escape(String(want)) + '"]');
+      if (node) {
+        outreachPicked = String(want);
+        node.classList.add("picked");
+        node.scrollIntoView({ block: "center", behavior: calm() ? "auto" : "smooth" });
+      }
+    }
+  }
+
+  function outreachCard(o, data) {
+    const canDecide = Boolean(data.canDecide);
+    const editable = outreachWaiting(o) || o.status === "rejected";
+    const editing = outreachEditing === o.id && editable;
+    const rejecting = outreachRejecting === o.id && outreachWaiting(o) && canDecide;
+    const open = outreachWaiting(o) || outreachOpen.has(o.id);
+    const detail = open ? outreachDetail.get(o.id) : null;
+    const card = el("article", "card cp-card" + (outreachWaiting(o) ? "" : " done"));
+    card.dataset.key = "or-" + o.id;
+    card.dataset.sig = sig(o, canDecide, editing, rejecting, open, detail ? [detail.updatedAt, detail.email.length, detail.log.length] : null);
+    const top = el("div", "card-top");
+    const title = el("h3", "card-title", o.subject || "(No subject)");
+    const pill = OUTREACH_STATUS[o.status] || ["pill-stop", o.status];
+    title.appendChild(el("span", pill[0], pill[1]));
+    top.append(title, el("span", "card-meta", when(o.createdAt)));
+    card.append(top, el("p", "card-who", "Written by " + (o.createdByName || "someone in the team")));
+    const facts = el("dl", "cp-facts");
+    const fact = (label, value) => value && facts.append(el("dt", "", label), el("dd", "", value));
+    fact("To", (outreachTo(o) ? outreachTo(o) + " · " : "") + o.toEmail);
+    fact("Who they are", (OUTREACH_KINDS[o.kind] || o.kind) + (o.kind === "client" ? (o.aboutBooking ? " · about their booking" : " · said yes to studio news") : ""));
+    if (o.status === "sent") fact("Sent", ukWhen(o.sentAt));
+    if (o.decidedByName && o.status !== "pending_approval") fact(o.status === "rejected" ? "Rejected by" : "Approved by", o.decidedByName + (o.decidedAt ? " · " + ukWhen(o.decidedAt) : ""));
+    card.appendChild(facts);
+    if (o.note) card.appendChild(el("p", "appr-why", "Note: " + o.note));
+    if (o.status === "failed") card.appendChild(el("p", "appr-result bad", "Didn't send: " + String(o.error || "unknown reason").replace(/\.$/, "") + "."));
+    if (o.status === "approved") card.appendChild(el("p", "appr-result", "Approved · going out through Resend…"));
+    if (editing) card.appendChild(outreachFields(o));
+    else if (open) {
+      card.appendChild(el("div", "cp-plain", detail && detail.email ? detail.email : o.body || ""));
+      if (detail && detail.log.length && !outreachWaiting(o)) {
+        const log = el("ul", "cp-log");
+        for (const e of detail.log.slice(-8)) log.appendChild(el("li", "", ukWhen(e.at) + " · " + (OUTREACH_EVENTS[e.event] || e.event) + (e.detail ? " · " + e.detail : "")));
+        card.appendChild(log);
+      }
+    }
+    if (rejecting) {
+      const why = el("label", "cp-field cp-reject");
+      const input = el("input");
+      input.type = "text";
+      input.maxLength = 500;
+      input.dataset.field = "note";
+      input.placeholder = "So Nova Agent (or whoever wrote it) can fix it";
+      why.append(el("span", "", "Why (optional)"), input);
+      card.appendChild(why);
+    }
+    const row = el("div", "actions");
+    const button = (text, cls, fn) => {
+      const b = el("button", "btn small" + (cls ? " " + cls : ""), text);
+      b.type = "button";
+      b.addEventListener("click", () => fn(b));
+      row.appendChild(b);
+      return b;
+    };
+    if (editing) {
+      button("Save changes", "", () => saveOutreach(card, o));
+      button("Cancel", "ghost", () => {
+        outreachEditing = null;
+        loadOutreach();
+      });
+    } else if (rejecting) {
+      button("Reject it", "", () => rejectOutreach(card, o, card.querySelector('[data-field="note"]').value.trim() || undefined));
+      button("Cancel", "ghost", () => {
+        outreachRejecting = null;
+        loadOutreach();
+      });
+    } else {
+      if (outreachWaiting(o) && canDecide) {
+        // Approve: pressed twice (it emails a real person), saying exactly who
+        button("Approve", "", (b) => {
+          if (b.dataset.sure !== "1") {
+            b.dataset.sure = "1";
+            b.textContent = "Send it to " + o.toEmail + " now?";
+            return;
+          }
+          approveOutreach(card, o);
+        });
+      }
+      if (editable) {
+        button("Edit", "ghost", () => {
+          outreachEditing = o.id;
+          outreachRejecting = null;
+          loadOutreach();
+        });
+      }
+      if (outreachWaiting(o) && canDecide) {
+        button("Reject", "ghost", () => {
+          outreachRejecting = o.id;
+          outreachEditing = null;
+          loadOutreach();
+        });
+        button("Send me a test", "ghost", () => testOutreach(card, o));
+      }
+      if (!outreachWaiting(o)) {
+        button(open ? "Hide the email" : "Show the email", "ghost", () => {
+          if (open) outreachOpen.delete(o.id);
+          else outreachOpen.add(o.id);
+          loadOutreach();
+        });
+      }
+    }
+    if (row.children.length) card.appendChild(row);
+    if (outreachWaiting(o) && !canDecide) card.appendChild(el("p", "card-foot", "An admin approves these, signed in to Portal in a browser. Nothing is sent until then."));
+    return card;
+  }
+
+  // The edit fields, filled from the email as it is
+  function outreachFields(o) {
+    const box = el("div", "appr-edit");
+    const field = (label, input, wide) => {
+      const l = el("label", "cp-field" + (wide ? " cp-wide" : ""));
+      l.append(el("span", "", label), input);
+      box.appendChild(l);
+      return l;
+    };
+    const input = (key, value, max, type = "text") => {
+      const i = el("input");
+      i.type = type;
+      i.maxLength = max;
+      i.value = value || "";
+      i.dataset.field = key;
+      return i;
+    };
+    const kind = el("select");
+    for (const k of Object.keys(OUTREACH_KINDS)) {
+      const opt = el("option", "", OUTREACH_KINDS[k]);
+      opt.value = k;
+      opt.selected = k === o.kind;
+      kind.appendChild(opt);
+    }
+    kind.dataset.field = "kind";
+    field("Who it's to", kind);
+    field("Their email", input("toEmail", o.toEmail, 200, "email"));
+    field("Their name", input("toName", o.toName, 100));
+    field("Business or organisation", input("organisation", o.organisation, 120));
+    const tick = el("label", "cp-tick");
+    const box2 = el("input");
+    box2.type = "checkbox";
+    box2.checked = Boolean(o.aboutBooking);
+    box2.dataset.field = "aboutBooking";
+    tick.append(box2, el("span", "", "A client email about their own booking"));
+    box.appendChild(tick);
+    field("Subject", input("subject", o.subject, 150), true);
+    const body = el("textarea");
+    body.rows = 10;
+    body.maxLength = 10000;
+    body.value = o.body || "";
+    body.dataset.field = "body";
+    field("The email", body, true);
+    return box;
+  }
+
+  async function saveOutreach(card, o) {
+    const f = (k) => card.querySelector('[data-field="' + k + '"]');
+    const body = { kind: f("kind").value, toEmail: f("toEmail").value.trim(), toName: f("toName").value.trim(), organisation: f("organisation").value.trim(), aboutBooking: f("aboutBooking").checked, subject: f("subject").value.trim(), body: f("body").value.trim() };
+    if (!body.toEmail || !body.subject || !body.body) return campaignProblem(card, "Not saved: it needs their email, a subject and the email.");
+    busy(card);
+    try {
+      await api("outreach/" + o.id + "/edit", { body });
+    } catch (err) {
+      if (err.message === "signed out") return;
+      toast(err.message);
+      return campaignProblem(card, "Not saved: " + err.message);
+    }
+    outreachEditing = null;
+    outreachDetail.delete(o.id);
+    toast("Saved: waiting for approval");
+    loadOutreach();
+  }
+
+  async function approveOutreach(card, o) {
+    busy(card);
+    // Still exactly what's on screen?
+    try {
+      const now = (await api("outreach/" + o.id)).outreach || {};
+      if (now.updatedAt !== o.updatedAt || now.status !== o.status) {
+        outreachDetail.delete(o.id);
+        toast("It changed since it was shown: check it again");
+        return loadOutreach();
+      }
+    } catch (err) {
+      if (err.message === "signed out") return;
+      return campaignProblem(card, "Not approved: " + err.message);
+    }
+    let done;
+    try {
+      done = (await api("outreach/" + o.id + "/approve", { body: {} })).outreach || {};
+    } catch (err) {
+      if (err.message === "signed out") return;
+      toast(err.message);
+      return campaignProblem(card, "Not approved: " + err.message);
+    }
+    if (done.status === "sent") toast("Sent to " + done.toEmail);
+    else if (done.status === "failed") toast("Didn't send: " + (done.error || "see the card"));
+    else toast("Approved: sending now");
+    loadOutreach();
+  }
+
+  async function rejectOutreach(card, o, note) {
+    busy(card);
+    try {
+      await api("outreach/" + o.id + "/reject", { body: { note } });
+    } catch (err) {
+      if (err.message === "signed out") return;
+      toast(err.message);
+      return campaignProblem(card, "Not rejected: " + err.message);
+    }
+    outreachRejecting = null;
+    toast("Rejected: nothing was sent");
+    loadOutreach();
+  }
+
+  async function testOutreach(card, o) {
+    busy(card);
+    try {
+      await api("outreach/test-send", { body: { id: o.id } });
+    } catch (err) {
+      if (err.message === "signed out") return;
+      toast(err.message);
+      return campaignProblem(card, "Test not sent: " + err.message);
+    }
+    card.querySelectorAll("button").forEach((b) => (b.disabled = false));
+    const old = card.querySelector(".appr-error");
+    if (old) old.remove();
+    toast("A test is on its way to your own email (marked [TEST])");
+  }
+
+  // Write one: the business field for a business, the booking tick for a client
+  function outreachFormKind() {
+    const kind = $("or-new-kind").value;
+    $("or-new-org-wrap").hidden = kind !== "business";
+    $("or-new-booking-wrap").hidden = kind !== "client";
+  }
+  $("or-new-kind").addEventListener("change", outreachFormKind);
+  $("outreach-new").addEventListener("click", () => {
+    const form = $("outreach-form");
+    form.hidden = !form.hidden;
+    $("outreach-new").setAttribute("aria-expanded", String(!form.hidden));
+    outreachFormKind();
+    if (!form.hidden) $("or-new-email").focus();
+  });
+  $("or-new-cancel").addEventListener("click", () => {
+    $("outreach-form").hidden = true;
+    $("outreach-new").setAttribute("aria-expanded", "false");
+  });
+  $("outreach-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = $("outreach-form");
+    const kind = $("or-new-kind").value;
+    const body = { kind, toEmail: $("or-new-email").value.trim(), toName: $("or-new-name").value.trim(), subject: $("or-new-subject").value.trim(), body: $("or-new-body").value.trim() };
+    if (kind === "business") body.organisation = $("or-new-org").value.trim();
+    if (kind === "client") body.aboutBooking = $("or-new-booking").checked;
+    if (kind === "business" && !body.organisation) return setText("or-new-error", "Say which business or organisation it's to.");
+    setText("or-new-error", "");
+    const go = form.querySelector('button[type="submit"]');
+    go.disabled = true;
+    try {
+      await api("outreach", { body });
+    } catch (err) {
+      go.disabled = false;
+      if (err.message !== "signed out") setText("or-new-error", "Not saved: " + err.message);
+      return;
+    }
+    go.disabled = false;
+    form.reset();
+    form.hidden = true;
+    $("outreach-new").setAttribute("aria-expanded", "false");
+    toast("Saved: waiting for an admin's approval");
+    loadOutreach();
+  });
+  // Someone replied "no thanks": never emailed this way again (and anything waiting to them won't go)
+  $("outreach-optout").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = $("or-optout-email").value.trim();
+    if (!email) return;
+    try {
+      const r = await api("outreach/optouts", { body: { email } });
+      toast("Recorded: " + r.email + " won't get one-to-one emails again" + (r.stopped ? " (" + r.stopped + " waiting stopped)" : ""));
+    } catch (err) {
+      if (err.message !== "signed out") toast("Not recorded: " + err.message);
+      return;
+    }
+    $("outreach-optout").reset();
+    loadOutreach();
+  });
 
   // ===== Clients: the studio's client list =====
   // Everyone who's booked through Acuity, sent an enquiry, been imported from Acuity's spreadsheets

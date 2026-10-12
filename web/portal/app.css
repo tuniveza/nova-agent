@@ -1269,7 +1269,7 @@ html.embed .listening-bar { top: 0; }
 .cl-what { color: var(--bright); font-size: 14.5px; }
 
 /* ----- Campaigns: email newsletters, waiting for an admin's approval ----- */
-.cp input[type="datetime-local"] {
+.cp input[type="datetime-local"], .cp input[type="email"] {
   width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px;
   background: rgba(var(--void-rgb), 0.6); color: var(--bright); font-size: 16px;
 }
@@ -1280,6 +1280,15 @@ html.embed .listening-bar { top: 0; }
 .cp-field { display: grid; gap: 4px; min-width: 0; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
 .cp-small { margin: 0; font-size: 12.5px; }
 .cp-error:empty { display: none; }
+/* One-to-one emails, under the campaigns */
+.cp-subhead { display: flex; align-items: center; gap: 10px; margin: 26px 0 6px; min-width: 0; }
+.cp-subhead .group-head { flex: 1; margin: 0; min-width: 0; }
+.cp-subhead .chip { flex: none; }
+.cp-tick { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: var(--text); min-width: 0; }
+.cp-tick input { margin-top: 3px; flex: none; width: 18px; height: 18px; accent-color: var(--accent, currentColor); }
+.cp-optout { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin: 6px 0 18px; min-width: 0; }
+.cp-optout .cp-field { flex: 1 1 220px; }
+.cp-optout input { min-width: 0; width: 100%; color: var(--bright); }
 .cp-card .card-title { overflow-wrap: anywhere; }
 .cp-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px 14px; margin: 12px 0 0; }
 .cp-facts dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted); }

@@ -426,6 +426,42 @@
         </div>
       </form>
       <div id="campaigns-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
+      <!-- One-to-one emails: a personal email to one venue, label, brand, client or someone who wrote in.
+           Agent and staff write them; Nova Bot checks the person may be emailed (UK law) and adds the
+           footer with a "don't email me again" link; nothing is sent until an admin approves it here. -->
+      <div class="cp-subhead">
+        <h3 class="group-head">One-to-one emails</h3>
+        <button id="outreach-new" class="chip" type="button" aria-expanded="false" aria-controls="outreach-form">Write one</button>
+      </div>
+      <p class="hint cp-small" id="outreach-hint">A personal email to one person. Nothing is sent until an admin approves it.</p>
+      <form id="outreach-form" class="card cp-form" autocomplete="off" hidden>
+        <h3 class="card-title">Write a one-to-one email</h3>
+        <div class="cp-grid">
+          <label class="cp-field"><span>Who it's to</span><select id="or-new-kind">
+            <option value="business">A business</option>
+            <option value="client">A studio client</option>
+            <option value="reply">Someone who wrote in</option>
+          </select></label>
+          <label class="cp-field"><span>Their email</span><input id="or-new-email" type="email" maxlength="200" required></label>
+          <label class="cp-field"><span>Their name (optional)</span><input id="or-new-name" type="text" maxlength="100"></label>
+          <label class="cp-field" id="or-new-org-wrap"><span>Business or organisation</span><input id="or-new-org" type="text" maxlength="120"></label>
+        </div>
+        <label class="cp-tick" id="or-new-booking-wrap" hidden><input id="or-new-booking" type="checkbox"> <span>It's about their own booking (clients who haven't said yes to studio news can only get these)</span></label>
+        <label class="cp-field"><span>Subject</span><input id="or-new-subject" type="text" maxlength="150" required></label>
+        <label class="cp-field"><span>The email</span><textarea id="or-new-body" rows="8" maxlength="10000" required placeholder="Hi Sam, … One clear ask. Signed Novacane Studios."></textarea></label>
+        <p class="hint cp-small">The footer (who it's from, why they're getting it, and a "don't email me again" link) is added for you.</p>
+        <p id="or-new-error" class="cp-error appr-result bad" role="alert"></p>
+        <div class="actions">
+          <button class="btn small" type="submit">Save for approval</button>
+          <button id="or-new-cancel" class="btn small ghost" type="button">Cancel</button>
+        </div>
+      </form>
+      <div id="outreach-list" class="list"></div>
+      <!-- Someone replied "no thanks": record it, and they're never emailed this way again -->
+      <form id="outreach-optout" class="cp-optout" autocomplete="off">
+        <label class="cp-field"><span>Someone replied “no thanks”? Their email</span><input id="or-optout-email" type="email" maxlength="200" required></label>
+        <button class="btn small ghost" type="submit">Don't email them again</button>
+      </form>
       <!-- The fan sign-up link (for SoundCloud and socials), with who's opted in -->
       <div id="campaigns-signup" class="list cp-signup"></div>
     </section>

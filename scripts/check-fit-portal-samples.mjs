@@ -267,6 +267,36 @@ function campaignDetailBody(id) {
   return { campaign: c, previewHtml, log };
 }
 
+// ----- One-to-one emails (under Campaigns) -----
+const O_STATUS = ["pending_approval", "pending_approval", "draft", "sent", "failed", "rejected", "approved"];
+const OUTREACH = O_STATUS.map((status, i) => ({
+  id: 501 + i,
+  toName: i === 1 ? LONGWORD : "Sam " + ["Okafor", "Lee", "Patel", "Nguyen", "Brown", "Jones", "Smith"][i],
+  toEmail: i === 0 ? "bookings." + LONGWORD.toLowerCase() + "@the-venue-with-a-very-long-name.co.uk" : "hello" + i + "@venue.co.uk",
+  organisation: i === 2 ? LONGWORD2 : "The Windmill, Brixton",
+  kind: ["business", "business", "client", "reply", "business", "client", "business"][i],
+  clientId: i === 2 || i === 5 ? 11 : null,
+  aboutBooking: i === 2,
+  subject: i === 0 ? "A live session at The Windmill with three of our artists, plus a short film of the night for both of our socials and a write-up" : i === 1 ? LONGWORD + LONGWORD2 : "Live session idea " + i,
+  body: "Hi Sam,\n\n" + PARA(2) + "\n\n" + LONG_URL + "\n\nNovacane Studios",
+  status,
+  createdBy: i % 2 ? "agent" : "tuniveza",
+  createdByName: i % 2 ? "Nova Agent" : ME_NAME,
+  createdAt: iso(2 + i, 9 + i, 0),
+  updatedAt: iso(2 + i, 10 + i, 0),
+  decidedByName: ["sent", "failed", "rejected", "approved"].includes(status) ? ME_NAME : null,
+  decidedAt: ["sent", "failed", "rejected", "approved"].includes(status) ? iso(3 + i, 11, 0) : null,
+  note: status === "rejected" ? "Not the right venue for this: " + LONGWORD : null,
+  sentAt: status === "sent" ? iso(4 + i, 12, 0) : null,
+  error: status === "failed" ? "Resend didn't send it: domain " + LONGWORD + ".co.uk is not verified" : null,
+  portalUrl: "https://novacane.example/portal/?view=campaigns&outreach=" + (501 + i),
+}));
+function outreachDetailBody(id) {
+  const o = OUTREACH.find((x) => x.id === id) || OUTREACH[0];
+  const log = ["created", "submitted", "edited", "approved", "sent", "rejected", "failed"].map((event, i) => ({ at: iso(1 + i, 10 + i, 0), event, detail: i % 2 ? "Changed: subject, body · " + LONGWORD : "" }));
+  return { outreach: o, log, email: o.body + "\n\n—\nNovacane Studios, Forest Hill, London\nWe're writing to " + o.organisation + " because we think it's relevant to your work.\nDon't want emails like this? Reply \"no thanks\", or use this link and we won't email you again: https://novacane.example/no-thanks?t=0123456789abcdef0123456789abcdef" };
+}
+
 // ----- Clients -----
 const CLIENTS = PEOPLE.map((p, i) => ({
   id: 401 + i,
@@ -531,6 +561,9 @@ export function portalMock(pathWithQuery, method = "GET") {
   if (path === "sessions") return { sessions: SESSIONS_NAMES.map((name, i) => ({ id: 12345670 + i, name, price: ["£540.00", "£45.00", "£120.00", "£1,250.00", "£80.00", "£360.00"][i] })) };
   if (path === "booking-actions") return { actions: ACTIONS, canDecide: true };
   if (path === "campaigns") return { campaigns: CAMPAIGNS, canDecide: true, audiences: { fans: 1873, clients: 412, everyone: 2201 }, signupUrl: "https://novacane.example/fans/join?ref=" + LONGWORD + "&src=instagram-bio-link-autumn-2026" };
+  if (path === "outreach") return { outreach: OUTREACH, canDecide: true, ready: true, optouts: 3, sentToday: 2, perDay: 40 };
+  hit = /^outreach\/(\d+)$/.exec(path);
+  if (hit) return outreachDetailBody(Number(hit[1]));
   hit = /^campaigns\/(\d+)$/.exec(path);
   if (hit) return campaignDetailBody(Number(hit[1]));
   if (path === "clients") return clientsBody(query);
