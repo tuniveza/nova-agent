@@ -20,8 +20,9 @@
     song: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
   };
   // A picture over an icon: if the picture can't be found, it goes and the icon shows
-  // An exact cover through Nova Bot (nothing in the browser blocks it, and no searching)
-  const cover = (u) => `/music-world/img?u=${encodeURIComponent(u)}`;
+  // An exact cover through Nova Bot (nothing in the browser blocks it, and no searching); with the
+  // song's name, so Nova Bot can find its current cover if Apple has moved that one
+  const cover = (u, q) => `/music-world/img?u=${encodeURIComponent(u)}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
   const art = (src) => `<img class="mw-art" alt="" loading="lazy" src="${src}" onerror="this.remove()">`;
   // Little illustrated pictures (same size and shape as the album art around them) for what has no
   // photo: each kind of gear, the music industry, and the charts while they load
@@ -61,7 +62,7 @@
   function topArt() {
     if (!top[0] || !top[0].art) return;
     // The #1's cover, through Nova Bot; when the #1 changes, so does the picture
-    const src = cover(top[0].art.replace(/\d+x\d+bb/, "300x300bb"));
+    const src = cover(top[0].art.replace(/\d+x\d+bb/, "300x300bb"), `${top[0].artist} ${top[0].title}`);
     document.querySelectorAll("[data-top-art]").forEach((el) => {
       const img = el.querySelector("img");
       if (img && img.getAttribute("src") === src) return;
@@ -75,6 +76,7 @@
   let quoteAt = day % D.quotes.length;
   const quote = D.quotes[quoteAt];
   const song = pick(D.songs, 3);
+  const songQ = `${song.artist} ${song.title.replace(/"/g, "")}`;
   // Today's gear: one with a photo of that exact product
   const withPhoto = D.gear.filter((g) => g.photo);
   const gear = pick(withPhoto.length ? withPhoto : D.gear, 5);
@@ -90,9 +92,9 @@
       <h4 class="mw-title">Today in music</h4>
       <div class="mw-row">
         <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art></span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
-        <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic mw-mosaic">${D.genres.slice(0, 3).map((g) => `<img alt="" loading="lazy" src="${cover(g.cover)}" title="${esc(g.name)}" onerror="this.parentElement.hidden = true">`).join("")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
+        <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic mw-mosaic">${D.genres.slice(0, 3).map((g) => `<img alt="" loading="lazy" src="${cover(g.cover, g.art)}" title="${esc(g.name)}" onerror="this.parentElement.hidden = true">`).join("")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
         <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${gearPic(gear)}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
-        <button type="button" class="mw-card" data-mw="song" data-sfx="open"><span class="mw-pic">${art(cover(song.cover))}${ico("song")}</span><span class="mw-k">Song of the day</span><span class="mw-line">${esc(song.title)} · ${esc(song.artist)}</span></button>
+        <button type="button" class="mw-card" data-mw="song" data-sfx="open"><span class="mw-pic">${art(cover(song.cover, songQ))}${ico("song")}</span><span class="mw-k">Song of the day</span><span class="mw-line">${esc(song.title)} · ${esc(song.artist)}</span></button>
         <button type="button" class="mw-card" data-mw="money" data-sfx="open"><span class="mw-pic"><img class="mw-art" alt="" loading="lazy" src="/music-world/photo/Record_shop?v=5" onerror="this.parentElement.hidden = true"></span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
       </div>
       <figure class="mw-quote">
@@ -121,13 +123,13 @@
     const k = card.dataset.mw;
     let html = "";
     if (k === "top") {
-      html = `<h5>Top 10 worldwide</h5>` + (top.length ? `<ol class="mw-list">${top.map((s) => `<li><img alt="" loading="lazy" src="${cover(s.art.replace(/\d+x\d+bb/, "300x300bb"))}" onerror="this.hidden = true"><span><b>${esc(s.title)}</b><small>${esc(s.artist)}</small></span></li>`).join("")}</ol><p class="mw-src">Most played on Apple Music across 12 countries, updated through the day</p>` : `<p>The charts couldn't be reached just now. Try again in a bit.</p>`);
+      html = `<h5>Top 10 worldwide</h5>` + (top.length ? `<ol class="mw-list">${top.map((s) => `<li><img alt="" loading="lazy" src="${cover(s.art.replace(/\d+x\d+bb/, "300x300bb"), `${s.artist} ${s.title}`)}" onerror="this.hidden = true"><span><b>${esc(s.title)}</b><small>${esc(s.artist)}</small></span></li>`).join("")}</ol><p class="mw-src">Most played on Apple Music across 12 countries, updated through the day</p>` : `<p>The charts couldn't be reached just now. Try again in a bit.</p>`);
     } else if (k === "genres") {
-      html = `<h5>Popular around the world</h5><ul class="mw-list plain">${D.genres.map((g) => `<li>${art(cover(g.cover))}<span><b>${esc(g.name)}</b><small>${esc(g.line)}</small></span></li>`).join("")}</ul>`;
+      html = `<h5>Popular around the world</h5><ul class="mw-list plain">${D.genres.map((g) => `<li>${art(cover(g.cover, g.art))}<span><b>${esc(g.name)}</b><small>${esc(g.line)}</small></span></li>`).join("")}</ul>`;
     } else if (k === "gear") {
       html = `<h5>Popular budget gear</h5><ul class="mw-list plain">${D.gear.map((g) => `<li>${g.photo ? `<span class="mw-pic mw-lp">${gearPic(g)}</span>` : ""}<span><b>${esc(g.name)}</b><small>${esc(g.kind)}: ${esc(g.does)} · ${esc(g.price)}</small></span></li>`).join("")}</ul><p class="mw-src">Prices are rough and change by shop and country</p>`;
     } else if (k === "song") {
-      html = `<h5>Song of the day</h5><div class="mw-song-pop">${art(cover(song.cover))}<b>${esc(song.title)}</b><small>${esc(song.artist)} · ${song.year}</small><p>${esc(song.about)}</p><a href="${lyrics(song)}" target="_blank" rel="noopener">Read the lyrics ↗</a></div>`;
+      html = `<h5>Song of the day</h5><div class="mw-song-pop">${art(cover(song.cover, songQ))}<b>${esc(song.title)}</b><small>${esc(song.artist)} · ${song.year}</small><p>${esc(song.about)}</p><a href="${lyrics(song)}" target="_blank" rel="noopener">Read the lyrics ↗</a></div>`;
     } else if (k === "money") {
       html = `<h5>${esc(D.revenue.headline)} ${esc(D.revenue.sub)}</h5><ul class="mw-list plain">${D.revenue.bites.map((b) => `<li><span>${esc(b)}</span></li>`).join("")}</ul><p class="mw-src">${esc(D.revenue.source)}</p>`;
     }
