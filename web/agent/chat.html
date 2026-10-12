@@ -1708,7 +1708,7 @@
       for (const a of actions) {
         const chip = document.createElement('span');
         chip.className = `action ${a.kind}`;
-        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : a.kind === 'draft' ? '✉' : a.kind === 'booking' ? '◷' : a.kind === 'campaign' ? '✉' : a.kind === 'outreach' ? '✉' : '✦'} ${a.text}`;
+        chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : a.kind === 'draft' ? '✉' : a.kind === 'booking' ? '◷' : a.kind === 'campaign' ? '✉' : a.kind === 'outreach' ? '✉' : a.kind === 'social' ? '◈' : '✦'} ${a.text}`;
         row.appendChild(chip);
       }
       wrap.appendChild(row);
@@ -2605,10 +2605,16 @@
   // The planet's card (web/shared/badge.js) opens your profile and Index here too
   // Agent itself (Portal's side menu has it): the open panel steps aside and this conversation shows,
   // the same one as on the bar (there's only ever one)
-  function showAgent() {
+  // (text: a message to start from, put in the box for them to change or send: e.g. Portal → Social's
+  // "Ideas and trends". It's never sent by itself.)
+  function showAgent(text) {
     const tab = document.querySelector('#tabbar [data-tab="pane:chat"]');
     if (tab && tab.offsetParent) tab.click();
     else if (!$('viewer').hidden) $('viewer-close').click();
+    if (typeof text === 'string' && text.trim() && !$('input').value.trim()) {
+      $('input').value = text.trim().slice(0, 4000);
+      $('input').dispatchEvent(new Event('input', { bubbles: true }));
+    }
     setTimeout(() => $('input').focus({ preventScroll: true }), 120);
     return true;
   }

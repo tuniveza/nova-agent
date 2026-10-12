@@ -10,9 +10,9 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "approvals", "campaigns", "quests", "alerts", "bot"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "approvals", "campaigns", "social", "quests", "alerts", "bot"];
   // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
-  const MORE = ["clients", "approvals", "campaigns", "quests", "alerts", "bot"];
+  const MORE = ["clients", "approvals", "campaigns", "social", "quests", "alerts", "bot"];
   let currentView = "today";
   let running = false;
   let sessions = null; // session types for booking links
@@ -209,6 +209,8 @@
     loadApprovals();
     // The Campaigns badge (email campaigns waiting for an admin)
     loadCampaigns();
+    // The Social badge (posts waiting for an admin, or to be posted by hand): social.js
+    if (window.PortalSocial) window.PortalSocial.load();
     // Light the bell up if this phone already gets notifications
     updateNotifyPanel();
     // Hands-free voice: the mic glows, and listening starts
@@ -263,6 +265,7 @@
     if (view === "calendar") loadCalendar();
     if (view === "approvals") loadApprovals();
     if (view === "campaigns") loadCampaigns();
+    if (view === "social" && window.PortalSocial) window.PortalSocial.load();
     if (view === "clients") loadClients();
     // Every section keeps the Alerts badge up to date; the Alerts tab also shows the list
     loadAlerts();
@@ -364,7 +367,7 @@
   const known = new Set();
   function syncCounts() {
     const n = (id) => ($(id).hidden ? 0 : Number($(id).textContent) || 0);
-    setBadge("more-badge", n("quest-badge") + n("alert-badge") + n("approvals-badge") + n("campaigns-badge"));
+    setBadge("more-badge", n("quest-badge") + n("alert-badge") + n("approvals-badge") + n("campaigns-badge") + n("social-badge"));
     if (known.has("alerts")) setText("t-alerts", n("alert-badge"));
     if (known.has("quests")) setText("t-quests", n("quest-badge"));
   }
@@ -5190,5 +5193,9 @@
   // ===== Start: portal.js starts the tabs once someone's signed in =====
   // (openOptions: Nova Agent's gear opens Portal's Options when Portal is the panel showing;
   //  showOnly: portal.js shows its own views the same way)
-  window.PortalApp = { VIEWS, start, stop, show, showOnly, openOptions, get view() { return currentView; } };
+  // (kit: the helpers Social uses, social.js)
+  window.PortalApp = {
+    VIEWS, start, stop, show, showOnly, openOptions, get view() { return currentView; },
+    kit: { api, el, setText, setBadge, syncCounts, emptyState, reconcile, sig, when, ukWhen, ukLocal, ukToIso, calm, toast, goView, get running() { return running; } },
+  };
 })();

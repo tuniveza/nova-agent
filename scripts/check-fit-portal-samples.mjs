@@ -317,6 +317,56 @@ function outreachDetailBody(id) {
   return { outreach: o, log, email: o.body + "\n\n—\nNovacane Studios, Forest Hill, London\nWe're writing to " + o.organisation + " because we think it's relevant to your work.\nDon't want emails like this? Reply \"no thanks\", or use this link and we won't email you again: https://novacane.example/no-thanks?t=0123456789abcdef0123456789abcdef" };
 }
 
+// ----- Social (Facebook and Instagram posts, comments) -----
+const SOCIAL_STATUSES = ["pending_approval", "pending_approval", "manual", "scheduled", "scheduled", "posting", "posted", "posted", "failed", "rejected"];
+const pic = (i, kind = "image") => ({ id: String(i).padStart(32, "a").slice(0, 32), ext: kind === "video" ? "mp4" : "jpg", kind, name: kind === "video" ? LONGWORD + ".mp4" : "cover-" + i + ".jpg", size: 123456, url: "/social-media/" + String(i).padStart(32, "a").slice(0, 32) + (kind === "video" ? ".mp4" : ".jpg") });
+const SOCIAL_POSTS = SOCIAL_STATUSES.map((status, i) => ({
+  id: 801 + i,
+  caption: (i % 2 ? LONGWORD + " " : "New single out Friday 🎶 ") + PARA(i % 3 + 1) + "\n\n#novacane #foresthill #" + LONGWORD2,
+  platforms: i % 3 === 0 ? ["facebook", "instagram"] : i % 3 === 1 ? ["instagram"] : ["facebook"],
+  media: i % 4 === 0 ? [] : Array.from({ length: (i % 4) + 1 }, (_, j) => pic(i * 10 + j, j === 0 && i % 5 === 0 ? "video" : "image")),
+  postAt: status === "scheduled" || status === "posting" ? iso(14 + i, 18, 30) : i % 2 ? iso(20, 9) : null,
+  status,
+  createdBy: ["agent", "staff-chat", ME_ID][i % 3],
+  createdAt: iso(1 + i, 9 + i),
+  updatedAt: iso(2 + i, 10),
+  decidedByName: status === "pending_approval" ? null : ME_NAME,
+  decidedAt: status === "pending_approval" ? null : iso(3 + i, 11),
+  note: status === "rejected" ? "Too long for Instagram, and " + LONGWORD : null,
+  targets: status === "posted" || status === "failed" || status === "manual" || status === "posting"
+    ? { facebook: { mode: status === "manual" ? "manual" : "auto", state: status === "failed" ? "failed" : status === "manual" ? "waiting" : status === "posting" ? "sending" : "posted", url: status === "posted" ? LONG_URL : null, error: status === "failed" ? "Meta said " + LONGWORD : null, postedAt: status === "posted" ? iso(9, 18) : null }, instagram: { mode: status === "manual" ? "manual" : "auto", state: status === "posting" ? "preparing" : status === "manual" ? "waiting" : "posted", url: status === "posted" ? LONG_URL : null, error: null, postedAt: null } }
+    : {},
+  postedAt: status === "posted" ? iso(9, 18) : null,
+  error: status === "failed" ? "Instagram: The image format isn't supported " + LONGWORD : null,
+  stats: status === "posted" ? { facebook: { reach: 12345, likes: 321, comments: 45, shares: 12, clicks: 98 }, instagram: { reach: 23456, likes: 1234, comments: 87, shares: 34, saved: 56, views: 98765 }, fetchedAt: iso(11, 8) } : null,
+  portalUrl: "https://novacane.example/portal/?view=social&post=" + (801 + i),
+}));
+const SOCIAL_COMMENTS = PEOPLE.slice(0, 6).map((p, i) => ({
+  id: 901 + i,
+  postId: 807,
+  postCaption: SOCIAL_POSTS[6].caption.slice(0, 120),
+  platform: i % 2 ? "instagram" : "facebook",
+  author: i % 2 ? "@" + LONGWORD.toLowerCase() : p.name,
+  text: i % 3 ? "When's the next open mic? " + PARA(1) : LONGWORD2,
+  commentedAt: iso(10, 9 + i),
+  handled: i > 3,
+  reply: i === 1 || i === 4 ? "Every Thursday from 7pm! " + LONGWORD : null,
+  replyStatus: i === 1 ? "pending_approval" : i === 4 ? "sent" : null,
+  note: null,
+  replyError: null,
+}));
+function socialBody() {
+  return {
+    posts: SOCIAL_POSTS,
+    comments: SOCIAL_COMMENTS,
+    followers: { facebook: { followers: 12345, day: "2026-10-11", change: 234 }, instagram: { followers: 54321, day: "2026-10-11", change: -12 } },
+    connected: { facebook: true, instagram: false },
+    canDecide: true,
+    adsUrl: "https://adsmanager.facebook.com/",
+    limits: { instagramCaption: 2200, instagramHashtags: 30, facebookCaption: 63206, media: 10 },
+  };
+}
+
 // ----- Clients -----
 const CLIENTS = PEOPLE.map((p, i) => ({
   id: 401 + i,
@@ -587,6 +637,9 @@ export function portalMock(pathWithQuery, method = "GET") {
   if (hit) return outreachDetailBody(Number(hit[1]));
   hit = /^campaigns\/(\d+)$/.exec(path);
   if (hit) return campaignDetailBody(Number(hit[1]));
+  if (path === "social") return socialBody();
+  hit = /^social\/(\d+)$/.exec(path);
+  if (hit) return { post: SOCIAL_POSTS.find((p) => p.id === Number(hit[1])) || SOCIAL_POSTS[0], log: ["created", "submitted", "approved", "posting", "posted"].map((event, i) => ({ at: iso(1 + i, 10), event, byName: ME_NAME, detail: i % 2 ? LONGWORD : "" })) };
   if (path === "clients") return clientsBody(query);
   hit = /^clients\/(\d+)$/.exec(path);
   if (hit) return clientBody(Number(hit[1]));

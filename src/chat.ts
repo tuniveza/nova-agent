@@ -44,6 +44,7 @@ import { fileCard, FILE_TYPES, findFile, listFiles, readFileText, removeFile, sa
 import { missionMarkdown } from "./quests/export";
 import { draftReply, listEnquiries, readEnquiry, savedReplies, sortEnquiry, threadText, type DraftCard } from "./enquiries";
 import { actionLine, appointmentsText, availability, BOOKING_KINDS, feedBookingsText, findClients, listActions, listAppointments, listBlocks, listFeedBookings, proposeChange, sessionTypes, ukWhen, type BookingAction, type BookingKind } from "./acuity-api";
+import { commentLine, contextText as socialContextText, createSocialDraft, draftCommentReply, editSocialDraft, listSocialComments, listSocialPosts, PLATFORMS, postLine, postStatsText, POST_STATUSES, readSocialPost, socialContext } from "./social";
 import { AUDIENCES, campaignContext, campaignLine, CAMPAIGN_STATUSES, contextText, createDraft, editDraft, listCampaigns, readCampaign, resultsText, ukToUtc, type Audiences, type CampaignCard, type CampaignChanges } from "./campaigns";
 import { draftOutreach, editOutreach, listOutreach, outreachLine, OUTREACH_STATUSES, type Outreach, type OutreachFields } from "./outreach";
 import { clientHistory, clientsLapsed, clientsOwing, clientsText, findClients as findStudioClients, historyText, lapsedText, MONTH_NAMES, owingText, sinceDate } from "./clients";
@@ -67,13 +68,14 @@ export interface ChatTurn {
   content: string;
 }
 export interface ChatAction {
-  kind: "added" | "changed" | "removed" | "looked" | "file" | "draft" | "booking" | "campaign" | "outreach";
+  kind: "added" | "changed" | "removed" | "looked" | "file" | "draft" | "booking" | "campaign" | "outreach" | "social";
   text: string;
   file?: ReturnType<typeof fileCard>; // for "file": the card to preview and download it
   draft?: DraftCard; // for "draft": a reply to an enquiry, waiting for a person's Approve & send
   booking?: BookingAction; // for "booking": a proposed booking change, waiting for an admin's Approve
   campaign?: CampaignCard; // for "campaign": an email campaign draft, waiting for an admin's Approve
   outreach?: Outreach; // for "outreach": a one-to-one email, waiting for an admin's Approve
+  url?: string; // for "social": where it is in Portal → Social
 }
 
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("A date, YYYY-MM-DD (UK)");
@@ -130,6 +132,7 @@ ${bookingsPrompt()}
 - The studio's clients (read-only): client_find (by name, email or phone), client_history (one client's sessions), clients_owing (who owes money, biggest first), clients_not_booked_since (who hasn't booked since a date: for "since July" pass month "July", which means 1 July of the most recent July; for "in the last 3 months" pass months_back 3). Say money in pounds (£120.00) and dates in UK time, as the tools give them. These are the list in Portal → Clients, where staff edit contact details, notes, money and marketing consent; you can't change anything there. Marketing consent is "no" unless it's been recorded with a date and a source: never suggest sending marketing to someone marked "marketing: no".
 - Email campaigns (newsletters to the studio's fans and clients, sent through Resend): suggest_campaign (who's opted in, how recent ones did; then you suggest 1–3 ideas, and nothing is saved), create_campaign_draft, edit_campaign_draft, campaign_results (how a sent one did: opened and clicked as percentages), list_campaigns. You can only draft and edit: you can't send, schedule or approve a campaign, and nobody can through you. Nothing is sent to anyone until an admin presses Approve in Portal → Campaigns (or on the card under your reply). Say that plainly every time you draft or change one ("It's saved as a draft: nothing is sent until an admin approves it in Portal → Campaigns"), and never say a campaign is sent or scheduled unless campaign_results or list_campaigns shows it. Only people who opted in get campaigns (confirmed fans, and clients who said yes to studio news); Nova Bot adds the footer saying who it's from, why they're getting it and how to unsubscribe, so don't write one. Write in warm, plain UK English: a short subject line, short paragraphs separated by blank lines, **bold** for the one thing that matters, full links (https://…), signed "Novacane Studios". Give a send time (UK) when one is asked for or matters; otherwise it goes as soon as it's approved.
 - One-to-one emails (a personal email to one person: a venue, label, brand, promoter, journalist or other business; a studio client; or someone who wrote to the studio): draft_outreach_email, edit_outreach_email, list_outreach_emails. Personalise it: look them up first when it helps (client_find and client_history for a client; web_search, web_fetch or page_look for a business, to get the right person, address and something specific to say). You can only draft and edit: nothing is sent until an admin presses Approve in Portal → Campaigns (One-to-one emails); say that plainly every time ("It's a draft: nothing goes until an admin approves it"). Who can be emailed is checked by Nova Bot (UK law): a business only at a work address (not Gmail, Hotmail and the like), a client only about their own booking unless they said yes to studio news, a reply only to someone who wrote in, and never anyone who said no. If it refuses, tell them why in a line. Nova Bot adds the footer (who it's from, why, and how to stop these emails), so don't write one. Short, warm, plain UK English, one clear ask, signed "Novacane Studios".
+- Social posts (Facebook and Instagram, posted by Nova Bot): social_context (what's connected, followers, how recent posts did, comments waiting; then suggest 1–3 ideas, nothing is saved), create_social_draft, edit_social_draft, list_social_posts, social_results (how a posted one did), list_social_comments and draft_comment_reply (a reply to a comment on the studio's posts). You can only draft and edit: you can't post, schedule or approve anything, and nobody can through you. Nothing goes on Facebook or Instagram until an admin presses Approve in Portal → Social; say that plainly every time ("It's saved as a draft: nothing is posted until an admin approves it in Portal → Social"), and never say a post is up unless list_social_posts or social_results shows it posted. You can't add pictures or videos: say which picture or video would suit it, and that someone adds it in Portal → Social (Instagram posts need one before they can be approved). Write in the studio's voice: warm, plain UK English, a strong first line, a few relevant hashtags at the end (Instagram allows 30 at most and 2,200 characters), no hashtag walls. For trends, hashtags and what other studios do, research with web_search first and say where it came from. Paid ads stay in Meta's Ads Manager (the link is in Portal → Social): never offer to run or pay for ads.
 - Say how you're doing (agent_status).
 
 How to work:
@@ -1004,6 +1007,162 @@ export function outreachTools(actions: ChatAction[]) {
   ];
 }
 
+// Social posts (Portal → Social on Nova Bot): look, DRAFT, edit, read results and comments, and draft
+// replies to comments. There is no approve or post tool, on purpose: an admin approves every post and
+// reply with their own Portal sign-in before anything goes on Facebook or Instagram. The trace only
+// gets ids and counts, never the words or anyone's names.
+export function socialTools(actions: ChatAction[]) {
+  const failed = (error: unknown) => `Couldn't reach the social posts just now: ${(error as Error).message}`;
+  const notPosted = "Nothing has been posted: it goes nowhere until an admin approves it in Portal → Social. Tell them that plainly.";
+  const CAPTION = z.string().min(1).max(2200).describe("The post's words as they'll appear: a strong first line, short lines, emoji only if it suits, a few relevant hashtags at the end (Instagram: 30 at most, 2,200 characters)");
+  const PLATFORM_LIST = z.array(z.enum(PLATFORMS)).min(1).max(2).describe("facebook, instagram, or both");
+  const POST_AT = STAMP.describe("When to post it, UK wall-clock YYYY-MM-DDTHH:MM (leave out to post as soon as it's approved)");
+  const postTime = (local: string): string | { error: string } => {
+    const iso = ukToUtc(local);
+    if (!iso) return { error: "That time isn't a UK date and time (YYYY-MM-DDTHH:MM)." };
+    if (Date.parse(iso) < Date.now() + 5 * 60_000) return { error: "That time has passed (or is too close: an admin still has to approve it). Pick a later time, or leave it out to post as soon as it's approved." };
+    return iso;
+  };
+  const did = (text: string, url?: string) => {
+    actions.push({ kind: "social", text, url });
+    trace("input", "ok", `Chat: ${text}`);
+  };
+  return [
+    betaZodTool({
+      name: "social_context",
+      description:
+        "Before suggesting social posts: whether Facebook and Instagram are connected, followers and how they changed, how the last few posts did, how many comments are waiting, and today's date. It saves nothing. Then suggest 1–3 ideas; write one with create_social_draft once they pick it.",
+      inputSchema: z.object({}),
+      run: async () => {
+        try {
+          const ctx = await socialContext();
+          noteAction(actions, "looked", `Looked at the social posts (${ctx.recent.length} recent)`);
+          return socialContextText(ctx);
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "create_social_draft",
+      description:
+        "Write a Facebook and/or Instagram post. It is NOT posted: it's saved as a draft waiting for an admin, who checks it and presses Approve in Portal → Social. You can't attach pictures or videos: say which would suit, and someone adds it in Portal → Social (Instagram needs one).",
+      inputSchema: z.object({ caption: CAPTION, platforms: PLATFORM_LIST, post_at: POST_AT.optional() }),
+      run: async ({ caption, platforms, post_at }) => {
+        let postAt: string | null = null;
+        if (post_at) {
+          const t = postTime(post_at);
+          if (typeof t !== "string") return `${t.error} Nothing was saved.`;
+          postAt = t;
+        }
+        let post;
+        try {
+          post = await createSocialDraft({ caption, platforms, postAt });
+        } catch (error) {
+          return `Couldn't save the draft: ${(error as Error).message} Nothing was saved or posted.`;
+        }
+        did(`Drafted social post #${post.id}, waiting for an admin's approval`, post.portalUrl);
+        const needsPicture = platforms.includes("instagram") ? " Instagram needs a picture or video: someone adds it in Portal → Social before it can be approved." : "";
+        return `Post #${post.id} saved as a draft, NOT posted: ${postLine(post)}. ${notPosted}${needsPicture}`;
+      },
+    }),
+    betaZodTool({
+      name: "edit_social_draft",
+      description:
+        "Change a post that hasn't gone yet (its words, platforms or time). It goes back to waiting for an admin's approval (any approval is cleared), and it is NOT posted. Read it first with list_social_posts.",
+      inputSchema: z.object({
+        id: z.number().int().positive().describe("The post's id"),
+        caption: CAPTION.optional(),
+        platforms: PLATFORM_LIST.optional(),
+        post_at: POST_AT.optional(),
+        post_when_approved: z.boolean().optional().describe("true: drop the time, so it posts as soon as it's approved"),
+      }),
+      run: async ({ id, caption, platforms, post_at, post_when_approved }) => {
+        const changes: { caption?: string; platforms?: ("facebook" | "instagram")[]; postAt?: string | null } = {};
+        if (caption !== undefined) changes.caption = caption;
+        if (platforms !== undefined) changes.platforms = platforms;
+        if (post_at) {
+          const t = postTime(post_at);
+          if (typeof t !== "string") return `${t.error} Nothing was changed.`;
+          changes.postAt = t;
+        } else if (post_when_approved) changes.postAt = null;
+        if (!Object.keys(changes).length) return "Say what to change: the words, the platforms or the time.";
+        let post;
+        try {
+          post = await editSocialDraft(id, changes);
+        } catch (error) {
+          return `Couldn't change post #${id}: ${(error as Error).message} Nothing was changed or posted.`;
+        }
+        did(`Changed social post #${id}, waiting for an admin's approval`, post.portalUrl);
+        return `Post #${id} changed and back to waiting for approval: ${postLine(post)}. ${notPosted}`;
+      },
+    }),
+    betaZodTool({
+      name: "list_social_posts",
+      description: "The studio's Facebook and Instagram posts, newest first: the words, status (waiting for approval, scheduled, posted, waiting to be posted by hand, rejected, didn't post), platforms, time (UK) and links. Read-only.",
+      inputSchema: z.object({ status: z.enum(POST_STATUSES).optional().describe("Only those with this status (leave out for all)") }),
+      run: async ({ status }) => {
+        try {
+          const list = await listSocialPosts(status);
+          noteAction(actions, "looked", `Looked at ${list.length} social post${list.length === 1 ? "" : "s"}`);
+          return list.length ? list.map(postLine).join("\n") : status ? "No posts with that status." : "No posts yet.";
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "social_results",
+      description: "How a posted Facebook/Instagram post did: reach, likes, comments, shares, saves, clicks. The latest posted one, or one by id. Read-only.",
+      inputSchema: z.object({ id: z.number().int().positive().optional().describe("The post's id (leave out for the latest posted one)") }),
+      run: async ({ id }) => {
+        try {
+          let post;
+          if (id) post = await readSocialPost(id);
+          else {
+            const posted = (await listSocialPosts("posted")).sort((a, b) => String(b.postedAt ?? "").localeCompare(String(a.postedAt ?? "")));
+            if (!posted.length) return "Nothing has been posted yet, so there are no results.";
+            post = posted[0];
+          }
+          noteAction(actions, "looked", `Looked at social post #${post.id}'s results`);
+          return `${postLine(post)}. ${postStatsText(post) || "No results for it."}`;
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "list_social_comments",
+      description: "Comments on the studio's Facebook and Instagram posts (read from Meta every hour): who, what they said, which post, and whether they've been answered. Waiting ones by default. Read-only.",
+      inputSchema: z.object({ all: z.boolean().optional().describe("true: answered ones too") }),
+      run: async ({ all }) => {
+        try {
+          const list = await listSocialComments(!all);
+          noteAction(actions, "looked", `Looked at ${list.length} comment${list.length === 1 ? "" : "s"} on the studio's posts`);
+          return list.length ? list.map(commentLine).join("\n") : all ? "No comments yet." : "No comments waiting for an answer.";
+        } catch (error) {
+          return failed(error);
+        }
+      },
+    }),
+    betaZodTool({
+      name: "draft_comment_reply",
+      description:
+        "Write a reply to a comment on one of the studio's posts. It is NOT posted: it waits for an admin's Approve in Portal → Social. Keep it short, warm and specific; only promise what the studio has said it can do; never share anyone's details.",
+      inputSchema: z.object({ id: z.number().int().positive().describe("The comment's id"), text: z.string().min(1).max(1000).describe("The reply") }),
+      run: async ({ id, text }) => {
+        try {
+          const c = await draftCommentReply(id, text);
+          did(`Drafted a reply to comment #${c.id}, waiting for an admin's approval`);
+          return `Reply to comment #${c.id} saved, NOT posted. It goes on ${c.platform === "instagram" ? "Instagram" : "Facebook"} only when an admin approves it in Portal → Social. Tell them that plainly.`;
+        } catch (error) {
+          return `Couldn't save the reply: ${(error as Error).message} Nothing was posted.`;
+        }
+      },
+    }),
+  ];
+}
+
 const noteAction = (actions: ChatAction[], kind: ChatAction["kind"], text: string) => {
   actions.push({ kind, text });
   trace("input", "ok", `Chat: ${text}`);
@@ -1304,7 +1463,7 @@ export async function chat(history: ChatTurn[], person: Person = localPerson()):
     model,
     max_tokens: 16000,
     system: memory ? `${systemPrompt(person)}\n\n${memory}` : systemPrompt(person),
-    tools: [...tools(actions, person), ...questTools(actions, person), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...campaignTools(actions), ...outreachTools(actions), ...webTools({ search: 5, fetch: 5 })],
+    tools: [...tools(actions, person), ...questTools(actions, person), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...campaignTools(actions), ...outreachTools(actions), ...socialTools(actions), ...webTools({ search: 5, fetch: 5 })],
     messages,
     output_config: { effort: "low" },
     max_iterations: 16 + MAX_CONTINUATIONS,

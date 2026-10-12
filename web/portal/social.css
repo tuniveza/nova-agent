@@ -1,0 +1,68 @@
+/* Portal → Social (social.js): Facebook and Instagram posts. Built on Campaigns' look (.cp, app.css):
+   the same cards, fields, facts and result tiles, plus pictures, the planner and comments. */
+
+/* At a glance: what's waiting, followers, comments */
+.sc-glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; margin: 0 0 16px; min-width: 0; }
+.sc-glance:empty { display: none; }
+.sc-tile { display: grid; gap: 3px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); min-width: 0; color: inherit; font: inherit; }
+button.sc-tile { cursor: pointer; }
+button.sc-tile:hover, button.sc-tile:focus-visible { border-color: var(--line-strong); }
+.sc-tile b { color: var(--bright); font-size: 20px; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+.sc-tile span { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
+.sc-tile small { color: var(--muted); font-size: 12.5px; }
+
+/* Writing and editing */
+.sc-fields { display: grid; gap: 12px; min-width: 0; }
+.sc-count { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -4px 0 0; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--muted); }
+.sc-count .over { color: var(--bad); }
+.sc-platforms { display: flex; flex-wrap: wrap; gap: 8px; border: 0; margin: 0; padding: 0; min-width: 0; }
+.sc-platforms legend { padding: 0; margin: 0 0 6px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
+.sc-check { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); color: var(--bright); font-size: 14px; cursor: pointer; }
+.sc-check:has(input:checked) { border-color: var(--line-strong); background: rgba(var(--glow-rgb), 0.14); }
+.sc-check input { margin: 0; accent-color: rgb(var(--glow-rgb)); }
+.sc-drop { display: grid; gap: 6px; justify-items: start; padding: 14px; border-radius: 16px; border: 1px dashed var(--line-strong); background: rgba(var(--void-rgb), 0.25); min-width: 0; }
+.sc-drop.over { background: rgba(var(--glow-rgb), 0.12); }
+.sc-drop p { margin: 0; color: var(--muted); font-size: 13px; }
+.sc-drop input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* Pictures and videos */
+.sc-media { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 110px), 1fr)); gap: 8px; margin: 12px 0 0; min-width: 0; }
+.sc-media:empty { display: none; }
+.sc-fields .sc-media { margin: 0; }
+.sc-thumb { position: relative; margin: 0; aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.45); min-width: 0; }
+.sc-thumb img, .sc-thumb video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sc-thumb figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 8px; font-family: var(--f-mono); font-size: 10px; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.7)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-thumb .sc-x { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.4); background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 15px; line-height: 1; cursor: pointer; }
+.sc-thumb.busy { display: grid; place-items: center; color: var(--muted); font-size: 12px; text-align: center; padding: 8px; }
+
+/* Cards */
+.sc-card .card-title { overflow-wrap: anywhere; }
+.sc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.sc-chip { display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--bright); }
+.sc-where { display: grid; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+.sc-where li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 14px; color: var(--text); overflow-wrap: anywhere; }
+.sc-where b { color: var(--bright); font-weight: 600; }
+.sc-where a { color: var(--bright); }
+.sc-where .bad { color: var(--bad); }
+.sc-hand { display: grid; gap: 10px; margin: 12px 0 0; padding: 12px; border-radius: 16px; border: 1px solid var(--line-strong); background: rgba(var(--glow-rgb), 0.08); min-width: 0; }
+.sc-hand p { margin: 0; font-size: 14px; color: var(--text); }
+.sc-hand .sc-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.sc-hand .sc-row input { flex: 1 1 200px; min-width: 0; }
+.sc-hand a.btn { text-decoration: none; }
+.card.sc-card.picked, .card.sc-comment.picked { box-shadow: 0 0 0 1px var(--line-strong), 0 0 24px -8px rgba(var(--glow-rgb), 0.55); }
+
+/* The planner: what's coming up, by day */
+.sc-day { margin: 14px 0 6px; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+/* Comments */
+.sc-head { margin-top: 22px; }
+.sc-comment .sc-said { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--bright); font-size: 15px; line-height: 1.5; }
+.sc-comment .sc-on { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.sc-comment textarea { width: 100%; min-height: 70px; margin-top: 10px; }
+.sc-comment.done { opacity: 0.78; }
+
+/* Ideas, trends and ads */
+.sc-tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; min-width: 0; }
+.sc-tools .card { margin: 0; display: grid; gap: 8px; align-content: start; }
+.sc-tools p { margin: 0; font-size: 14px; color: var(--text); }
+.sc-tools a.btn { text-decoration: none; justify-self: start; }

@@ -84,7 +84,49 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
 | **Quests** | Nova Agent's plan, synced from the studio computer: the quest on now, repeating pulses, today, Missions with progress rings, and every quest. Taps (Start, Done, +15 min, Not now, Skip, Pause) go straight back to Nova Agent. |
 | **Campaigns** | Email newsletters to fans and clients who opted in, sent through Resend once an admin approves them. Below them, **one-to-one emails**: a personal email to one person (a venue, label, brand or other business at its work address; a studio client; someone who wrote in). Agent or anyone in the team writes one; Nova Bot checks the person may be emailed (never anyone who said no; a client only about their own booking unless they said yes to studio news; no personal Gmail-style addresses as "business") and adds a footer with a "don't email me again" link (`/no-thanks`). Nothing is sent until an admin presses Approve (twice), and it goes exactly as approved, once. Someone who replies "no thanks" can be recorded under the list. Nova Bot's `src/outreach.js`, migration `0028_outreach.sql`. |
 | **Alerts** | Every notification that reached a phone, newest first, with colour-coded labels, exact times, Call/Email buttons and an auto-delete switch. |
+| **Social** | Facebook and Instagram posts. Write one (or let Agent draft it), add pictures and videos, pick a time; an admin approves it and Nova Bot posts it. See [Social](#social). |
 | **NovaBot** | Two chats. **Ask Nova** answers questions about the studio's bookings, enquiries and alerts (Nova Bot's `src/studio-ask.js`). **NovaBot · bookings** is NovaBot with the booking tools, talking to you as staff: get a link for a client, find, move, cancel or change a booking. Every change shows a summary and waits for a yes. |
+
+## Social
+
+Facebook and Instagram posts, in Portal → Social (the Studio group, after Campaigns).
+
+- **Writing.** Anyone signed in writes a post: the words (with Instagram's 2,200-character and
+  30-hashtag counts), Facebook, Instagram or both, up to 10 pictures or videos, and a time (UK).
+  Agent can draft and edit posts too (`create_social_draft`, `edit_social_draft`), but it can't add
+  pictures, approve or post.
+- **Approval.** Nothing is posted until an admin, signed in to Portal in a browser, presses Approve
+  (twice: it says exactly what will happen). Nova Bot keeps a hash of exactly what was approved; any
+  edit clears the approval.
+- **Posting.** With Meta connected, Nova Bot posts it through Meta's Graph API, now or at its time
+  (Instagram videos are checked every minute until Meta has them ready). Without Meta, the approved
+  post waits under **Post these by hand**: copy the words, download the files, post it, then press
+  **I posted it** (with the link, if you like). One platform can be connected and the other not.
+- **Pictures and videos** are kept on the studio computer (Nova Agent's `data/social-media/`), so it
+  has to be on when a post goes out. Pictures become JPEGs (what Instagram takes) before they're
+  added; videos are MP4 or MOV, up to 25 MB from a phone (bigger from the studio computer).
+- **Results, followers and comments** come from Meta every hour for 30 days. Replies to comments are
+  drafts until an admin approves them. Dealt-with comments are deleted after 90 days.
+- **Ideas and trends** opens Agent with a question ready to send. **Paid ads** stay in Meta's Ads
+  Manager: Nova never spends money.
+
+Connecting Meta (Nova Bot's secrets, with `npx wrangler secret put`):
+
+1. In [Meta for Developers](https://developers.facebook.com/), make a Business app and add
+   **Facebook Login for Business** and the **Instagram Graph API**. The studio's Instagram must be a
+   Business or Creator account, linked to its Facebook Page.
+2. In the Graph API Explorer, get a **user token** for the app with `pages_show_list`,
+   `pages_read_engagement`, `pages_manage_posts`, `pages_manage_engagement`, `read_insights`,
+   `instagram_basic`, `instagram_content_publish`, `instagram_manage_comments` and
+   `instagram_manage_insights`. Exchange it for a **long-lived** one (Access Token Debugger → Extend),
+   then call `GET /me/accounts` with it: the Page's `access_token` there doesn't expire.
+3. Set `META_PAGE_TOKEN` (that Page token), `META_PAGE_ID` (the Page's id) and `META_IG_USER_ID`
+   (`GET /<page id>?fields=instagram_business_account`). Portal → You → How it works → What Nova runs on shows what's
+   connected.
+
+When the VPS takes over the files: give Nova Agent another store in `src/social-media.ts` (the same
+four functions) and set `SOCIAL_MEDIA_BASE` (where the VPS serves `<id>.<ext>`) and
+`SOCIAL_MEDIA_KEY` on Nova Bot: it fetches files from there instead of the studio computer.
 
 ## The smart calendar
 

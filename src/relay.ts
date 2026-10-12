@@ -40,6 +40,10 @@ const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
   // The Fixer (src/fixer/routes.ts): admins only
   { methods: ["GET"], path: /^\/fixer-api\/(state|jobs\/[\w-]+|shots\/[\w-]+\/[\w-]+\.png)$/, admin: true },
   { methods: ["POST"], path: /^\/actions\/fixer\/(check|settings|quests|(quests|suggestions|issues|jobs)\/[\w-]+)$/, admin: true },
+  // Social posts' pictures and videos (src/social-media.ts): see them (Nova Bot too, for Meta), add one,
+  // take one out of a draft
+  { methods: ["GET"], path: /^\/social-media\/[a-f0-9]{32}\.(jpg|png|webp|gif|mp4|mov)$/ },
+  { methods: ["POST"], path: /^\/actions\/social-media(\/[a-f0-9]{32}\/remove)?$/ },
 ];
 
 // Whether the link is up right now (the Fixer's health check asks)

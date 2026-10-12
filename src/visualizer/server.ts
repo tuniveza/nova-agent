@@ -17,7 +17,8 @@
 // SSH tunnel:  ssh -L 4545:localhost:4545 your-vps
 
 import { fromOurPage, passOn, passOnPicture, session, signIn, signOut } from "../signin";
-import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { Readable } from "node:stream";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
@@ -50,6 +51,7 @@ import { questEvents, readQuests } from "../quests/store";
 import { missionMarkdown } from "../quests/export";
 import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile, saveFile } from "../files";
 import { registerFixerRoutes } from "../fixer/routes";
+import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
 import { currentFixer, startFixer } from "../fixer/service";
 
 // Everything Nova Agent shows lives in web/: its own page (web/agent) and each panel
@@ -494,6 +496,55 @@ app.post("/actions/missions/:id", async (c) => {
   });
 });
 // Answers to the plan's questions, or any new detail: the work that's left is planned again
+// ---- Social posts' pictures and videos (social-media.ts): Portal → Social adds them; Nova Bot
+// fetches them for Meta when an approved post goes out (both over the link when online) ----
+app.post("/actions/social-media", async (c) => {
+  const size = Number(c.req.header("Content-Length") || 0);
+  if (size > MAX_VIDEO_BYTES) return c.json({ ok: false, message: "That's too big (up to 100 MB)." }, 413);
+  const person = await personFor(c.req.raw).catch(() => null);
+  const bytes = Buffer.from(await c.req.arrayBuffer());
+  if (!bytes.length) return c.json({ ok: false, message: "No file came through." }, 400);
+  try {
+    const entry = mediaStore.save(bytes, { name: c.req.query("name"), by: person?.id || "" });
+    trace("input", "ok", `Social: ${person?.online ? `${person.name} ` : ""}added a ${entry.kind} (${Math.round(entry.size / 1000)} KB)`);
+    return c.json({ ok: true, media: mediaCard(entry) });
+  } catch (error) {
+    return c.json({ ok: false, message: (error as Error).message }, 400);
+  }
+});
+app.post("/actions/social-media/:id/remove", (c) => {
+  const id = c.req.param("id");
+  if (!MEDIA_ID.test(id)) return c.json({ ok: false, message: "No such file" }, 404);
+  return mediaStore.remove(id) ? c.json({ ok: true }) : c.json({ ok: false, message: "No such file" }, 404);
+});
+app.on(["GET", "HEAD"], "/social-media/:file", (c) => {
+  const m = /^([a-f0-9]{32})\.(jpg|png|webp|gif|mp4|mov)$/.exec(c.req.param("file"));
+  const entry = m ? mediaStore.find(m[1]) : null;
+  if (!entry || entry.ext !== m![2]) return c.text("No such file", 404);
+  const headers: Record<string, string> = {
+    "Content-Type": MEDIA_TYPES[entry.ext],
+    "Accept-Ranges": "bytes",
+    // (how big it is, for Nova Bot: the link doesn't carry Content-Length)
+    "X-Nova-Size": String(entry.size),
+    "Cache-Control": "private, max-age=86400, immutable",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "sandbox; default-src 'none'",
+  };
+  const download = c.req.query("download");
+  if (download !== undefined) {
+    const name = entry.name.replace(/["\\]/g, "") || `${entry.kind}.${entry.ext}`;
+    headers["Content-Disposition"] = `attachment; filename="${name.replace(/[^\x20-\x7e]/g, "_")}"; filename*=UTF-8''${encodeURIComponent(name)}`;
+  }
+  const range = readRange(c.req.header("Range"), entry.size);
+  if (range === "bad") return c.body(null, 416, { ...headers, "Content-Range": `bytes */${entry.size}` });
+  const [start, end] = range ?? [0, entry.size - 1];
+  headers["Content-Length"] = String(end - start + 1);
+  if (range) headers["Content-Range"] = `bytes ${start}-${end}/${entry.size}`;
+  if (c.req.method === "HEAD") return c.body(null, range ? 206 : 200, headers);
+  const stream = Readable.toWeb(createReadStream(mediaStore.path(entry), { start, end })) as ReadableStream;
+  return c.body(stream, range ? 206 : 200, headers);
+});
+
 // ---- Files Nova Agent wrote (files.ts): the list, each one to view or download ----
 app.get("/files/list", (c) => c.json({ files: listFiles().map(fileCard) }, 200, { "Cache-Control": "no-store" }));
 app.get("/files/:id/:name", (c) => {
