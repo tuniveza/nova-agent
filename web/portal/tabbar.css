@@ -116,7 +116,7 @@
 @media (min-width: 761px) and (max-width: 1180px) {
   .tabs > .tab,
   html.embed .tabs > .tab { padding: 0 11px; gap: 7px; min-height: 38px; }
-  .tabs > .tab > span:not(.badge) { font-size: 13px; }
+  .tabs > .tab > span:not(.badge) { font-size: 12.5px; }
   .tabs > .tab-group,
   html.embed .tabs > .tab-group { padding-left: 9px; }
 }
@@ -141,55 +141,51 @@
   html.embed .tabs > .tab-group { margin-left: 12px; padding-left: 14px; }
 }
 
-/* ===================== Every section at once =====================
-   All of Portal's sections show together, in their groups. tabbar.js keeps each group whole on a
-   line (a .tg-br starts the next line) and puts a thin divider (.tg-div) between groups that share
-   one. Readable, medium-large tabs; the group labels are small and quiet. */
+/* ===================== Every section at once: one line per group =====================
+   All of Portal's sections show together, each group on its own line (tabbar.js adds .tg-rows and
+   starts each group's line with a .tg-br): the group's name in a narrow column on the left, its
+   tabs after it, so the lines read like a list. Compact tabs; the names small and quiet. A group
+   with one tab keeps the column's room but no name (.tg-quiet). The whole block is centred in the
+   bar (--tg-inset). #portal-tabs (set by tabbar.js) wins over the tablet styles inside Nova Agent. */
 @media (min-width: 761px) {
-  .tabs,
-  html.embed .tabs { --tg-rg: 8px; flex-wrap: wrap; justify-content: center; align-items: center; row-gap: var(--tg-rg); column-gap: 4px; padding: 10px 14px; overflow: visible; }
-  .tabs > .tg-br,
-  .tabs > .tg-div { display: none; }
-  /* The big group (Studio) after the small ones */
-  html nav.tabs.tg-packed > .tg-later { order: 1; }
-  html nav.tabs.tg-packed > .tg-last { order: 2; }
+  .tabs > .tg-br { display: none; }
+  #portal-tabs.tg-rows {
+    --tg-pad: 12px; --tg-lab: 78px; --tg-rg: 0px;
+    flex-wrap: wrap; justify-content: flex-start; align-items: center; align-content: flex-start;
+    row-gap: var(--tg-rg); column-gap: 2px; overflow: visible;
+    max-width: min(1440px, calc(100% - 32px));
+    padding: 6px var(--tg-pad) 6px calc(var(--tg-pad) + var(--tg-inset, 0px));
+  }
   /* The line break: a zero-height full line (its own row gap taken back) */
-  html nav.tabs.tg-packed > div.tg-br.on { display: block; flex: 0 0 100%; width: 100%; height: 0; margin: calc(-1 * var(--tg-rg)) 0 0; }
-  html nav.tabs.tg-packed > div.tg-div.on {
-    display: block; flex: none; width: 1px; height: 26px; margin: 0 10px;
-    background: linear-gradient(transparent, var(--line-strong), transparent);
+  #portal-tabs.tg-rows > div.tg-br.on { display: block; flex: 0 0 100%; width: 100%; height: 0; margin: calc(-1 * var(--tg-rg)) 0 0; }
+  /* The group's name: a right-aligned column, so every line's tabs start in the same place */
+  #portal-tabs.tg-rows > .tab-group {
+    display: flex !important; align-items: center; justify-content: flex-end; flex: none;
+    width: var(--tg-lab); height: 30px; margin: 0; padding: 0 10px 0 0; border: 0; background: none; overflow: hidden;
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(var(--text-rgb, 230, 220, 240), 0.6); white-space: nowrap;
   }
-  .tabs > .tab-group,
-  html.embed .tabs > .tab-group { border-left: 0; margin: 0 4px 0 2px; padding: 0; height: 26px; }
-  .tabs > .tab-group.tg-quiet,
-  html.embed .tabs > .tab-group.tg-quiet { display: none !important; }
-  .tabs > .tab,
-  html.embed .tabs > .tab { min-height: 42px; padding: 0 13px; gap: 8px; }
-  .tabs > .tab > span:not(.badge) { font-size: 14px; }
-  .tabs > .tab svg { width: 19px; height: 19px; }
-}
-/* A bit snugger in a medium window, so the groups pair up on fewer lines */
-@media (min-width: 761px) and (max-width: 1180px) {
-  .tabs > .tab,
-  html.embed .tabs > .tab { min-height: 40px; padding: 0 10px; gap: 6px; }
-  .tabs > .tab > span:not(.badge) { font-size: 13.5px; }
-  html nav.tabs.tg-packed > div.tg-div.on { margin: 0 6px; }
-}
-/* Inside Nova Agent on a tablet (inside.js draws bordered mini pills there): the same tabs */
-@media (min-width: 761px) and (max-width: 980px) {
-  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs { --tg-rg: 6px; row-gap: var(--tg-rg); column-gap: 2px; padding: 10px; }
-  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs > .tab {
-    min-height: 40px; padding: 0 9px; gap: 6px; border-color: transparent; border-radius: 999px;
+  #portal-tabs.tg-rows > .tab-group.tg-quiet { visibility: hidden; }
+  #portal-tabs.tg-rows > .tab-group[hidden] { display: none !important; }
+  html:not(.embed) #portal-tabs.tg-rows > .tab-group.embed-only { display: none !important; }
+  /* Compact tabs */
+  #portal-tabs.tg-rows > .tab {
+    min-height: 30px; padding: 0 10px; gap: 6px; border-color: transparent; border-radius: 999px;
   }
-  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs > .tab > span:not(.badge) { font-size: 13.5px; }
-  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs > .tab svg { width: 18px; height: 18px; }
+  #portal-tabs.tg-rows > .tab > span:not(.badge) { font-size: 12.5px; }
+  #portal-tabs.tg-rows > .tab svg,
+  #portal-tabs.tg-rows > .tab img { width: 16px; height: 16px; }
+  #portal-tabs.tg-rows .tab .tab-planet { width: 18px; height: 18px; }
+  #portal-tabs.tg-rows .tab-mark { width: 16px; height: 16px; }
+  #portal-tabs.tg-rows > .tab.active::after { bottom: 2px; width: 14px; height: 2px; margin-left: -7px; }
+  #portal-tabs.tg-rows .badge { transform: scale(0.9); }
+  html.embed #portal-tabs.tg-rows > .tab.embed-only { width: 30px; min-width: 30px; min-height: 30px; padding: 0; }
+  /* A group too wide for its line: its second half lines up under the first */
+  #portal-tabs.tg-rows > .tab.tg-indent { margin-left: calc(var(--tg-lab) + 2px); }
+  html nav.tabs > .tg-div { display: none; }
 }
 @media (min-width: 761px) and (max-width: 980px) {
-  /* (app.css makes the group labels thin lines here; the tab bar has its own dividers) */
-  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs > .tab-group {
-    display: flex; align-items: center; width: auto; height: 26px; margin: 0 4px 0 2px; padding: 0;
-    overflow: visible; font-size: 10px; background: none;
-  }
-  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs > .tab-group.tg-quiet,
-  html.embed:not([data-menu="side"]) body .embed-head > nav.tabs > .tab-group[hidden] { display: none !important; }
+  #portal-tabs.tg-rows { --tg-lab: 64px; --tg-pad: 8px; }
+  #portal-tabs.tg-rows > .tab { padding: 0 8px; }
+  #portal-tabs.tg-rows > .tab-group { font-size: 9px; letter-spacing: 0.14em; padding-right: 8px; }
 }

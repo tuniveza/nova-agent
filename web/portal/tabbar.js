@@ -83,88 +83,67 @@
     edges();
   }).observe(bar, { subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
 
-  // ---- Every section at once (tabs on top): whole groups side by side, never split mid-line ----
-  // Each group (Today · Studio · Plans · You · Admin · the settings icons) stays together: when the
-  // next group doesn't fit on the line, it starts a new one (a .tg-br line break); groups sharing a
-  // line get a thin divider between them (.tg-div). A group with one tab needs no label (its tab
-  // says it). The big group (Studio) comes after the small ones, on a line of its own; when it's
-  // wider than a line it splits into even halves (.tg-mid), never one tab left on its own.
-  // Only for the tab bar on a computer or tablet: the side menu and the phone's bar are as before.
-  const groups = []; // { key, label (the .tab-group), tabs: [], br, div }
+  // ---- Every section at once (tabs on top): each group on its own line ----
+  // Today · Studio · Plans · You · Admin · (inside Nova Agent) the settings icons: one line each,
+  // in that order, the group's name in a narrow column on the left and its tabs after it, so the
+  // lines line up like a list. A group with one tab keeps the column's room but shows no name (its
+  // tab says it). A group wider than its line splits into two even halves, the second lined up
+  // under the first (.tg-mid, then .tg-indent). The whole block sits in the middle of the bar
+  // (--tg-inset). Only for the tab bar on a computer or tablet: the side menu and the phone's bar
+  // are as before.
+  if (!bar.id) bar.id = "portal-tabs";
+  const groups = []; // { label (the .tab-group), tabs: [], br, mid }
   {
     let current = null;
     for (const el of [...bar.children]) {
-      if (el.classList.contains("tab-group")) { current = { key: el.dataset.group || "", label: el, tabs: [] }; groups.push(current); }
+      if (el.classList.contains("tab-group")) { current = { label: el, tabs: [] }; groups.push(current); }
       else if (el.classList.contains("tab") && current) current.tabs.push(el);
     }
   }
   for (const g of groups) {
     g.br = document.createElement("div");
     g.br.className = "tg-br";
-    g.div = document.createElement("div");
-    g.div.className = "tg-div";
-    for (const el of [g.br, g.div]) el.setAttribute("aria-hidden", "true");
-    g.label.before(g.br, g.div);
     g.mid = document.createElement("div");
     g.mid.className = "tg-br tg-mid";
-    g.mid.setAttribute("aria-hidden", "true");
+    for (const el of [g.br, g.mid]) el.setAttribute("aria-hidden", "true");
+    g.label.before(g.br);
   }
-  // The big group: the one with the most tabs (Studio)
-  const big = groups.reduce((m, g) => (!m || g.tabs.length > m.tabs.length ? g : m), null);
-  for (const g of groups) {
-    g.later = g === big && g.tabs.length >= 5;
-    if (g.later) for (const el of [g.br, g.div, g.label, ...g.tabs, g.mid]) el.classList.add("tg-later");
-  }
-  const order = [...groups.filter((g) => !g.later), ...groups.filter((g) => g.later)];
   // Only write a class when it changes (so the observer below doesn't go round and round)
   const set = (el, cls, on) => { if (el.classList.contains(cls) !== on) el.classList.toggle(cls, on); };
   const seen = (el) => !el.hidden && el.offsetParent !== null && getComputedStyle(el).display !== "none";
   function pack() {
     const on = topTabs();
-    set(bar, "tg-packed", on);
-    if (!on) return;
+    set(bar, "tg-rows", on);
+    if (!on) { bar.style.removeProperty("--tg-inset"); return; }
     for (const g of groups) set(g.label, "tg-quiet", g.tabs.filter((t) => !t.hidden).length <= 1);
     const cs = getComputedStyle(bar);
-    const room = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 1;
+    const pad = parseFloat(cs.getPropertyValue("--tg-pad")) || 12;
+    const room = bar.clientWidth - 2 * pad - 1;
     const gap = parseFloat(cs.columnGap) || 0;
-    const ds = getComputedStyle(groups[0]?.div || bar);
-    const divider = 1 + (parseFloat(ds.marginLeft) || 0) + (parseFloat(ds.marginRight) || 0) + 2 * gap;
-    let used = 0;
+    const lab = parseFloat(cs.getPropertyValue("--tg-lab")) || 0;
     let first = true;
-    const place = (g, items, widths, w, forceNew) => {
-      // Too wide for a line: break it in the middle, so its two lines are even
-      let split = -1;
-      if (w > room) {
-        let run = 0;
-        for (let i = 0; i < items.length; i++) { run += widths[i] + gap; if (run >= w / 2) { split = Math.min(Math.max(i, 1), items.length - 1); break; } }
-      }
-      if (split > 0 && g.mid.nextElementSibling !== items[split]) items[split].before(g.mid);
-      set(g.mid, "on", split > 0);
-      const newLine = !first && (forceNew || used + divider + w > room);
-      set(g.br, "on", newLine);
-      set(g.div, "on", !first && !newLine);
-      if (split > 0) used = widths.slice(split).reduce((n, x) => n + x, 0) + gap * (items.length - split - 1);
-      else used = first || newLine ? w : used + divider + w;
-      if (used > room) used = room;
+    let widest = 0;
+    for (const g of groups) {
+      const tabs = g.tabs.filter(seen);
+      if (!tabs.length) { set(g.br, "on", false); set(g.mid, "on", false); for (const t of g.tabs) set(t, "tg-indent", false); continue; }
+      set(g.br, "on", !first);
       first = false;
-    };
-    // The small groups on the first line; one that doesn't fit there goes after the big group
-    // (.tg-last), so it never sits on a line of its own between the others
-    const after = [];
-    for (const g of order) {
-      const items = [g.label, ...g.tabs].filter(seen);
-      if (!items.length) { for (const el of [g.br, g.div, g.mid]) set(el, "on", false); set(g.label, "tg-last", false); continue; }
-      const widths = items.map((el) => el.getBoundingClientRect().width);
-      const w = widths.reduce((n, x) => n + x, 0) + gap * (items.length - 1);
-      const defer = !g.later && !first && !after.length && used + divider + w > room && order.some((x) => x.later && x.tabs.some(seen));
-      if (defer || (after.length && !g.later)) { after.push({ g, items, widths, w }); continue; }
-      for (const el of [g.br, g.div, g.label, ...g.tabs, g.mid]) set(el, "tg-last", false);
-      place(g, items, widths, w, g.later);
+      const widths = tabs.map((t) => t.getBoundingClientRect().width);
+      const line = (a, b) => widths.slice(a, b).reduce((n, x) => n + x, 0) + gap * Math.max(0, b - a - 1);
+      const all = line(0, tabs.length);
+      let split = -1;
+      if (lab + gap + all > room && tabs.length > 1) {
+        let run = 0;
+        for (let i = 0; i < tabs.length; i++) { run += widths[i] + gap; if (run >= all / 2) { split = Math.min(Math.max(i + 1, 1), tabs.length - 1); break; } }
+      }
+      if (split > 0 && g.mid.nextElementSibling !== tabs[split]) tabs[split].before(g.mid);
+      set(g.mid, "on", split > 0);
+      for (const t of g.tabs) set(t, "tg-indent", split > 0 && t === tabs[split]);
+      const w = lab + gap + (split > 0 ? Math.max(line(0, split), line(split, tabs.length)) : all);
+      widest = Math.max(widest, Math.min(w, room));
     }
-    for (const { g, items, widths, w } of after) {
-      for (const el of [g.br, g.div, g.label, ...g.tabs, g.mid]) set(el, "tg-last", true);
-      place(g, items, widths, w, false);
-    }
+    const inset = `${Math.max(0, Math.floor((room - widest) / 2))}px`;
+    if (bar.style.getPropertyValue("--tg-inset") !== inset) bar.style.setProperty("--tg-inset", inset);
   }
   // Tabs shown or hidden (Admin after signing in), counts changing their width: pack again
   new MutationObserver(pack).observe(bar, { subtree: true, attributes: true, attributeFilter: ["class", "hidden"], childList: true, characterData: true });
