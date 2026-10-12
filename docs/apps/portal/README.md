@@ -212,6 +212,22 @@ still reach Acuity's API and alerts staff phones if not (`src/health.js`).
 - **Themes hold all the art direction:** palettes, surfaces, glow, rings, moons, naming and the starfield. The Nova look lives in `planet/themes/nova.js`. When the studio's own lore is ready, it becomes a new theme file, with no change to the generator. A test proves it with a "lore" theme.
 - **Porting:** `planet/README.md` documents the exact random number generator and draw order, so a Kotlin port (for Nova Club) draws identical planets.
 
+## Money
+
+Portal → **Money** (in Studio, after Clients) keeps the studio's invoices, the payments against them, and its expenses. The badge counts invoices and reminders waiting for an admin, plus overdue invoices; Today has an **Invoices overdue** tile.
+
+- **Four tiles:** money in this month (payments), money out (confirmed expenses), what clients owe, and what's overdue.
+- **Write an invoice:** pick a client from the list (their name and email fill in) or type them in. Add lines (what it's for, how many, the price of one), with VAT, the issue and due days, and a note. The totals add up as you type, in whole pence. It's saved **waiting for approval**; Agent can write one too.
+- **Approve (admins, signed in to Portal in a browser):** pressed twice ("Email it to … now?"). Nova Bot then emails the client a link to their invoice's own page, `/invoice/<random secret>`. There they can see it, print it or save it as a PDF, and pay: by card through Stripe's own page (when Stripe is set up; the payment comes back by itself), or by bank transfer with the studio's bank details. Admins can also Reject (with why), Send me a test, and Void. Anyone can Edit it until it's sent.
+- **Payments:** Record a payment (amount, day, bank transfer / card / cash / other, a note). The invoice becomes part paid or paid, and the client's money on the client list follows: invoiced and owed go up when it's sent, owed comes down with each payment. An admin can take a payment back that was a mistake; a Stripe one is refunded in Stripe.
+- **Reminders:** Ask for a reminder on an unpaid invoice. It waits under **Reminders to approve** until an admin approves it, then goes to the client with the link.
+- **Expenses:** amount, what for (a list of categories), who it was paid to, the day, a note and a receipt. The receipt is a photo or a PDF, kept on the studio PC (`data/receipts/`), so the PC must be on to add one. Expenses Agent notes come in **Not confirmed** and count in no total until someone presses Confirm.
+- **Tax year:** in, out and the difference for this UK tax year (6 April to 5 April), where the money went by category, the accountant's spreadsheets (CSV: invoices, payments, expenses; admins), and **Invoice settings** for admins: studio name, address, reply email, VAT number, bank details, VAT on new invoices and days to pay.
+
+Agent's money tools: `money_summary`, `list_invoices`, `draft_invoice`, `edit_invoice_draft`, `log_expense`. It has nothing that sends, approves, reminds, voids, records a payment or changes settings.
+
+Setting it up: invoices are emailed with Nova Bot's own Resend key (`RESEND_API_KEY`) from `INVOICE_FROM` (or the enquiry replies' from address). Card payments use the Stripe keys Nova Bot already has (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`); the same webhook records invoice payments. The tables come from Nova Bot's `migrations/0029_money.sql`.
+
 ## The API (on Nova Bot's worker)
 
 | | |

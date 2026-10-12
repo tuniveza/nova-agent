@@ -24,6 +24,9 @@
 //   - write files for you (Markdown, text, CSV, JSON, HTML) to preview, download
 //     or open in Notes, read them back, and export a mission as a document
 //     (files.ts, quests/export.ts)
+//   - the studio's money (money.ts): read the totals and invoices, WRITE and edit invoices (an admin
+//     approves each one in Portal → Money before it's emailed) and note expenses (unconfirmed until
+//     a person confirms them). It can't send, remind, record payments, void or change settings
 //   - read the studio's enquiries and DRAFT replies to them (enquiries.ts). It can't send:
 //     a person approves each draft (Approve & send, in Portal or on the draft's card)
 //   - say how Nova Agent itself is doing
@@ -47,6 +50,7 @@ import { actionLine, appointmentsText, availability, BOOKING_KINDS, feedBookings
 import { commentLine, contextText as socialContextText, createSocialDraft, draftCommentReply, editSocialDraft, listSocialComments, listSocialPosts, PLATFORMS, postLine, postStatsText, POST_STATUSES, readSocialPost, socialContext } from "./social";
 import { AUDIENCES, campaignContext, campaignLine, CAMPAIGN_STATUSES, contextText, createDraft, editDraft, listCampaigns, readCampaign, resultsText, ukToUtc, type Audiences, type CampaignCard, type CampaignChanges } from "./campaigns";
 import { draftOutreach, editOutreach, listOutreach, outreachLine, OUTREACH_STATUSES, type Outreach, type OutreachFields } from "./outreach";
+import { MONEY_PROMPT, moneyTools } from "./money";
 import { clientHistory, clientsLapsed, clientsOwing, clientsText, findClients as findStudioClients, historyText, lapsedText, MONTH_NAMES, owingText, sinceDate } from "./clients";
 import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
@@ -133,6 +137,7 @@ ${bookingsPrompt()}
 - Email campaigns (newsletters to the studio's fans and clients, sent through Resend): suggest_campaign (who's opted in, how recent ones did; then you suggest 1–3 ideas, and nothing is saved), create_campaign_draft, edit_campaign_draft, campaign_results (how a sent one did: opened and clicked as percentages), list_campaigns. You can only draft and edit: you can't send, schedule or approve a campaign, and nobody can through you. Nothing is sent to anyone until an admin presses Approve in Portal → Campaigns (or on the card under your reply). Say that plainly every time you draft or change one ("It's saved as a draft: nothing is sent until an admin approves it in Portal → Campaigns"), and never say a campaign is sent or scheduled unless campaign_results or list_campaigns shows it. Only people who opted in get campaigns (confirmed fans, and clients who said yes to studio news); Nova Bot adds the footer saying who it's from, why they're getting it and how to unsubscribe, so don't write one. Write in warm, plain UK English: a short subject line, short paragraphs separated by blank lines, **bold** for the one thing that matters, full links (https://…), signed "Novacane Studios". Give a send time (UK) when one is asked for or matters; otherwise it goes as soon as it's approved.
 - One-to-one emails (a personal email to one person: a venue, label, brand, promoter, journalist or other business; a studio client; or someone who wrote to the studio): draft_outreach_email, edit_outreach_email, list_outreach_emails. Personalise it: look them up first when it helps (client_find and client_history for a client; web_search, web_fetch or page_look for a business, to get the right person, address and something specific to say). You can only draft and edit: nothing is sent until an admin presses Approve in Portal → Campaigns (One-to-one emails); say that plainly every time ("It's a draft: nothing goes until an admin approves it"). Who can be emailed is checked by Nova Bot (UK law): a business only at a work address (not Gmail, Hotmail and the like), a client only about their own booking unless they said yes to studio news, a reply only to someone who wrote in, and never anyone who said no. If it refuses, tell them why in a line. Nova Bot adds the footer (who it's from, why, and how to stop these emails), so don't write one. Short, warm, plain UK English, one clear ask, signed "Novacane Studios".
 - Social posts (Facebook and Instagram, posted by Nova Bot): social_context (what's connected, followers, how recent posts did, comments waiting; then suggest 1–3 ideas, nothing is saved), create_social_draft, edit_social_draft, list_social_posts, social_results (how a posted one did), list_social_comments and draft_comment_reply (a reply to a comment on the studio's posts). You can only draft and edit: you can't post, schedule or approve anything, and nobody can through you. Nothing goes on Facebook or Instagram until an admin presses Approve in Portal → Social; say that plainly every time ("It's saved as a draft: nothing is posted until an admin approves it in Portal → Social"), and never say a post is up unless list_social_posts or social_results shows it posted. You can't add pictures or videos: say which picture or video would suit it, and that someone adds it in Portal → Social (Instagram posts need one before they can be approved). Write in the studio's voice: warm, plain UK English, a strong first line, a few relevant hashtags at the end (Instagram allows 30 at most and 2,200 characters), no hashtag walls. For trends, hashtags and what other studios do, research with web_search first and say where it came from. Paid ads stay in Meta's Ads Manager (the link is in Portal → Social): never offer to run or pay for ads.
+${MONEY_PROMPT}
 - Say how you're doing (agent_status).
 
 How to work:
@@ -1463,7 +1468,7 @@ export async function chat(history: ChatTurn[], person: Person = localPerson()):
     model,
     max_tokens: 16000,
     system: memory ? `${systemPrompt(person)}\n\n${memory}` : systemPrompt(person),
-    tools: [...tools(actions, person), ...questTools(actions, person), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...campaignTools(actions), ...outreachTools(actions), ...socialTools(actions), ...webTools({ search: 5, fetch: 5 })],
+    tools: [...tools(actions, person), ...questTools(actions, person), ...fileTools(actions), ...enquiryTools(actions), ...clientTools(actions), ...campaignTools(actions), ...outreachTools(actions), ...socialTools(actions), ...moneyTools(actions), ...webTools({ search: 5, fetch: 5 })],
     messages,
     output_config: { effort: "low" },
     max_iterations: 16 + MAX_CONTINUATIONS,

@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Money: invoices, payments and expenses (Portal → Money, through Nova Bot)
+
+- Portal → Money (Studio, after Clients): four tiles (in and out this month, owed, overdue), invoices
+  grouped as waiting, overdue, waiting for payment, paid, and rejected or voided; expenses by month
+  with the ones Agent noted to confirm; and the UK tax year with totals by category, the
+  accountant's CSV and the invoice settings. Today has an "Invoices overdue" tile.
+- An invoice is emailed to a client only after an admin presses Approve (twice) in a browser. The
+  client gets a link to a printable page with card (Stripe) or bank transfer payment. Reminders
+  wait for an Approve too. Payments, part paid and paid, and the client list's money keep in step.
+- Receipts are kept on the studio PC (src/receipts.ts, `POST /actions/receipts`,
+  `GET /receipts/<id>`), relayed for signed-in staff when online.
+- Agent has five money tools: money_summary, list_invoices, draft_invoice, edit_invoice_draft and
+  log_expense (unconfirmed). Nothing that sends, approves, reminds, voids, pays or changes settings.
+
 ### Quest 3: email campaigns with an admin's approval (Resend, through Nova Bot)
 
 - Agent has five campaign tools: suggest_campaign (who's opted in and how recent campaigns did;

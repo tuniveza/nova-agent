@@ -50,6 +50,7 @@ import { startBookingRefresh } from "../quests/bookings";
 import { questEvents, readQuests } from "../quests/store";
 import { missionMarkdown } from "../quests/export";
 import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile, saveFile } from "../files";
+import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, receipts } from "../receipts";
 import { registerFixerRoutes } from "../fixer/routes";
 import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
 import { currentFixer, startFixer } from "../fixer/service";
@@ -567,6 +568,32 @@ app.post("/actions/files/:id/remove", (c) => {
   } catch (error) {
     return c.json({ ok: false, message: (error as Error).message }, 404);
   }
+});
+// ---- Receipts for expenses (receipts.ts): Portal → Money uploads one, and shows it ----
+// The upload is the file itself (its type in Content-Type); the answer is the receipt's name,
+// which Portal saves on the expense in Nova Bot.
+app.post("/actions/receipts", async (c) => {
+  const type = (c.req.header("Content-Type") || "").split(";")[0].trim().toLowerCase();
+  if (!RECEIPT_TYPES[type]) return c.json({ ok: false, message: "A receipt is a photo (JPEG, PNG, WebP, HEIC) or a PDF." }, 415);
+  if (Number(c.req.header("Content-Length") || 0) > MAX_RECEIPT_BYTES) return c.json({ ok: false, message: "That's too big for a receipt (20 MB at most)." }, 413);
+  try {
+    const bytes = new Uint8Array(await c.req.arrayBuffer());
+    return c.json({ ok: true, receipt: receipts.save(bytes, type) });
+  } catch (error) {
+    return c.json({ ok: false, message: (error as Error).message }, 400);
+  }
+});
+app.get("/receipts/:id", (c) => {
+  const found = receipts.read(c.req.param("id"));
+  if (!found) return c.text("No such receipt", 404);
+  return c.body(new Uint8Array(found.bytes), 200, {
+    "Content-Type": found.type,
+    "Content-Disposition": `inline; filename="${c.req.param("id")}.${RECEIPT_TYPES[found.type] || "bin"}"`,
+    // Only ever a picture or a PDF to look at: it can't run anything
+    "Content-Security-Policy": "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; object-src 'self'",
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "private, max-age=3600",
+  });
 });
 // A mission's whole plan as a Markdown file (exporting again updates the same file)
 app.post("/actions/missions/:id/export", async (c) => {

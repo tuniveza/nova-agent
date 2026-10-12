@@ -258,6 +258,24 @@ const APPS = {
           b && b.click();
         }, { v, menu })]);
       }
+      // Money's other parts, each of its forms open, and an invoice's details and payment box
+      const money = (steps) => async () => f.evaluate(async (steps) => {
+        document.documentElement.removeAttribute("data-menu");
+        document.querySelector('.tab[data-view="money"]').click();
+        await new Promise((r) => setTimeout(r, 400));
+        for (const s of steps) {
+          const node = document.querySelector(s);
+          if (node) node.click();
+          await new Promise((r) => setTimeout(r, 300));
+        }
+        // (how it's laid out is what's checked, not where it was scrolled to)
+        scrollTo(0, 0);
+      }, steps);
+      out.push(["money: expenses", money(['[data-mn="expenses"]'])]);
+      out.push(["money: tax year", money(['[data-mn="year"]'])]);
+      out.push(["money: invoice form", money(['[data-mn="invoices"]', "#money-new", "#mn-inv-add-line"])]);
+      out.push(["money: expense form", money(["#money-expense-new"])]);
+      out.push(["money: details and a payment", money(['[data-mn="invoices"]', '[data-key="mn-3"] .actions .btn:last-child', '[data-key="mn-4"] .actions .btn'])]);
       return out;
     },
     dialogs: true,

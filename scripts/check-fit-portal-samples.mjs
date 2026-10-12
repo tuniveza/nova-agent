@@ -592,6 +592,87 @@ function linksBody() {
   };
 }
 
+// ----- Money (invoices, payments, expenses) -----
+const MONEY_STATUSES = ["pending_approval", "failed", "sent", "part_paid", "paid", "rejected", "void"];
+const INVOICES = MONEY_STATUSES.map((status, i) => ({
+  id: i + 1,
+  number: "NS-" + String(i + 1).padStart(4, "0"),
+  clientId: i + 1,
+  billTo: { name: i === 0 ? LONGWORD : PEOPLE[i % PEOPLE.length].name, email: i === 1 ? LONGWORD.toLowerCase() + "@example.co.uk" : "client" + i + "@example.com", address: PARA(1) },
+  lines: [
+    { description: i === 0 ? LONGWORD2 : "Recording, mixing and mastering for the EP, " + PARA(1).slice(0, 120), qty: 2.5, unitPence: 1234567, totalPence: 3086418 },
+    { description: "Mastering", qty: 1, unitPence: 4999, totalPence: 4999 },
+  ],
+  vatRate: i % 2 ? 20 : 0,
+  subtotalPence: 3091417,
+  vatPence: i % 2 ? 618283 : 0,
+  totalPence: i % 2 ? 3709700 : 3091417,
+  paidPence: status === "paid" ? 3091417 : status === "part_paid" ? 100000 : 0,
+  balancePence: status === "paid" ? 0 : 2991417,
+  issueDate: "2026-10-01",
+  dueDate: i === 2 ? "2026-10-05" : "2026-10-31",
+  notes: i === 0 ? LONGWORD + " " + PARA(1) : "",
+  status,
+  overdue: i === 2,
+  createdBy: i === 0 ? "agent" : "test-admin",
+  createdAt: "2026-10-0" + (i + 1) + "T10:00:00.000Z",
+  updatedAt: "2026-10-0" + (i + 1) + "T11:00:00.000Z",
+  decidedByName: i > 1 ? LONGWORD : null,
+  note: status === "rejected" ? PARA(1) : null,
+  sentAt: ["sent", "part_paid", "paid"].includes(status) ? "2026-10-02T09:00:00.000Z" : null,
+  paidAt: status === "paid" ? "2026-10-08T09:00:00.000Z" : null,
+  error: status === "failed" ? "Resend didn't send it: " + LONGWORD : null,
+  pageUrl: ["sent", "part_paid", "paid", "void"].includes(status) ? "https://novacane.example/invoice/" + "0123456789abcdef".repeat(2) : null,
+}));
+const MONEY_CATEGORIES = ["Equipment", "Software and subscriptions", "Studio rent and bills", "Marketing and ads", "Musicians and freelancers", "Travel", "Repairs and upkeep", "Food and hospitality", "Bank and payment fees", "Other"];
+function moneyBody() {
+  return {
+    summary: {
+      today: "2026-10-12",
+      month: { from: "2026-10-01", to: "2026-10-31", inPence: 123456789, outPence: 98765432 },
+      taxYear: { from: "2026-04-06", to: "2027-04-05", name: "2026–27", inPence: 987654321, outPence: 123456789, outByCategory: MONEY_CATEGORIES.map((category, i) => ({ category, pence: 9000000 - i * 800000 })) },
+      owed: { count: 12, pence: 9876543 },
+      overdue: { count: 3, pence: 2991417 },
+      waitingApproval: 2,
+      invoicesWaiting: 1,
+      remindersWaiting: 1,
+      unconfirmedExpenses: 2,
+    },
+    invoices: INVOICES,
+    expenses: Array.from({ length: 6 }, (_, i) => ({
+      id: i + 1,
+      spentOn: i < 3 ? "2026-10-0" + (i + 1) : "2026-09-1" + i,
+      amountPence: 1234567 + i,
+      category: MONEY_CATEGORIES[i],
+      supplier: i === 0 ? LONGWORD : "Thomann",
+      note: i === 1 ? PARA(1) : "",
+      receiptId: i % 2 ? "r-20261012-0123456789" : null,
+      status: i < 2 ? "unconfirmed" : "confirmed",
+      createdBy: i < 2 ? "agent" : "test-admin",
+      createdAt: "2026-10-01T10:00:00.000Z",
+      updatedAt: "2026-10-01T10:00:00.000Z",
+    })),
+    reminders: [{ id: 1, invoiceId: 3, body: "Hi " + LONGWORD + ",\n\n" + PARA(2), status: "pending_approval", createdBy: "test-admin", createdAt: "2026-10-10T10:00:00.000Z", updatedAt: "2026-10-10T10:00:00.000Z" }],
+    settings: { business: { name: "Novacane Studios", address: PARA(1), email: "studio@example.com", vatNumber: "GB123456789" }, bank: { accountName: LONGWORD, sortCode: "12-34-56", accountNumber: "12345678", note: PARA(1).slice(0, 190) }, vatRate: 0, dueDays: 14, bankReady: true },
+    categories: MONEY_CATEGORIES,
+    methods: [
+      { id: "bank", name: "Bank transfer" },
+      { id: "card", name: "Card" },
+      { id: "cash", name: "Cash" },
+      { id: "other", name: "Other" },
+    ],
+    canDecide: true,
+    emailReady: true,
+    cardReady: false,
+  };
+}
+const moneyInvoiceBody = (id) => ({
+  invoice: INVOICES.find((x) => x.id === id) || INVOICES[0],
+  payments: [{ id: 1, invoiceId: id, amountPence: 100000, paidOn: "2026-10-03", method: "bank", methodName: "Bank transfer", note: LONGWORD, removed: false }],
+  reminders: [],
+  log: Array.from({ length: 4 }, (_, i) => ({ id: i + 1, at: "2026-10-0" + (i + 1) + "T10:00:00.000Z", event: ["created", "approved", "sent", "payment"][i], byName: LONGWORD, detail: PARA(1).slice(0, 140) })),
+});
+
 // ----- Router -----
 export function portalMock(pathWithQuery, method = "GET") {
   let raw = String(pathWithQuery || "");
@@ -640,6 +721,9 @@ export function portalMock(pathWithQuery, method = "GET") {
   if (path === "social") return socialBody();
   hit = /^social\/(\d+)$/.exec(path);
   if (hit) return { post: SOCIAL_POSTS.find((p) => p.id === Number(hit[1])) || SOCIAL_POSTS[0], log: ["created", "submitted", "approved", "posting", "posted"].map((event, i) => ({ at: iso(1 + i, 10), event, byName: ME_NAME, detail: i % 2 ? LONGWORD : "" })) };
+  if (path === "money") return moneyBody();
+  hit = /^money\/invoices\/(\d+)$/.exec(path);
+  if (hit) return moneyInvoiceBody(Number(hit[1]));
   if (path === "clients") return clientsBody(query);
   hit = /^clients\/(\d+)$/.exec(path);
   if (hit) return clientBody(Number(hit[1]));
