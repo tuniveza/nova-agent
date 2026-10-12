@@ -6,6 +6,7 @@
 //   await lab.music({ seed: "K7M2QX", piece: "keys", seconds: 60 })  // { peakDb, loudestDb, ... }
 //   await lab.sound("shimmer", { theme: "notes" })                   // the same for one sound
 //   await lab.close();
+// inTurns() shares the work between several labs, so long checks run side by side.
 import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
 
@@ -29,4 +30,20 @@ export async function openLab() {
     names: () => page.evaluate(() => ({ pieces: window.NovaAmbient.pieces.map((p) => p.id), ...window.NovaSfx._names() })),
     close: () => browser.close(),
   };
+}
+
+// Runs fn(item, worker) for every item with at most `workers` running at once (worker is
+// 0..workers-1, each busy with one item at a time); the results come back in the items' order.
+//   await inTurns(seeds, labs.length, (seed, w) => labs[w].music({ seed, piece }))
+export async function inTurns(items, workers, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async (w) => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i], w);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(workers, items.length)) }, (_, w) => worker(w)));
+  return out;
 }
