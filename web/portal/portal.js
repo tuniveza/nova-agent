@@ -114,6 +114,9 @@
       const url = new URL(v, location.origin);
       if (url.origin !== location.origin) return "";
       if (/^\/(portal|app)(\/|$)/.test(url.pathname) && !url.pathname.startsWith("/app/memory")) return "";
+      // Connecting Google can't happen inside a frame (Google won't show there): Portal → Admin →
+      // Google opens it in its own window instead
+      if (url.pathname.startsWith("/admin/google")) return "";
       return url.pathname + url.search + url.hash;
     } catch (err) {
       return "";

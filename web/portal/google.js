@@ -287,16 +287,40 @@
     await act("google/disconnect", {}, "Google disconnected. Nothing in Google was deleted.");
   }
 
-  // Google's page can't open inside Nova Agent: a small window, then back here
-  function connect() {
+  // Google's page can't open inside Nova Agent: its own small window (or, in the installed app,
+  // the whole window), then back here. Nova Bot first gives a one-time pass (10 minutes), so
+  // connecting works however you're signed in (the window to Google may not carry the sign-in).
+  async function connect() {
     if (!data) return;
     const standalone = matchMedia("(display-mode: standalone)").matches;
-    if (standalone) {
-      window.top.location.href = data.connectUrl.replace("?popup=1", "");
+    // Opened straight away (browsers only allow a new window right after the press), filled in below
+    const w = standalone ? null : window.open("about:blank", "nova-google", "width=520,height=720");
+    let link;
+    try {
+      link = await K().api("google/connect-link", { body: { popup: !standalone } });
+    } catch (err) {
+      if (w) w.close();
+      if (err.message !== "signed out") K().toast(err.message);
       return;
     }
-    const w = window.open(data.connectUrl, "nova-google", "width=520,height=720");
-    if (!w) K().toast("Your browser blocked the window: allow pop-ups for this page, then press Connect Google again.");
+    if (standalone) {
+      window.top.location.href = link.url;
+      return;
+    }
+    if (w && !w.closed) {
+      w.location.href = link.url;
+      // When the window closes, look again (its "connected" message may not reach this page)
+      const watch = setInterval(() => { if (w.closed) { clearInterval(watch); load(); } }, 1000);
+      return;
+    }
+    // The browser blocked the window: a plain link to press instead
+    K().toast("Your browser blocked the window. Use the Open Google link below.");
+    const a = el("a", "btn big", "Open Google ↗");
+    a.href = link.url;
+    a.target = "_blank";
+    a.rel = "opener";
+    const box = document.querySelector(".gg-steps") || $("google-body");
+    if (box) box.append(a);
   }
   addEventListener("message", (ev) => {
     if (ev.data && ev.data.type === "nova-google") {
