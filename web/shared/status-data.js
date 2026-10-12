@@ -1,200 +1,200 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 216,
- "date": "2026-10-10",
+ "build": 303,
+ "date": "2026-10-12",
  "panels": {
   "chat": [
-   "An App button everywhere",
-   "Portal everywhere",
-   "\"Chat\" is now \"Agent\" everywhere you see…",
-   "Nova Agent reopens the app you had…",
-   "One centre line"
+   "Google, Portal → Admin → Google",
+   "Portal → Test stuff",
+   "Money, invoices",
+   "Social, Quest 4)",
+   "Portal inbox"
   ],
   "portal": [
-   "An App button everywhere",
-   "Portal as its own phone app",
-   "Portal everywhere",
-   "\"Chat\" is now \"Agent\" everywhere you see…",
-   "Cosmic icons"
+   "Google, Portal → Admin → Google",
+   "Portal → Test stuff",
+   "Portal tabs",
+   "Money, invoices",
+   "Social, Quest 4)"
   ],
   "calendar": [
-   "\"Chat\" is now \"Agent\" everywhere you see…",
-   "every day measured so nothing is cut…",
-   "symbols on phones too",
-   "day words and symbols switch at sensible…",
-   "size checks read the month's grid"
+   "Everything fits",
+   "Centred text reaches the last left-aligned corners",
+   "Dates and times written the British way",
+   "Plain app names again",
+   "Nova first in every app name"
   ],
   "notes": [
-   "pasted Markdown becomes formatting",
-   "Portal everywhere",
-   "new notes start Shared when signed in",
-   "Every window size usable",
-   "Cosmic icons"
+   "Google, Portal → Admin → Google",
+   "a clickable Welcome guide instead of a…",
+   "P0-4, chats",
+   "Everything fits",
+   "Centred text in Notes' list and Nova…"
   ],
   "index": [
-   "Portal everywhere",
-   "Cosmic icons",
-   "Panels on phones",
-   "Panels fit inside Nova Agent's viewer",
-   "Portal and Index"
+   "Centred text in Index's header",
+   "Plain names",
+   "Dates and times written the British way",
+   "Plain app names again",
+   "Nova first in every app name"
   ],
   "quests": [
-   "Portal everywhere",
-   "Plain names",
-   "Nova Agent talks to Nova Bot at…",
-   "Portal is Studio",
-   "Missions"
+   "P0-4, chats",
+   "Plain app names again",
+   "Nova first in every app name",
+   "Quest 2",
+   "Quest 1"
   ],
   "missions": [
+   "Quest 1",
    "Portal everywhere",
    "Plain names",
    "Nova Agent talks to Nova Bot at…",
-   "Portal is Studio",
-   "Send the Nova Quest plan to Portal"
+   "Portal is Studio"
   ],
   "lossless": [
-   "Cosmic icons",
-   "Every panel sounds like itself",
-   "Panels on phones",
-   "Nova Agent is the one app",
-   "Lossless audio and Observatory as panels everywhere"
+   "Centred text in Index's header",
+   "Plain app names again",
+   "Tools in the Nova Agent family",
+   "Nova first in every app name",
+   "Themes, a colour spectrum with a Custom…"
   ],
   "visualizer": [
-   "Portal everywhere",
-   "\"Chat\" is now \"Agent\" everywhere you see…",
-   "Today in music on the front page",
-   "Cosmic icons",
-   "Shared and Local notes"
+   "Fixer, one problem wherever it's seen",
+   "Google, Portal → Admin → Google",
+   "Portal → Test stuff",
+   "Money, invoices",
+   "Social, Quest 4)"
   ],
   "observatory": [
-   "only the categories that have projects show…",
-   "more on screen",
-   "Cosmic icons",
-   "Panels on phones",
-   "Lossless audio and Observatory as panels everywhere"
+   "Everything fits",
+   "Centred text in Index's header",
+   "Dates and times written the British way",
+   "Plain app names again",
+   "Tools in the Nova Agent family"
   ],
   "manual": [
-   "Portal everywhere",
-   "Undo, the Manual keeps \"Nova Agent\"",
-   "Portal on phones",
-   "Plain names",
-   "The Manual is built from Nova…"
+   "The Fixer",
+   "Centred text reaches the last left-aligned corners",
+   "Dates and times written the British way",
+   "Plain app names again",
+   "Nova Manual"
   ],
   "look": [
-   "An App button everywhere",
-   "Portal as its own phone app",
-   "Portal everywhere",
-   "more on screen",
-   "\"Chat\" is now \"Agent\" everywhere you see…"
+   "Status line on every panel",
+   "Look, with the planet on",
+   "Look, a chosen colour shows with the…",
+   "Fixer, undo “Nova Agent at 1280px",
+   "Fixer, Nova Agent at 1280px"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "An App button everywhere"
+    "words": "Google, Portal → Admin → Google"
    },
    {
     "panel": "chat",
-    "words": "Portal everywhere"
+    "words": "Portal → Test stuff"
    },
    {
     "panel": "portal",
-    "words": "An App button everywhere"
+    "words": "Google, Portal → Admin → Google"
    },
    {
     "panel": "portal",
-    "words": "Portal as its own phone app"
+    "words": "Portal → Test stuff"
    },
    {
     "panel": "calendar",
-    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
+    "words": "Everything fits"
    },
    {
     "panel": "calendar",
-    "words": "every day measured so nothing is cut…"
+    "words": "Centred text reaches the last left-aligned corners"
    },
    {
     "panel": "notes",
-    "words": "pasted Markdown becomes formatting"
+    "words": "Google, Portal → Admin → Google"
    },
    {
     "panel": "notes",
-    "words": "Portal everywhere"
+    "words": "a clickable Welcome guide instead of a…"
    },
    {
     "panel": "index",
-    "words": "Portal everywhere"
+    "words": "Centred text in Index's header"
    },
    {
     "panel": "index",
-    "words": "Cosmic icons"
+    "words": "Plain names"
    }
   ],
   "tasks": [
    {
     "panel": "quests",
-    "words": "Portal everywhere"
+    "words": "P0-4, chats"
    },
    {
     "panel": "quests",
-    "words": "Plain names"
+    "words": "Plain app names again"
+   },
+   {
+    "panel": "missions",
+    "words": "Quest 1"
    },
    {
     "panel": "missions",
     "words": "Portal everywhere"
-   },
-   {
-    "panel": "missions",
-    "words": "Plain names"
    }
   ],
   "tools": [
    {
     "panel": "lossless",
-    "words": "Cosmic icons"
+    "words": "Centred text in Index's header"
    },
    {
     "panel": "lossless",
-    "words": "Every panel sounds like itself"
+    "words": "Plain app names again"
    },
    {
     "panel": "visualizer",
-    "words": "Portal everywhere"
+    "words": "Fixer, one problem wherever it's seen"
    },
    {
     "panel": "visualizer",
-    "words": "\"Chat\" is now \"Agent\" everywhere you see…"
+    "words": "Google, Portal → Admin → Google"
    }
   ],
   "helpers": [
    {
     "panel": "observatory",
-    "words": "only the categories that have projects show…"
+    "words": "Everything fits"
    },
    {
     "panel": "observatory",
-    "words": "more on screen"
+    "words": "Centred text in Index's header"
    },
    {
     "panel": "manual",
-    "words": "Portal everywhere"
+    "words": "The Fixer"
    },
    {
     "panel": "manual",
-    "words": "Undo, the Manual keeps \"Nova Agent\""
+    "words": "Centred text reaches the last left-aligned corners"
    }
   ]
  },
  "everything": [
-  "An App button everywhere",
-  "Portal as its own phone app",
-  "pasted Markdown becomes formatting",
-  "Portal everywhere",
-  "only the categories that have projects show…",
-  "more on screen",
-  "Undo, the Manual keeps \"Nova Agent\"",
-  "\"Chat\" is now \"Agent\" everywhere you see…"
+  "Fixer, one problem wherever it's seen",
+  "Google, Portal → Admin → Google",
+  "Status line on every panel",
+  "Portal → Test stuff",
+  "Portal tabs",
+  "Look, with the planet on",
+  "Look, a chosen colour shows with the…",
+  "Fixer, undo “Nova Agent at 1280px"
  ]
 };

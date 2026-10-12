@@ -315,6 +315,10 @@ or Mono) and every app, task, tool and helper wears it, whatever its own theme s
 panel's own" goes back to each panel's own. **Colour everything from my planet** tints it all
 with the colours of your planet in Portal (Nova Bot sends them with who you are). Saved on the
 device; every open panel follows at once (`web/shared/look.js`, loaded first in every panel).
+With both on, the planet keeps its look (its dark backgrounds and soft light) and the colour you
+picked takes the buttons, glows and highlights, so every colour choice clearly shows: Pulsar gives
+cyan, Aurora green and violet, Eclipse gold. With "Each panel's own", the planet colours everything
+as before.
 
 **The top bar** (Nova Agent's header) has the same choice as the panels bar: Auto (with a panel
 open it slides away while you work and comes back when the mouse goes to the top, or you scroll
@@ -426,6 +430,8 @@ for the whole app, in Nova Agent's main page, so it carries on while panels open
 every switch shows the same state. On or off is remembered on the device: when it was on, it
 starts again on your first tap (browsers only allow sound after a tap). The volume is Portal's
 Options → Ambient music volume.
+
+Coming next: music with bass and melody, seven moods.
 
 ### Index: it remembers
 

@@ -30,6 +30,7 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
 
 | | |
 |---|---|
+| ✦ **Welcome guide** | The first time Notes opens in a browser, a clickable guide shows once (no more "Welcome to Notes" notes). Topics along the top jump to their part (Start, Writing, The look, Shared · Local, In and out, Shortcuts), and **Try it** buttons do the thing: a new note, find and replace, focus mode, the themes, Shared or Local, import, export, Google Docs, every shortcut. It's always in **Help → Welcome guide**. |
 | 👥 **Shared and Local notes** | **Shared** notes are the whole team's: everyone signed in with Portal sees and edits them, on every device, and changes show up for the others within seconds. **Local** notes stay only on this device. Tap **Local / Shared** by "Saved" to move a note between the two (with Undo), and use **All · Shared · Local** above the list to pick what you see. New notes start Shared when you're signed in (Local when you're signed out or looking at Local). If two people change a shared note at the same time, both versions are kept ("… (conflicted copy)"). |
 | 🔔 **Sound effects** | Soft cosmic sounds on every action. Switch them off or on in **View → Sound effects**. |
 | 🔒 **All Nova Agent links** | **Help → 🔒 All Nova Agent links** opens the password-protected page with every Nova Agent address, live and testing. |

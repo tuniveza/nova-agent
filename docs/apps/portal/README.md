@@ -14,12 +14,16 @@ Portal's old address, `/app/`, opens Portal (with the same tab: `/app/?view=aler
 
 ## The tabs
 
-Along the bottom on a phone, down the side on a desktop:
+Every section shows at once, so nothing hides behind a click. On a computer or tablet they sit at the top in **lanes**:
 
-| Tab | |
+| Lane | Tabs |
 |---|---|
-| **Enquiries · Chats · Calendar · Quests · Alerts · NovaBot** | The work tabs. See [the work tabs](#the-work-tabs). |
-| **You** | Your planet (it's the tab's icon), your profile, your Index, and for admins the crew and the admin pages. |
+| **Today · You · Admin** | Share the first lane: Today's overview, your profile and planet, and (admins) Admin and **Test stuff**. |
+| **Studio** | Enquiries, Conversations, Clients, Money, Calendar, Booking tools, Approvals, Campaigns, Social, Website bot. |
+| **Plans** | Quests, Alerts and Nova Agent. |
+| **Settings** (inside Nova Agent) | Voice, music, Options and apps. |
+
+Each lane starts with its name in a small chip, all the same width, so the tabs line up; soft lines sit between lanes. A lane too wide for the window splits into two even halves, the second under the first. On a phone the tabs are along the bottom (with More); Options → Menu → **Side menu** puts them down the side instead.
 
 The address follows the tab, so a reload or a link lands in the same place: `/portal/?view=enquiries` (or `chats`, `calendar`, `quests`, `alerts`, `bot`), `/portal/?view=me`, `/portal/?view=crew`, `/portal/?id=<someone>`. With no `?view=`, Portal opens on the starting tab from Options; a Nova Agent notification (`#nova`) opens Alerts.
 
@@ -80,11 +84,15 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
 |---|---|
 | **Enquiries** | Every enquiry NovaBot took, sorted like a ticket inbox: New, Open, Waiting on them, Done and Spam (one press moves it; likely spam lands in Spam by itself, with the reason, and nothing is ever deleted). Who's on it, a label, search, and the team's saved replies for routine questions. Email, call, make a booking link with the customer's details filled in, read the chat it came from. Details: Nova Bot's README-ENQUIRIES.md. |
 | **Chats** | What customers asked NovaBot on the website (kept for 90 days). Mark a chat **Needs a person** (you're put on it) or **Done**, and filter by either, so follow-ups don't get lost. |
+| **Clients** | Everyone who has booked or enquired: their sessions, money (deposits, invoiced, owed) and marketing consent with its date and source. Admins can import Acuity's spreadsheet; Agent can look people up. |
+| **Money** | Invoices (sent only after an admin's Approve), payments and expenses. See [Money](#money). |
 | **Calendar** | Every booking in Acuity's diary, as a month you can swipe, with Calendar's cards and planned quests alongside. See [the smart calendar](#the-smart-calendar). |
 | **Quests** | Nova Agent's plan, synced from the studio computer: the quest on now, repeating pulses, today, Missions with progress rings, and every quest. Taps (Start, Done, +15 min, Not now, Skip, Pause) go straight back to Nova Agent. |
+| **Approvals** | Booking changes Agent proposed. Nothing changes in Acuity until an admin presses Approve. |
 | **Campaigns** | Email newsletters to fans and clients who opted in, sent through Resend once an admin approves them. Below them, **one-to-one emails**: a personal email to one person (a venue, label, brand or other business at its work address; a studio client; someone who wrote in). Agent or anyone in the team writes one; Nova Bot checks the person may be emailed (never anyone who said no; a client only about their own booking unless they said yes to studio news; no personal Gmail-style addresses as "business") and adds a footer with a "don't email me again" link (`/no-thanks`). Nothing is sent until an admin presses Approve (twice), and it goes exactly as approved, once. Someone who replies "no thanks" can be recorded under the list. Nova Bot's `src/outreach.js`, migration `0028_outreach.sql`. |
 | **Alerts** | Every notification that reached a phone, newest first, with colour-coded labels, exact times, Call/Email buttons and an auto-delete switch. |
 | **Social** | Facebook and Instagram posts. Write one (or let Agent draft it), add pictures and videos, pick a time; an admin approves it and Nova Bot posts it. See [Social](#social). |
+| **Test stuff** | (Admin) Things that look like tests or copies, with why, and Delete (into a 30-day bin) or Not a test. See [Test stuff](#test-stuff). |
 | **NovaBot** | Two chats. **Ask Nova** answers questions about the studio's bookings, enquiries and alerts (Nova Bot's `src/studio-ask.js`). **NovaBot · bookings** is NovaBot with the booking tools, talking to you as staff: get a link for a client, find, move, cancel or change a booking. Every change shows a summary and waits for a yes. |
 
 ## Social
