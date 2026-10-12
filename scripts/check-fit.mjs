@@ -65,7 +65,7 @@ if (process.env.FIT_DATA_DIR) seedData(process.env.FIT_DATA_DIR.replace(/\/$/, "
 const calendarItems = () => ({
   rev: 1,
   items: [
-    ...Array.from({ length: 14 }, (_, i) => ({ id: `e${i}`, kind: "event", title: i % 3 ? `${LONG} ${i}` : `${WORD}${i}`, start: day(i % 7 - 2, `${String(8 + (i % 5) * 2).padStart(2, "0")}:00`), end: day(i % 7 - 2, `${String(9 + (i % 5) * 2).padStart(2, "0")}:30`), notes: `${LONG} ${LINK}`, location: LONG, color: "violet", updated: new Date().toISOString() })),
+    ...Array.from({ length: 14 }, (_, i) => ({ id: `e${i}`, kind: "event", title: i % 3 ? `${LONG} ${i}` : `${WORD}${i}`, start: day(i % 7 - 2, `${String(8 + (i % 5) * 2).padStart(2, "0")}:00`), end: day(i % 7 - 2, `${String(9 + (i % 5) * 2).padStart(2, "0")}:30`), notes: `${LONG} ${LINK}`, location: LONG, color: "violet", ...(i === 1 ? { meet: true, meetUrl: "https://meet.google.com/abc-defg-hij" } : {}), updated: new Date().toISOString() })),
     ...Array.from({ length: 4 }, (_, i) => ({ id: `ea${i}`, kind: "event", title: `${LONG} all day ${i}`, start: day(i, "00:00"), end: day(i + 1, "00:00"), allDay: true, color: "teal", updated: new Date().toISOString() })),
     { id: "d1", kind: "day", title: LONG, date: day(0).slice(0, 10), notes: LONG, updated: new Date().toISOString() },
   ],

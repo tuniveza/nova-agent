@@ -408,6 +408,8 @@
     } else if (enq.reason && enq.reason.message !== "signed out") emptyState(list, enq.reason.message);
     if (chats.status === "fulfilled") set("t-chats", chats.value.conversations.filter((c) => c.started && dayKey(new Date(c.started)) === today).length);
     if (cal.status === "fulfilled") set("t-bookings", cal.value.setUp ? cal.value.bookings.filter((b) => { const d = feedDate(b.start); return d && dayKey(d) === today; }).length : "–");
+    // Today's calendar, with Google Calendar's events (google.js)
+    if (window.PortalGoogle && window.PortalGoogle.today) window.PortalGoogle.today();
     syncCounts();
   }
   const onWorkTab = () => running && !$("view-" + currentView).hidden;

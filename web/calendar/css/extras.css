@@ -73,3 +73,10 @@
   .art-head { min-height: 128px; }
   .art-tools select, .art-tools button, .art-tools a { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,.6) !important; }
 }
+
+/* Google Meet: the tick, and the link once Google has made one */
+.meet-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; min-height: 44px; }
+.meet-tick { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.meet-tick input { width: 20px; height: 20px; accent-color: var(--accent, #c2337a); }
+.meet-link { color: var(--hi, var(--accent)); font-weight: 600; text-decoration: none; padding: 8px 4px; }
+.meet-link:hover, .meet-link:focus-visible { text-decoration: underline; }

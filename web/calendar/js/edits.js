@@ -20,7 +20,7 @@ export function onlyRemindersChanged(it, was, fields) {
   return (
     fields.start === was &&
     minutesBetween(fields.start, fields.end) === length &&
-    ["title", "location", "body", "color", "allDay"].every((k) => same(fields[k], k === "allDay" ? Boolean(it[k]) : it[k] || (k === "color" ? "violet" : ""))) &&
+    ["title", "location", "body", "color", "allDay", "meet"].every((k) => same(k === "meet" ? Boolean(fields[k]) : fields[k], k === "allDay" || k === "meet" ? Boolean(it[k]) : it[k] || (k === "color" ? "violet" : ""))) &&
     same(fields.art, it.art || fields.art)
   );
 }

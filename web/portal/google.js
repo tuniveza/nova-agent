@@ -22,7 +22,7 @@
   let showSteps = false; // connected, but the steps opened again
   let disarm = 0;
   const busy = new Set();
-  const SYNCABLE = { calendar: "calendar", replies: "replies", contacts: "contacts", sheets: "sheets", backups: "backups" };
+  const SYNCABLE = { calendar: "calendar", replies: "replies", contacts: "contacts", sheets: "sheets", backups: "backups", inbox: "inbox", docs: "docs", files: "files" };
 
   const el = (tag, cls, text) => K().el(tag, cls, text);
   function button(text, cls, onClick, extra = {}) {
@@ -256,6 +256,10 @@
     add(data.sheetUrl, "The Money sheet");
     add("https://calendar.google.com/", "Google Calendar");
     add("https://contacts.google.com/", "Google Contacts");
+    add("https://tasks.google.com/", "Google Tasks");
+    add("https://studio.youtube.com/", "YouTube Studio");
+    // Reviews (Google Business Profile) need Google's own say-so for its API first
+    card.append(el("p", "gg-help gg-later", "Google reviews (Business Profile) can come later: Google first has to approve the studio for its Business Profile API (search \"Business Profile API access request\", fill in Google's form with project nova-agent). Then Nova can show and answer reviews here."));
     return card;
   }
 
@@ -369,5 +373,98 @@
     }
   }
 
-  window.PortalGoogle = { load, openSheet };
+  // ===== For Today: today's calendar (Nova's events and Google Calendar's) =====
+
+  async function today() {
+    const box = $("today-calendar");
+    const wrap = $("today-calendar-wrap");
+    if (!box || !wrap || !K()) return;
+    let events = [];
+    try {
+      events = (await K().api("google/today")).events || [];
+    } catch (err) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = !events.length;
+    box.replaceChildren(
+      ...events.map((e) => {
+        const row = el("div", "card today-ev");
+        row.append(el("span", "today-ev-time", e.allDay ? "All day" : `${e.start}–${e.end}`), el("span", "today-ev-title", e.title));
+        const sub = [e.from === "Google Calendar" ? "Google Calendar" : "", e.location].filter(Boolean).join(" · ");
+        if (sub) row.append(el("span", "today-ev-sub", sub));
+        if (e.meetUrl) {
+          const a = el("a", "chip", "Join on Meet ↗");
+          a.href = e.meetUrl;
+          a.target = "_blank";
+          a.rel = "noopener";
+          row.append(a);
+        }
+        return row;
+      })
+    );
+  }
+
+  // ===== Find someone in Google Contacts (Campaigns' one-to-one email form) =====
+  // A search box at the top of the form: type a name, email or company, pick someone, and their
+  // name and email are filled in. Hidden when Google Contacts isn't switched on.
+  function contactPicker(form, fill) {
+    if (!form || form.querySelector(".gg-find")) return;
+    const wrap = el("div", "gg-find");
+    const label = el("label", "cp-field");
+    const input = el("input");
+    input.type = "search";
+    input.placeholder = "A name, email or company";
+    input.autocomplete = "off";
+    label.append(el("span", "", "Find in Google Contacts (optional)"), input);
+    const list = el("div", "gg-find-list");
+    list.setAttribute("role", "listbox");
+    list.setAttribute("aria-label", "People found in Google Contacts");
+    wrap.append(label, list);
+    form.querySelector(".card-title")?.after(wrap);
+    let timer = null;
+    input.addEventListener("input", () => {
+      clearTimeout(timer);
+      const q = input.value.trim();
+      if (q.length < 2) return list.replaceChildren();
+      timer = setTimeout(async () => {
+        let res;
+        try {
+          res = await K().api("google/contacts?q=" + encodeURIComponent(q));
+        } catch (err) {
+          return list.replaceChildren(el("p", "gg-help", err.message === "signed out" ? "" : "Google Contacts didn't answer just now."));
+        }
+        if (res.off) {
+          wrap.hidden = true;
+          return;
+        }
+        const found = (res.contacts || []).filter((c) => c.email);
+        list.replaceChildren(
+          ...(found.length
+            ? found.map((c) => {
+                const b = el("button", "chip gg-find-pick", c.name ? `${c.name} · ${c.email}` : c.email);
+                b.type = "button";
+                b.setAttribute("role", "option");
+                b.addEventListener("click", () => {
+                  fill(c);
+                  list.replaceChildren();
+                  input.value = "";
+                  K().toast(`Filled in ${c.name || c.email}`);
+                });
+                return b;
+              })
+            : [el("p", "gg-help", "Nobody in Google Contacts matches that.")])
+        );
+      }, 300);
+    });
+  }
+  const outreachForm = $("outreach-form");
+  if (outreachForm) {
+    contactPicker(outreachForm, (c) => {
+      $("or-new-email").value = c.email || "";
+      if (c.name) $("or-new-name").value = c.name;
+    });
+  }
+
+  window.PortalGoogle = { load, openSheet, today, contactPicker };
 })();

@@ -9,6 +9,7 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { config } from "./config";
+import { dropFromDriveLater, mirrorFileLater } from "./google";
 
 export const FILE_TYPES = ["md", "txt", "csv", "json", "html"] as const;
 export type FileType = (typeof FILE_TYPES)[number];
@@ -119,6 +120,8 @@ export function saveFile(input: { name: string; content: string; title?: string;
   const kept = [entry, ...rest.sort((a, b) => b.updated.localeCompare(a.updated))].slice(0, MAX_FILES);
   for (const gone of rest.filter((f) => !kept.includes(f))) if (existsSync(pathOf(gone))) unlinkSync(pathOf(gone));
   writeIndex(kept);
+  // A copy in Google Drive's "Nova Agent/Files", kept up to date (in the background; off: nothing)
+  mirrorFileLater(`${entry.id}.${entry.type}`, entry.name, content);
   return entry;
 }
 
@@ -127,6 +130,7 @@ export function removeFile(idOrName: string): FileEntry {
   if (!f) throw new Error(`No file called ${idOrName}.`);
   if (existsSync(pathOf(f))) unlinkSync(pathOf(f));
   writeIndex(readIndex().filter((x) => x.id !== f.id));
+  dropFromDriveLater("file", `files/${f.id}.${f.type}`);
   return f;
 }
 

@@ -312,6 +312,11 @@
           </div>
         </section>
       </div>
+      <!-- Today's calendar: Nova's events and Google Calendar's (google.js; hidden when there's nothing) -->
+      <section class="group" id="today-calendar-wrap" aria-labelledby="today-cal-head" hidden>
+        <div class="today-sub"><h3 class="group-head" id="today-cal-head">Today's calendar</h3><button class="chip" type="button" data-go="calendar">Calendar</button></div>
+        <div id="today-calendar" class="list"></div>
+      </section>
       <section class="group" aria-labelledby="today-new-head">
         <div class="today-sub"><h3 class="group-head" id="today-new-head">New enquiries</h3><button class="chip" type="button" data-go="enquiries">See all</button></div>
         <div id="today-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>

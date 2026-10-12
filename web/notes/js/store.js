@@ -2,7 +2,7 @@
    Where the notes live: this browser's IndexedDB (room for long notes with pictures), or
    localStorage if IndexedDB isn't available (e.g. some private windows). Settings are small, so they
    always go in localStorage.
-   A note: { id, title, html, created, updated, pinned, named, gdocId, gdocUrl, shared }
+   A note: { id, title, html, created, updated, pinned, named, gdocId, gdocUrl, gdocKeep, shared }
    Two kinds of note: Local (only here, in this browser) and Shared (the whole team's, kept by
    Nova Bot and synced by js/shared.js, which keeps its own copy here for speed and offline).
    Everything below works on both: a note with shared: true goes to the team, any other stays here. */
@@ -79,6 +79,7 @@
       named: n.named === true,
       gdocId: typeof n.gdocId === 'string' ? n.gdocId : '',
       gdocUrl: typeof n.gdocUrl === 'string' && n.gdocUrl.startsWith('https://') ? n.gdocUrl : '',
+      gdocKeep: n.gdocKeep === true,
       // Shared or Local (not decided yet for a brand-new note: js/shared.js picks)
       shared: n.shared === true ? true : n.shared === false ? false : undefined,
       // Shared notes only: the version the team last had, and who changed it last

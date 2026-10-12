@@ -893,6 +893,15 @@ let picked = { reminders: [], color: "violet", days: [], aesthetic: "nebula", th
 // The artwork being edited: a note card's seed and subject, a day card's salt
 let art = { seed: 0, subject: "auto", salt: "", tempId: "" };
 
+// The "Google Meet link" tick and, once Google made one, the link
+function fillMeet(it) {
+  $("f-meet").checked = Boolean(it && it.meet);
+  const link = $("f-meet-link");
+  const url = it && /^https:\/\/meet\.google\.com\/[\w-]{3,60}$/.test(it.meetUrl || "") ? it.meetUrl : "";
+  link.hidden = !url;
+  if (url) link.href = url;
+}
+
 function fillChips() {
   $("f-reminders").innerHTML = REMINDERS.map(([m, l]) => `<button type="button" data-min="${m}" aria-pressed="${picked.reminders.includes(m)}">${l}</button>`).join("");
   fillPhones();
@@ -1177,6 +1186,7 @@ function openNew({ date = cursor, time, kind = "event", special } = {}) {
   const start = `${date}T${time || (date === today() ? nextHalfHour() : "09:00")}`;
   fillWhen(start, addMinutes(start, 60), false);
   fillRepeat(null);
+  fillMeet(null);
   $("d-date").value = date;
   $("d-preset").value = "custom";
   $("d-yearly").checked = false;
@@ -1228,6 +1238,7 @@ function openExisting(type, id, date) {
     fillWhen(start, addMinutes(start, length), it.allDay);
     fillRepeat(it.repeat);
     $("f-location").value = it.location || "";
+    fillMeet(it);
   }
   fillChips();
   $("kinds").hidden = true;
@@ -1296,6 +1307,9 @@ form.addEventListener("submit", async (e) => {
     allDay,
     location: $("f-location").value.trim(),
     body: $("f-notes").value,
+    // Google Meet: Google makes the link when the calendar syncs (it then shows here)
+    meet: $("f-meet").checked,
+    ...($("f-meet").checked && editing.item?.meetUrl ? { meetUrl: editing.item.meetUrl } : {}),
     color: picked.color,
     reminders: picked.reminders,
     phones: picked.reminders.length ? picked.phones || [] : [],

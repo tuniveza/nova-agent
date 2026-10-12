@@ -35,6 +35,8 @@ export interface NoteCard {
   phones?: string[]; // which phones get them (Nova Bot's phone ids; none = the studio owner's)
   repeat?: Repeat; // see web/calendar/js/recur.js
   exdates?: string[]; // dates taken out of a repeating series
+  meet?: boolean; // "Google Meet" ticked: Google makes a Meet link when the calendar syncs
+  meetUrl?: string; // the link Google made (https://meet.google.com/…)
 }
 
 export interface DayCard {
@@ -107,6 +109,8 @@ function noteExtras(n: any): Partial<NoteCard> {
     const p = [...new Set(n.phones.filter((x: unknown) => typeof x === "string" && /^[0-9a-f]{12}$/.test(x)))].slice(0, 10) as string[];
     if (p.length) out.phones = p;
   }
+  if (n.meet === true) out.meet = true;
+  if (typeof n.meetUrl === "string" && /^https:\/\/meet\.google\.com\/[\w-]{3,60}$/.test(n.meetUrl)) out.meetUrl = n.meetUrl;
   const repeat = cleanRepeat(n.repeat);
   if (repeat) {
     out.repeat = repeat;

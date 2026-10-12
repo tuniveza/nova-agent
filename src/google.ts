@@ -24,6 +24,8 @@ interface Status {
   connected: boolean;
   drive: boolean;
   backups: boolean;
+  files?: boolean; // Agent's files kept in Drive's "Files" folder as they change
+  tasks?: boolean; // quests ⇄ Google Tasks
 }
 
 async function call<T>(path: string, body: unknown = {}, raw?: { bytes: Uint8Array; type: string }): Promise<T> {
@@ -48,18 +50,18 @@ export async function googleStatus(): Promise<Status> {
     known = { at: Date.now(), status };
     return status;
   } catch {
-    return { connected: false, drive: false, backups: false };
+    return { connected: false, drive: false, backups: false, files: false, tasks: false };
   }
 }
 export const forgetGoogleStatus = () => void (known = null);
 
 // ---- Copies in Drive ----
 
-export type DriveKind = "media" | "receipt" | "backup";
+export type DriveKind = "media" | "receipt" | "backup" | "file";
 
 export async function copyToDrive(kind: DriveKind, id: string, name: string, type: string, bytes: Uint8Array): Promise<boolean> {
   const status = await googleStatus();
-  if (!status.connected || !(kind === "backup" ? status.backups : status.drive)) return false;
+  if (!status.connected || !(kind === "backup" ? status.backups : kind === "file" ? status.files : status.drive)) return false;
   const q = new URLSearchParams({ kind, id, name, type });
   const result = await call<{ ok?: boolean; skipped?: boolean }>(`/nova-agent/google/drive/put?${q}`, {}, { bytes, type });
   return Boolean(result.ok);
@@ -105,6 +107,32 @@ export async function backupFilesToDrive(): Promise<number> {
   return sent;
 }
 
+// Agent's files (file_write): a copy in Drive's "Nova Agent/Files" each time one's saved, kept up to
+// date in place (Portal → Admin → Google → "Files and invoices in Drive")
+const FILE_TYPES: Record<string, string> = { md: "text/markdown", txt: "text/plain", csv: "text/csv", json: "application/json", html: "text/html" };
+export function mirrorFileLater(file: string, name: string, content: string): void {
+  const ext = (/\.(\w+)$/.exec(file) || [])[1] || "txt";
+  copyToDriveLater("file", `files/${file}`, name, FILE_TYPES[ext] || "text/plain", new TextEncoder().encode(content));
+}
+
+// ---- Quests ⇄ Google Tasks ----
+// Every 10 minutes: this PC's person's quests to Nova Bot, which keeps a "Nova quests" list in
+// Google Tasks in step (src/google/tasks.js there). Quests ticked off in Google come back here as
+// done. Repeating quests stay out (a task list can't hold "every day").
+
+export interface TaskQuest {
+  id: string;
+  title: string;
+  notes: string;
+  due: string | null;
+  done: boolean;
+}
+export async function syncTasks(quests: TaskQuest[]): Promise<{ completed: string[]; note?: string; skipped?: boolean } | null> {
+  const status = await googleStatus();
+  if (!status.connected || !status.tasks) return null;
+  return call("/nova-agent/google/tasks/sync", { quests });
+}
+
 // ---- For Agent (read-only) ----
 
 export interface BusyTime {
@@ -130,4 +158,34 @@ export interface ContactHit {
 }
 export async function contactsFind(q: string): Promise<ContactHit[]> {
   return (await call<{ contacts: ContactHit[] }>("/nova-agent/google/contacts/find", { q })).contacts ?? [];
+}
+
+export interface TaskHit {
+  list: string;
+  title: string;
+  due: string | null;
+  notes: string;
+}
+export async function tasksList(): Promise<TaskHit[]> {
+  return (await call<{ tasks: TaskHit[] }>("/nova-agent/google/tasks/list", {})).tasks ?? [];
+}
+export interface DriveHit {
+  id: string;
+  name: string;
+  kind: string;
+  modified: string;
+  url: string;
+}
+export async function driveSearch(q: string): Promise<DriveHit[]> {
+  return (await call<{ files: DriveHit[] }>("/nova-agent/google/drive/search", { q })).files ?? [];
+}
+export async function docRead(id: string): Promise<{ name: string; url: string; text: string; cut: boolean }> {
+  return call("/nova-agent/google/doc/read", { id });
+}
+export interface YouTubeSummary {
+  channel: { title?: string; subscribers: number | null; views: number; videos: number; before?: { subscribers: number | null; day: string } | null } | null;
+  videos: { title: string; url: string; published: string | null; views?: number; likes?: number; comments?: number }[];
+}
+export async function youtubeStats(): Promise<YouTubeSummary> {
+  return call("/nova-agent/google/youtube/stats", {});
 }

@@ -20,7 +20,7 @@
 import { config } from "./config";
 import { ukWhen } from "./campaigns";
 
-export const PLATFORMS = ["facebook", "instagram"] as const;
+export const PLATFORMS = ["facebook", "instagram", "youtube"] as const;
 export type Platform = (typeof PLATFORMS)[number];
 export const POST_STATUSES = ["draft", "pending_approval", "approved", "scheduled", "posting", "manual", "posted", "failed", "rejected"] as const;
 export type PostStatus = (typeof POST_STATUSES)[number];
@@ -96,7 +96,7 @@ async function call<T>(path: string, body: unknown = {}): Promise<T> {
 
 export async function socialContext(): Promise<SocialContext> {
   const r = await call<Partial<SocialContext>>("/nova-agent/social/context", {});
-  return { connected: r.connected ?? { facebook: false, instagram: false }, recent: r.recent ?? [], followers: r.followers ?? {}, openComments: r.openComments ?? 0, today: r.today ?? "" };
+  return { connected: r.connected ?? { facebook: false, instagram: false, youtube: false }, recent: r.recent ?? [], followers: r.followers ?? {}, openComments: r.openComments ?? 0, today: r.today ?? "" };
 }
 export async function createSocialDraft(draft: { caption: string; platforms: Platform[]; postAt?: string | null }): Promise<SocialPost> {
   const body: Record<string, unknown> = { caption: draft.caption, platforms: draft.platforms };
@@ -121,7 +121,7 @@ export async function draftCommentReply(id: number, text: string): Promise<Socia
 
 // ===== Words for Claude =====
 
-export const PLATFORM_NAMES: Record<Platform, string> = { facebook: "Facebook", instagram: "Instagram" };
+export const PLATFORM_NAMES: Record<Platform, string> = { facebook: "Facebook", instagram: "Instagram", youtube: "YouTube" };
 const on = (ps: readonly Platform[]) => ps.map((p) => PLATFORM_NAMES[p] || p).join(" and ");
 const STATUS_WORDS: Record<PostStatus, string> = {
   draft: "draft",
@@ -138,7 +138,7 @@ const STATUS_WORDS: Record<PostStatus, string> = {
 // How a posted one did, in plain words
 export function postStatsText(p: SocialPost): string {
   const s = p.stats;
-  if (!s) return p.status === "posted" ? "No results yet (they come from Meta every hour for 30 days, once Meta is connected)." : "";
+  if (!s) return p.status === "posted" ? "No results yet (they come from Meta and YouTube every hour for 30 days, once connected)." : "";
   const parts: string[] = [];
   for (const pl of PLATFORMS) {
     const x = s[pl];
@@ -154,7 +154,7 @@ export function postStatsText(p: SocialPost): string {
     ].filter(Boolean);
     if (bits.length) parts.push(`${PLATFORM_NAMES[pl]}: ${bits.join(", ")}`);
   }
-  return parts.length ? `${parts.join("; ")}${s.fetchedAt ? ` (from Meta, ${ukWhen(s.fetchedAt)})` : ""}.` : "";
+  return parts.length ? `${parts.join("; ")}${s.fetchedAt ? ` (as of ${ukWhen(s.fetchedAt)})` : ""}.` : "";
 }
 
 // One post in a line
@@ -179,12 +179,13 @@ export function postLine(p: SocialPost): string {
 export function contextText(ctx: SocialContext): string {
   const lines = [`Today is ${ctx.today || "unknown"} (UK).`];
   const connected = PLATFORMS.filter((p) => ctx.connected[p]);
+  const notYet = PLATFORMS.filter((p) => !ctx.connected[p]);
   lines.push(
-    connected.length === 2
-      ? "Facebook and Instagram are connected: approved posts go out by themselves."
+    !notYet.length
+      ? "Facebook, Instagram and YouTube are connected: approved posts go out by themselves."
       : connected.length
-        ? `${PLATFORM_NAMES[connected[0]]} is connected; posts for the other one wait for someone to post them by hand after approval.`
-        : "Meta isn't connected yet: approved posts wait in Portal → Social for someone to post them by hand."
+        ? `${connected.map((p) => PLATFORM_NAMES[p]).join(" and ")} ${connected.length === 1 ? "is" : "are"} connected; posts for ${notYet.map((p) => PLATFORM_NAMES[p]).join(" and ")} wait for someone to post them by hand after approval.`
+        : "Nothing is connected yet: approved posts wait in Portal → Social for someone to post them by hand."
   );
   for (const p of PLATFORMS) {
     const f = ctx.followers[p];

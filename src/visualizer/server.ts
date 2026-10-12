@@ -56,6 +56,7 @@ import { registerFixerRoutes } from "../fixer/routes";
 import { registerTidyRoutes } from "../tidy-routes";
 import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
 import { backupFilesToDrive, copyToDriveLater, dropFromDriveLater } from "../google";
+import { startTasksSync } from "../quests/googletasks";
 import { currentFixer, startFixer } from "../fixer/service";
 
 // Everything Nova Agent shows lives in web/: its own page (web/agent) and each panel
@@ -784,6 +785,8 @@ cron.schedule(
 );
 
 startCollectingJobs();
+// Quests ⇄ Google Tasks (when Google is connected with Tasks): every 10 minutes
+startTasksSync();
 
 // Quests: plan on start-up, then reminders and check-ins every 30 seconds
 try {

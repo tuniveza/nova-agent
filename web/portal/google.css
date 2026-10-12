@@ -55,3 +55,16 @@
   .gg-nav .btn { flex: 1; }
   .gg-big { font-size: 16px; }
 }
+
+/* Today's calendar (Portal → Today) */
+.today-ev { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; min-height: 44px; }
+.today-ev-time { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--hi); min-width: 7.5em; }
+.today-ev-title { flex: 1 1 12em; min-width: 0; overflow-wrap: anywhere; }
+.today-ev-sub { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.today-ev .chip { min-height: 36px; }
+.gg-later { margin-top: 10px; }
+
+/* Find in Google Contacts (one-to-one email form) */
+.gg-find { margin: 4px 0 10px; }
+.gg-find-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.gg-find-pick { min-height: 40px; max-width: 100%; overflow-wrap: anywhere; text-align: left; }

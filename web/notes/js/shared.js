@@ -191,7 +191,7 @@
           queue.delete(id);
           continue;
         }
-        const body = { title: n.title, html: n.html, created: n.created, updated: n.updated, pinned: n.pinned, named: n.named, gdocId: n.gdocId, gdocUrl: n.gdocUrl, base: Number.isInteger(n.rev) ? n.rev : null };
+        const body = { title: n.title, html: n.html, created: n.created, updated: n.updated, pinned: n.pinned, named: n.named, gdocId: n.gdocId, gdocUrl: n.gdocUrl, gdocKeep: n.gdocKeep === true, base: Number.isInteger(n.rev) ? n.rev : null };
         const sent = JSON.stringify(n.html) + n.title + n.pinned + n.named;
         const r = await api(`/notes/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(body) });
         if (r.status === 401) return signedOut();

@@ -1,4 +1,4 @@
-// Portal → Social: Facebook and Instagram posts (Nova Bot posts them through Meta, src/social.js
+// Portal → Social: Facebook, Instagram and YouTube posts (Nova Bot posts them through Meta and Google, src/social.js
 // there). Anyone signed in writes a post and adds its pictures and videos (kept on the studio
 // computer: src/social-media.ts in Nova Agent); nothing is posted until an admin approves it here.
 // Without Meta connected, an approved post waits for someone to post it by hand: the words and files
@@ -24,7 +24,8 @@
     failed: ["pill-failed", "Didn't post"],
     rejected: ["pill-stop", "Rejected"],
   };
-  const NAMES = { facebook: "Facebook", instagram: "Instagram" };
+  const NAMES = { facebook: "Facebook", instagram: "Instagram", youtube: "YouTube" };
+  const ALL = ["facebook", "instagram", "youtube"];
   const WRITERS = { agent: "Nova Agent", "staff-chat": "Portal's staff chat" };
   const EVENTS = {
     created: "Written", edited: "Changed", submitted: "Sent for approval", approved: "Approved", rejected: "Rejected", scheduled: "Scheduled",
@@ -83,12 +84,13 @@
     const k = K();
     const posts = data.posts || [];
     const connected = data.connected || {};
-    const both = connected.facebook && connected.instagram;
-    const one = connected.facebook || connected.instagram;
+    const on = ALL.filter((p) => connected[p]);
+    const off = ALL.filter((p) => !connected[p]);
+    const list = (ps) => ps.map((p) => NAMES[p]).join(ps.length === 2 ? " and " : ", ");
     k.setText(
       "social-hint",
-      (data.canDecide ? "Facebook and Instagram posts. Nothing is posted until you approve it. " : "Facebook and Instagram posts. An admin approves these (signed in to Portal in a browser); nothing is posted until then. ") +
-        (both ? "Approved posts go out by themselves." : one ? `Approved posts go out on ${connected.facebook ? "Facebook" : "Instagram"} by themselves; ${connected.facebook ? "Instagram" : "Facebook"} ones wait for someone to post them by hand.` : "Meta isn't connected yet, so approved posts wait here for someone to post them by hand.")
+      (data.canDecide ? "Facebook, Instagram and YouTube posts. Nothing is posted until you approve it. " : "Facebook, Instagram and YouTube posts. An admin approves these (signed in to Portal in a browser); nothing is posted until then. ") +
+        (!off.length ? "Approved posts go out by themselves." : on.length ? `Approved posts go out on ${list(on)} by themselves; ${list(off)} ones wait for someone to post them by hand.` : "Nothing's connected yet, so approved posts wait here for someone to post them by hand.")
     );
     drawGlance(posts);
     const want = Number(new URLSearchParams(location.search).get("post")) || null;
@@ -150,10 +152,10 @@
     const next = posts.filter((p) => p.status === "scheduled" && p.postAt).sort((a, b) => a.postAt.localeCompare(b.postAt))[0];
     tile(String(posts.filter((p) => p.status === "scheduled").length), "Scheduled", next ? "Next: " + K().ukWhen(next.postAt) : "");
     const f = data.followers || {};
-    for (const p of ["facebook", "instagram"]) {
+    for (const p of ALL) {
       if (!f[p]) continue;
       const c = Number(f[p].change) || 0;
-      tile(people(f[p].followers), NAMES[p] + " followers", (c >= 0 ? "+" : "−") + people(Math.abs(c)) + " in 30 days");
+      tile(people(f[p].followers), NAMES[p] + (p === "youtube" ? " subscribers" : " followers"), (c >= 0 ? "+" : "−") + people(Math.abs(c)) + (p === "youtube" ? " since yesterday" : " in 30 days"));
     }
     const open = (data.comments || []).filter((c) => !c.handled).length;
     tile(String(open), "Comments to answer", "", scrollTo("social-comments-head"));
@@ -184,19 +186,23 @@
       const parts = [];
       if (ig) parts.push([`Instagram ${n.toLocaleString("en-GB")} / ${limits.instagramCaption.toLocaleString("en-GB")}`, n > limits.instagramCaption], [`${tags} / ${limits.instagramHashtags} hashtags`, tags > limits.instagramHashtags]);
       if (state.platforms.includes("facebook")) parts.push([`Facebook ${n.toLocaleString("en-GB")} characters`, false]);
+      if (state.platforms.includes("youtube")) {
+        const first = (words.value.split("\n").map((l) => l.trim()).find(Boolean) || "");
+        parts.push([`YouTube title ${first.length} / ${limits.youtubeTitle || 100} (the first line)`, first.length > (limits.youtubeTitle || 100)], [`description ${n.toLocaleString("en-GB")} / ${(limits.youtubeDescription || 5000).toLocaleString("en-GB")}`, n > (limits.youtubeDescription || 5000)]);
+      }
       count.replaceChildren(...parts.map(([t, over]) => el("span", over ? "over" : "", t)));
     };
     words.addEventListener("input", recount);
 
     const where = el("fieldset", "sc-platforms");
     where.appendChild(el("legend", "", "Where"));
-    for (const p of ["facebook", "instagram"]) {
+    for (const p of ALL) {
       const l = el("label", "sc-check");
       const box2 = el("input");
       box2.type = "checkbox";
       box2.checked = state.platforms.includes(p);
       box2.addEventListener("change", () => {
-        state.platforms = ["facebook", "instagram"].filter((x) => (x === p ? box2.checked : state.platforms.includes(x)));
+        state.platforms = ALL.filter((x) => (x === p ? box2.checked : state.platforms.includes(x)));
         recount();
       });
       l.append(box2, el("span", "", NAMES[p]));
@@ -254,6 +260,7 @@
       el("p", "", `Up to ${limits.media}. Pictures become JPEGs (what Instagram takes). Videos: MP4 or MOV${onStudioPC ? "" : ", up to 25 MB from here (bigger ones from the studio computer)"}. They're kept on the studio computer, so it has to be on when the post goes out.`)
     );
     if (!state.media.length && state.platforms.includes("instagram")) drop.appendChild(el("p", "", "Instagram needs at least one before it can be approved."));
+    if (state.platforms.includes("youtube")) drop.appendChild(el("p", "", "YouTube takes one video on its own (no pictures). Google keeps new uploads private until YouTube has checked the studio's Google project: make each one public in YouTube Studio until then."));
 
     const at = el("input");
     at.type = "datetime-local";
@@ -393,7 +400,7 @@
   $("social-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     if (draft.uploading.length) return void ($("sc-new-error").textContent = "Wait for the files to finish adding.");
-    if (!draft.platforms.length) return void ($("sc-new-error").textContent = "Pick Facebook, Instagram or both.");
+    if (!draft.platforms.length) return void ($("sc-new-error").textContent = "Pick Facebook, Instagram and/or YouTube.");
     const button = e.submitter || $("social-form").querySelector('[type="submit"]');
     button.disabled = true;
     try {
@@ -552,6 +559,7 @@
         : t.state === "failed" ? "Didn't post"
         : t.mode === "manual" ? "Waiting for someone to post it by hand"
         : t.state === "preparing" ? "Instagram is getting it ready"
+        : t.state === "uploading" ? "Uploading to YouTube"
         : "Waiting";
       li.appendChild(el("span", t.state === "failed" ? "bad" : "", words));
       if (t.url) {
@@ -610,7 +618,7 @@
   // How it did, per platform
   function results(p) {
     const wrap = el("div", "");
-    for (const pl of ["facebook", "instagram"]) {
+    for (const pl of ALL) {
       const s = p.stats[pl];
       if (!s) continue;
       const box = el("div", "cp-stats");
@@ -621,7 +629,7 @@
         box.appendChild(t);
       };
       tile(s.reach, NAMES[pl] + " · reached");
-      tile(s.views, "Views");
+      tile(s.views, s.reach === undefined ? NAMES[pl] + " · views" : "Views");
       tile(s.likes, "Likes");
       tile(s.comments, "Comments");
       tile(s.shares, "Shares");
@@ -629,7 +637,7 @@
       tile(s.clicks, "Clicks");
       if (box.children.length) wrap.appendChild(box);
     }
-    wrap.appendChild(el("p", "card-foot", p.stats.fetchedAt ? "From Meta, " + K().ukWhen(p.stats.fetchedAt) + ". Updated every hour for 30 days." : "Results come from Meta within the hour."));
+    wrap.appendChild(el("p", "card-foot", p.stats.fetchedAt ? "As of " + K().ukWhen(p.stats.fetchedAt) + ". Updated every hour for 30 days." : "Results come within the hour."));
     return wrap;
   }
 
@@ -660,7 +668,7 @@
   async function savePost(card, p) {
     const state = editing.state;
     if (state.uploading.length) return problem(card, "Wait for the files to finish adding.");
-    if (!state.platforms.length) return problem(card, "Pick Facebook, Instagram or both.");
+    if (!state.platforms.length) return problem(card, "Pick Facebook, Instagram and/or YouTube.");
     card.querySelectorAll("button").forEach((b) => (b.disabled = true));
     try {
       await K().api("social/" + p.id + "/edit", { body: bodyOf(state) });

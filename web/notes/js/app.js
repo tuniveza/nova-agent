@@ -705,6 +705,8 @@
       { label: 'Import…', icon: 'import', kbd: 'Ctrl+O', run: openImport },
       { label: 'Download', icon: 'export', sub: exportItems },
       { label: 'Send to Google Docs…', icon: 'doc', run: sendToDocs },
+      { label: 'Keep in Google Docs', icon: 'doc', checked: Boolean(current && current.gdocKeep), run: toggleKeepInDocs },
+      { label: 'Open a Google Doc…', icon: 'import', run: openGoogleDoc },
       { sep: true },
       { label: 'Back up all notes (.json)', icon: 'export', sfx: 'send', run: backupAll },
       { label: 'Restore a backup…', icon: 'import', run: openImport },
@@ -1240,6 +1242,47 @@
     else window.open(data.url, '_blank', 'noopener');
     toast('In Google Docs ✦ (the Nova Agent folder)');
   }
+  // Keep in Google Docs (a shared note only): Nova Bot keeps the note and its Google Doc in step both
+  // ways every 15 minutes; the newer change wins and the other is kept as a copy
+  async function toggleKeepInDocs() {
+    if (!current) return;
+    if (current.shared === false || !NN.shared || NN.shared.signedIn === false) return toast('Only shared notes can be kept in Google Docs: move it to Shared first.');
+    const on = !current.gdocKeep;
+    await saveNow();
+    try {
+      if (NN.shared.sync) await NN.shared.sync();
+      const res = await fetch('/app/api/google/docs/keep', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ noteId: current.id, on }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return toast(data.error || "Google Docs didn't answer. Try again in a minute.");
+      current.gdocKeep = data.kept === true;
+      if (data.url) {
+        current.gdocUrl = data.url;
+        current.gdocId = (data.url.match(/\/d\/([\w-]+)/) || [])[1] || current.gdocId;
+      }
+      await S.notes.put(current);
+      toast(current.gdocKeep ? 'Kept in Google Docs ✦ Changes go both ways every 15 minutes' : 'No longer kept in Google Docs (the Doc stays in Drive)', current.gdocKeep && data.url ? 'Open' : null, current.gdocKeep && data.url ? () => window.open(data.url, '_blank', 'noopener') : null);
+    } catch (err) {
+      toast("Google Docs didn't answer. Try again in a minute.");
+    }
+  }
+
+  // Open a Google Doc into Notes (from the studio's Drive, by its link), kept in step from then on
+  async function openGoogleDoc() {
+    const link = window.prompt('Paste the Google Doc\'s link (docs.google.com/document/d/…):', '');
+    if (!link || !link.trim()) return;
+    try {
+      const res = await fetch('/app/api/google/docs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ url: link.trim() }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return toast(data.error || "That Doc couldn't be opened. Try again in a minute.");
+      if (NN.shared && NN.shared.sync) await NN.shared.sync();
+      notes = await S.notes.all();
+      if (notes.some((n) => n.id === data.noteId)) await openNote(data.noteId);
+      toast(data.oneWay ? "Opened ✦ It's kept in step from the Doc (Nova can't change a Doc it didn't make, so changes here stay in Notes)" : 'Opened ✦ Kept in step with its Google Doc');
+    } catch (err) {
+      toast("That Doc couldn't be opened. Try again in a minute.");
+    }
+  }
+
   $('gd-copy').addEventListener('click', async () => {
     await saveNow();
     const { body } = exported();

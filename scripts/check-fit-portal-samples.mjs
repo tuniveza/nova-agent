@@ -365,8 +365,8 @@ function socialBody() {
   return {
     posts: SOCIAL_POSTS,
     comments: SOCIAL_COMMENTS,
-    followers: { facebook: { followers: 12345, day: "2026-10-11", change: 234 }, instagram: { followers: 54321, day: "2026-10-11", change: -12 } },
-    connected: { facebook: true, instagram: false },
+    followers: { facebook: { followers: 12345, day: "2026-10-11", change: 234 }, instagram: { followers: 54321, day: "2026-10-11", change: -12 }, youtube: { followers: 9876, day: "2026-10-12", change: 21, views: 123456, videos: 42 } },
+    connected: { facebook: true, instagram: false, youtube: true },
     canDecide: true,
     adsUrl: "https://adsmanager.facebook.com/",
     limits: { instagramCaption: 2200, instagramHashtags: 30, facebookCaption: 63206, media: 10 },
@@ -722,6 +722,12 @@ function googleBody() {
     ["drive", "Pictures, videos and receipts in Google Drive", "In a \"Nova Agent\" folder, so posts go out even with the studio PC off.", true, true],
     ["backups", "Nightly backups to Google Drive", "Index and the PC's files, every night.", true, true],
     ["sheets", "Money in Google Sheets", "A live sheet of invoices, payments and expenses for the accountant.", true, true],
+    ["inbox", "Gmail as Enquiries' inbox", "New customer emails to the studio's Gmail come into Enquiries (newsletters, notifications and spam stay out). " + LONGWORD, true, true],
+    ["meet", "Google Meet links", "Events you tick \"Google Meet\" on in Calendar, and online-session bookings, get a Meet link.", true, true],
+    ["tasks", "Quests in Google Tasks", "Missions and quests in a \"Nova quests\" list; ticking one off in Google Tasks marks it done in Nova.", true, false],
+    ["docs", "Notes kept in Google Docs", "Notes you mark \"Keep in Google Docs\" stay in step with their Google Doc, both ways.", true, true],
+    ["files", "Files and invoices in Drive", "Agent's files in \"Nova Agent/Files\" and each sent invoice in \"Nova Agent/Invoices\".", true, true],
+    ["youtube", "YouTube", "The channel's numbers in Social, and YouTube as a place to post videos (uploaded only after an admin's Approve).", true, false],
   ];
   return {
     sandbox: false,
@@ -732,7 +738,9 @@ function googleBody() {
     connected: true,
     account: LONGWORD.toLowerCase() + "@gmail.com",
     connectedAt: iso(11, 10),
-    missing: ["Clients in Google Contacts"],
+    missing: ["Clients in Google Contacts", "Quests in Google Tasks", "YouTube"],
+    needsReconnect: true,
+    held: {},
     options: Object.fromEntries(parts.map(([id, , , on]) => [id, on])),
     parts: parts.map(([id, label, help, on, allowed]) => ({ id, label, help, on, allowed })),
     status: {
@@ -740,6 +748,10 @@ function googleBody() {
       replies: { at: iso(12, 8), ok: false, note: "That Google feature isn't switched on in Google Cloud yet: step 1 of the setup, then try again. " + LONGWORD },
       sheets: { at: iso(12, 7), ok: true, note: "Up to date · 12 invoices, 9 payments, 30 expenses in the sheet" },
       backups: { at: iso(11, 3), ok: true, note: "Index backed up (37 pages), 2026-10-12" },
+      contacts: { at: iso(12, 6), ok: true, note: "Contacts: 9 of 10 clients in Google so far · the rest next run", more: true },
+      inbox: { at: iso(12, 5), ok: true, running: true, note: "Syncing now…" },
+      docs: { at: iso(12, 4), ok: true, note: "3 notes kept in Google Docs · 1 to Docs, 1 copies kept" },
+      files: { at: iso(12, 3), ok: false, note: "Google asked Nova to slow down; it tries again shortly. Next try: 14:35." },
     },
     folderUrl: "https://drive.google.com/drive/folders/" + LONGWORD,
     sheetUrl: "https://docs.google.com/spreadsheets/d/" + LONGWORD + "/edit",
@@ -805,6 +817,12 @@ export function portalMock(pathWithQuery, method = "GET") {
   if (path === "money") return moneyBody();
   if (path === "tidy") return tidyBody("bot");
   if (path === "google") return googleBody();
+  if (path === "google/today") return { events: [
+    { id: "gp-1", title: "Dentist " + LONGWORD, start: "09:30", end: "10:15", allDay: false, location: "Forest Hill Road, London " + LONGWORD2, meetUrl: "", from: "Google Calendar" },
+    { id: "ev-1", title: "Call with the label", start: "15:00", end: "15:30", allDay: false, location: "", meetUrl: "https://meet.google.com/abc-defg-hij", from: ME_NAME },
+    { id: "d-1", title: "Release day", start: null, end: null, allDay: true, location: "", meetUrl: "", from: "Nova" },
+  ] };
+  if (path.startsWith("google/contacts")) return { contacts: [{ name: "Sam " + LONGWORD, email: "bookings." + LONGWORD.toLowerCase() + "@the-venue.co.uk", phone: null }] };
   if (path === "tidy-api/state") return tidyBody("pc");
   hit = /^money\/invoices\/(\d+)$/.exec(path);
   if (hit) return moneyInvoiceBody(Number(hit[1]));
