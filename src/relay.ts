@@ -80,7 +80,8 @@ export function relayAllowed(method: string, path: string, staff: Staff): boolea
   return !!rule && (!rule.admin || staff.role === "admin");
 }
 
-const MAX_BODY = 25 * 1024 * 1024;
+// (Nova Bot takes up to 95 MB in one request; each route here has its own limit too)
+const MAX_BODY = 95 * 1024 * 1024;
 const PIECE = 256 * 1024;
 const PASS_HEADERS = ["accept", "content-type", "x-nova-visualizer", "x-nova-rev", "x-nova-app", "last-event-id", "range"];
 // A made-up host: relayed requests are never "from this computer" (see fromOurPage)

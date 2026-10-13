@@ -11,9 +11,37 @@
 
 import type { Hono } from "hono";
 import { listBoards, removeBoard, saveBoard } from "./board";
-import { BOARD_FILE_TYPES, MAX_BOARD_FILE_BYTES, boardFiles } from "./board-files";
+import { createReadStream } from "node:fs";
+import { Readable } from "node:stream";
+import { BOARD_FILE_TYPES, MAX_BOARD_FILE_BYTES, MAX_BOARD_FILE_ONLINE, TooBig, boardFiles, mb } from "./board-files";
+import { copyBoardFileToDriveLater } from "./google";
 import { linkPreview } from "./board-link";
-import { personFor } from "./person";
+import { isRelayed, personFor } from "./person";
+
+// What a Board's file is shown with: only ever something to look at or listen to, never run
+const FILE_HEADERS = {
+  "Content-Security-Policy": "sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'; object-src 'self'",
+  "X-Content-Type-Options": "nosniff",
+  // A file's id never changes (a new file is a new id)
+  "Cache-Control": "private, max-age=86400, immutable",
+  "Accept-Ranges": "bytes",
+};
+
+// "bytes=a-b" (or "a-", or "-n": the last n) -> [start, end] inside a file of `size`, or null (all
+// of it), or "bad" (not satisfiable)
+export function readRange(header: string | undefined, size: number): [number, number] | null | "bad" {
+  const m = /^bytes=(\d*)-(\d*)$/.exec((header || "").trim());
+  if (!m || (!m[1] && !m[2])) return null;
+  let start: number, end: number;
+  if (!m[1]) {
+    start = Math.max(0, size - Number(m[2]));
+    end = size - 1;
+  } else {
+    start = Number(m[1]);
+    end = m[2] ? Math.min(Number(m[2]), size - 1) : size - 1;
+  }
+  return start > end || start >= size ? "bad" : [start, end];
+}
 
 // Changes (and the link look-up) only from Nova Agent's own pages: they send this header, which
 // other websites can't add to a request here
@@ -44,29 +72,42 @@ export function registerBoardRoutes(app: Hono): void {
     return removeBoard(person, c.req.param("id")) ? c.json({ ok: true }) : c.json({ ok: false, message: "No such board." }, 404);
   });
 
+  // How big a file may be: 500 MB here on the studio computer, 95 MB online (through Nova Bot)
+  app.get("/board-api/limits", (c) => {
+    const max = isRelayed(c.req.raw) ? MAX_BOARD_FILE_ONLINE : MAX_BOARD_FILE_BYTES;
+    return c.json({ ok: true, maxBytes: max, max: mb(max), here: !isRelayed(c.req.raw), types: Object.keys(BOARD_FILE_TYPES) }, 200, { "Cache-Control": "no-store" });
+  });
+
   app.post("/actions/board-files", async (c) => {
     await personFor(c.req.raw);
     const type = (c.req.header("Content-Type") || "").split(";")[0].trim().toLowerCase();
-    if (!BOARD_FILE_TYPES[type]) return c.json({ ok: false, message: "That kind of file can't go on a board (pictures, PDFs, text, audio and MP4 can)." }, 415);
-    if (Number(c.req.header("Content-Length") || 0) > MAX_BOARD_FILE_BYTES) return c.json({ ok: false, message: "That's too big for a board (25 MB at most)." }, 413);
+    if (!BOARD_FILE_TYPES[type]) return c.json({ ok: false, message: "That kind of file can't go on a board (pictures, PDFs, text, audio and video can)." }, 415);
+    const max = isRelayed(c.req.raw) ? MAX_BOARD_FILE_ONLINE : MAX_BOARD_FILE_BYTES;
+    if (Number(c.req.header("Content-Length") || 0) > max) return c.json({ ok: false, message: `That's too big for a board (${mb(max)} at most${max < MAX_BOARD_FILE_BYTES ? " online; up to " + mb(MAX_BOARD_FILE_BYTES) + " on the studio computer itself" : ""}).` }, 413);
+    if (!c.req.raw.body) return c.json({ ok: false, message: "That file is empty." }, 400);
     try {
-      const file = boardFiles.save(new Uint8Array(await c.req.arrayBuffer()), type);
+      const file = await boardFiles.saveStream(c.req.raw.body, type, max);
+      // A copy in Google Drive, in the background (Nova Bot shows it from there online)
+      const info = boardFiles.info(file.id);
+      if (info) copyBoardFileToDriveLater(file.id, c.req.header("X-Nova-Name") || file.id, file.type, info.path, info.size);
       return c.json({ ok: true, file });
     } catch (error) {
-      return c.json({ ok: false, message: (error as Error).message }, 400);
+      return c.json({ ok: false, message: (error as Error).message }, error instanceof TooBig ? 413 : 400);
     }
   });
 
+  // One of those files: all of it, or a part (Range), so videos start at once and can skip
   app.get("/board-files/:id", (c) => {
-    const found = boardFiles.read(c.req.param("id"));
+    const found = boardFiles.info(c.req.param("id"));
     if (!found) return c.text("No such file", 404);
-    return c.body(new Uint8Array(found.bytes), 200, {
-      "Content-Type": found.type,
-      "Content-Disposition": `inline; filename="${c.req.param("id")}"`,
-      // Only ever something to look at or listen to: it can't run anything
-      "Content-Security-Policy": "sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'; object-src 'self'",
-      "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "private, max-age=86400",
+    const range = readRange(c.req.header("Range"), found.size);
+    const base = { "Content-Type": found.type, "Content-Disposition": `inline; filename="${c.req.param("id")}"`, ETag: `"${c.req.param("id")}"`, ...FILE_HEADERS };
+    if (range === "bad") return c.body(null, 416, { ...base, "Content-Range": `bytes */${found.size}` });
+    const [start, end] = range || [0, found.size - 1];
+    const stream = Readable.toWeb(createReadStream(found.path, { start, end })) as unknown as ReadableStream<Uint8Array>;
+    return new Response(stream, {
+      status: range ? 206 : 200,
+      headers: { ...base, "Content-Length": String(end - start + 1), ...(range ? { "Content-Range": `bytes ${start}-${end}/${found.size}` } : {}) },
     });
   });
 

@@ -2,7 +2,7 @@
 // (src/board-files.ts), link previews that only open public pages (src/board-link.ts), and the
 // addresses (src/board-routes.ts), reachable online through the relay for signed-in staff.
 //   Run: npm test
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Hono } from "hono";
@@ -155,5 +155,54 @@ describe("online", () => {
     expect(relay.relayAllowed("GET", "/board-api/boards", null)).toBe(false);
     expect(relay.relayAllowed("GET", "/board-files/../data/staff.json", sam)).toBe(false);
     expect(relay.relayAllowed("DELETE", "/board-api/boards/abcdef123456", sam)).toBe(false);
+  });
+});
+
+describe("big files and parts of them", () => {
+  it("a file saved as it arrives, refused part-way when it's over the limit, and read back in parts (Range)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "nova-board-stream-")) + "/";
+    const { diskBoardStore } = await import("../src/board-files");
+    const { readRange } = await import("../src/board-routes");
+    const store = diskBoardStore(dir);
+    const mp4 = new Uint8Array(3 * 1024 * 1024);
+    mp4.set(new TextEncoder().encode("\0\0\0\x18ftypisom"), 0);
+    for (let i = 16; i < mp4.length; i++) mp4[i] = i & 255;
+    const streamOf = (bytes: Uint8Array, piece = 65536) =>
+      new ReadableStream<Uint8Array>({
+        start(c) {
+          for (let i = 0; i < bytes.length; i += piece) c.enqueue(bytes.subarray(i, i + piece));
+          c.close();
+        },
+      });
+    const saved = await store.saveStream(streamOf(mp4), "video/mp4");
+    expect(saved.size).toBe(mp4.length);
+    expect(store.info(saved.id)?.size).toBe(mp4.length);
+    expect(Buffer.compare(store.read(saved.id)!.bytes, Buffer.from(mp4))).toBe(0);
+    // Over the limit: refused, and nothing half-written is left behind
+    await expect(store.saveStream(streamOf(mp4), "video/mp4", 1024 * 1024)).rejects.toThrow(/too big/);
+    expect(readdirSync(dir).filter((f) => f.endsWith(".part"))).toHaveLength(0);
+    // Not what it says it is
+    await expect(store.saveStream(streamOf(new TextEncoder().encode("<html>hi</html>")), "video/mp4")).rejects.toThrow(/isn't the kind/);
+    expect(readRange("bytes=0-99", 1000)).toEqual([0, 99]);
+    expect(readRange("bytes=900-", 1000)).toEqual([900, 999]);
+    expect(readRange("bytes=-100", 1000)).toEqual([900, 999]);
+    expect(readRange("bytes=5000-", 1000)).toBe("bad");
+    expect(readRange(undefined, 1000)).toBeNull();
+  });
+
+  it("through the routes: a video comes back whole or in parts, and the limit is bigger here than online", async () => {
+    const { as, call, app } = await studio();
+    const mp4 = new Uint8Array(200_000);
+    mp4.set(new TextEncoder().encode("\0\0\0\x18ftypisom"), 0);
+    for (let i = 16; i < mp4.length; i++) mp4[i] = (i * 7) & 255;
+    const up = await call(as("bea"), "POST", "/actions/board-files", mp4, { "content-type": "video/mp4" });
+    expect(up.status).toBe(200);
+    const part = await call(as("bea"), "GET", `/board-files/${up.data.file.id}`, undefined, { range: "bytes=1000-1999" });
+    expect(part.status).toBe(206);
+    expect(Buffer.compare(Buffer.from(part.data as ArrayBuffer), Buffer.from(mp4.subarray(1000, 2000)))).toBe(0);
+    // Online (through Nova Bot) 95 MB; on the studio computer itself 500 MB
+    expect((await call(as("bea"), "GET", "/board-api/limits")).data.maxBytes).toBe(95 * 1024 * 1024);
+    const here = await (await app.fetch(new Request("http://localhost:4545/board-api/limits"))).json();
+    expect(here.maxBytes).toBe(500 * 1024 * 1024);
   });
 });

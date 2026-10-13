@@ -56,7 +56,7 @@ import { registerBoardRoutes } from "../board-routes";
 import { registerFixerRoutes } from "../fixer/routes";
 import { registerTidyRoutes } from "../tidy-routes";
 import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
-import { backupFilesToDrive, copyToDriveLater, dropFromDriveLater } from "../google";
+import { backupFilesToDrive, copyMissingBoardFilesToDrive, copyToDriveLater, dropFromDriveLater } from "../google";
 import { startTasksSync } from "../quests/googletasks";
 import { currentFixer, startFixer } from "../fixer/service";
 
@@ -787,6 +787,13 @@ cron.schedule(
   },
   { timezone: config.timezone },
 );
+
+// A Board's files not yet in Google Drive (dropped while Google was off): a minute after start-up,
+// then every hour (unless this is a throwaway test server)
+if (!process.env.FIXER_DRY) {
+  setTimeout(copyMissingBoardFilesToDrive, 60_000);
+  cron.schedule("40 * * * *", copyMissingBoardFilesToDrive, { timezone: config.timezone });
+}
 
 startCollectingJobs();
 // Quests ⇄ Google Tasks (when Google is connected with Tasks): every 10 minutes

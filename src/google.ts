@@ -16,7 +16,8 @@
 //
 // There's no send, create or change tool for the AI here: the read ones only.
 
-import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { createReadStream, readdirSync, readFileSync, existsSync, writeFileSync, statSync } from "node:fs";
+import { Readable } from "node:stream";
 import { config } from "./config";
 import { trace } from "./trace";
 
@@ -72,6 +73,60 @@ export function copyToDriveLater(kind: DriveKind, id: string, name: string, type
   void copyToDrive(kind, id, name, type, bytes)
     .then((done) => done && trace("task", "ok", `Google Drive: a copy of a ${kind === "media" ? "social post's file" : kind} is kept there`))
     .catch((error) => trace("task", "warn", `Google Drive didn't take a copy: ${(error as Error).message}`));
+}
+
+// A Board's picture, video or file: the studio computer uploads it to Drive's "Nova Agent/Board"
+// itself, straight from disk (Nova Bot makes the upload and is told which file it became), so it
+// can be as big as a board takes (500 MB) and Nova Bot can show it online from Drive.
+const BOARD_DRIVE_LOG = () => `${config.paths.dataDir}board-files/.drive.json`;
+function boardDriveLog(): Record<string, string> {
+  try {
+    return JSON.parse(readFileSync(BOARD_DRIVE_LOG(), "utf8"));
+  } catch {
+    return {};
+  }
+}
+export async function copyBoardFileToDrive(id: string, name: string, type: string, path: string, size: number): Promise<boolean> {
+  if (boardDriveLog()[id]) return true;
+  const status = await googleStatus();
+  if (!status.connected || !status.drive) return false;
+  const start = await call<{ ok?: boolean; session?: string; skipped?: boolean }>("/nova-agent/google/drive/start", { kind: "board", id, name, type, size });
+  if (!start.session) return false;
+  const res = await fetch(start.session, {
+    method: "PUT",
+    headers: { "Content-Type": type, "Content-Length": String(size) },
+    body: Readable.toWeb(createReadStream(path)) as unknown as BodyInit,
+    duplex: "half",
+    signal: AbortSignal.timeout(30 * 60_000),
+  } as RequestInit);
+  const made = (await res.json().catch(() => ({}))) as { id?: string };
+  if (!res.ok || !made.id) throw new Error(`Google Drive didn't take the upload (${res.status}).`);
+  await call("/nova-agent/google/drive/link", { kind: "board", id, driveId: made.id, name });
+  const log = boardDriveLog();
+  log[id] = made.id;
+  writeFileSync(BOARD_DRIVE_LOG(), JSON.stringify(log), { mode: 0o600 });
+  return true;
+}
+// One at a time, in the background: never holds up the drop, never throws
+let boardQueue: Promise<unknown> = Promise.resolve();
+export function copyBoardFileToDriveLater(id: string, name: string, type: string, path: string, size: number): void {
+  boardQueue = boardQueue
+    .then(() => copyBoardFileToDrive(id, name, type, path, size))
+    .then((done) => done && trace("task", "ok", "Google Drive: a Board's file is kept there (shown online from Drive)"))
+    .catch((error) => trace("task", "warn", `Google Drive didn't take a Board's file: ${(error as Error).message}`));
+}
+// Files dropped before Google was connected (or while it was off): copied now. Started with Nova
+// Agent and every hour (src/visualizer/server.ts).
+export function copyMissingBoardFilesToDrive(): void {
+  const dir = `${config.paths.dataDir}board-files/`;
+  if (!existsSync(dir)) return;
+  const done = boardDriveLog();
+  const TYPES: Record<string, string> = { jpg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", pdf: "application/pdf", txt: "text/plain", md: "text/markdown", csv: "text/csv", mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", ogg: "audio/ogg", mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime" };
+  for (const file of readdirSync(dir)) {
+    const m = /^(b-\d{8}-[a-f0-9]{12})\.(\w+)$/.exec(file);
+    if (!m || done[m[1]] || !TYPES[m[2]]) continue;
+    copyBoardFileToDriveLater(m[1], m[1], TYPES[m[2]], dir + file, statSync(dir + file).size);
+  }
 }
 
 export function dropFromDriveLater(kind: DriveKind, id: string): void {
