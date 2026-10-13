@@ -11,7 +11,7 @@ export const LINES = [
   "calendar today", "calendar week", "notes", "notes list", "board", "board list",
   "portal enquiries", "portal chats", "portal clients", "portal money", "portal campaigns", "portal outreach", "portal social", "portal approvals", "portal tests", "portal alerts",
   "enquiries", "clients", "money", "campaigns", "social", "approvals",
-  "google", "google status", "fixer", "fixer jobs", "lossless status", "desk", "deploy status",
+  "google", "google status", "fixer", "fixer jobs", "lossless status", "computer", "desk", "deploy status",
   "music", "theme list", "index search studio", "search studio", "logs 5", "admin crew", "vps show",
   "nonsense", "quets list",
 ];

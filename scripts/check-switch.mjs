@@ -1,7 +1,7 @@
-// The switch-over to the VPS, the app's side: Desk's "Live now" card (web/portal/desk.js) and
+// The switch-over to the VPS, the app's side: Computer's "Live now" card (web/portal/desk.js) and
 // Portal's quiet new notification address when the server's key changes (web/portal/app.js).
 //   node scripts/check-switch.mjs [out-dir]
-// Desk is drawn in a real browser with a pretend Portal kit; the notification code is taken from
+// Computer is drawn in a real browser with a pretend Portal kit; the notification code is taken from
 // app.js as it is and run with a pretend phone.
 import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
@@ -11,7 +11,7 @@ const results = [];
 const ok = (name, pass, extra = "") => results.push(`${pass ? "PASS" : "FAIL"} ${name}${extra ? ` (${extra})` : ""}`);
 const root = new URL("..", import.meta.url).pathname;
 
-// ---- Desk: which side is live, the commands, the warnings ----
+// ---- Computer (Portal → Admin): which side is live, the commands, the warnings ----
 const here = (over) => ({
   where: "cloudflare",
   url: "https://novacane-worker.novacane-studio.workers.dev",

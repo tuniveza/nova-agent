@@ -4,7 +4,7 @@ Console is in Nova Agent's **Tools**. Type commands for the whole of Nova Agent 
 
 ## The Nova tab
 
-Type a command and press Enter, or tap one in the row of commands above (Today, Now, Quests, Calendar, Notes, Boards, Enquiries, Clients, Money, Social, Approvals, Google, Desk, Search…, Ask Agent…, Help, Clear). **Tab** finishes a word, and **↑ ↓** go back through what you typed. Type **help** for every command in groups (Start here, Plans, Apps, Studio, Tools, Server, Admin, Console), each with what it does and an example, or **help quests** for one. A typo gets a "Did you mean …?", and some other words work too (`inbox`, `tasks`, `cal`, `server`, `find`, `terminal`, `ssh`…).
+Type a command and press Enter, or tap one in the row of commands above (Today, Now, Quests, Calendar, Notes, Boards, Enquiries, Clients, Money, Social, Approvals, Google, Computer, Search…, Ask Agent…, Help, Clear). **Tab** finishes a word, and **↑ ↓** go back through what you typed. Type **help** for every command in groups (Start here, Plans, Apps, Studio, Tools, Server, Admin, Console), each with what it does and an example, or **help quests** for one. A typo gets a "Did you mean …?", and some other words work too (`inbox`, `tasks`, `cal`, `server`, `find`, `terminal`, `ssh`…).
 
 Everything is centred and easy to read: Console sits in a centred column, with bigger text, headings in the theme's colours, lined-up tables, and help with the command in pink and its example in green. On a phone, help stacks each command over what it does.
 
@@ -29,7 +29,7 @@ Everything is centred and easy to read: Console sits in a centred column, with b
 | `theme list` / `theme pulsar` / `theme own` | The look |
 | `open <app>` | Opens an app or panel: portal, calendar, notes, board, index, lossless, visualizer, observatory, fixer, agent, quests, missions, manual |
 | `agent "what's on today?"` (or `ask`) | Asks Agent, and shows the answer here |
-| `desk` | Nova Bot on Cloudflare and on the VPS side by side: versions, the PC link, VPS memory, disk, services, last data copy and backup, the timed jobs (admins) |
+| `computer` (or `desk`) | Nova Bot on Cloudflare and on the VPS side by side, and which one is live: versions, the PC link, VPS memory, disk, services, last data copy and backup, the timed jobs (admins) |
 | `deploy status` | What's live where: Cloudflare's version, the VPS's, the studio computer |
 | `backup` | Backs up the VPS's database now (admins; asks you to type yes first) |
 | `admin crew` | Everyone on the crew (admins). Also: `admin invite` and `admin pages` |

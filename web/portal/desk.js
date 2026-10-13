@@ -1,4 +1,4 @@
-// Portal → Admin → Desk (admins): where Nova Bot runs, all day and night — on Cloudflare and on the
+// Portal → Admin → Computer (admins; called "desk" inside: this file, view=desk, /app/api/desk): where Nova Bot runs, all day and night — on Cloudflare and on the
 // studio's VPS — side by side (Nova Bot's src/desk.js: GET /app/api/desk says it all).
 // Each side: online or not, since when, how busy (processor, memory, disk), its version, the
 // last copy of the data and the last backup, its jobs' last runs, the PC link, and recent problems
@@ -179,7 +179,7 @@
       data = await K().api("desk");
       draw();
     } catch (err) {
-      if (err.message !== "signed out") K().emptyState(box, "Desk couldn't load: " + err.message);
+      if (err.message !== "signed out") K().emptyState(box, "Computer couldn't load: " + err.message);
     } finally {
       loading = false;
     }

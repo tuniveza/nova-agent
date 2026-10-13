@@ -41,7 +41,7 @@ export interface VpsSettings {
 }
 const settingsFile = () => `${config.paths.dataDir}console.json`;
 
-// The studio's VPSdime server (Desk), until another is set with `vps set`
+// The studio's VPSdime server (Computer), until another is set with `vps set`
 export const DEFAULT_VPS: VpsSettings = { host: "185.185.126.195", user: "root", port: 22 };
 
 export function readVps(): VpsSettings | null {

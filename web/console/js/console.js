@@ -573,7 +573,7 @@ function novaTab(me) {
   out.heading("Console");
   out.print("Everything in Nova Agent, typed.");
   out.dim(`Signed in as ${me.name} (${me.role})${me.online ? " · online" : " · on the studio computer"}`);
-  out.dim("Type help · or tap a command above · try: today · quests · enquiries · desk");
+  out.dim("Type help · or tap a command above · try: today · quests · enquiries · computer");
   term.write("\r\n");
   term.write(PROMPT);
   drawnAt = PROMPT_LEN;
@@ -708,7 +708,7 @@ new MutationObserver(() => retheme()).observe(document.documentElement, { attrib
 const QUICK = [
   ["Today", "today"], ["Now", "now"], ["Quests", "quests"], ["Calendar", "calendar week"], ["Notes", "notes"], ["Boards", "board"],
   ["Enquiries", "enquiries"], ["Clients", "clients"], ["Money", "money"], ["Social", "social"], ["Approvals", "approvals"],
-  ["Google", "google"], ["Desk", "desk"], ["Search…", "search "], ["Ask Agent…", "ask "], ["Help", "help"], ["Clear", "clear"],
+  ["Google", "google"], ["Computer", "computer"], ["Search…", "search "], ["Ask Agent…", "ask "], ["Help", "help"], ["Clear", "clear"],
 ];
 function quickRow() {
   const row = $("quick");

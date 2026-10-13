@@ -569,15 +569,23 @@ export const COMMANDS = {
       ]);
     },
   },
-  desk: {
-    help: "Nova Bot on Cloudflare and on the VPS, side by side (admins)",
-    usage: "desk",
+  computer: {
+    help: "Nova Bot on Cloudflare and on the VPS, side by side, and which one is live (admins)",
+    usage: "computer",
     async run(ctx) {
       adminOnly(ctx);
       const d = await ctx.api(P("desk"));
       const h = d.here || {};
       const v = d.vps || {};
-      ctx.heading("Cloudflare");
+      if (h.live) {
+        ctx.heading("Live now");
+        ctx.kv([
+          ["Side", h.live === "vps" ? "the VPS" : h.live === "standby" ? "Cloudflare (the VPS is standing by)" : "Cloudflare"],
+          ...(h.switchHelp ? [[h.live === "vps" ? "Go back" : "Switch", h.live === "vps" ? h.switchHelp.back : h.switchHelp.to]] : []),
+        ]);
+        for (const w of h.warnings || []) ctx.warn(w);
+      }
+      ctx.heading(h.where === "vps" ? "This Nova Bot (VPS)" : "Cloudflare");
       ctx.kv([
         ["Address", h.url || ""],
         ["Version", h.version ? `${h.version.id}${h.version.at ? ` · ${ukTime(h.version.at)}` : ""}` : ""],
@@ -625,7 +633,7 @@ export const COMMANDS = {
       const typed = (await ctx.ask("Back up the VPS's database now? Type yes: ")).trim().toLowerCase();
       if (typed !== "yes") return ctx.dim("Cancelled. Nothing changed.");
       await ctx.api(P("desk/action"), { method: "POST", body: { do: "backup" } });
-      ctx.ok("Backed up. desk shows when.");
+      ctx.ok("Backed up. computer shows when.");
     },
   },
   search: {
@@ -699,7 +707,7 @@ export const GROUPS = [
   ["Apps", ["calendar", "notes", "board", "agent", "ask", "index", "open"]],
   ["Studio", ["enquiries", "chats", "clients", "money", "campaigns", "outreach", "social", "approvals", "alerts", "tests", "portal", "approve", "reject"]],
   ["Tools", ["google", "fixer", "lossless", "music", "theme", "logs"]],
-  ["Server", ["desk", "deploy", "backup", "vps", "shell"]],
+  ["Server", ["computer", "deploy", "backup", "vps", "shell"]],
   ["Admin", ["admin"]],
   ["Console", ["clear", "history"]],
 ];
@@ -710,14 +718,14 @@ export const EXAMPLES = {
   enquiries: "enquiries", chats: "chats", clients: "clients", money: "money", campaigns: "campaigns", outreach: "outreach", social: "social", approvals: "approvals", alerts: "alerts", tests: "tests",
   portal: "portal enquiries", approve: "approve campaign 12", reject: "reject social 7",
   google: "google sync calendar", fixer: "fixer jobs", lossless: "lossless start", music: "music next", theme: "theme pulsar", logs: "logs 20",
-  desk: "desk", deploy: "deploy status", backup: "backup", vps: "vps", shell: "shell", admin: "admin crew", clear: "clear", history: "history",
+  computer: "computer", deploy: "deploy status", backup: "backup", vps: "vps", shell: "shell", admin: "admin crew", clear: "clear", history: "history",
 };
 // "quests list" → "list" (the part after the command's own name in its usage line)
 function argsOf(usage, name) {
   return String(usage || "").replace(new RegExp(`^${name}\\s*`), "");
 }
 // A few other words people type
-const ALIASES = { "?": "help", h: "help", q: "quests", quest: "quests", task: "quests", tasks: "quests", cal: "calendar", note: "notes", boards: "board", enquiry: "enquiries", inbox: "enquiries", chat: "chats", conversations: "chats", client: "clients", invoices: "money", campaign: "campaigns", posts: "social", server: "desk", status_: "status", cls: "clear", ls: "help", find: "search", whoami_: "whoami", ver: "version", terminal: "shell", ssh: "vps" };
+const ALIASES = { "?": "help", h: "help", q: "quests", quest: "quests", task: "quests", tasks: "quests", cal: "calendar", note: "notes", boards: "board", enquiry: "enquiries", inbox: "enquiries", chat: "chats", conversations: "chats", client: "clients", invoices: "money", campaign: "campaigns", posts: "social", server: "computer", desk: "computer", status_: "status", cls: "clear", ls: "help", find: "search", whoami_: "whoami", ver: "version", terminal: "shell", ssh: "vps" };
 export function resolveName(name) {
   return COMMANDS[name] ? name : ALIASES[name] && COMMANDS[ALIASES[name]] ? ALIASES[name] : name;
 }

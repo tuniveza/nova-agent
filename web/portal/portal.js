@@ -467,6 +467,8 @@
     const id = p.get("id");
     if (id && (!state.me || id !== state.me.id)) return { view: "person", id };
     if (view === "me" || view === "you" || id) return { view: "me" };
+    // Computer is "desk" inside (view=computer works too)
+    if (view === "computer") return { view: "work", tab: "desk" };
     if (WORK.includes(view)) return { view: "work", tab: view };
     // Nothing asked for: Alerts from a Nova Agent notification, else the starting tab (Options)
     if (location.hash === "#nova") return { view: "work", tab: "alerts" };

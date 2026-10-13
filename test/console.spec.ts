@@ -68,6 +68,18 @@ describe("reading what's typed", () => {
     const { ctx, calls } = fakeCtx({ answers: { "/app/api/enquiries": { enquiries: [] } } });
     await Nova.run(ctx, "inbox");
     expect(calls.some((c) => c.path === "/app/api/enquiries")).toBe(true);
+    // Desk is called Computer now; the old word still works
+    expect(Nova.resolveName("desk")).toBe("computer");
+    expect(Nova.resolveName("server")).toBe("computer");
+  });
+  it("computer says which side is live, how to switch, and any warnings", async () => {
+    const here = { where: "cloudflare", live: "cloudflare", url: "https://x", switchHelp: { to: "vps/switch.sh", back: "vps/switch-back.sh" }, warnings: ["Newsletters won't send"], pc: { connected: true }, jobs: [] };
+    const { ctx, printed } = fakeCtx({ answers: { "/app/api/desk": { here, vps: { reachable: false, url: "https://v", reason: "down" } } } });
+    await Nova.run(ctx, "desk");
+    const out = printed.join("\n");
+    expect(out).toMatch(/Live now/);
+    expect(out).toMatch(/vps\/switch\.sh/);
+    expect(out).toMatch(/Newsletters won't send/);
   });
 });
 

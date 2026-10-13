@@ -841,7 +841,7 @@ export function portalMock(pathWithQuery, method = "GET") {
   return null;
 }
 
-// ----- Desk (Cloudflare and the VPS side by side) -----
+// ----- Computer (Cloudflare and the VPS side by side) -----
 function deskBody() {
   const ago = (m) => new Date(Date.now() - m * 60000).toISOString();
   return {
