@@ -14,7 +14,7 @@ const root = new URL("..", import.meta.url).pathname;
 // ---- Computer (Portal → Admin): which side is live, the commands, the warnings ----
 const here = (over) => ({
   where: "cloudflare",
-  url: "https://novacane-worker.novacane-studio.workers.dev",
+  url: "https://nova.novacane.co.uk",
   live: "cloudflare",
   switchHelp: { to: "vps/switch.sh", back: "vps/switch-back.sh", from: "the studio PC, in nb/novacane-worker" },
   warnings: [],

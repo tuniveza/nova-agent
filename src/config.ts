@@ -65,7 +65,7 @@ export const config = {
   // Novabot's Cloudflare Worker. Nova Agent collects jobs from it (what
   // Acuity's API can't do) and sends alerts to staff phones through it.
   // AGENT_NOVA_KEY must match the worker's AGENT_NOVA_KEY secret.
-  workerUrl: readText("NOVA_WORKER_URL", "https://novacane-worker.novacane-studio.workers.dev"),
+  workerUrl: readText("NOVA_WORKER_URL", "https://nova.novacane.co.uk"),
   agentNovaKey: readText("AGENT_NOVA_KEY"),
   // Who's using this Nova Agent, for Index's memory (their own staff facts) and its
   // Nova Agent badge. Nothing to set: it's found automatically (src/staff.ts). Setting

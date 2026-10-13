@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
 const ns = join(root, "..");
-const WORKER = "https://novacane-worker.novacane-studio.workers.dev";
+const WORKER = "https://nova.novacane.co.uk";
 
 // Nova Agent and its panels, in the order the manual lists them. `readme` is in this repo;
 // `paths` is what its history is about, and `joined` finds the commit that brought a panel's

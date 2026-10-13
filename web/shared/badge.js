@@ -1,7 +1,7 @@
 // Nova Agent badge: who's signed in, on every Nova Agent panel.
 //
 //   <script src="/shared/badge.js" defer></script>        (on Nova Bot's worker and in Nova Agent)
-//   <script src="https://novacane-worker.novacane-studio.workers.dev/portal/badge.js" defer></script>
+//   <script src="https://nova.novacane.co.uk/portal/badge.js" defer></script>
 //   <nova-portal-badge></nova-portal-badge>                 (compact: planet only; align="start" opens its card to the right; calm: no ever-moving parts)
 // Pages can style ::part(chip) and ::part(words) (e.g. hide the words on a phone).
 //
@@ -18,7 +18,7 @@
   "use strict";
   if (customElements.get("nova-portal-badge")) return;
 
-  const WORKER = "https://novacane-worker.novacane-studio.workers.dev";
+  const WORKER = "https://nova.novacane.co.uk";
   const TOKEN_KEY = "nova-portal/badge-token";
   const here = location.origin;
   const onWorker = here === WORKER || /^http:\/\/(localhost|127\.0\.0\.1):87\d\d$/.test(here);

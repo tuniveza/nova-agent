@@ -1199,7 +1199,7 @@
     if (state.pendingLocked) {
       const note = el("div", "empty", [el("strong", "", "Approvals need a sign-in"), el("span", "", "Customers' facts and the approval queue need a Portal sign-in, so they aren't shown until you sign in. You can also approve them in Index online.")]);
       const go = el("a", "btn", "Open Index online ↗");
-      go.href = "https://novacane-worker.novacane-studio.workers.dev/app/memory/";
+      go.href = "https://nova.novacane.co.uk/app/memory/";
       go.target = "_blank";
       go.rel = "noopener";
       note.appendChild(go);

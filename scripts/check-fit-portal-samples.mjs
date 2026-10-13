@@ -711,7 +711,7 @@ function tidyBody(side) {
 
 // ----- Google (Portal → Admin → Google) -----
 function googleBody() {
-  const origin = "https://novacane-worker.novacane-studio.workers.dev";
+  const origin = "https://nova.novacane.co.uk";
   const parts = [
     ["calendar", "Calendar", "Nova's Calendar and Google Calendar, both ways.", true, true],
     ["calendarPlan", "Quests and music time in Google Calendar", "Also put Nova Agent's plan into the Novacane Studio calendar.", false, true],
@@ -848,7 +848,7 @@ function deskBody() {
     canAct: true,
     here: {
       where: "cloudflare",
-      url: "https://novacane-worker.novacane-studio.workers.dev",
+      url: "https://nova.novacane.co.uk",
       version: { id: "fcbd6766", at: ago(90) },
       pc: { connected: true, since: ago(30) },
       jobs: [

@@ -28,7 +28,7 @@ const DC_OPTIONS = { ordered: false };
 
 // Where the signalling and relay setup live: next to this page online. Inside Nova Agent on the
 // studio PC the page is served locally, so it uses Nova Bot's, and the other device can be anywhere.
-const ONLINE = "https://novacane-worker.novacane-studio.workers.dev/lossless/";
+const ONLINE = "https://nova.novacane.co.uk/lossless/";
 const SERVER = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? ONLINE : new URL(".", location.href).href;
 
 // STUN until /lossless/ice answers (it adds Cloudflare's TURN relay when set up)

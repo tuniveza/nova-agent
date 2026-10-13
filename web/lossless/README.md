@@ -25,7 +25,7 @@ Signalling (SDP + ICE only): browser ⇄ WebSocket ⇄ LosslessRoom Durable Obje
 
 ## Where it runs
 
-Nova Bot serves it at `https://novacane-worker.novacane-studio.workers.dev/lossless/` (HTTPS, which phones need before they'll give a page the mic). Its build (`scripts/sync-apps.mjs`) copies `public/lossless/` into its assets and `src/worker.js` + `src/room.js` into `src/lossless/`; Nova Bot sends `/lossless/ws` and `/lossless/ice` to them and has the `LosslessRoom` Durable Object binding and migration. Deploy Nova Bot as usual.
+Nova Bot serves it at `https://nova.novacane.co.uk/lossless/` (HTTPS, which phones need before they'll give a page the mic). Its build (`scripts/sync-apps.mjs`) copies `public/lossless/` into its assets and `src/worker.js` + `src/room.js` into `src/lossless/`; Nova Bot sends `/lossless/ws` and `/lossless/ice` to them and has the `LosslessRoom` Durable Object binding and migration. Deploy Nova Bot as usual.
 
 Nova Agent shows the same page at `/lossless/` on the studio PC. Signalling and the relay setup still come from Nova Bot, so the other device can be anywhere, and invite links point at the online address.
 

@@ -24,7 +24,7 @@ NovaBot, sign-in, your planet and the team; Portal is part of it now), **Calenda
 **Index**, **Observatory**, **Lossless audio** and **Admin**. The panels only ever open
 inside Nova Agent. Nova Agent has one address in each place, `/agent/`:
 
-- online, for everyone: <https://novacane-worker.novacane-studio.workers.dev/agent/>
+- online, for everyone: <https://nova.novacane.co.uk/agent/>
 - on the studio PC: `http://localhost:4545/agent/`
 
 `/agent/<panel>` (`/agent/calendar`, `/agent/portal`, `/agent/notes`, `/agent/index`...)

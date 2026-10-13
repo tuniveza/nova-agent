@@ -105,7 +105,7 @@ app.use("/actions/*", async (c, next) => {
 
 // ---- One address: Nova Agent online ----
 // A page opened in a browser on this computer opens Nova Agent online instead
-// (https://…workers.dev/agent/), which reaches this server over its link (src/relay.ts).
+// (https://nova.novacane.co.uk/agent/), which reaches this server over its link (src/relay.ts).
 // NOVA_LOCAL_UI=1 keeps the pages here (for when the internet is down). Only top-level pages:
 // Nova Agent's own requests, files and the online link's requests aren't touched.
 // Console opened on this computer itself (/console/?here=1): its terminals only open at localhost

@@ -62,9 +62,9 @@
 
   function hereCard(h) {
     const card = el("section", "card dk-card");
-    card.setAttribute("aria-label", h.where === "vps" ? "Nova Bot here, on the VPS" : "Nova Bot on Cloudflare");
+    card.setAttribute("aria-label", h.where === "vps" ? "Nova Bot on Nova's own computer" : "Nova Bot at the old host");
     const head = el("div", "dk-head");
-    head.append(el("h3", "card-title", h.where === "vps" ? "This Nova Bot (VPS)" : "Cloudflare"), state(true, "Online"));
+    head.append(el("h3", "card-title", h.where === "vps" ? "Nova's computer" : "The old host"), state(true, "Online"));
     card.append(head);
     card.append(row("Address", h.url || "?"));
     if (h.version) card.append(row("Version", h.version.id, h.version.at ? `deployed ${ago(h.version.at)}` : ""));
@@ -83,14 +83,14 @@
     const card = el("section", "card dk-card dk-live");
     card.setAttribute("aria-label", "Which side is live");
     const live = h.live || (h.where === "cloudflare" ? "cloudflare" : "standby");
-    const words = live === "cloudflare" ? "Cloudflare" : live === "vps" ? "The VPS" : "Cloudflare (this VPS is standing by)";
+    const words = live === "cloudflare" ? "The old host" : live === "vps" ? "Nova's own computer (nova.novacane.co.uk)" : "The old host (Nova's computer is standing by)";
     const head = el("div", "dk-head");
     head.append(el("h3", "card-title", "Live now"), state(true, words));
     card.append(head);
     const sw = h.switchHelp;
     if (sw) {
       const vpsLive = live === "vps";
-      card.append(row(vpsLive ? "Go back to Cloudflare" : "Switch to the VPS", vpsLive ? sw.back : sw.to, `run on ${sw.from}; it asks before doing anything`));
+      card.append(row(vpsLive ? "Undo the move (back to the old host)" : "Move to Nova's own computer", vpsLive ? sw.back : sw.to, `run on ${sw.from}; it asks before doing anything`));
       if (!vpsLive) card.append(row("Go back afterwards", sw.back));
     }
     for (const w of h.warnings || []) card.append(el("p", "dk-why dk-warn", `⚠ ${w}`));
@@ -116,7 +116,7 @@
     const jobsNote = v.jobsOn ? "" : live === "vps" ? "The VPS is live but its timed jobs are off: on the VPS, systemctl enable --now nova-cron.timer" : "they switch on at the cutover, so the VPS and Cloudflare never both send";
     card.append(row("Every-minute jobs", v.jobsOn ? "On" : "Off", jobsNote));
     card.append(row("Nightly backup", on("nova-backup.timer") ? "On" : "Off", `last ${ago(v.lastBackup)}`));
-    card.append(row("Data copied from Cloudflare", v.lastSync ? ago(v.lastSync) : "not yet"));
+    card.append(row("Last data copy", v.lastSync ? ago(v.lastSync) : "not yet"));
     if (v.cpu) card.append(row("Processors", `${v.cpu.count}`, `busy ${(v.cpu.load || []).join(" · ")} (1, 5, 15 min)`));
     if (v.memory) card.append(meter("Memory", v.memory.total - v.memory.free, v.memory.total, `${gb(v.memory.total - v.memory.free)} of ${gb(v.memory.total)}`));
     if (v.disk) card.append(meter("Disk", v.disk.total - v.disk.free, v.disk.total, `${gb(v.disk.free)} free of ${gb(v.disk.total)}`));

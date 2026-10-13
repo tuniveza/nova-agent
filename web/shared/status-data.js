@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 353,
+ "build": 355,
  "date": "2026-10-13",
  "panels": {
   "chat": [
@@ -12,11 +12,11 @@ window.NOVA_STATUS = {
    "Money, invoices"
   ],
   "portal": [
+   "Portal's README",
    "Computer is called Computer now",
    "Switch-over, Computer's Live now card",
    "Portal → Admin → Computer",
-   "Google round two on the PC and…",
-   "Sizing, Portal's tabs never squash or cut…"
+   "Google round two on the PC and…"
   ],
   "calendar": [
    "Google round two on the PC and…",
@@ -112,11 +112,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "portal",
-    "words": "Computer is called Computer now"
+    "words": "Portal's README"
    },
    {
     "panel": "portal",
-    "words": "Switch-over, Computer's Live now card"
+    "words": "Computer is called Computer now"
    },
    {
     "panel": "calendar",
@@ -215,13 +215,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Fixer, put fixes live with vps/deploy-live.sh",
+  "Portal's README",
   "Computer is called Computer now",
   "Switch-over, Computer's Live now card",
   "Console docs and Manual",
   "check-console.mjs reads everything printed in the tab…",
   "Console, terminal check",
-  "Console tests",
-  "Portal → Admin → Computer",
-  "Allow node-pty's build step"
+  "Console tests"
  ]
 };
