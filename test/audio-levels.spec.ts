@@ -62,7 +62,7 @@ describe("ambient music levels", () => {
     expect(r.pieces!.length).toBeGreaterThanOrEqual(5);
     r.pieces!.forEach((p, i) => i && expect(p).not.toBe(r.pieces![i - 1]));
     expect(r.peakDb).toBeLessThanOrEqual(-26.5);
-  }, 120000);
+  }, 300000); // 160 s of music takes about two minutes to render, longer while other tests run
 
   it("the same seed plays the same variation; another seed another one", async () => {
     const a = await lab!.music({ seed: "K7M2QX", seconds: 30, pieceSeconds: 12, fadeSeconds: 6 });
