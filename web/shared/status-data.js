@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 340,
+ "build": 349,
  "date": "2026-10-13",
  "panels": {
   "chat": [
@@ -12,11 +12,11 @@ window.NOVA_STATUS = {
    "Money, invoices"
   ],
   "portal": [
+   "Portal → Admin → Desk",
    "Google round two on the PC and…",
    "Sizing, Portal's tabs never squash or cut…",
    "Portal's Admin address is view=manage",
-   "Portal → Google",
-   "Portal → Conversations"
+   "Portal → Google"
   ],
   "calendar": [
    "Google round two on the PC and…",
@@ -37,6 +37,7 @@ window.NOVA_STATUS = {
    "Board, a table in Nova Agent's Apps…"
   ],
   "console": [
+   "Console tests",
    "Console, the terminal sizes itself to an…",
    "Console, docs"
   ],
@@ -109,11 +110,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "portal",
-    "words": "Google round two on the PC and…"
+    "words": "Portal → Admin → Desk"
    },
    {
     "panel": "portal",
-    "words": "Sizing, Portal's tabs never squash or cut…"
+    "words": "Google round two on the PC and…"
    },
    {
     "panel": "calendar",
@@ -185,11 +186,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "console",
-    "words": "Console, the terminal sizes itself to an…"
+    "words": "Console tests"
    },
    {
     "panel": "console",
-    "words": "Console, docs"
+    "words": "Console, the terminal sizes itself to an…"
    }
   ],
   "helpers": [
@@ -212,13 +213,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "check-console.mjs reads everything printed in the tab…",
+  "Console, terminal check",
+  "Console tests",
+  "Portal → Admin → Desk",
+  "Allow node-pty's build step",
   "Console, the terminal sizes itself to an…",
   "Console, docs",
-  "Console, xterm.js and node-pty",
-  "check-board.mjs, BOARD_URL picks the throwaway server",
-  "Board docs and Manual",
-  "Fixer, Nova Agent",
-  "Board's click-through check",
-  "Board, a table in Nova Agent's Apps…"
+  "Console, xterm.js and node-pty"
  ]
 };

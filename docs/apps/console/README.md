@@ -4,18 +4,23 @@ Console is in Nova Agent's **Tools**. Type commands for the whole of Nova Agent 
 
 ## The Nova tab
 
-Type a command and press Enter. **Tab** finishes a word, and **↑ ↓** go back through what you typed. Type **help** to see every command, or **help quests** for one.
+Type a command and press Enter, or tap one in the row of commands above (Today, Now, Quests, Calendar, Notes, Boards, Enquiries, Clients, Money, Social, Approvals, Google, Desk, Search…, Ask Agent…, Help, Clear). **Tab** finishes a word, and **↑ ↓** go back through what you typed. Type **help** for every command in groups (Start here, Plans, Apps, Studio, Tools, Server, Admin, Console), each with what it does and an example, or **help quests** for one. A typo gets a "Did you mean …?", and some other words work too (`inbox`, `tasks`, `cal`, `server`, `find`, `terminal`, `ssh`…).
+
+Everything is centred and easy to read: Console sits in a centred column, with bigger text, headings in the theme's colours, lined-up tables, and help with the command in pink and its example in green. On a phone, help stacks each command over what it does.
 
 | Type | What happens |
 |---|---|
+| `today` | Your day at a glance: now and next, quests, the calendar, new or open enquiries |
 | `status` | How Nova Agent is doing: live or not, the online link, quests, and whether terminals can open here |
+| `search <words>` | Looks through quests, the calendar, boards, notes, Index and enquiries at once |
+| `whoami` / `version` | Who's signed in; which version of Nova Agent this is |
 | `now` (or `plans`) | What's on now and what's next |
 | `quests` | Your quests. Also: `quests add "Mix the EP" --minutes 45`, then `quests start`, `done`, `skip` or `snooze <id>`. The first 8 letters of an id are enough |
 | `missions` | Your missions. Also: `missions new "Release the EP by December"` and `missions show <id>` |
 | `calendar today` / `calendar week` | What's on the calendar. Also: `calendar add "Engineer in" 2026-10-20 14:00` |
 | `notes` | Your shared notes. Also: `notes open <id>` and `notes new` |
 | `board` | Your boards. Also: `board open` |
-| `portal enquiries` | One of Portal's sections: enquiries, chats, clients, money, campaigns, outreach, social, approvals, tests, alerts |
+| `enquiries`, `chats`, `clients`, `money`, `campaigns`, `outreach`, `social`, `approvals`, `alerts`, `tests` | One of Portal's sections (the same as `portal enquiries` and so on) |
 | `approve campaign 12` | Approve something waiting (admins). It shows exactly what will go, then you type its number back to say yes. Anything else cancels. Also: `reject …`. Works for campaign, outreach, social, invoice, reminder and booking |
 | `google` | Google's status. Also: `google sync contacts` (admins) |
 | `fixer` | The Fixer (admins): `fixer check` and `fixer jobs` |
@@ -23,7 +28,10 @@ Type a command and press Enter. **Tab** finishes a word, and **↑ ↓** go back
 | `music on` / `off` / `next` / `seed` | The ambient music |
 | `theme list` / `theme pulsar` / `theme own` | The look |
 | `open <app>` | Opens an app or panel: portal, calendar, notes, board, index, lossless, visualizer, observatory, fixer, agent, quests, missions, manual |
-| `agent "what's on today?"` | Asks Agent, and shows the answer here |
+| `agent "what's on today?"` (or `ask`) | Asks Agent, and shows the answer here |
+| `desk` | Nova Bot on Cloudflare and on the VPS side by side: versions, the PC link, VPS memory, disk, services, last data copy and backup, the timed jobs (admins) |
+| `deploy status` | What's live where: Cloudflare's version, the VPS's, the studio computer |
+| `backup` | Backs up the VPS's database now (admins; asks you to type yes first) |
 | `admin crew` | Everyone on the crew (admins). Also: `admin invite` and `admin pages` |
 | `index search <words>` | Searches what Nova knows |
 | `logs` | The studio computer's recent log (admins) |
@@ -42,13 +50,11 @@ Terminals only open when all of these are true:
 - You're an admin.
 - The request comes from Console's own page.
 
-Online, through Nova Bot, they're always refused, and Nova Bot never passes them on. Only Nova commands work online.
+Online, through Nova Bot, they're always refused, and Nova Bot never passes them on. Only Nova commands work online. Instead, Console online shows an **Open Console on this computer** button: on the studio computer it opens `http://localhost:4545/console/?here=1`, Console on its own page on the computer itself, where **+ Shell** and **+ VPS** work. (Nova Agent's pages normally move to Nova Agent online; this one address stays on the computer, for the terminals.)
 
-### Setting up the VPS, once
+### The VPS
 
-1. Type `vps set <the VPS's address> <your user on it> [port]`. For example: `vps set 203.0.113.7 root`. This is saved on the PC in `data/console.json`. No password is ever saved.
-2. Type `vps setup-key`. It asks for the VPS's password once, inside the terminal, and copies the PC's key there.
-3. From then on, `vps` (or **+ VPS**) connects without a password.
+The VPS is already set: the studio's VPSdime server, `root@185.185.126.195` (port 22), and the studio PC's key is already on it, so **+ VPS** connects straight away. To use another server: `vps set <address> <user> [port]` (saved on the PC in `data/console.json`; no password is ever saved), then `vps setup-key` once (it asks for that server's password inside the terminal and copies the PC's key there).
 
 ## On a phone
 
