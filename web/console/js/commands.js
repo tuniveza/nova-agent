@@ -9,6 +9,8 @@
 // This file has no page or network of its own: console.js hands each command a `ctx`:
 //   ctx.api(path, { method, body })  → JSON (throws Error with .status and the server's message)
 //   ctx.print(text) / ctx.table(rows, columns) / ctx.ok(text) / ctx.warn(text) / ctx.dim(text)
+//   ctx.heading(text)  ctx.kv(rows: [label, value][])   (a title, and two lined-up columns)
+//   ctx.help(groups)   (help's grouped list: [{ title, rows: [{ name, args, what, example }] }])
 //   ctx.ask(question) → Promise<string>   (one line typed by the person)
 //   ctx.open(path)                        (opens a panel in Nova Agent)
 //   ctx.terminal(kind)                    (opens a shell / vps / vps-key tab; the PC refuses where it must)
@@ -76,12 +78,12 @@ export function firstList(data) {
 }
 // A short line for any item: its title or subject or name, its state and when
 export function summary(x) {
-  const title = x.title || x.subject || x.name || x.caption || x.toName || x.number || x.message || x.text || x.id;
+  const title = x.title || x.subject || x.name || x.caption || x.summary || x.toName || x.number || x.preview || x.lastMessage || x.firstMessage || x.question || x.message || x.text || x.description || x.id;
   return {
     id: x.id ?? "",
     title: String(title ?? "").replace(/\s+/g, " ").slice(0, 70),
-    state: x.status || x.state || (x.done ? "done" : "") || "",
-    when: ukTime(x.updatedAt || x.updated_at || x.createdAt || x.created_at || x.start || x.when || ""),
+    state: String(x.status || x.state || x.mark || (x.done ? "done" : "") || "").replace(/_/g, " "),
+    when: ukTime(x.updatedAt || x.updated_at || x.lastAt || x.last_at || x.createdAt || x.created_at || x.start || x.when || x.at || ""),
   };
 }
 
@@ -127,22 +129,24 @@ const P = (path) => "/app/api/" + path;
 // Each: { help, usage, subs?, run(ctx, args, flags) }
 export const COMMANDS = {
   help: {
-    help: "What you can type",
+    help: "Everything you can type, in groups",
     usage: "help [command]",
     async run(ctx, [which]) {
       if (which) {
-        const c = COMMANDS[which.toLowerCase()];
-        if (!c) throw new Error(`There's no "${which}". Type help for the list.`);
-        ctx.print(`${c.usage}`);
-        ctx.dim(`  ${c.help}`);
-        if (c.subs) ctx.dim(`  ${c.subs.join(" · ")}`);
+        const name = resolveName(which.toLowerCase());
+        const c = COMMANDS[name];
+        if (!c) throw new Error(notFound(which));
+        ctx.heading(name);
+        ctx.kv([["What", c.help], ["Type", c.usage], ...(c.subs ? [["Parts", c.subs.join(" · ")]] : []), ...(EXAMPLES[name] ? [["Example", EXAMPLES[name]]] : [])]);
         return;
       }
-      ctx.table(
-        Object.entries(COMMANDS).map(([name, c]) => ({ command: name, what: c.help })),
-        ["command", "what"]
+      ctx.help(
+        GROUPS.map(([title, names]) => ({
+          title,
+          rows: names.filter((n) => COMMANDS[n]).map((n) => ({ name: n, args: argsOf(COMMANDS[n].usage, n), what: COMMANDS[n].help, example: EXAMPLES[n] || "" })),
+        }))
       );
-      ctx.dim("Tab finishes a word · ↑ ↓ go through what you typed · help <command> for more");
+      ctx.dim("Tab finishes a word · ↑ ↓ go back through what you typed · help <command> for more · tap a command above to run it");
     },
   },
   clear: { help: "Clear the screen", usage: "clear", async run(ctx) { ctx.clear(); } },
@@ -384,9 +388,10 @@ export const COMMANDS = {
   music: {
     help: "Ambient music: on, off, next, seed",
     usage: "music [on | off | next | seed [CODE]]",
-    subs: ["on", "off", "next", "seed"],
+    subs: ["on", "off", "next", "seed", "status"],
     async run(ctx, [sub = "seed", code]) {
       const m = ctx.music;
+      if (sub === "status") sub = "seed";
       if (!m) throw new Error("Music plays in Nova Agent's own page; open Console inside Nova Agent.");
       if (sub === "on") return void (await m.start(), ctx.ok("Music on"));
       if (sub === "off") return void (m.stop(), ctx.ok("Music off"));
@@ -396,7 +401,8 @@ export const COMMANDS = {
           m.setSeed(code);
           return ctx.ok(`Playing ${code}`);
         }
-        return ctx.print(`Seed ${m.seed ? m.seed() : "?"}${m.piece ? ` · ${m.piece()?.name || ""}` : ""}`);
+        const piece = m.piece ? m.piece() : null;
+        return ctx.kv([["Music", m.isPlaying && m.isPlaying() ? "playing" : "off"], ["Seed", m.seed ? m.seed() : "?"], ["Piece", piece?.name || "—"]]);
       }
       throw new Error(`music ${sub}? Try: ${this.subs.join(", ")}`);
     },
@@ -466,7 +472,7 @@ export const COMMANDS = {
     async run(ctx, [sub, ...words]) {
       if (sub !== "search") throw new Error("index search <words>");
       const q = need(words.join(" ").trim(), "words");
-      const r = await ctx.api(P("memory/index"));
+      const r = await ctx.api(P(`memory/index?q=${encodeURIComponent(q)}`));
       const list = firstList(r).filter((f) => JSON.stringify(f).toLowerCase().includes(q.toLowerCase()));
       if (!list.length) return ctx.dim("Nothing found.");
       ctx.table(list.slice(0, 30).map((f) => ({ page: f.path || f.name, about: String(f.description || "").slice(0, 60) })), ["page", "about"]);
@@ -514,6 +520,150 @@ export const COMMANDS = {
       throw new Error(`vps ${sub}? Try: ${this.subs.join(", ")}`);
     },
   },
+
+  today: {
+    help: "Your day at a glance: what's on, the calendar, what's waiting",
+    usage: "today",
+    async run(ctx) {
+      ctx.heading(new Date().toLocaleDateString("en-GB", { ...UK, weekday: "long", day: "numeric", month: "long" }));
+      const [q, cal, enq] = await Promise.allSettled([ctx.api("/quests/state"), ctx.api("/calendar-api/data"), ctx.api(P("enquiries"))]);
+      const rows = [];
+      if (q.status === "fulfilled") {
+        const s = q.value;
+        rows.push(["Now", s.current ? s.current.title : "nothing planned"]);
+        const next = (s.next || [])[0];
+        if (next) rows.push(["Next", `${next.title} · ${ukTime(next.start)}`]);
+        const open = (s.quests || []).filter((x) => x.status === "todo" || x.status === "doing").length;
+        rows.push(["Quests", `${open} to do${(s.overdue || []).length ? ` · ${s.overdue.length} overdue` : ""}`]);
+      } else rows.push(["Quests", "the studio computer can't be reached"]);
+      if (cal.status === "fulfilled") {
+        const day = ukDay(new Date());
+        const list = (cal.value.notes || []).filter((n) => String(n.start || "").slice(0, 10) === day);
+        rows.push(["Calendar", list.length ? list.map((n) => n.title).slice(0, 4).join(" · ") : "nothing today"]);
+      }
+      if (enq.status === "fulfilled") {
+        const list = firstList(enq.value);
+        const fresh = list.filter((e) => ["new", "open"].includes(String(e.status || e.state || "")));
+        rows.push(["Enquiries", `${fresh.length} new or open`]);
+      }
+      ctx.kv(rows);
+    },
+  },
+  version: {
+    help: "Which version of Nova Agent this is",
+    usage: "version",
+    async run(ctx) {
+      let v = null;
+      try {
+        v = window.top.NOVA_STATUS || window.NOVA_STATUS || null;
+      } catch {
+        v = window.NOVA_STATUS || null;
+      }
+      const s = await ctx.api("/status").catch(() => null);
+      ctx.kv([
+        ["Nova Agent", v ? `v${v.version} · build ${v.build}` : "not known here"],
+        ["Studio PC", s ? (s.version || s.rev || "running") : "can't be reached"],
+        ["Where you are", ctx.me?.online ? "online (through Nova Bot)" : "on the studio computer"],
+      ]);
+    },
+  },
+  desk: {
+    help: "Nova Bot on Cloudflare and on the VPS, side by side (admins)",
+    usage: "desk",
+    async run(ctx) {
+      adminOnly(ctx);
+      const d = await ctx.api(P("desk"));
+      const h = d.here || {};
+      const v = d.vps || {};
+      ctx.heading("Cloudflare");
+      ctx.kv([
+        ["Address", h.url || ""],
+        ["Version", h.version ? `${h.version.id}${h.version.at ? ` · ${ukTime(h.version.at)}` : ""}` : ""],
+        ["Studio PC", h.pc?.connected ? `linked${h.pc.since ? ` since ${ukTime(h.pc.since)}` : ""}` : "not linked"],
+      ]);
+      ctx.heading("VPS");
+      if (!v.reachable) return ctx.kv([["Address", v.url || ""], ["State", v.reason || "can't be reached"]]);
+      const gb = (n) => (n ? `${(n / 1e9).toFixed(1)} GB` : "");
+      ctx.kv([
+        ["Address", v.url || ""],
+        ["Up for", v.uptimeSeconds ? `${Math.floor(v.uptimeSeconds / 86400)}d ${Math.floor((v.uptimeSeconds % 86400) / 3600)}h` : ""],
+        ["Memory", v.memory ? `${gb(v.memory.total - v.memory.free)} of ${gb(v.memory.total)} used` : ""],
+        ["Disk", v.disk ? `${gb(v.disk.free)} free of ${gb(v.disk.total)}` : ""],
+        ["Services", v.services ? Object.entries(v.services).map(([k, x]) => `${k} ${x}`).join(" · ") : ""],
+        ["Last data copy", v.lastSync ? ukTime(v.lastSync) : "never"],
+        ["Last backup", v.lastBackup ? ukTime(v.lastBackup) : "none yet"],
+      ]);
+      const jobs = (h.jobs || []).slice(0, 8);
+      if (jobs.length) {
+        ctx.heading("Jobs");
+        ctx.table(jobs.map((j) => ({ job: j.name, last: ukTime(j.at), state: j.ok ? "ok" : j.note || "problem" })), ["job", "last", "state"]);
+      }
+    },
+  },
+  deploy: {
+    help: "What's live where: Cloudflare's version, the VPS's, this computer's",
+    usage: "deploy status",
+    subs: ["status"],
+    async run(ctx, [sub = "status"]) {
+      if (sub !== "status") throw new Error("deploy status");
+      const [d, s] = await Promise.allSettled([ctx.api(P("desk")), ctx.api("/status")]);
+      const desk = d.status === "fulfilled" ? d.value : null;
+      ctx.kv([
+        ["Cloudflare", desk?.here?.version ? `${desk.here.version.id} · ${ukTime(desk.here.version.at)}` : d.status === "rejected" ? d.reason.message : "not known"],
+        ["VPS", desk?.vps?.reachable ? desk.vps.version || "running" : desk?.vps?.reason || "not known"],
+        ["Studio PC", s.status === "fulfilled" ? s.value.version || s.value.rev || "running" : "can't be reached"],
+      ]);
+    },
+  },
+  backup: {
+    help: "Back up the VPS's database now (admins; asks first)",
+    usage: "backup",
+    async run(ctx) {
+      adminOnly(ctx);
+      const typed = (await ctx.ask("Back up the VPS's database now? Type yes: ")).trim().toLowerCase();
+      if (typed !== "yes") return ctx.dim("Cancelled. Nothing changed.");
+      await ctx.api(P("desk/action"), { method: "POST", body: { do: "backup" } });
+      ctx.ok("Backed up. desk shows when.");
+    },
+  },
+  search: {
+    help: "Look for words in quests, the calendar, boards, notes, Index and enquiries",
+    usage: "search <words>",
+    async run(ctx, words) {
+      const q = need(words.join(" ").trim(), "words to look for").toLowerCase();
+      const has = (x) => JSON.stringify(x || "").toLowerCase().includes(q);
+      const found = [];
+      const [qs, cal, boards, notes, index, enq] = await Promise.allSettled([
+        ctx.api("/quests/state"),
+        ctx.api("/calendar-api/data"),
+        ctx.api("/board-api/boards"),
+        ctx.api("/notes-api/changes?since=0"),
+        ctx.api(P(`memory/index?q=${encodeURIComponent(q)}`)),
+        ctx.api(P("enquiries")),
+      ]);
+      const val = (r) => (r.status === "fulfilled" ? r.value : null);
+      for (const x of val(qs)?.quests || []) if (has([x.title, x.notes])) found.push({ where: "quest", what: x.title, id: short(x.id) });
+      for (const n of val(cal)?.notes || []) if (has([n.title, n.body])) found.push({ where: "calendar", what: `${n.title} · ${String(n.start || "").slice(0, 10)}`, id: "" });
+      for (const b of val(boards)?.boards || []) for (const c of b.cards || []) if (has([c.title, c.text, c.question, c.answer, c.url])) found.push({ where: `board ${b.name || ""}`.trim(), what: String(c.title || c.text || c.question || c.url || "card").slice(0, 70), id: "" });
+      for (const n of firstList(val(notes) || {})) if (n.html !== "" && has([n.title, n.html])) found.push({ where: "note", what: n.title || "Untitled", id: short(n.id) });
+      for (const f of firstList(val(index) || {})) if (has(f)) found.push({ where: "Index", what: f.path || f.name, id: "" });
+      for (const e of firstList(val(enq) || {})) if (has([e.name, e.subject, e.details, e.email])) found.push({ where: "enquiry", what: e.subject || e.name, id: String(e.id ?? "") });
+      if (!found.length) return ctx.dim(`Nothing found for "${q}".`);
+      ctx.table(found.slice(0, 40), ["where", "what", "id"]);
+      if (found.length > 40) ctx.dim(`… and ${found.length - 40} more`);
+    },
+  },
+  ask: { help: "Ask Agent something (same as agent)", usage: 'ask "<question>"', async run(ctx, a, f) { return COMMANDS.agent.run(ctx, a, f); } },
+  enquiries: { help: "Portal's enquiries (same as portal enquiries)", usage: "enquiries", async run(ctx) { return COMMANDS.portal.run(ctx, ["enquiries"], {}); } },
+  chats: { help: "Portal's chats (same as portal chats)", usage: "chats", async run(ctx) { return COMMANDS.portal.run(ctx, ["chats"], {}); } },
+  clients: { help: "Portal's clients (same as portal clients)", usage: "clients", async run(ctx) { return COMMANDS.portal.run(ctx, ["clients"], {}); } },
+  money: { help: "Portal's money (same as portal money)", usage: "money", async run(ctx) { return COMMANDS.portal.run(ctx, ["money"], {}); } },
+  campaigns: { help: "Portal's campaigns (same as portal campaigns)", usage: "campaigns", async run(ctx) { return COMMANDS.portal.run(ctx, ["campaigns"], {}); } },
+  outreach: { help: "Portal's outreach (same as portal outreach)", usage: "outreach", async run(ctx) { return COMMANDS.portal.run(ctx, ["outreach"], {}); } },
+  social: { help: "Portal's social (same as portal social)", usage: "social", async run(ctx) { return COMMANDS.portal.run(ctx, ["social"], {}); } },
+  approvals: { help: "Portal's approvals waiting for an admin (same as portal approvals)", usage: "approvals", async run(ctx) { return COMMANDS.portal.run(ctx, ["approvals"], {}); } },
+  alerts: { help: "Portal's alerts (same as portal alerts)", usage: "alerts", async run(ctx) { return COMMANDS.portal.run(ctx, ["alerts"], {}); } },
+  tests: { help: "Portal's tests (same as portal tests)", usage: "tests", async run(ctx) { return COMMANDS.portal.run(ctx, ["tests"], {}); } },
 };
 
 // approve/reject: shows exactly what it is, then asks for its number to be typed back
@@ -540,6 +690,53 @@ async function decide(ctx, action, kind, id) {
   ctx.ok(r.message || `${action === "approve" ? "Approved" : "Rejected"} ${kind} #${id}`);
 }
 
+// ---- help's groups and an example for each ----
+export const GROUPS = [
+  ["Start here", ["help", "today", "now", "status", "search", "whoami", "version"]],
+  ["Plans", ["quests", "missions", "plans"]],
+  ["Apps", ["calendar", "notes", "board", "agent", "ask", "index", "open"]],
+  ["Studio", ["enquiries", "chats", "clients", "money", "campaigns", "outreach", "social", "approvals", "alerts", "tests", "portal", "approve", "reject"]],
+  ["Tools", ["google", "fixer", "lossless", "music", "theme", "logs"]],
+  ["Server", ["desk", "deploy", "backup", "vps", "shell"]],
+  ["Admin", ["admin"]],
+  ["Console", ["clear", "history"]],
+];
+export const EXAMPLES = {
+  help: "help quests", today: "today", now: "now", status: "status", search: "search mixing", whoami: "whoami", version: "version",
+  quests: 'quests add "Mix the EP" --minutes 60', missions: 'missions new "Release the EP by December"', plans: "plans",
+  calendar: "calendar week", notes: "notes list", board: "board list", agent: 'agent "what\'s on today?"', ask: 'ask "who booked last week?"', index: "index search pricing", open: "open board",
+  enquiries: "enquiries", chats: "chats", clients: "clients", money: "money", campaigns: "campaigns", outreach: "outreach", social: "social", approvals: "approvals", alerts: "alerts", tests: "tests",
+  portal: "portal enquiries", approve: "approve campaign 12", reject: "reject social 7",
+  google: "google sync calendar", fixer: "fixer jobs", lossless: "lossless start", music: "music next", theme: "theme pulsar", logs: "logs 20",
+  desk: "desk", deploy: "deploy status", backup: "backup", vps: "vps", shell: "shell", admin: "admin crew", clear: "clear", history: "history",
+};
+// "quests list" → "list" (the part after the command's own name in its usage line)
+function argsOf(usage, name) {
+  return String(usage || "").replace(new RegExp(`^${name}\\s*`), "");
+}
+// A few other words people type
+const ALIASES = { "?": "help", h: "help", q: "quests", quest: "quests", task: "quests", tasks: "quests", cal: "calendar", note: "notes", boards: "board", enquiry: "enquiries", inbox: "enquiries", chat: "chats", conversations: "chats", client: "clients", invoices: "money", campaign: "campaigns", posts: "social", server: "desk", status_: "status", cls: "clear", ls: "help", find: "search", whoami_: "whoami", ver: "version", terminal: "shell", ssh: "vps" };
+export function resolveName(name) {
+  return COMMANDS[name] ? name : ALIASES[name] && COMMANDS[ALIASES[name]] ? ALIASES[name] : name;
+}
+function distance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+export function suggestions(name) {
+  const n = String(name || "").toLowerCase();
+  const all = Object.keys(COMMANDS);
+  const close = all.map((c) => [c, distance(n, c)]).filter(([c, d]) => d <= Math.max(1, Math.floor(c.length / 3)) || (n.length >= 3 && c.startsWith(n))).sort((a, b) => a[1] - b[1]).map(([c]) => c);
+  return close.slice(0, 3);
+}
+export function notFound(name) {
+  const near = suggestions(name);
+  return `There's no "${name}".${near.length ? ` Did you mean ${near.join(" or ")}?` : ""} Type help for the list.`;
+}
+
 // ---- Finishing a word with Tab ----
 export function complete(line) {
   const ends = /\s$/.test(line);
@@ -554,7 +751,7 @@ export function complete(line) {
     const w = (words[0] || "").toLowerCase();
     return Object.keys(COMMANDS).filter((c) => c.startsWith(w));
   }
-  const cmd = COMMANDS[words[0].toLowerCase()];
+  const cmd = COMMANDS[resolveName(words[0].toLowerCase())];
   if (!cmd || !cmd.subs || words.length > 2) return [];
   const w = words[1].toLowerCase();
   return cmd.subs.filter((s) => s.startsWith(w));
@@ -564,11 +761,10 @@ export function complete(line) {
 export async function run(ctx, line) {
   const trimmed = String(line || "").trim();
   if (!trimmed) return;
-  const { name, args, flags } = parse(trimmed);
+  const parsed = parse(trimmed);
+  const name = resolveName(parsed.name);
+  const { args, flags } = parsed;
   const cmd = COMMANDS[name];
-  if (!cmd) {
-    const near = Object.keys(COMMANDS).filter((c) => c.startsWith(name.slice(0, 2)));
-    throw new Error(`There's no "${name}".${near.length ? ` Did you mean ${near.join(" or ")}?` : ""} Type help for the list.`);
-  }
+  if (!cmd) throw new Error(notFound(parsed.name));
   await cmd.run.call(cmd, ctx, args, flags);
 }
