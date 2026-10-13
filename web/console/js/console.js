@@ -94,7 +94,7 @@ function themeNow() {
 }
 
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-let fontSize = Math.min(24, Math.max(11, Number(store.get(FONT_KEY, 15)) || 15));
+let fontSize = Math.min(26, Math.max(12, Number(store.get(FONT_KEY, 16)) || 16));
 const tabs = []; // { id, kind, title, term, fit, screen, tabEl, ... }
 let current = null;
 
@@ -105,7 +105,10 @@ function makeTerminal(screen) {
   const term = new window.Terminal({
     fontFamily: '"Source Code Pro", ui-monospace, Menlo, Consolas, monospace',
     fontSize,
-    lineHeight: 1.25,
+    lineHeight: 1.35,
+    // (the weights the page loads, so bold letters are exactly as wide as the rest)
+    fontWeight: "400",
+    fontWeightBold: "600",
     cursorBlink: !still,
     cursorStyle: "bar",
     scrollback: 5000,
@@ -170,6 +173,7 @@ function addTab({ id, title, closable, kind }) {
 
 function show(tab) {
   current = tab;
+  showQuick();
   for (const t of tabs) {
     const on = t === tab;
     t.screen.hidden = !on;
@@ -198,40 +202,159 @@ function closeTab(tab) {
 }
 
 // ---- Writing to a terminal ----
-const C = { reset: "\x1b[0m", dim: "\x1b[2m", bold: "\x1b[1m", ok: "\x1b[32m", warn: "\x1b[33m", err: "\x1b[31m", hi: "\x1b[35m", soft: "\x1b[36m" };
+// Everything Nova prints sits in the middle: a block of text is wrapped to a comfortable width
+// and centred as a block (so short lines are centred, and longer ones stay easy to read), tables
+// and lists are centred as blocks, and headings stand out in the theme's colours.
+const C = { reset: "\x1b[0m", dim: "\x1b[2m", bold: "\x1b[1m", ok: "\x1b[32m", warn: "\x1b[33m", err: "\x1b[31m", hi: "\x1b[35m", soft: "\x1b[36m", lilac: "\x1b[34m", gold: "\x1b[93m", white: "\x1b[97m" };
 const lines = (t) => String(t).split(/\r?\n/);
+const ANSI = /\x1b\[[0-9;]*m/g;
+// How many columns a piece of text takes (emoji and wide letters take two, joiners none)
+export function widthOf(text) {
+  let w = 0;
+  for (const ch of String(text).replace(ANSI, "")) {
+    if (/[̀-ͯ​-‏︎️]/.test(ch)) continue;
+    w += /\p{Extended_Pictographic}|[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]/u.test(ch) ? 2 : 1;
+  }
+  return w;
+}
+// Cut plain text to fit n columns
+function fitTo(text, n) {
+  const s = String(text ?? "");
+  if (widthOf(s) <= n) return s + " ".repeat(n - widthOf(s));
+  let out = "";
+  for (const ch of s) {
+    if (widthOf(out + ch) > n - 1) break;
+    out += ch;
+  }
+  return out + "…" + " ".repeat(Math.max(0, n - widthOf(out) - 1));
+}
+// Wrap plain text to n columns, at spaces where possible
+function wrap(text, n) {
+  const out = [];
+  for (const para of lines(text)) {
+    if (widthOf(para) <= n) {
+      out.push(para);
+      continue;
+    }
+    let line = "";
+    for (const word of para.split(/(\s+)/)) {
+      if (widthOf(line + word) <= n) line += word;
+      else if (widthOf(word) > n) {
+        if (line.trim()) out.push(line.trimEnd());
+        let rest = word;
+        while (widthOf(rest) > n) {
+          let cut = "";
+          for (const ch of rest) {
+            if (widthOf(cut + ch) > n) break;
+            cut += ch;
+          }
+          out.push(cut);
+          rest = rest.slice(cut.length);
+        }
+        line = rest;
+      } else {
+        if (line.trim()) out.push(line.trimEnd());
+        line = word.trimStart();
+      }
+    }
+    if (line.trim()) out.push(line.trimEnd());
+  }
+  return out;
+}
 function writer(term) {
-  const put = (text, colour = "") => {
-    for (const l of lines(text)) term.write(`${colour}${l}${colour ? C.reset : ""}\r\n`);
+  const cols = () => Math.max(20, term.cols);
+  const readable = () => Math.min(cols() - 4, 92);
+  // A block of already-coloured lines, centred as a block
+  const block = (rows) => {
+    const w = Math.max(0, ...rows.map(widthOf));
+    const pad = " ".repeat(Math.max(0, Math.floor((cols() - w) / 2)));
+    for (const r of rows) term.write(`${pad}${r}${C.reset}\r\n`);
   };
+  const say = (text, colour = "") => block(wrap(text, readable()).map((l) => `${colour}${l}`));
   return {
-    print: (t) => put(t),
-    ok: (t) => put(`✓ ${t}`, C.ok),
-    warn: (t) => put(t, C.warn),
-    error: (t) => put(t, C.err),
-    dim: (t) => put(t, C.dim),
-    table(rows, cols) {
-      if (!rows.length) return put("(nothing)", C.dim);
-      const width = Math.max(40, term.cols - 2);
-      const w = cols.map((c) => Math.min(Math.max(c.length, ...rows.map((r) => String(r[c] ?? "").length)), 48));
-      // Shrink the widest columns until it fits the terminal
-      while (w.reduce((a, b) => a + b + 2, 0) > width) {
+    print: (t) => say(t),
+    ok: (t) => say(`✓ ${t}`, C.ok),
+    warn: (t) => say(t, C.warn),
+    error: (t) => say(`✗ ${t}`, C.err),
+    dim: (t) => say(t, C.dim),
+    // A title with a soft line under it
+    heading(t) {
+      const title = String(t);
+      const rule = "─".repeat(Math.min(readable(), Math.max(12, widthOf(title) + 8)));
+      term.write("\r\n");
+      block([`${C.bold}${C.hi}${title}`, `${C.dim}${rule}`]);
+    },
+    // Two lined-up columns: what it is, and its value (wrapped under itself)
+    kv(rows) {
+      const list = rows.filter((r) => r && r[1] !== undefined && r[1] !== null && r[1] !== "");
+      if (!list.length) return say("(nothing)", C.dim);
+      const lw = Math.min(18, Math.max(...list.map(([k]) => widthOf(k))));
+      const vw = Math.max(16, readable() - lw - 3);
+      const out = [];
+      for (const [k, v] of list) {
+        const parts = wrap(String(v), vw);
+        out.push(`${C.lilac}${fitTo(k, lw)}${C.reset}   ${C.white}${parts[0] || ""}`);
+        for (const more of parts.slice(1)) out.push(`${" ".repeat(lw)}   ${C.white}${more}`);
+      }
+      block(out);
+    },
+    // A table with a coloured header; colours per column if given
+    table(rows, cols2, colours = {}) {
+      if (!rows.length) return say("(nothing)", C.dim);
+      const avail = readable();
+      const w = cols2.map((c) => Math.min(Math.max(widthOf(c), ...rows.map((r) => widthOf(r[c] ?? ""))), 52));
+      while (w.reduce((a, b) => a + b + 3, -3) > avail) {
         const i = w.indexOf(Math.max(...w));
         if (w[i] <= 6) break;
         w[i]--;
       }
-      const cell = (v, n) => {
-        const s = String(v ?? "");
-        return s.length > n ? s.slice(0, Math.max(1, n - 1)) + "…" : s.padEnd(n);
-      };
-      put(cols.map((c, i) => cell(c.toUpperCase(), w[i])).join("  "), C.soft + C.bold);
-      for (const r of rows) put(cols.map((c, i) => cell(r[c], w[i])).join("  "));
+      const out = [cols2.map((c, i) => `${C.bold}${C.soft}${fitTo(c.toUpperCase(), w[i])}${C.reset}`).join("   ")];
+      out.push(`${C.dim}${"─".repeat(w.reduce((a, b) => a + b + 3, -3))}`);
+      for (const r of rows) out.push(cols2.map((c, i) => `${colours[c] || ""}${fitTo(r[c], w[i])}${C.reset}`).join("   "));
+      block(out);
+    },
+    // help: each group under its own heading; one shared set of columns for all of them (the
+    // command, what it does (wrapped, never cut), and an example), lined up and centred as a block
+    help(groups) {
+      const all = groups.flatMap((g) => g.rows);
+      const nw = Math.max(...all.map((r) => widthOf(r.name)));
+      const ew = Math.min(30, Math.max(...all.map((r) => widthOf(r.example || ""))));
+      const ww = Math.max(18, Math.min(52, readable() - nw - ew - 6));
+      const total = nw + ww + ew + 6;
+      // Narrow (a phone): each command on its own line with its example, what it does under it
+      if (total > cols() - 2 || ww < 24) {
+        const w = Math.min(cols() - 2, 60);
+        const lp = " ".repeat(Math.max(0, Math.floor((cols() - w) / 2)));
+        for (const g of groups) {
+          if (!g.rows.length) continue;
+          this.heading(g.title);
+          for (const r of g.rows) {
+            const ex = r.example && r.example !== r.name ? r.example : "";
+            term.write(`${lp}${C.bold}${C.hi}${r.name}${C.reset}${ex && widthOf(r.name) + widthOf(ex) + 3 <= w ? `   ${C.ok}${ex}` : ""}${C.reset}\r\n`);
+            for (const l of wrap(r.what, w - 2)) term.write(`${lp}  ${C.white}${l}${C.reset}\r\n`);
+          }
+        }
+        term.write("\r\n");
+        return;
+      }
+      const pad = " ".repeat(Math.max(0, Math.floor((cols() - total) / 2)));
+      const row = (a, b, c) => term.write(`${pad}${a}   ${b}   ${c}${C.reset}\r\n`);
+      for (const g of groups) {
+        if (!g.rows.length) continue;
+        this.heading(g.title);
+        for (const r of g.rows) {
+          const what = wrap(r.what, ww);
+          row(`${C.bold}${C.hi}${fitTo(r.name, nw)}${C.reset}`, `${C.white}${fitTo(what[0] || "", ww)}${C.reset}`, `${C.ok}${fitTo(r.example || "", ew)}`);
+          for (const more of what.slice(1)) row(" ".repeat(nw), `${C.white}${fitTo(more, ww)}${C.reset}`, " ".repeat(ew));
+        }
+      }
+      term.write("\r\n");
     },
   };
 }
 
 // ---- The Nova tab: a line to type commands into ----
-const PROMPT = `${C.hi}nova ›${C.reset} `;
+const PROMPT = `${C.bold}${C.hi}nova ›${C.reset} `;
 const PROMPT_LEN = 7;
 function novaTab(me) {
   const tab = addTab({ id: "nova", title: "Nova", closable: false, kind: "nova" });
@@ -447,8 +570,11 @@ function novaTab(me) {
   };
   term.onData((d) => tab.input(d));
 
-  out.print(`${C.bold}Console${C.reset}  ${C.dim}· everything in Nova Agent, typed${C.reset}`);
-  out.dim(`Signed in as ${me.name} (${me.role})${me.online ? " · online" : " · on the studio computer"}. Type help, or try: now · quests · portal enquiries · agent "what's on today?"`);
+  out.heading("Console");
+  out.print("Everything in Nova Agent, typed.");
+  out.dim(`Signed in as ${me.name} (${me.role})${me.online ? " · online" : " · on the studio computer"}`);
+  out.dim("Type help · or tap a command above · try: today · quests · enquiries · desk");
+  term.write("\r\n");
   term.write(PROMPT);
   drawnAt = PROMPT_LEN;
   return tab;
@@ -543,7 +669,7 @@ document.addEventListener(
 
 // ---- Text size, new terminals, resizing, the theme ----
 function setFont(n) {
-  fontSize = Math.min(24, Math.max(11, n));
+  fontSize = Math.min(26, Math.max(12, n));
   store.set(FONT_KEY, fontSize);
   for (const t of tabs) {
     t.term.options.fontSize = fontSize;
@@ -578,6 +704,63 @@ addEventListener("novathemechange", () => setTimeout(retheme, 50));
 addEventListener("storage", (e) => e.key === "nova-look" && setTimeout(retheme, 50));
 new MutationObserver(() => retheme()).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-look", "style"] });
 
+// ---- Quick commands: tap one to run it (the Nova tab) ----
+const QUICK = [
+  ["Today", "today"], ["Now", "now"], ["Quests", "quests"], ["Calendar", "calendar week"], ["Notes", "notes"], ["Boards", "board"],
+  ["Enquiries", "enquiries"], ["Clients", "clients"], ["Money", "money"], ["Social", "social"], ["Approvals", "approvals"],
+  ["Google", "google"], ["Desk", "desk"], ["Search…", "search "], ["Ask Agent…", "ask "], ["Help", "help"], ["Clear", "clear"],
+];
+function quickRow() {
+  const row = $("quick");
+  if (!row) return;
+  row.replaceChildren(
+    ...QUICK.map(([label, cmd]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "q";
+      b.textContent = label;
+      b.title = cmd.trim();
+      b.addEventListener("click", () => {
+        const nova = tabs.find((t) => t.kind === "nova");
+        if (!nova) return;
+        show(nova);
+        // (anything half-typed is cleared first; a command ending in a space waits for the rest)
+        nova.input("\x15");
+        nova.input(cmd.endsWith(" ") ? cmd : cmd + "\r");
+        nova.term.focus();
+      });
+      return b;
+    })
+  );
+}
+const showQuick = () => {
+  const row = $("quick");
+  if (row) row.hidden = !(current && current.kind === "nova");
+};
+
+// Online, terminals don't open: a clear way to open Console on the studio computer itself
+function hereButton(why, url) {
+  const box = $("note");
+  box.replaceChildren();
+  const p = document.createElement("span");
+  p.textContent = `${why} `;
+  box.append(p);
+  if (url && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+    const a = document.createElement("a");
+    a.className = "here";
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = "Open Console on this computer";
+    a.title = "Works when this browser is on the studio computer itself";
+    box.append(a);
+    const small = document.createElement("small");
+    small.textContent = " (only on the studio computer itself)";
+    box.append(small);
+  }
+  box.hidden = false;
+}
+
 // ---- Start ----
 async function start() {
   let me = { id: "", name: "you", role: "staff", online: true };
@@ -591,7 +774,8 @@ async function start() {
     $(id).disabled = !state.terminals;
     if (!state.terminals) $(id).title = state.why || "Terminals only open on the studio computer itself, for admins.";
   }
-  if (!state.terminals && state.why) note(`Terminals: ${state.why}`);
+  if (!state.terminals && state.why) hereButton(`Terminals: ${state.why}`, state.localUrl);
+  quickRow();
   novaTab(me);
   // This browser tab's terminals from before a reload
   const still = new Set((state.open || []).map((t) => t.id));

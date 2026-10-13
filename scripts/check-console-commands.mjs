@@ -28,7 +28,7 @@ await p.goto(BASE + "/agent/?open=%2Fconsole%2F", { waitUntil: "domcontentloaded
 let f = null;
 for (let i = 0; i < 60 && !f; i++) { f = p.frames().find((x) => x.url().includes("/console/")); if (!f) await p.waitForTimeout(250); }
 await f.waitForFunction(() => window.NovaConsole && window.NovaConsole.tabs.length, null, { timeout: 20000 });
-const dump = () => f.evaluate(() => { const t = window.NovaConsole.tabs.find((x) => x.kind === "nova").term; const buf = t.buffer.active; const out = []; for (let i = 0; i < buf.length; i++) out.push(buf.getLine(i).translateToString(true)); return out; });
+const dump = () => f.evaluate(() => { const t = window.NovaConsole.tabs.find((x) => x.kind === "nova").term; const buf = t.buffer.active; const out = []; for (let i = 0; i <= buf.baseY + buf.cursorY; i++) out.push(buf.getLine(i).translateToString(true)); return out; });
 let seen = (await dump()).length;
 const results = [];
 for (const line of only.length ? LINES.filter((l) => only.includes(l.split(" ")[0])) : LINES) {

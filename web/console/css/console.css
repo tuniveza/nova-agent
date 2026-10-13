@@ -11,9 +11,9 @@ body {
 [hidden] { display: none !important; }
 button { font: inherit; color: inherit; }
 
-.console-app { position: fixed; inset: 0; display: grid; grid-template-rows: auto auto 1fr auto; min-width: 0; }
-/* Each in its own row, whether the note shows or not */
-.bar { grid-row: 1; } .note { grid-row: 2; } .screens { grid-row: 3; } .keys { grid-row: 4; }
+.console-app { position: fixed; inset: 0; display: grid; grid-template-rows: auto auto auto 1fr auto; min-width: 0; }
+/* Each in its own row, whether the note and the quick commands show or not */
+.bar { grid-row: 1; } .note { grid-row: 2; } .quick { grid-row: 3; } .screens { grid-row: 4; } .keys { grid-row: 5; }
 
 /* ----- The bar: the open consoles as tabs, and new ones ----- */
 .bar {
@@ -60,7 +60,7 @@ button { font: inherit; color: inherit; }
     rgba(var(--void-rgb, 6, 4, 13), 1);
 }
 /* The terminal itself, inset from the edges (no padding: xterm sizes itself to this box exactly) */
-.screen .term { position: absolute; inset: 10px 6px 6px 12px; overflow: hidden; }
+.screen .term { position: absolute; top: 14px; bottom: 10px; left: max(12px, calc(50% - 600px)); right: max(8px, calc(50% - 600px)); overflow: hidden; }
 .screen .xterm { height: 100%; }
 .screen .xterm-viewport { scrollbar-width: thin; scrollbar-color: rgba(var(--hi-rgb), 0.4) transparent; }
 
@@ -88,3 +88,30 @@ html.is-touch .keys, .keys.on { display: flex; }
 }
 /* Terminals line up from the left, even with "Centre all text" on (look.js centres everything else) */
 html body .screen .xterm, html body .screen .xterm * { text-align: left !important; }
+
+/* ----- Centred and easy to read ----- */
+.bar { justify-content: center; }
+.tabs { justify-content: center; flex: 0 1 auto; }
+.note { text-align: center; font-size: 14.5px; color: var(--text, #ebd3e7); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 10px; }
+.note .here {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 12px; text-decoration: none; font-weight: 600;
+  color: var(--bright, #fff); background: rgba(var(--hi-rgb, 255, 95, 168), 0.18); border: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.5);
+}
+.note .here:hover, .note .here:focus-visible { background: rgba(var(--hi-rgb, 255, 95, 168), 0.3); }
+.note small { color: var(--muted, #b997b5); }
+/* Commands to tap */
+.quick {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 8px 12px;
+  border-bottom: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.1);
+  background: rgba(var(--deep-rgb, 16, 8, 22), 0.6);
+}
+.quick .q {
+  height: 34px; padding: 0 12px; border-radius: 999px; cursor: pointer; font: 600 13.5px var(--f-body, "Saira", sans-serif);
+  color: var(--text, #ebd3e7); background: rgba(var(--panel-rgb, 28, 17, 41), 0.8); border: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.22);
+}
+.quick .q:hover, .quick .q:focus-visible { border-color: rgba(var(--hi-rgb, 255, 95, 168), 0.6); color: var(--bright, #fff); }
+@media (max-width: 560px) {
+  .quick { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; }
+  .quick .q { flex: none; }
+}
+html.is-touch .quick .q { height: 40px; }
