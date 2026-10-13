@@ -99,6 +99,9 @@ const tabs = []; // { id, kind, title, term, fit, screen, tabEl, ... }
 let current = null;
 
 function makeTerminal(screen) {
+  const box = document.createElement("div");
+  box.className = "term";
+  screen.append(box);
   const term = new window.Terminal({
     fontFamily: '"Source Code Pro", ui-monospace, Menlo, Consolas, monospace',
     fontSize,
@@ -113,7 +116,7 @@ function makeTerminal(screen) {
   const fit = new window.FitAddon.FitAddon();
   term.loadAddon(fit);
   term.loadAddon(new window.WebLinksAddon.WebLinksAddon((e, uri) => window.open(uri, "_blank", "noopener")));
-  term.open(screen);
+  term.open(box);
   return { term, fit };
 }
 

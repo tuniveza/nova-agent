@@ -54,11 +54,13 @@ button { font: inherit; color: inherit; }
 /* ----- The screens: one terminal each, only the chosen one showing ----- */
 .screens { position: relative; min-height: 0; min-width: 0; overflow: hidden; }
 .screen {
-  position: absolute; inset: 0; padding: 10px 6px 6px 12px;
+  position: absolute; inset: 0; overflow: hidden;
   background:
     radial-gradient(ellipse at 100% 0%, rgba(var(--accent-2-rgb, 122, 31, 134), 0.12), transparent 60%),
     rgba(var(--void-rgb, 6, 4, 13), 1);
 }
+/* The terminal itself, inset from the edges (no padding: xterm sizes itself to this box exactly) */
+.screen .term { position: absolute; inset: 10px 6px 6px 12px; overflow: hidden; }
 .screen .xterm { height: 100%; }
 .screen .xterm-viewport { scrollbar-width: thin; scrollbar-color: rgba(var(--hi-rgb), 0.4) transparent; }
 
@@ -79,7 +81,7 @@ html.is-touch .keys, .keys.on { display: flex; }
 @media (max-width: 560px) {
   .bar { padding: 6px 8px; }
   .chip { padding: 0 10px; }
-  .screen { padding: 6px 2px 4px 6px; }
+  .screen .term { inset: 6px 2px 4px 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
