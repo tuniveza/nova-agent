@@ -5,7 +5,7 @@
 // Against a throwaway server (see scripts/check-fit.mjs's header), on port 4811:
 //   node scripts/check-board.mjs <folder for a screenshot>
 import { chromium } from "playwright";
-const B = "http://localhost:4811";
+const B = process.env.BOARD_URL || "http://localhost:4811";
 const out = process.argv[2];
 const b = await chromium.launch();
 const ctx = await b.newContext({ viewport: { width: 1400, height: 900 } });
