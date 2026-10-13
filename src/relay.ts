@@ -44,6 +44,11 @@ const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
   { methods: ["POST"], path: /^\/actions\/board\/[a-z0-9-]{6,40}\/remove$/ },
   { methods: ["POST"], path: /^\/actions\/board-files$/ },
   { methods: ["GET"], path: /^\/board-files\/b-\d{8}-[a-f0-9]{12}$/ },
+  // Console (src/console.ts): online it's Nova commands only. Its state (it says terminals can't
+  // open), and the recent log for admins. Terminals (/console-api/term…, /console-api/vps) are
+  // never passed on: they only open on the studio computer itself.
+  { methods: ["GET"], path: /^\/console-api\/state$/ },
+  { methods: ["GET"], path: /^\/console-api\/logs$/, admin: true },
   { methods: ["GET"], path: /^\/(events|cache|tasks)$/, admin: true },
   { methods: ["POST"], path: /^\/actions\/(run\/[\w-]+|forget)$/, admin: true },
   // Test stuff on the PC (src/tidy.ts): admins only

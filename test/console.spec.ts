@@ -1,0 +1,190 @@
+// Console (web/console/): the Nova commands (web/console/js/commands.js: reading a line, finishing
+// words, permissions, approvals that ask for the number to be typed back) and the PC side
+// (src/console.ts): terminals only for admins on the studio computer itself, never online, the
+// VPS's address checked, each terminal's token.
+//   Run: npm test
+import { Hono } from "hono";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { boot, shutdown } from "./harness";
+import * as Nova from "../web/console/js/commands.js";
+
+afterEach(shutdown);
+
+// A stand-in for the page: records what was asked of Nova Agent and what was printed
+function fakeCtx({ role = "admin", answers = {} as Record<string, unknown>, typed = "" } = {}) {
+  const calls: { path: string; method: string; body?: unknown }[] = [];
+  const printed: string[] = [];
+  const ctx: any = {
+    me: { id: "ana", name: "Ana", role, online: false },
+    api: async (path: string, opts: { method?: string; body?: unknown } = {}) => {
+      calls.push({ path, method: opts.method || "GET", body: opts.body });
+      const hit = Object.entries(answers).find(([k]) => path.startsWith(k));
+      if (!hit) {
+        const e: any = new Error("not here");
+        e.status = 404;
+        throw e;
+      }
+      return typeof hit[1] === "function" ? (hit[1] as any)(path, opts) : hit[1];
+    },
+    print: (t: string) => printed.push(t),
+    ok: (t: string) => printed.push("ok: " + t),
+    warn: (t: string) => printed.push("warn: " + t),
+    error: (t: string) => printed.push("error: " + t),
+    dim: (t: string) => printed.push("dim: " + t),
+    table: (rows: unknown[]) => printed.push("table:" + JSON.stringify(rows)),
+    ask: async (q: string) => {
+      printed.push("ask: " + q);
+      return typed;
+    },
+    open: (p: string) => printed.push("open: " + p),
+    terminal: async (k: string) => printed.push("terminal: " + k),
+    clear: () => {},
+    history: () => [],
+  };
+  return { ctx, calls, printed };
+}
+
+describe("reading what's typed", () => {
+  it("splits words, keeps quoted words together and reads --flags", () => {
+    expect(Nova.tokenize(`quests add "Mix the EP" --minutes 45`)).toEqual(["quests", "add", "Mix the EP", "--minutes", "45"]);
+    expect(Nova.parse(`agent 'what''s on' --x`)).toEqual({ name: "agent", args: ["whats on"], flags: { x: true } });
+    expect(() => Nova.tokenize(`agent "unclosed`)).toThrow(/quote/);
+  });
+  it("finishes commands and their parts with Tab", () => {
+    expect(Nova.complete("qu")).toEqual(["quests"]);
+    expect(Nova.complete("quests s")).toEqual(["start", "skip", "snooze"]);
+    expect(Nova.complete("portal en")).toEqual(["enquiries"]);
+    expect(Nova.complete("open bo")).toEqual(["board"]);
+  });
+  it("explains a command that doesn't exist", async () => {
+    const { ctx } = fakeCtx();
+    await expect(Nova.run(ctx, "qeusts")).rejects.toThrow(/There's no "qeusts"/);
+  });
+});
+
+describe("the commands", () => {
+  it("adds a quest with its length, and finds one by the start of its id", async () => {
+    const quests = [{ id: "abcd1234-xyz", title: "Mix", status: "todo" }];
+    const { ctx, calls, printed } = fakeCtx({ answers: { "/actions/quests": { ok: true, quest: { title: "Mix the EP" } }, "/quests/state": { quests } } });
+    await Nova.run(ctx, `quests add "Mix the EP" --minutes 45`);
+    expect(calls[0]).toEqual({ path: "/actions/quests", method: "POST", body: { title: "Mix the EP", minutes: 45 } });
+    await Nova.run(ctx, "quests done abcd");
+    expect(calls.at(-1)).toMatchObject({ path: "/actions/quests/abcd1234-xyz", method: "POST", body: { action: "done" } });
+    expect(printed.join("\n")).toMatch(/Done: Mix/);
+  });
+  it("lists a Portal section from Nova Bot's answer", async () => {
+    const { ctx, printed } = fakeCtx({ answers: { "/app/api/enquiries": { enquiries: [{ id: 7, name: "Sam", status: "new", created_at: "2026-10-13T09:00:00Z" }] } } });
+    await Nova.run(ctx, "portal enquiries");
+    expect(printed.join("\n")).toMatch(/"id":7/);
+  });
+  it("keeps admin commands for admins", async () => {
+    const { ctx } = fakeCtx({ role: "staff" });
+    await expect(Nova.run(ctx, "logs")).rejects.toThrow(/admins/);
+    await expect(Nova.run(ctx, "shell")).rejects.toThrow(/admins/);
+    await expect(Nova.run(ctx, "approve campaign 3")).rejects.toThrow(/admins/);
+  });
+  it("approves only when the number is typed back, and shows what it is first", async () => {
+    const answers = { "/app/api/campaigns/3": { campaign: { id: 3, subject: "October news", body: "Hello fans", audience: "fans" } }, "/app/api/campaigns/3/approve": { ok: true } };
+    const wrong = fakeCtx({ answers, typed: "yes" });
+    await Nova.run(wrong.ctx, "approve campaign 3");
+    expect(wrong.calls.some((c) => c.method === "POST")).toBe(false);
+    expect(wrong.printed.join("\n")).toMatch(/October news[\s\S]*Cancelled/);
+    const right = fakeCtx({ answers, typed: "3" });
+    await Nova.run(right.ctx, "approve campaign 3");
+    expect(right.calls.at(-1)).toEqual({ path: "/app/api/campaigns/3/approve", method: "POST", body: {} });
+  });
+  it("opens apps and terminals through the page", async () => {
+    const { ctx, printed } = fakeCtx();
+    await Nova.run(ctx, "open board");
+    await Nova.run(ctx, "vps setup-key");
+    expect(printed).toContain("open: /board/");
+    expect(printed).toContain("terminal: vps-key");
+  });
+});
+
+describe("terminals on the studio computer", () => {
+  async function load() {
+    await boot("2026-10-13T09:00");
+    const con = await import("../src/console");
+    const relay = await import("../src/relay");
+    return { con, relay };
+  }
+
+  it("open only for admins, at localhost, from Console's own page, never through the relay", async () => {
+    const { con, relay } = await load();
+    const local = (headers: Record<string, string> = {}) => new Request("http://localhost:4545/console-api/term", { method: "POST", headers });
+    const admin = { role: "admin" };
+    expect(con.terminalProblem(local({ "X-Nova-Visualizer": "1", Origin: "http://localhost:4545" }), admin, { write: true })).toBe("");
+    expect(con.terminalProblem(local({ "X-Nova-Visualizer": "1" }), { role: "staff" }, { write: true })).toMatch(/admins/);
+    expect(con.terminalProblem(local(), admin, { write: true })).toMatch(/own page/);
+    expect(con.terminalProblem(local({ "X-Nova-Visualizer": "1", Origin: "https://evil.example" }), admin, { write: true })).toMatch(/own page/);
+    expect(con.terminalProblem(new Request("http://192.168.1.20:4545/console-api/term", { method: "POST", headers: { "X-Nova-Visualizer": "1" } }), admin, { write: true })).toMatch(/localhost/);
+    const online = relay.relayedRequest({ method: "POST", path: "/console-api/term", headers: { "x-nova-visualizer": "1" }, staff: { id: "dee", name: "Dee", role: "admin" } });
+    expect(con.terminalProblem(online, admin, { write: true })).toMatch(/not online/);
+    // …and Nova Bot's link never carries them at all
+    expect(relay.relayAllowed("POST", "/console-api/term", { id: "dee", name: "Dee", role: "admin" } as any)).toBe(false);
+    expect(relay.relayAllowed("POST", "/console-api/vps", { id: "dee", name: "Dee", role: "admin" } as any)).toBe(false);
+    expect(relay.relayAllowed("GET", "/console-api/state", { id: "bea", name: "Bea", role: "staff" } as any)).toBe(true);
+    expect(relay.relayAllowed("GET", "/console-api/logs", { id: "bea", name: "Bea", role: "staff" } as any)).toBe(false);
+  });
+
+  it("refuses a terminal asked for online, with a clear message", async () => {
+    const { con, relay } = await load();
+    const app = new Hono();
+    con.registerConsoleRoutes(app);
+    const req = relay.relayedRequest({ method: "POST", path: "/console-api/term", headers: { "content-type": "application/json", "x-nova-visualizer": "1" }, staff: { id: "dee", name: "Dee", role: "admin" } }, Buffer.from(JSON.stringify({ kind: "shell" })));
+    const res = await app.fetch(req);
+    expect(res.status).toBe(403);
+    expect((await res.json()).message).toMatch(/studio computer itself/);
+    const state = await (await app.fetch(relay.relayedRequest({ method: "GET", path: "/console-api/state", headers: {}, staff: { id: "dee", name: "Dee", role: "admin" } }))).json();
+    expect(state).toMatchObject({ terminals: false, open: [] });
+  });
+
+  it("checks the VPS's address, and builds ssh without anything that could be an option", async () => {
+    const { con } = await load();
+    expect(con.cleanVps({ host: "vps.example.com", user: "root", port: 22 })).toEqual({ host: "vps.example.com", user: "root", port: 22 });
+    expect(con.cleanVps({ host: "203.0.113.7", user: "nova", port: "2222" })).toEqual({ host: "203.0.113.7", user: "nova", port: 2222 });
+    expect(con.cleanVps({ host: "-oProxyCommand=evil", user: "root" })).toHaveProperty("error");
+    expect(con.cleanVps({ host: "vps.example.com", user: "-l root" })).toHaveProperty("error");
+    expect(con.cleanVps({ host: "vps.example.com", user: "root", port: 70000 })).toHaveProperty("error");
+    expect(con.commandFor("vps", null)).toHaveProperty("error");
+    const ssh = con.commandFor("vps", { host: "vps.example.com", user: "root", port: 22 }) as any;
+    expect(ssh.file).toBe("ssh");
+    expect(ssh.args).toEqual(["-p", "22", "-o", "ServerAliveInterval=30", "root@vps.example.com"]);
+    expect((con.commandFor("vps-key", { host: "vps.example.com", user: "root", port: 22 }) as any).file).toBe("ssh-copy-id");
+  });
+
+  it("each terminal needs its own token for keys, and closes when asked", async () => {
+    const { con } = await load();
+    const written: string[] = [];
+    let killed = false;
+    void con;
+    // As an admin on this computer: Nova Bot says the PC's person (Ana) is an admin
+    process.env.AGENT_NOVA_KEY = "test-key";
+    process.env.NOVA_WORKER_URL = "http://worker.test";
+    vi.stubGlobal("fetch", async (url: string) =>
+      String(url).endsWith("/nova-agent/me") ? Response.json({ staff: { id: "ana", display_name: "Ana", role: "admin", status: "active" }, linked: true }) : new Response("{}", { status: 404 })
+    );
+    vi.resetModules();
+    const con2 = await import("../src/console");
+    const staff = await import("../src/staff");
+    await staff.whoAmI(true);
+    con2.usePty(() => ({ onData: () => {}, onExit: () => {}, write: (d: string) => void written.push(d), resize: () => {}, kill: () => void (killed = true), pid: 1 }));
+    const app = new Hono();
+    con2.registerConsoleRoutes(app);
+    const H = { "X-Nova-Visualizer": "1", "Content-Type": "application/json", Origin: "http://localhost:4545" };
+    const made = await app.fetch(new Request("http://localhost:4545/console-api/term", { method: "POST", headers: H, body: JSON.stringify({ kind: "shell", cols: 80, rows: 24 }) }));
+    expect(made.status).toBe(200);
+    const { id, token } = await made.json();
+    const bad = await app.fetch(new Request(`http://localhost:4545/console-api/term/${id}/input`, { method: "POST", headers: { ...H, "X-Console-Token": "nope" }, body: JSON.stringify({ data: "ls\r" }) }));
+    expect(bad.status).toBe(404);
+    const good = await app.fetch(new Request(`http://localhost:4545/console-api/term/${id}/input`, { method: "POST", headers: { ...H, "X-Console-Token": token }, body: JSON.stringify({ data: "ls\r" }) }));
+    expect(good.status).toBe(200);
+    expect(written).toEqual(["ls\r"]);
+    await app.fetch(new Request(`http://localhost:4545/console-api/term/${id}/close`, { method: "POST", headers: { ...H, "X-Console-Token": token }, body: "{}" }));
+    expect(killed).toBe(true);
+    con2.usePty(null);
+    delete process.env.AGENT_NOVA_KEY;
+    delete process.env.NOVA_WORKER_URL;
+  });
+});
