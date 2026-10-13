@@ -722,7 +722,12 @@ export class Fixer {
     const co = await this.git(this.paths.release, ["checkout", "-q", "--detach", "main"]);
     if (co.code !== 0) return false;
     for (let attempt = 1; attempt <= 3; attempt++) {
-      const r = await this.deps.run("npx", ["wrangler", "deploy"], { cwd: this.paths.nbMain, timeoutMs: 10 * 60_000, env: { NOVA_AGENT_DIR: this.paths.release } });
+      // Wherever Nova Bot is live: vps/deploy-live.sh picks the VPS after the switch-over (a plain
+      // `wrangler deploy` there would put the full Nova Bot back on Cloudflare and undo the switch)
+      const live = existsSync(join(this.paths.nbMain, "vps", "deploy-live.sh"));
+      const r = live
+        ? await this.deps.run("bash", ["vps/deploy-live.sh"], { cwd: this.paths.nbMain, timeoutMs: 15 * 60_000, env: { NOVA_AGENT_DIR: this.paths.release } })
+        : await this.deps.run("npx", ["wrangler", "deploy"], { cwd: this.paths.nbMain, timeoutMs: 10 * 60_000, env: { NOVA_AGENT_DIR: this.paths.release } });
       if (r.code === 0) {
         this.store.update((d) => this.note(d, "deploy", "Deployed to Nova Bot"));
         return true;
