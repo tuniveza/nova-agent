@@ -32,6 +32,9 @@ function fakeCtx({ role = "admin", answers = {} as Record<string, unknown>, type
     error: (t: string) => printed.push("error: " + t),
     dim: (t: string) => printed.push("dim: " + t),
     table: (rows: unknown[]) => printed.push("table:" + JSON.stringify(rows)),
+    heading: (t: string) => printed.push("heading: " + t),
+    kv: (rows: unknown[]) => printed.push("kv:" + JSON.stringify(rows)),
+    help: (groups: { title: string; rows: unknown[] }[]) => printed.push("help:" + groups.map((g) => `${g.title}(${g.rows.length})`).join(",")),
     ask: async (q: string) => {
       printed.push("ask: " + q);
       return typed;
@@ -56,9 +59,51 @@ describe("reading what's typed", () => {
     expect(Nova.complete("portal en")).toEqual(["enquiries"]);
     expect(Nova.complete("open bo")).toEqual(["board"]);
   });
-  it("explains a command that doesn't exist", async () => {
+  it("explains a command that doesn't exist, and suggests the one meant", async () => {
     const { ctx } = fakeCtx();
-    await expect(Nova.run(ctx, "qeusts")).rejects.toThrow(/There's no "qeusts"/);
+    await expect(Nova.run(ctx, "qeusts")).rejects.toThrow(/There's no "qeusts". Did you mean quests\?/);
+    await expect(Nova.run(ctx, "stauts")).rejects.toThrow(/Did you mean status\?/);
+  });
+  it("knows other words people type", async () => {
+    const { ctx, calls } = fakeCtx({ answers: { "/app/api/enquiries": { enquiries: [] } } });
+    await Nova.run(ctx, "inbox");
+    expect(calls.some((c) => c.path === "/app/api/enquiries")).toBe(true);
+  });
+});
+
+// Every command, with Nova Agent's answers stood in for, runs without breaking (so none can quietly
+// stop working). Commands that change something are given what they need, and asked-first ones are
+// answered with nothing (cancelled).
+describe("every command runs", () => {
+  const answers: Record<string, unknown> = {
+    "/quests/state": { quests: [{ id: "abcdef12-1", title: "Mix the EP", status: "todo", start: "2026-10-14T09:00:00Z" }], missions: [{ id: "m1234567", title: "EP", progress: { percent: 40 } }], current: null, next: [], overdue: [] },
+    "/actions/": { ok: true },
+    "/calendar-api/data": { notes: [{ id: "c1", title: "Session", start: "2026-10-14T10:00" }], rev: 3 },
+    "/board-api/boards": { boards: [{ name: "Welcome", cards: [{ title: "Hello" }] }] },
+    "/notes-api/changes": { notes: [{ id: "n1", title: "Plan", html: "<p>x</p>" }] },
+    "/status": { live: true, connected: true, model: "claude" },
+    "/console-api/state": { terminals: false, why: "online", vps: { host: "h", user: "u", port: 22 } },
+    "/console-api/logs": { lines: [{ time: Date.now(), part: "task", level: "info", message: "hello" }] },
+    "/console-api/vps": { vps: { host: "h", user: "u", port: 22 } },
+    "/fixer-api/state": { issues: [], jobs: [], lastCheck: { at: "2026-10-13T10:00:00Z" } },
+    "/staff": { staff: [{ id: "ana", display_name: "Ana", role: "admin", status: "active" }] },
+    "/app/api/google": { connected: true, account: "a@b.c", missing: [], parts: [{ id: "calendar", on: true, allowed: true }] },
+    "/app/api/desk": { here: { url: "https://x", version: { id: "abc", at: "2026-10-13T10:00:00Z" }, pc: { connected: true }, jobs: [] }, vps: { reachable: true, url: "https://v", uptimeSeconds: 99999, memory: { total: 6e9, free: 3e9 }, disk: { total: 3e10, free: 2e10 }, services: { nova: "active" } } },
+    "/app/api/memory/index": { files: [{ path: "studio", description: "the studio" }] },
+    "/app/api/": { items: [{ id: 1, title: "Thing", status: "new" }] },
+  };
+  const LINE: Record<string, string> = { quests: 'quests add "Mix" --minutes 20', missions: "missions list", search: "search mix", agent: 'agent "hi"', ask: 'ask "hi"', index: "index search studio", open: "open board", approve: "approve campaign 12", reject: "reject social 7", vps: "vps show", shell: "shell", theme: "theme list", music: "music", google: "google status", fixer: "fixer", lossless: "lossless status", logs: "logs 3", portal: "portal enquiries" };
+  for (const name of Object.keys(Nova.COMMANDS)) {
+    it(name, async () => {
+      const { ctx } = fakeCtx({ answers: { ...answers, "/actions/chat": { reply: "Hello", actions: [] } } });
+      ctx.music = { start: async () => {}, stop() {}, newSeed() {}, seed: () => "ABC", setSeed() {}, piece: () => ({ name: "Glow" }), isPlaying: () => false };
+      ctx.look = { themes: [{ id: "pulsar", name: "Pulsar" }], setTheme() {} };
+      await expect(Nova.run(ctx, LINE[name] || name)).resolves.toBeUndefined();
+    });
+  }
+  it("help shows every command in a group", async () => {
+    const grouped = new Set(Nova.GROUPS.flatMap(([, names]) => names));
+    expect(Object.keys(Nova.COMMANDS).filter((c) => !grouped.has(c))).toEqual([]);
   });
 });
 

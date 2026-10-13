@@ -553,11 +553,13 @@ export const COMMANDS = {
     help: "Which version of Nova Agent this is",
     usage: "version",
     async run(ctx) {
-      let v = null;
-      try {
-        v = window.top.NOVA_STATUS || window.NOVA_STATUS || null;
-      } catch {
-        v = window.NOVA_STATUS || null;
+      let v = ctx.status || null;
+      if (!v && typeof window !== "undefined") {
+        try {
+          v = window.top.NOVA_STATUS || window.NOVA_STATUS || null;
+        } catch {
+          v = window.NOVA_STATUS || null;
+        }
       }
       const s = await ctx.api("/status").catch(() => null);
       ctx.kv([
