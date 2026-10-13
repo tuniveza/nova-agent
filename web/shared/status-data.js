@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 320,
+ "build": 328,
  "date": "2026-10-13",
  "panels": {
   "chat": [
@@ -195,13 +195,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Fixer, Nova Agent",
+  "Board's click-through check",
   "Board, a table in Nova Agent's Apps…",
   "Google round two on the PC and…",
   "Sizing, Portal's tabs never squash or cut…",
   "Portal's Admin address is view=manage",
   "Portal → Google",
-  "Portal → Conversations",
-  "Music, a calm late-night studio band",
-  "Google, the Connect step shows the key's…"
+  "Portal → Conversations"
  ]
 };

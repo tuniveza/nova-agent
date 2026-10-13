@@ -4,6 +4,9 @@ A table to lay things out on. Bring notes, a stretch of the calendar, Agent's an
 
 ## What's new
 
+- **A Welcome board** the first time you open Board: a looping video, a picture, a sound, a link, a pinned card, a sticky note, a question card, an Agent answer, a note and this week's calendar, with little labels saying what to try. Then choose: **Clear it and start**, **Keep it, start a new board**, or **Keep as is**.
+- **Pictures and videos show online** (from their copy in Google Drive: quick, and videos start straight away and can skip), with a calm shimmer while they come and **Try again** if one doesn't.
+- **Bigger files**: up to 500 MB on the studio computer itself, 95 MB online. WebM and MOV videos and OGG sound too.
 - Board joins Nova Agent's Apps: a table for notes (with their times), the calendar (a day, week, month or year), Agent's questions and answers, question cards, sticky notes, text, links, pictures and files, moved around with the mouse and pinned in place.
 
 ## What it does
@@ -23,7 +26,11 @@ A table to lay things out on. Bring notes, a stretch of the calendar, Agent's an
   - **Agent**: what you've asked Agent before, with the answers.
   Drag one onto the table, or press it to put it in the middle.
 - **Ask Agent** cards: type a question and press **Ask** (or Enter). The answer appears on the card (and in your Agent conversation). **Ask something else** clears it for a new question.
-- **From outside Nova Agent**: drop a picture, a file, a link or some text from the desktop or another browser tab onto the table, or paste one (Ctrl+V) with nothing else selected. Links show their page's title, a line about it and its little icon. Pictures (JPEG, PNG, WebP, GIF), PDFs, text files, audio (MP3, WAV, M4A) and MP4 videos can go on a board, up to 25 MB each.
+- **From outside Nova Agent**: drop a picture, a file, a link or some text from the desktop or another browser tab onto the table, or paste one (Ctrl+V) with nothing else selected. Links show their page's title, a line about it and its little icon. Pictures (JPEG, PNG, WebP, GIF), PDFs, text files, audio (MP3, WAV, M4A, OGG) and videos (MP4, WebM, MOV) can go on a board: up to 500 MB each on the studio computer itself, 95 MB online (just under what Nova Bot can take in one go). A big one shows how far along it is. Videos play right on the card.
+
+## The Welcome board
+
+The first time each person opens Board, they get a Welcome board (once, ever): a calm showcase of everything a board can hold, laid out on the table, with a banner at the bottom. **Clear it and start** empties it (it becomes "My board"); **Keep it, start a new board** keeps it as "Welcome" and opens a fresh board; **Keep as is** just hides the banner. Its video, picture and sound come with Board (`web/board/assets/welcome/`, made by `scripts/make-board-welcome.py`, nothing borrowed).
 
 ## The keyboard
 
@@ -31,7 +38,7 @@ With a card selected: the arrow keys move it (Shift for bigger steps), **P** pin
 
 ## Where it's kept
 
-Each person's own boards, on the studio computer (`data/boards/<person>.json`), saved a moment after every change. Pictures and files are kept beside them (`data/board-files/`), under names Nova Agent makes up. Your browser keeps a copy too, so a board opens straight away; with the studio computer off, changes wait in the browser and save when it's back. Online, Board reaches the studio computer through Nova Bot, for signed-in staff only. An admin can look at everyone's boards (`/board-api/boards?who=everyone`); changing a board is for its owner.
+Each person's own boards, on the studio computer (`data/boards/<person>.json`), saved a moment after every change. Pictures and files are kept beside them (`data/board-files/`), under names Nova Agent makes up, written to disk as they arrive. When Google is connected, the studio computer also uploads each one to Google Drive's **Nova Agent/Board** folder itself (straight from disk, any size; files dropped while Google was off follow within the hour), and online Board shows them from there: quick, and parts on request (Range), so videos start at once. Without a Drive copy they come from the studio computer through Nova Bot, as before; a file cut off part-way now shows **Try again** instead of half a picture. Your browser keeps a copy too, so a board opens straight away; with the studio computer off, changes wait in the browser and save when it's back. Online, Board reaches the studio computer through Nova Bot, for signed-in staff only. An admin can look at everyone's boards (`/board-api/boards?who=everyone`); changing a board is for its owner.
 
 ## How it works
 
@@ -43,4 +50,4 @@ Each person's own boards, on the studio computer (`data/boards/<person>.json`), 
 
 ## Tests
 
-`test/board.spec.ts`: each person's own boards, an admin looking at everyone's, a stale page told about a newer save, saving only from Nova Agent's pages, what a card may hold, pictures and files (type checks, made-up names), links only to public pages, and the relay's list. `node scripts/check-fit.mjs --only board` checks it fits from phones to 4K.
+`test/board.spec.ts`: the Welcome board (once, every kind of card, its choices), big files saved as they arrive and refused part-way when too big, parts on request (Range), the limits here and online, each person's own boards, an admin looking at everyone's, a stale page told about a newer save, saving only from Nova Agent's pages, what a card may hold, pictures and files (type checks, made-up names), links only to public pages, and the relay's list. `node scripts/check-fit.mjs --only board` checks it fits from phones to 4K; `node scripts/check-board-welcome.mjs` opens the Welcome board in a browser (video playing, picture and sound ready, each choice) and puts a 6 MB video on the table (kept whole, a part back on request). Nova Bot's tests cover a 3 MB answer coming through the link byte for byte, a cut-off answer being an error, and Board files from Drive (whole and Range, signed-in staff only).
