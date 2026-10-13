@@ -29,6 +29,7 @@ const APPS = [
   { id: "index", name: "Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel; online too", links: [["Open Index", `${PC}/app/memory/`]] },
   { id: "observatory", name: "Observatory", readme: "docs/apps/observatory/README.md", paths: ["web/observatory", "docs/apps/observatory", "scripts/observatory"], joined: "as web/observatory", colour: "#FFB86B", glyph: "✧", where: "A Nova Agent panel", links: [["Open Observatory", `${PC}/observatory/`]] },
   { id: "fixer", name: "Fixer", readme: "docs/apps/fixer/README.md", paths: ["src/fixer", "web/fixer", "docs/apps/fixer", "test/fixer.spec.ts"], colour: "#B3F26B", glyph: "✦", where: "A Nova Agent panel, for admins", links: [["Open the Fixer", `${PC}/fixer/`]] },
+  { id: "console", name: "Console", readme: "docs/apps/console/README.md", paths: ["web/console", "src/console.ts", "docs/apps/console", "test/console.spec.ts"], colour: "#FF8CC6", glyph: "›", where: "A Nova Agent panel (Tools); terminals only on the studio PC", links: [["Open Console", `${PC}/console/`]] },
   { id: "bot", name: "Nova Bot", repo: "nb/novacane-worker", colour: "#5CE1FF", glyph: "◎", where: "On the website and Cloudflare: Nova Agent's back end", links: [["Admin pages", `${WORKER}/admin`]] },
 ];
 

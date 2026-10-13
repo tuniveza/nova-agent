@@ -215,14 +215,14 @@
 
   // ---- The bar along the bottom: every place in Nova Agent, always there, in four groups ----
   // Apps (Portal, Agent, Calendar, Notes, Index) · Plans (Quests, Missions) · Tools (Lossless,
-  // Visualizer) · Helpers (Observatory, Manual). Any other panel joins Tools.
+  // Visualizer, Console) · Helpers (Observatory, Manual). Any other panel joins Tools.
   // On a narrow phone only Portal, Agent, Calendar, Notes and Quests stay on the bar, with a More
   // button for the rest (a sheet with the same icons; they open just the same)
   const SKIP = ['/admin/links']; // All links: behind the gear
   const GROUPS = [
     ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
     ['tasks', 'Plans', ['pane:quests', 'pane:missions']],
-    ['tools', 'Tools', ['/lossless/', '/visualizer']],
+    ['tools', 'Tools', ['/lossless/', '/visualizer', '/console/']],
     ['helpers', 'Helpers', ['/observatory/', 'manual']],
   ];
   const bar = document.createElement('nav');

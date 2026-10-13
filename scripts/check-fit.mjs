@@ -373,6 +373,14 @@ const APPS = {
     },
     dialogs: true,
   },
+  console: {
+    path: "/console/",
+    ready: ".xterm",
+    async prepare(f) {
+      await f.evaluate(() => window.NovaConsole && window.NovaConsole.type("help\r"));
+      await new Promise((r) => setTimeout(r, 400));
+    },
+  },
   index: { path: "/app/memory/", ready: "body", dialogs: true },
   observatory: { path: "/observatory/", ready: "body", dialogs: true },
   lossless: { path: "/lossless/", ready: "body", dialogs: true },

@@ -197,7 +197,7 @@
     if (/quests/.test(p)) return "quests";
     if (/missions/.test(p)) return "missions";
     if (/pane:chat|^\/agent\/?$/.test(p)) return "chat";
-    for (const k of ["portal", "calendar", "notes", "board", "lossless", "visualizer", "observatory", "manual"]) if (p.includes(k)) return k;
+    for (const k of ["portal", "calendar", "notes", "board", "console", "lossless", "visualizer", "observatory", "manual"]) if (p.includes(k)) return k;
     if (/memory|index/.test(p)) return "index";
     return "";
   };
