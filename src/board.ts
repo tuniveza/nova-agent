@@ -171,7 +171,7 @@ export function welcomeBoard(now = new Date()): Board {
   const earlier = new Date(now.getTime() - 26 * 3600_000).toISOString();
   let z = 1;
   const card = (kind: CardKind, x: number, y: number, w: number, h: number, turn: number, more: Partial<Card>): Card => ({ id: newId(), kind, x, y, w, h, z: z++, turn, pinned: false, created: at, updated: at, ...more });
-  const hint = (x: number, y: number, text: string, turn = 0) => card("text", x, y, 170, 90, turn, { text, hint: true });
+  const hint = (x: number, y: number, text: string, turn = 0) => card("text", x, y, 250, 96, turn, { text, hint: true });
   return {
     id: newId(),
     name: "Welcome",
@@ -182,7 +182,7 @@ export function welcomeBoard(now = new Date()): Board {
     cards: [
       card("text", -330, -470, 660, 120, 0, { text: "Welcome to Board ✦\nA table for everything: lay it out, move it around, pin what matters." }),
       card("file", -700, -300, 420, 290, -1.5, { asset: "/board/assets/welcome/nebula.mp4", fileType: "video/mp4", fileName: "A video", title: "A video plays right on the table" }),
-      hint(-700, 10, "↖ videos, pictures and sounds: drop your own files on the table"),
+      hint(-700, 4, "↖ drop your own videos, pictures and sounds"),
       card("image", -230, -300, 360, 250, 1.2, { asset: "/board/assets/welcome/nebula.webp", fileType: "image/webp", fileName: "A picture", title: "A picture" }),
       card("file", 180, -300, 300, 150, -0.8, { asset: "/board/assets/welcome/chime.mp3", fileType: "audio/mpeg", fileName: "A calm chime", title: "A sound" }),
       hint(500, -280, "← press play", 2),
@@ -191,11 +191,11 @@ export function welcomeBoard(now = new Date()): Board {
       card("sticky", -230, -20, 280, 200, -2, { colour: "teal", text: "I'm pinned 📌\nTap my pin to let me move.", pinned: true }),
       card("question", 80, 120, 320, 230, 0.6, { text: "What's the next song we finish?", answer: "Write the answer, notes or next steps here." }),
       card("agent", 430, 120, 360, 260, -1, { title: "What should I work on first this week?", answer: "This is an example answer. Ask Agent anything on an Ask Agent card (+ → Ask Agent) and its answer lands right here, and in your Agent conversation too.", asked: earlier }),
-      card("note", -700, 70, 300, 190, 1.4, { title: "An example note", text: "Notes come onto the table from the drawer (the ☰ button), with when they were made and changed.", noteCreated: earlier, noteUpdated: at }),
+      card("note", -700, 110, 300, 190, 1.4, { title: "An example note", text: "Notes come onto the table from the drawer (the ☰ button), with when they were made and changed.", noteCreated: earlier, noteUpdated: at }),
       card("calendar", -380, 210, 440, 260, -0.6, { span: "week", start: mondayUk(now) }),
       card("link", 820, -300, 300, 140, 1, { url: "https://novacane.co.uk/", title: "Novacane Studios", text: "Links show their page's title and picture." }),
-      hint(820, -140, "wheel or pinch to zoom · drag the table to move around"),
-      hint(820, 410, "+ adds cards · drop or paste anything from outside", 1.5),
+      hint(820, -140, "wheel or pinch to zoom, drag the table to move around"),
+      hint(820, 410, "+ Add makes cards; drop or paste anything", 1.5),
     ],
   };
 }

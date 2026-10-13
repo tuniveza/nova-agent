@@ -292,11 +292,15 @@ function fitAll() {
   const cards = board().cards;
   if (!cards.length) return $("zoom-reset").click();
   const r = table.getBoundingClientRect();
+  // (the Welcome board's banner covers the bottom of the table: everything goes above it)
+  const bar = $("welcome-bar");
+  const below = bar && !bar.hidden ? bar.offsetHeight + 24 : 0;
+  const h = r.height - below;
   const minX = Math.min(...cards.map((c) => c.x)), minY = Math.min(...cards.map((c) => c.y));
   const maxX = Math.max(...cards.map((c) => c.x + c.w)), maxY = Math.max(...cards.map((c) => c.y + c.h));
-  const z = Math.min(1.5, Math.max(0.2, Math.min((r.width - 60) / (maxX - minX || 1), (r.height - 60) / (maxY - minY || 1))));
+  const z = Math.min(1.5, Math.max(0.2, Math.min((r.width - 60) / (maxX - minX || 1), (h - 60) / (maxY - minY || 1))));
   const v = view();
-  Object.assign(v, { zoom: z, x: (r.width - (maxX - minX) * z) / 2 - minX * z, y: (r.height - (maxY - minY) * z) / 2 - minY * z });
+  Object.assign(v, { zoom: z, x: (r.width - (maxX - minX) * z) / 2 - minX * z, y: (h - (maxY - minY) * z) / 2 - minY * z });
   applyView();
   changed(board(), 1500);
 }
@@ -467,6 +471,13 @@ function front(c) {
     place(c);
   }
 }
+// A file card says what it is: a video, a sound, a PDF…
+function kindName(c) {
+  const t = c.fileType || "";
+  if (c.kind === "file") return t.startsWith("video/") ? "Video" : t.startsWith("audio/") ? "Sound" : t === "application/pdf" ? "PDF" : "File";
+  if (c.kind === "text" && c.hint) return "Label";
+  return KIND_NAMES[c.kind];
+}
 function cardTitle(c) {
   if (c.kind === "calendar") return calendarTitle(c);
   return (c.title || c.text || c.fileName || c.url || KIND_NAMES[c.kind]).split("\n")[0].slice(0, 80);
@@ -478,9 +489,9 @@ function buildCard(c) {
   node.dataset.id = c.id;
   node.setAttribute("data-fit-free", ""); // (it may lie anywhere on the table: scripts/check-fit.mjs)
   node.setAttribute("role", "group");
-  node.setAttribute("aria-label", `${KIND_NAMES[c.kind]}: ${cardTitle(c)}. Arrow keys move it, P pins it, Delete removes it.`);
+  node.setAttribute("aria-label", `${kindName(c)}: ${cardTitle(c)}. Arrow keys move it, P pins it, Delete removes it.`);
   const head = el("div", "card-head");
-  const kind = el("span", "card-kind", KIND_NAMES[c.kind]);
+  const kind = el("span", "card-kind", kindName(c));
   const pinB = iconButton(ICON.pin, c.pinned ? "Unpin (let it move)" : "Pin (keep it here)", "card-btn pin-btn");
   pinB.setAttribute("aria-pressed", String(Boolean(c.pinned)));
   pinB.addEventListener("click", () => togglePin(c));
