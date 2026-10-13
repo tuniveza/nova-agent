@@ -298,6 +298,18 @@ Agent can look but not touch: `google_calendar_busy`, `gmail_search` (who, subje
 
 Built in Nova Bot's `src/google/` (`calendar.js`, `gmail.js`, `contacts.js`, `drive.js`, `sheets.js`; `index.js` runs one part a minute at most on the cron, within the free Workers plan's limit of 50 calls a run; links between Nova's things and Google's are in `google_links`, `migrations/0032_google.sql`), and here in `src/google.ts` (copies to Drive, the nightly file backup), `src/google-agent.ts` and `web/portal/google.js`.
 
+## Computer
+
+Portal → **Computer** (in Admin; admins only; `?view=computer`) shows where Nova Bot runs: on
+Cloudflare and on the studio's VPS, side by side. At the top, **Live now** says which side the
+address everyone uses reaches, the one command to switch over (`vps/switch.sh`) or back
+(`vps/switch-back.sh`, run on the studio PC in Nova Bot's folder; each asks first), and any warnings
+(for example when newsletters can't send). Under it: each side's version, the studio PC link, the
+VPS's memory, disk, services, last data copy and backup, its timed jobs and recent problems, with
+**Back up now**, **Restart Nova Bot** and **Restart web front** (Restart asks twice). Console's
+`computer` command shows the same. It was called Desk once (inside it still is: `desk.js`,
+`/app/api/desk`).
+
 ## Live chat
 
 Someone from the studio can answer a website chat themselves, in Portal → **Conversations**.

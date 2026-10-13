@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 352,
+ "build": 353,
  "date": "2026-10-13",
  "panels": {
   "chat": [
