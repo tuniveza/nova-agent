@@ -12,6 +12,8 @@ body {
 button { font: inherit; color: inherit; }
 
 .console-app { position: fixed; inset: 0; display: grid; grid-template-rows: auto auto 1fr auto; min-width: 0; }
+/* Each in its own row, whether the note shows or not */
+.bar { grid-row: 1; } .note { grid-row: 2; } .screens { grid-row: 3; } .keys { grid-row: 4; }
 
 /* ----- The bar: the open consoles as tabs, and new ones ----- */
 .bar {
@@ -82,3 +84,5 @@ html.is-touch .keys, .keys.on { display: flex; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+/* Terminals line up from the left, even with "Centre all text" on (look.js centres everything else) */
+html body .screen .xterm, html body .screen .xterm * { text-align: left !important; }

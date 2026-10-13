@@ -533,7 +533,7 @@ async function decide(ctx, action, kind, id) {
     if (it.audience || it.toEmail || it.platforms) ctx.dim(`  to: ${it.audience || it.toEmail || [].concat(it.platforms).join(", ")}`);
   }
   if (action === "approve") ctx.warn("Approving lets Nova send or post it, exactly as above.");
-  const typed = (await ctx.ask(`Type ${id} to ${action} it (anything else cancels): `)).trim();
+  const typed = (await ctx.ask(`Type ${id} to ${action} (else cancel): `)).trim();
   if (typed !== String(id)) return ctx.dim("Cancelled. Nothing changed.");
   const body = action === "reject" ? { note: "Rejected in Console" } : {};
   const r = await ctx.api(P(k.act(id, action)), { method: "POST", body });
