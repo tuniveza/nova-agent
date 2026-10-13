@@ -89,7 +89,7 @@ export function registerBoardRoutes(app: Hono): void {
       const file = await boardFiles.saveStream(c.req.raw.body, type, max);
       // A copy in Google Drive, in the background (Nova Bot shows it from there online)
       const info = boardFiles.info(file.id);
-      if (info) copyBoardFileToDriveLater(file.id, c.req.header("X-Nova-Name") || file.id, file.type, info.path, info.size);
+      if (info) copyBoardFileToDriveLater(file.id, (c.req.query("name") || file.id).replace(/[\r\n\/\\]/g, " ").slice(0, 200), file.type, info.path, info.size);
       return c.json({ ok: true, file });
     } catch (error) {
       return c.json({ ok: false, message: (error as Error).message }, error instanceof TooBig ? 413 : 400);

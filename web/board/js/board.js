@@ -148,6 +148,13 @@ async function start() {
     boards = fresh;
     const wanted = current || load(CURRENT, null);
     current = boards.some((b) => b.id === wanted) ? wanted : boards[0] && boards[0].id;
+    // The Welcome board, the first time: opened, with everything in view
+    const welcome = boards.find((b) => b.welcome);
+    if (welcome && !load(WELCOME_SHOWN, []).includes(welcome.id)) {
+      current = welcome.id;
+      keep(WELCOME_SHOWN, [...load(WELCOME_SHOWN, []), welcome.id].slice(-20));
+      requestAnimationFrame(() => requestAnimationFrame(fitAll));
+    }
     cache();
     drawPicker();
     drawBoard();
@@ -394,7 +401,32 @@ function drawBoard() {
 }
 function refreshEmpty() {
   $("empty").hidden = board().cards.length > 0;
+  $("welcome-bar").hidden = !board().welcome;
 }
+
+// ===== The Welcome board: what to do with it (once) =====
+const WELCOME_SHOWN = "board-welcome-shown";
+function welcomeDone(b, said) {
+  delete b.welcome;
+  b.updated = nowIso();
+  changed(b, 0);
+  $("welcome-bar").hidden = true;
+  toast(said);
+}
+$("welcome-clear").addEventListener("click", () => {
+  const b = board();
+  b.cards = [];
+  b.name = "My board";
+  drawPicker();
+  drawBoard();
+  welcomeDone(b, "All clear: the table is yours.");
+});
+$("welcome-new").addEventListener("click", () => {
+  const b = board();
+  welcomeDone(b, "“Welcome” is kept in your boards.");
+  $("board-new").click();
+});
+$("welcome-keep").addEventListener("click", () => welcomeDone(board(), "Kept as it is. Add your own cards any time with +."));
 
 const KIND_NAMES = { note: "Note", calendar: "Calendar", agent: "Agent", question: "Question", sticky: "Sticky note", text: "Text", link: "Link", image: "Picture", file: "File" };
 const ICON = {
@@ -526,6 +558,8 @@ function fillBody(c, body) {
     const f = el("div", "fill");
     f.append(sw, box(c, "text", "Write anything…"));
     body.append(f);
+  } else if (c.kind === "text" && c.hint) {
+    body.append(el("p", "hint-text", c.text || ""));
   } else if (c.kind === "text") {
     const f = el("div", "fill");
     f.append(box(c, "text", "Some text…"));
@@ -560,40 +594,75 @@ function fillBody(c, body) {
     row.append(icon, words);
     body.append(row);
   } else if (c.kind === "image") {
-    const img = el("img");
-    img.alt = c.fileName || "A picture";
-    img.src = `/board-files/${c.fileId}`;
-    img.draggable = false;
-    body.append(img);
+    body.append(media("img", c, (img) => {
+      img.alt = c.fileName || "A picture";
+      img.draggable = false;
+      img.decoding = "async";
+    }));
   } else if (c.kind === "file") {
+    const type = c.fileType || "";
+    if (type.startsWith("video/")) {
+      // A video plays right on the card (the Welcome board's loops quietly by itself)
+      body.append(media("video", c, (v) => {
+        v.controls = true;
+        v.playsInline = true;
+        v.preload = "metadata";
+        if (c.asset) Object.assign(v, { muted: true, loop: true, autoplay: true });
+      }));
+      return;
+    }
     const row = el("div", "file-row");
     const ext = (c.fileName || "").split(".").pop() || "file";
-    row.append(el("span", "file-ico", ext.slice(0, 4)));
+    row.append(el("span", "file-ico", type.startsWith("audio/") ? "♪" : ext.slice(0, 4)));
     const words = el("div");
-    words.append(el("p", "card-title", c.fileName || "A file"));
+    words.append(el("p", "card-title", c.title || c.fileName || "A file"));
     const a = el("a", "link-url", "Open");
-    a.href = `/board-files/${c.fileId}`;
+    a.href = fileUrl(c);
     a.target = "_blank";
     a.rel = "noopener";
     words.append(a);
     row.append(words);
     body.append(row);
-    if ((c.fileType || "").startsWith("audio/")) {
-      const au = el("audio");
+    if (type.startsWith("audio/")) body.append(media("audio", c, (au) => {
       au.controls = true;
-      au.preload = "none";
-      au.src = `/board-files/${c.fileId}`;
-      body.append(au);
-    } else if ((c.fileType || "").startsWith("video/")) {
-      const v = el("video");
-      v.controls = true;
-      v.preload = "metadata";
-      v.src = `/board-files/${c.fileId}`;
-      body.append(v);
-    }
+      au.preload = "metadata";
+    }));
   }
 }
 const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch (err) { return url || ""; } };
+
+// Where a card's picture, video or sound comes from: Board's own (the Welcome board's) or one
+// dropped on a board (kept on the studio computer, and online from its copy in Google Drive)
+const fileUrl = (c) => c.asset || `/board-files/${c.fileId}`;
+// A picture, video or sound: a calm shimmer until it's there; if it doesn't come, a "Try again"
+// (never an empty box). Big files online can take a moment the first time.
+function media(tag, c, setup) {
+  const box = el("div", `media media-${tag} is-loading`);
+  const m = el(tag);
+  const wait = el("span", "media-wait", tag === "img" ? "Bringing the picture…" : "Getting it ready…");
+  const retry = el("button", "media-retry", "Couldn't load it · Try again");
+  retry.type = "button";
+  const ok = () => box.classList.remove("is-loading", "is-failed");
+  const fail = () => {
+    box.classList.remove("is-loading");
+    box.classList.add("is-failed");
+  };
+  m.addEventListener(tag === "img" ? "load" : "loadedmetadata", ok);
+  m.addEventListener("error", fail);
+  retry.addEventListener("click", (e) => {
+    e.stopPropagation();
+    box.classList.remove("is-failed");
+    box.classList.add("is-loading");
+    m.src = `${fileUrl(c)}${fileUrl(c).includes("?") ? "&" : "?"}again=${Date.now()}`;
+    if (tag !== "img") m.load();
+  });
+  setup(m);
+  m.src = fileUrl(c);
+  // (already there, from the browser's copy)
+  if (tag === "img" && m.complete && m.naturalWidth) ok();
+  box.append(m, wait, retry);
+  return box;
+}
 
 // ===== Moving, sizing, pinning and removing cards =====
 const INTERACTIVE = "textarea, input, select, button, a, audio, video, .resize, .answer";
@@ -860,17 +929,33 @@ async function addLink(url, at) {
     }
   } catch (err) {}
 }
-const EXT_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", pdf: "application/pdf", txt: "text/plain", md: "text/markdown", csv: "text/csv", mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", mp4: "video/mp4" };
+const EXT_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", pdf: "application/pdf", txt: "text/plain", md: "text/markdown", csv: "text/csv", mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", ogg: "audio/ogg", mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime" };
+// How big a file may be here: 500 MB on the studio computer itself, 95 MB online (asked once)
+let limits = { maxBytes: 95 * 1024 * 1024, max: "95 MB" };
+fetch("/board-api/limits", { cache: "no-store" }).then((r) => r.json()).then((d) => d && d.maxBytes && (limits = d)).catch(() => {});
 async function upload(file, at) {
   const type = (file.type || EXT_TYPES[(file.name.split(".").pop() || "").toLowerCase()] || "").toLowerCase();
-  if (!type || !Object.values(EXT_TYPES).includes(type)) return toast(`“${file.name}” can't go on a board (pictures, PDFs, text, audio and MP4 can).`);
-  if (file.size > 25 * 1024 * 1024) return toast(`“${file.name}” is too big (25 MB at most).`);
+  if (!type || !Object.values(EXT_TYPES).includes(type)) return toast(`“${file.name}” can't go on a board (pictures, PDFs, text, audio and video can).`);
+  if (file.size > limits.maxBytes) return toast(`“${file.name}” is too big (${limits.max} at most${limits.here ? "" : " online; up to 500 MB on the studio computer itself"}).`);
   status(`Putting “${file.name}” on the table…`);
   let data;
   try {
-    const res = await fetch("/actions/board-files", { method: "POST", headers: { ...HDR, "Content-Type": type }, body: file });
-    data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok) throw new Error(data.message || data.error || (res.status === 503 ? "The studio computer is off, so files can't be kept just now." : `Error ${res.status}`));
+    data = await new Promise((resolve, reject) => {
+      // (with a progress line, since a big video takes a while)
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `/actions/board-files?name=${encodeURIComponent(file.name.slice(0, 200))}`);
+      xhr.setRequestHeader("X-Nova-Visualizer", "1");
+      xhr.setRequestHeader("Content-Type", type);
+      xhr.upload.onprogress = (e) => e.lengthComputable && file.size > 2e6 && status(`Putting “${file.name}” on the table… ${Math.round((e.loaded / e.total) * 100)}%`);
+      xhr.onload = () => {
+        let d = {};
+        try { d = JSON.parse(xhr.responseText); } catch (err) {}
+        if (xhr.status >= 200 && xhr.status < 300 && d.ok) resolve(d);
+        else reject(new Error(d.message || d.error || (xhr.status === 503 ? "The studio computer is off, so files can't be kept just now." : `Error ${xhr.status}`)));
+      };
+      xhr.onerror = () => reject(new Error("the connection dropped"));
+      xhr.send(file);
+    });
   } catch (err) {
     status("");
     return toast(`Couldn't keep “${file.name}”: ${err.message}`);

@@ -223,3 +223,47 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 @media (prefers-reduced-motion: reduce) {
   .card { transition: none; }
 }
+
+/* ----- Pictures, videos and sounds: a calm shimmer while they come, "Try again" if they don't ----- */
+.media { position: relative; width: 100%; height: 100%; min-height: 60px; display: grid; place-items: center; border-radius: 8px; }
+.media img, .media video { max-width: 100%; max-height: 100%; border-radius: 8px; display: block; }
+.media video { width: 100%; height: 100%; object-fit: contain; background: rgba(0, 0, 0, 0.25); }
+.media audio { width: 100%; margin-top: 8px; }
+.card.k-file .card-body:has(> .media-video) { padding: 0 6px 6px; display: grid; }
+.media-wait, .media-retry { display: none; }
+.media.is-loading > :is(img, video, audio) { opacity: 0; }
+.media.is-loading {
+  background: linear-gradient(110deg, rgba(var(--panel-2-rgb, 36, 22, 64), 0.6) 30%, rgba(var(--hi-rgb), 0.16) 50%, rgba(var(--panel-2-rgb, 36, 22, 64), 0.6) 70%) 0 0 / 300% 100%;
+  animation: board-shimmer 1.8s ease-in-out infinite;
+}
+.media.media-audio.is-loading { min-height: 54px; }
+.media.is-loading > .media-wait { display: block; position: absolute; font-size: 12px; color: var(--muted); }
+.media.is-failed { background: rgba(var(--panel-2-rgb, 36, 22, 64), 0.6); border: 1px dashed rgba(var(--hi-rgb), 0.35); }
+.media.is-failed > :is(img, video, audio) { display: none; }
+.media.is-failed > .media-retry {
+  display: block; padding: 8px 14px; border-radius: 999px; cursor: pointer; font: 600 12px var(--f-body); color: var(--text);
+  background: rgba(var(--hi-rgb), 0.12); border: 1px solid rgba(var(--hi-rgb), 0.4);
+}
+@keyframes board-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+/* ----- Little labels on the Welcome board ("drag me"): words on the table, not a card ----- */
+.card.k-text:has(.hint-text) { background: transparent; border-color: transparent; box-shadow: none; }
+.card.k-text:has(.hint-text) .card-head { opacity: 0; transition: opacity 0.2s; }
+.card.k-text:has(.hint-text):is(:hover, :focus-visible, :focus-within) .card-head { opacity: 1; }
+.hint-text { margin: 0; font: 600 italic 15px/1.4 var(--f-body); color: var(--hi); text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5); }
+
+/* ----- The Welcome board's banner: what to do with it ----- */
+.welcome-bar {
+  position: absolute; z-index: 14; left: 50%; bottom: 18px; translate: -50% 0; width: min(760px, calc(100% - 24px));
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 16px; padding: 14px 18px; border-radius: 18px;
+  background: rgba(var(--panel-rgb), 0.94); border: 1px solid rgba(var(--hi-rgb), 0.3); box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7), 0 0 30px -18px var(--hi);
+}
+.welcome-words { flex: 1 1 320px; min-width: 0; }
+.welcome-words h2 { margin: 0 0 4px; font: 700 15px var(--f-display); letter-spacing: 0.04em; color: var(--bright, #fff); }
+.welcome-words p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.welcome-choices { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.welcome-choices .chip { min-height: 40px; }
+.chip.ghost { background: transparent; border: 1px solid rgba(var(--hi-rgb), 0.4); color: var(--text); }
+@media (prefers-reduced-motion: reduce) {
+  .media.is-loading { animation: none; }
+}

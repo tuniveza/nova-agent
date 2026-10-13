@@ -65,6 +65,19 @@
 
   <div class="status" id="status" role="status" aria-live="polite" hidden></div>
 
+  <!-- The Welcome board (once, the first time): what to do with the showcase -->
+  <section class="welcome-bar" id="welcome-bar" aria-labelledby="welcome-title" hidden>
+    <div class="welcome-words">
+      <h2 id="welcome-title">Welcome to Board ✦</h2>
+      <p>This table shows what Board can do: play the video, press play on the sound, drag the cards, pin and unpin them, zoom with the wheel. When you're ready:</p>
+    </div>
+    <div class="welcome-choices">
+      <button class="chip" id="welcome-clear" type="button">Clear it and start</button>
+      <button class="chip" id="welcome-new" type="button">Keep it, start a new board</button>
+      <button class="chip ghost" id="welcome-keep" type="button">Keep as is</button>
+    </div>
+  </section>
+
   <main class="table" id="table" tabindex="0" aria-label="The table. Drag empty space to move around, the wheel to zoom. Drop notes, pictures, files, links or text here.">
     <div class="world" id="world"></div>
     <p class="empty" id="empty" hidden>Your table is clear.<br>Press <b>Add</b>, open <b>Notes, calendar &amp; Agent</b>, or drop a picture, file, link or some text here.</p>
