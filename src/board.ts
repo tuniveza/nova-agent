@@ -116,6 +116,9 @@ export function cleanCard(raw: any, now = new Date().toISOString()): Card | null
     const url = str(raw.url, 2000);
     if (!url || !/^https?:\/\//i.test(url)) return null;
     card.url = url;
+    // (its page's little icon, when the link's page says where it is)
+    const icon = str(raw.fileName, 500);
+    if (icon && /^https?:\/\//i.test(icon)) card.fileName = icon;
   }
   if (kind === "image" || kind === "file") {
     if (typeof raw.fileId !== "string" || !/^b-\d{8}-[a-f0-9]{12}$/.test(raw.fileId)) return null;
