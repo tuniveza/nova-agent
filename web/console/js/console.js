@@ -243,10 +243,24 @@ function novaTab(me) {
 
   const prompt = () => (asking ? asking.prompt : PROMPT);
   const promptLen = () => (asking ? asking.len : PROMPT_LEN);
+  // Where the cursor was drawn (prompt + text before it), so a long line that wraps is redrawn whole
+  let drawnAt = 0;
   function redraw() {
-    term.write(`\r\x1b[2K${prompt()}${line}`);
-    const back = line.length - cursor;
-    if (back > 0) term.write(`\x1b[${back}D`);
+    const cols = Math.max(10, term.cols);
+    const P = promptLen();
+    // Back to where this line started, then clear everything below
+    const upRows = Math.floor(drawnAt / cols);
+    term.write(`\r${upRows ? `\x1b[${upRows}A` : ""}\x1b[J${prompt()}${line}`);
+    // From the end of the text to the cursor
+    const end = P + line.length;
+    const at = P + cursor;
+    const endRow = Math.floor(end / cols);
+    const atRow = Math.floor(at / cols);
+    if (end % cols === 0 && end > 0) term.write("\r\n"); // a full last row: step onto the next like a terminal would
+    const fromRow = end % cols === 0 && end > 0 ? endRow : endRow;
+    if (fromRow > atRow) term.write(`\x1b[${fromRow - atRow}A`);
+    term.write(`\r${at % cols ? `\x1b[${at % cols}C` : ""}`);
+    drawnAt = at;
   }
   function setLine(v) {
     line = v;
@@ -265,6 +279,7 @@ function novaTab(me) {
         asking = { resolve, prompt: `${C.warn}${question}${C.reset}`, len: question.length };
         line = "";
         cursor = 0;
+        drawnAt = 0;
         redraw();
       }),
     open(path) {
@@ -292,6 +307,7 @@ function novaTab(me) {
     term.write("\r\n");
     line = "";
     cursor = 0;
+    drawnAt = 0;
     if (asking) {
       const a = asking;
       asking = null;
@@ -310,7 +326,10 @@ function novaTab(me) {
       out.error(err.message || String(err));
     }
     busy = false;
-    if (!asking) term.write(PROMPT);
+    if (!asking) {
+      term.write(PROMPT);
+      drawnAt = PROMPT_LEN;
+    }
   }
 
   function complete() {
@@ -334,6 +353,7 @@ function novaTab(me) {
       return redraw();
     }
     term.write("\r\n" + C.dim + options.join("   ") + C.reset + "\r\n");
+    drawnAt = 0;
     redraw();
   }
 
@@ -373,13 +393,13 @@ function novaTab(me) {
       case "\x1b[D":
         if (cursor > 0) {
           cursor--;
-          term.write("\x1b[D");
+          redraw();
         }
         return;
       case "\x1b[C":
         if (cursor < line.length) {
           cursor++;
-          term.write("\x1b[C");
+          redraw();
         }
         return;
       case "\x1b[H":
@@ -407,6 +427,7 @@ function novaTab(me) {
         }
         line = "";
         cursor = 0;
+        drawnAt = PROMPT_LEN;
         return void term.write(PROMPT);
       case "\x1b":
         return setLine("");
@@ -426,6 +447,7 @@ function novaTab(me) {
   out.print(`${C.bold}Console${C.reset}  ${C.dim}· everything in Nova Agent, typed${C.reset}`);
   out.dim(`Signed in as ${me.name} (${me.role})${me.online ? " · online" : " · on the studio computer"}. Type help, or try: now · quests · portal enquiries · agent "what's on today?"`);
   term.write(PROMPT);
+  drawnAt = PROMPT_LEN;
   return tab;
 }
 
