@@ -19,7 +19,8 @@ for (const [w, h] of [[1280, 820], [390, 844]]) {
   }
   await f.waitForSelector(".xterm", { timeout: 20000 });
   await f.waitForFunction(() => window.NovaConsole && window.NovaConsole.tabs.length, null, { timeout: 20000 });
-  const text = () => f.evaluate(() => [...document.querySelectorAll(".screen:not([hidden]) .xterm-rows > div")].map((d) => d.textContent).join("\n"));
+  // (everything printed so far, not just what's on screen: help is longer than the screen now)
+  const text = () => f.evaluate(() => { const t = (window.NovaConsole.tabs.find((x) => !x.screen.hidden) || window.NovaConsole.tabs[0]).term; const buf = t.buffer.active; const o = []; for (let i = 0; i <= buf.baseY + buf.cursorY; i++) o.push(buf.getLine(i).translateToString(true)); return o.join("\n"); });
   const type = async (line, wait = 900) => {
     await f.evaluate((l) => window.NovaConsole.type(l), line);
     await p.waitForTimeout(wait);
