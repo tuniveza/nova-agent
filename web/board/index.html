@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Board</title>
+<meta name="description" content="Board: a table to lay things out on. Notes, the calendar, Agent's answers, questions, pictures, files and links, moved around with the mouse.">
+<meta name="theme-color" content="#06040D">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,800&family=Saira:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap">
+<script src="/shared/inside.js"></script>
+<link rel="stylesheet" href="/shared/themes.css">
+<script src="/shared/spectrum.js"></script>
+<script src="/shared/themes.js"></script>
+<link rel="stylesheet" href="css/board.css">
+<!-- Every button's look, last so it decides it (buttons.css) -->
+<link rel="stylesheet" href="/shared/buttons.css">
+<link rel="stylesheet" href="/shared/scrollbars.css">
+<script src="/shared/look.js"></script>
+</head>
+<body data-sfx-theme="notes">
+<div class="board-app" id="app">
+  <header class="bar" aria-label="Board">
+    <div class="boards">
+      <label class="sr" for="board-pick">Board</label>
+      <select id="board-pick" class="board-pick" aria-label="Which board"></select>
+      <button class="icon-btn" id="board-rename" type="button" aria-label="Rename this board" title="Rename"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></button>
+      <button class="icon-btn" id="board-new" type="button" aria-label="New board" title="New board"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></button>
+      <button class="icon-btn" id="board-delete" type="button" aria-label="Delete this board" title="Delete this board" data-sfx="remove"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg></button>
+      <form class="rename" id="rename-form" hidden>
+        <input id="rename-input" maxlength="80" aria-label="The board's name" autocomplete="off">
+        <button class="chip" type="submit">Save</button>
+        <button class="chip" type="button" id="rename-cancel">Cancel</button>
+      </form>
+    </div>
+    <div class="tools">
+      <div class="add-wrap">
+        <button class="add-btn" id="add" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="add-menu"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add</span></button>
+        <div class="menu" id="add-menu" role="menu" hidden>
+          <button role="menuitem" type="button" data-add="question"><span class="dot q"></span>Question card</button>
+          <button role="menuitem" type="button" data-add="agent"><span class="dot a"></span>Ask Agent</button>
+          <button role="menuitem" type="button" data-add="sticky"><span class="dot s"></span>Sticky note</button>
+          <button role="menuitem" type="button" data-add="text"><span class="dot t"></span>Text</button>
+          <button role="menuitem" type="button" data-add="link"><span class="dot l"></span>Link…</button>
+          <button role="menuitem" type="button" data-add="file"><span class="dot f"></span>Picture or file…</button>
+          <div class="menu-sep" role="separator"></div>
+          <button role="menuitem" type="button" data-add="calendar" data-span="day"><span class="dot c"></span>Calendar: a day</button>
+          <button role="menuitem" type="button" data-add="calendar" data-span="week"><span class="dot c"></span>Calendar: a week</button>
+          <button role="menuitem" type="button" data-add="calendar" data-span="month"><span class="dot c"></span>Calendar: a month</button>
+          <button role="menuitem" type="button" data-add="calendar" data-span="year"><span class="dot c"></span>Calendar: a year</button>
+        </div>
+      </div>
+      <button class="chip" id="drawer-btn" type="button" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg><span>Notes, calendar &amp; Agent</span></button>
+      <div class="zoom" role="group" aria-label="Zoom">
+        <button class="icon-btn" id="zoom-out" type="button" aria-label="Zoom out"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+        <button class="zoom-level" id="zoom-reset" type="button" aria-label="Back to 100% and the middle">100%</button>
+        <button class="icon-btn" id="zoom-in" type="button" aria-label="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+        <button class="icon-btn" id="zoom-fit" type="button" aria-label="Show every card" title="Show every card"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      </div>
+      <button class="icon-btn bin-btn" id="bin-btn" type="button" aria-label="Removed cards" aria-haspopup="dialog" aria-controls="bin"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg><span class="count" id="bin-count" hidden></span></button>
+    </div>
+  </header>
+
+  <div class="status" id="status" role="status" aria-live="polite" hidden></div>
+
+  <main class="table" id="table" tabindex="0" aria-label="The table. Drag empty space to move around, the wheel to zoom. Drop notes, pictures, files, links or text here.">
+    <div class="world" id="world"></div>
+    <p class="empty" id="empty" hidden>Your table is clear.<br>Press <b>Add</b>, open <b>Notes, calendar &amp; Agent</b>, or drop a picture, file, link or some text here.</p>
+    <div class="drop-hint" id="drop-hint" hidden>Drop it on the table</div>
+  </main>
+
+  <aside class="drawer" id="drawer" aria-label="Notes, calendar and Agent" hidden>
+    <div class="drawer-head">
+      <div class="drawer-tabs" role="tablist" aria-label="What to bring to the table">
+        <button role="tab" type="button" data-pane="notes" aria-selected="true">Notes</button>
+        <button role="tab" type="button" data-pane="calendar" aria-selected="false">Calendar</button>
+        <button role="tab" type="button" data-pane="agent" aria-selected="false">Agent</button>
+      </div>
+      <button class="icon-btn" id="drawer-close" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <p class="drawer-hint">Drag one onto the table, or press it to put it in the middle.</p>
+    <div class="pane" data-pane="notes">
+      <input type="search" id="notes-search" placeholder="Find a note" aria-label="Find a note" autocomplete="off">
+      <ul class="pick-list" id="notes-list" aria-label="Notes"></ul>
+    </div>
+    <div class="pane" data-pane="calendar" hidden>
+      <ul class="pick-list" id="cal-list" aria-label="Calendar spans"></ul>
+    </div>
+    <div class="pane" data-pane="agent" hidden>
+      <ul class="pick-list" id="agent-list" aria-label="What you asked Agent"></ul>
+    </div>
+  </aside>
+
+  <div class="bin" id="bin" role="dialog" aria-label="Removed cards" hidden>
+    <div class="bin-head"><b>Removed cards</b><button class="icon-btn" id="bin-close" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <ul id="bin-list"></ul>
+    <p class="bin-none" id="bin-none">Nothing removed.</p>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button class="chip" id="toast-undo" type="button" hidden>Undo</button></div>
+  <input type="file" id="file-input" hidden multiple>
+</div>
+<script src="/shared/sfx.js"></script>
+<script type="module" src="js/board.js"></script>
+</body>
+</html>
