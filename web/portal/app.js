@@ -10,9 +10,9 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot", "tests", "google"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot", "tests", "google", "desk"];
   // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
-  const MORE = ["clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot", "tests", "google"];
+  const MORE = ["clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot", "tests", "google", "desk"];
   let currentView = "today";
   let running = false;
   let sessions = null; // session types for booking links
@@ -283,6 +283,7 @@
     if ((view === "money" || view === "today") && window.PortalMoney) window.PortalMoney.load();
     if ((view === "tests" || view === "today") && window.PortalTests) window.PortalTests.load();
     if (view === "google" && window.PortalGoogle) window.PortalGoogle.load();
+    if (view === "desk" && window.PortalDesk) window.PortalDesk.load();
     // Every section keeps the Alerts badge up to date; the Alerts tab also shows the list
     loadAlerts();
     if (view === "bot") setTimeout(() => $("bot-input").focus({ preventScroll: true }), 50);

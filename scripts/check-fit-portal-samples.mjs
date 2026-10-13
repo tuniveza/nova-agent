@@ -817,6 +817,7 @@ export function portalMock(pathWithQuery, method = "GET") {
   if (path === "money") return moneyBody();
   if (path === "tidy") return tidyBody("bot");
   if (path === "google") return googleBody();
+  if (path === "desk") return deskBody();
   if (path === "google/today") return { events: [
     { id: "gp-1", title: "Dentist " + LONGWORD, start: "09:30", end: "10:15", allDay: false, location: "Forest Hill Road, London " + LONGWORD2, meetUrl: "", from: "Google Calendar" },
     { id: "ev-1", title: "Call with the label", start: "15:00", end: "15:30", allDay: false, location: "", meetUrl: "https://meet.google.com/abc-defg-hij", from: ME_NAME },
@@ -838,4 +839,40 @@ export function portalMock(pathWithQuery, method = "GET") {
   }
   if (path === "push/key") return { publicKey: "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U" };
   return null;
+}
+
+// ----- Desk (Cloudflare and the VPS side by side) -----
+function deskBody() {
+  const ago = (m) => new Date(Date.now() - m * 60000).toISOString();
+  return {
+    canAct: true,
+    here: {
+      where: "cloudflare",
+      url: "https://novacane-worker.novacane-studio.workers.dev",
+      version: { id: "fcbd6766", at: ago(90) },
+      pc: { connected: true, since: ago(30) },
+      jobs: [
+        { name: "Google: calendar", at: ago(3), ok: true, note: "39 events in step (68 in, 2 out just now) " + LONGWORD },
+        { name: "Google: contacts", at: ago(50), ok: false, note: "9 of 10 so far · the rest next run" },
+        { name: "Email campaigns (hourly check)", at: ago(20), ok: true, note: "" },
+        { name: "Social posts (hourly check)", at: ago(22), ok: true, note: "" },
+      ],
+    },
+    vps: {
+      reachable: true,
+      url: "https://185-185-126-195.sslip.io",
+      host: "odysi",
+      uptimeSeconds: 321000,
+      novaSince: "Tue 2026-10-13 18:30:43 UTC",
+      cpu: { count: 4, load: [0.31, 0.27, 0.22] },
+      memory: { total: 6 * 1024 ** 3, free: 3.4 * 1024 ** 3 },
+      disk: { total: 30 * 1024 ** 3, free: 27 * 1024 ** 3 },
+      services: { nova: "active", caddy: "active", "nova-cron.timer": "inactive", "nova-backup.timer": "active", "desk-status": "active" },
+      jobsOn: false,
+      lastSync: null,
+      lastBackup: ago(600),
+      version: "a98df50 " + ago(60),
+      problems: ["2026-10-13T18:31:02+0000 odysi caddy[1]: a long warning line with " + LONGWORD + " " + LONG_URL],
+    },
+  };
 }
