@@ -22,6 +22,8 @@
 .dk-why { margin: 4px 0 0; color: var(--text); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; text-align: left; }
 .dk-problems { margin: 0; padding-left: 18px; display: grid; gap: 4px; text-align: left; }
 .dk-problems li { font-family: var(--f-mono, monospace); font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
+.dk-live { margin-bottom: 14px; }
+.dk-warn { padding: 8px 10px; border-radius: 10px; background: rgba(var(--panel-2-rgb), 0.6); }
 .dk-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .dk-actions .btn { min-height: 44px; }
 

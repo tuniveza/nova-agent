@@ -3,7 +3,8 @@
 // Each side: online or not, since when, how busy (processor, memory, disk), its version, the
 // last copy of the data and the last backup, its jobs' last runs, the PC link, and recent problems
 // in plain words. Buttons for admins (Portal open in a browser): restart Nova Bot on the VPS,
-// restart its web front, back up now (Restart asks twice).
+// restart its web front, back up now (Restart asks twice). Above them: which side is live (the one
+// the address everyone uses reaches), the commands to switch over and back, and any warnings.
 // Plain buttons and text only (nothing from the server is drawn as HTML), words not colours.
 
 (function () {
@@ -77,7 +78,26 @@
     return card;
   }
 
-  function vpsCard(v, canAct) {
+  // Which side the address everyone uses reaches, how to switch, and what needs doing
+  function liveCard(h) {
+    const card = el("section", "card dk-card dk-live");
+    card.setAttribute("aria-label", "Which side is live");
+    const live = h.live || (h.where === "cloudflare" ? "cloudflare" : "standby");
+    const words = live === "cloudflare" ? "Cloudflare" : live === "vps" ? "The VPS" : "Cloudflare (this VPS is standing by)";
+    const head = el("div", "dk-head");
+    head.append(el("h3", "card-title", "Live now"), state(true, words));
+    card.append(head);
+    const sw = h.switchHelp;
+    if (sw) {
+      const vpsLive = live === "vps";
+      card.append(row(vpsLive ? "Go back to Cloudflare" : "Switch to the VPS", vpsLive ? sw.back : sw.to, `run on ${sw.from}; it asks before doing anything`));
+      if (!vpsLive) card.append(row("Go back afterwards", sw.back));
+    }
+    for (const w of h.warnings || []) card.append(el("p", "dk-why dk-warn", `⚠ ${w}`));
+    return card;
+  }
+
+  function vpsCard(v, canAct, live) {
     const card = el("section", "card dk-card");
     card.setAttribute("aria-label", "The VPS");
     const head = el("div", "dk-head");
@@ -93,7 +113,8 @@
     card.append(row("Server", v.host || "?", `up ${dur(v.uptimeSeconds)}`));
     card.append(row("Nova Bot", on("nova") ? "Running" : svc.nova || "?", v.novaSince ? `since ${v.novaSince}` : ""));
     card.append(row("Web front (HTTPS)", on("caddy") ? "Running" : svc.caddy || "?"));
-    card.append(row("Every-minute jobs", v.jobsOn ? "On" : "Off", v.jobsOn ? "" : "they switch on at the cutover, so the VPS and Cloudflare never both send"));
+    const jobsNote = v.jobsOn ? "" : live === "vps" ? "The VPS is live but its timed jobs are off: on the VPS, systemctl enable --now nova-cron.timer" : "they switch on at the cutover, so the VPS and Cloudflare never both send";
+    card.append(row("Every-minute jobs", v.jobsOn ? "On" : "Off", jobsNote));
     card.append(row("Nightly backup", on("nova-backup.timer") ? "On" : "Off", `last ${ago(v.lastBackup)}`));
     card.append(row("Data copied from Cloudflare", v.lastSync ? ago(v.lastSync) : "not yet"));
     if (v.cpu) card.append(row("Processors", `${v.cpu.count}`, `busy ${(v.cpu.load || []).join(" · ")} (1, 5, 15 min)`));
@@ -146,8 +167,8 @@
     const box = $("desk-body");
     if (!box || !data) return;
     const grid = el("div", "dk-grid");
-    grid.append(hereCard(data.here), vpsCard(data.vps, data.canAct));
-    box.replaceChildren(grid);
+    grid.append(hereCard(data.here), vpsCard(data.vps, data.canAct, data.here.live));
+    box.replaceChildren(liveCard(data.here), grid);
   }
 
   async function load() {

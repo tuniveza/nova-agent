@@ -213,6 +213,8 @@
     if (window.PortalSocial) window.PortalSocial.load();
     // The Money badge (invoices waiting for an admin, and overdue ones): money.js
     if (window.PortalMoney) window.PortalMoney.load();
+    // This phone's notifications still use the server's current key
+    setTimeout(renewPushAddress, 3000);
     // Admins: what looks like test stuff (the Test stuff badge and Today's line): teststuff.js
     if (window.PortalTests) window.PortalTests.load();
     // Light the bell up if this phone already gets notifications
@@ -4572,6 +4574,8 @@
     else if (Notification.permission === "denied") status = "Notifications are blocked for this app. Turn them on in the iPhone's Settings, then Notifications, then Portal (or Portal or Nova Agent, if you added it to the Home Screen before).";
     // Already on
     else if (address) status = "Notifications are on for this phone.";
+    // The server's keys changed and this phone needs one tap to get notifications again
+    else if (pushRenewNeeded) status = "Nova's notification keys changed. Tap Turn on notifications once to get them on this phone again.";
     // Put the message in the panel
     $("notify-status").textContent = status;
     // Show "Turn on" only when it can be turned on and isn't already
@@ -4622,6 +4626,7 @@
       });
       // Hand the address to the Worker to keep
       await api("push/subscribe", { body: { subscription: address.toJSON() } });
+      pushRenewNeeded = false;
       // Let him know it worked
       toast("Notifications are on");
     } catch (err) {
@@ -4668,6 +4673,42 @@
     // Show the new state
     updateNotifyPanel();
   });
+
+  // ===== When the server's notification keys change (the switch to the VPS) =====
+  // A phone keeps the public key it signed up with, and notifications sent with a new pair of keys
+  // can't reach it. So when Portal opens it compares the two: if they differ it quietly gets a new
+  // address with the new key (the phone already said Allow), or, when the phone wants a tap for
+  // that, says calmly that notifications need turning on again, once.
+  let pushRenewChecked = false;
+  let pushRenewNeeded = false;
+  async function renewPushAddress() {
+    if (pushRenewChecked || !canNotify || Notification.permission !== "granted") return;
+    pushRenewChecked = true;
+    try {
+      const address = await currentAddress();
+      const had = address && address.options && address.options.applicationServerKey;
+      // No address here, or the phone doesn't say which key it has: nothing to compare
+      if (!had) return;
+      const { publicKey } = await api("push/key");
+      if (!publicKey) return;
+      const want = keyBytes(publicKey);
+      const old = new Uint8Array(had);
+      if (old.length === want.length && old.every((b, i) => b === want[i])) return;
+      // The doorman that holds the old address gets the new one
+      const reg = await pushDoorman();
+      await api("push/unsubscribe", { body: { endpoint: address.endpoint } }).catch(() => {});
+      await address.unsubscribe().catch(() => {});
+      try {
+        const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want });
+        await api("push/subscribe", { body: { subscription: fresh.toJSON() } });
+      } catch (err) {
+        if (err.message === "signed out") return;
+        pushRenewNeeded = true;
+        toast("Notifications need turning on again: Alerts, then Turn on notifications");
+      }
+      updateNotifyPanel();
+    } catch (err) {}
+  }
 
   // ===== Voice commands =====
   // Tap the mic, say what to do, and Portal does it. Like asking someone at
