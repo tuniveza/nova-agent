@@ -38,6 +38,12 @@ const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
   { methods: ["POST"], path: /^\/actions\/receipts$/ },
   { methods: ["GET"], path: /^\/receipts\/r-\d{8}-[a-f0-9]{10}$/ },
   { methods: ["GET"], path: /^\/calendar-api\/events$/ },
+  // Board (src/board-routes.ts): each person's own boards, and what's dropped on them
+  { methods: ["GET"], path: /^\/board-api\/(boards|link)$/ },
+  { methods: ["PUT"], path: /^\/board-api\/boards\/[a-z0-9-]{6,40}$/ },
+  { methods: ["POST"], path: /^\/actions\/board\/[a-z0-9-]{6,40}\/remove$/ },
+  { methods: ["POST"], path: /^\/actions\/board-files$/ },
+  { methods: ["GET"], path: /^\/board-files\/b-\d{8}-[a-f0-9]{12}$/ },
   { methods: ["GET"], path: /^\/(events|cache|tasks)$/, admin: true },
   { methods: ["POST"], path: /^\/actions\/(run\/[\w-]+|forget)$/, admin: true },
   // Test stuff on the PC (src/tidy.ts): admins only

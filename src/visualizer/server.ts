@@ -52,6 +52,7 @@ import { questEvents, readQuests } from "../quests/store";
 import { missionMarkdown } from "../quests/export";
 import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile, saveFile } from "../files";
 import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, receipts } from "../receipts";
+import { registerBoardRoutes } from "../board-routes";
 import { registerFixerRoutes } from "../fixer/routes";
 import { registerTidyRoutes } from "../tidy-routes";
 import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
@@ -123,7 +124,7 @@ app.use("*", async (c, next) => {
 // Opened on its own (a bookmark, a typed address, an old link), a panel opens inside Nova Agent
 // instead: /agent/?open=<its address>. Inside Nova Agent's viewer (a frame) it loads as itself. The
 // browser says which (Sec-Fetch-Dest); web/shared/inside.js catches browsers that don't.
-const PANELS = ["/portal", "/calendar", "/notes", "/app/memory", "/observatory", "/lossless", "/visualizer", "/admin", "/fixer"];
+const PANELS = ["/portal", "/calendar", "/notes", "/board", "/app/memory", "/observatory", "/lossless", "/visualizer", "/admin", "/fixer"];
 app.use("*", async (c, next) => {
   const path = c.req.path;
   const page = (c.req.method === "GET" || c.req.method === "HEAD") && c.req.header("Sec-Fetch-Dest") === "document";
@@ -137,7 +138,7 @@ app.use("*", async (c, next) => {
 
 // The pages. Read from disk each time, so edits show on refresh.
 // Nova Agent's page is /agent/, the same address as online; /agent/<panel> opens it with that panel
-const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", index: "/app/memory/", observatory: "/observatory/", lossless: "/lossless/", visualizer: "/visualizer", admin: "/admin", fixer: "/fixer/" };
+const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", board: "/board/", index: "/app/memory/", observatory: "/observatory/", lossless: "/lossless/", visualizer: "/visualizer", admin: "/admin", fixer: "/fixer/" };
 app.get("/", (c) => c.redirect("/agent/"));
 app.get("/agent", (c) => c.redirect("/agent/"));
 app.get("/agent/", (c) => c.html(readFileSync(chatFile, "utf8")));
@@ -196,6 +197,9 @@ for (const path of ["/notes/sw.js", "/calendar/sw.js"]) {
 }
 serveFolder("/observatory", "observatory/", "Observatory is missing from web/observatory.");
 serveFolder("/notes", "notes/", "Notes is missing from web/notes.");
+// Board: a table to lay notes, the calendar, Agent's answers, pictures and links out on (src/board*.ts)
+serveFolder("/board", "board/", "Board is missing from web/board.");
+registerBoardRoutes(app);
 // Lossless audio: the page only; its signalling and relay setup are Nova Bot's (/lossless/ws, /lossless/ice)
 serveFolder("/lossless", "lossless/public/lossless/", "Lossless audio is missing from web/lossless.");
 serveFolder("/app/memory", "index/", "Index is missing from web/index.");
