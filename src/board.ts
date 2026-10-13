@@ -49,6 +49,8 @@ export interface Card {
   fileName?: string;
   colour?: (typeof STICKY_COLOURS)[number];
   asked?: string; // when an Agent question was asked
+  asset?: string; // a picture/video/sound that comes with Board itself (the Welcome board's)
+  hint?: boolean; // a text card that's a little label ("drag me"), not a card to write on
 }
 export interface Board {
   id: string;
@@ -58,6 +60,7 @@ export interface Board {
   view: { x: number; y: number; zoom: number };
   cards: Card[];
   owner?: string; // filled in when an admin looks at everyone's
+  welcome?: boolean; // the first-run Welcome board, until its person chooses what to do with it
 }
 
 export const MAX_BOARDS = 50;
@@ -121,11 +124,13 @@ export function cleanCard(raw: any, now = new Date().toISOString()): Card | null
     if (icon && /^https?:\/\//i.test(icon)) card.fileName = icon;
   }
   if (kind === "image" || kind === "file") {
-    if (typeof raw.fileId !== "string" || !/^b-\d{8}-[a-f0-9]{12}$/.test(raw.fileId)) return null;
-    card.fileId = raw.fileId;
+    if (typeof raw.asset === "string" && WELCOME_ASSET.test(raw.asset)) card.asset = raw.asset;
+    else if (typeof raw.fileId === "string" && /^b-\d{8}-[a-f0-9]{12}$/.test(raw.fileId)) card.fileId = raw.fileId;
+    else return null;
     set("fileType", str(raw.fileType, 100));
     set("fileName", str(raw.fileName, 200));
   }
+  if (kind === "text" && raw.hint === true) card.hint = true;
   if (kind === "sticky") card.colour = oneOf(raw.colour, STICKY_COLOURS) || "amber";
   return card;
 }
@@ -140,6 +145,7 @@ export function cleanBoard(raw: any, id: string, now = new Date().toISOString())
   }
   return {
     id,
+    ...(raw?.welcome === true ? { welcome: true } : {}),
     name: str(raw?.name, 80)?.trim() || "Board",
     created: iso(raw?.created, now),
     updated: now,
@@ -148,17 +154,64 @@ export function cleanBoard(raw: any, id: string, now = new Date().toISOString())
   };
 }
 
+// ---- The Welcome board: shown once to each person, the first time they open Board ----
+// A calm showcase laid out on the table: a looping video, a picture and a sound (made for Board:
+// web/board/assets/welcome/), a link, a pinned card, a sticky note, a question card, an Agent
+// question with its answer (a sample: nothing is asked), a note and this week from the calendar,
+// with little labels saying what to try. A banner on it (web/board/js/board.js) lets them clear
+// it and start, keep it and start a new board, or keep it as it is; then it's an ordinary board.
+export const WELCOME_ASSET = /^\/board\/assets\/welcome\/[\w-]+\.(mp4|webp|mp3)$/;
+function mondayUk(now: Date): string {
+  const d = new Date(now.toLocaleDateString("en-CA", { timeZone: "Europe/London" }) + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+export function welcomeBoard(now = new Date()): Board {
+  const at = now.toISOString();
+  const earlier = new Date(now.getTime() - 26 * 3600_000).toISOString();
+  let z = 1;
+  const card = (kind: CardKind, x: number, y: number, w: number, h: number, turn: number, more: Partial<Card>): Card => ({ id: newId(), kind, x, y, w, h, z: z++, turn, pinned: false, created: at, updated: at, ...more });
+  const hint = (x: number, y: number, text: string, turn = 0) => card("text", x, y, 170, 90, turn, { text, hint: true });
+  return {
+    id: newId(),
+    name: "Welcome",
+    created: at,
+    updated: at,
+    welcome: true,
+    view: { x: 0, y: 0, zoom: 0.8 },
+    cards: [
+      card("text", -330, -470, 660, 120, 0, { text: "Welcome to Board ✦\nA table for everything: lay it out, move it around, pin what matters." }),
+      card("file", -700, -300, 420, 290, -1.5, { asset: "/board/assets/welcome/nebula.mp4", fileType: "video/mp4", fileName: "A video", title: "A video plays right on the table" }),
+      hint(-700, 10, "↖ videos, pictures and sounds: drop your own files on the table"),
+      card("image", -230, -300, 360, 250, 1.2, { asset: "/board/assets/welcome/nebula.webp", fileType: "image/webp", fileName: "A picture", title: "A picture" }),
+      card("file", 180, -300, 300, 150, -0.8, { asset: "/board/assets/welcome/chime.mp3", fileType: "audio/mpeg", fileName: "A calm chime", title: "A sound" }),
+      hint(500, -280, "← press play", 2),
+      card("sticky", 180, -110, 260, 200, 2.5, { colour: "rose", text: "Drag me anywhere.\nGrab my corner to make me bigger." }),
+      hint(460, -60, "drag me ↙", -3),
+      card("sticky", -230, -20, 280, 200, -2, { colour: "teal", text: "I'm pinned 📌\nTap my pin to let me move.", pinned: true }),
+      card("question", 80, 120, 320, 230, 0.6, { text: "What's the next song we finish?", answer: "Write the answer, notes or next steps here." }),
+      card("agent", 430, 120, 360, 260, -1, { title: "What should I work on first this week?", answer: "This is an example answer. Ask Agent anything on an Ask Agent card (+ → Ask Agent) and its answer lands right here, and in your Agent conversation too.", asked: earlier }),
+      card("note", -700, 70, 300, 190, 1.4, { title: "An example note", text: "Notes come onto the table from the drawer (the ☰ button), with when they were made and changed.", noteCreated: earlier, noteUpdated: at }),
+      card("calendar", -380, 210, 440, 260, -0.6, { span: "week", start: mondayUk(now) }),
+      card("link", 820, -300, 300, 140, 1, { url: "https://novacane.co.uk/", title: "Novacane Studios", text: "Links show their page's title and picture." }),
+      hint(820, -140, "wheel or pinch to zoom · drag the table to move around"),
+      hint(820, 410, "+ adds cards · drop or paste anything from outside", 1.5),
+    ],
+  };
+}
+
 // ---- On disk: one file per person ----
 interface Saved {
   version: 1;
   boards: Board[];
+  welcomed?: boolean; // the Welcome board has been given to them (once, ever)
 }
 function load(personId: string): Saved {
   try {
     const file = personFile(personId);
     if (existsSync(file)) {
       const data = JSON.parse(readFileSync(file, "utf8"));
-      if (data && Array.isArray(data.boards)) return { version: 1, boards: data.boards };
+      if (data && Array.isArray(data.boards)) return { version: 1, boards: data.boards, ...(data.welcomed ? { welcomed: true } : {}) };
     }
   } catch {}
   return { version: 1, boards: [] };
@@ -184,6 +237,13 @@ export function listBoards(person: Person, everyone = false): Board[] {
     return all;
   }
   const saved = load(person.id);
+  // The first time they open Board: the Welcome board, first in their list (once, ever: they
+  // decide what becomes of it)
+  if (!saved.welcomed && saved.boards.length < MAX_BOARDS) {
+    saved.boards.unshift(welcomeBoard());
+    saved.welcomed = true;
+    store(person.id, saved);
+  }
   if (!saved.boards.length) {
     const now = new Date().toISOString();
     saved.boards.push({ id: newId(), name: "My board", created: now, updated: now, view: { x: 0, y: 0, zoom: 1 }, cards: [] });

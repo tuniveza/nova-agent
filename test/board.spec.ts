@@ -40,7 +40,7 @@ describe("a person's boards", () => {
     expect(saved.data.board.cards[0]).toMatchObject({ kind: "question", text: "When's the release?", x: 10, y: 20, pinned: false });
     // Cal doesn't see Bea's
     const cal = await call(as("cal"), "GET", "/board-api/boards");
-    expect(cal.data.boards.map((b: any) => b.name)).toEqual(["My board"]);
+    expect(cal.data.boards.map((b: any) => b.name)).toEqual(["Welcome"]);
     // Cal saving under Bea's board's name makes Cal's own, it doesn't touch Bea's
     await call(as("cal"), "PUT", `/board-api/boards/${id}`, { board: { name: "Not yours", cards: [] } });
     expect((await call(as("bea"), "GET", "/board-api/boards")).data.boards.find((b: any) => b.id === id).name).toBe("EP plan");
@@ -67,6 +67,37 @@ describe("a person's boards", () => {
     const { as, call } = await studio();
     const res = await call(as("bea"), "PUT", "/board-api/boards/abcdef123456", { board: {} }, { "x-nova-visualizer": "" });
     expect(res.status).toBe(403);
+  });
+});
+
+describe("the Welcome board", () => {
+  it("is given once to each person, first in their list, a showcase of every kind of card", async () => {
+    const { as, call } = await studio();
+    const first = (await call(as("eve"), "GET", "/board-api/boards")).data.boards;
+    expect(first).toHaveLength(1);
+    const w = first[0];
+    expect(w).toMatchObject({ name: "Welcome", welcome: true });
+    const kinds = new Set(w.cards.map((c: any) => c.kind));
+    for (const k of ["file", "image", "sticky", "question", "agent", "note", "calendar", "link", "text"]) expect(kinds.has(k)).toBe(true);
+    expect(w.cards.some((c: any) => c.pinned)).toBe(true);
+    expect(w.cards.find((c: any) => c.kind === "agent").answer).toBeTruthy(); // a sample: nothing is asked
+    expect(w.cards.filter((c: any) => c.asset).map((c: any) => c.asset).sort()).toEqual(["/board/assets/welcome/chime.mp3", "/board/assets/welcome/nebula.mp4", "/board/assets/welcome/nebula.webp"]);
+    // "Clear it and start": saved without its cards and the welcome mark; it never comes back
+    await call(as("eve"), "PUT", `/board-api/boards/${w.id}`, { board: { ...w, welcome: false, name: "My board", cards: [] } });
+    const again = (await call(as("eve"), "GET", "/board-api/boards")).data.boards;
+    expect(again).toHaveLength(1);
+    expect(again[0]).toMatchObject({ name: "My board", cards: [] });
+    expect(again[0].welcome).toBeUndefined();
+    // Deleting it doesn't bring it back either
+    await call(as("eve"), "POST", `/actions/board/${w.id}/remove`);
+    expect((await call(as("eve"), "GET", "/board-api/boards")).data.boards.map((b: any) => b.name)).toEqual(["My board"]);
+  });
+
+  it("only Board's own welcome pictures may be shown from outside the board's files", async () => {
+    await boot("2026-10-13T09:00");
+    const { cleanCard } = await import("../src/board");
+    expect(cleanCard({ kind: "image", asset: "/board/assets/welcome/nebula.webp" })?.asset).toBe("/board/assets/welcome/nebula.webp");
+    for (const asset of ["https://evil.example/x.png", "/board/assets/welcome/../../secret.webp", "/app/api/x.mp4", "javascript:alert(1)"]) expect(cleanCard({ kind: "image", asset })).toBeNull();
   });
 });
 
