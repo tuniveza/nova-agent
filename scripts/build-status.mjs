@@ -16,6 +16,7 @@ const PANELS = {
   portal: ["web/portal", "docs/apps/portal"],
   calendar: ["web/calendar", "src/calendar", "docs/apps/calendar"],
   notes: ["web/notes", "docs/apps/notes"],
+  board: ["web/board", "src/board.ts", "src/board-files.ts", "src/board-link.ts", "src/board-routes.ts", "docs/apps/board"],
   index: ["web/index", "docs/apps/index"],
   quests: ["src/quests"],
   missions: ["src/tasks.ts", "src/jobs.ts"],
@@ -25,7 +26,7 @@ const PANELS = {
   manual: ["web/shared/manual.js", "scripts/build-manual.mjs"],
   look: ["web/shared/sfx.js", "web/shared/ambient.js", "web/shared/look.js", "web/agent/assets"],
 };
-const GROUPS = { apps: ["chat", "portal", "calendar", "notes", "index"], tasks: ["quests", "missions"], tools: ["lossless", "visualizer"], helpers: ["observatory", "manual"] };
+const GROUPS = { apps: ["chat", "portal", "calendar", "notes", "board", "index"], tasks: ["quests", "missions"], tools: ["lossless", "visualizer"], helpers: ["observatory", "manual"] };
 
 // A commit's subject made into a few plain words: no "Panel:" prefix, up to the first comma
 function words(subject) {
