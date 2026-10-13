@@ -61,6 +61,14 @@ import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRang
 import { backupFilesToDrive, copyMissingBoardFilesToDrive, copyToDriveLater, dropFromDriveLater } from "../google";
 import { startTasksSync } from "../quests/googletasks";
 import { currentFixer, startFixer } from "../fixer/service";
+import { standDownReason } from "../where";
+
+// Only one Nova Agent runs: when the server has it, the PC's copy doesn't start (src/where.ts)
+const standDown = standDownReason();
+if (standDown) {
+  console.log(standDown);
+  process.exit(0);
+}
 
 // Everything Nova Agent shows lives in web/: its own page (web/agent) and each panel
 const web = (path: string) => fileURLToPath(new URL(`../../web/${path}`, import.meta.url));
@@ -771,7 +779,7 @@ app.post("/actions/forget", (c) => {
 });
 
 serve({ fetch: app.fetch, hostname: "127.0.0.1", port: config.visualizerPort }, () => {
-  console.log(`Nova Agent: http://localhost:${config.visualizerPort}  (Agent)  ·  /calendar/  ·  /visualizer`);
+  console.log(`Nova Agent${config.onServer ? " (on the server)" : ""}: http://localhost:${config.visualizerPort}  (Agent)  ·  /calendar/  ·  /visualizer`);
 });
 
 // The daily healthcheck. It waits its turn in the task queue like any task.

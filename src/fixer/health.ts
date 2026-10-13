@@ -18,6 +18,7 @@ export interface HealthInput {
   linkUp: () => boolean | null; // null: there's no link to check (no key)
   run: Run;
   restartsSeen: number;
+  onServer?: boolean; // Nova Agent on the server: its system service (nova-agent.service), not the PC's user one
   underSystemd: boolean;
   fetch?: typeof fetch;
 }
@@ -39,7 +40,7 @@ export async function healthFindings(input: HealthInput): Promise<{ findings: Fi
   const add = (key: string, severity: Finding["severity"], title: string, detail = "") => findings.push({ fingerprint: `health:${key}`, area: "health", severity, title, detail });
 
   const pc = await answers(f, `${input.pcBase}/app-version`);
-  if (pc) add("pc-server", "serious", "Nova Agent's server on the PC isn't answering", pc);
+  if (pc) add("pc-server", "serious", input.onServer ? "Nova Agent isn't answering on the server" : "Nova Agent's server on the PC isn't answering", pc);
 
   const link = input.linkUp();
   if (link === false) add("relay", "serious", "Nova Agent's online link to Nova Bot is down", "Online, Nova Agent can't reach the PC until it reconnects (it keeps trying by itself).");
@@ -49,10 +50,11 @@ export async function healthFindings(input: HealthInput): Promise<{ findings: Fi
 
   let restarts = input.restartsSeen;
   if (input.underSystemd) {
-    const r = await input.run("systemctl", ["--user", "show", "agent-nova.service", "-p", "NRestarts", "--value"], { cwd: homedir(), timeoutMs: 10_000 });
+    const unit = input.onServer ? "nova-agent.service" : "agent-nova.service";
+    const r = await input.run("systemctl", [...(input.onServer ? [] : ["--user"]), "show", unit, "-p", "NRestarts", "--value"], { cwd: homedir(), timeoutMs: 10_000 });
     const n = Number(r.out.trim());
     if (r.code === 0 && Number.isFinite(n)) {
-      if (n > input.restartsSeen) add(`restarts-${n}`, "serious", `Nova Agent's service restarted by itself ${n - input.restartsSeen} time${n - input.restartsSeen === 1 ? "" : "s"} since the last check`, "It crashed and systemd started it again. The journal says why: journalctl --user -u agent-nova");
+      if (n > input.restartsSeen) add(`restarts-${n}`, "serious", `Nova Agent's service restarted by itself ${n - input.restartsSeen} time${n - input.restartsSeen === 1 ? "" : "s"} since the last check`, input.onServer ? "It crashed and systemd started it again. The journal on the server says why: journalctl -u nova-agent" : "It crashed and systemd started it again. The journal says why: journalctl --user -u agent-nova");
       restarts = n;
     }
   }

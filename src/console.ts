@@ -14,6 +14,11 @@
 //   - the person is an admin.
 // Each terminal gets a random token at birth; its output stream and its keys need it.
 //
+// On the server (NOVA_ON_SERVER=1, Nova Agent moved to the VPS): + Shell is the server's own shell
+// (as Nova Agent's user), and "the VPS" is this same machine, so vps / vps-key aren't needed. The
+// same rules hold: localhost only, so an admin reaches it through an ssh tunnel from their computer
+// (SERVER_TUNNEL below). Online it stays Nova commands only.
+//
 //   GET  /console-api/state               who's asking, whether terminals can open here, the VPS's address, open terminals
 //   POST /console-api/vps                 { host, user, port } the VPS's address (data/console.json; never a password)
 //   POST /console-api/term                { kind: "shell" | "vps" | "vps-key", cols, rows } → { id, token }
@@ -80,17 +85,20 @@ export function saveVps(v: VpsSettings): void {
 // ===== Who may open a real terminal =====
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+// How an admin opens the server's terminals from their own computer (Nova Agent on the server)
+export const SERVER_TUNNEL = `ssh -L ${config.visualizerPort}:localhost:${config.visualizerPort} root@${DEFAULT_VPS.host}`;
+const here = () => (config.onServer ? "the server" : "the studio computer");
 
 // Why a terminal can't open for this request ("" = it can)
 export function terminalProblem(req: Request, person: Pick<Person, "role">, { write = false }: { write?: boolean } = {}): string {
-  if (isRelayed(req)) return "Terminals only open on the studio computer itself, not online. Nova commands work everywhere.";
+  if (isRelayed(req)) return config.onServer ? `Terminals only open on the server itself (through an ssh tunnel: ${SERVER_TUNNEL}), not online. Nova commands work everywhere.` : "Terminals only open on the studio computer itself, not online. Nova commands work everywhere.";
   let url: URL;
   try {
     url = new URL(req.url);
   } catch {
-    return "Terminals only open on the studio computer itself.";
+    return `Terminals only open on ${here()} itself.`;
   }
-  if (!LOCAL_HOSTS.has(url.hostname)) return "Terminals only open on the studio computer itself (at localhost).";
+  if (!LOCAL_HOSTS.has(url.hostname)) return `Terminals only open on ${here()} itself (at localhost).`;
   const origin = req.headers.get("Origin");
   if (origin) {
     try {
@@ -152,11 +160,12 @@ export function openTerminals() {
   return [...terms.values()].filter((t) => !t.exited).map((t) => ({ id: t.id, kind: t.kind, title: t.title, made: new Date(t.made).toISOString() }));
 }
 
-export function commandFor(kind: string, vps: VpsSettings | null): { file: string; args: string[]; title: string } | { error: string } {
+export function commandFor(kind: string, vps: VpsSettings | null, onServer = config.onServer): { file: string; args: string[]; title: string } | { error: string } {
   if (kind === "shell") {
     const shell = process.env.SHELL && /^\/[\w/.-]+$/.test(process.env.SHELL) ? process.env.SHELL : "/bin/bash";
-    return { file: shell, args: ["-l"], title: "Studio PC" };
+    return { file: shell, args: ["-l"], title: onServer ? "Server" : "Studio PC" };
   }
+  if ((kind === "vps" || kind === "vps-key") && onServer) return { error: "Nova Agent runs on the server itself now: + Shell is the server's shell." };
   if (kind === "vps" || kind === "vps-key") {
     if (!vps) return { error: "The VPS's address isn't set yet. Type: vps set <address> <user> [port]" };
     const target = `${vps.user}@${vps.host}`;
@@ -249,8 +258,11 @@ export function registerConsoleRoutes(app: Hono): void {
         why,
         vps: person.role === "admin" ? readVps() : null,
         open: why ? [] : openTerminals(),
-        // Where Console opens on the studio computer itself, with its terminals
+        // Where Console opens on the studio computer itself, with its terminals (on the server: the
+        // same address, through the ssh tunnel)
         localUrl: `http://localhost:${config.visualizerPort}/console/?here=1`,
+        where: config.onServer ? "server" : "pc",
+        tunnel: config.onServer ? SERVER_TUNNEL : "",
       },
       200,
       { "Cache-Control": "no-store" }

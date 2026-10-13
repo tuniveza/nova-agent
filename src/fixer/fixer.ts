@@ -83,6 +83,11 @@ export function isApproval(a: unknown, jobId: string): a is Approval {
 const ukDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 const short = (s: string, n = 160) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 const COAUTHOR = "Co-Authored-By: Claude <noreply@anthropic.com>";
+// Nova Agent's service on the studio PC (a systemd user service); on the server, src/fixer/service.ts
+// passes the system one (nova-agent.service, through the one sudo rule Nova Agent's user has)
+export const PC_RESTART = { file: "systemctl", args: ["--user", "restart", "agent-nova.service"] };
+export const SERVER_RESTART = { file: "sudo", args: ["-n", "systemctl", "restart", "nova-agent.service"] };
+
 const LIVE: Job["status"][] = ["approved", "landing", "restarting", "verifying", "rolling-back"];
 // Fixes that are closed when their problem goes away (not ones being prepared or going live)
 const CLOSABLE: Job["status"][] = ["queued", "ready", "failed", "blocked"];
@@ -99,8 +104,14 @@ export class Fixer {
     readonly store: FixerStore,
     readonly paths: Paths,
     readonly deps: Deps,
-    readonly opts: { dry: boolean; pcBase: string },
+    readonly opts: { dry: boolean; pcBase: string; restart?: { file: string; args: string[] }; claudeProblem?: () => string },
   ) {}
+
+  // How Nova Agent's service is restarted: the PC's user service, or (on the server) the system one
+  private restart() {
+    const r = this.opts.restart || PC_RESTART;
+    return this.deps.run(r.file, r.args, { cwd: this.paths.naMain, timeoutMs: 60_000 });
+  }
 
   private now() {
     return this.deps.now();
@@ -486,6 +497,9 @@ export class Fixer {
     this.saveJob(job, { status: "preparing", startedAt: this.now().toISOString(), error: "" });
     this.store.update((d) => this.note(d, "job", `Preparing a fix${job.attempt > 1 ? ` (attempt ${job.attempt})` : ""}: ${job.target.title}`));
     try {
+      // Claude Code installed and signed in here? (on the server: a one-time login over ssh)
+      const missing = this.opts.claudeProblem?.() || "";
+      if (missing) throw new Error(missing);
       await this.worktrees(job);
       // Before: how the panels look (and what the sweep finds) before any change
       const beforeFile = join(this.paths.shotsDir, job.id, "before.json");
@@ -707,7 +721,7 @@ export class Fixer {
         // The Fixer runs inside this service: everything is saved first, and it carries on after
         this.saveJob(job, { status: "restarting", restartPending: true });
         this.store.update((d) => this.note(d, "deploy", `Restarting Nova Agent with: ${job.target.title}`));
-        await this.deps.run("systemctl", ["--user", "restart", "agent-nova.service"], { cwd: this.paths.naMain, timeoutMs: 60_000 });
+        await this.restart();
         return job;
       }
       return await this.verify(job);
@@ -790,7 +804,7 @@ export class Fixer {
     if (auto || !ok) await this.deps.notify(ok ? "A fix was undone" : "A fix needs you", short(line, 300), `rollback-${job.id}`);
     if (ok && this.needsRestart(job)) {
       this.saveJob(job, { status: "rolling-back", restartPending: true, error: ok ? "" : line });
-      await this.deps.run("systemctl", ["--user", "restart", "agent-nova.service"], { cwd: this.paths.naMain, timeoutMs: 60_000 });
+      await this.restart();
       return job;
     }
     this.saveJob(job, { status: ok ? final : "blocked", restartPending: false, finishedAt: this.now().toISOString(), error: ok ? "" : line });

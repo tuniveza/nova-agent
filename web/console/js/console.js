@@ -751,11 +751,13 @@ function hereButton(why, url) {
     a.href = url;
     a.target = "_blank";
     a.rel = "noopener";
-    a.textContent = "Open Console on this computer";
-    a.title = "Works when this browser is on the studio computer itself";
+    const server = state && state.where === "server";
+    a.textContent = server ? "Open Console on the server" : "Open Console on this computer";
+    a.title = server ? "Works once the ssh tunnel is open on this computer" : "Works when this browser is on the studio computer itself";
     box.append(a);
     const small = document.createElement("small");
-    small.textContent = " (only on the studio computer itself)";
+    // Nova Agent on the server: its terminals open through an ssh tunnel from an admin's computer
+    small.textContent = server && state.tunnel ? ` (first, in a terminal on this computer: ${state.tunnel})` : " (only on the studio computer itself)";
     box.append(small);
   }
   box.hidden = false;

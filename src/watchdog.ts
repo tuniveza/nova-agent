@@ -1,14 +1,16 @@
-// The watchdog: from the studio PC, is Nova Bot (the server) still working?
+// The watchdog: is Nova Bot (the server) still working? From the studio PC, or (Nova Agent on the
+// server, NOVA_ON_SERVER=1) the server watching itself through its public address.
 //
 // Every 5 minutes it reads Nova Bot's public status page (GET /status.json, src/status.js in Nova
 // Bot): 200 with "ok": true is fine; a 503, an error or no answer counts as a miss. After 2 misses
 // in a row it tells someone, calmly, once:
-//   - a desktop notification on this PC (notify-send),
+//   - a desktop notification on this PC (notify-send; not on the server, which has no screen),
 //   - a phone notification through ntfy.sh, if NTFY_TOPIC is set (works even when Nova Bot is down),
 //   - and the usual alert (sendAlert: Nova Bot's push, which only gets through if the server answers).
 // When it's working again it says so, once. The outside watchdog (an uptime checker watching the same
-// address) is the main one; this is the PC's own second pair of eyes. WATCHDOG=off turns it off.
-// Once Nova Agent itself runs on the server too, this is optional.
+// address) is the main one; this is a second pair of eyes. WATCHDOG=off turns it off. On the server
+// it's a self-watch: it catches the web front, the address or Nova Bot going wrong while the machine
+// itself still runs (NTFY_TOPIC is the way out then, as Nova Bot's push goes through that address).
 
 import { spawn } from "node:child_process";
 import { sendAlert } from "./alerts";
@@ -64,6 +66,7 @@ export function makeWatchdog(url: string, deps: WatchdogDeps) {
 }
 
 function desktop(title: string, message: string): void {
+  if (config.onServer) return;
   try {
     const child = spawn("notify-send", ["--app-name=Nova Agent", "--urgency=normal", title, message], { stdio: "ignore", detached: true });
     child.on("error", () => {});

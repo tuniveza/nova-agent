@@ -2,6 +2,7 @@
 // The rest of the code imports `config` and never touches process.env directly.
 
 import { existsSync } from "node:fs";
+import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 // Paths are worked out from this file's location, so the program behaves the
@@ -91,6 +92,12 @@ export const config = {
   visualizerPort: Number(readText("VISUALIZER_PORT", "4545")),
   // 1: the pages stay on this computer instead of opening Nova Agent online (for when the internet is down)
   localUi: readText("NOVA_LOCAL_UI") === "1",
+  // 1: this Nova Agent runs on the server (the VPS, Nova Bot's vps/agent-*.sh), not the studio PC:
+  // no desktop notifications, + Shell is the server's shell, the Fixer restarts nova-agent.service
+  onServer: readText("NOVA_ON_SERVER") === "1",
+  // On the studio PC: this file says Nova Agent runs on the server now, so the PC's copy stays off
+  // (written by Nova Bot's vps/agent-switch.sh, removed by vps/agent-switch-back.sh)
+  onServerMarker: readText("NOVA_ON_SERVER_MARKER", `${homedir()}/.config/nova/agent-on-server`),
 
   headless: readYesNo("HEADLESS", true),
   dryRun: readYesNo("DRY_RUN", true),

@@ -14,6 +14,7 @@
 import { config } from "./config";
 import { markRelayed } from "./person";
 import { trace } from "./trace";
+import { markServerHasIt, where } from "./where";
 
 type Handler = (request: Request) => Response | Promise<Response>;
 type Staff = { id?: string; name?: string; role?: string } | null;
@@ -209,7 +210,8 @@ export function startRelay(handle: Handler): void {
     let socket: WebSocket;
     try {
       // Node's WebSocket takes headers (the key never goes in the address)
-      socket = new WebSocket(url, { headers: { Authorization: `Bearer ${config.agentNovaKey}` } } as unknown as string[]);
+      // (and which Nova Agent this is: the server's link wins over a PC's, src/where.ts)
+      socket = new WebSocket(url, { headers: { Authorization: `Bearer ${config.agentNovaKey}`, "X-Nova-Agent-Where": where() } } as unknown as string[]);
     } catch (err) {
       return later(`couldn't start (${(err as Error).message})`);
     }
@@ -241,8 +243,14 @@ export function startRelay(handle: Handler): void {
       clearInterval(beat);
       stopAll();
       ws = null;
+      // The server's Nova Agent has the link: this PC's copy stops, and stays off (src/where.ts)
+      if (event.code === 4002 && where() === "pc") {
+        trace("llm", "warn", "Nova Agent runs on the server now, so this PC's copy is stopping (vps/agent-switch-back.sh in Nova Bot brings it back)");
+        markServerHasIt();
+        return void setTimeout(() => process.exit(0), 500);
+      }
       // Another Nova Agent took over the link (a second copy running): don't fight over it
-      if (event.code === 4001) {
+      if (event.code === 4001 || event.code === 4002) {
         trace("llm", "warn", "Another Nova Agent linked to Nova Bot instead of this one; trying again in a minute");
         wasUp = false;
         return void setTimeout(connect, 60_000);

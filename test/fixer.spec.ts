@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
-import { type Actor, type Deps, Fixer, type Paths } from "../src/fixer/fixer";
+import { type Actor, type Deps, Fixer, type Paths, SERVER_RESTART } from "../src/fixer/fixer";
 import { actorFor, registerFixerRoutes } from "../src/fixer/routes";
 import { groupFindings, isTrivial, looksLikeDevWork, mergeIssues, offLimits, placesText, shouldRollBack, suggestions } from "../src/fixer/rules";
 import { claudeArgs } from "../src/fixer/claude";
@@ -795,5 +795,33 @@ describe("Nova Bot not answering for a moment isn't a problem", () => {
     await w.fixer.check("full");
     expect(tries).toBe(0);
     expect(w.fixer.state().issues).toHaveLength(1);
+  });
+});
+
+// Nova Agent on the server (vps/agent-switch.sh in Nova Bot): the system service is restarted, and
+// without Claude Code signed in there a fix isn't prepared (and says why)
+describe("the Fixer on the server", () => {
+  it("restarts nova-agent.service (through its one sudo rule), not the PC's user service", async () => {
+    const w = world(SCENARIOS["a change to Nova Agent's server"]);
+    const f = new Fixer(w.store, w.fixer.paths, w.deps, { dry: false, pcBase: "http://pc.test", restart: SERVER_RESTART });
+    f.addQuest({ title: "Quest: server change", details: "details", kind: "change", start: true }, ADMIN);
+    await idle(f);
+    const job = f.state().needsYou[0];
+    expect(job.status).toBe("ready");
+    const done = await f.approve(job.id, ADMIN).landing;
+    expect(done.status).toBe("restarting");
+    expect(w.log.some((l) => l.includes("sudo -n systemctl restart nova-agent.service"))).toBe(true);
+    expect(w.log.some((l) => l.includes("systemctl --user restart"))).toBe(false);
+  });
+
+  it("says plainly when Claude Code isn't signed in on the server", async () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    const f = new Fixer(w.store, w.fixer.paths, w.deps, { dry: false, pcBase: "http://pc.test", claudeProblem: () => "Claude Code isn't signed in on the server." });
+    f.addQuest({ title: "Quest: needs Claude", details: "details", kind: "change", start: true }, ADMIN);
+    await idle(f);
+    const job = f.state().done.find((j) => j.target.title === "Quest: needs Claude") || f.state().needsYou.find((j) => j.target.title === "Quest: needs Claude");
+    expect(job?.status).toBe("failed");
+    expect(job?.error).toMatch(/isn't signed in on the server/);
+    expect(w.log.some((l) => l.startsWith("/fake/claude"))).toBe(false);
   });
 });

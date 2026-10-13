@@ -11,7 +11,7 @@
 //   FIXER_DRY=1        inert: checks may run, nothing is prepared, merged or deployed
 
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
@@ -20,7 +20,7 @@ import { config } from "../config";
 import { relayLink } from "../relay";
 import { readQuests } from "../quests/store";
 import { trace } from "../trace";
-import { Fixer, type Paths } from "./fixer";
+import { Fixer, SERVER_RESTART, type Paths } from "./fixer";
 import { healthFindings } from "./health";
 import { cleanEnv, runCommand } from "./runner";
 import { FixerStore } from "./store";
@@ -36,6 +36,15 @@ export const fixerPaths: Paths = {
   shotsDir: `${config.paths.dataDir}fixer-shots/`,
   claudeBin: process.env.FIXER_CLAUDE || join(home, ".local/bin/claude"),
 };
+
+// On the server, Claude Code is signed in once by an admin over ssh (vps/README.md in Nova Bot):
+// until then, a fix can't be prepared and the Fixer says so plainly
+export function claudeProblem(onServer = config.onServer, bin = fixerPaths.claudeBin, home_ = home): string {
+  if (!onServer) return "";
+  if (!existsSync(bin)) return "Claude Code isn't installed on the server yet (vps/agent-setup.sh in Nova Bot installs it).";
+  if (!existsSync(join(home_, ".claude", ".credentials.json"))) return "Claude Code isn't signed in on the server. An admin signs it in once: ssh root@185.185.126.195, then sudo -iu nova-agent claude, then /login.";
+  return "";
+}
 
 function freePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -116,6 +125,7 @@ export function startFixer(): Fixer {
           run: runCommand,
           restartsSeen,
           underSystemd: Boolean(process.env.INVOCATION_ID),
+          onServer: config.onServer,
         }),
       notify,
       quests: () => readQuests().quests,
@@ -124,7 +134,7 @@ export function startFixer(): Fixer {
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
       log: (line) => trace("task", "info", line),
     },
-    { dry: fixerDry, pcBase },
+    { dry: fixerDry, pcBase, restart: config.onServer ? SERVER_RESTART : undefined, claudeProblem },
   );
   const f = fixer;
   // Every hour at :07 (when hourly checks are on); the audio levels with the first check each day
