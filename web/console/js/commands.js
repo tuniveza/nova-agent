@@ -249,7 +249,7 @@ export const COMMANDS = {
         const start = `${date}T${time || "09:00"}`;
         const note = { id: `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, title, body: "", author: ctx.me?.name || "", start, end: start, art: { seed: Math.floor(Math.random() * 1e6), subject: "" }, allDay: !time, created: now, updated: now };
         data.notes = [...(data.notes || []), note];
-        await ctx.api("/calendar-api/data", { method: "PUT", body: data });
+        await ctx.api("/calendar-api/data", { method: "PUT", body: data, headers: { "X-Nova-Rev": String(data.rev ?? "") } });
         return ctx.ok(`Added to ${date}${time ? ` at ${time}` : ""}: ${title}`);
       }
       if (sub !== "today" && sub !== "week") throw new Error(`calendar ${sub}? Try: ${this.subs.join(", ")}`);

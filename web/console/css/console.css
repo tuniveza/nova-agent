@@ -1,0 +1,84 @@
+/* Console: commands for Nova Agent, and terminals. The colours come from the theme (themes.css / look.js). */
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--f-body, "Saira", system-ui, sans-serif);
+  color: var(--text, #ebd3e7);
+  background: var(--void, #06040d);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; }
+
+.console-app { position: fixed; inset: 0; display: grid; grid-template-rows: auto auto 1fr auto; min-width: 0; }
+
+/* ----- The bar: the open consoles as tabs, and new ones ----- */
+.bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;
+  padding: 8px 12px;
+  background: linear-gradient(rgba(var(--deep-rgb, 16, 8, 22), 0.94), rgba(var(--deep-rgb, 16, 8, 22), 0.84));
+  border-bottom: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.16);
+  min-width: 0;
+}
+.tabs { display: flex; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: thin; flex: 1 1 260px; }
+.tab {
+  display: inline-flex; align-items: center; gap: 8px; flex: none; height: 38px; padding: 0 6px 0 12px; border-radius: 12px; cursor: pointer;
+  font: 600 13.5px var(--f-body); white-space: nowrap;
+  background: rgba(var(--panel-rgb, 28, 17, 41), 0.7); border: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.14);
+}
+.tab[aria-selected="true"] { border-color: rgba(var(--hi-rgb), 0.55); background: rgba(var(--hi-rgb), 0.13); color: var(--bright, #fff); }
+.tab .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--hi, #ff5fa8); box-shadow: 0 0 8px var(--hi, #ff5fa8); }
+.tab.ended .dot { background: var(--muted, #b997b5); box-shadow: none; }
+.tab .x { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; border: 0; background: transparent; cursor: pointer; opacity: 0.7; }
+.tab .x:hover, .tab .x:focus-visible { opacity: 1; background: rgba(var(--hi-rgb), 0.16); }
+.tab:not(.closable) { padding-right: 12px; }
+.tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.chip {
+  height: 38px; padding: 0 14px; border-radius: 12px; cursor: pointer; font: 600 13.5px var(--f-body);
+  background: rgba(var(--panel-rgb, 28, 17, 41), 0.75); border: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.2);
+}
+.chip:hover:not(:disabled) { border-color: rgba(var(--hi-rgb), 0.5); }
+.chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.icon-btn {
+  display: inline-grid; place-items: center; min-width: 38px; height: 38px; padding: 0 8px; border-radius: 12px; cursor: pointer;
+  font: 700 13px var(--f-body);
+  background: rgba(var(--panel-rgb, 28, 17, 41), 0.75); border: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.16);
+}
+.icon-btn:hover { border-color: rgba(var(--hi-rgb), 0.4); }
+
+.note { margin: 0; padding: 8px 14px; font-size: 13.5px; color: var(--muted, #b997b5); border-bottom: 1px solid rgba(var(--hi-rgb), 0.1); overflow-wrap: anywhere; }
+
+/* ----- The screens: one terminal each, only the chosen one showing ----- */
+.screens { position: relative; min-height: 0; min-width: 0; overflow: hidden; }
+.screen {
+  position: absolute; inset: 0; padding: 10px 6px 6px 12px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(var(--accent-2-rgb, 122, 31, 134), 0.12), transparent 60%),
+    rgba(var(--void-rgb, 6, 4, 13), 1);
+}
+.screen .xterm { height: 100%; }
+.screen .xterm-viewport { scrollbar-width: thin; scrollbar-color: rgba(var(--hi-rgb), 0.4) transparent; }
+
+/* ----- Extra keys for touch screens ----- */
+.keys {
+  display: none; gap: 6px; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); overflow-x: auto;
+  background: rgba(var(--deep-rgb, 16, 8, 22), 0.95); border-top: 1px solid rgba(var(--hi-rgb), 0.14);
+}
+.keys button {
+  flex: none; min-width: 46px; height: 44px; padding: 0 10px; border-radius: 10px; cursor: pointer;
+  font: 600 14px var(--f-mono, "Source Code Pro", monospace);
+  background: rgba(var(--panel-rgb, 28, 17, 41), 0.85); border: 1px solid rgba(var(--hi-rgb), 0.2);
+}
+.keys button[aria-pressed="true"] { border-color: rgba(var(--hi-rgb), 0.7); background: rgba(var(--hi-rgb), 0.2); }
+html.is-touch .keys, .keys.on { display: flex; }
+@media (hover: none) and (pointer: coarse) { .keys { display: flex; } }
+
+@media (max-width: 560px) {
+  .bar { padding: 6px 8px; }
+  .chip { padding: 0 10px; }
+  .screen { padding: 6px 2px 4px 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

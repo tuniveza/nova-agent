@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Console</title>
+<meta name="description" content="Console: type commands for the whole of Nova Agent, and (on the studio computer, for admins) open a terminal or the VPS.">
+<meta name="theme-color" content="#06040D">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,800&family=Saira:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap">
+<script src="/shared/inside.js"></script>
+<link rel="stylesheet" href="/shared/themes.css">
+<script src="/shared/spectrum.js"></script>
+<script src="/shared/themes.js"></script>
+<link rel="stylesheet" href="vendor/xterm.css">
+<link rel="stylesheet" href="css/console.css">
+<!-- Every button's look, last so it decides it (buttons.css) -->
+<link rel="stylesheet" href="/shared/buttons.css">
+<link rel="stylesheet" href="/shared/scrollbars.css">
+<script src="/shared/look.js"></script>
+</head>
+<body data-sfx-theme="notes">
+<div class="console-app" id="app">
+  <header class="bar" aria-label="Console">
+    <div class="tabs" id="tabs" role="tablist" aria-label="Open consoles"></div>
+    <div class="tools">
+      <button class="chip" id="new-shell" type="button" title="A terminal on the studio computer">+ Shell</button>
+      <button class="chip" id="new-vps" type="button" title="The VPSdime server">+ VPS</button>
+      <button class="icon-btn" id="font-down" type="button" aria-label="Smaller text" title="Smaller text">A−</button>
+      <button class="icon-btn" id="font-up" type="button" aria-label="Bigger text" title="Bigger text">A+</button>
+    </div>
+  </header>
+  <p class="note" id="note" role="status" aria-live="polite" hidden></p>
+  <main class="screens" id="screens"></main>
+  <!-- Keys a phone's keyboard doesn't have -->
+  <nav class="keys" id="keys" aria-label="Extra keys">
+    <button type="button" data-key="tab">Tab</button>
+    <button type="button" data-key="ctrl" aria-pressed="false">Ctrl</button>
+    <button type="button" data-key="esc">Esc</button>
+    <button type="button" data-key="left" aria-label="Left">←</button>
+    <button type="button" data-key="up" aria-label="Up">↑</button>
+    <button type="button" data-key="down" aria-label="Down">↓</button>
+    <button type="button" data-key="right" aria-label="Right">→</button>
+    <button type="button" data-key="|">|</button>
+    <button type="button" data-key="~">~</button>
+    <button type="button" data-key="/">/</button>
+  </nav>
+</div>
+<script src="vendor/xterm.js"></script>
+<script src="vendor/addon-fit.js"></script>
+<script src="vendor/addon-web-links.js"></script>
+<script type="module" src="js/console.js"></script>
+</body>
+</html>
