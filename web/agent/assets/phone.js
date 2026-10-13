@@ -220,7 +220,7 @@
   // button for the rest (a sheet with the same icons; they open just the same)
   const SKIP = ['/admin/links']; // All links: behind the gear
   const GROUPS = [
-    ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/app/memory/']], // Portal first, Agent second
+    ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
     ['tasks', 'Plans', ['pane:quests', 'pane:missions']],
     ['tools', 'Tools', ['/lossless/', '/visualizer']],
     ['helpers', 'Helpers', ['/observatory/', 'manual']],
@@ -242,7 +242,7 @@
   };
   // The bar keeps its short labels: "Notes" in the launcher is "Notes" here
   const panelItem = (p) => (tile(p) ? item(p, nameOf(tile(p)).replace(/^Nova /, '').replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico')) : '');
-  const MORE_ORDER = ['pane:missions', '/app/memory/', '/lossless/', '/visualizer', '/observatory/', 'manual'];
+  const MORE_ORDER = ['pane:missions', '/board/', '/app/memory/', '/lossless/', '/visualizer', '/observatory/', 'manual'];
   let moreKeys = [];
   function fillBar() {
     const placed = new Set(GROUPS.flatMap((g) => g[2]));

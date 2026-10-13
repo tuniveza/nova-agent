@@ -1700,6 +1700,11 @@
       }
     } else if (q.has('new')) {
       await newNote();
+    } else if (q.has('note')) {
+      // One note (./?note=<id>): from Board, a note card's Open
+      const id = q.get('note') || '';
+      if (notes.some((n) => n.id === id)) await openNote(id);
+      else toast("That note isn't in Notes any more (or not on this device yet).");
     } else if (q.has('open')) {
       // A file Nova Agent wrote (./?open=/files/<id>/<name>), when Notes runs inside Nova
       // Agent: only from this same site's /files/, and only documents (never a backup to restore)
