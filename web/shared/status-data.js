@@ -1,8 +1,8 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 312,
- "date": "2026-10-12",
+ "build": 320,
+ "date": "2026-10-13",
  "panels": {
   "chat": [
    "Google round two on the PC and…",
@@ -31,6 +31,9 @@ window.NOVA_STATUS = {
    "Portal's Admin address is view=manage",
    "Google, Portal → Admin → Google",
    "a clickable Welcome guide instead of a…"
+  ],
+  "board": [
+   "Board, a table in Nova Agent's Apps…"
   ],
   "index": [
    "Centred text in Index's header",
@@ -75,18 +78,18 @@ window.NOVA_STATUS = {
    "Tools in the Nova Agent family"
   ],
   "manual": [
+   "Board, a table in Nova Agent's Apps…",
    "The Fixer",
    "Centred text reaches the last left-aligned corners",
    "Dates and times written the British way",
-   "Plain app names again",
-   "Nova Manual"
+   "Plain app names again"
   ],
   "look": [
+   "Board, a table in Nova Agent's Apps…",
    "Portal's Admin address is view=manage",
    "Music, a calm late-night studio band",
    "Status line on every panel",
-   "Look, with the planet on",
-   "Look, a chosen colour shows with the…"
+   "Look, with the planet on"
   ]
  },
  "areas": {
@@ -122,6 +125,10 @@ window.NOVA_STATUS = {
    {
     "panel": "notes",
     "words": "Sizing, Portal's tabs never squash or cut…"
+   },
+   {
+    "panel": "board",
+    "words": "Board, a table in Nova Agent's Apps…"
    },
    {
     "panel": "index",
@@ -179,22 +186,22 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "manual",
-    "words": "The Fixer"
+    "words": "Board, a table in Nova Agent's Apps…"
    },
    {
     "panel": "manual",
-    "words": "Centred text reaches the last left-aligned corners"
+    "words": "The Fixer"
    }
   ]
  },
  "everything": [
+  "Board, a table in Nova Agent's Apps…",
   "Google round two on the PC and…",
   "Sizing, Portal's tabs never squash or cut…",
   "Portal's Admin address is view=manage",
   "Portal → Google",
   "Portal → Conversations",
   "Music, a calm late-night studio band",
-  "Google, the Connect step shows the key's…",
-  "Fixer, one problem wherever it's seen"
+  "Google, the Connect step shows the key's…"
  ]
 };
