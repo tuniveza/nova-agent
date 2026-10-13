@@ -58,12 +58,28 @@ function changed(b = board(), soon = 700) {
   saveTimers.set(b.id, setTimeout(() => push(b), soon));
 }
 let offline = false;
+// One save at a time for each board: a change made while one is on its way goes up right after
+const sending = new Set();
+const again = new Set();
 async function push(b) {
   if (!b || !b.dirty) return;
-  const sending = JSON.parse(JSON.stringify({ id: b.id, name: b.name, created: b.created, view: b.view, cards: b.cards }));
+  if (sending.has(b.id)) {
+    again.add(b.id);
+    return;
+  }
+  sending.add(b.id);
+  try {
+    await pushNow(b);
+  } finally {
+    sending.delete(b.id);
+    if (again.delete(b.id)) push(b);
+  }
+}
+async function pushNow(b) {
+  const snapshot = JSON.parse(JSON.stringify({ id: b.id, name: b.name, created: b.created, view: b.view, cards: b.cards }));
   let res;
   try {
-    res = await fetch(`/board-api/boards/${b.id}`, { method: "PUT", headers: { ...HDR, "Content-Type": "application/json" }, body: JSON.stringify({ board: sending, base: b.serverUpdated || undefined }) });
+    res = await fetch(`/board-api/boards/${b.id}`, { method: "PUT", headers: { ...HDR, "Content-Type": "application/json" }, body: JSON.stringify({ board: snapshot, base: b.serverUpdated || undefined }) });
   } catch (err) {
     return away();
   }
@@ -80,7 +96,7 @@ async function push(b) {
     return away();
   }
   // Saved: only clear the flag if nothing changed while it was on its way
-  if (JSON.stringify({ name: b.name, view: b.view, cards: b.cards }) === JSON.stringify({ name: sending.name, view: sending.view, cards: sending.cards })) b.dirty = false;
+  if (JSON.stringify({ name: b.name, view: b.view, cards: b.cards }) === JSON.stringify({ name: snapshot.name, view: snapshot.view, cards: snapshot.cards })) b.dirty = false;
   b.serverUpdated = data.board.updated;
   cache();
   if (offline) {
