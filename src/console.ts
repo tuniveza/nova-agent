@@ -41,14 +41,18 @@ export interface VpsSettings {
 }
 const settingsFile = () => `${config.paths.dataDir}console.json`;
 
+// The studio's VPSdime server (Desk), until another is set with `vps set`
+export const DEFAULT_VPS: VpsSettings = { host: "185.185.126.195", user: "root", port: 22 };
+
 export function readVps(): VpsSettings | null {
   try {
-    if (!existsSync(settingsFile())) return null;
+    if (!existsSync(settingsFile())) return DEFAULT_VPS;
     const v = JSON.parse(readFileSync(settingsFile(), "utf8"))?.vps;
+    if (!v) return DEFAULT_VPS;
     const clean = cleanVps(v);
-    return "error" in clean ? null : clean;
+    return "error" in clean ? DEFAULT_VPS : clean;
   } catch {
-    return null;
+    return DEFAULT_VPS;
   }
 }
 
@@ -245,6 +249,8 @@ export function registerConsoleRoutes(app: Hono): void {
         why,
         vps: person.role === "admin" ? readVps() : null,
         open: why ? [] : openTerminals(),
+        // Where Console opens on the studio computer itself, with its terminals
+        localUrl: `http://localhost:${config.visualizerPort}/console/?here=1`,
       },
       200,
       { "Cache-Control": "no-store" }

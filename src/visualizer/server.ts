@@ -108,8 +108,10 @@ app.use("/actions/*", async (c, next) => {
 // (https://…workers.dev/agent/), which reaches this server over its link (src/relay.ts).
 // NOVA_LOCAL_UI=1 keeps the pages here (for when the internet is down). Only top-level pages:
 // Nova Agent's own requests, files and the online link's requests aren't touched.
+// Console opened on this computer itself (/console/?here=1): its terminals only open at localhost
+const consoleHere = (c: { req: { path: string; url: string } }) => c.req.path.startsWith("/console") && new URL(c.req.url).searchParams.get("here") === "1";
 app.use("*", async (c, next) => {
-  if (config.localUi || c.req.header("Sec-Fetch-Dest") !== "document" || (c.req.method !== "GET" && c.req.method !== "HEAD")) return next();
+  if (config.localUi || consoleHere(c) || c.req.header("Sec-Fetch-Dest") !== "document" || (c.req.method !== "GET" && c.req.method !== "HEAD")) return next();
   const path = c.req.path;
   const last = path.slice(path.lastIndexOf("/") + 1);
   if (last.includes(".") && !last.endsWith(".html")) return next();
@@ -131,7 +133,7 @@ app.use("*", async (c, next) => {
   const page = (c.req.method === "GET" || c.req.method === "HEAD") && c.req.header("Sec-Fetch-Dest") === "document";
   const last = path.slice(path.lastIndexOf("/") + 1);
   // (Connecting Google leaves Nova Agent: Google won't show its sign-in inside a frame)
-  if (page && (!last.includes(".") || last.endsWith(".html")) && PANELS.some((p) => path === p || path.startsWith(p + "/")) && !/^\/admin\/google(\/|$)/.test(path)) {
+  if (page && !consoleHere(c) && (!last.includes(".") || last.endsWith(".html")) && PANELS.some((p) => path === p || path.startsWith(p + "/")) && !/^\/admin\/google(\/|$)/.test(path)) {
     return c.redirect("/agent/?open=" + encodeURIComponent(path + new URL(c.req.url).search));
   }
   await next();

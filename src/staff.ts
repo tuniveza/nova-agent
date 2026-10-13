@@ -45,9 +45,15 @@ function save(next: Saved) {
 
 // A stand-in from an id, for when Portal doesn't know them (or can't be reached)
 function standIn(id: string): Who {
-  const name = id === "owner" ? "Studio" : id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  // What Nova Bot last said about them (data/people.json, src/person.ts), until it answers again
+  let known: { name?: string; role?: string } = {};
+  try {
+    const file = `${config.paths.dataDir}people.json`;
+    if (existsSync(file)) known = (JSON.parse(readFileSync(file, "utf8")) || {})[id] || {};
+  } catch {}
+  const name = known.name || (id === "owner" ? "Studio" : id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()));
   return {
-    staff: { id, display_name: name, role: "staff", status: "local", planet_seed: id, planet_overrides: null, index_partition: `staff:${id}`, created_at: null },
+    staff: { id, display_name: name, role: known.role === "admin" ? "admin" : "staff", status: "local", planet_seed: id, planet_overrides: null, index_partition: `staff:${id}`, created_at: null },
     via: "nova-agent",
     linked: false,
     how: "stand-in",

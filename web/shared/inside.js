@@ -107,7 +107,12 @@ ${GLOW}`);
   // (Nova Agent's server does this already; this catches browsers that don't say how a page was opened)
   // …except Portal as its own phone app: opened from its home-screen icon, or from the install
   // link (/portal/?app=1), it stays Portal, full screen (the Portal phone app)
-  else if (!portalApp()) location.replace("/agent/?open=" + encodeURIComponent(location.pathname + location.search) + location.hash);
+  // …and Console opened on the studio computer itself (/console/?here=1), for its terminals: those
+  // only open at localhost, never through Nova Agent online
+  else if (!portalApp() && !consoleHere()) location.replace("/agent/?open=" + encodeURIComponent(location.pathname + location.search) + location.hash);
+  function consoleHere() {
+    return location.pathname.startsWith("/console/") && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && new URLSearchParams(location.search).get("here") === "1";
+  }
   function portalApp() {
     if (!location.pathname.startsWith("/portal/")) return false;
     const fromHomeScreen = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
