@@ -32,6 +32,7 @@ import { readCache } from "../heal/cache";
 import { runHealthcheck } from "../healthcheck";
 import { startCollectingJobs } from "../jobs";
 import { startRelay } from "../relay";
+import { startWatchdog } from "../watchdog";
 import { checkLogin, describeAppointments, listTask, readOnlyTour } from "../tasks";
 import { getRecentEvents, onTrace, trace } from "../trace";
 import { calendarEvents, readCalendar } from "../calendar/store";
@@ -823,3 +824,5 @@ void whoAmI().catch(() => {});
 startRelay(app.fetch);
 // The Fixer: hourly checks, fixes prepared for an admin's Approve (src/fixer/)
 startFixer();
+// The watchdog: every 5 minutes, is Nova Bot's status page still all clear? (src/watchdog.ts)
+startWatchdog();
