@@ -172,6 +172,8 @@ function inspect(skip) {
     const away = r.right <= b.l + 1 || r.left >= b.r - 1 || r.bottom <= b.t + 1 || r.top >= b.b - 1;
     // A drawer slid off the side until it's opened (moved there, not pushed there): left alone
     if (away && (s.transform !== "none" || s.translate !== "none" || /absolute|fixed/.test(s.position))) { bad.add(e); continue; }
+    // Free to lie anywhere on a surface that moves (Board's cards on its table): only what's inside it counts
+    if (e.hasAttribute("data-fit-free")) continue;
     report(e, `${where(e)} sticks out of ${b.name} (${sides.join(", ")})`);
   }
   // Text that runs past its box (a long word, a long link)
@@ -341,6 +343,33 @@ const APPS = {
     },
     async states(f) {
       return ["", "show-library", "show-outline"].map((p) => [p ? p.replace("show-", "") + " open" : "writing", async () => f.evaluate((p) => { const s = document.getElementById("shell"); s.classList.remove("show-library", "show-outline", "no-outline"); if (p) s.classList.add(p); }, p)]);
+    },
+    dialogs: true,
+  },
+  board: {
+    path: "/board/",
+    ready: "#table",
+    async prepare(f) {
+      await f.evaluate(({ LONG, LINK }) => {
+        const nb = window.NovaBoard;
+        if (!nb) return;
+        // A fresh board each time (cards left from before may lie at a slant)
+        document.getElementById("board-new").click();
+        for (const kind of ["question", "sticky", "text", "agent", "note", "link"]) nb.addCard({ kind, title: LONG, text: LONG + " " + LINK, url: "https://example.com/" + "a".repeat(80), noteId: "n1", answer: LONG, turn: 0 });
+        nb.addCard({ kind: "calendar", span: "week", turn: 0 });
+        nb.addCard({ kind: "calendar", span: "year", turn: 0 });
+        // (at 100%: the check measures boxes that are zoomed wrongly)
+        document.getElementById("zoom-reset").click();
+      }, { LONG, LINK });
+    },
+    async states(f) {
+      return [
+        ["the table", async () => {}],
+        ["the add menu open", async () => f.evaluate(() => document.getElementById("add").click()), async () => f.evaluate(() => document.getElementById("add").click())],
+        ["the drawer open", async () => f.evaluate(() => document.getElementById("drawer-btn").click()), async () => f.evaluate(() => document.getElementById("drawer-close").click())],
+        ["the bin open", async () => f.evaluate(() => document.getElementById("bin-btn").click()), async () => f.evaluate(() => document.getElementById("bin-close").click())],
+        ["renaming", async () => f.evaluate(() => document.getElementById("board-rename").click()), async () => f.evaluate(() => document.getElementById("rename-cancel").click())],
+      ];
     },
     dialogs: true,
   },

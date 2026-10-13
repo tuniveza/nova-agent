@@ -8,6 +8,8 @@ body {
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
+/* Hidden means hidden (several boxes here have a display of their own) */
+[hidden] { display: none !important; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 button { font: inherit; color: inherit; }
 svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
@@ -55,6 +57,7 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 
 .menu {
   position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; min-width: 220px; padding: 6px;
+  max-height: calc(100vh - var(--bar-h, 58px) - 16px); max-height: calc(100dvh - var(--bar-h, 58px) - 16px); overflow: auto;
   border-radius: 14px; background: rgba(var(--panel-rgb, 28, 17, 41), 0.98); border: 1px solid rgba(var(--hi-rgb), 0.25);
   box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.7);
 }

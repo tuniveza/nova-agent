@@ -13,6 +13,7 @@ const $ = (id) => document.getElementById(id);
 const HDR = { "X-Nova-Visualizer": "1" };
 const CACHE = "nova-board-v1";
 const BIN = "nova-board-bin-v1";
+const CURRENT = "nova-board-current"; // the board that was open last (on this device)
 const STILL = matchMedia("(prefers-reduced-motion: reduce)");
 const UK = { timeZone: "Europe/London" };
 const sfx = (name) => { try { window.NovaSfx && window.NovaSfx.play(name); } catch (err) {} };
@@ -45,6 +46,7 @@ const dayLabel = (date, opts = { weekday: "short", day: "numeric", month: "short
 // ===== Saving =====
 const saveTimers = new Map();
 function cache() {
+  keep(CURRENT, current);
   keep(CACHE, { current, boards: boards.map((b) => ({ ...b })), dirty: boards.filter((b) => b.dirty).map((b) => b.id) });
 }
 function changed(b = board(), soon = 700) {
@@ -128,7 +130,8 @@ async function start() {
     // Boards made here while the computer was away
     for (const b of boards) if (b.dirty && !fresh.some((f) => f.id === b.id)) fresh.push(b);
     boards = fresh;
-    if (!boards.some((b) => b.id === current)) current = boards[0] && boards[0].id;
+    const wanted = current || load(CURRENT, null);
+    current = boards.some((b) => b.id === wanted) ? wanted : boards[0] && boards[0].id;
     cache();
     drawPicker();
     drawBoard();
@@ -425,6 +428,7 @@ function buildCard(c) {
   const node = el("div", `card k-${c.kind}${c.kind === "sticky" ? ` c-${c.colour || "amber"}` : ""}`);
   node.tabIndex = 0;
   node.dataset.id = c.id;
+  node.setAttribute("data-fit-free", ""); // (it may lie anywhere on the table: scripts/check-fit.mjs)
   node.setAttribute("role", "group");
   node.setAttribute("aria-label", `${KIND_NAMES[c.kind]}: ${cardTitle(c)}. Arrow keys move it, P pins it, Delete removes it.`);
   const head = el("div", "card-head");
@@ -699,12 +703,32 @@ function restore(entry) {
 }
 
 // ===== Adding cards =====
-let cascade = 0;
+// Round and round from the middle, a little further each time, until a card that size fits
+function freeSpot(b, centre, w, h) {
+  const gap = 18;
+  const clear = (x, y) => !b.cards.some((c) => x < c.x + c.w + gap && x + w + gap > c.x && y < c.y + c.h + gap && y + h + gap > c.y);
+  const x0 = centre.x - w / 2;
+  const y0 = centre.y - h / 2;
+  if (clear(x0, y0)) return { x: x0, y: y0 };
+  for (let ring = 1; ring < 40; ring++) {
+    const r = ring * 60;
+    const steps = 8 + ring * 4;
+    for (let i = 0; i < steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      const x = x0 + Math.cos(a) * r * 1.4;
+      const y = y0 + Math.sin(a) * r;
+      if (clear(x, y)) return { x, y };
+    }
+  }
+  return { x: x0, y: y0 };
+}
 function addCard(spec, at) {
   const b = board();
   const centre = at || middle();
   const size = { note: [280, 190], calendar: [320, 300], agent: [340, 260], question: [300, 230], sticky: [220, 200], text: [280, 160], link: [320, 140], image: [320, 240], file: [280, 150] }[spec.kind] || [260, 180];
-  const offset = at ? 0 : (cascade++ % 6) * 24;
+  // Dropped somewhere: there. Added from a menu: the free spot nearest the middle, so new cards
+  // never land on top of others
+  const spot = at ? { x: centre.x - size[0] / 2, y: centre.y - size[1] / 2 } : freeSpot(b, centre, size[0], size[1]);
   const now = nowIso();
   const c = {
     id: rid(),
@@ -715,8 +739,8 @@ function addCard(spec, at) {
     created: now,
     updated: now,
     ...spec,
-    x: Math.round(centre.x - size[0] / 2 + offset),
-    y: Math.round(centre.y - size[1] / 2 + offset),
+    x: Math.round(spot.x),
+    y: Math.round(spot.y),
     z: Math.max(0, ...b.cards.map((x) => x.z || 0)) + 1,
   };
   b.cards.push(c);
