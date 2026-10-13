@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 331,
+ "build": 340,
  "date": "2026-10-13",
  "panels": {
   "chat": [
@@ -33,9 +33,13 @@ window.NOVA_STATUS = {
    "a clickable Welcome guide instead of a…"
   ],
   "board": [
+   "Board docs and Manual",
    "Board, a table in Nova Agent's Apps…"
   ],
-  "console": [],
+  "console": [
+   "Console, the terminal sizes itself to an…",
+   "Console, docs"
+  ],
   "index": [
    "Centred text in Index's header",
    "Plain names",
@@ -129,6 +133,10 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "board",
+    "words": "Board docs and Manual"
+   },
+   {
+    "panel": "board",
     "words": "Board, a table in Nova Agent's Apps…"
    },
    {
@@ -174,6 +182,14 @@ window.NOVA_STATUS = {
    {
     "panel": "visualizer",
     "words": "Fixer, one problem wherever it's seen"
+   },
+   {
+    "panel": "console",
+    "words": "Console, the terminal sizes itself to an…"
+   },
+   {
+    "panel": "console",
+    "words": "Console, docs"
    }
   ],
   "helpers": [
@@ -196,13 +212,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Console, the terminal sizes itself to an…",
+  "Console, docs",
   "Console, xterm.js and node-pty",
+  "check-board.mjs, BOARD_URL picks the throwaway server",
+  "Board docs and Manual",
   "Fixer, Nova Agent",
   "Board's click-through check",
-  "Board, a table in Nova Agent's Apps…",
-  "Google round two on the PC and…",
-  "Sizing, Portal's tabs never squash or cut…",
-  "Portal's Admin address is view=manage",
-  "Portal → Google"
+  "Board, a table in Nova Agent's Apps…"
  ]
 };
