@@ -1,7 +1,7 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 349,
+ "build": 352,
  "date": "2026-10-13",
  "panels": {
   "chat": [
@@ -12,11 +12,11 @@ window.NOVA_STATUS = {
    "Money, invoices"
   ],
   "portal": [
-   "Portal → Admin → Desk",
+   "Computer is called Computer now",
+   "Switch-over, Computer's Live now card",
+   "Portal → Admin → Computer",
    "Google round two on the PC and…",
-   "Sizing, Portal's tabs never squash or cut…",
-   "Portal's Admin address is view=manage",
-   "Portal → Google"
+   "Sizing, Portal's tabs never squash or cut…"
   ],
   "calendar": [
    "Google round two on the PC and…",
@@ -37,6 +37,8 @@ window.NOVA_STATUS = {
    "Board, a table in Nova Agent's Apps…"
   ],
   "console": [
+   "Computer is called Computer now",
+   "Console docs and Manual",
    "Console tests",
    "Console, the terminal sizes itself to an…",
    "Console, docs"
@@ -110,11 +112,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "portal",
-    "words": "Portal → Admin → Desk"
+    "words": "Computer is called Computer now"
    },
    {
     "panel": "portal",
-    "words": "Google round two on the PC and…"
+    "words": "Switch-over, Computer's Live now card"
    },
    {
     "panel": "calendar",
@@ -186,11 +188,11 @@ window.NOVA_STATUS = {
    },
    {
     "panel": "console",
-    "words": "Console tests"
+    "words": "Computer is called Computer now"
    },
    {
     "panel": "console",
-    "words": "Console, the terminal sizes itself to an…"
+    "words": "Console docs and Manual"
    }
   ],
   "helpers": [
@@ -213,13 +215,13 @@ window.NOVA_STATUS = {
   ]
  },
  "everything": [
+  "Computer is called Computer now",
+  "Switch-over, Computer's Live now card",
+  "Console docs and Manual",
   "check-console.mjs reads everything printed in the tab…",
   "Console, terminal check",
   "Console tests",
-  "Portal → Admin → Desk",
-  "Allow node-pty's build step",
-  "Console, the terminal sizes itself to an…",
-  "Console, docs",
-  "Console, xterm.js and node-pty"
+  "Portal → Admin → Computer",
+  "Allow node-pty's build step"
  ]
 };
