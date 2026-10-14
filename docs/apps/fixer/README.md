@@ -4,6 +4,7 @@ Nova Agent's caretaker. It checks Nova Agent every hour, keeps a list of what it
 
 ## What's new
 
+- Everything at once on a wide screen: Needs you down the left, Health, Fixer quests and Suggested along the top, Done, Activity and Settings below, each scrolling inside itself. No tabs (on a phone the parts are still one at a time, behind the tabs).
 - One problem, wherever it's seen: a file that didn't load on Notes, Index and Observatory is one problem ("· on Notes, Index and Observatory at 390px") with one fix, not three.
 - A fix whose problem has gone by itself (fixed another way) is closed, instead of sitting "blocked".
 - No false alarms when Nova Bot blips: Nova Bot not answering, or a file failing with 502/503/504, is checked again (3 tries over about 2 minutes) before it counts, and never has a fix prepared.

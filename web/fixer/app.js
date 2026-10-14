@@ -64,13 +64,17 @@
   const clock = (iso) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
   // ---- Tabs ----
+  // On a wide screen every part shows at once (fixer.css lays them side by side) and the tabs go
+  const WIDE = matchMedia("(min-width: 1100px) and (min-height: 600px)");
   function showTab(name) {
     tab = name;
     try { sessionStorage.setItem("fixer-tab", name); } catch (e) {}
+    document.documentElement.classList.toggle("fx-wide", WIDE.matches);
     for (const b of document.querySelectorAll(".fx-tabs [role=tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === name));
-    for (const p of document.querySelectorAll(".pane")) p.hidden = p.id !== `pane-${name}`;
+    for (const p of document.querySelectorAll(".pane")) p.hidden = !WIDE.matches && p.id !== `pane-${name}`;
   }
   for (const b of document.querySelectorAll(".fx-tabs [role=tab]")) b.addEventListener("click", () => showTab(b.dataset.tab));
+  WIDE.addEventListener("change", () => showTab(tab));
 
   // ---- Drawing ----
   const shot = (job, file) => `/fixer-api/shots/${encodeURIComponent(job.id)}/${encodeURIComponent(file)}`;

@@ -35,7 +35,7 @@ describe("one screen, nothing scrolling the page", () => {
   it("Lossless, the Visualizer and the Fixer: one screen, their cards or the open tab scroll inside themselves", () => {
     expect(read("../web/lossless/public/lossless/index.html")).toContain("main > .grid { grid-template-columns: repeat(4, minmax(0, 1fr));");
     expect(read("../web/agent/page.html")).toContain("body > main { overflow: hidden; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr));");
-    expect(read("../web/fixer/fixer.css")).toContain("main > .pane:not([hidden]) { flex: 1 1 auto; min-height: 0; overflow-y: auto;");
+    expect(read("../web/fixer/fixer.css")).toContain(".panes > .pane:not([hidden]) { flex: 1 1 auto; min-height: 0; overflow-y: auto;");
   });
 
   it("Calendar: whichever view is open scrolls inside its own box, never the calendar's page", () => {
@@ -69,5 +69,14 @@ describe("one screen, nothing scrolling the page", () => {
     expect(q).not.toContain('role="menu"');
     expect(q).toContain('<div class="opts" role="group" aria-label="Options">');
     for (const id of ["opt-celebrate", "opt-phone", "opt-done", "opt-replan", "opt-keys"]) expect(q).toContain(`id="${id}"`);
+  });
+
+  it("Fixer: on a wide screen all seven parts at once, no tabs", () => {
+    const js = read("../web/fixer/app.js");
+    expect(js).toContain('const WIDE = matchMedia("(min-width: 1100px) and (min-height: 600px)");');
+    expect(js).toContain("p.hidden = !WIDE.matches && p.id !== `pane-${name}`;");
+    const css = read("../web/fixer/fixer.css");
+    expect(css).toContain("html.fx-wide .fx-tabs { display: none; }");
+    expect(css).toContain("html.fx-wide #pane-needs { grid-row: 1 / span 2; }");
   });
 });

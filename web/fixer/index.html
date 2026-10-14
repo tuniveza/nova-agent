@@ -56,13 +56,17 @@
 
   <p class="message" id="message" role="status" hidden></p>
 
+  <!-- The parts: one at a time behind the tabs on a phone; on a wide screen all seven side by side
+       (Needs you down the left), each scrolling inside itself, and no tabs -->
+  <div class="panes" id="panes">
   <!-- Needs you: the approval cards first, then what's being worked on -->
-  <section class="pane" id="pane-needs" role="tabpanel">
+  <section class="pane" id="pane-needs" role="tabpanel" aria-label="Needs you">
+    <h2 class="pane-h">Needs you</h2>
     <div id="needs-list" class="stack"><p class="nt-loading">Looking…</p></div>
     <div id="working" class="stack"></div>
   </section>
 
-  <section class="pane" id="pane-health" role="tabpanel" hidden>
+  <section class="pane" id="pane-health" role="tabpanel" aria-label="Health" hidden>
     <div class="nt-card">
       <h2 class="nt-h">Health</h2>
       <p class="nt-note" id="health-summary"></p>
@@ -84,7 +88,8 @@
     </div>
   </section>
 
-  <section class="pane" id="pane-quests" role="tabpanel" hidden>
+  <section class="pane" id="pane-quests" role="tabpanel" aria-label="Fixer quests" hidden>
+    <h2 class="pane-h">Fixer quests</h2>
     <form class="nt-card" id="quest-form">
       <h2 class="nt-h">New fixer quest</h2>
       <label class="nt-label" for="q-title">What should change?</label>
@@ -104,23 +109,25 @@
     <div id="quests" class="stack"></div>
   </section>
 
-  <section class="pane" id="pane-suggested" role="tabpanel" hidden>
+  <section class="pane" id="pane-suggested" role="tabpanel" aria-label="Suggested" hidden>
+    <h2 class="pane-h">Suggested</h2>
     <p class="nt-note lead">Quests (from Nova Agent and Notes) that look like work on Nova Agent itself. Adopt one to make it a fixer quest: nothing starts by itself.</p>
     <div id="suggested" class="stack"></div>
   </section>
 
-  <section class="pane" id="pane-done" role="tabpanel" hidden>
+  <section class="pane" id="pane-done" role="tabpanel" aria-label="Done" hidden>
+    <h2 class="pane-h">Done</h2>
     <div id="done" class="stack"></div>
   </section>
 
-  <section class="pane" id="pane-activity" role="tabpanel" hidden>
+  <section class="pane" id="pane-activity" role="tabpanel" aria-label="Activity" hidden>
     <div class="nt-card">
       <h2 class="nt-h">Activity</h2>
       <ol class="activity" id="activity"></ol>
     </div>
   </section>
 
-  <section class="pane" id="pane-settings" role="tabpanel" hidden>
+  <section class="pane" id="pane-settings" role="tabpanel" aria-label="Settings" hidden>
     <div class="nt-card settings">
       <h2 class="nt-h">Settings</h2>
       <label class="switch-row"><input type="checkbox" class="nt-switch" id="s-hourly"> Hourly checks</label>
@@ -132,6 +139,7 @@
       <p class="nt-note">Every change waits for an admin to tap <strong>Approve</strong>, trivial ones included. The only thing the Fixer does by itself is undo a change that made things worse right after it went live, and it tells you when it does.</p>
     </div>
   </section>
+  </div>
 </main>
 
 <!-- A screenshot, big -->
