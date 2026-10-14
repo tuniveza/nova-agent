@@ -217,16 +217,16 @@
 
   // ---- The bar along the bottom: every place in Nova Agent, always there, in four groups ----
   // Apps (Portal, Agent, Calendar, Notes, Index) · Plans (Quests, Today, Missions) · Tools (Lossless,
-  // Visualizer) · Helpers (Observatory, Console, Manual) · Invoicer, on its own. Any other panel joins Tools.
+  // Visualizer) · Helpers (Observatory, Console, Manual), with Invoicer on its own at the left end. Any other panel joins Tools.
   // Every place stays on the bar on every screen (no More menu): on a phone held upright it's two
   // rows, Apps along the top and Plans, Tools and Helpers below
   const SKIP = ['/admin/links']; // All links: behind the gear
   const GROUPS = [
+    ['solo', '', ['/invoicer/']], // Invoicer: on its own, in no group, at the left end
     ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
     ['tasks', 'Plans', ['/quests/', 'pane:missions']],
     ['tools', 'Tools', ['/lossless/', '/visualizer']],
     ['helpers', 'Helpers', ['/observatory/', '/console/', 'manual']],
-    ['solo', '', ['/invoicer/']], // Invoicer: on its own, in no group
   ];
   const bar = document.createElement('nav');
   bar.className = 'tabbar';
@@ -300,7 +300,7 @@
     const k = {};
     for (const g of bar.querySelectorAll('.tgroup')) g.style.setProperty('--k', (k[g.dataset.group] = g.querySelectorAll(shown).length || 1));
     // The second row on a phone held upright: each group as wide as its places (phone.css)
-    bar.style.setProperty('--row2', ['tasks', 'tools', 'helpers'].map((id) => `minmax(0, ${k[id] || 1}fr)`).join(' ') + ' auto');
+    bar.style.setProperty('--row2', ['tasks', 'tools', 'helpers'].map((id) => `minmax(0, ${k[id] || 1}fr)`).join(' ').replace(/^/, 'auto '));
     // In one row (a tablet, a short or zoomed-in window, a phone on its side) every place is the same
     // width, whatever its group: phone.css shares the row out by how many places are showing
     bar.style.setProperty('--tab-n', [...bar.querySelectorAll('.tgroup')].reduce((n, g) => n + g.querySelectorAll(shown).length, 0) || 14);

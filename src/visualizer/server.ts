@@ -137,7 +137,7 @@ app.use("*", async (c, next) => {
 // Opened on its own (a bookmark, a typed address, an old link), a panel opens inside Nova Agent
 // instead: /agent/?open=<its address>. Inside Nova Agent's viewer (a frame) it loads as itself. The
 // browser says which (Sec-Fetch-Dest); web/shared/inside.js catches browsers that don't.
-const PANELS = ["/portal", "/calendar", "/notes", "/quests", "/board", "/console", "/app/memory", "/observatory", "/lossless", "/visualizer", "/admin", "/fixer"];
+const PANELS = ["/portal", "/calendar", "/notes", "/quests", "/board", "/console", "/app/memory", "/observatory", "/lossless", "/visualizer", "/admin", "/fixer", "/invoicer"];
 app.use("*", async (c, next) => {
   const path = c.req.path;
   const page = (c.req.method === "GET" || c.req.method === "HEAD") && c.req.header("Sec-Fetch-Dest") === "document";
@@ -151,7 +151,7 @@ app.use("*", async (c, next) => {
 
 // The pages. Read from disk each time, so edits show on refresh.
 // Nova Agent's page is /agent/, the same address as online; /agent/<panel> opens it with that panel
-const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", quests: "/quests/", board: "/board/", console: "/console/", index: "/app/memory/", observatory: "/observatory/", lossless: "/lossless/", visualizer: "/visualizer", admin: "/admin", fixer: "/fixer/" };
+const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", quests: "/quests/", board: "/board/", console: "/console/", index: "/app/memory/", observatory: "/observatory/", lossless: "/lossless/", visualizer: "/visualizer", admin: "/admin", fixer: "/fixer/", computer: "/computer/", invoicer: "/invoicer/" };
 app.get("/", (c) => c.redirect("/agent/"));
 app.get("/agent", (c) => c.redirect("/agent/"));
 app.get("/agent/", (c) => c.html(readFileSync(chatFile, "utf8")));

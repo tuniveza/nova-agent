@@ -1001,6 +1001,12 @@
       <button type="button" class="icon-btn suite-x" id="suite-close" aria-label="Close">✕</button>
     </div>
     <div class="suite-groups">
+      <!-- Invoicer: on its own, in no group, first (the left end of the navigation panel) -->
+      <div class="suite-group tools solo" data-group="solo" aria-label="Invoicer">
+        <div class="suite-grid">
+          <a class="suite-app" href="/invoicer/" data-inside="/invoicer/"><span class="pico" data-p="invoicer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-invoicer"/></svg></span><b>Invoicer</b><small>Invoices at each stage (deposit, balance, overdue, paid), branded, with the email to send</small></a>
+        </div>
+      </div>
       <div class="suite-group apps">
         <h4>Apps</h4>
         <div class="suite-grid">
@@ -1034,12 +1040,6 @@
           <a class="suite-app" href="/observatory/" data-inside="/observatory/"><span class="pico" data-p="observatory" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-observatory"/></svg></span><b>Observatory</b><small>Every project, lines of code and the star map</small></a>
           <a class="suite-app" href="/console/" data-inside="/console/"><span class="pico" data-p="console" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-console"/></svg></span><b>Console</b><small>Type commands for all of Nova Agent; terminals and the VPS on the studio PC</small></a>
           <a class="suite-app" href="/agent/" data-act="manual"><span class="pico" data-p="manual" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-manual"/></svg></span><b>Manual</b><small>How everything in Nova Agent works</small></a>
-        </div>
-      </div>
-      <!-- Invoicer: on its own, in no group -->
-      <div class="suite-group tools solo" data-group="solo" aria-label="Invoicer">
-        <div class="suite-grid">
-          <a class="suite-app" href="/invoicer/" data-inside="/invoicer/"><span class="pico" data-p="invoicer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-invoicer"/></svg></span><b>Invoicer</b><small>Invoices at each stage (deposit, balance, overdue, paid), branded, with the email to send</small></a>
         </div>
       </div>
     </div>

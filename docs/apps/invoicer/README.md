@@ -1,6 +1,6 @@
 # Invoicer
 
-Invoices to artists at each of their four stages, as the studio's own branded page to print or save as a PDF, with a short email to go with it. It has its own place in the navigation panel, on its own, in no group.
+Invoices to artists at each of their four stages, as the studio's own branded page to print or save as a PDF, with a short email to go with it. It has its own place at the left end of the navigation panel, on its own, in no group.
 
 ## What's new
 
