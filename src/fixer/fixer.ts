@@ -565,8 +565,7 @@ export class Fixer {
 
   // A looks problem (looks.ts): the live pictures where it was seen are the "before"; the job's copy,
   // looked at again at those sizes, the "after", with a check that the problem's gone there. (The
-  // job's copy has no Nova Bot behind it: Portal gets sample answers, and it counts as the studio's
-  // own computer, so it's signed in.)
+  // job's copy has no Nova Bot behind it: for a problem seen signed in, Portal gets sample answers.)
   private async looksAgain(job: Job): Promise<{ check: Check; screens: Screen[] } | null> {
     if (job.target.type !== "issue" || !this.deps.looks) return null;
     const data = this.store.read();
@@ -587,7 +586,10 @@ export class Fixer {
     const server = await this.deps.startServer(job.worktrees.na);
     let after: LooksScreen[] = [];
     try {
-      after = await this.deps.looks({ base: server.base, sizes, panels: [issue.panel], auth: "out", mockPortal: true, shotsDir: dir, prefix: "after-looks-", shootAll: true });
+      // Seen signed in: Portal's sample answers stand in for being signed in. Seen signed out: none
+      // (the copy has no Nova Bot to sign in to), so the "after" shows the same signed-out screen
+      const signedIn = seen.every((r) => r.signedIn);
+      after = await this.deps.looks({ base: server.base, sizes, panels: [issue.panel], auth: "out", mockPortal: signedIn, shotsDir: dir, prefix: "after-looks-", shootAll: true });
     } finally {
       await server.stop();
     }

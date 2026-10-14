@@ -925,6 +925,15 @@ describe("the looks check", () => {
     expect(wentLive(w.log)).toEqual([]);
   });
 
+  it("seen only signed out: the job's copy is looked at signed out too (no sample sign-in)", async () => {
+    const w = looksWorld();
+    const looks = w.deps.looks!;
+    w.deps.looks = async (o) => (o.base ? looks(o) : (await looks(o)).map((x) => ({ ...x, signedIn: false })));
+    await w.fixer.check("looks");
+    await idle(w.fixer);
+    expect(w.calls.find((c) => c.base === "http://job.test")?.mockPortal).toBe(false);
+  });
+
   it("a fix that doesn't make the gap go away fails its looks check", async () => {
     const w = looksWorld(false);
     await w.fixer.check("looks");
