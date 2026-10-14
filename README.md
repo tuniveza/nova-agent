@@ -430,6 +430,22 @@ needs a mouse, no frosted-glass blur or drifting sky. On a tablet showing the co
 bars hide and show with your swipes and a handle brings them back. The conversation's pages turn
 with a sideways swipe (`web/agent/assets/touch.css`).
 
+**Android phones and tablets.** The keyboard makes room instead of covering the message box
+(`interactive-widget=resizes-content`); pulling down never reloads Nova Agent; a tap is a tap (no
+wait, no grey flash, no "copy" pop-up from holding a button); typing boxes are 16px or more and
+every panel's buttons at least 40px (`/shared/fit.css`). Back (the gesture or the button) closes an
+open window first, then the open panel, and never leaves Nova Agent (`phone.js`). Held upright, the
+status line is one line that slides sideways inside itself; held sideways, the title panel is 44px,
+the navigation panel one slim row of icons and the status line steps aside, and each panel's own
+header and section rows slim down or scroll away inside the panel so its content has the room.
+Android's bigger text (Chrome makes it page zoom) is checked at 130%, where Calendar's date row,
+Index's numbers, Portal's sign-in and the Fixer's tabs all still fit. `scripts/check-android.sh`
+opens the home and every panel on Galaxy S23, Pixel 7, Galaxy A54, a small phone, a phone on its
+side and three tablets (upright and sideways), signed in and out, at 100% and 130% text, and finds
+what's broken (gaps, cut-off pages, things off the screen, sideways scrolling, Back leaving the app)
+and what's awkward (buttons under 40px, text under 11px); `--shots folder --sheet` saves a picture of
+every screen and a contact sheet per device.
+
 ### Install or remove the apps (and help)
 
 An **App** button (the phone with an arrow, in the top bar of Nova Agent and of the Portal app,
