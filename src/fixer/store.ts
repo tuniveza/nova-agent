@@ -103,8 +103,14 @@ export interface Screen {
   label?: string; // what the picture is of, when it's not just the panel at a width ("2000×1130 signed in")
   before: string; // file name under the job's shots folder ("" = none)
   after: string;
+  boxes?: { x: number; y: number; w: number; h: number }[]; // where the problem is on the picture (px): outlined on the card
 }
 export interface Card {
+  // The card's headline, short and plain (Claude Code writes them; the page falls back when empty)
+  title?: string; // "Portal's sign-in cut off on phones"
+  wrong?: string; // what's wrong, one sentence
+  cause?: string; // why it happens, one sentence
+  fix?: string; // what the change does, one sentence
   summary: string;
   why: string;
   files: FileChange[];

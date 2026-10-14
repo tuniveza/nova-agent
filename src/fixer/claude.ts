@@ -17,6 +17,10 @@
 export const CARD_SCHEMA = {
   type: "object",
   properties: {
+    title: { type: "string", description: "A short plain name for the problem, at most 8 words, like a headline (e.g. \"Portal's sign-in cut off on phones\")" },
+    wrong: { type: "string", description: "What's wrong, as the person using it sees it: ONE short sentence, no code words" },
+    cause: { type: "string", description: "Why it happens: the likely cause in ONE short plain sentence" },
+    fix: { type: "string", description: "What your change does about it: ONE short plain sentence" },
     summary: { type: "string", description: "Plain English, 1-3 sentences: what changed, for someone who doesn't code" },
     why: { type: "string", description: "Why: the problem it fixes or what was asked for" },
     consequences: { type: "string", description: "What this means for the people using Nova Agent once it's live" },
@@ -26,7 +30,7 @@ export const CARD_SCHEMA = {
     reasons: { type: "array", items: { type: "string" } },
     changed: { type: "boolean", description: "false if you made no change (say why in summary)" },
   },
-  required: ["summary", "why", "consequences", "assessment", "risks", "verdict", "reasons", "changed"],
+  required: ["title", "wrong", "cause", "fix", "summary", "why", "consequences", "assessment", "risks", "verdict", "reasons", "changed"],
 } as const;
 
 export const RULES = [
@@ -70,7 +74,9 @@ export function briefText(b: Brief): string {
     "You may run only these checks: `npx vitest run` and `npx tsc --noEmit` in Nova Agent's folder, and `npx vitest run` in Nova Bot's.",
     "Run the tests that cover what you changed before you finish.",
     "",
-    "When you're done, answer with the JSON asked for: a plain-English summary (no code words) of what you changed and why,",
+    "When you're done, answer with the JSON asked for. First the card's headline, for a busy owner who reads at a glance:",
+    "a title of at most 8 plain words, then ONE short sentence each for what's wrong (as they see it), why it happens, and what your change does.",
+    "Then a plain-English summary (no code words) of what you changed and why,",
     "what it means for the people using Nova Agent, an honest view of whether it's a good idea (with risks),",
     "and your recommendation (approve, reject or tweak) with reasons. If you couldn't or shouldn't change anything, say so (changed: false).",
   ]
@@ -117,6 +123,10 @@ export function claudeArgs(b: Brief, budgetUsd = 5): string[] {
 }
 
 export interface ClaudeAnswer {
+  title: string;
+  wrong: string;
+  cause: string;
+  fix: string;
   summary: string;
   why: string;
   consequences: string;
@@ -132,6 +142,10 @@ export function readAnswer(out: string): ClaudeAnswer | null {
   const pick = (o: any): ClaudeAnswer | null =>
     o && typeof o === "object" && typeof o.summary === "string"
       ? {
+          title: String(o.title || ""),
+          wrong: String(o.wrong || ""),
+          cause: String(o.cause || ""),
+          fix: String(o.fix || ""),
           summary: String(o.summary),
           why: String(o.why || ""),
           consequences: String(o.consequences || ""),

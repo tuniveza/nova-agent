@@ -74,6 +74,7 @@ export interface LooksProblem {
   kind: LooksKind;
   severity: "serious" | "minor";
   text: string;
+  box?: Box; // where on the screen's picture (px), for the Fixer's card to outline it
 }
 export interface LooksScreen {
   name: string;
@@ -100,7 +101,7 @@ export interface LooksOptions {
 }
 
 // ================= Measuring (runs inside the page) =================
-interface Box {
+export interface Box {
   x: number;
   y: number;
   w: number;
@@ -113,6 +114,8 @@ export interface Content {
   text: number; // characters of visible text
   media: number; // pictures, drawings, inputs
   header: number | null; // the panel's own header's top (px from the area's top), or null
+  x?: number; // where the area is in its page (px), so a problem's box can be drawn on the picture
+  y?: number;
 }
 export interface FrameMeasure extends Content {
   docH: number; // the page's own height (scrollHeight)
@@ -121,6 +124,8 @@ export interface FrameMeasure extends Content {
   offscreen: string[];
   textCut: string[];
   titleBars: number; // title panels drawn inside the panel itself
+  offscreenBoxes?: Box[]; // where those are (px in the panel's page)
+  textCutBoxes?: Box[];
 }
 export interface HostMeasure {
   vw: number;
@@ -157,7 +162,7 @@ export function measureContent(selector: string | null): Content {
     return true;
   };
   const scope = root || document.body;
-  if (!scope) return { w: W, h: H, rows: [], text: 0, media: 0, header: null };
+  if (!scope) return { w: W, h: H, rows: [], text: 0, media: 0, header: null, x: Math.round(X), y: Math.round(Y) };
   // Text, line by line
   const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
   const range = document.createRange();
@@ -199,7 +204,7 @@ export function measureContent(selector: string | null): Content {
     header = Math.round(r.top - Y);
     break;
   }
-  return { w: Math.round(W), h: Math.round(H), rows, text, media, header };
+  return { w: Math.round(W), h: Math.round(H), rows, text, media, header, x: Math.round(X), y: Math.round(Y) };
 }
 
 // Inside a panel, besides where its content is (measureContent): the page or its <main> scrolling,
@@ -229,6 +234,8 @@ export function measureFrame(): FrameExtras {
     return !(s.visibility === "hidden" || s.display === "none" || Number(s.opacity) === 0) && !el.closest("[hidden], [aria-hidden=true], [inert], dialog:not([open])");
   };
   const offscreen: string[] = [];
+  const offscreenBoxes: Box[] = [];
+  const boxOf = (r: DOMRect): Box => ({ x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) });
   for (const el of document.querySelectorAll("button, a[href], input, select, textarea, [role=button], [role=tab]")) {
     if (offscreen.length >= 3) break;
     if (!shown(el)) continue;
@@ -237,9 +244,13 @@ export function measureFrame(): FrameExtras {
     const r = el.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) continue;
     if (r.right <= 0 || r.left >= W || r.top >= H || r.bottom <= 0) continue; // wholly away: a drawer tucked away
-    if ((r.left < -2 || r.right > W + 2 || r.bottom > H + 2) && !scrollsInside(el)) offscreen.push(name(el));
+    if ((r.left < -2 || r.right > W + 2 || r.bottom > H + 2) && !scrollsInside(el)) {
+      offscreen.push(name(el));
+      offscreenBoxes.push(boxOf(r));
+    }
   }
   const textCut: string[] = [];
+  const textCutBoxes: Box[] = [];
   for (const el of document.querySelectorAll("body *")) {
     if (textCut.length >= 3) break;
     const own = [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent || "").trim().length > 2);
@@ -248,13 +259,16 @@ export function measureFrame(): FrameExtras {
     if (!/hidden|clip/.test(cs.overflowX) || cs.textOverflow === "ellipsis") continue;
     // (Words kept for screen readers only, a 1px box or clipped away, aren't cut off: they're hidden on purpose)
     if (el.clientWidth <= 4 || el.clientHeight <= 4 || cs.clip !== "auto" || cs.clipPath !== "none") continue;
-    if (el.scrollWidth > el.clientWidth + 2 && shown(el)) textCut.push(name(el));
+    if (el.scrollWidth > el.clientWidth + 2 && shown(el)) {
+      textCut.push(name(el));
+      textCutBoxes.push(boxOf(el.getBoundingClientRect()));
+    }
   }
   const titleBars = [...document.querySelectorAll(".nv-topbar")].filter((el) => shown(el) && el.getBoundingClientRect().height > 8).length;
   // (Content cut off by a box that doesn't scroll: the page's, the body's or <main>'s own height)
   const clipped = (el: Element | null) => (el && /hidden|clip/.test(getComputedStyle(el).overflowY) ? el.scrollHeight - el.clientHeight : 0);
   const docH = Math.max(se.scrollHeight, H + Math.max(clipped(document.body), clipped(main)));
-  return { docH, docScrolls, mainScrolls, offscreen, textCut, titleBars };
+  return { docH, docScrolls, mainScrolls, offscreen, textCut, titleBars, offscreenBoxes, textCutBoxes };
 }
 
 // Nova Agent's own page: its title panels, the navigation panel, the open panel's frame
@@ -286,33 +300,48 @@ export function measureHost(): HostMeasure {
 
 // ================= Judging (plain rules) =================
 const pct = (n: number) => `${Math.round(n * 100)}%`;
+// The smallest box around some boxes (what the Fixer's card outlines), or none
+export function unionBox(boxes: (Box | null | undefined)[]): Box | undefined {
+  const bs = boxes.filter((b): b is Box => !!b && b.w > 0 && b.h > 0);
+  if (!bs.length) return undefined;
+  const x = Math.min(...bs.map((b) => b.x)), y = Math.min(...bs.map((b) => b.y));
+  return { x, y, w: Math.max(...bs.map((b) => b.x + b.w)) - x, h: Math.max(...bs.map((b) => b.y + b.h)) - y };
+}
+// A problem's box moved by (dx, dy): a panel's own boxes are in its page, the picture is of Nova Agent's
+export function shiftBoxes(problems: LooksProblem[], by: { x: number; y: number } | null): LooksProblem[] {
+  if (!by) return problems;
+  return problems.map((p) => (p.box ? { ...p, box: { ...p.box, x: p.box.x + by.x, y: p.box.y + by.y } } : p));
+}
 export function judgeContent(c: Content, where: "panel" | "home"): LooksProblem[] {
   const out: LooksProblem[] = [];
   if (c.h < 40) return out;
+  const X = c.x || 0, Y = c.y || 0;
   if (!c.rows.length || (c.text < 3 && c.media === 0)) {
-    out.push({ kind: "blank", severity: "serious", text: `The ${where} shows nothing (blank)` });
+    out.push({ kind: "blank", severity: "serious", text: `The ${where} shows nothing (blank)`, box: { x: X, y: Y, w: c.w, h: c.h } });
     return out;
   }
   const first = c.rows[0][0];
   const below = c.h - c.rows[c.rows.length - 1][1];
-  if (first > 0.4 * c.h && below < 0.6 * first) out.push({ kind: "top-gap", severity: "serious", text: `The top ${pct(first / c.h)} of the ${where} is empty: its content sits low, with a big empty gap above it` });
+  if (first > 0.4 * c.h && below < 0.6 * first) out.push({ kind: "top-gap", severity: "serious", text: `The top ${pct(first / c.h)} of the ${where} is empty: its content sits low, with a big empty gap above it`, box: { x: X, y: Y, w: c.w, h: Math.round(first) } });
   let gap = 0, at = 0;
   for (let i = 1; i < c.rows.length; i++) {
     const g = c.rows[i][0] - c.rows[i - 1][1];
     if (g > gap) (gap = g), (at = c.rows[i - 1][1]);
   }
-  if (gap > 0.45 * c.h) out.push({ kind: "gap", severity: "serious", text: `A big empty gap (${pct(gap / c.h)} of the ${where}, ${Math.round(gap)}px) between its parts, ${Math.round(at)}px down` });
-  if (c.header != null && c.header > 0.45 * c.h) out.push({ kind: "header-low", severity: "serious", text: `The ${where}'s own header sits ${pct(c.header / c.h)} of the way down instead of at the top` });
+  if (gap > 0.45 * c.h) out.push({ kind: "gap", severity: "serious", text: `A big empty gap (${pct(gap / c.h)} of the ${where}, ${Math.round(gap)}px) between its parts, ${Math.round(at)}px down`, box: { x: X, y: Y + Math.round(at), w: c.w, h: Math.round(gap) } });
+  if (c.header != null && c.header > 0.45 * c.h) out.push({ kind: "header-low", severity: "serious", text: `The ${where}'s own header sits ${pct(c.header / c.h)} of the way down instead of at the top`, box: { x: X, y: Y + c.header, w: c.w, h: Math.max(24, Math.min(64, c.h - c.header)) } });
   return out;
 }
 
 export function judgeFrame(f: FrameMeasure): LooksProblem[] {
   const out = judgeContent(f, "panel");
-  if (f.docScrolls) out.push({ kind: "page-scrolls", severity: "minor", text: `The panel's page scrolls (${f.docH}px tall on a ${f.h}px screen): only boxes inside it should` });
-  else if (f.docH > f.h + 24) out.push({ kind: "cut-off", severity: "minor", text: `The panel's page is ${f.docH}px tall on a ${f.h}px screen and can't scroll: the bottom is cut off` });
-  if (f.mainScrolls) out.push({ kind: "main-scrolls", severity: "minor", text: "The panel's whole main area scrolls: only boxes inside it should" });
-  if (f.offscreen.length) out.push({ kind: "offscreen", severity: "minor", text: `Partly off the screen: ${f.offscreen.join(", ")}` });
-  if (f.textCut.length) out.push({ kind: "text-cut", severity: "minor", text: `Text cut off: ${f.textCut.join(", ")}` });
+  const bottom = { x: 0, y: Math.max(0, f.h - 72), w: f.w, h: Math.min(72, f.h) };
+  if (f.docScrolls) out.push({ kind: "page-scrolls", severity: "minor", text: `The panel's page scrolls (${f.docH}px tall on a ${f.h}px screen): only boxes inside it should`, box: bottom });
+  else if (f.docH > f.h + 24) out.push({ kind: "cut-off", severity: "minor", text: `The panel's page is ${f.docH}px tall on a ${f.h}px screen and can't scroll: the bottom is cut off`, box: bottom });
+  if (f.mainScrolls) out.push({ kind: "main-scrolls", severity: "minor", text: "The panel's whole main area scrolls: only boxes inside it should", box: { x: 0, y: 0, w: f.w, h: f.h } });
+  const clip = (b: Box | undefined) => (b ? { x: Math.max(0, b.x), y: Math.max(0, b.y), w: Math.min(f.w, b.x + b.w) - Math.max(0, b.x), h: Math.min(f.h, b.y + b.h) - Math.max(0, b.y) } : undefined);
+  if (f.offscreen.length) out.push({ kind: "offscreen", severity: "minor", text: `Partly off the screen: ${f.offscreen.join(", ")}`, box: clip(unionBox(f.offscreenBoxes || [])) });
+  if (f.textCut.length) out.push({ kind: "text-cut", severity: "minor", text: `Text cut off: ${f.textCut.join(", ")}`, box: clip(unionBox(f.textCutBoxes || [])) });
   return out;
 }
 
@@ -320,20 +349,21 @@ const overlap = (a: Box, b: Box) => Math.max(0, Math.min(a.y + a.h, b.y + b.h) -
 export function judgeHost(h: HostMeasure, insideTitles: number): LooksProblem[] {
   const out: LooksProblem[] = [];
   const titles = h.titles.length + insideTitles;
-  if (titles > 1) out.push({ kind: "title-count", severity: "serious", text: `${titles} title panels at once (there should be one)` });
+  if (titles > 1) out.push({ kind: "title-count", severity: "serious", text: `${titles} title panels at once (there should be one)`, box: unionBox([...h.titles, h.frame ? { ...h.frame, h: Math.min(h.frame.h, 80) } : null]) });
   else if (!h.titleInDom) out.push({ kind: "title-count", severity: "serious", text: "No title panel" });
-  if (h.docH > h.vh + 2) out.push({ kind: "page-scrolls", severity: "minor", text: `Nova Agent's page is taller than the screen (${h.docH}px on ${h.vh}px)` });
+  if (h.docH > h.vh + 2) out.push({ kind: "page-scrolls", severity: "minor", text: `Nova Agent's page is taller than the screen (${h.docH}px on ${h.vh}px)`, box: { x: 0, y: Math.max(0, h.vh - 72), w: h.vw, h: Math.min(72, h.vh) } });
   if (h.offscreen.length) out.push({ kind: "offscreen", severity: "minor", text: `Partly off the screen: ${h.offscreen.join(", ")}` });
   if (h.frame) {
     const t = h.titles[0];
     const covT = t ? overlap(t, h.frame) : 0;
     const covN = h.nav ? overlap(h.nav, h.frame) : 0;
-    if (covT > 4) out.push({ kind: "covered", severity: "serious", text: `The title panel covers the top ${covT}px of the panel` });
-    if (covN > 4) out.push({ kind: "covered", severity: "serious", text: `The navigation panel covers the bottom ${covN}px of the panel` });
-    const above = t ? h.frame.y - (t.y + t.h) : 0;
-    const below = h.nav ? h.nav.y - (h.frame.y + h.frame.h) : 0;
-    if (above > 40) out.push({ kind: "unused", severity: "minor", text: `${above}px of empty space between the title panel and the panel` });
-    if (below > 40) out.push({ kind: "unused", severity: "minor", text: `${below}px of empty space between the panel and the navigation panel` });
+    const f = h.frame;
+    if (covT > 4) out.push({ kind: "covered", severity: "serious", text: `The title panel covers the top ${covT}px of the panel`, box: { x: f.x, y: f.y, w: f.w, h: covT } });
+    if (covN > 4) out.push({ kind: "covered", severity: "serious", text: `The navigation panel covers the bottom ${covN}px of the panel`, box: { x: f.x, y: f.y + f.h - covN, w: f.w, h: covN } });
+    const above = t ? f.y - (t.y + t.h) : 0;
+    const below = h.nav ? h.nav.y - (f.y + f.h) : 0;
+    if (above > 40) out.push({ kind: "unused", severity: "minor", text: `${above}px of empty space between the title panel and the panel`, box: { x: f.x, y: t!.y + t!.h, w: f.w, h: above } });
+    if (below > 40) out.push({ kind: "unused", severity: "minor", text: `${below}px of empty space between the panel and the navigation panel`, box: { x: f.x, y: f.y + f.h, w: f.w, h: below } });
   }
   return out;
 }
@@ -435,7 +465,7 @@ export async function runLooks(opts: LooksOptions): Promise<LooksScreen[]> {
               await page.waitForTimeout(settle);
               const inside: FrameMeasure = { ...(await frame.evaluate(measureContent, null)), ...(await frame.evaluate(measureFrame)) };
               const host = await page.evaluate(measureHost);
-              problems = [...problems, ...judgeHost(host, inside.titleBars), ...judgeFrame(inside)];
+              problems = [...problems, ...judgeHost(host, inside.titleBars), ...shiftBoxes(judgeFrame(inside), host.frame)];
               await screen(p, ms, problems);
             } catch (err) {
               await screen(p, Date.now() - started, [...problems, { kind: "open", severity: "serious", text: `Couldn't be opened (${String((err as Error).message).split("\n")[0].slice(0, 160)})` }]);

@@ -172,7 +172,24 @@ export class Fixer {
   state() {
     const data = this.store.read();
     const day = this.today(data);
-    const view = (j: Job) => ({ ...j, card: j.card ? { ...j.card, diff: "" } : null });
+    // What the fix is about, for its card: how bad, which panel, what was seen and where
+    const about = (j: Job) => {
+      if (j.target.type !== "issue") return null;
+      const i = data.issues.find((x) => x.id === j.target.id);
+      if (!i) return null;
+      const seen = i.area === "looks" ? (data.looks?.results || []).filter((r) => r.path === i.panel && r.problems.some((p) => fingerprint("looks", r.path, p.kind) === i.fingerprint)) : [];
+      const p = seen[0]?.problems.find((x) => fingerprint("looks", seen[0].path, x.kind) === i.fingerprint);
+      return {
+        severity: i.severity,
+        area: i.area,
+        panel: i.panel,
+        panelName: seen[0]?.name || "",
+        kind: p?.kind || "",
+        problem: p?.text || "",
+        where: [...new Set(seen.map((r) => `${r.width}×${r.height} ${r.signedIn ? "signed in" : "signed out"}`))].slice(0, 12),
+      };
+    };
+    const view = (j: Job) => ({ ...j, card: j.card ? { ...j.card, diff: "" } : null, about: about(j) });
     const byNew = (a: Job, b: Job) => b.updated.localeCompare(a.updated);
     return {
       dry: this.opts.dry,
@@ -599,7 +616,8 @@ export class Fixer {
     const screens: Screen[] = sizes.map(([w, h]) => {
       const b = seen.find((r) => r.width === w && r.height === h && r.shot);
       const a = shotName("after-looks-", issue.panel, w, h, false);
-      return { name: seen[0].name, path: issue.panel, width: w, height: h, label: `${w}×${h}${b ? (b.signedIn ? ", signed in" : ", signed out") : ""}`, before: b ? `before-looks-${b.shot}` : "", after: existsSync(join(dir, a)) ? a : "" };
+      const boxes = b ? hit(b).map((p) => p.box).filter((x): x is NonNullable<typeof x> => !!x) : [];
+      return { name: seen[0].name, path: issue.panel, width: w, height: h, label: `${w}×${h}${b ? (b.signedIn ? ", signed in" : ", signed out") : ""}`, before: b ? `before-looks-${b.shot}` : "", after: existsSync(join(dir, a)) ? a : "", ...(boxes.length ? { boxes } : {}) };
     });
     return { check, screens };
   }
@@ -688,7 +706,12 @@ export class Fixer {
           return { name: s.name, path: s.path, width, before: existsSync(join(this.paths.shotsDir, job.id, `before-${name}`)) ? `before-${name}` : "", after: shots.get(`${s.path}|${width}`) || "" };
         }),
       );
+      const line = (s: string | undefined, max: number) => short(String(s || "").trim().replace(/\s+/g, " "), max);
       const card: Card = {
+        title: line(answer?.title, 90),
+        wrong: line(answer?.wrong, 240),
+        cause: line(answer?.cause, 240),
+        fix: line(answer?.fix, 240),
         summary: answer?.summary || "Claude Code made a change but didn't describe it.",
         why: answer?.why || job.target.title,
         files,
