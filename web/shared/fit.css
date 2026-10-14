@@ -38,3 +38,21 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+
+/* ---- Phones and tablets (a finger, not a mouse) ----
+   - A tap is a tap: no double-tap-to-zoom wait, no grey flash, no text selected or "copy" pop-up
+     from holding a button.
+   - Pulling down at the top never reloads the page (Chrome's pull-to-refresh) and a box that's
+     scrolled to its end doesn't drag the page with it.
+   - Typing boxes at 16px or more: easy to read while typing, and Chrome never zooms in on them. */
+html, body { overscroll-behavior-y: none; }
+@media (pointer: coarse) {
+  html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  :where(button, [role="button"], [role="tab"], [role="switch"], a[href], summary, label, select, input) { touch-action: manipulation; }
+  :where(button, [role="button"], [role="tab"], [role="switch"], summary) { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  /* Buttons big enough for a finger (40px at least; a panel that sets its own size still wins).
+     Not on a canvas you drag and zoom (Board's table) or inside a calendar's day squares; only in the
+     panels (Nova Agent's own bars are sized on their own). */
+  :where(html.embed) :where(button, [role="button"], [role="tab"], [role="switch"], summary, select):not(:where([data-pan] *, .cal .cell *, .cal .grid *, .cal .tg *)) { min-height: 40px; min-width: 40px; }
+  :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="button"], [type="submit"], [type="reset"], [type="image"], [type="hidden"]), textarea, select) { font-size: max(1em, 16px) !important; }
+}

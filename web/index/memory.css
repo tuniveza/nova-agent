@@ -747,3 +747,23 @@ html.embed.ix-wide .app > main > #view-approve { grid-column: 2; grid-row: 3; }
 html.embed.ix-wide .app > main > .view { min-height: 0; overflow-y: auto; padding: 10px 12px; border-radius: 20px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel, #1C1129) 40%, transparent); }
 html.embed.ix-wide .app > main > .view { grid-auto-rows: max-content; align-content: start; }
 html.embed.ix-wide nav.tabs { display: none; }
+
+/* A short screen (a phone held sideways): the header and the numbers scroll away inside the panel,
+   then the open view has the whole height (and scrolls inside itself as usual) */
+@media (max-height: 480px) {
+  html.embed .app { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  html.embed .app > main { flex: none; height: calc(100vh - 8px); height: calc(100dvh - 8px); }
+}
+
+/* ---- Phones: the numbers' names readable (not 8–9px), never cut at the side ---- */
+@media (max-width: 560px) {
+  .stat-label { font-size: 10.5px; letter-spacing: 0.06em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stat-sub { font-size: 11.5px; }
+}
+/* A very narrow screen (or Android's bigger text): two by two, each a slim row (number, then name) */
+@media (max-width: 330px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
+  .stat { grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; column-gap: 8px; padding: 8px 10px; border-radius: 14px; }
+  .stat-num { font-size: 18px; grid-row: 1 / 3; }
+  .stat-sub { display: none; }
+}

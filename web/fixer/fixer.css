@@ -196,3 +196,25 @@ html.fx-wide .panes .switch-row > input { flex: none; }
   .shots.side[data-show] .shot.before, .shots.side[data-show] .shot.after { display: block; }
   .pair-shot:has(> .shots.side) > .flip { display: none; }
 }
+
+/* ---- Phones, tablets and short screens inside Nova Agent ----
+   The title panel already says "Fixer", so the big heading steps aside; the tabs are one row that
+   slides sideways inside itself (never two rows, never past the edge); tap targets are full size */
+@media (max-width: 760px), (max-height: 700px) {
+  html.embed .top .nt-kicker, html.embed .top .nt-title { display: none; }
+  html.embed .top { margin-bottom: 6px; }
+  .fx-tabs { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x proximity; justify-content: flex-start; }
+  .fx-tabs::-webkit-scrollbar { display: none; }
+  .fx-tabs button { flex: none; min-height: 40px; padding: 4px 14px; font-size: 13.5px; scroll-snap-align: start; }
+  .glance-item .nt-label { font-size: 10px; letter-spacing: .06em; }
+  .glance-actions button { min-height: 40px; }
+}
+/* A short screen (a phone held sideways): the one line under the heading goes too, and the four
+   numbers and Check now share one row, so the open tab gets the room (notes still show) */
+@media (max-height: 480px) {
+  html.embed .top { display: none; }
+  .glance { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 10px; }
+  .glance > p { flex-basis: 100%; margin: 0; }
+  .glance-row { flex: 1 1 auto; display: flex; gap: 12px; }
+  .glance-item { display: flex; flex-direction: column; }
+}

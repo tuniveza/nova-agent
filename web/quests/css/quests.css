@@ -9,7 +9,7 @@
 .title { background: none; display: flex; align-items: center; gap: 8px; margin: 0 6px 0 0; font: 800 22px/1 var(--f-display); letter-spacing: .01em; }
 .title-ico { width: 26px !important; height: 26px !important; color: var(--hi); }
 .views { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--glass, rgba(255,255,255,.04)); border: 1px solid var(--line); }
-.views [role=tab] { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 0; background: transparent; color: var(--muted); font: 600 14px var(--f-body); cursor: pointer; }
+.views [role=tab] { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 0; background: transparent; color: var(--muted); font: 600 14px var(--f-body); cursor: pointer; }
 .views [role=tab][aria-selected="true"] { background: var(--accent); color: var(--on-accent, #fff); }
 .views [role=tab]:hover:not([aria-selected="true"]) { color: var(--text); }
 .tools { display: flex; align-items: center; gap: 6px; margin-left: auto; position: relative; }
@@ -230,6 +230,11 @@ body { overflow: hidden; }
 .views-wrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .views-wrap > .view:not([hidden]) { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .views-wrap > #view-board:not([hidden]) { overflow: hidden; display: flex; flex-direction: column; }
+/* Nothing to show yet (loading, or signed out): the empty views step aside and the message sits in
+   the middle of the room, not at the bottom under a big gap */
+.qx:has(> .views-wrap:not(:has(> .view:not([hidden]) > *))) > .views-wrap { display: none; }
+.qx:has(> .views-wrap:not(:has(> .view:not([hidden]) > *))) > :is(.loading, .offline):not([hidden]) { margin: auto; max-width: 440px; width: calc(100% - 32px); }
+.qx > .offline:not([hidden]) { line-height: 1.5; font-size: 15px; }
 #view-board > .board { flex: 1 1 auto; min-height: 0; align-items: stretch; }
 #view-board .col { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 #view-board .col > ul, #view-board .col > .qs { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
@@ -248,4 +253,11 @@ body { overflow: hidden; }
   #view-today > .day .slot { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   #view-today > .day .slot-time { display: flex; gap: 6px; align-items: baseline; justify-content: flex-start; text-align: left; padding: 0 6px; font-size: 12.5px; }
   #view-today > .day .slot-time small::before { content: "– "; }
+}
+
+/* A short screen (a phone held sideways): the bar, the options and the add box scroll away inside
+   Quests, then the open view has the whole height (and scrolls inside itself as usual) */
+@media (max-height: 480px) {
+  .qx { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .qx > .views-wrap { flex: none; height: calc(100vh - 8px); height: calc(100dvh - 8px); }
 }

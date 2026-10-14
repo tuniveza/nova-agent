@@ -61,3 +61,19 @@ html.embed #main > .view:not([hidden]) {
 html.embed #view-profile .pv .stage, html.embed .pv .hero > .stage { margin-top: 0; }
 /* (Today's wide chips wrap inside the section on a narrow phone) */
 html.embed #view-today .today-tools { max-width: 100%; white-space: normal; height: auto; min-height: 34px; }
+/* Signing in, setting up or joining inside Nova Agent: the screen scrolls inside itself when the
+   form is taller than the room (a phone, bigger text, the keyboard up), never cut off at the
+   bottom; on a short screen the P is smaller so the form shows without scrolling at all */
+html.embed .pv .auth, html.embed .pv .boot { height: 100vh; height: 100dvh; min-height: 0; overflow-y: auto; overscroll-behavior: contain; justify-content: safe center; padding-top: 20px; padding-bottom: 20px; }
+@media (max-height: 760px) {
+  html.embed .pv .auth .mark-wrap { width: 76px; height: 76px; margin-bottom: 12px; }
+  html.embed .pv .auth .big-mark { border-radius: 22px; }
+  html.embed .pv .auth-sub { margin: 4px 0 14px; }
+  html.embed .pv .auth-card { gap: 10px; padding: 16px; }
+}
+/* A short screen (a phone held sideways): the header and section lanes scroll away inside the
+   panel, then the open section has the whole height (and scrolls inside itself as usual) */
+@media (max-height: 480px) {
+  html.embed .app { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  html.embed .app > main { flex: none; height: calc(100vh - 8px); height: calc(100dvh - 8px); }
+}

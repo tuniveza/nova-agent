@@ -376,3 +376,6 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
   .month > .grid { flex: none !important; grid-auto-rows: minmax(58px, auto) !important; }
   .month > .dayplan { max-height: none; overflow: visible; flex: none; }
 }
+/* A booking's name: a long word breaks inside the card instead of being cut at its side, and what
+   doesn't fit in its lines ends with … (tap the card for all of it) */
+.pill span { overflow-wrap: anywhere; text-overflow: ellipsis; }

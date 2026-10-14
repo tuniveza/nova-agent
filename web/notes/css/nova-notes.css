@@ -689,6 +689,16 @@ html.embed .toolbar { flex-wrap: wrap; justify-content: center; row-gap: 2px; bo
 html.embed .page { min-height: max(320px, calc(100dvh - 250px)); padding: clamp(26px, 5vw, 72px) clamp(18px, 5.5vw, 84px) clamp(36px, 6vw, 90px); }
 html.embed .page-wrap { padding: 14px clamp(8px, 2vw, 18px) 90px; }
 @media (max-width: 640px) { html.embed .toolbar { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; } }
+/* A short frame (a phone on its side, or Android's bigger text): the toolbar is one row that slides
+   sideways inside itself (a second row would leave the page no room), and the page needs no
+   minimum height of its own (it takes what's left and scrolls inside itself) */
+@media (max-height: 500px) {
+  html.embed .toolbar { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; justify-content: flex-start; scrollbar-width: none; }
+  html.embed .toolbar::-webkit-scrollbar { display: none; }
+  html.embed .page { min-height: 0; padding-top: 18px; padding-bottom: 28px; }
+  html.embed .page-wrap { padding-top: 6px; padding-bottom: 12px; }
+  html.embed .topbar { row-gap: 2px; padding-top: 4px; padding-bottom: 2px; }
+}
 
 /* ---------- THE PAGE STAYS PUT ----------
    At every size the whole of Notes fits its window (or Nova Agent's frame): the bars stay on top,
@@ -764,3 +774,18 @@ dialog.dlg.guide .dlg-body { flex: 1 1 auto; min-height: 0; overscroll-behavior:
 dialog.dlg.guide .dlg-foot { justify-content: center; }
 @media (prefers-reduced-motion: reduce) { dialog.dlg.guide .dlg-body { scroll-behavior: auto; } .guide-sec.flash { animation: none; } }
 .themes.flash { animation: guide-flash 1.2s ease-out; border-radius: 999px; }
+
+/* The Welcome guide on a phone or a short frame: its topics are one row that slides sideways inside
+   itself (not three rows squeezing the guide), and the head is slimmer, so the guide has the room */
+@media (max-width: 640px), (max-height: 560px) {
+  .guide-toc { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 8px 12px; scroll-snap-type: x proximity; }
+  .guide-toc::-webkit-scrollbar { display: none; }
+  .guide-toc { flex: none; }
+  .guide-toc button { flex: none; scroll-snap-align: start; }
+  dialog.dlg.guide .dlg-head .app-mark.lg { width: 34px; height: 34px; }
+  dialog.dlg.guide .dlg-head h2 { font-size: 18px; }
+}
+@media (max-height: 560px) {
+  dialog.dlg.guide .dlg-head { padding-top: 8px; padding-bottom: 8px; }
+  dialog.dlg.guide .dlg-kicker { display: none; }
+}

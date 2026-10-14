@@ -10,7 +10,8 @@
   "use strict";
   const bar = document.querySelector("nav.tabs");
   if (!bar) return;
-  const WIDE = matchMedia("(min-width: 761px)");
+  // (a phone on its side is wide but short: its sections are one sliding row, like an upright phone)
+  const WIDE = matchMedia("(min-width: 761px) and (min-height: 501px), (min-width: 981px)");
   // The tab bar is on (not the side menu: Options → Menu)
   // The side menu only fits from 1024px wide: narrower than that the tabs go on top whatever's
   // chosen (themes.js switches tabbar.css on for those widths too), never a squashed row

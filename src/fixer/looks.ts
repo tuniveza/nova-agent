@@ -232,6 +232,8 @@ export function measureFrame(): FrameExtras {
   for (const el of document.querySelectorAll("button, a[href], input, select, textarea, [role=button], [role=tab]")) {
     if (offscreen.length >= 3) break;
     if (!shown(el)) continue;
+    // (On a canvas you drag around, like Board's table, things past the edge are reached by moving it)
+    if (el.closest("[data-pan]")) continue;
     const r = el.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) continue;
     if (r.right <= 0 || r.left >= W || r.top >= H || r.bottom <= 0) continue; // wholly away: a drawer tucked away

@@ -80,6 +80,16 @@ html.embed .embed-head > .top { position: relative; top: auto; }
   html.embed .embed-head > .tabs > .tab.active::after { display: none; }
   html.embed .embed-head > .tabs .badge { position: static; margin-left: -2px; }
 }
+/* A phone on its side (short and wide): one row of sections that slides sideways inside itself
+   (two rows would leave the section no room), and the header slimmer */
+@media (max-height: 500px) and (orientation: landscape) and (max-width: 980px) {
+  html.embed .embed-head > .tabs { flex-wrap: nowrap; justify-content: flex-start; row-gap: 0; padding: 4px 10px; overflow-x: auto; scroll-snap-type: x proximity; }
+  html.embed .embed-head > .tabs > .tab { min-height: 40px; }
+  html.embed .embed-head { position: relative; } /* (it scrolls away with the panel, rather than staying stuck over a short screen) */
+  html.embed .embed-head > .top { padding-top: 2px; padding-bottom: 2px; min-height: 0; }
+  html.embed .embed-head > .top :is(.brand, #brand) svg { width: 30px; height: 30px; }
+  html.embed .embed-head > .top .icon-btn { width: 40px; height: 40px; }
+}
 ${MOTION}
 ${GLOW}`);
       document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];

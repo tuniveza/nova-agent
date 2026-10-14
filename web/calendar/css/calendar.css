@@ -407,3 +407,18 @@ html[data-motion="calm"] .view[data-anim] > * { animation: none !important; }/* 
 @media (max-width: 1099px) { .dayplan { content-visibility: auto; contain-intrinsic-size: auto 420px; } }/* The strip keeps its room (while the sky is still to come, and when space is tight) */
 .strip { min-height: 48px; box-sizing: border-box; }
 @media (max-width: 719px) { .strip { min-height: 42px; } }
+
+/* ---- A narrow phone (or Android's bigger text): the date's controls share one full-width row ----
+   Back and Forward at the ends, the month in the middle shortening with … if it must, Today
+   beside it; never wider than the screen */
+@media (max-width: 420px) {
+  .bar > .nav, html[data-centred] .bar > .nav { flex: 1 1 100%; width: 100%; justify-self: stretch; justify-content: space-between; }
+  .nav > .title { flex: 1 1 auto; justify-content: center; }
+  .tools { gap: 4px; }
+  .views button { min-height: 40px; }
+}
+@media (max-width: 320px) {
+  .nav > .title { font-size: 15px; padding: 4px 2px; }
+  .views button { font-size: 12.5px; padding: 0 2px; }
+  .tools .icon-btn { width: 40px; height: 40px; }
+}
