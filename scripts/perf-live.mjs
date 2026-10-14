@@ -49,13 +49,16 @@ async function pageLoad(context, label) {
   cdp.on("Network.loadingFinished", (e) => { bytes += e.encodedDataLength; requests++; });
   await page.goto(URL_ + "/agent/", { waitUntil: "load", timeout: 60_000 });
   await page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => {});
-  const t = await page.evaluate(() => new Promise((done) => {
+  // (Nova Agent reloads itself when the studio computer's link comes back: measure the page that stays)
+  const measure = () => page.evaluate(() => new Promise((done) => {
     const nav = performance.getEntriesByType("navigation")[0];
     const fcp = performance.getEntriesByName("first-contentful-paint")[0];
     let lcp = 0;
     new PerformanceObserver((l) => { for (const e of l.getEntries()) lcp = e.startTime; }).observe({ type: "largest-contentful-paint", buffered: true });
     setTimeout(() => done({ ttfb: nav.responseStart - nav.startTime, fcp: fcp?.startTime, lcp, dcl: nav.domContentLoadedEventEnd, load: nav.loadEventEnd }), 300);
   }));
+  let t;
+  for (let i = 0; i < 3 && !t; i++) t = await measure().catch(async () => { await page.waitForLoadState("load").catch(() => {}); return null; });
   return { page, cdp, label, ...t, bytes, requests };
 }
 
@@ -109,6 +112,8 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await context.addCookies([{ name: "nova_session", value: token, domain: HOST, path: "/", secure: true, httpOnly: true, sameSite: "Lax" }]);
   const cold = await pageLoad(context, "cold");
+  // a returning visit: Nova's files settle on the device first (its service worker), like the next day
+  await cold.page.waitForTimeout(Number(process.env.PERF_SETTLE || 15000));
   await cold.page.close();
   const warm = await pageLoad(context, "warm");
   out.page = [cold, warm].map(({ label, ttfb, fcp, lcp, dcl, load, bytes, requests }) => ({ label, ttfb, fcp, lcp, dcl, load, bytes, requests }));
