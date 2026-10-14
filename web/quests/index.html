@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quests</title>
+<meta name="description" content="Quests: every quest in one place. Add one in everyday words, tick it off, focus on one thing, see them on a board or hour by hour.">
+<meta name="theme-color" content="#06040D">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,800&family=Saira:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap">
+<script src="/shared/inside.js"></script>
+<link rel="stylesheet" href="/shared/themes.css">
+<script src="/shared/spectrum.js"></script>
+<script src="/shared/themes.js"></script>
+<link rel="stylesheet" href="/shared/tools.css">
+<link rel="stylesheet" href="/shared/quest-modes.css">
+<link rel="stylesheet" href="css/quests.css">
+<!-- Every button's look, last so it decides it (buttons.css) -->
+<link rel="stylesheet" href="/shared/buttons.css">
+<link rel="stylesheet" href="/shared/scrollbars.css">
+<script src="/shared/look.js"></script>
+</head>
+<body class="nb-tool" data-sfx-theme="quests">
+<div class="qx" id="app">
+  <header class="bar" aria-label="Quests">
+    <h1 class="title"><svg class="title-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8.5 11.5l2 2 4-4.5M8.5 17h7"/></svg>Quests</h1>
+    <div class="views" role="tablist" aria-label="How to see your quests">
+      <button role="tab" type="button" data-view="focus" aria-selected="false" title="One thing at a time (1)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg><span>Focus</span></button>
+      <button role="tab" type="button" data-view="list" aria-selected="true" title="Everything, grouped (2)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span>List</span></button>
+      <button role="tab" type="button" data-view="board" aria-selected="false" title="By how it's going (3)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg><span>Board</span></button>
+      <button role="tab" type="button" data-view="today" aria-selected="false" title="Today and the next days, hour by hour (4)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M12 13.5v3l2 1.2"/></svg><span>Today</span></button>
+    </div>
+    <div class="tools">
+      <span class="streak" id="streak" hidden></span>
+      <button class="icon-btn" id="search-btn" type="button" aria-label="Find a quest (/)" title="Find (/)" aria-controls="search-row" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
+      <button class="icon-btn" id="calm-btn" type="button" aria-pressed="false" aria-label="Calm: fewer things on screen (C)" title="Calm (C)"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+      <button class="icon-btn" id="more-btn" type="button" aria-label="Options" title="Options" aria-haspopup="menu" aria-expanded="false" aria-controls="more-menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+      <div class="menu" id="more-menu" role="menu" hidden>
+        <button role="menuitemcheckbox" type="button" id="opt-everyone" aria-checked="false" hidden>Everyone's quests</button>
+        <button role="menuitemcheckbox" type="button" id="opt-celebrate" aria-checked="true">Little celebrations</button>
+        <button role="menuitemcheckbox" type="button" id="opt-phone" aria-checked="false">Reminders on my phone</button>
+        <button role="menuitemcheckbox" type="button" id="opt-done" aria-checked="true">Show what's done</button>
+        <div class="menu-sep" role="separator"></div>
+        <button role="menuitem" type="button" id="opt-replan">Re-plan from now</button>
+        <button role="menuitem" type="button" id="opt-keys">Keyboard shortcuts</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Quick add: one line in everyday words -->
+  <form class="add" id="add-form" autocomplete="off">
+    <label class="sr" for="add-input">Add a quest</label>
+    <div class="add-box">
+      <svg class="add-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      <input id="add-input" maxlength="300" placeholder="Add a quest… e.g. tomorrow 3pm call Sam !high #studio" aria-describedby="add-hint add-preview" enterkeyhint="done">
+      <button class="btn primary add-go" type="submit" data-sfx="send">Add</button>
+      <button class="icon-btn" id="add-more" type="button" aria-label="Add with details" title="Add with details"><svg viewBox="0 0 24 24"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="18" cy="7" r="2"/></svg></button>
+    </div>
+    <p class="add-preview" id="add-preview" aria-live="polite"></p>
+    <p class="sr" id="add-hint">Write it how you'd say it. A day or time, how long (30m), !high, #tags and "every day" are understood. Press Enter to add.</p>
+  </form>
+
+  <div class="search-row" id="search-row" hidden>
+    <label class="sr" for="search">Find a quest</label>
+    <input type="search" id="search" placeholder="Find… (words or #tag)" autocomplete="off">
+  </div>
+  <div class="filters" id="filters" role="group" aria-label="Tags" hidden></div>
+
+  <main class="views-wrap" id="main" tabindex="-1">
+    <section class="view" id="view-focus" data-view="focus" aria-label="Focus" hidden></section>
+    <section class="view" id="view-list" data-view="list" aria-label="List"></section>
+    <section class="view" id="view-board" data-view="board" aria-label="Board" hidden></section>
+    <section class="view" id="view-today" data-view="today" aria-label="Today" hidden></section>
+  </main>
+
+  <p class="loading" id="loading">Loading your quests…</p>
+  <p class="offline" id="offline" role="alert" hidden></p>
+
+  <!-- One quest's details -->
+  <dialog class="sheet" id="editor" aria-labelledby="ed-title-label">
+    <form method="dialog" id="ed-form" autocomplete="off">
+      <div class="sheet-head">
+        <h2 id="ed-title-label">Quest</h2>
+        <button class="icon-btn" type="button" id="ed-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="sheet-body">
+        <label class="field"><span>What</span><input id="ed-title" maxlength="140" required></label>
+        <div class="row2">
+          <label class="field"><span>When</span><input id="ed-start" type="datetime-local" step="60"></label>
+          <label class="field"><span>Finish by</span><input id="ed-deadline" type="datetime-local" step="60"></label>
+        </div>
+        <div class="row2">
+          <label class="field"><span>How long</span>
+            <select id="ed-minutes">
+              <option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="90">1½ hours</option><option value="120">2 hours</option><option value="180">3 hours</option><option value="240">4 hours</option>
+            </select>
+          </label>
+          <label class="field"><span>Repeat</span>
+            <select id="ed-repeat">
+              <option value="">No</option><option value="day">Every day</option><option value="weekday">Weekdays</option><option value="week">Every week</option><option value="interval">Every few minutes…</option>
+            </select>
+          </label>
+        </div>
+        <label class="field" id="ed-every-wrap" hidden><span>Every how many minutes</span><input id="ed-every" type="number" min="1" max="1440" step="1" inputmode="numeric"></label>
+        <label class="field" id="ed-mode-wrap"><span>How it's going</span>
+          <select id="ed-mode">
+            <option value="waiting">Waiting</option><option value="soon">Soon</option><option value="working">Working On It</option><option value="nearly">Nearly Finished</option><option value="longer">Taking longer than expected</option><option value="questions">Questions</option><option value="done">Done</option>
+          </select>
+        </label>
+        <fieldset class="field seg-field">
+          <legend>Priority</legend>
+          <div class="seg" id="ed-priority" role="radiogroup" aria-label="Priority">
+            <label><input type="radio" name="pri" value="low"><span>Low</span></label>
+            <label><input type="radio" name="pri" value="normal"><span>Normal</span></label>
+            <label><input type="radio" name="pri" value="high"><span>High</span></label>
+            <label><input type="radio" name="pri" value="critical"><span>Critical</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="field">
+          <legend>Steps <small id="ed-steps-count"></small></legend>
+          <ul class="steps" id="ed-steps"></ul>
+          <div class="step-add">
+            <label class="sr" for="ed-step-new">Add a step</label>
+            <input id="ed-step-new" maxlength="200" placeholder="Add a step, then Enter">
+            <button class="chip" type="button" id="ed-step-add">Add step</button>
+          </div>
+        </fieldset>
+        <label class="field"><span>Tags <small>(separate with spaces or commas)</small></span><input id="ed-tags" maxlength="200" placeholder="studio, mix"></label>
+        <label class="field"><span>Notes</span><textarea id="ed-notes" maxlength="2000" rows="3"></textarea></label>
+        <label class="field"><span>Where</span><input id="ed-location" maxlength="160" placeholder="Anywhere"></label>
+        <p class="ed-info" id="ed-info"></p>
+      </div>
+      <div class="sheet-foot">
+        <button class="btn danger" type="button" id="ed-delete" data-sfx="remove">Delete</button>
+        <span class="grow"></span>
+        <button class="btn ghost" type="button" id="ed-cancel">Cancel</button>
+        <button class="btn primary" type="submit" id="ed-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="sheet small" id="keys" aria-labelledby="keys-title">
+    <div class="sheet-head"><h2 id="keys-title">Keyboard shortcuts</h2><button class="icon-btn" type="button" id="keys-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <dl class="keys">
+      <dt><kbd>N</kbd> or <kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Add a quest</dd>
+      <dt><kbd>/</kbd></dt><dd>Find</dd>
+      <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Focus, List, Board, Today</dd>
+      <dt><kbd>C</kbd></dt><dd>Calm on or off</dd>
+      <dt><kbd>J</kbd> <kbd>K</kbd> or <kbd>↓</kbd> <kbd>↑</kbd></dt><dd>Move between quests</dd>
+      <dt><kbd>X</kbd> or <kbd>Space</kbd></dt><dd>Done (or not done)</dd>
+      <dt><kbd>E</kbd> or <kbd>Enter</kbd></dt><dd>Open the details</dd>
+      <dt><kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Move it up or down the list</dd>
+      <dt><kbd>Delete</kbd></dt><dd>Delete (with Undo)</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Close</dd>
+    </dl>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button class="chip" id="toast-undo" type="button" hidden>Undo</button></div>
+  <p class="sr" id="say" aria-live="polite"></p>
+</div>
+<script src="/shared/sfx.js"></script>
+<script src="/shared/quest-modes.js"></script>
+<script type="module" src="js/quests.js"></script>
+</body>
+</html>

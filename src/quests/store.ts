@@ -129,6 +129,10 @@ export interface Quest {
   from: string; // where it was made, for people ("Notes · Studio plan"; "" = Nova Agent itself)
   link: string; // what it's tied to ("note:<note id>|<heading id>"), so a change in either place shows in both
   phones: string[]; // which phones get its reminders (Nova Bot's phone ids); none = its owner's phones
+  // The Quests panel's extras: small steps to tick off, a few tags, and the person's own order
+  steps: Step[];
+  tags: string[]; // lower case, no "#"
+  order: number; // where the person dragged it (0 = not placed by hand: by time, then priority)
   // Set by the planner
   start: string;
   end: string;
@@ -143,6 +147,21 @@ export interface Quest {
   created: string;
   updated: string;
 }
+
+export interface Step {
+  id: string;
+  text: string;
+  done: boolean;
+}
+export const MAX_STEPS = 30;
+export const MAX_TAGS = 10;
+export const cleanSteps = (v: unknown): Step[] =>
+  (Array.isArray(v) ? v : [])
+    .map((x: any) => ({ id: text(x?.id, 64) || randomUUID().slice(0, 8), text: text(x?.text, 200).trim(), done: x?.done === true }))
+    .filter((x) => x.text)
+    .slice(0, MAX_STEPS);
+export const cleanTags = (v: unknown): string[] =>
+  [...new Set((Array.isArray(v) ? v : []).map((x) => text(x, 24).trim().toLowerCase().replace(/^#+/, "").replace(/\s+/g, "-")).filter(Boolean))].slice(0, MAX_TAGS);
 
 export interface Block {
   id: string;
@@ -316,6 +335,9 @@ export function cleanQuest(q: any): Quest {
     from: text(q?.from, 80),
     link: text(q?.link, 160),
     phones: Array.isArray(q?.phones) ? [...new Set(q.phones.filter((x: unknown) => typeof x === "string" && /^[0-9a-f]{12}$/.test(x)))].slice(0, 10) as string[] : [],
+    steps: cleanSteps(q?.steps),
+    tags: cleanTags(q?.tags),
+    order: num(q?.order, 0, 1_000_000, 0),
     start: isStamp(q?.start) ? q.start : "",
     end: isStamp(q?.end) ? q.end : "",
     travelStart: isStamp(q?.travelStart) ? q.travelStart : "",

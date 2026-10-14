@@ -9,7 +9,7 @@ import { nextSession, splitLong } from "./lengths";
 import { isPulse } from "./pulses";
 import { notifyMission, recentNotices } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
-import { cleanQuest, cleanRhythm, EVERY, MODES, PRIORITIES, readQuests, readStamp, rhythmFor, TIMES_OF_DAY, writeQuests, type Block, type Mission, type Quest, type QuestData, type QuestMode, type Rhythm } from "./store";
+import { cleanQuest, cleanRhythm, cleanSteps, cleanTags, EVERY, MAX_STEPS, MAX_TAGS, MODES, PRIORITIES, readQuests, readStamp, rhythmFor, TIMES_OF_DAY, writeQuests, type Block, type Mission, type Quest, type QuestData, type QuestMode, type Rhythm } from "./store";
 import { ownerOf, personName } from "../person";
 import { pcOwnerId } from "../staff";
 
@@ -272,6 +272,9 @@ const EDITABLE: Record<string, (v: any) => unknown> = {
   from: (v) => words(v, 80, "Where it's from"),
   link: (v) => words(v, 160, "What it's tied to"),
   phones: (v) => (Array.isArray(v) && v.length <= 10 && v.every((x) => typeof x === "string" && /^[0-9a-f]{12}$/.test(x)) ? [...new Set(v)] : bad("Phones must be a list of up to 10 phone ids.")),
+  steps: (v) => (Array.isArray(v) && v.length <= MAX_STEPS && v.every((x) => x && typeof x.text === "string" && x.text.length <= 200) ? cleanSteps(v) : bad(`Steps must be a list of up to ${MAX_STEPS}, each up to 200 characters.`)),
+  tags: (v) => (Array.isArray(v) && v.length <= MAX_TAGS && v.every((x) => typeof x === "string" && x.length <= 24) ? cleanTags(v) : bad(`Tags must be a list of up to ${MAX_TAGS}, each up to 24 characters.`)),
+  order: (v) => (Number.isInteger(v) && v >= 0 && v <= 1_000_000 ? v : bad("The order must be a whole number.")),
   dependsOn: (v) => (Array.isArray(v) && v.length <= 20 && v.every((x) => typeof x === "string" && x.length <= 64) ? v : bad("Depends on must be a list of up to 20 quest ids.")),
 };
 function bad(message: string): never {
@@ -326,6 +329,19 @@ export function updateQuest(id: string, changes: Partial<Quest>): Quest {
   }
   replan();
   return readQuests().quests.find((x) => x.id === q.id)!;
+}
+
+// The Quests panel's drag and drop: these quests, in this order (1, 2, 3...). Only the order
+// changes, so nothing is re-planned. Ids it doesn't know are refused; `may` says whose can move.
+export function orderQuests(ids: unknown, may: (q: Quest) => boolean = () => true): { ordered: number } {
+  if (!Array.isArray(ids) || !ids.length || ids.length > 500 || !ids.every((x) => typeof x === "string")) throw new Error("Say which quests, in order.");
+  const data = readQuests();
+  const byId = new Map(data.quests.map((q) => [q.id, q]));
+  const list = (ids as string[]).map((id) => byId.get(id) ?? bad(`There's no quest ${id}.`));
+  for (const q of list) if (!may(q)) bad(`“${q.title}” isn't yours to move.`);
+  list.forEach((q, i) => (q.order = i + 1));
+  writeQuests(data);
+  return { ordered: list.length };
 }
 
 export function removeQuest(id: string): Quest {

@@ -214,14 +214,14 @@
   if (right) right.append(gear);
 
   // ---- The bar along the bottom: every place in Nova Agent, always there, in four groups ----
-  // Apps (Portal, Agent, Calendar, Notes, Index) · Plans (Quests, Missions) · Tools (Lossless,
+  // Apps (Portal, Agent, Calendar, Notes, Index) · Plans (Quests, Today, Missions) · Tools (Lossless,
   // Visualizer, Console) · Helpers (Observatory, Manual). Any other panel joins Tools.
   // On a narrow phone only Portal, Agent, Calendar, Notes and Quests stay on the bar, with a More
   // button for the rest (a sheet with the same icons; they open just the same)
   const SKIP = ['/admin/links']; // All links: behind the gear
   const GROUPS = [
     ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
-    ['tasks', 'Plans', ['pane:quests', 'pane:missions']],
+    ['tasks', 'Plans', ['/quests/', 'pane:quests', 'pane:missions']],
     ['tools', 'Tools', ['/lossless/', '/visualizer', '/console/']],
     ['helpers', 'Helpers', ['/observatory/', 'manual']],
   ];
@@ -229,20 +229,20 @@
   bar.className = 'tabbar';
   bar.id = 'tabbar';
   bar.setAttribute('aria-label', 'Nova Agent');
-  const STAYS = ['/portal/', 'pane:chat', '/calendar/', '/notes/', 'pane:quests']; // on the narrow bar; the rest are behind More
+  const STAYS = ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/quests/']; // on the narrow bar; the rest are behind More
   const item = (key, label, icon) => `<button type="button" data-tab="${key}"${STAYS.includes(key) ? '' : ' class="in-more"'}>${icon}<span>${label}</span></button>`;
   const glyph = (g) => `<span class="t-ico g" aria-hidden="true">${g}</span>`;
   // The panels' own icons (chat.html's .pico set: each its own colour, tinted by the theme)
   const pico = (k) => `<span class="pico t-ico" data-p="${k}" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-${k}"/></svg></span>`;
   const FIXED = {
     'pane:chat': () => item('pane:chat', 'Agent', pico('chat')),
-    'pane:quests': () => item('pane:quests', 'Quests', pico('quests')),
+    'pane:quests': () => item('pane:quests', 'Today', pico('quests')),
     'pane:missions': () => item('pane:missions', 'Missions', pico('missions')),
     manual: () => item('manual', 'Manual', pico('manual')),
   };
   // The bar keeps its short labels: "Notes" in the launcher is "Notes" here
   const panelItem = (p) => (tile(p) ? item(p, nameOf(tile(p)).replace(/^Nova /, '').replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico')) : '');
-  const MORE_ORDER = ['pane:missions', '/board/', '/app/memory/', '/lossless/', '/visualizer', '/observatory/', 'manual'];
+  const MORE_ORDER = ['pane:quests', 'pane:missions', '/board/', '/app/memory/', '/lossless/', '/visualizer', '/observatory/', 'manual'];
   let moreKeys = [];
   function fillBar() {
     const placed = new Set(GROUPS.flatMap((g) => g[2]));

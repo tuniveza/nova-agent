@@ -898,6 +898,7 @@
       <div class="side-head">
         <h2 class="sec-title" id="quests-title"><span class="pico sec-ico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span> Quests</h2>
         <div class="strip-tools">
+          <button type="button" class="icon-btn" id="btn-quests-open" title="Open Quests: every quest, Focus, Board" aria-label="Open Quests"><svg class="ico"><use href="#i-open"/></svg></button>
           <button type="button" class="icon-btn" id="btn-calendar" title="Open Calendar" aria-label="Open Calendar"><svg class="ico"><use href="#i-cal"/></svg></button>
           <button type="button" class="icon-btn" id="btn-replan" title="Re-plan everything from now" aria-label="Re-plan everything from now"><svg class="ico"><use href="#i-replan"/></svg></button>
           <button type="button" class="icon-btn" id="btn-bell" title="Turn on pop-up reminders" aria-label="Turn on pop-up reminders"><svg class="ico"><use href="#i-bell"/></svg></button>
@@ -1010,7 +1011,8 @@
       <div class="suite-group tools tasks">
         <h4>Plans</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/agent/" data-pane="quests"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span><b>Quests</b><small>Today's plan, hour by hour</small></a>
+          <a class="suite-app" href="/quests/" data-inside="/quests/"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span><b>Quests</b><small>Every quest: add in your own words, Focus, List, Board, Today</small></a>
+          <a class="suite-app" href="/agent/" data-pane="quests"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span><b>Today's plan</b><small>Today's quests beside Agent, hour by hour</small></a>
           <a class="suite-app" href="/agent/" data-pane="missions"><span class="pico" data-p="missions" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-missions"/></svg></span><b>Missions</b><small>Your goals, planned into Quests</small></a>
         </div>
       </div>
@@ -2312,6 +2314,7 @@
   // Calendar opens like its Nova Agent tile does (inside Nova Agent, or in a window)
   const openCalendar = () => document.querySelector('#suite-body a.suite-app[href="/calendar/"]').click();
   $('btn-calendar').addEventListener('click', openCalendar);
+  $('btn-quests-open').addEventListener('click', () => document.querySelector('#suite-body a.suite-app[href="/quests/"]').click());
 
   $('mission-form').addEventListener('submit', async (e) => {
     e.preventDefault();

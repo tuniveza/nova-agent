@@ -42,7 +42,7 @@ import { adoptChat, chatTurn, clearChat, readChat } from "../chats";
 import { ownerToSave, personFor, type Person } from "../person";
 import { whoAmI } from "../staff";
 import { drawPlanet } from "./planet";
-import { addBlock, addQuest, mayChange, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestMode, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
+import { addBlock, addQuest, mayChange, orderQuests, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestMode, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
 import { createMission, refineMission } from "../quests/planner";
 import { startPortalSync } from "../quests/portalsync";
@@ -136,7 +136,7 @@ app.use("*", async (c, next) => {
 // Opened on its own (a bookmark, a typed address, an old link), a panel opens inside Nova Agent
 // instead: /agent/?open=<its address>. Inside Nova Agent's viewer (a frame) it loads as itself. The
 // browser says which (Sec-Fetch-Dest); web/shared/inside.js catches browsers that don't.
-const PANELS = ["/portal", "/calendar", "/notes", "/board", "/console", "/app/memory", "/observatory", "/lossless", "/visualizer", "/admin", "/fixer"];
+const PANELS = ["/portal", "/calendar", "/notes", "/quests", "/board", "/console", "/app/memory", "/observatory", "/lossless", "/visualizer", "/admin", "/fixer"];
 app.use("*", async (c, next) => {
   const path = c.req.path;
   const page = (c.req.method === "GET" || c.req.method === "HEAD") && c.req.header("Sec-Fetch-Dest") === "document";
@@ -150,7 +150,7 @@ app.use("*", async (c, next) => {
 
 // The pages. Read from disk each time, so edits show on refresh.
 // Nova Agent's page is /agent/, the same address as online; /agent/<panel> opens it with that panel
-const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", board: "/board/", console: "/console/", index: "/app/memory/", observatory: "/observatory/", lossless: "/lossless/", visualizer: "/visualizer", admin: "/admin", fixer: "/fixer/" };
+const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", quests: "/quests/", board: "/board/", console: "/console/", index: "/app/memory/", observatory: "/observatory/", lossless: "/lossless/", visualizer: "/visualizer", admin: "/admin", fixer: "/fixer/" };
 app.get("/", (c) => c.redirect("/agent/"));
 app.get("/agent", (c) => c.redirect("/agent/"));
 app.get("/agent/", (c) => c.html(readFileSync(chatFile, "utf8")));
@@ -209,6 +209,9 @@ for (const path of ["/notes/sw.js", "/calendar/sw.js"]) {
 }
 serveFolder("/observatory", "observatory/", "Observatory is missing from web/observatory.");
 serveFolder("/notes", "notes/", "Notes is missing from web/notes.");
+// Quests: every quest in one place, to add, tick off, sort and plan (its data: /quests/state and
+// /actions/quests, the same as Nova Agent's own Quests)
+serveFolder("/quests", "quests/", "Quests is missing from web/quests.", /^\/quests\/(state|events)$/);
 // Board: a table to lay notes, the calendar, Agent's answers, pictures and links out on (src/board*.ts)
 serveFolder("/board", "board/", "Board is missing from web/board.");
 registerBoardRoutes(app);
@@ -663,6 +666,12 @@ app.post("/actions/missions/:id/refine", async (c) => {
 app.post("/actions/quests", async (c) => {
   const person = await personFor(c.req.raw);
   return questAction(c, async () => addQuest(await c.req.json(), ownerToSave(person)));
+});
+// The Quests panel's drag and drop: { ids: [...] } in the order wanted (only quests theirs to change)
+app.post("/actions/quests/order", async (c) => {
+  const person = await personFor(c.req.raw);
+  const body = await c.req.json().catch(() => ({}));
+  return questAction(c, () => orderQuests(body.ids, (q) => mayChange(q, person)));
 });
 app.post("/actions/quests/:id", async (c) => {
   const person = await personFor(c.req.raw);

@@ -17,6 +17,7 @@
         { name: "Portal", path: "/portal/", what: "Enquiries, bookings, clients, campaigns, money and settings." },
         { name: "Calendar", path: "/calendar/", what: "Note cards and day cards, with your quests on them." },
         { name: "Notes", path: "/notes/", what: "Notes and documents, shared with the team." },
+        { name: "Quests", path: "/quests/", what: "Every quest: add one in your own words, Focus, List, Board and Today." },
         { name: "Board", path: "/board/", what: "Boards of cards for plans, files, pictures and video." },
         { name: "Index", path: "/app/memory/", what: "Nova Agent's memory: everything it knows, searchable." },
         { name: "Console", path: "/console/", what: "Nova commands, typed. (Terminals only open through a private connection.)" },
