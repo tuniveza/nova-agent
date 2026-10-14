@@ -232,8 +232,8 @@ body { overflow: hidden; }
 .views-wrap > #view-board:not([hidden]) { overflow: hidden; display: flex; flex-direction: column; }
 /* Nothing to show yet (loading, or signed out): the empty views step aside and the message sits in
    the middle of the room, not at the bottom under a big gap */
-.qx:has(> .views-wrap:not(:has(> .view:not([hidden]) > *))) > .views-wrap { display: none; }
-.qx:has(> .views-wrap:not(:has(> .view:not([hidden]) > *))) > :is(.loading, .offline):not([hidden]) { margin: auto; max-width: 440px; width: calc(100% - 32px); }
+.qx:not(:has(> .views-wrap > .view:not([hidden]) > *)) > .views-wrap { display: none; } /* (no :has() inside :has(): browsers drop that rule) */
+.qx:not(:has(> .views-wrap > .view:not([hidden]) > *)) > :is(.loading, .offline):not([hidden]) { margin: auto; max-width: 440px; width: calc(100% - 32px); }
 .qx > .offline:not([hidden]) { line-height: 1.5; font-size: 15px; }
 #view-board > .board { flex: 1 1 auto; min-height: 0; align-items: stretch; }
 #view-board .col { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
