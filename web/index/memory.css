@@ -646,6 +646,9 @@ html[data-stars="off"] body::before { display: none; }
 
 /* Inside Nova Agent (see /shared/inside.js): a slimmer tab bar, so more of the list shows in a short frame */
 html.embed { --tabs-h: 54px; }
+/* …and Nova Agent's top bar above already says "Nova Agent · Index" (/shared/topbar.css): the name
+   isn't said twice. The mark stays, still taking you back to the top. */
+html.embed .top .brand-text { display: none; }
 
 /* ---------- PHONES: lighter ----------
    No glass blur and no endless decorative motion (drifting stars, floating marks, shimmering

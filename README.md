@@ -292,7 +292,16 @@ It shows and hides itself (**Auto**, the default): always there on Nova Agent's 
 panel open it follows what you do, not timers: on a computer it's in view while the mouse is near
 the bottom and steps aside once you work higher up in the panel; on a phone it steps aside when you
 scroll down a good way on purpose and comes back as soon as you scroll up a little or tap the
-little handle at the bottom (pages that hardly scroll never hide it).
+little handle at the bottom (pages that hardly scroll never hide it). With a mouse, scrolling down
+in a panel sends it away too (unless the mouse is on it).
+
+Over an open panel the bars float and only slide: in over 0.18 s, away in 0.15 s, moving as one
+piece. The panel never changes size when they come and go, so nothing in it jumps or reflows
+(checked by `node scripts/check-bars.mjs <address>`, which opens a panel at computer, tablet and
+phone sizes, brings the bars in and out, and fails if the panel moves, a move is set longer than
+0.2 s, or the two top bars differ). On the home, typing no longer hides the bar, so the page stays
+put. On a tablet or a phone on its side the bar is one row, each group as wide as its places and
+their names need (`--tg-cols`, set by `phone.js`), so no name is squeezed or cut.
 
 Each panel's icon is from one line-art set, in its own colour (Notes amber, Calendar moon-violet,
 Index teal…) blended with the theme's accent, so the icons change with the theme and still keep
@@ -319,10 +328,20 @@ picked takes the buttons, glows and highlights, so every colour choice clearly s
 cyan, Aurora green and violet, Eclipse gold. With "Each panel's own", the planet colours everything
 as before.
 
+**One top bar:** Nova Agent's header and the bar above every open panel (Portal, Calendar, Notes,
+Board, Console, Index, Observatory, Fixer, Lossless, Visualizer…) are the same bar
+(`web/shared/topbar.css`, class `nv-topbar`): the same glass capsule with the glowing edge, the
+same height, corners and size of mark and name, in the same place and as wide as the header is on
+the home, so opening a panel swaps one for the other without the top changing. A panel's bar has
+its icon, "Nova Agent" small above its name, Back on the left (←), Reload on the right, and its
+name opens the Panels window to switch; phones have it too. The panel sits in its own box under
+it (`#viewer-body`, with the status line along its bottom). Index doesn't repeat its name under it.
+
 **The top bar** (Nova Agent's header) has the same choice as the panels bar: Auto (with a panel
-open it slides away while you work and comes back when the mouse goes to the top, or you scroll
-up on a phone), Always shown, or Always hidden. Typing in any box hides the panels bar until
-you're done or the mouse goes to the bottom.
+open it slides away while you work and comes back, floating over the panel's own bar, when the
+mouse goes to the top, or you scroll up on a phone), Always shown, or Always hidden (on a phone,
+Always shown puts Nova Agent's header in place of the panel's bar). Typing in a panel's box hides
+the panels bar until you're done or the mouse goes to the bottom.
 
 **The status line** runs under the panels bar (inside the bar on a phone), one line tall: the
 version and build, the latest change in a few still words (for the group or panel you point at,

@@ -76,33 +76,32 @@ html[data-status="auto"].bar-tucked .shell > .status-line { display: none; opaci
 
 /* With a panel open (status.js moves the line into the panel's frame): a slim strip along the
    bottom of the panel, on a computer and a phone alike. The panel's frame gives up that height
-   (one more row in the viewer's grid), so nothing in the panel is covered. Auto keeps it showing
+   (one more row in the panel box's grid, #viewer-body), so nothing in the panel is covered. Auto keeps it showing
    here (the panels bar tucks away with a panel open, so this is the only place it can be);
    Always hidden still hides it. Narrower windows let the less useful parts go first; the panel's
    name and news, the date and the time stay. */
-#viewer:has(> .status-line) { grid-template-rows: auto minmax(0, 1fr) auto; }
-#viewer > .status-line {
+#viewer-body:has(> .status-line) { grid-template-rows: minmax(0, 1fr) auto; }
+#viewer-body > .status-line {
   grid-row: -2 / -1; grid-column: 1 / -1; z-index: 1;
   width: auto; max-width: none; height: auto; min-height: 26px; margin: 0; padding: 0 10px; gap: 2px;
   justify-content: center; overflow: hidden; font-size: 11px;
   border: 0; border-top: 1px solid color-mix(in srgb, var(--line) 85%, transparent); border-radius: 0;
   background: color-mix(in srgb, var(--panel) 45%, var(--void));
 }
-#viewer > .status-line .sl-item { padding: 1px 8px; }
-#viewer > .status-line .sl-ico { width: 12px; height: 12px; }
-#viewer > .status-line .sl-news { flex: 0 1 auto; min-width: 0; }
-#viewer > .status-line .sl-track { text-overflow: ellipsis; }
-@media (max-width: 1250px) { #viewer > .status-line .sl-left { display: none; } }
-@media (max-width: 1100px) { #viewer > .status-line .sl-ver { display: none; } }
-@media (max-width: 860px) { #viewer > .status-line .sl-sess { display: none; } }
+#viewer-body > .status-line .sl-item { padding: 1px 8px; }
+#viewer-body > .status-line .sl-ico { width: 12px; height: 12px; }
+#viewer-body > .status-line .sl-news { flex: 0 1 auto; min-width: 0; }
+#viewer-body > .status-line .sl-track { text-overflow: ellipsis; }
+@media (max-width: 1250px) { #viewer-body > .status-line .sl-left { display: none; } }
+@media (max-width: 1100px) { #viewer-body > .status-line .sl-ver { display: none; } }
+@media (max-width: 860px) { #viewer-body > .status-line .sl-sess { display: none; } }
 /* A phone: smaller still, and the activity button goes (the panel's own name, news, date and time stay) */
 @media (max-width: 980px), (max-height: 480px) {
-  #viewer:has(> .status-line) { grid-template-rows: minmax(0, 1fr) auto; }
-  #viewer > .status-line { min-height: 22px; padding: 0 4px; font-size: 10px; }
-  #viewer > .status-line .sl-item { padding: 0 6px; gap: 4px; }
-  #viewer > .status-line .sl-ico { width: 11px; height: 11px; }
+  #viewer-body > .status-line { min-height: 22px; padding: 0 4px; font-size: 10px; }
+  #viewer-body > .status-line .sl-item { padding: 0 6px; gap: 4px; }
+  #viewer-body > .status-line .sl-ico { width: 11px; height: 11px; }
 }
-@media (max-width: 560px) { #viewer > .status-line .sl-act { display: none; } }
-@media (max-width: 380px) { #viewer > .status-line .sl-area { display: none; } }
+@media (max-width: 560px) { #viewer-body > .status-line .sl-act { display: none; } }
+@media (max-width: 380px) { #viewer-body > .status-line .sl-area { display: none; } }
 /* A touch screen: the parts keep their bigger tap height (touch.css), so the strip grows to fit them */
-html.is-touch #viewer > .status-line .sl-item { min-height: 28px; }
+html.is-touch #viewer-body > .status-line .sl-item { min-height: 28px; }

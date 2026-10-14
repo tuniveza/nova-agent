@@ -1,8 +1,11 @@
 // The panels bar (along the bottom on a computer, the bar on a phone) shows and hides itself:
 //   Auto (the default): always there on Nova Agent's home. With a panel open it follows what you
 //     do: on a computer it comes when you rest the mouse at the bottom edge, stays while the mouse
-//     is on or near it, and steps aside when you work higher up; on a phone it steps aside when you scroll down a good way and comes back
-//     when you scroll up a little or tap the handle at the bottom.
+//     is on or near it, and steps aside when you work higher up or scroll down; on a phone it steps
+//     aside when you scroll down a good way and comes back when you scroll up a little, reach the
+//     top, or tap the handle at the bottom.
+//   Over an open panel the bars float and only slide (bar.css): the panel never changes size when
+//     they come or go, so nothing in it jumps, and nothing is measured while they move.
 //   Always shown: it stays, as before.   Always hidden: it stays out of the way everywhere (on a
 //     phone the little handle at the bottom still brings it up, to get around).
 // Chosen in the Panels window (the PANELS button) or the phone's gear; remembered on the device.
@@ -43,34 +46,20 @@
   let out = true; // in view (Auto, with a panel open)
   let peeking = false; // brought up with the handle while "Always hidden"
   const viewing = () => main.classList.contains("viewing");
-  let typing = false; // you're typing (Nova Agent's message box or a panel's): the bar steps aside
-  // Each tile's place, so they pop in one after another (bar.css)
-  // How much room the bars take while they're in view (bar.css makes the open panel give it up)
-  // The brand panel (top bar) is as wide as Agent below it (glow.css reads --chat-w)
+  let typing = false; // you're typing in an open panel (or Nova Agent's box over one): the bar steps aside
+  // The brand panel (top bar) is as wide as Agent below it, and so is an open panel's top bar
+  // (glow.css and chat.html read --chat-w). While a panel is open Agent is hidden: its last width stays.
   const chatCol = document.querySelector(".main > .chat");
-  if (chatCol) new ResizeObserver(() => root.style.setProperty("--chat-w", `${Math.round(chatCol.getBoundingClientRect().width)}px`)).observe(chatCol);
-  function measure() {
-    if (strip) root.style.setProperty("--strip-room", `${strip.offsetHeight + 16}px`);
-    if (topbar) root.style.setProperty("--top-room", `${topbar.offsetHeight + 12}px`);
-  }
-  addEventListener("resize", measure);
-  function number() {
-    measure();
-    document.querySelectorAll("#suite-home .suite-app").forEach((el, i) => el.style.setProperty("--i", i));
-    document.querySelectorAll("#tabbar [data-tab]").forEach((el, i) => el.style.setProperty("--i", i));
-    if (topbar) topbar.querySelectorAll(".top-side > *, .brand").forEach((el, i) => el.style.setProperty("--i", i));
-  }
-  // When the bar last came or went (the phone ignores the scrolling that this causes by itself)
+  if (chatCol) new ResizeObserver(([e]) => { const w = Math.round(e.contentRect.width + 2); if (w > 2) root.style.setProperty("--chat-w", `${w}px`); }).observe(chatCol);
+  // An open panel's top bar takes the width Nova Agent's header has on the home (chat.html reads
+  // --top-w), so opening a panel swaps one bar for the other in the same place, the same size
+  if (topbar) new ResizeObserver(() => { if (viewing()) return; const w = Math.round(topbar.getBoundingClientRect().width); if (w > 2) root.style.setProperty("--top-w", `${w}px`); }).observe(topbar);
+  // When the bar last came or went (scrolling just then isn't counted)
   let movedAt = 0;
   function update() {
-    number();
-    const tuck = current === "hidden" ? !peeking : current === "auto" ? (viewing() && !out) || typing : false;
-    const was = root.classList.contains("bar-tucked");
-    if (tuck !== was) {
-      movedAt = performance.now();
-      // (no trail when an app opens: the bar is just away, bar-instant)
-      if (!root.classList.contains("bar-instant")) trail(tuck ? "away" : "back");
-    }
+    // Auto: only over an open panel (on the home it stays put: the page never shifts under you)
+    const tuck = current === "hidden" ? !peeking : current === "auto" ? viewing() && (!out || typing) : false;
+    if (tuck !== root.classList.contains("bar-tucked")) movedAt = performance.now();
     root.classList.toggle("bar-tucked", tuck);
     const topTuck = topMode === "shown" ? false : viewing() && !topOut;
     root.classList.toggle("top-tucked", topTuck);
@@ -87,41 +76,6 @@
   // mouse) the pointer is on it. (A tap leaves a phone's "hover" and focus behind, so not those.)
   const busy = (bar) => !!document.querySelector("dialog[open]") || !!document.querySelector(".sl-list:not([hidden])") ||
     (!!bar && bar.matches(":focus-visible, :has(:focus-visible)")) || (!!bar && !PHONE.matches && !root.classList.contains("is-touch") && bar.matches(":hover"));
-
-  // ---- The trail: as the panels bar (over an open panel) slides away or comes back, a few soft echoes of it in the
-  // theme's colours follow it along its path and fade (about 0.4 s; bar.css draws them). They sit
-  // above the page and under the bar, take no clicks and only move and fade (no layout). Not with
-  // reduced motion. ----
-  const STILL = matchMedia("(prefers-reduced-motion: reduce)");
-  let lastTrail = null;
-  let awake = false; // not while the page is still opening
-  setTimeout(() => { awake = true; }, 400);
-  function trail(dir) {
-    if (!awake || STILL.matches || current === "shown") return;
-    const bar = PHONE.matches ? document.getElementById("tabbar") : viewing() ? strip : null;
-    if (!bar) return;
-    const cs = getComputedStyle(bar);
-    if (cs.display === "none") return;
-    // Where the bar rests (its box, minus how far it has slid right now)
-    const r = bar.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    let slid = 0;
-    try { slid = new DOMMatrixReadOnly(cs.transform === "none" ? undefined : cs.transform).m42; } catch (err) {}
-    const top = r.top - slid;
-    const travel = Math.max(24, innerHeight - top);
-    if (lastTrail) lastTrail.remove();
-    const t = document.createElement("div");
-    t.className = `bar-trail ${dir}${PHONE.matches ? " phone" : ""}`;
-    t.setAttribute("aria-hidden", "true");
-    t.style.cssText = `left:${r.left}px;top:${top}px;width:${r.width}px;height:${r.height}px;--travel:${travel}px;--r:${cs.borderTopLeftRadius}`;
-    t.innerHTML = "<b></b><i></i><i></i><i></i>";
-    document.body.append(t);
-    lastTrail = t;
-    // Gone once its last echo has faded (or after a while, if it never animated)
-    const done = () => { t.remove(); if (lastTrail === t) lastTrail = null; };
-    t.lastElementChild.addEventListener("animationend", done);
-    setTimeout(done, 5000);
-  }
 
   function setMode(m) {
     if (!MODES.includes(m)) return current;
@@ -233,29 +187,31 @@
     if (topbar && topbar.contains(e.target) && topbar.matches(":has(:focus-visible)")) topShow();
   });
 
-  // ---- Phone: deliberate scrolling inside the open panel ----
+  // ---- Scrolling inside the open panel ----
+  // Phones and touch screens: scrolling down a good way on purpose sends the bars away, scrolling up
+  // a little (or reaching the top) brings them back. With a mouse: scrolling down sends them away
+  // (they come back at the edges, as above), unless the mouse is on one.
   let scrolled = 0; // how far down (positive) or up (negative) since the last change of direction
   let touching = 0; // until when a finger was last on the panel (only scrolling you do counts)
+  let wheeling = 0; // until when the mouse wheel or trackpad last moved in the panel
   const lastY = new WeakMap();
   function onScroll(e) {
-    // Phones, and touch screens of any size (a tablet showing the computer layout too)
-    if (!(PHONE.matches || root.classList.contains("is-touch")) || !viewing() || (current !== "auto" && topMode === "shown")) return;
-    if (performance.now() > touching) return; // the page moved by itself
+    if (!viewing() || (current !== "auto" && topMode === "shown")) return;
+    const touch = PHONE.matches || root.classList.contains("is-touch");
+    if (performance.now() > (touch ? touching : wheeling)) return; // the page moved by itself
     const el = e.target && e.target.nodeType === 9 ? e.target.scrollingElement : e.target;
     if (!el || typeof el.scrollTop !== "number") return;
-    if (el.scrollHeight - el.clientHeight < 160) return; // hardly scrolls: leave the bar be
+    if (el.scrollHeight - el.clientHeight < 160) return; // hardly scrolls: leave the bars be
     const y = el.scrollTop;
     const was = lastY.has(el) ? lastY.get(el) : y;
     lastY.set(el, y);
-    // Just after the bar came or went the panel changed size, and the page may have shifted by
-    // itself (at the very bottom it does): that isn't you scrolling, so it can't start a loop
-    if (performance.now() - movedAt < 420) { scrolled = 0; return; }
+    if (performance.now() - movedAt < 200) { scrolled = 0; return; } // a bar has only just moved
     const dy = y - was;
     if (!dy) return; // sideways scrolling
     if (Math.sign(dy) !== Math.sign(scrolled)) scrolled = 0;
     scrolled += dy;
     if (scrolled > 70 && y > 60) { tuck(); topTuck(); }
-    else if (scrolled < -24 || y <= 0) { show(); if (topMode === "auto" || y <= 0) topShow(); }
+    else if (touch && (scrolled < -24 || y <= 0)) { show(); if (topMode === "auto" || y <= 0) topShow(); }
   }
 
   // Typing (Nova Agent's message box or any box in a panel): the bar steps aside until you're
@@ -281,12 +237,20 @@
   function watchFrame(frame) {
     if (frame.dataset.barWatch) return;
     frame.dataset.barWatch = "1";
+    // A page is ready to be watched long before it has fully loaded (pictures and all): look for it
+    // often for a few seconds after each new page starts, then stop (no checking forever)
+    let tries = 0, timer = null;
+    const poll = () => { tries = 0; if (!timer) timer = setInterval(() => { attach(); if (++tries > 30) { clearInterval(timer); timer = null; } }, 100); };
     const attach = () => {
       try {
         const doc = frame.contentDocument;
-        if (!doc || doc.__barWatched) return;
+        if (!doc || doc.__barWatched || doc.URL === "about:blank") return;
         doc.__barWatched = true;
+        if (timer) { clearInterval(timer); timer = null; }
+        // The next page this frame goes to: look for it again
+        frame.contentWindow.addEventListener("pagehide", poll);
         doc.addEventListener("scroll", onScroll, { capture: true, passive: true });
+        doc.addEventListener("wheel", () => { wheeling = performance.now() + 400; }, { capture: true, passive: true });
         doc.addEventListener("keydown", onKey, true);
         doc.addEventListener("focusout", onBlur, true);
         const touch = () => { touching = performance.now() + 900; };
@@ -301,9 +265,7 @@
     };
     frame.addEventListener("load", attach);
     attach();
-    // A panel's page is ready for this long before it has fully loaded (pictures and all): check
-    // often, so the mouse counts from the start (cheap: one look at a flag)
-    setInterval(attach, 400);
+    poll();
   }
   const viewer = document.getElementById("viewer");
   if (viewer) {

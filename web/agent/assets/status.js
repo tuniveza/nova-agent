@@ -97,7 +97,8 @@
     const bar = $("tabbar");
     const panel = inPanel();
     line.classList.toggle("sl-in-panel", panel);
-    if (panel) { if (line.parentElement !== viewer) viewer.append(line); }
+    const box = $("viewer-body") || viewer; // the panel's box, under its top bar
+    if (panel) { if (line.parentElement !== box) box.append(line); }
     else if (PHONE.matches && bar) { if (line.parentElement !== bar) bar.append(line); }
     else if (line.parentElement !== shell) shell.append(line);
   }

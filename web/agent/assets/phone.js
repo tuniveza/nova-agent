@@ -69,7 +69,7 @@
   function fresh() {
     const frame = document.createElement('iframe');
     for (const attr of ['title', 'allow']) if (first.hasAttribute(attr)) frame.setAttribute(attr, first.getAttribute(attr));
-    viewer.append(frame);
+    (first.parentElement || viewer).append(frame); // beside the first, in the panel's box
     return frame;
   }
   function loading(frame) {
@@ -295,6 +295,15 @@
   function layout() {
     const shown = NARROW.matches ? '[data-tab]:not(.in-more), [data-more]' : '[data-tab]';
     for (const g of bar.querySelectorAll('.tgroup')) g.style.setProperty('--k', g.querySelectorAll(shown).length || 1);
+    // In one row (a tablet, a phone on its side) each group's share of the width follows its places
+    // and how long their names are, so a group of four (or a long name like Observatory) never
+    // squeezes into too little room
+    const share = (id) => {
+      const g = bar.querySelector(`.tgroup[data-group="${id}"]`);
+      const items = g ? [...g.querySelectorAll(shown)] : [];
+      return Math.max(1, items.reduce((n, b) => n + Math.max(1, (b.textContent.trim().length || 1) / 6.5), 0));
+    };
+    bar.style.setProperty('--tg-cols', ['apps', 'tasks', 'tools', 'helpers'].map((id) => `minmax(0, ${share(id).toFixed(2)}fr)`).join(' '));
     document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight || 126}px`);
   }
   window.addEventListener('resize', layout);
