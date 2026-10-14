@@ -34,7 +34,7 @@ Google Docs–style writing in the Novacane cosmic look: centred by default, six
 | 👥 **Shared and Local notes** | **Shared** notes are the whole team's: everyone signed in with Portal sees and edits them, on every device, and changes show up for the others within seconds. **Local** notes stay only on this device. Tap **Local / Shared** by "Saved" to move a note between the two (with Undo), and use **All · Shared · Local** above the list to pick what you see. New notes start Shared when you're signed in (Local when you're signed out or looking at Local). If two people change a shared note at the same time, both versions are kept ("… (conflicted copy)"). |
 | 🔔 **Sound effects** | Soft cosmic sounds on every action. Switch them off or on in **View → Sound effects**. |
 | 🔒 **All Nova Agent links** | **Help → 🔒 All Nova Agent links** opens the password-protected page with every Nova Agent address, live and testing. |
-| ✦ **Inside Nova Agent** | Nova Agent serves its own copy at `/notes/`, so privacy-minded browsers don't block it there. Notes written there are kept on the studio computer. |
+| ✦ **Inside Nova Agent** | Nova Agent serves its own copy at `/notes/`, so privacy-minded browsers don't block it there. Notes written there are kept on the VPS, where Nova Agent runs. |
 
 ## See it in action
 
@@ -106,12 +106,12 @@ Every press makes a soft cosmic sound: a tap, a menu opening, a dialog closing, 
 
 ## Inside Nova Agent
 
-[Nova Agent](https://github.com/tuniveza/nova-agent), the studio computer's helper, serves its own copy of Notes at **`/notes/`** (<https://nova.novacane.co.uk/notes/>).
+[Nova Agent](https://github.com/tuniveza/nova-agent), the studio's helper (it runs on the VPS), serves its own copy of Notes at **`/notes/`** (<https://nova.novacane.co.uk/notes/>).
 
 | | On the web | Inside Nova Agent |
 |---|---|---|
 | Address | nova.novacane.co.uk/notes/ | `/notes/` on Nova Agent |
-| Where Local notes are kept | In that browser | On the studio computer, separate from the web app's |
+| Where Local notes are kept | In that browser | On the VPS, separate from the web app's |
 | Shared notes | The team's, kept by Nova Bot | The same team notes |
 | Privacy-minded browsers | May limit what a website saves | Fine: it's part of Nova Agent |
 

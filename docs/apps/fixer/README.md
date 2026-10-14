@@ -25,7 +25,7 @@ Nova Agent's caretaker. It checks Nova Agent every hour, keeps a list of what it
 
 ## Inside Nova Agent
 
-The Fixer is in the Panels window and on the bar, under Tools. It's for admins: on the studio PC its page counts as an admin; online, sign in to Portal as an admin (the PC must be on: the Fixer runs there).
+The Fixer is in the Panels window and on the bar, under Tools. It's for admins: sign in to Portal as an admin. The Fixer runs on the VPS with Nova Agent, so it keeps checking with every laptop off.
 
 ## How it works
 

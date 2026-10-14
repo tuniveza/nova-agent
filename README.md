@@ -4,7 +4,7 @@
 
 # Nova Agent
 
-**Your planner, your Agent and the studio's hands in Acuity, on the studio computer.**<br>
+**Your planner, your Agent and the studio's hands in Acuity, on the studio's VPS.**<br>
 Talk to it, give it a goal, and it plans your days to the second. It also works Acuity's admin pages for Novacane Studios.
 
 [![Node 22](https://img.shields.io/badge/Node-22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
@@ -29,11 +29,12 @@ It runs on the studio's server, so it works with every laptop off.
 `/agent/<panel>` (`/agent/calendar`, `/agent/portal`, `/agent/notes`, `/agent/index`...)
 opens Nova Agent with that panel. Nova Bot (the website chat) keeps the main address.
 
-Agent, Missions, Quests, Calendar and the Visualizer run on the studio PC. The online Nova Agent
-reaches them over a link the PC opens to Nova Bot (`src/relay.ts`, a WebSocket with
-`AGENT_NOVA_KEY`), for signed-in staff only. When the PC is off, the online page says so and the
-other panels keep working. On the PC itself, its pages open the online Nova Agent, so there's one
-address; set `NOVA_LOCAL_UI=1` in `.env` to keep using the pages here (when the internet is down).
+Agent, Missions, Quests, Calendar and the Visualizer run on the VPS (`nova-agent.service`, the
+same server as Nova Bot), day and night, with every laptop off. The online Nova Agent reaches them
+over a link Nova Agent opens to Nova Bot (`src/relay.ts`, a WebSocket with `AGENT_NOVA_KEY`), for
+signed-in staff only. If that link is ever down, the online page says so and the other panels keep
+working. Run on a computer of its own, its pages open the online Nova Agent, so there's one
+address; set `NOVA_LOCAL_UI=1` in `.env` to keep using the pages there (when the internet is down).
 
 Open <https://nova.novacane.co.uk/agent/> and you get one screen that fits without
 scrolling: **Missions** on the left, **Agent** in the middle, **Nova
@@ -75,7 +76,7 @@ All the pictures here come from a separate sample copy with made-up quests and p
 
 ## The panels
 
-| Panel | What it is | On the studio PC | Online (Nova Bot) | Code |
+| Panel | What it is | On the VPS (Nova Agent) | Online (Nova Bot) | Code |
 |---|---|---|---|---|
 | **Agent** | Talk to Nova Agent; Missions and Quests | `/` | | `src/`, `web/agent/` |
 | **Portal** | The staff app: enquiries, website chats, bookings, quests, alerts, Ask NovaBot, push to the phones, and sign-in, your planet, the team and invites | `/portal/` | `/portal/` | `web/portal/` |
@@ -88,14 +89,14 @@ All the pictures here come from a separate sample copy with made-up quests and p
 What they share (themes, sounds, the badge, the Manual) is in `web/shared/`. Each
 panel's guide is in `docs/apps/<panel>/`.
 
-**Signing in on the PC.** Portal uses Nova Bot's staff API. Sign in on the Portal
+**Signing in.** Portal uses Nova Bot's staff API. Sign in on the Portal
 panel and Nova Agent signs in to Nova Bot as you (an app sign-in; the token stays in
 `data/signin.json` and never reaches the browser); after that the panels work with your
 own permissions, and Nova Agent works for you. Only Nova Agent's own pages can use it.
 
 **Online.** Nova Bot's worker copies the panels in at build time (its
-`scripts/sync-apps.mjs`, from this repo's `web/`) and serves them for phones and anywhere
-away from the studio PC. Portal's old address (`/app/`) opens Portal; its API (`/app/api/`),
+`scripts/sync-apps.mjs`, from this repo's `web/`) and serves them for phones, laptops and
+everywhere else. Portal's old address (`/app/`) opens Portal; its API (`/app/api/`),
 Index (`/app/memory/`) and the push helper that phones which installed Portal still use
 (`/app/sw.js`) keep their addresses.
 
@@ -516,7 +517,7 @@ Agent is its own server on the same machine.
 
 ```mermaid
 flowchart LR
-    You[You, at the studio PC] --> UI[Nova Agent page<br/>Agent · plan · suite]
+    You[You, on any phone or computer] --> UI[Nova Agent page<br/>Agent · plan · suite]
     UI --> Chat[Agent<br/>src/chat.ts] --> Claude[Claude]
     Chat --> Q[(Quests and calendar<br/>data/)]
     UI --> Q
@@ -739,7 +740,7 @@ web/portal/               the Portal panel (Portal is part of it; old-app-addres
                           phones that installed Portal from its old address, /app/ still use)
 web/calendar/ web/notes/ web/index/ web/observatory/ web/lossless/   the other panels
 web/shared/               themes, sounds, the badge and the Manual (manual-data.js: npm run manual)
-src/signin.ts             signing in to Nova Bot as a person, for Portal on the PC
+src/signin.ts             signing in to Nova Bot as a person, for Portal
 scripts/                  the manual builder; scripts/observatory/ scans and captures your projects
 docs/apps/<panel>/        each panel's guide and pictures
 deploy/agent-nova.service systemd user service

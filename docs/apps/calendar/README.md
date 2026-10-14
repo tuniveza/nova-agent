@@ -19,7 +19,7 @@
 - **Every note card has its own painted picture** (a planet, a galaxy, a comet…): pick the kind or let it surprise you, press **New artwork** for another, and **Save image** to keep it big.
 - **Change:** tap a note card to edit it. On a computer, drag it to move it and drag its bottom edge to make it longer; on a phone, hold it for a moment, then drag.
 - **Repeat:** every day, week, month or year, or a custom rule (every 2 weeks on Mon and Wed, until a date or a number of times). Changing or deleting one of them asks: just this one, this and the ones after, or every one.
-- **Reminders:** at the start, 10 or 30 minutes, an hour or a day before. They arrive on phones as alerts, even when the studio PC is off.
+- **Reminders:** at the start, 10 or 30 minutes, an hour or a day before. They arrive on phones as alerts, even with every laptop off.
 - **Delete** with **Undo** (a few seconds to change your mind), **duplicate**, pick a **colour**, add **where** and **notes**.
 - **Day cards:** birthdays, release days, studio sessions, holidays and more (**+ Day card**). Each has a kind with its icon, a **title style** (Nebula, Supernova, Orbit, Constellation, Eclipse, Aurora, Celestial), its own **theme** and a painted header (**New artwork** for another). They show as a banner on the day, wear their theme in the month, and can come back every year.
 - **The real sky:** the moon's phases (full moons in gold, with their names), and special days (Easter, Bonfire Night, the solstices and equinoxes, meteor-shower peaks…). Tap **Make it a day card** to keep one. The strip above the month shows its day cards, full moon and special days; tap one to go there.
@@ -35,9 +35,9 @@
 
 ## Where it's kept
 
-The calendar lives on Nova Bot (its D1 database, `calendar_items`), so it's the same on every phone and computer and keeps working when the studio PC is off. Each browser keeps a copy so it opens instantly and works offline; changes made offline save when you're back. The latest change wins; if another device changed something later, Calendar shows that and says so.
+The calendar lives on Nova Bot (its D1 database, `calendar_items`), so it's the same on every phone and computer and keeps working with every laptop off. Each browser keeps a copy so it opens instantly and works offline; changes made offline save when you're back. The latest change wins; if another device changed something later, Calendar shows that and says so.
 
-Nova Agent on the studio PC keeps its own copy (`data/calendar.json`, read by its chat and planner) in step with Nova Bot every few seconds (`src/calendar/cloud.ts` ⇄ `POST /nova-agent/calendar`).
+Nova Agent (on the VPS) keeps its own copy (`data/calendar.json`, read by its chat and planner) in step with Nova Bot every few seconds (`src/calendar/cloud.ts` ⇄ `POST /nova-agent/calendar`).
 
 Anything an earlier version of Calendar saved in a browser is brought in the first time it opens there (once, never twice).
 

@@ -60,7 +60,7 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
 
 - **Sign in once, everywhere:** email and password give you a secure session that Portal, Index and the admin pages all trust. Signing out (from any of them) ends it everywhere at once.
 - **Setting up:** the very first admin is created with the `ADMIN_PASSWORD` secret, to prove it's you. After that, admins **invite** people with a link (valid for 7 days), and each person chooses their own password. Nobody else ever knows it.
-- **On the studio PC**, signing in here signs Nova Agent in to Nova Bot as you.
+- Signing in here also signs Nova Agent in to Nova Bot as you.
 - **Nova Club and other native apps** can sign in through the same API and get an app token instead of a cookie.
 
 ## You, and the crew
@@ -87,7 +87,7 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
 | **Clients** | Everyone who has booked or enquired: their sessions, money (deposits, invoiced, owed) and marketing consent with its date and source. Admins can import Acuity's spreadsheet; Agent can look people up. |
 | **Money** | Invoices (sent only after an admin's Approve), payments and expenses. See [Money](#money). |
 | **Calendar** | Every booking in Acuity's diary, as a month you can swipe, with Calendar's cards and planned quests alongside. See [the smart calendar](#the-smart-calendar). |
-| **Quests** | Nova Agent's plan, synced from the studio computer: the quest on now, repeating pulses, today, Missions with progress rings, and every quest. Taps (Start, Done, +15 min, Not now, Skip, Pause) go straight back to Nova Agent. |
+| **Quests** | Nova Agent's plan, synced from the VPS: the quest on now, repeating pulses, today, Missions with progress rings, and every quest. Taps (Start, Done, +15 min, Not now, Skip, Pause) go straight back to Nova Agent. |
 | **Approvals** | Booking changes Agent proposed. Nothing changes in Acuity until an admin presses Approve. |
 | **Campaigns** | Email newsletters to fans and clients who opted in, sent by the studio's own mail server (a few a minute, each with its own unsubscribe link) once an admin approves them. Below them, **one-to-one emails**: a personal email to one person (a venue, label, brand or other business at its work address; a studio client; someone who wrote in). Agent or anyone in the team writes one; Nova Bot checks the person may be emailed (never anyone who said no; a client only about their own booking unless they said yes to studio news; no personal Gmail-style addresses as "business") and adds a footer with a "don't email me again" link (`/no-thanks`). Nothing is sent until an admin presses Approve (twice), and it goes exactly as approved, once. Someone who replies "no thanks" can be recorded under the list. Nova Bot's `src/outreach.js`, migration `0028_outreach.sql`. |
 | **Alerts** | Every notification that reached a phone, newest first, with colour-coded labels, exact times, Call/Email buttons and an auto-delete switch. |
@@ -110,9 +110,9 @@ Facebook and Instagram posts, in Portal → Social (the Studio group, after Camp
   (Instagram videos are checked every minute until Meta has them ready). Without Meta, the approved
   post waits under **Post these by hand**: copy the words, download the files, post it, then press
   **I posted it** (with the link, if you like). One platform can be connected and the other not.
-- **Pictures and videos** are kept on the studio computer (Nova Agent's `data/social-media/`), so it
-  has to be on when a post goes out. Pictures become JPEGs (what Instagram takes) before they're
-  added; videos are MP4 or MOV, up to 25 MB from a phone (bigger from the studio computer).
+- **Pictures and videos** are kept on the VPS (Nova Agent's `data/social-media/`), which is on day and
+  night, so posts go out with every laptop off. Pictures become JPEGs (what Instagram takes) before they're
+  added; videos are MP4 or MOV, up to 25 MB from a phone (bigger straight to Nova Agent).
 - **Results, followers and comments** come from Meta every hour for 30 days. Replies to comments are
   drafts until an admin approves them. Dealt-with comments are deleted after 90 days.
 - **Ideas and trends** opens Agent with a question ready to send. **Paid ads** stay in Meta's Ads
@@ -134,7 +134,7 @@ Connecting Meta (Nova Bot's secrets, with `npx wrangler secret put`):
 
 When the VPS takes over the files: give Nova Agent another store in `src/social-media.ts` (the same
 four functions) and set `SOCIAL_MEDIA_BASE` (where the VPS serves `<id>.<ext>`) and
-`SOCIAL_MEDIA_KEY` on Nova Bot: it fetches files from there instead of the studio computer.
+`SOCIAL_MEDIA_KEY` on Nova Bot: it fetches files from there instead of the VPS.
 
 ## The smart calendar
 
@@ -208,7 +208,7 @@ four functions) and set `SOCIAL_MEDIA_BASE` (where the VPS serves `<id>.<ext>`) 
 
 **Behind the scenes:** Acuity's API can't change a booking's session type, price or paid
 status, so those changes are queued for [Nova Agent](https://github.com/tuniveza/nova-agent),
-the browser helper on the studio computer, which does them in Acuity's admin pages and
+the browser helper on the VPS, which does them in Acuity's admin pages and
 reports back (`src/agent-nova.js`). Every day at 06:00 UK time the Worker checks it can
 still reach Acuity's API and alerts staff phones if not (`src/health.js`).
 
@@ -234,7 +234,7 @@ Portal → **Money** (in Studio, after Clients) keeps the studio's invoices, the
 - **Approve (admins, signed in to Portal in a browser):** pressed twice ("Email it to … now?"). Nova Bot then emails the client a link to their invoice's own page, `/invoice/<random secret>`. There they can see it, print it or save it as a PDF, and pay: by card through Stripe's own page (when Stripe is set up; the payment comes back by itself), or by bank transfer with the studio's bank details. Admins can also Reject (with why), Send me a test, and Void. Anyone can Edit it until it's sent.
 - **Payments:** Record a payment (amount, day, bank transfer / card / cash / other, a note). The invoice becomes part paid or paid, and the client's money on the client list follows: invoiced and owed go up when it's sent, owed comes down with each payment. An admin can take a payment back that was a mistake; a Stripe one is refunded in Stripe.
 - **Reminders:** Ask for a reminder on an unpaid invoice. It waits under **Reminders to approve** until an admin approves it, then goes to the client with the link.
-- **Expenses:** amount, what for (a list of categories), who it was paid to, the day, a note and a receipt. The receipt is a photo or a PDF, kept on the studio PC (`data/receipts/`), so the PC must be on to add one. Expenses Agent notes come in **Not confirmed** and count in no total until someone presses Confirm.
+- **Expenses:** amount, what for (a list of categories), who it was paid to, the day, a note and a receipt. The receipt is a photo or a PDF, kept on the VPS (`data/receipts/`), so you can add one any time. Expenses Agent notes come in **Not confirmed** and count in no total until someone presses Confirm.
 - **Tax year:** in, out and the difference for this UK tax year (6 April to 5 April), where the money went by category, the accountant's spreadsheets (CSV: invoices, payments, expenses; admins), and **Invoice settings** for admins: studio name, address, reply email, VAT number, bank details, VAT on new invoices and days to pay.
 
 Agent's money tools: `money_summary`, `list_invoices`, `draft_invoice`, `edit_invoice_draft`, `log_expense`. It has nothing that sends, approves, reminds, voids, records a payment or changes settings.
@@ -245,14 +245,14 @@ Setting it up: invoices are emailed through the studio's own mail server (`MAIL_
 
 Portal → **Test stuff** (in Admin; admins only) lists things that look like tests or copies, so they can be cleared in a few taps. Today shows a quiet line ("3 things look like tests · look") when there are any, and the tab has a count of the likely ones.
 
-- **Where it looks:** on Nova Bot, enquiries, website chats, chat bookings (and their booking jobs), clients, Index pages, shared notes, and drafts that haven't gone anywhere (social posts, one-to-one emails, invoices, expenses). On the studio PC, quests, missions, calendar notes, Fixer jobs and Agent's files. PC off: Nova Bot's list still shows, and it says the PC's part isn't checked.
+- **Where it looks:** on Nova Bot, enquiries, website chats, chat bookings (and their booking jobs), clients, Index pages, shared notes, and drafts that haven't gone anywhere (social posts, one-to-one emails, invoices, expenses). On the VPS (Nova Agent), quests, missions, calendar notes, Fixer jobs and Agent's files. If Nova Agent can't be reached, Nova Bot's list still shows, and it says Nova Agent's part isn't checked.
 - **Why it thinks so,** in words on each card: a staff member's own email or a TV and film phone number (07700 900…) used as a customer; test, rude or joke words, or a name from the studio's own tests (the list is `src/tidy-words.js` in Nova Bot and `src/tidy-words.ts` here: change both); keyboard mashing; the same first message in several chats minutes apart; Claude's test chats; chat bookings that never reached Acuity; Index pages whose chat is gone; the same facts, note, draft or file twice (the newest stays); copies of a quest (the one in progress stays); quests seconds long, made and finished within minutes (reminder tests); Fixer fixes for a problem that's gone or was fixed another way. One strong reason, or two weaker ones, makes it **Likely a test**; one weaker one makes it **Maybe**. A real client (sessions, money, consent, invoices) is never listed unless a strong sign says so, and then only as Maybe, and it can't be deleted here.
 - **Each card:** what it is and where, when it was made and by whom, the reasons, what goes with it (a test chat's bookings, enquiry and Index pages: **Delete these too** is ticked), and **Delete**, **Not a test** and **Open**.
 - **Delete all likely:** pressed twice; the second press says how many. Esc cancels.
 - **Safe:** everything deleted can be put back for 30 days (**Put back** right after, or under **Recently deleted**). Index pages go through Index's own bin; shared notes and expenses are deleted the way their apps do it, so every copy follows; quests, calendar notes and files go through their own delete, so the calendar's sync tells Nova Bot too. A Fixer job is only cleared (the Fixer's Reject), so it can't come back. **Not a test** is remembered (under **Marked as real**, with Undo). Every delete and put-back is logged with ids and kinds only.
 - **Accessible:** every button is at least 44 px tall and works from the keyboard; after a delete the focus moves to the next card; what happened is read out; reasons and confidence are words, not colours.
 
-Agent can read the list (`test_stuff_list`) but has nothing that deletes. Nova Bot's side is `src/tidy.js` (tables from `migrations/0031_tidy.sql`: `tidy_bin`, `tidy_real`, `tidy_log`); the PC's side is `src/tidy.ts` (its bin and "Not a test" list are in `data/tidy.json`), at `/tidy-api/state` and `/actions/tidy/*`, relayed online for admins only.
+Agent can read the list (`test_stuff_list`) but has nothing that deletes. Nova Bot's side is `src/tidy.js` (tables from `migrations/0031_tidy.sql`: `tidy_bin`, `tidy_real`, `tidy_log`); Nova Agent's side is `src/tidy.ts` (its bin and "Not a test" list are in `data/tidy.json`), at `/tidy-api/state` and `/actions/tidy/*`, relayed online for admins only.
 
 ## Google
 
@@ -275,13 +275,13 @@ A connection made before a feature existed shows **Connect again to switch on: �
 - **Send approved emails from Gmail.** Enquiry replies, one-to-one emails, invoices and their reminders go from the studio's Gmail once an admin has approved them (so they're in its Sent folder), each joining its own thread. On the VPS the studio's own mail server sends them first and Gmail is the backup; with Gmail off or saying no, the mail server sends them. Campaigns always go through the mail server (with their own unsubscribe links).
 - **Customers' replies into Enquiries.** Every hour, replies to those emails (and emails from people with open enquiries) land in the right enquiry as their reply, without the quoted email under it, and the enquiry goes back to Open; a reply about a one-to-one email or an invoice starts a new enquiry. Gmail is only read, never changed.
 - **Clients in Google Contacts,** both ways, under a "Novacane clients" label. A contact given the label in Google becomes a client (with no marketing consent: that stays Nova's alone, with its date and source, and is never sent to Google). Nobody is made twice: the same email links the two. Hourly.
-- **Pictures, videos and receipts in Google Drive,** in a "Nova Agent" folder. Each social post picture or video and each receipt saved on the studio PC gets a copy there, so posts go out (and Portal shows receipts) with the studio PC off. Nova Agent only sees the files it made itself.
-- **Nightly backups:** all of Index (the last 14 nights kept) and the PC's files, about 3am.
+- **Pictures, videos and receipts in Google Drive,** in a "Nova Agent" folder. Each social post picture or video and each receipt saved on the VPS gets a copy there, so posts go out (and Portal shows receipts) even if Nova Agent can't be reached. Nova Agent only sees the files it made itself.
+- **Nightly backups:** all of Index (the last 14 nights kept) and Nova Agent's files, about 3am.
 - **Money in Google Sheets:** one live sheet (Invoices, Payments, Expenses) for the accountant, brought up to date hourly and when someone presses **Open in Google Sheets** in Money → Tax year.
 
 - **Gmail as Enquiries' inbox.** Every 15 minutes, new customer emails to the studio's Gmail (its Primary inbox) come into Enquiries like the website's form; newsletters, notifications, mailing lists and other automatic mail stay out, and likely spam goes to Enquiries' Spam folder. With the Gmail permission each gets a **Nova** label in Gmail, and one marked **Done** is archived in Gmail (back in the inbox if it's opened again). Nothing is sent from here.
 - **Google Meet links.** Tick **Google Meet link** on an event in Calendar and Google makes the link at the next sync (it then shows on the event, on Today and in Agent's what_now); online-session bookings get one too.
-- **Quests in Google Tasks.** The PC's person's quests (not repeating ones) are kept in a **Nova quests** list every 10 minutes; ticking one off in Google Tasks marks it done in Nova.
+- **Quests in Google Tasks.** Nova Agent's own person's quests (not repeating ones) are kept in a **Nova quests** list every 10 minutes; ticking one off in Google Tasks marks it done in Nova.
 - **Notes kept in Google Docs.** A shared note ticked **Keep in Google Docs** (Notes → File) stays in step with its Doc both ways every 15 minutes; when both changed, the newer wins and the other is kept as a copy. **Open a Google Doc** (Notes → File) brings a Doc from the studio's Drive into Notes; one Nova didn't make only comes in (Google lets Nova change only its own Docs).
 - **Files and invoices in Drive.** Agent's files are kept in "Nova Agent/Files" as they're saved, and each sent invoice is a Doc in "Nova Agent/Invoices" (download it as a PDF from Drive), updated when it's paid or cancelled.
 - **YouTube.** The channel's subscribers (Social → at a glance) and each video's views, likes and comments, and YouTube as a place to post in Social: one video per post, its first line the title, uploaded only after an admin's Approve. Google keeps uploads from a new Google Cloud project private until YouTube has checked it: make each one public in YouTube Studio till then.
@@ -302,8 +302,8 @@ Built in Nova Bot's `src/google/` (`calendar.js`, `gmail.js`, `contacts.js`, `dr
 
 Portal → **Computer** (in Admin; admins only; `?view=computer`) is the studio's VPS: the server
 where Nova Bot and Nova Agent both run, day and night, with the laptop off. At the top, **Live now**
-says Nova's address, where Nova Agent runs (on the VPS), the one command to move it back to the
-studio PC (`vps/agent-switch-back.sh`, run in Nova Bot's folder; it asks first) and any warnings.
+says Nova's address, where Nova Agent runs (on the VPS), the one command to move it back to a
+laptop (`vps/agent-switch-back.sh`, run in Nova Bot's folder; it asks first) and any warnings.
 Under it: the VPS's memory, disk and services (Nova Bot, Nova Agent, mail, backups, timed jobs),
 the last backup, each job's last run and recent problems, with **Back up now**, **Restart Nova
 Bot**, **Restart Nova Agent** and **Restart web front** (Restart asks twice). Console's `computer`

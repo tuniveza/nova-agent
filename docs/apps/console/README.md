@@ -1,6 +1,6 @@
 # Console
 
-Console is in Nova Agent's **Tools**. Type commands for the whole of Nova Agent instead of clicking. On the studio PC, admins can also open a real terminal there, or one on the VPSdime server.
+Console is in Nova Agent's **Tools**. Type commands for the whole of Nova Agent instead of clicking. On the computer Nova Agent runs on (the VPS), admins can also open a real terminal there, or one on another server.
 
 ## The Nova tab
 
@@ -29,32 +29,32 @@ Everything is centred and easy to read: Console sits in a centred column, with b
 | `theme list` / `theme pulsar` / `theme own` | The look |
 | `open <app>` | Opens an app or panel: portal, calendar, notes, board, index, lossless, visualizer, observatory, fixer, agent, quests, missions, manual |
 | `agent "what's on today?"` (or `ask`) | Asks Agent, and shows the answer here |
-| `computer` (or `desk`) | Nova Bot on Cloudflare and on the VPS side by side, and which one is live: versions, the PC link, VPS memory, disk, services, last data copy and backup, the timed jobs (admins) |
-| `deploy status` | What's live where: Cloudflare's version, the VPS's, the studio computer |
+| `computer` (or `desk`) | The VPS: Nova Bot and Nova Agent, versions, Nova Agent's link, VPS memory, disk, services, last data copy and backup, the timed jobs (admins) |
+| `deploy status` | What's live where: Nova Bot and Nova Agent on the VPS |
 | `backup` | Backs up the VPS's database now (admins; asks you to type yes first) |
 | `admin crew` | Everyone on the crew (admins). Also: `admin invite` and `admin pages` |
 | `index search <words>` | Searches what Nova knows |
-| `logs` | The studio computer's recent log (admins) |
-| `shell` | A terminal on the studio computer (admins, on that computer only) |
-| `vps` | The VPSdime server (admins, on the studio computer only): `vps set <address> <user> [port]`, `vps setup-key`, `vps show` |
+| `logs` | Nova Agent's recent log (admins) |
+| `shell` | A terminal on the computer Nova Agent runs on (admins, on that computer only) |
+| `vps` | The VPSdime server (admins, on the computer Nova Agent runs on only): `vps set <address> <user> [port]`, `vps setup-key`, `vps show` |
 
 Every command does exactly what you could do with the mouse as yourself, and nothing more. Nothing is sent, posted, booked or approved without a person typing the item's number back. Agent can't use Console.
 
-## Terminals: the studio PC and the VPS
+## Terminals: Nova Agent's computer and another server
 
-**+ Shell** opens a terminal on the studio computer. **+ VPS** opens one on the VPSdime server, using ssh with the computer's own key (`~/.ssh/id_ed25519`). Each opens in its own tab. Copy, paste, scrolling back and resizing all work. If the page reloads, its terminals are still there.
+**+ Shell** opens a terminal on the computer Nova Agent runs on (the VPS). **+ VPS** opens one on the VPSdime server, using ssh with the computer's own key (`~/.ssh/id_ed25519`). Each opens in its own tab. Copy, paste, scrolling back and resizing all work. If the page reloads, its terminals are still there.
 
 Terminals only open when all of these are true:
 
-- Console is opened on the studio computer itself (at `localhost`).
+- Console is opened on the computer Nova Agent runs on (at `localhost`).
 - You're an admin.
 - The request comes from Console's own page.
 
-Online, through Nova Bot, they're always refused, and Nova Bot never passes them on. Only Nova commands work online. Instead, Console online shows an **Open Console on this computer** button: on the studio computer it opens `http://localhost:4545/console/?here=1`, Console on its own page on the computer itself, where **+ Shell** and **+ VPS** work. (Nova Agent's pages normally move to Nova Agent online; this one address stays on the computer, for the terminals.)
+Online, through Nova Bot, they're always refused, and Nova Bot never passes them on. Only Nova commands work online. Instead, Console online shows an **Open Console on this computer** button: on the computer Nova Agent runs on it opens `http://localhost:4545/console/?here=1`, Console on its own page on the computer itself, where **+ Shell** and **+ VPS** work. (Nova Agent's pages normally move to Nova Agent online; this one address stays on the computer, for the terminals.)
 
 ### The VPS
 
-The VPS is already set: the studio's VPSdime server, `root@185.185.126.195` (port 22), and the studio PC's key is already on it, so **+ VPS** connects straight away. To use another server: `vps set <address> <user> [port]` (saved on the PC in `data/console.json`; no password is ever saved), then `vps setup-key` once (it asks for that server's password inside the terminal and copies the PC's key there).
+The VPS is already set: the studio's VPSdime server, `root@185.185.126.195` (port 22), and the laptop's key is already on it, so **+ VPS** connects straight away. To use another server: `vps set <address> <user> [port]` (saved by Nova Agent in `data/console.json`; no password is ever saved), then `vps setup-key` once (it asks for that server's password inside the terminal and copies Nova Agent's computer's key there).
 
 ## On a phone
 
@@ -65,7 +65,7 @@ A row of extra keys sits under the terminal: Tab, Ctrl, Esc, the arrows, `|`, `~
 - `web/console/`: the page. It uses xterm.js 6 (copied into `web/console/vendor/`, nothing from the internet) with the theme's colours.
   - `js/commands.js`: the command language.
   - `js/console.js`: the tabs, the typing line and the terminals.
-- `src/console.ts`: the PC side. Terminals run through node-pty, and their output comes back as server-sent events. Each terminal has a random token. One that nobody watches closes after 15 minutes. Nova Agent's own secret settings are left out of the terminal's environment.
+- `src/console.ts`: Nova Agent's side. Terminals run through node-pty, and their output comes back as server-sent events. Each terminal has a random token. One that nobody watches closes after 15 minutes. Nova Agent's own secret settings are left out of the terminal's environment.
 - `src/relay.ts` and Nova Bot's `src/agent-relay.js` only pass on `GET /console-api/state` (everyone) and `/console-api/logs` (admins).
 - node-pty has a native part. After `npm install`, build it once with `npm install-scripts approve node-pty && npm rebuild node-pty`, or `cd node_modules/node-pty && npx node-gyp rebuild`. Without it, Nova commands still work and terminals say what's missing.
 - Checks:
