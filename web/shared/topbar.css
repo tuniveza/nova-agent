@@ -102,3 +102,83 @@
   .shell:has(> .main.viewing) > .topbar .icon-btn { width: 28px; height: 28px; }
   .shell:has(> .main.viewing) > .topbar .viewer-name::after { display: none; }
 }
+
+/* ---- One title panel everywhere (2026-10-14) ----
+   Nova Agent's home header and every open panel's title panel are the same bar: the same height,
+   the same width (the full width, lined up with the panel's box below), the same controls in the
+   same places: left ← back (with a panel open), sound, music, Live; the middle the mark or the
+   panel's icon and its name; right the Manual, the planet (sign in and out), Install, Reload (with
+   a panel open) and the gear. Compact, but every control is a big, easy target (40px on a
+   computer, 44px on a phone): plain round buttons without their own borders, clearer words (13px
+   and up, no tiny spaced-out capitals). (The selector covers the home and a panel alike, and wins
+   over the older per-place sizes above, in chat.html, phone.css and bar.css.) */
+:root { --tp-h: 52px; --tp-btn: 40px; --tp-mark: 32px; --tp-word: 18px; --tp-gap: 4px; --tp-pad: 0 6px; --tp-r: 16px; --tp-ico: 20px; }
+@media (max-width: 980px), (max-height: 480px) {
+  :root { --tp-h: 48px; --tp-btn: 44px; --tp-mark: 28px; --tp-word: 15px; --tp-gap: 0px; --tp-pad: 0 2px; --tp-r: 14px; } }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar {
+  --nv-top-h: var(--tp-h); --nv-mark: var(--tp-mark); --nv-word: var(--tp-word); --nv-top-r: var(--tp-r);
+  box-sizing: border-box; height: var(--tp-h); min-height: var(--tp-h); padding: var(--tp-pad); border-radius: var(--tp-r);
+  justify-self: stretch; width: auto; min-width: 0; max-width: none; margin-inline: 0;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > .top-side { display: flex; align-items: center; gap: var(--tp-gap); min-width: 0; }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > .top-side.left { justify-content: flex-start; }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > .top-side.right { justify-content: flex-end; }
+/* The round buttons: one big target each, no border of their own, a soft light on hover and focus */
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .icon-btn {
+  flex: none; width: var(--tp-btn); height: var(--tp-btn); min-width: var(--tp-btn); padding: 0; border: 0; border-radius: 12px;
+  place-items: center; justify-content: center; align-items: center; background: transparent; box-shadow: none; color: var(--text, #F4ECFF); font-size: 18px; line-height: 1; }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .icon-btn:is(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--hi, #FF5FA8) 16%, transparent); }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .icon-btn :is(svg, .ico) { width: var(--tp-ico); height: var(--tp-ico); }
+/* (on the home the back and Reload aren't needed: still hidden there) */
+.shell:not(:has(> .main.viewing)) > .topbar.nv-topbar :is(.viewer-back, .viewer-reload) { display: none; }
+/* Install: one control (the chip, which also does the browser's one-tap install when it's offered;
+   the old second "Install app" button stays for the phone's gear menu, never in the bar) */
+.shell > .topbar.nv-topbar #install { display: none !important; }
+/* Words on buttons (Install, Panels): plain, readable, the same height as the round ones */
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .top-side .btn,
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .top-side .icon-btn:has(> span:not(.sfx-on, .sfx-off)) {
+  width: auto; min-height: var(--tp-btn); height: var(--tp-btn); padding: 0 12px; gap: 6px; display: inline-flex; align-items: center;
+  border: 0; border-radius: 12px; background: color-mix(in srgb, var(--text, #fff) 6%, transparent);
+  font-family: var(--f-body, inherit); font-size: 13.5px; font-weight: 600; letter-spacing: normal; text-transform: none; }
+/* Live: its dot and a plain word, as tall as the buttons */
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .status {
+  flex: none; height: var(--tp-btn); min-width: var(--tp-btn); box-sizing: border-box; padding: 0 12px; gap: 7px; justify-content: center;
+  border: 0; border-radius: 12px; background: color-mix(in srgb, var(--text, #fff) 6%, transparent);
+  font-family: var(--f-body, inherit); font-size: 13px; font-weight: 600; letter-spacing: normal; text-transform: none; color: var(--text, #F4ECFF); }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .status .label { display: inline !important; }
+/* The middle: the mark or the panel's icon, and the name, in readable letters (no small word above) */
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .kicker { display: none !important; } /* (over glow.css) */
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .vn-text::before { display: none; }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > .brand { display: inline-flex; align-items: center; gap: 10px; min-height: var(--tp-btn); }
+.shell:has(> .main.viewing) > .topbar.nv-topbar > .brand { display: none; }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar :is(.wordmark, .vn-text) {
+  font-size: var(--tp-word); font-stretch: 110%; font-weight: 800; letter-spacing: .02em; line-height: 1.1; }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > .viewer-name { min-height: var(--tp-btn); gap: 10px; padding: 0 8px; border-radius: 12px; }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar :is(.mark, .vn-ico) { width: var(--tp-mark); height: var(--tp-mark); border-radius: 9px; }
+/* The Manual and the planet: the same height as the buttons */
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar nova-portal-badge { zoom: 1; }
+.shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar nova-portal-badge::part(chip) { min-height: var(--tp-btn); min-width: var(--tp-btn); justify-content: center; }
+/* Right-hand order: the Manual, the planet, Install, Reload, the gear (Panels, when it shows, before the gear) */
+.shell > .topbar.nv-topbar > .top-side.right > nova-manual { order: 1; }
+.shell > .topbar.nv-topbar > .top-side.right > nova-portal-badge { order: 2; }
+.shell > .topbar.nv-topbar > .top-side.right > :is(.ni-btn, .install-chip, [data-install], button:not(#viewer-reload, #suite-btn, #phone-gear, .gear-btn)) { order: 3; }
+.shell > .topbar.nv-topbar > .top-side.right > #viewer-reload { order: 4; }
+.shell > .topbar.nv-topbar > .top-side.right > #suite-btn { order: 5; }
+.shell > .topbar.nv-topbar > .top-side.right > :is(#phone-gear, .gear-btn) { order: 6; }
+@media (max-width: 980px), (max-height: 480px) {
+  /* A phone: the bar's own words make way for the big targets (Live is its dot; Install its icon) */
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar { gap: 2px; grid-template-columns: auto minmax(0, 1fr) auto; }
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > :is(.brand, .viewer-name) { justify-self: center; min-width: 0; max-width: 100%; }
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .status { padding: 0; width: var(--tp-btn); background: transparent; }
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .status .label { display: none !important; }
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .top-side .icon-btn:has(> span:not(.sfx-on, .sfx-off)) { width: var(--tp-btn); padding: 0; justify-content: center; background: transparent; }
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .top-side .icon-btn:has(> span:not(.sfx-on, .sfx-off)) > span { display: none; }
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar nova-portal-badge::part(words) { display: none; }
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > .viewer-name { padding: 0 4px; gap: 6px; }
+}
+@media (max-width: 379px) {
+  /* The smallest phones: the panel's name gets the room (its icon is on the navigation panel below) */
+  .shell:has(> .main.viewing) > .topbar.nv-topbar .vn-ico { display: none; }
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar :is(.wordmark, .vn-text) { font-size: 14px; }
+}

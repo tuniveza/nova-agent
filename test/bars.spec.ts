@@ -29,6 +29,24 @@ describe("the top bars", () => {
     expect(rules(top)).toMatch(/\.nv-topbar \.wordmark, \.nv-topbar \.vn-text \{/);
   });
 
+  it("one title panel everywhere: the home's header and every panel's are the same height and width, with big targets and one Install", () => {
+    const r = rules(top);
+    const both = ".shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar";
+    // one size for both (computer 52px with 40px targets; phone 48px with 44px targets)
+    expect(r).toMatch(/:root \{ --tp-h: 52px; --tp-btn: 40px;/);
+    expect(r).toMatch(/:root \{ --tp-h: 48px; --tp-btn: 44px;/);
+    expect(r).toContain(`${both} {\n  --nv-top-h: var(--tp-h);`);
+    expect(r).toMatch(/height: var\(--tp-h\); min-height: var\(--tp-h\);/);
+    expect(r).toContain(`${both} .icon-btn {\n  flex: none; width: var(--tp-btn); height: var(--tp-btn);`);
+    // full width on both (no narrower bar on one of them)
+    expect(r).toContain("justify-self: stretch; width: auto;");
+    // readable: the Live word plain 13px; no small spaced-out word above the name
+    expect(r).toMatch(/font-size: 13px; font-weight: 600; letter-spacing: normal; text-transform: none;/);
+    expect(r).toContain(`${both} .kicker { display: none !important; }`);
+    // one Install control in the bar (the chip); the old button stays for the phone's gear menu
+    expect(r).toContain(".shell > .topbar.nv-topbar #install { display: none !important; }");
+    expect(html).toContain('id="install"');
+  });
   it("the panel's name stays exactly its name (other code reads it): the small word above it is drawn", () => {
     expect(rules(top)).toMatch(/\.vn-text::before \{ content: "Nova Agent"/);
     expect(html).not.toMatch(/vn-kicker/);

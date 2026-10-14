@@ -181,7 +181,7 @@ button, a { font: inherit; color: inherit; }
 
 .words { display: grid; line-height: 1.05; text-align: left; min-width: 0; }
 .name { font-family: var(--f-d); font-weight: 800; font-size: 13.5px; letter-spacing: 0.01em; color: var(--c-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 14ch; }
-.role { justify-self: start; margin-top: 3px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c-muted); }
+.role { justify-self: start; margin-top: 2px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--c-muted); }
 .role.admin, .role.staff { position: relative; overflow: hidden; padding: 1px 6px; border-radius: 999px; color: var(--c-on-accent); background: linear-gradient(90deg, var(--c-accent), var(--c-accent-2)); }
 .role.staff { background: color-mix(in srgb, var(--halo) 30%, var(--c-panel)); color: var(--c-bright); }
 .role.admin::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%); transform: translateX(-120%); animation: shimmer 3.6s ease-in-out infinite 1s; }
