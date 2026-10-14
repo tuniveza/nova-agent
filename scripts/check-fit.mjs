@@ -13,6 +13,7 @@
 //     NOVA_WORKER_URL=https://worker.test npx tsx src/visualizer/server.ts &
 //   FIT_DATA_DIR=$D node scripts/check-fit.mjs http://localhost:4721 [--only portal,calendar]
 //     [--sizes 360x640,1280x800] [--shots /some/folder] [--where own|agent] [--manual] [--verbose]
+//     [--bars away]   (Nova Agent's bars away: the panels in the room they leave)
 import { chromium } from "playwright";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { portalMock } from "./check-fit-portal-samples.mjs";
@@ -26,6 +27,9 @@ const WHERE = opt("where") ? [opt("where")] : ["own", "agent"];
 const SHOTS = opt("shots");
 const VERBOSE = args.includes("--verbose");
 const MANUAL = args.includes("--manual"); // the Manual too (it has its own fixes, so it's left out unless asked)
+// --bars away: Nova Agent's title panel and navigation panel away (Always hidden), so everything is
+// checked again in the bigger room they leave (bar.js)
+const BARS_AWAY = opt("bars") === "away";
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
 // ---- Long sample content ----
@@ -494,6 +498,7 @@ const note = (map, msg, at) => { if (!map.has(msg)) map.set(msg, []); map.get(ms
 
 async function newTab(w, h) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: w < 800, hasTouch: w < 800 });
+  if (BARS_AWAY) await ctx.addInitScript(() => { try { localStorage.setItem("nova-bar-2", "hidden"); localStorage.setItem("nova-top-2", "hidden"); } catch (err) {} });
   const tab = await ctx.newPage();
   await tab.route(/\/__fit\.html/, (r) => r.fulfill({ contentType: "text/html", body: FRAME(new URL(r.request().url()).searchParams.get("src")) }));
   // Nova Bot's answers for Portal (signed in as an admin, with long lists), from the samples file

@@ -85,7 +85,9 @@ describe("one screen, nothing scrolling the page", () => {
 
   it("the home's welcome: sized once, kept while it still fits, never a hair too big", () => {
     const js = read("../web/agent/assets/music.js");
-    expect(js).toContain("let fitting = 0, lastZ = 0;");
+    expect(js).toContain("let fitting = 0, lastZ = 0, lastH = 0;");
+    // a big change of room (a bar came or went): aimed straight for, one layout, not a search
+    expect(js).toContain("let z = clamp(lastZ * (room / lastH) * 0.985);");
     expect(js).toContain("const r3 = (z) => Math.floor(z * 1000) / 1000;");
     expect(js).not.toContain("Math.round(z * 1000) / 1000");
   });

@@ -76,18 +76,24 @@ describe("the top bars", () => {
 
 describe("the panels bar along the bottom", () => {
   const css = rules(barCss);
-  it("never makes the open panel change size as it comes and goes (no room taken and given back)", () => {
+  it("gives the room back to the content once per move, never during a slide (no room animated)", () => {
     expect(css).not.toMatch(/--strip-room|--top-room|--bar-room-delay|--top-room-delay/);
-    expect(css).not.toMatch(/margin-bottom: var\(--strip-room/);
     expect(barJs).not.toMatch(/--strip-room|--top-room/);
+    // away: out of the rows only once its slide has ended; back: slides in first, then takes its row
+    expect(css).toMatch(/html\.top-away \.shell \{ grid-template-rows: minmax\(0, 1fr\); \}/);
+    expect(css).toMatch(/html\.nav-away \.main \{ grid-template-rows: minmax\(0, 1fr\); \}/);
+    expect(barJs).toContain('if (b.state === "going") { b.state = "away"; root.classList.add(`${b.cls}-away`); }');
+    expect(barJs).toContain('if (b.state === "in") root.classList.remove(`${b.cls}-away`);');
   });
 
-  it("only slides (transform and opacity), and quickly: in 0.18 s, away in 0.15 s", () => {
-    expect(css).toMatch(/--come: \.18s;/);
-    expect(css).toMatch(/--away: \.15s;/);
-    // nothing in the bars' own moves takes longer than 0.2 s
-    const secs = [...css.matchAll(/transition:[^;]*?(\d*\.\d+)s/g)].map((m) => Number(m[1]));
-    expect(Math.max(...secs)).toBeLessThanOrEqual(0.2);
+  it("only slides (transform and opacity), and fast: in 0.1 s, away in 0.09 s, no wait before it starts", () => {
+    expect(css).toMatch(/--bar-in: \.1s;/);
+    expect(css).toMatch(/--bar-out: \.09s;/);
+    expect(css).toMatch(/\.shell > \.topbar, \.main > \.suite-home, \.shell > \.tabbar \{\s*transition: transform var\(--bar-in\) var\(--bar-in-ease\), opacity var\(--bar-in\) ease; \}/);
+    const own = css.slice(0, css.indexOf(".bar-edge {"));
+    const secs = [...own.matchAll(/--bar-(?:in|out): (\d*\.\d+)s/g)].map((m) => Number(m[1]));
+    expect(Math.max(...secs)).toBeLessThanOrEqual(0.12);
+    expect(own).not.toMatch(/transition-delay/);
   });
 
   it("has no trail of echoes and no tile-by-tile ripple (the bar moves as one piece)", () => {
@@ -97,9 +103,10 @@ describe("the panels bar along the bottom", () => {
     expect(barJs).not.toMatch(/setProperty\("--i"/);
   });
 
-  it("doesn't measure or restyle anything each time it shows or hides", () => {
-    const update = barJs.slice(barJs.indexOf("function update()"), barJs.indexOf("function show()"));
-    expect(update).not.toMatch(/offsetHeight|getBoundingClientRect|setProperty|number\(\)|measure\(\)/);
+  it("doesn't measure anything while the mouse moves (the bars' heights are kept as they change)", () => {
+    const pointer = barJs.slice(barJs.indexOf("function pointerAt(y)"), barJs.indexOf('document.addEventListener("pointermove"'));
+    expect(pointer).not.toMatch(/offsetHeight|getBoundingClientRect|getComputedStyle|setProperty/);
+    expect(barJs).toContain("new ResizeObserver((entries) => {");
   });
 
   it("stops looking for a panel's page once it has it (no checking forever)", () => {
@@ -107,20 +114,44 @@ describe("the panels bar along the bottom", () => {
     expect(barJs).toMatch(/if \(\+\+tries > 30\) \{ clearInterval\(timer\)/);
   });
 
-  it("always shown by default: nothing hides, slides or waits (a device that had the old Auto gets Always shown)", () => {
-    expect(barJs).toContain('const MODES = ["shown", "hidden"];');
-    expect(barJs).toContain('const pick = (m) => (MODES.includes(m) ? m : "shown");');
-    expect(html).not.toContain('data-bar-mode="auto"');
-    expect(html).not.toContain('data-top-mode="auto"');
+  it("Auto by default, for both bars (new keys, so it's on for every device), with Always shown and Always hidden", () => {
+    expect(barJs).toContain('const MODES = ["auto", "shown", "hidden"];');
+    expect(barJs).toContain('const pick = (m) => (MODES.includes(m) ? m : "auto");');
+    expect(barJs).toContain('const KEYS = { nav: "nova-bar-2", top: "nova-top-2" };');
+    for (const m of ["auto", "shown", "hidden"]) {
+      expect(html).toContain(`data-bar-mode="${m}"`);
+      expect(html).toContain(`data-top-mode="${m}"`);
+    }
+    for (const k of ["setMode", "setTopMode", "reveal:", "nextTop", "next:"]) expect(barJs).toContain(k);
   });
 
-  it("keeps its two choices and its handle: Always shown, Always hidden, for the bar and the top bar", () => {
-    for (const k of ["setMode", "setTopMode", "reveal: show", "nextTop"]) expect(barJs).toContain(k);
-    expect(barJs).toContain('peek.id = "bar-peek";');
+  it("comes back at once: the mouse at the edge, a tap or swipe at the edge, Tab into it, scrolling up", () => {
+    expect(barJs).toContain("const HIDE_AFTER = 1500, EDGE = 12, NEAR = 60;");
+    expect(barJs).toContain("if (fromEdge <= EDGE) { show(b); continue; }");
+    expect(barJs).toContain('el.id = side === "bottom" ? "bar-peek" : "top-peek";');
+    expect(barJs).toContain('document.addEventListener("focusin", (e) => {');
+    expect(barJs).toMatch(/if \(scrolled < -24 \|\| y <= 0\)/);
+    expect(barJs).toMatch(/function touchMove\(y\)/);
+    // showing never waits for a timer: the slide starts first
+    const show = barJs.slice(barJs.indexOf("function show(b)"), barJs.indexOf("function hide(b)"));
+    expect(show.indexOf("setTimeout")).toBeGreaterThan(show.indexOf('root.classList.remove(`${b.cls}-going`);'));
+    // panels tell it about their mouse, scrolling and swipes
+    expect(barJs).toContain('doc.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") pointerAt(top + e.clientY); }');
   });
 
-  it("with less motion asked for, nothing slides", () => {
-    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*html \.main\.viewing > \.suite-home, html \.shell > \.tabbar, html \.shell > \.topbar/);
+  it("never goes while it's in use: the mouse on it, the keyboard in it, a window, menu or the sign-in card open", () => {
+    const busy = barJs.slice(barJs.indexOf("function busy(b)"), barJs.indexOf("// ---- Moving a bar ----"));
+    expect(busy).toContain('document.querySelector("dialog[open]")');
+    expect(busy).toContain('el.matches(":hover")');
+    expect(busy).toContain("el.contains(a)");
+    expect(busy).toContain('[aria-expanded="true"]');
+    expect(busy).toContain(".sl-list:not([hidden])");
+    expect(barJs).toContain("if (busy(b)) return later(b);");
+  });
+
+  it("with less motion asked for, nothing slides (it's just there or not)", () => {
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*html \.main > \.suite-home, html \.shell > \.tabbar, html \.shell > \.topbar/);
+    expect(barJs).toContain('const STILL = matchMedia("(prefers-reduced-motion: reduce)");');
   });
 
   it("in one row (a tablet, a short window, a phone on its side) every place is the same width and each group as wide as its places", () => {

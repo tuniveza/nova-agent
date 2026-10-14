@@ -289,26 +289,14 @@ themselves, and come back after a pause.
 
 ### The panels bar and motion
 
-It shows and hides itself (**Auto**, the default): always there on Nova Agent's home. With a
-panel open it follows what you do, not timers: on a computer it's in view while the mouse is near
-the bottom and steps aside once you work higher up in the panel; on a phone it steps aside when you
-scroll down a good way on purpose and comes back as soon as you scroll up a little or tap the
-little handle at the bottom (pages that hardly scroll never hide it). With a mouse, scrolling down
-in a panel sends it away too (unless the mouse is on it).
-
-Over an open panel the bars float and only slide: in over 0.18 s, away in 0.15 s, moving as one
-piece. The panel never changes size when they come and go, so nothing in it jumps or reflows
-(checked by `node scripts/check-bars.mjs <address>`, which opens a panel at computer, tablet and
-phone sizes, brings the bars in and out, and fails if the panel moves, a move is set longer than
-0.2 s, or the two top bars differ). On the home, typing no longer hides the bar, so the page stays
-put. On a tablet or a phone on its side the bar is one row, each group as wide as its places and
+It shows and hides itself (**Auto**, the default), with the title panel: see "Auto show and hide"
+below. Over an open panel or on the home, it moves as one piece and only slides. On a tablet or a phone on its side the bar is one row, each group as wide as its places and
 their names need (`--tg-cols`, set by `phone.js`), so no name is squeezed or cut.
 
 Each panel's icon is from one line-art set, in its own colour (Notes amber, Calendar moon-violet,
 Index teal…) blended with the theme's accent, so the icons change with the theme and still keep
-their own mood. It can also be **Always shown** or **Always hidden**: choose in
-the Panels window (the PANELS button) or on a phone in the gear (Bar). Remembered on the device
-(`web/agent/assets/bar.js` and `bar.css`).
+their own mood. The bar shows and hides itself (Auto, the default), or is **Always shown** or
+**Always hidden**: see "Auto show and hide" below (`web/agent/assets/bar.js` and `bar.css`).
 
 Along the bottom on a computer: every panel in its four groups (Apps, Tasks, Tools, Helpers),
 edge to edge. It's the same bar whatever is open; with a panel open it only gets smaller. Motion
@@ -329,18 +317,39 @@ picked takes the buttons, glows and highlights, so every colour choice clearly s
 cyan, Aurora green and violet, Eclipse gold. With "Each panel's own", the planet colours everything
 as before.
 
-**One top bar:** Nova Agent's header (`web/shared/topbar.css`, class `nv-topbar`: a glass capsule
-with the glowing edge). With a panel open (an app, a plan, a tool or a helper) there's no second
-bar: the header itself becomes that panel's slim **title panel** (48px on a computer, 44px on a
-phone): ← back, the panel's icon and name (tap it to switch panels) and Reload, with Nova Agent's
-own controls right there in it: sound, music, Live, the planet (sign in and out, your Portal
-account), Install, Panels and the gear. It stays as wide as the header is on the home, so the panel
-below starts in the same place. On a narrow phone Live shows as its coloured dot. The panel sits in
-its own box under it (`#viewer-body`). Index and Quests don't repeat their names under it.
+**One title panel everywhere:** Nova Agent's header on the home and the title panel over every
+open panel (an app, a plan, a tool or a helper) are the same bar (`web/shared/topbar.css`, class
+`nv-topbar`): the same height (52px on a computer, 48px on a phone), the full width, the same
+look, the same controls in the same places. Left: ← back (with a panel open), sound, music, Live.
+Middle: Nova Agent's mark, or the panel's icon and name (tap it to switch panels). Right: the
+Manual, the planet (sign in and out, your Portal account), Install, Reload (with a panel open) and
+the gear. Compact but easy to hit: every control is at least 40px on a computer and 44px on a
+phone (plain round buttons without their own borders), with plain, readable words (13px and up;
+no small spaced-out word above the name). One Install control (the chip: it also does the
+browser's one-tap install when it's offered). On a phone Live is its coloured dot and Install its
+icon. There's never a second bar. The panel sits in its own box under it (`#viewer-body`).
+`scripts/check-bars.mjs` fails a title panel that differs from the home's header in height or
+width, or a control smaller than 40/44px.
 
-**The bars are always shown** (the old Auto, which hid them while you scrolled, is gone: it made
-Nova feel laggy). Always hidden is still a choice in the Panels window, for the panels bar and the
-top bar.
+**Auto show and hide (the default):** the title panel and the navigation panel (with its status
+row) slide out of the way while you work, and the panel (or the home) grows into all the room they
+leave; they're back the moment you want them. Back at once, with no wait: the mouse at the very
+top or bottom edge of the screen, a tap or a swipe at the edge (a thin strip there; on a touch
+screen a small handle at the bottom), Tab into a bar, or scrolling up inside a panel. Away: when
+the mouse has been away from a bar for 1.5 s, or on a phone or touch screen after scrolling down a
+good way on purpose; never while the mouse is on it, the keyboard is in it, or a window, menu or
+the sign-in card is open. The bars only slide (transform and opacity: in 0.1 s, away in 0.09 s;
+at once when the device asks for less motion), and the content changes size once per move, never
+during a slide: a bar going away gives up its row after its slide, a bar coming back slides in
+over the edge of the content first and then takes its row (`web/agent/assets/bar.js`, `bar.css`).
+Panels report their mouse, scrolling and swipes to Nova Agent, so it works over any panel.
+**Always shown** and **Always hidden** are the other choices, for each bar: the Panels window
+(the PANELS button) or the gear (Bar, Top bar); remembered on the device. Measured by
+`node scripts/check-autohide.mjs <address>`: at computer and phone sizes, on the home and over a
+panel, both bars go after 1.5 s, the content then fills the window minus the bars still showing,
+each bar is back within a frame plus 120 ms with the content kept still while it slides and no
+slow frame, the keyboard in a bar keeps it, Always shown never moves and Always hidden starts away.
+`node scripts/check-fit.mjs … --bars away` checks every panel again in the bigger room.
 
 **One screen:** inside Nova Agent a panel's page never scrolls, and neither does its `<main>`: the
 panel fills the space between the bars, and only a box inside it scrolls when it has more than fits

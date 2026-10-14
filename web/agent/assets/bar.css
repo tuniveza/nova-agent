@@ -4,66 +4,57 @@
      away in 0.15 s, picking up speed. */
   --come: .18s; --come-ease: cubic-bezier(.2, .8, .2, 1); --away: .15s; --away-ease: cubic-bezier(.4, 0, .9, .5); }
 
-/* The panels bar showing and hiding itself (bar.js): html[data-bar="auto|shown|hidden"], and
-   html.bar-tucked while it's out of the way. The bars float over an open panel and only slide
-   (transform and opacity): the panel never changes size when they come or go, so nothing in it
-   jumps, and the browser only has to move a picture of the bar. "Always shown" keeps the bar in
-   its own row instead (the panel is a little shorter, always the same). */
+/* The title panel and the navigation panel (with its status row) showing and hiding (bar.js):
+   html[data-bar] / html[data-top] = auto | shown | hidden, and for each bar one of two states:
+   html.nav-going / html.top-going   sliding away (transform and opacity only, 0.09 s, still in its row)
+   html.nav-away  / html.top-away    out of the page's rows, so the panel (or the home) grows into
+                                     all the room it had, in one step, after the slide
+   Coming back, the other way round: it slides in at once (0.1 s, no wait) over the edge of the
+   content, in exactly the place it sits, and then takes its row back (the panel shrinks once).
+   The panel never re-fits during a slide. Nothing else moves. */
+:root { --bar-in: .1s; --bar-in-ease: cubic-bezier(.2, .8, .2, 1); --bar-out: .09s; --bar-out-ease: cubic-bezier(.4, 0, 1, 1); }
+.shell > .topbar, .main > .suite-home, .shell > .tabbar {
+  transition: transform var(--bar-in) var(--bar-in-ease), opacity var(--bar-in) ease; }
+html.top-going .shell > .topbar, html.nav-going .main > .suite-home, html.nav-going .shell > .tabbar {
+  opacity: 0; pointer-events: none; will-change: transform, opacity;
+  backdrop-filter: none; -webkit-backdrop-filter: none; /* (no blur to redraw while it moves) */
+  transition: transform var(--bar-out) var(--bar-out-ease), opacity var(--bar-out) ease; }
+html.top-going .shell > .topbar { transform: translateY(calc(-100% - 16px)); }
+html.nav-going .main > .suite-home, html.nav-going .shell > .tabbar { transform: translateY(calc(100% + 16px)); }
 
-/* The way back: an invisible edge along the bottom on a computer, a small handle on a phone */
-.bar-peek { display: none; position: fixed; z-index: 45; border: 0; padding: 0; background: none; cursor: pointer; }
-.bar-peek > span { display: block; border-radius: 99px; }
-
-/* ---- A computer: the strip floats over the bottom of the open panel and slides away ---- */
+/* Away: out of the rows (the content takes the room) */
 @media (min-width: 981px) and (min-height: 481px) {
-  html[data-bar="auto"] .main.viewing, html[data-bar="hidden"] .main.viewing { position: relative; grid-template-rows: minmax(0, 1fr); }
-  html[data-bar="auto"] .main.viewing > .viewer, html[data-bar="hidden"] .main.viewing > .viewer { grid-area: 1 / 1 / -1 / -1; }
-  html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home {
-    position: absolute; left: 10px; right: 10px; bottom: 8px; z-index: 20;
-    box-shadow: 0 -12px 40px -18px rgba(0, 0, 0, .7), 0 0 0 1px var(--line); will-change: transform;
-    transition: transform var(--come) var(--come-ease), opacity var(--come) ease; }
-  html.bar-tucked .main.viewing > .suite-home { transform: translateY(calc(100% + 16px)); opacity: 0; pointer-events: none; transition: transform var(--away) var(--away-ease), opacity var(--away) ease; }
-  /* Always hidden: not on the home either (the PANELS button at the top still opens them all) */
-  html[data-bar="hidden"].bar-tucked .main:not(.viewing) { grid-template-rows: minmax(0, 1fr); }
-  html[data-bar="hidden"].bar-tucked .main:not(.viewing) > .suite-home { display: none; }
-  /* Auto: the mouse near the bottom brings it back (bar.js watches where the mouse is) */
-}
-
-/* ---- A phone: the bar slides down out of the way; the handle brings it up ---- */
-@media (max-width: 980px), (max-height: 480px) {
-  html[data-bar="auto"] .shell:has(> .main.viewing), html[data-bar="hidden"] .shell {
-    grid-template-rows: auto minmax(0, 1fr); padding-bottom: max(6px, env(safe-area-inset-bottom)); }
-  html[data-bar="auto"] .shell:has(> .main.viewing) > .tabbar, html[data-bar="hidden"] .shell > .tabbar {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0;
-    box-shadow: 0 -10px 30px -14px rgba(0, 0, 0, .8); will-change: transform;
-    transition: transform var(--come) var(--come-ease); }
-  html.bar-tucked .shell > .tabbar { transform: translateY(calc(100% + 2px)); pointer-events: none; transition: transform var(--away) var(--away-ease); }
-  html.bar-tucked .toasts { bottom: calc(20px + env(safe-area-inset-bottom)); }
-  html.bar-tucked .bar-peek { display: grid; place-items: center; left: 50%; bottom: 0; width: 96px; height: calc(22px + env(safe-area-inset-bottom)); margin-left: -48px; padding-bottom: env(safe-area-inset-bottom); }
-  html.bar-tucked .bar-peek > span { width: 44px; height: 5px; background: color-mix(in srgb, var(--hi) 55%, var(--muted)); box-shadow: 0 0 10px -2px var(--hi); opacity: .8;
-    animation: peek-in .16s ease var(--away) backwards; }
-  @keyframes peek-in { from { opacity: 0; transform: translateY(4px); } }
-  html.kb .bar-peek { display: none !important; }
-}
-
-/* ---- The top bar (Nova Agent's header), Auto or Always hidden: with a panel open it floats over
-   the top of the panel and slides away (html.top-tucked) ---- */
-@media (min-width: 981px) and (min-height: 481px) {
-  html[data-top="auto"] .shell:has(> .main.viewing), html[data-top="hidden"] .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto; }
-  html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
-    position: absolute; top: max(12px, env(safe-area-inset-top)); left: 14px; right: 14px; z-index: 30;
-    box-shadow: 0 12px 40px -18px rgba(0, 0, 0, .7), 0 0 0 1px var(--line); will-change: transform;
-    transition: transform var(--come) var(--come-ease), opacity var(--come) ease; }
-  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 20px)); opacity: 0; pointer-events: none; transition: transform var(--away) var(--away-ease), opacity var(--away) ease; }
+  html.top-away .shell { grid-template-rows: minmax(0, 1fr); }
+  html.top-away .shell > .topbar { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 14px; right: 14px; z-index: 30; }
+  html.nav-away .main { grid-template-rows: minmax(0, 1fr); }
+  html.nav-away .main > #suite-home { position: fixed; left: 0; right: 0; margin-inline: auto; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 20; }
 }
 @media (max-width: 980px), (max-height: 480px) {
-  html[data-top="auto"] .shell:has(> .main.viewing), html[data-top="hidden"] .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto; }
-  html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
-    position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; z-index: 41;
-    box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .8); will-change: transform;
-    transition: transform var(--come) var(--come-ease); }
-  html.top-tucked .shell > .topbar { transform: translateY(calc(-100% - 14px)); pointer-events: none; transition: transform var(--away) var(--away-ease); }
+  html.top-away .shell, html.top-away .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto; }
+  html.nav-away .shell, html.nav-away .shell:has(> .main.viewing) { grid-template-rows: auto minmax(0, 1fr); padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+  html.top-away.nav-away .shell, html.top-away.nav-away .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr); }
+  html.top-away .shell > .topbar { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; z-index: 41; }
+  html.nav-away .shell > .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0; }
+  html.nav-away .toasts { bottom: calc(20px + env(safe-area-inset-bottom)); }
 }
+
+/* The way back while a bar is away: a thin edge along the top and the bottom of the screen (the
+   mouse touching it, a tap, or a swipe from it brings the bar at once); on a touch screen the
+   bottom one shows a small handle */
+.bar-edge { display: none; position: fixed; left: 0; right: 0; z-index: 46; height: 12px; border: 0; padding: 0; background: none; cursor: pointer; }
+.bar-edge.top { top: 0; }
+.bar-edge.bottom { bottom: 0; }
+html.top-away .bar-edge.top, html.nav-away .bar-edge.bottom { display: grid; place-items: center; }
+.bar-edge > span { display: none; border-radius: 99px; }
+@media (max-width: 980px), (max-height: 480px) {
+  .bar-edge { height: 18px; }
+  .bar-edge.bottom { left: 50%; right: auto; width: 120px; margin-left: -60px; height: calc(22px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); }
+}
+html.is-touch .bar-edge.bottom > span, .bar-edge.bottom:is(:hover, :focus-visible) > span,
+html.nav-away .bar-edge.bottom > span { display: block; width: 44px; height: 4px; opacity: .55; background: color-mix(in srgb, var(--hi) 55%, var(--muted)); box-shadow: 0 0 10px -2px var(--hi); }
+@media (min-width: 981px) and (min-height: 481px) { html.nav-away:not(.is-touch) .bar-edge.bottom > span { opacity: .3; } }
+html.kb .bar-edge { display: none !important; }
+
 
 /* The choice in the Panels window */
 .bar-mode { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; }
@@ -96,7 +87,7 @@ dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { o
 @starting-style { dialog.rhythm[open]::backdrop, dialog.more-sheet[open]::backdrop { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  html .main.viewing > .suite-home, html .shell > .tabbar, html .shell > .topbar, html .suite-app, html .tabbar [data-tab], html .topbar * { transition: none !important; }
+  html .main > .suite-home, html .shell > .tabbar, html .shell > .topbar, html .suite-app, html .tabbar [data-tab], html .topbar * { transition: none !important; }
 }
 
 /* ---- The bar's look: a strip of Novacane night sky ----
@@ -173,9 +164,6 @@ dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { o
   .main > .suite-home .suite-group, .main > .suite-home .suite-group.tools { flex: none; }
   .main > .suite-home .suite-grid { grid-auto-columns: 78px; }
   .main.viewing > .suite-home .suite-grid { grid-auto-columns: 70px; }
-  /* Floating over an open panel: centred too */
-  html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home { left: 0; right: 0; margin-inline: auto; width: fit-content; max-width: calc(100% - 20px); }
-  html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar { left: 0; right: 0; margin-inline: auto; width: fit-content; max-width: calc(100% - 28px); }
 }
 
 /* ---- A smaller panels bar, and its group names centred between two fine lines of light ---- */
@@ -194,21 +182,3 @@ dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { o
 #suite-home .suite-group h4::before { content: ""; flex: 1; height: 1px; margin: 0; font-size: 0; text-shadow: none; -webkit-text-fill-color: initial;
   background: linear-gradient(270deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 40%, transparent) 50%, transparent); box-shadow: 0 0 6px color-mix(in srgb, var(--hi) 40%, transparent); }
 .tabbar .tg-label { text-align: center; padding-left: 0; }
-
-/* An app opening: the bars are just away at once, no slide (bar.js, one frame) */
-html.bar-instant .shell > .tabbar, html.bar-instant .shell > .topbar, html.bar-instant .main > .suite-home,
-html.bar-instant .suite-home .suite-app, html.bar-instant .tabbar [data-tab], html.bar-instant .shell > .topbar *,
-html.bar-instant .status-line, html.bar-instant .main, html.bar-instant .viewer { transition: none !important; animation: none !important; }
-
-/* Floating over an open panel the bars are solid, not frosted: a frosted bar has to blur what's
-   behind it again on every frame it moves (the slow part of a slide), and over a dark panel the
-   blur shows nothing anyway */
-html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home,
-html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
-  backdrop-filter: none; -webkit-backdrop-filter: none; }
-html[data-top="auto"] .shell:has(> .main.viewing) > .topbar, html[data-top="hidden"] .shell:has(> .main.viewing) > .topbar {
-  background:
-    radial-gradient(60% 70% at 0% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%) padding-box,
-    linear-gradient(color-mix(in srgb, var(--panel) 92%, var(--void)), color-mix(in srgb, var(--panel) 92%, var(--void))) padding-box,
-    var(--edge-glow) border-box; }
-html[data-bar="auto"] .main.viewing > .suite-home, html[data-bar="hidden"] .main.viewing > .suite-home { background-color: color-mix(in srgb, var(--void) 92%, var(--panel)); }

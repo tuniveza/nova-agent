@@ -1,14 +1,11 @@
-// The bars, measured: does an open panel jump when the panels bar (bottom) or Nova Agent's top bar
-// comes and goes, how long each move takes, and does the bar above an open panel look like Nova
-// Agent's own top bar (same height, corners, edge and title size)?
-// For each size it opens a panel inside Nova Agent, then brings the bars in and sends them away
-// (the mouse at the edges on a computer, scrolling on a phone) and records, every animation frame:
-// the panel frame's box, the panel page's own size (a resize inside it = its page reflowed) and
-// when the bar's movement finished.
+// The bars, measured: is the title panel over an open panel exactly Nova Agent's own header (the
+// same height, width, corners and look, one bar only), is every control in it a big enough target,
+// and are the bars' slides set short (at most 120 ms, no wait)? (How they come and go, and the
+// content filling the room they leave: scripts/check-autohide.mjs.)
 //
 // Against a throwaway server (see scripts/check-fit.mjs's header):
 //   node scripts/check-bars.mjs http://localhost:4721 [--sizes 1440x900,390x844] [--panel /portal/]
-// Exits 1 when a panel jumps, a move is set to take longer than 200 ms, or the two top bars don't match.
+// Exits 1 when the two top bars don't match, a control is too small, or a move is set too long.
 import { chromium } from "playwright";
 import { portalMock } from "./check-fit-portal-samples.mjs";
 
@@ -73,86 +70,27 @@ for (const [w, h] of SIZES) {
     (small.length ? fail : ok)(`every title panel control at least ${need}px${small.length ? ": too small: " + small.join(", ") : ""}`);
   }
 
-  // Watch the panel and the bars, frame by frame, while something happens
-  await tab.evaluate(() => {
-    const frame = document.getElementById("viewer-frame");
-    const log = (window.__barLog = { boxes: new Set(), inner: new Set(), resizes: 0, ends: [], starts: [] });
-    const fw = frame.contentWindow;
-    fw.addEventListener("resize", () => log.resizes++);
-    for (const el of [document.getElementById("suite-home"), document.getElementById("tabbar"), document.querySelector(".shell > .topbar")]) {
-      if (!el) continue;
-      el.addEventListener("transitionrun", (e) => { if (e.target === el && e.propertyName === "transform") log.starts.push(performance.now()); });
-      el.addEventListener("transitionend", (e) => { if (e.target === el && e.propertyName === "transform") log.ends.push(performance.now()); });
-    }
-    const tick = () => {
-      const b = frame.getBoundingClientRect();
-      log.boxes.add(`${Math.round(b.top)},${Math.round(b.height)}`);
-      log.inner.add(`${fw.innerWidth}x${fw.innerHeight}`);
-      if (!window.__barStop) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  });
-  const stateNow = () => tab.evaluate(() => ({ tucked: document.documentElement.classList.contains("bar-tucked"), top: document.documentElement.classList.contains("top-tucked") }));
-  const before = await stateNow();
-  // (the panel's frame: by its address, else the viewer's frame)
-  const fr = tab.frames().find((f) => f !== tab.mainFrame() && f.url().includes(PANEL.replace(/\/$/, "")))
-    || (await (await tab.$("#viewer-frame"))?.contentFrame());
-  if (phone && !fr) console.log("  (the panel's frame wasn't found: scrolling not tried)");
-  if (phone && fr) {
-    // Scroll the panel's page down a good way, then up a little, then down again
-    // (no taps: the bars no longer come and go with touches, and a tap could open something)
-    const swipe = async (dy) => {
-      for (let i = 0; i < 6; i++) {
-        await fr.evaluate((d) => { const s = [...document.querySelectorAll("*")].find((e) => e.scrollHeight - e.clientHeight > 300 && /auto|scroll/.test(getComputedStyle(e).overflowY)) || document.scrollingElement; s.scrollBy(0, d); }, dy / 6);
-        await sleep(30);
-      }
-      await sleep(450);
-    };
-    await tab.evaluate(() => window.NovaBar && window.NovaBar.reveal());
-    await sleep(400);
-    await swipe(500);
-    const a = await stateNow();
-    await swipe(-120);
-    const b = await stateNow();
-    await swipe(400);
-    const c = await stateNow();
-    console.log(`  bar after: down ${a.tucked ? "away" : "shown"} · up ${b.tucked ? "away" : "shown"} · down ${c.tucked ? "away" : "shown"}`);
-  } else {
-    // The mouse rests at the bottom edge (the bar comes), then works up in the panel (it goes),
-    // then at the top edge (the top bar comes) and back down (it goes)
-    const move = async (y, ms) => { await tab.mouse.move(w / 2, y, { steps: 4 }); await sleep(ms); };
-    await move(h / 2, 900);
-    await move(h - 4, 700);
-    const a = await stateNow();
-    await move(h / 2, 1200);
-    const b = await stateNow();
-    await move(3, 700);
-    const c = await stateNow();
-    await move(h / 2, 1200);
-    const d = await stateNow();
-    console.log(`  bar: edge ${a.tucked ? "away" : "shown"} → middle ${b.tucked ? "away" : "shown"} · top bar: edge ${c.top ? "away" : "shown"} → middle ${d.top ? "away" : "shown"}`);
-  }
-  const log = await tab.evaluate(() => { window.__barStop = true; const l = window.__barLog; return { boxes: [...l.boxes], inner: [...l.inner], resizes: l.resizes, starts: l.starts, ends: l.ends }; });
-  (log.boxes.length <= 1 && log.resizes === 0 ? ok : fail)(`the panel kept still (${log.boxes.length} frame boxes: ${log.boxes.join(" | ")}; its page resized ${log.resizes}×: ${log.inner.join(" | ")})`);
-  // Each move's length as set (what a real screen shows), and as seen here, from its start to the
-  // matching end (a headless browser draws few frames a second, so this one runs long)
+  // How the bars come and go (Auto, the default): measured in scripts/check-autohide.mjs (the
+  // timing, the content filling the room, never resizing during a slide). Here: each move's
+  // length as set, coming and going, at most 120 ms with no wait before it starts
   const set = await tab.evaluate(() => {
     const out = [];
-    for (const tucked of [false, true]) {
-      document.documentElement.classList.toggle("bar-tucked", tucked);
-      document.documentElement.classList.toggle("top-tucked", tucked);
+    const root = document.documentElement;
+    const was = root.className;
+    for (const going of [false, true]) {
+      root.classList.toggle("top-going", going);
+      root.classList.toggle("nav-going", going);
       for (const el of [document.getElementById("suite-home"), document.getElementById("tabbar"), document.querySelector(".shell > .topbar")]) {
         if (!el || getComputedStyle(el).display === "none") continue;
         const cs = getComputedStyle(el), names = cs.transitionProperty.split(", "), durs = cs.transitionDuration.split(", "), dels = cs.transitionDelay.split(", ");
         const i = names.findIndex((n) => n === "transform" || n === "all");
-        if (i >= 0) out.push(Math.round((parseFloat(durs[i % durs.length]) + parseFloat(dels[i % dels.length])) * 1000));
+        if (i >= 0) out.push({ ms: Math.round(parseFloat(durs[i % durs.length]) * 1000), wait: Math.round(parseFloat(dels[i % dels.length]) * 1000) });
       }
     }
+    root.className = was;
     return out;
   });
-  if (set.length) (Math.max(...set) <= 200 ? ok : fail)(`bar moves are set to ${[...new Set(set)].join(", ")} ms`);
-  const lens = log.starts.map((s) => { const e = log.ends.find((t) => t > s); return e ? Math.round(e - s) : null; }).filter((x) => x != null);
-  console.log(lens.length ? `  (seen here: ${lens.join(", ")} ms)` : `  (no bar moves seen; before: ${JSON.stringify(before)})`);
+  if (set.length) (Math.max(...set.map((x) => x.ms)) <= 120 && set.every((x) => x.wait === 0) ? ok : fail)(`bar moves are set to ${[...new Set(set.map((x) => x.ms))].join(", ")} ms, no wait`);
   await ctx.close();
 }
 await browser.close();

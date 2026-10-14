@@ -217,7 +217,7 @@
 
   // The whole front page fits the chat's space with no scrolling, and fills it: drawn smaller when
   // it's taller than the room, bigger when there's room to spare
-  let fitting = 0, lastZ = 0;
+  let fitting = 0, lastZ = 0, lastH = 0;
   function fit() {
     cancelAnimationFrame(fitting);
     fitting = requestAnimationFrame(() => {
@@ -237,7 +237,7 @@
       };
       // Fills the room: smaller when there's too little (never below 65%), bigger when there's
       // plenty (up to 140%), always all of it in view
-      const done = (z, h) => { lastZ = z; log.classList.toggle("mw-scroll", h > room + 2); };
+      const done = (z, h) => { lastZ = z; lastH = h; log.classList.toggle("mw-scroll", h > room + 2); };
       const r3 = (z) => Math.floor(z * 1000) / 1000; // (down: a size that fits, never a hair over it)
       // Most of the time nothing has changed: the last size still fits and a touch bigger doesn't.
       // Two layouts instead of a dozen (this runs on every resize, font and picture load)
@@ -247,6 +247,23 @@
           const h = measure(lastZ);
           if (!h) return;
           if (h <= room || lastZ <= 0.65) return done(lastZ, h);
+        }
+      }
+      // The room changed a lot (a bar came or went, the window was resized): the content's height
+      // goes up and down about in step with its size, so aim straight for it and correct once or
+      // twice (one layout, now and then two, not ten)
+      if (lastZ && lastH) {
+        const clamp = (z) => Math.min(1.4, Math.max(0.65, r3(z)));
+        // (aimed a touch under, so the first try nearly always fits: one layout)
+        let z = clamp(lastZ * (room / lastH) * 0.985);
+        for (let i = 0; i < 3; i++) {
+          const h = measure(z);
+          if (!h) return;
+          if (h <= room) return done(z, h);
+          if (h > room && z <= 0.65) return done(z, h);
+          const next = clamp(z * (room / h) * 0.985);
+          if (next === z) break;
+          z = next;
         }
       }
       // The biggest size (65% to 140%) at which all of it is in view. Text rewraps as the size

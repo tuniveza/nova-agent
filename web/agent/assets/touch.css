@@ -22,11 +22,9 @@ html.is-touch .status-line .sl-item { min-height: 28px; }
   .suite-app:hover > .pico, .suite-app:hover > img { transform: none; }
 }
 
-/* A tablet showing the computer layout: the bars' hide-and-show follow your swipes (as on a phone),
-   and the little handle at the bottom brings the panels bar back */
+/* A tablet showing the computer layout: bigger places on the panels bar (the bars come back with
+   a swipe or a tap at the edge, bar.js) */
 @media (min-width: 981px) and (min-height: 481px) {
-  html.is-touch[data-bar="auto"].bar-tucked .bar-peek { display: grid; place-items: center; left: 50%; bottom: 0; width: 110px; height: calc(24px + env(safe-area-inset-bottom)); margin-left: -55px; padding-bottom: env(safe-area-inset-bottom); }
-  html.is-touch.bar-tucked .bar-peek > span { width: 48px; height: 5px; background: color-mix(in srgb, var(--hi) 55%, var(--muted)); box-shadow: 0 0 10px -2px var(--hi); opacity: .85; }
   html.is-tablet .main > .suite-home .suite-grid { grid-auto-columns: 72px; }
   html.is-tablet .main > .suite-home .suite-app { padding-block: 7px 6px; }
 }
