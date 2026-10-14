@@ -288,6 +288,7 @@ dialog.detail[open] .dt-inner { animation: rise .28s ease-out; }
 
 /* ---------- FOOTER / TOAST ---------- */
 .foot { margin-top: 36px; text-align: center; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in srgb, var(--muted) 85%, transparent); line-height: 1.8; }
+.foot .foot-sep { display: none; }
 .foot code { font-family: var(--f-mono); color: var(--soft); text-transform: none; letter-spacing: 0; }
 /* Nothing to show yet (no scan, or not signed in): one calm glass note across the whole width */
 .empty-data {
@@ -487,4 +488,110 @@ html.embed .stats { margin-top: 14px; }
   .controls .sort { width: 100%; flex: 1 1 100%; order: 1; }
   .controls .sort select { flex: 1; padding: 6px 8px; max-width: none; }
   .filters { width: 100%; order: 2; }
+}
+
+/* ================= EVERYTHING AT ONCE (computers and tablets on their side) =================
+   The whole Observatory fits the window, nothing to scroll around: the header and the search row
+   at the top, then the decks on the left and the star map on the right, side by side, both filling
+   the height that's left; the footer is one quiet line. Each deck lies on its side (picture left,
+   words right) so a row of two fits; its goal is in its details (and shows again on tall windows).
+   Only if there are more decks than fit does the deck column scroll, inside itself. */
+@media (min-width: 900px) and (min-height: 560px), (min-width: 641px) and (min-height: 900px) {
+  .app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; max-width: 1920px; padding-bottom: 10px !important; }
+  .hero, .controls, .foot { flex: none; }
+  .controls { position: relative; top: 0; margin: 10px 0; }
+  .app > main { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); grid-template-rows: minmax(0, 1fr); gap: 14px; }
+  .app > main > .decks, .app > main > .none { grid-column: 1; grid-row: 1; }
+  .app > main > .starmap-wrap { grid-column: 2; grid-row: 1; }
+
+  /* The decks: two to a row (one when there's only one), sharing the height evenly */
+  .decks { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent;
+    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); grid-auto-rows: minmax(min-content, 1fr); gap: 12px; padding: 4px 4px 4px 0; align-content: stretch; }
+  .decks[data-n="1"] { --cols: 1; }
+  .deck { flex-direction: row; min-height: 0; }
+  .deck-media { flex: 0 0 32%; aspect-ratio: auto !important; min-height: 100%; }
+  .deck-media::after { background: linear-gradient(to right, transparent 60%, color-mix(in srgb, var(--panel) 92%, transparent)); }
+  .cover-title { font-size: clamp(12px, 1.3vw, 18px); left: 6px; right: 6px; white-space: normal; overflow-wrap: anywhere; line-height: 1.05; }
+  .deck-body { min-width: 0; gap: 6px; padding: 10px 12px; }
+  .deck-name { font-size: 15px; }
+  .deck-tag { margin-top: -2px; }
+  .deck-goal { display: none; }
+  .deck-foot { padding-top: 6px; }
+  /* The status and category stack in the picture's corner instead of crowding it */
+  .deck .pills { flex-direction: column; align-items: flex-start; right: auto; gap: 4px; }
+  /* The four numbers: two by two when the words side is narrow, so none are cut short */
+  .deck-body { container-type: inline-size; }
+  .none { align-self: start; }
+  /* Shorter windows: the summary line gives its room to the decks (the numbers above and the
+     footer say the same) */
+  @media (max-height: 860px) { .hero-lede, .lang-key { display: none; } }
+  /* Short windows: each deck's tools go too (they're in its details) */
+  @media (max-height: 700px) { .deck .chips { display: none; } .hero-lede, .lang-key { display: none; } }
+  /* Narrower windows (the header takes three rows here): the decks get a little more of the width,
+     and the language names go (the bar stays; hover it for each one) */
+  @media (max-width: 1179px) {
+    .app > main { grid-template-columns: minmax(0, 1.9fr) minmax(280px, 1fr); }
+    .lang-key, .deck .chips { display: none; }
+    .foot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  }
+  .fig b { font-size: 12.5px; }
+  /* The footer of a deck: one line each side, cut short with … (the details have it in full) */
+  .deck-foot { flex-wrap: nowrap; }
+  .deck-foot > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .deck-foot > span:first-child { flex: 0 1 auto; }
+  .deck-foot > span + span { flex: 0 1000 auto; }
+
+  /* The star map: its own panel, filling the column; the drawing grows to fit it */
+  .starmap-wrap { margin: 0 !important; min-height: 0; display: flex; flex-direction: column; }
+  .starmap-wrap .sec-title { flex: none; margin-bottom: 8px; flex-direction: column; align-items: stretch; gap: 2px; }
+  .starmap-wrap .sec-title h2 { font-size: 17px; }
+  .starmap-wrap .sec-title p { font-size: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .starmap { flex: 1 1 auto; min-height: 0; border-radius: 22px; display: flex; }
+  .starmap svg { flex: 1; width: 100%; height: 100%; min-height: 0; }
+
+  .foot { margin-top: 8px; font-size: 9.5px; line-height: 1.5; }
+  .foot br { display: none; }
+  .foot .foot-sep { display: inline; margin: 0 .6em; }
+}
+/* Tablets standing up: the decks on top, the star map under them, still all on one screen */
+@media (min-width: 641px) and (max-width: 899px) and (min-height: 900px) {
+  .app > main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .app > main > .starmap-wrap { grid-column: 1; grid-row: 2; }
+  .app > main { grid-template-rows: minmax(0, 2fr) minmax(0, 1fr); }
+  .hero .stats, html.embed .hero .stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .hero-lede { display: none; }
+}
+/* Tall windows: room for each deck's goal again */
+@media (min-width: 900px) and (min-height: 980px) {
+  .deck-goal { display: -webkit-box; }
+}
+/* Wide windows: three decks to a row once there are five or more */
+@media (min-width: 1600px) and (min-height: 560px) {
+  .decks[data-n="5"], .decks[data-n="6"], .decks[data-n="many"] { --cols: 3; }
+}
+
+/* Phones: the sort sits beside the categories (one row less), so the decks start higher */
+@media (max-width: 640px) {
+  .controls .sort { width: auto; flex: 0 1 auto; order: 2; }
+  .controls .sort > span { display: none; }
+  .controls .sort select { max-width: 46vw; }
+  .filters { width: auto; flex: 1 1 0; min-width: 0; order: 1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .search { order: 0; }
+  .deck-media { min-height: 80px; width: 84px; }
+  .controls .sort select { font-size: 12px; padding: 6px 8px; }
+  .foot { font-size: 9.5px; line-height: 1.6; }
+  .foot { margin-top: 18px; }
+}
+
+/* The star map's words and lines stay the same size on screen however big the map is drawn
+   (observatory.js fitStarmap sets --sm-u, map units per pixel) */
+.starmap svg { --sm-u: 1; }
+.sm-edge, .sm-ring { vector-effect: non-scaling-stroke; }
+.sm-dir text { font-size: calc(10px * var(--sm-u)); }
+.sm-root text { font-size: calc(12px * var(--sm-u)); }
+.sm-star text { font-size: calc(11px * var(--sm-u)); stroke-width: calc(3px * var(--sm-u)); }
+.sm-star .sm-lang { font-size: calc(9.5px * var(--sm-u)); stroke-width: calc(2.5px * var(--sm-u)); }
+@container (max-width: 236px) {
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 6px; }
 }

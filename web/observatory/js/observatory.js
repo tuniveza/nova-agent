@@ -218,6 +218,8 @@
   function renderDecks() {
     const list = visible();
     $('#decks').innerHTML = list.map(deckHTML).join('');
+    // How many there are, so the layout can choose how many go in a row (css: EVERYTHING AT ONCE)
+    $('#decks').dataset.n = list.length > 6 ? 'many' : String(list.length);
     $('#none').hidden = list.length > 0;
   }
 
@@ -449,6 +451,49 @@
       <defs>${grads}</defs>${rings}${edges.join('')}${dirs.join('')}
       <g class="sm-root"><circle r="6" fill="var(--soft)"/><text y="-14" text-anchor="middle">${esc(home(D.root))}</text></g>
       ${starEls.join('')}</svg>`;
+    fitStarmap();
+    if (!renderStarmap.watching && window.ResizeObserver) {
+      let queued = 0;
+      new ResizeObserver(() => { if (!queued) queued = requestAnimationFrame(() => { queued = 0; fitStarmap(); }); }).observe($('#starmap'));
+      renderStarmap.watching = true;
+    }
+  }
+
+  // The star map fills its panel: the view closes in on the stars (with room for their names) and
+  // the names stay a readable size however big or small the map is drawn (--sm-u: map units per pixel)
+  const ONE_SCREEN = matchMedia('(min-width: 900px) and (min-height: 560px), (min-width: 641px) and (min-height: 900px)');
+  function fitStarmap() {
+    const box = $('#starmap'), svg = box && box.querySelector('svg');
+    if (!svg || !box.clientWidth) return;
+    const W = box.clientWidth, H = ONE_SCREEN.matches && box.clientHeight > 80 ? box.clientHeight : W * 0.8;
+    const parts = [];
+    svg.querySelectorAll('.sm-star').forEach((g) => {
+      const c = g.querySelector('circle:not(.halo)'), t = g.querySelector('text');
+      const x = +c.getAttribute('cx'), y = +c.getAttribute('cy'), r = +c.getAttribute('r');
+      parts.push({ x, y, r: r * 3.4, label: t ? t.textContent.length : 0, end: t && t.getAttribute('text-anchor') === 'end', px: g.classList.contains('sm-member') ? 6.5 : 9 });
+    });
+    svg.querySelectorAll('.sm-dir circle').forEach((c) => parts.push({ x: +c.getAttribute('cx'), y: +c.getAttribute('cy'), r: 4, label: 0 }));
+    parts.push({ x: 0, y: 0, r: 8, label: 0, top: true });
+    if (!parts.length) return;
+    let u = 1, vb = [-600, -480, 1200, 960];
+    for (let i = 0; i < 4; i++) {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const p of parts) {
+        const w = p.label * p.px * u + p.r + 10 * u;
+        x0 = Math.min(x0, p.x - (p.end ? w : p.r)); x1 = Math.max(x1, p.x + (p.end ? p.r : p.label ? w : p.r));
+        y0 = Math.min(y0, p.y - p.r - (p.top ? 22 * u : 10 * u)); y1 = Math.max(y1, p.y + p.r + 10 * u);
+      }
+      const pad = 24 * u;
+      let w = x1 - x0 + pad * 2, h = y1 - y0 + pad * 2;
+      // Never closer than a 300-wide view, so one lone star doesn't fill the whole sky
+      w = Math.max(w, 300); h = Math.max(h, 240);
+      // Same shape as the panel, centred on the stars
+      if (w / h < W / H) w = h * (W / H); else h = w / (W / H);
+      vb = [(x0 + x1) / 2 - w / 2, (y0 + y1) / 2 - h / 2, w, h];
+      u = w / W;
+    }
+    svg.setAttribute('viewBox', vb.map((n) => n.toFixed(1)).join(' '));
+    svg.style.setProperty('--sm-u', u.toFixed(4));
   }
 
   // ---------- WIRING ----------
@@ -497,6 +542,6 @@
   renderDecks();
   renderStarmap();
   bind();
-  $('#foot').innerHTML = `Observatory · part of Nova Agent · Novacane Studios<br>Scanned ${esc(when(D.generatedAt))} · refresh with <code>npm run build</code> (or <code>npm run scan</code> for numbers only)`;
+  $('#foot').innerHTML = `Observatory · part of Nova Agent · Novacane Studios<br><span class="foot-sep" aria-hidden="true">·</span>Scanned ${esc(when(D.generatedAt))} · refresh with <code>npm run build</code> (or <code>npm run scan</code> for numbers only)`;
   if (location.hash.length > 1) openDetail(location.hash.slice(1), false);
 })();

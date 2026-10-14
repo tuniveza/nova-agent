@@ -269,23 +269,27 @@ function pillHtml(e) {
   }
   // The title in full (it wraps rather than being cut short) and, under it, what it's for
   const what = whatOf(e);
-  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}"><i class="pill-sym" aria-hidden="true">${iconOf(symbolOf(e))}</i>${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
+  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}"><i class="pill-sym" aria-hidden="true">${symbolIcon(e)}</i>${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
 }
 // A symbol for what a card is about (shown when its day is too small for words)
 const SYMBOLS = [
+  [/birthday|bday/i, "cake"], [/\bdate\b|love|anniversary|valentine/i, "heart"],
   [/record|recording|vocal|sing|mic|podcast|voice|studio/i, "mic"], [/mix|master|beat|song|track|music|ep\b|album|release|gig|concert|rehears/i, "note"],
   [/lesson|class|course|study|learn|tutor|school|exam/i, "cap"], [/listen|playlist|headphone|audio/i, "headphones"],
   [/meet|meeting|call with|team|crew|band|session with|catch.?up/i, "people"], [/gym|workout|run|walk|yoga|train|exercise|steps/i, "dumbbell"],
   [/lunch|dinner|breakfast|eat|food|cook|meal/i, "plate"], [/flight|fly|travel|trip|holiday|airport/i, "plane"],
   [/phone|call\b|ring/i, "phone"], [/write|lyrics|note|journal|draft|edit\b|script/i, "pen"], [/video|film|reel|shoot|camera|youtube|tiktok/i, "film"],
-  [/read|book/i, "book"], [/email|mail|reply|send/i, "mail"], [/birthday|bday/i, "cake"], [/date|love|anniversary/i, "heart"],
+  [/read|book/i, "book"], [/email|mail|reply|send/i, "mail"],
 ];
 function symbolOf(e) {
-  if (e.type === "booking") return "user";
+  if (e.type === "booking") return "booking";
   const text = `${titleOf(e)} ${(e.item && (e.item.notes || e.item.location)) || ""}`;
   for (const [re, ico] of SYMBOLS) if (re.test(text)) return ico;
-  return e.ro ? "flag" : "sparkle";
+  return e.ro ? "quest" : "card";
 }
+// What each symbol means, in words (its tooltip)
+const SYMBOL_WORDS = { booking: "Studio booking", quest: "Quest", card: "Note card", mic: "Recording", note: "Music", cap: "Lesson", headphones: "Listening", people: "Meeting", dumbbell: "Exercise", plate: "Food", plane: "Travel", phone: "Call", pen: "Writing", film: "Video", book: "Reading", mail: "Email", cake: "Birthday", heart: "Someone special" };
+const symbolIcon = (e) => { const s = symbolOf(e); return window.NT && window.NT.presets ? window.NT.presets.icon(s, "", SYMBOL_WORDS[s] || "") : ""; };
 // What a card is for, in a line: its notes (first line), else where it is
 function whatOf(e) {
   const it = e.item || {};
@@ -423,7 +427,7 @@ function rowHtml(e) {
   const when = e.allDay ? "All day" : `${fmtTime(e.start)}<br>${fmtTime(e.end)}`;
   const art = e.type === "event" && !e.ro;
   // Quests and bookings have no picture: their symbol sits in its place, so every row's times line up
-  const lead = art ? `<span class="art" data-art-note="${esc(e.item.id)}" data-date="${e.date}"></span>` : `<span class="row-sym" aria-hidden="true">${iconOf(symbolOf(e))}</span>`;
+  const lead = art ? `<span class="art" data-art-note="${esc(e.item.id)}" data-date="${e.date}"></span>` : `<span class="row-sym" aria-hidden="true">${symbolIcon(e)}</span>`;
   return `<li><button type="button" class="row-item note has-art${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${lead}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
 }
 function dayPlanHtml(d) {

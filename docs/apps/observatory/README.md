@@ -28,6 +28,7 @@ and experiments. They show project names, sizes and folder trees, and nothing pe
 
 | | |
 |---|---|
+| 🪟 **Everything at once** | On a computer (and a tablet standing up) the whole Observatory fits the window: the decks on the left, the star map on the right, nothing to scroll around. The star map closes in on the stars and keeps their names readable at any size. Only if there are more decks than fit does the deck column scroll, inside itself. |
 | 🔔 **Sound switch** | Soft cosmic sound effects on every press. The **Sound on / Sound off** switch beside All links turns them off and on. |
 | 🔒 **All links** | A pill in the header that opens the password-protected page with every Nova Agent address, live and testing. |
 | ✦ **Served by Nova Agent** | Nova Agent serves it at `/observatory/`, so it's always on while Nova Agent is. |

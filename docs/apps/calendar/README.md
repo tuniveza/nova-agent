@@ -26,6 +26,7 @@
 - **Backup** (the layers button): **Export** downloads every note card and day card; **Import** brings a backup back in, including one from the old Calendar.
 - **What to show** (the layers button): note cards, day cards, the moon and special days, Quests (Nova Agent's plan: read-only here, change them in Quests) and studio bookings (read-only, from the diary).
 - **Search** every note card and day card by title, place or notes.
+- **Icons that say what they are:** one modern line set throughout. A note card shows what it's about (a mic for a recording, a cake for a birthday, a plane for travel…), a studio booking shows a ticked calendar, a quest a target; each day-card kind has its own (a ghost for Halloween, a flame for Bonfire Night, a party popper for New Year, a suitcase for a trip). Point at one for its name.
 
 ## Works with Nova Agent
 
