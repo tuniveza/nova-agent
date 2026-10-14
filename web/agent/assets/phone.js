@@ -222,7 +222,7 @@
   // rows, Apps along the top and Plans, Tools and Helpers below
   const SKIP = ['/admin/links']; // All links: behind the gear
   const GROUPS = [
-    ['apps', 'Programs', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
+    ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
     ['tasks', 'Plans', ['/quests/', 'pane:missions']],
     ['tools', 'Tools', ['/lossless/', '/visualizer', '/console/']],
     ['helpers', 'Helpers', ['/observatory/', 'manual']],
