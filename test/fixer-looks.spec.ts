@@ -3,7 +3,7 @@
 // numbers pushed down behind the navigation panel) is caught, and an ordinary empty state isn't.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser, Page } from "playwright";
-import { judgeContent, judgeFrame, judgeHost, looksFindings, measureContent, measureFrame, measureHost, type FrameMeasure, type LooksScreen } from "../src/fixer/looks";
+import { LOOKS_SIZES, judgeContent, judgeFrame, judgeHost, looksDevice, looksFindings, measureContent, measureFrame, measureHost, type FrameMeasure, type LooksScreen } from "../src/fixer/looks";
 
 let browser: Browser;
 let page: Page;
@@ -48,6 +48,11 @@ describe("judging a panel", () => {
   it("a big gap between its parts", async () => {
     const f = await frameOf(`<header style="height:50px">Top</header><div style="height:600px"></div><footer>Bottom words here</footer>`);
     expect(judgeFrame(f).map((p) => p.kind)).toContain("gap");
+  });
+
+  it("a space marked to be filled (Console's empty terminal) isn't a gap", async () => {
+    const f = await frameOf(`<header style="height:50px">Top</header><main data-looks-fill style="height:600px"></main><footer>Bottom words here</footer>`);
+    expect(judgeFrame(f).map((p) => p.kind)).not.toContain("gap");
   });
 
   it("backdrops don't count as content; a big drawing that is the content does", async () => {
@@ -123,5 +128,26 @@ describe("the Fixer's problems from the looks check", () => {
   it("the judging rules on their own: content low is a gap, content high is fine", () => {
     expect(judgeContent({ w: 1000, h: 1000, rows: [[700, 760], [800, 900]], text: 40, media: 2, header: 700 }, "panel").map((p) => p.kind)).toEqual(["top-gap", "header-low"]);
     expect(judgeContent({ w: 1000, h: 1000, rows: [[0, 60], [80, 120]], text: 40, media: 2, header: 0 }, "panel")).toEqual([]);
+  });
+});
+
+describe("the sizes it looks at, and how each is opened", () => {
+  it("includes a phone held sideways and an Android tablet upright", () => {
+    const sizes = LOOKS_SIZES.map(([w, h]) => `${w}x${h}`);
+    expect(sizes).toContain("780x360");
+    expect(sizes).toContain("800x1280");
+  });
+  it("opens phones (upright and sideways) and Android tablets as Chrome on Android, computers as computers", () => {
+    for (const [w, h] of [[360, 740], [390, 844], [780, 360], [915, 412]] as const) {
+      const d = looksDevice(w, h);
+      expect(d.kind).toBe("phone");
+      expect(d.touch).toBe(true);
+      expect(d.userAgent).toMatch(/Android .* Mobile Safari/);
+    }
+    const tab = looksDevice(800, 1280);
+    expect(tab).toMatchObject({ kind: "tablet", touch: true });
+    expect(tab.userAgent).toMatch(/Android/);
+    expect(tab.userAgent).not.toMatch(/Mobile/);
+    for (const [w, h] of [[1024, 768], [1440, 900], [2000, 1130]] as const) expect(looksDevice(w, h)).toEqual({ kind: "computer", touch: false, dpr: 1 });
   });
 });

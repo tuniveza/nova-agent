@@ -5,7 +5,7 @@
 //               online link, Nova Bot, restarts, disk space, data files); once a day, the audio
 //               levels. Problems become issues (one per fingerprint), cleared when they're gone.
 //   Looks       every hour and after each deploy: the live Nova Agent and every panel inside it,
-//               signed in and out, at six screen sizes, judged for gaps, blank panels, bars
+//               signed in and out, at eight screen sizes (phones upright and sideways and an Android tablet as Chrome on Android shows them), judged for gaps, blank panels, bars
 //               covering things, scrolling and cut-off text (looks.ts). Its problems are issues
 //               too, with a picture; a fix for one is checked at the sizes where it was seen.
 //   Preparing   for an issue or a fixer quest (by itself for new issues, if that's switched on):

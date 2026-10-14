@@ -445,6 +445,14 @@ side and three tablets (upright and sideways), signed in and out, at 100% and 13
 what's broken (gaps, cut-off pages, things off the screen, sideways scrolling, Back leaving the app)
 and what's awkward (buttons under 40px, text under 11px); `--shots folder --sheet` saves a picture of
 every screen and a contact sheet per device.
+Held sideways, the Visualizer's four cards sit side by side under a one-row heading, Console's quick
+commands share the top row with its tabs so the terminal keeps its room, Notes' and Calendar's
+headers are one row, and Notes' list slides in at full height. On touch screens the panels drop the
+frosted-glass blur (it's the costliest thing on cheaper phones; also for anyone whose device asks
+for less transparency). The Fixer's looks check opens a phone held sideways (780×360) and an Android
+tablet (800×1280) too, as Chrome on Android shows them (`looksDevice()` in `src/fixer/looks.ts`); a
+space that's meant to be filled, like Console's terminal, is marked `data-looks-fill` so it isn't
+taken for a gap.
 
 ### Install or remove the apps (and help)
 

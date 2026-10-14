@@ -186,6 +186,7 @@
   .side .empty { padding: 14px; }
   .strip-tools { display: flex; gap: 6px; }
   .strip-btn { justify-content: center; padding: 7px 12px; }
+  .side-head > .strip-btn { max-width: 100%; min-width: 0; white-space: normal; } /* (a very narrow screen: wraps rather than running off the side) */
   /* The panels strip: the apps in their four groups, edge to edge. Its name is there for screen
      readers only (no box on the left), and it's the same bar whatever is open: only its size changes. */
   .strip { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); border-radius: 22px; overflow: hidden; }

@@ -1,7 +1,10 @@
 // The Fixer's scripted checks (src/fixer/probes.ts), in a pretend world: no real network, commands
 // or DNS. The real address list and Manual are read, as the Fixer reads them.
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+// (a healthy world is a quiet machine too: the load check doesn't read the real server's load,
+// which made this test fail whenever the machine running it was busy)
+vi.mock("node:os", async (orig) => ({ ...(await orig<typeof import("node:os")>()), loadavg: () => [0.4, 0.4, 0.4] }));
 import { answers, buildProbes, mailQueueCount, manualLinks, probeFindings, readAddresses, runProbes, systemdTime, type ProbeDeps } from "../src/fixer/probes";
 
 const NA = join(__dirname, "..");

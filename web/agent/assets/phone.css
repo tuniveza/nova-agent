@@ -201,7 +201,8 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
    buttons in reach; on a phone on its side, one row (name, then Start / In 15 min), the note left
    out (it's in Quests). The × stays a full-size target. */
 @media (max-width: 980px), (max-height: 500px) {
-  .toast { padding: 8px 12px 10px; border-radius: 16px; }
+  .toasts { grid-template-columns: minmax(0, 1fr); } /* (a long name on its one line can't push the card past the screen) */
+  .toast { min-width: 0; padding: 8px 12px 10px; border-radius: 16px; }
   .toast .x { width: 40px; height: 40px; margin: -6px -8px 0 4px; font-size: 18px; }
   .toast h5 { margin: 4px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .toast p { margin: 0 0 6px; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

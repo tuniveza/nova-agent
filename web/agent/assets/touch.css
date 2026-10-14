@@ -14,6 +14,7 @@ html.is-touch input, html.is-touch textarea, html.is-touch select { font-size: m
 html.is-touch .icon-btn { min-width: 40px; min-height: 40px; }
 html.is-touch .chat-pager button { width: 40px; height: 34px; }
 html.is-touch .mw-card { min-height: 44px; }
+html.is-touch .suggest .chip { min-height: 40px; } /* the suggestions under the welcome, finger-sized */
 html.is-touch .status-line .sl-item { min-height: 28px; }
 
 /* Nothing that only works with a mouse: hover lifts and glows stay off (they'd stick after a tap) */

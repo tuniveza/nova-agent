@@ -203,6 +203,14 @@
     .row { grid-template-columns: auto auto minmax(0, 1fr); gap: 2px 8px; padding: 4px 8px; margin: 0; }
     .row .msg, .row .more, .row > pre { grid-column: 1 / -1; }
     body > main section > h2.nt-h { font-size: 12px; letter-spacing: .1em; }
+    .pair { grid-template-columns: 1fr; }
+    .pair-arrows { display: none; }
+  }
+  /* A very short, narrow frame (a small phone with bigger text): the four cards are one row you
+     slide sideways, each the full height left, rather than four slivers */
+  @media (max-height: 320px) and (max-width: 640px) {
+    body > main { grid-auto-flow: column; grid-template-columns: none; grid-template-rows: minmax(0, 1fr); grid-auto-columns: 86%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-width: none; }
+    body > main section.nt-card { scroll-snap-align: start; }
   }
   /* Touch screens: buttons big enough for a finger */
   @media (pointer: coarse) {

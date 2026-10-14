@@ -422,3 +422,17 @@ html[data-motion="calm"] .view[data-anim] > * { animation: none !important; }/* 
   .views button { font-size: 12.5px; padding: 0 2px; }
   .tools .icon-btn { width: 40px; height: 40px; }
 }
+
+/* ---- A phone held sideways (short and wide): the bar is ONE row (the date's controls, then the
+   views, search, what to show and the + as just its icon, its name still read out), so the month
+   keeps the height ---- */
+@media (max-height: 500px) and (min-width: 600px) {
+  .bar, html[data-centred] .bar { flex-wrap: nowrap; justify-content: space-between; gap: 6px; padding-block: 4px; }
+  html.embed .bar { padding-top: 4px; }
+  .bar > .nav, html[data-centred] .bar > .nav { flex: 0 1 auto; min-width: 0; }
+  .bar > .tools { flex: none; gap: 4px; }
+  .nav > .title { font-size: 16px; min-width: 0; }
+  .views button { padding: 0 9px; }
+  .add-btn { padding: 0 12px; }
+  .add-btn > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}

@@ -1,7 +1,9 @@
 // The looks check: does every screen of Nova Agent LOOK right? (The hourly sweep, sweep.ts, opens
 // each panel on its own; this opens them the way people see them: inside Nova Agent, with the
 // title panel above and the navigation panel below, signed in and signed out, at phone, tablet,
-// laptop and big-screen sizes.)
+// laptop and big-screen sizes. Phones (upright and on their side) and Android tablets are opened
+// the way Chrome on Android opens them: touch, Android's user agent and pixel density; see
+// looksDevice().)
 //
 // For each screen it measures, then judges (judge(): plain rules, no AI):
 //   - a panel showing nothing (blank)
@@ -32,11 +34,25 @@ import { SWEEP_HEADER } from "./sweep-guard";
 export const LOOKS_SIZES: readonly (readonly [number, number])[] = [
   [360, 740],
   [390, 844],
+  [780, 360], // a phone held sideways
+  [800, 1280], // an Android tablet upright (Galaxy Tab S9)
   [1024, 768],
   [1440, 900],
   [1512, 1500],
   [2000, 1130],
 ];
+// How a size is opened: phones (narrower than 800, or held sideways: no taller than 500) and the
+// Android tablets' sizes as Chrome on Android (touch, its user agent and pixel density, the page's
+// viewport tag obeyed), everything else as a computer
+export const ANDROID_TABLET_SIZES: readonly string[] = ["800x1280", "1280x800", "600x960"];
+const PHONE_UA = "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36";
+const TABLET_UA = "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+export interface LooksDevice { kind: "phone" | "tablet" | "computer"; touch: boolean; dpr: number; userAgent?: string }
+export function looksDevice(width: number, height: number): LooksDevice {
+  if (width < 800 || (width > height && height <= 500)) return { kind: "phone", touch: true, dpr: 2, userAgent: PHONE_UA };
+  if (ANDROID_TABLET_SIZES.includes(`${width}x${height}`)) return { kind: "tablet", touch: true, dpr: 2, userAgent: TABLET_UA };
+  return { kind: "computer", touch: false, dpr: 1 };
+}
 // The panels, if the page doesn't list them (it does: the navigation panel's links)
 export const LOOKS_PANELS: { name: string; path: string }[] = [
   { name: "Portal", path: "/portal/" },
@@ -177,8 +193,9 @@ export function measureContent(selector: string | null): Content {
     for (const r of range.getClientRects()) any = add(r) || any;
     if (any) text += t.length;
   }
-  // Pictures, drawings, inputs, buttons, the panels' own frames
-  for (const el of scope.querySelectorAll("img, svg, canvas, video, input, textarea, select, button, iframe, [role=img], [style*=background-image]")) {
+  // Pictures, drawings, inputs, buttons, the panels' own frames, and a space that's there to be
+  // filled (data-looks-fill: Console's terminal, empty until you type, is room in use, not a gap)
+  for (const el of scope.querySelectorAll("img, svg, canvas, video, input, textarea, select, button, iframe, [role=img], [style*=background-image], [data-looks-fill]")) {
     if (el.tagName.toLowerCase() === "svg" && el.parentElement?.closest("svg")) continue;
     if (!shown(el)) continue;
     const cs = getComputedStyle(el);
@@ -389,8 +406,11 @@ export async function runLooks(opts: LooksOptions): Promise<LooksScreen[]> {
   try {
     for (const signedIn of states) {
       for (const [width, height] of sizes) {
-        const phone = width < 800;
-        const ctx = await browser.newContext({ viewport: { width, height }, isMobile: phone, hasTouch: phone, deviceScaleFactor: 1, serviceWorkers: "block" });
+        const dev = looksDevice(width, height);
+        const ctx = await browser.newContext({
+          viewport: { width, height }, screen: { width, height }, isMobile: dev.touch, hasTouch: dev.touch, deviceScaleFactor: dev.dpr, serviceWorkers: "block",
+          ...(dev.userAgent ? { userAgent: dev.userAgent } : {}),
+        });
         try {
           if (signedIn && opts.cookie) await ctx.addCookies([{ name: opts.cookie.name, value: opts.cookie.value, domain: new URL(origin).hostname, path: "/", secure: origin.startsWith("https:"), httpOnly: true, sameSite: "Lax" }]);
           // It only looks: nothing that would change something leaves this browser

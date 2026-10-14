@@ -255,5 +255,5 @@
 
 /* A phone or tablet: the cards' small names readable (11px, not 9px), the same quiet spaced capitals */
 @media (pointer: coarse) {
-  .mw-k { font-size: 11px; letter-spacing: .08em; }
+  .mw-k, .mw-title { font-size: 11px; letter-spacing: .08em; }
 }

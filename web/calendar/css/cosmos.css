@@ -369,12 +369,17 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
   /* The tightest month: the moon's little mark gives its room to the cards (the day's plan shows the moon) */
   .grid.fit-4 .cell > .moonmark { display: none !important; }
 }
-/* A short phone: the weeks keep a readable height, so the month (with the day's plan under it)
-   scrolls inside its own box rather than squeezing the days */
-@media (max-width: 700px) and (max-height: 700px) {
+/* A short phone (or one held sideways): the weeks keep a readable height, so the month (with the
+   day's plan under it) scrolls inside its own box rather than squeezing the days */
+@media (max-width: 700px) and (max-height: 700px), (max-height: 500px) and (max-width: 1099px) {
   .view > .month { overflow-y: auto; }
   .month > .grid { flex: none !important; grid-auto-rows: minmax(58px, auto) !important; }
   .month > .dayplan { max-height: none; overflow: visible; flex: none; }
+}
+/* Held sideways the days are wide but short: a little more height each, so a busy day's cards and
+   its "+ more" stay inside the square */
+@media (max-height: 500px) and (min-width: 701px) and (max-width: 1099px) {
+  .month > .grid { grid-auto-rows: minmax(74px, auto) !important; }
 }
 /* A booking's name: a long word breaks inside the card instead of being cut at its side, and what
    doesn't fit in its lines ends with … (tap the card for all of it) */

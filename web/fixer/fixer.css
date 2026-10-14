@@ -394,3 +394,12 @@ html.fx-wide #g-working { display: none; }
   .fx-actions.quiet .fx-wait { grid-column: 1 / -1; font-size: 13.5px; }
   .fx-tweak { grid-column: 1 / -1; grid-row: 1 / span 2; }
 }
+/* A short, narrow frame (a small phone with bigger text): the four numbers in one row and the notes
+   under them one line each (… if long), so the tabs and the open tab keep their room */
+@media (max-height: 480px) and (max-width: 480px) {
+  .glance-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .glance-item b { font-size: 14px; }
+  .glance > p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+}
+/* Touch screens: the numbers' names readable (11px) */
+@media (pointer: coarse) { .glance-item .nt-label { font-size: 11px; letter-spacing: .04em; } }

@@ -186,4 +186,4 @@ body.nb-tool {
   .nb-tool summary::before, .nt-bar > div { transition: none; }
 }
 /* Touch screens: the small labels readable on a phone */
-@media (pointer: coarse) { .nt-kicker, .nt-chip { font-size: 11px; } }
+@media (pointer: coarse) { .nt-kicker, .nt-chip, .nt-label, .nb-tool label.nt-label { font-size: 11px; } }

@@ -516,7 +516,9 @@ const cutShort = new Map();
 const note = (map, msg, at) => { if (!map.has(msg)) map.set(msg, []); map.get(msg).push(at); };
 
 async function newTab(w, h) {
-  const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: w < 800, hasTouch: w < 800 });
+  // (touch: phones, upright or sideways, and the Android tablets' sizes, as in src/fixer/looks.ts looksDevice)
+  const touch = w < 800 || (w > h && h <= 500) || ["800x1280", "1280x800", "600x960"].includes(`${w}x${h}`);
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch });
   if (BARS_AWAY) await ctx.addInitScript(() => { try { localStorage.setItem("nova-bar-2", "hidden"); localStorage.setItem("nova-top-2", "hidden"); } catch (err) {} });
   const tab = await ctx.newPage();
   await tab.route(/\/__fit\.html/, (r) => r.fulfill({ contentType: "text/html", body: FRAME(new URL(r.request().url()).searchParams.get("src")) }));

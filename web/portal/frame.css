@@ -77,3 +77,15 @@ html.embed .pv .auth, html.embed .pv .boot { height: 100vh; height: 100dvh; min-
   html.embed .app { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
   html.embed .app > main { flex: none; height: calc(100vh - 8px); height: calc(100dvh - 8px); }
 }
+/* Touch screens: Today's group names and its booking-tools and tests buttons readable (11px) and
+   finger-sized (40px) */
+@media (pointer: coarse) {
+  html #view-today .group-head { font-size: 11px; }
+  html #view-today .today-tools { min-height: 40px; font-size: 11px; }
+}
+/* A very narrow screen (a small phone with bigger text): the alerts' auto-delete switch wraps its
+   words inside the row instead of running past both sides */
+.auto-delete { max-width: 100%; min-width: 0; }
+.auto-delete .switch { min-width: 0; white-space: normal; }
+/* Touch screens: the month's days keep a finger's height (their width is the screen's seventh) */
+@media (pointer: coarse) { #cal-grid > .cal-day { min-height: 40px; } }
