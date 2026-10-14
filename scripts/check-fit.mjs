@@ -537,6 +537,14 @@ async function newTab(w, h) {
   await tab.route(/\/app\/api\/calendar\/items/, (r) => (r.request().method() === "GET" ? r.fulfill({ contentType: "application/json", body: JSON.stringify(calendarItems()) }) : r.fulfill({ contentType: "application/json", body: "{}" })));
   return { ctx, tab };
 }
+// Inside Nova Agent a panel shows no header of its own: no brand, logo or name row, no second planet
+// (Nova Agent's title panel has the panel's icon and name, the planet and the gear: one title panel only)
+const OWN_HEAD = () => {
+  const shown = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 4 && r.height > 4 && cs.visibility !== "hidden" && Number(cs.opacity) > 0.05 && r.bottom > 0 && r.top < innerHeight; };
+  return [...document.querySelectorAll(".brand, #brand, .brand-mark, .app-mark, .wordmark, .nt-title, nova-portal-badge, .portal-badge")]
+    .filter((e) => shown(e) && !e.closest("dialog, [role=dialog], .sheet, .login, #login"))
+    .map((e) => e.tagName.toLowerCase() + (e.id ? "#" + e.id : "") + (typeof e.className === "string" && e.className.trim() ? "." + e.className.trim().split(/\s+/)[0] : ""));
+};
 async function check(frames, at, shot, tab) {
   checked++;
   await sleep(450);
@@ -592,6 +600,11 @@ for (const [w, h] of SIZES) {
       await f.waitForSelector(app.ready, { timeout: 10000 }).catch(() => {});
       await sleep(900);
       if (app.prepare) await app.prepare(f).catch((e) => console.log(`  (prepare: ${e.message.split("\n")[0]})`));
+      if (where === "agent") {
+        const heads = await f.evaluate(OWN_HEAD).catch(() => []);
+        for (const x of heads) note(found, `${name}: shows a header of its own inside Nova Agent (${x}); the title panel is the only one`, at);
+        if (heads.length) { problems++; console.log(`✗ ${at}: its own header (${heads.join(", ")})`); }
+      }
       const frames = where === "own" ? [[name, f]] : [["Nova Agent", tab.mainFrame()], [name, f]];
       const states = app.states ? await app.states(f) : [["as it opens", async () => {}]];
       await runStates(states, frames, at, tab, `${name}-${where}-${size}`, app.path);

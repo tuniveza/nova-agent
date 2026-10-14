@@ -142,3 +142,4 @@ can reach a live service.
 `--include-private`. Use it for anything whose pages can show personal data (Nova Agent's
 visualizer can show client names, so it's marked private in the example).
 
+Inside Nova Agent there's no title of Observatory's own (the title panel names it): the colours, All links and Sound stay as a slim row.

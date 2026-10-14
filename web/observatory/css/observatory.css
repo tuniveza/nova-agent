@@ -635,3 +635,10 @@ html.embed .stats { margin-top: 14px; }
   .hero-pill, .hero .brand { min-height: 40px; display: inline-flex; align-items: center; }
   .hero .brand { min-width: 40px; }
 }
+
+/* ---- Inside Nova Agent: no title of its own (Nova Agent's title panel has the icon and the name, one
+   title panel only); the colours, the links and Sound stay as a slim row ---- */
+html.embed .hero .brand { display: none; }
+@media (min-width: 1180px) {
+  html.embed .hero { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "stats stats stats" "themes spec links" "lede lede lede"; }
+}

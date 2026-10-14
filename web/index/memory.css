@@ -780,3 +780,15 @@ html.embed.ix-wide nav.tabs { display: none; }
   .login .wordmark { font-size: 26px; }
   .login-sub { margin: 4px 0 12px; }
 }
+
+/* ---- Inside Nova Agent: no header of Index's own (Nova Agent's title panel has the name, the planet and
+   the gear). Index's options are the last of the numbers instead ---- */
+.stat-options { display: none; }
+html.embed .app > header.top, html.embed .embed-head > header.top { display: none; }
+html.embed .stats { grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(64px, auto); }
+html.embed .stat-options { display: grid; align-content: center; justify-items: center; gap: 4px; padding: 8px 12px; }
+html.embed .stat-options .stat-ico { width: 20px; height: 20px; color: var(--soft); }
+@media (max-width: 330px) {
+  html.embed .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html.embed .stat-options { grid-column: 1 / -1; grid-template-columns: auto auto; justify-content: center; column-gap: 8px; padding: 6px 10px; }
+}

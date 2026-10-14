@@ -1631,7 +1631,7 @@
   document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.tab)));
 
   // The stats tiles take you to what they count
-  document.querySelectorAll(".stat").forEach((b) =>
+  document.querySelectorAll(".stat[data-stat]").forEach((b) =>
     b.addEventListener("click", () => {
       const what = b.dataset.stat;
       if (what === "pending") setTab("approve");
@@ -1642,6 +1642,8 @@
     })
   );
 
+  // Inside Nova Agent the options are at the end of the numbers (Index's own header isn't shown there)
+  $("options-here").addEventListener("click", () => $("options").click());
   $("brand").addEventListener("click", () => window.scrollTo({ top: 0, behavior: still() ? "auto" : "smooth" }));
 
   // ===== Options =====

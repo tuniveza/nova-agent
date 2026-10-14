@@ -71,6 +71,8 @@
       html.embed .top { margin-bottom: 12px; }
       html.embed main { padding-top: 12px; }
     }
+    /* Inside Nova Agent its title panel names the panel: no heading of its own (one title panel only) */
+    html.embed main > .top { display: none; }
     /* Phones: snug margins, big buttons, boxes at 16px so phones don't zoom in */
     @media (max-width: 640px) {
       main { padding: 14px 12px 12px; }

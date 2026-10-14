@@ -403,3 +403,7 @@ html.fx-wide #g-working { display: none; }
 }
 /* Touch screens: the numbers' names readable (11px) */
 @media (pointer: coarse) { .glance-item .nt-label { font-size: 11px; letter-spacing: .04em; } }
+
+/* ---- Inside Nova Agent, at every size: no title of its own (Nova Agent's title panel names it; one
+   title panel only). Its one-line note stays ---- */
+html.embed .top .nt-kicker, html.embed .top .nt-title { display: none; }

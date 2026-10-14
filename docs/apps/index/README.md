@@ -82,7 +82,9 @@ the differences lit up, and can put your edit on top of theirs in one tap, or ke
 - **Approve** holds facts learned from customers. One tap approves, edits or rejects each one.
   Nothing about a customer is kept without a person saying yes.
 - **Options**: the theme (shared with Portal), sound effects, refresh everything, open
-  Portal and sign out. It installs as an app, with the suite's cosmic "I".
+  Portal and sign out. It installs as an app, with the suite's cosmic "I". Inside Nova Agent there's
+  no header of Index's own (Nova Agent's title panel has the name, the planet and the gear, one
+  title panel only): **Options** is the last of the numbers along the top instead.
 
 ### Smart extras
 

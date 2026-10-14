@@ -104,4 +104,17 @@ describe("one screen, nothing scrolling the page", () => {
     expect(phone).toContain("html.embed .embed-head > .tabs > .tab.tab-more { display: flex; }");
     expect(phone).toContain("html.embed .embed-head > .tabs > #tab-more { display: none; }");
   });
+
+  it("one title panel: inside Nova Agent no panel shows a header of its own (Index, Lossless, Observatory)", () => {
+    const fit = read("../scripts/check-fit.mjs");
+    expect(fit).toContain("shows a header of its own inside Nova Agent");
+    const ix = read("../web/index/memory.css");
+    expect(ix).toContain("html.embed .app > header.top, html.embed .embed-head > header.top { display: none; }");
+    // Index's options stay a tap away: the last of the numbers, opening the same Options sheet
+    expect(read("../web/index/index.html")).toContain('id="options-here"');
+    expect(read("../web/index/memory.js")).toContain('$("options-here").addEventListener("click", () => $("options").click());');
+    expect(read("../web/index/memory.js")).toContain('document.querySelectorAll(".stat[data-stat]")');
+    expect(read("../web/lossless/public/lossless/index.html")).toContain("html.embed main > .top { display: none; }");
+    expect(read("../web/observatory/css/observatory.css")).toContain("html.embed .hero .brand { display: none; }");
+  });
 });
