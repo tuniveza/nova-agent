@@ -82,6 +82,7 @@
     <span class="sl-item sl-time">${ico("clock")}<time class="sl-clock"></time></span>`;
   const list = document.createElement("div");
   list.className = "sl-list";
+  list.setAttribute("data-fit", ""); // (kept on screen by /shared/fit.js)
   list.hidden = true;
   list.setAttribute("role", "dialog");
   list.setAttribute("aria-label", "What you've been doing");

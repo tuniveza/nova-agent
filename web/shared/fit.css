@@ -1,0 +1,40 @@
+/* Fit on screen, the same in every panel (with /shared/fit.js): no window, dialog, panel, card,
+   menu or pop-up ends up past the edge of the screen, and things scroll only when they really
+   don't fit. Linked by every panel's page next to /shared/scrollbars.css.
+
+   - The sizes a panel can use for "as big as the screen allows": --fit-w and --fit-h (the screen
+     less 16px and a phone's notches; dvh, so a phone's address bar and keyboard are allowed for).
+   - Menus, pop-ups and tooltips are never wider or taller than that. These rules have no weight
+     (:where), so any size a panel gives its own pop-ups wins; fit.js still nudges them back in.
+   - .fit-scroll on the body part of a card or dialog: it scrolls on its own (only when its
+     content is taller than the room left), while the head and the buttons stay put. */
+
+:root {
+  --fit-gap: 8px;
+  --fit-w: calc(100vw - 2 * var(--fit-gap) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  --fit-h: calc(100vh - 2 * var(--fit-gap) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+@supports (height: 100dvh) {
+  :root {
+    --fit-w: calc(100dvw - 2 * var(--fit-gap) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+    --fit-h: calc(100dvh - 2 * var(--fit-gap) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+:where([role="menu"], [role="tooltip"], [popover], [data-fit]) {
+  max-width: var(--fit-w);
+  max-height: var(--fit-h);
+}
+/* A menu with more choices than fit scrolls inside (a tooltip or a card is capped by fit.js
+   instead, and only when it has to be; a list in the page, role="listbox", is left as it is) */
+:where([role="menu"]) {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* A card or dialog laid out as head / body / buttons: the body takes what's left and scrolls */
+.fit-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

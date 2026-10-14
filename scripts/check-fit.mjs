@@ -3,7 +3,9 @@
 // home, at phone, tablet and computer sizes, with long sample content; opens each sheet, dialog,
 // menu and the Manual; and reports every element whose box sticks out past the screen or past the
 // box that clips it (where it can't be scrolled to), every bit of text that does, and any sideways
-// scrolling of the page itself. Generalises scripts/check-notes-fit.mjs (Notes' own check).
+// scrolling of the page itself; and that the fit layer (/shared/fit.js) is on every page and brings
+// a menu put past the edge back on screen, also after the window shrinks. Generalises
+// scripts/check-notes-fit.mjs (Notes' own check). The easy way to run it: scripts/check-fit-all.sh
 //
 // Against a throwaway server (its own data folder, so the sample missions, quests and files can be
 // written there):
@@ -437,6 +439,41 @@ const SHELL = {
   },
 };
 
+// The fit layer (/shared/fit.js) is there and works: a menu put past the bottom right corner is
+// back on screen a moment later, and still is when the window is made phone-sized
+async function probeFit(tab, f, at) {
+  const look = () => f.evaluate(async () => {
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) => setTimeout(r, 120));
+    const m = document.getElementById("__fit-probe");
+    if (!m) return "the test menu went away";
+    const r = m.getBoundingClientRect();
+    const W = document.documentElement.clientWidth, H = innerHeight;
+    return r.left >= 0 && r.top >= 0 && r.right <= W + 0.5 && r.bottom <= H + 0.5 ? "" : `a menu past the edge stays out (${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}×${Math.round(r.height)} on ${W}×${H})`;
+  });
+  checked++;
+  const has = await f.evaluate(() => {
+    if (!window.NovaFit) return false;
+    const m = document.createElement("div");
+    m.id = "__fit-probe";
+    m.setAttribute("role", "menu");
+    m.style.cssText = `position:fixed;left:${innerWidth - 60}px;top:${innerHeight - 40}px;width:280px;height:220px;background:#808`;
+    document.body.append(m);
+    return true;
+  }).catch(() => false);
+  let bad = has ? await look().catch((e) => e.message.split("\n")[0]) : "the fit layer (/shared/fit.js) isn't on this page";
+  const size = tab.viewportSize();
+  if (has && !bad && size.width > 400) {
+    await tab.setViewportSize({ width: 360, height: 640 });
+    bad = await look().catch((e) => e.message.split("\n")[0]);
+    if (bad) bad += " after the window was made phone-sized";
+    await tab.setViewportSize(size);
+  }
+  await f.evaluate(() => document.getElementById("__fit-probe")?.remove()).catch(() => {});
+  console.log(`${bad ? "✗" : "✓"} ${at} · the fit layer`);
+  if (bad) { note(found, `fit layer: ${bad}`, at); problems++; }
+}
+
 // ---- Run ----
 const FRAME = (src) => `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;height:100%;overflow:hidden}iframe{border:0;width:100%;height:100%;display:block}</style><iframe src="${src}"></iframe>`;
 const browser = await chromium.launch();
@@ -498,6 +535,7 @@ for (const [w, h] of SIZES) {
     if (MANUAL) await runStates([manualState].map(([l, o, c]) => [l, () => o(tab.mainFrame()), () => c(tab.mainFrame())]), frames, `Nova Agent ${size}`, tab, `agent-${size}`);
     await runStates(await openDialogs(tab.mainFrame(), "dialog:not(#mv):not(#fv)"), frames, `Nova Agent ${size}`, tab, `agent-${size}`);
     await runStates(await popups(tab.mainFrame()), frames, `Nova Agent ${size}`, tab, `agent-${size}`);
+    await probeFit(tab, tab.mainFrame(), `Nova Agent ${size}`);
     await ctx.close();
   }
   for (const [name, app] of Object.entries(APPS)) {
@@ -518,6 +556,7 @@ for (const [w, h] of SIZES) {
       if (MANUAL) await runStates([manualState].map(([l, o, c]) => [l, () => o(f), () => c(f)]), frames, at, tab, `${name}-${where}-${size}`, app.path);
       if (app.dialogs) await runStates(await openDialogs(f), frames, at, tab, `${name}-${where}-${size}`, app.path);
       await runStates(await popups(f), frames, at, tab, `${name}-${where}-${size}`, app.path);
+      if (where === "own") await probeFit(tab, f, at);
       await ctx.close();
     }
   }

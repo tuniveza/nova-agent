@@ -425,6 +425,8 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       // A short window: the card scrolls inside rather than running off the bottom
       card.style.maxHeight = `${Math.max(200, innerHeight - top - 10)}px`;
       card.style.setProperty("--ox", `${Math.round(r.left + r.width / 2 - left)}px`);
+      // (inside a shadow root, so /shared/fit.js is handed it: kept on screen when the window changes)
+      if (window.NovaFit) window.NovaFit.keep(card);
     }
     close(withSound) {
       if (!this.isOpen) return;
