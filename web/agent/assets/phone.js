@@ -35,11 +35,13 @@
   }
 
   // ---- The panels' frames ----
-  // On a phone the last three panels stay loaded (each in its own frame, the others hidden), so
-  // going back to one is instant and it's where you left it. Switching never piles up "back" steps:
-  // a frame that's already showing a page is moved on, not stacked. On a computer: one frame.
+  // The last panels opened stay loaded (each in its own frame, the others hidden): three on a phone,
+  // six on a computer. Going back to one is instant and it's where you left it. Switching never piles
+  // up "back" steps: a frame that's already showing a page is moved on, not stacked. Lossless audio
+  // (the microphone and a live call) is the exception: closed, it's really closed.
   const srcProp = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'src');
-  const KEEP = 3;
+  const KEEP = PHONE.matches ? 3 : 6;
+  const LIVE = /^\/lossless(\/|$)/; // closed means closed
   const pool = []; // { base, frame, shown, used }
   const first = $('viewer-frame');
   function wire(frame, entry) {
@@ -79,17 +81,13 @@
   // What the page's own script does to "the frame" (open a panel, reload it, close it) comes here
   function show(value, entry) {
     const url = new URL(value, location.href).href;
-    // Closing a panel: on a phone it stays loaded (just hidden with the viewer); on a computer it's emptied
+    // Closing a panel: it stays loaded (just hidden with the viewer), except Lossless audio
     if (url === 'about:blank') {
-      if (PHONE.matches) return;
+      if (!LIVE.test(entry.base || '')) return;
       entry.shown = '';
+      entry.base = '';
       srcProp.set.call(entry.frame, url);
       return;
-    }
-    if (!PHONE.matches) {
-      // A computer: the one frame, moved on (or reloaded)
-      if (entry.shown === url) { try { entry.frame.contentWindow.location.reload(); return; } catch (e) {} }
-      return navigate(entry, url);
     }
     const base = baseOf(url);
     const active = entry.frame.id === 'viewer-frame' && !viewer.hidden;

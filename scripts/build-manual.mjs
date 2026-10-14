@@ -300,6 +300,10 @@ function addresses() {
 const data = build();
 const out = join(root, "web", "shared", "manual-data.js");
 writeFileSync(out, `// The Manual's content, made by scripts/build-manual.mjs from every app's README and git history.\n// Don't edit by hand: run  node scripts/build-manual.mjs  again.\nwindow.NovaManualData = ${JSON.stringify(data)};\n`);
+// The newest change anywhere, on its own (a few bytes): the Manual button's "something's new" dot
+// needs only this, so it never downloads the whole manual just to decide whether to show a dot
+const newest = data.apps.map((a) => (a.history.commits[0] ? a.history.commits[0].date : "")).filter(Boolean).sort().pop() || "";
+writeFileSync(join(root, "web", "shared", "manual-news.js"), `// Made by scripts/build-manual.mjs with manual-data.js: the newest change in the suite (the Manual's "new" dot).\nwindow.NovaManualNews = ${JSON.stringify({ newest })};\n`);
 console.log(`Manual: ${data.apps.length} apps, ${data.apps.reduce((n, a) => n + a.guide.length + a.built.length, 0)} chapters, ${(readFileSync(out).length / 1024).toFixed(0)} KB → web/shared/manual-data.js`);
 
 

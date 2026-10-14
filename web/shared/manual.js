@@ -39,6 +39,28 @@
     },
   };
 
+  // The newest change in the suite on its own (manual-news.js, a few bytes, made with the content):
+  // all the "something's new" dot needs, so the whole manual isn't downloaded just for a dot
+  const NEWS_SRC = DATA_SRC.replace(/manual-data(\.js)$/, "manual-news$1");
+  let newsLoading = null;
+  function news() {
+    if (window.NovaManualNews) return Promise.resolve(window.NovaManualNews);
+    if (!newsLoading) {
+      newsLoading = new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = NEWS_SRC;
+        s.async = true;
+        s.onload = () => (window.NovaManualNews ? resolve(window.NovaManualNews) : reject(new Error("empty")));
+        s.onerror = () => reject(new Error("missing"));
+        document.head.appendChild(s);
+      }).catch((err) => {
+        newsLoading = null;
+        throw err;
+      });
+    }
+    return newsLoading;
+  }
+
   // The content, loaded once, the first time anyone needs it
   let loading = null;
   function data() {
@@ -534,14 +556,14 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
       this.centredWatch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-centred"] });
       window.addEventListener("novaoptionschange", this.onCalm);
       this.drawButton();
-      // A small green dot when something in the suite changed since you last looked. It needs the
-      // whole manual (the biggest download on the page), so a phone, or a button nobody can see,
-      // skips it: the manual still loads the moment it's opened.
+      // A small green dot when something in the suite changed since you last looked. It needs only
+      // the newest change (manual-news.js, tiny), not the whole manual; a button nobody can see skips
+      // it. The manual itself still loads the moment it's opened.
       const idle = window.requestIdleCallback || ((f) => setTimeout(f, 1500));
       idle(() => {
         const seen = this.checkVisibility ? this.checkVisibility() : this.getClientRects().length > 0;
-        if (!seen || matchMedia("(max-width: 760px)").matches) return;
-        data().then((d) => this.markNew(d)).catch(() => {});
+        if (!seen) return;
+        news().then((n) => this.markNewAt(Date.parse(n.newest) || 0)).catch(() => {});
       });
     }
     disconnectedCallback() {
@@ -560,8 +582,10 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
       this.root.querySelector(".open").addEventListener("click", () => (this.isOpen ? this.close(true) : this.open()));
     }
     markNew(d) {
+      this.markNewAt(Math.max(0, ...d.apps.map((a) => Date.parse(lastChange(a)) || 0)));
+    }
+    markNewAt(newest) {
       const seen = Date.parse(store.get(SEEN_KEY) || "") || 0;
-      const newest = Math.max(0, ...d.apps.map((a) => Date.parse(lastChange(a)) || 0));
       const btn = this.root.querySelector(".open");
       if (!btn || this.isOpen) return;
       const dot = btn.querySelector(".dot");
