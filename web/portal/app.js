@@ -1046,7 +1046,7 @@
 
   // ===== Campaigns: email newsletters, waiting for an admin =====
   // Emails to the studio's opted-in fans (signed up and confirmed by email) and clients (said yes to
-  // studio news), sent through Resend by Nova Bot. Agent (and anyone signed in, with Write one) only
+  // studio news), sent by Nova Bot through the studio's own mail server, a few a minute. Agent (and anyone signed in, with Write one) only
   // DRAFTS them: nothing is sent until an admin presses Approve here (or on the campaign's card under
   // Agent's reply) with their own sign-in. Nova Bot keeps a fingerprint of exactly what was approved
   // and won't send anything that changed since; here, Approve also checks the campaign is still the
@@ -1171,7 +1171,7 @@
     card.dataset.sig = sig(c, canDecide, audiences[c.audience], editing, rejecting, open, detail ? [detail.updatedAt, detail.previewHtml.length, detail.log.length] : null);
     const top = el("div", "card-top");
     const title = el("h3", "card-title", c.subject || "(No subject)");
-    const pill = CAMPAIGN_STATUS[c.status] || ["pill-stop", c.status];
+    const pill = c.status === "scheduled" && c.sending ? ["pill-replied", "Sending"] : CAMPAIGN_STATUS[c.status] || ["pill-stop", c.status];
     title.appendChild(el("span", pill[0], pill[1]));
     top.append(title, el("span", "card-meta", when(c.createdAt)));
     card.append(top, el("p", "card-who", "Written by " + (CAMPAIGN_WRITERS[c.createdBy] || "someone in the team")));
@@ -1186,7 +1186,8 @@
     card.appendChild(facts);
     if (c.note) card.appendChild(el("p", "appr-why", "Note: " + c.note));
     if (c.status === "failed") card.appendChild(el("p", "appr-result bad", "Didn't send: " + String(c.error || "unknown reason").replace(/\.$/, "") + ". Nobody got it."));
-    if (c.status === "approved") card.appendChild(el("p", "appr-result", "Approved · going out through Resend…"));
+    if (c.status === "approved") card.appendChild(el("p", "appr-result", "Approved · getting ready to send…"));
+    if (c.status === "scheduled" && c.sending) card.appendChild(el("p", "appr-result", "Going out now, a few a minute · " + c.sending.sent + " of " + c.sending.total + " sent"));
     if (c.status === "sent") card.appendChild(campaignStats(c));
     // The email, as people will get it (or as written, while the preview loads)
     if (editing) card.appendChild(campaignFields(c, audiences));
@@ -1277,26 +1278,25 @@
     return card;
   }
 
-  // How a sent one did: delivered, opened and clicked (of those it reached), unsubscribed
+  // How a sent one did: how many it went to, unsubscribes since, and any it couldn't send to
+  // (the studio's own mail server sends them: opens and clicks aren't tracked)
   function campaignStats(c) {
     const s = c.stats || {};
     const sent = Number(s.sent || c.recipients) || 0;
-    const delivered = Number(s.delivered) || 0;
-    const base = delivered || sent;
     const box = el("div", "cp-stats");
     const tile = (value, label) => {
       const t = el("div", "cp-stat");
       t.append(el("b", "", value), el("span", "", label));
       box.appendChild(t);
     };
-    tile(String(delivered), "Delivered");
-    tile(pct(Number(s.opened) || 0, base), "Opened");
-    tile(pct(Number(s.clicked) || 0, base), "Clicked");
+    tile(String(sent), "Sent");
     tile(String(Number(s.unsubscribed) || 0), "Unsubscribed");
-    if (Number(s.bounced)) tile(String(s.bounced), "Bounced");
+    if (Number(s.failed)) tile(String(s.failed), "Didn't go");
+    if (Number(s.skipped)) tile(String(s.skipped), "Unsubscribed first");
+    if (Number(s.opened)) tile(pct(Number(s.opened) || 0, Number(s.delivered) || sent), "Opened");
     const wrap = el("div", "");
     wrap.appendChild(box);
-    wrap.appendChild(el("p", "card-foot", s.fetchedAt ? "From Resend, " + ukWhen(s.fetchedAt) + ". Opens only count email apps that load images." : "Results come from Resend within the hour."));
+    wrap.appendChild(el("p", "card-foot", "Sent by the studio's own mail server" + (s.fetchedAt ? ", finished " + ukWhen(s.fetchedAt) : "") + ". Opens and clicks aren't tracked; unsubscribes are counted as they come in."));
     return wrap;
   }
 
@@ -1605,7 +1605,7 @@
     card.appendChild(facts);
     if (o.note) card.appendChild(el("p", "appr-why", "Note: " + o.note));
     if (o.status === "failed") card.appendChild(el("p", "appr-result bad", "Didn't send: " + String(o.error || "unknown reason").replace(/\.$/, "") + "."));
-    if (o.status === "approved") card.appendChild(el("p", "appr-result", "Approved · going out through Resend…"));
+    if (o.status === "approved") card.appendChild(el("p", "appr-result", "Approved · sending…"));
     if (editing) card.appendChild(outreachFields(o));
     else if (open) {
       card.appendChild(el("div", "cp-plain", detail && detail.email ? detail.email : o.body || ""));

@@ -112,7 +112,7 @@ function threadBody(id) {
     { direction: "note", created_by: "staff", status: "sent", channel: "email", body: "Phone call: Rang them at 14:05, no answer, left a voicemail about the evening slots on Thursday 22 October and the deposit policy. Will try again tomorrow morning. " + LONGWORD2 },
     { direction: "out", created_by: "staff", status: "sent", channel: "whatsapp", body: "Hi! Just following up on the voicemail 🙂 We have Thu 22 Oct 18:30–23:00 free if that suits. " + LONG_URL },
     { direction: "out", created_by: "staff", status: "sent", channel: "sms", body: "Quick reminder: the 22 Oct evening slot is held for you until Friday. Reply YES to confirm." },
-    { direction: "out", created_by: "staff", status: "failed", channel: "email", error: "Resend said the address " + LONG_EMAIL + " bounced (mailbox full or doesn't exist): 550 5.1.1 " + LONGWORD, body: "Hi again, just checking you got our last message about the evening session." },
+    { direction: "out", created_by: "staff", status: "failed", channel: "email", error: "The mail server said the address " + LONG_EMAIL + " bounced (mailbox full or doesn't exist): 550 5.1.1 " + LONGWORD, body: "Hi again, just checking you got our last message about the evening session." },
     { direction: "out", created_by: "staff", status: "approved", channel: "email", stuck: true, body: "Sending you the invoice for the deposit now (£150). " + LONGWORD },
     { direction: "note", created_by: "staff", status: "sent", channel: "email", body: "Internal note: they're the cousin of a regular client (see Clients). Offer the returning-client 10% discount if they ask.\n\nAlso flagged: they want two friends in the control room. That's fine for the Deluxe room (capacity 6) but not the vocal booth sessions." },
     { direction: "out", created_by: "agent", status: "draft", channel: "email", body: "Hi " + q.name.split(/\s+/)[0] + ",\n\nGreat news: Thursday 22 October from 18:30 to 23:00 is confirmed and pencilled in for you.\n\nTo lock it in, please pay the £150 deposit here: " + LONG_URL + "\n\nA few things to bring:\n• Your reference tracks (WAV or high-quality MP3)\n• Lyrics, printed or on your phone\n• Water and something to snack on — sessions can run long!\n\nAbout file formats: we record at 24-bit/96kHz and can deliver stems as 32-bit float WAVs if your mix engineer prefers. We keep a backup of every session for 12 months.\n\nYour two friends are welcome in the control room.\n\nSee you soon,\nNova Agent on behalf of the Novacane team\n\n" + LONGWORD2 },
@@ -277,8 +277,8 @@ const CAMPAIGNS = C_STATUS.map((status, i) => ({
   recipients: status === "sent" ? 1234 + i * 111 : null,
   decidedByName: status === "pending_approval" || status === "draft" ? null : ME_NAME,
   decidedAt: status === "pending_approval" || status === "draft" ? null : iso(4 + (i % 6), 9, 0),
-  note: status === "rejected" ? "Too long and the discount code doesn't exist. Please shorten the intro, fix " + LONGWORD + " and resend. " + PARA(1) : i === 0 ? "Drafted from Nova Agent's plan: " + LONG_URL : null,
-  error: status === "failed" ? "Resend rejected the batch: domain " + LONGWORD + ".co.uk is not verified (403 validation_error)" : null,
+  note: status === "rejected" ? "Too long and the discount code doesn't exist. Please shorten the intro, fix " + LONGWORD + " and send it again. " + PARA(1) : i === 0 ? "Drafted from Nova Agent's plan: " + LONG_URL : null,
+  error: status === "failed" ? "The mail server refused it: domain " + LONGWORD + ".co.uk is not allowed (422)" : null,
   stats: status === "sent" ? { sent: 1234 + i * 111, delivered: 1200 + i * 100, opened: 640 + i * 10, clicked: 88 + i, unsubscribed: 3 + i, bounced: i % 2 ? 7 : 0, fetchedAt: iso(11, 8, 0) } : null,
 }));
 function campaignDetailBody(id) {
@@ -314,7 +314,7 @@ const OUTREACH = O_STATUS.map((status, i) => ({
   decidedAt: ["sent", "failed", "rejected", "approved"].includes(status) ? iso(3 + i, 11, 0) : null,
   note: status === "rejected" ? "Not the right venue for this: " + LONGWORD : null,
   sentAt: status === "sent" ? iso(4 + i, 12, 0) : null,
-  error: status === "failed" ? "Resend didn't send it: domain " + LONGWORD + ".co.uk is not verified" : null,
+  error: status === "failed" ? "The studio's mail server didn't send it: domain " + LONGWORD + ".co.uk is not allowed" : null,
   portalUrl: "https://novacane.example/portal/?view=campaigns&outreach=" + (501 + i),
 }));
 function outreachDetailBody(id) {
@@ -557,14 +557,14 @@ const CREW = [
   })),
 ];
 const SERVICES = [
-  { id: "email", name: "Email to customers and fans", tech: "Resend", ready: true, detail: "Sends from hello@" + LONGWORD.toLowerCase() + ".co.uk. " + PARA(1), last: iso(11, 9), test: true },
+  { id: "email", name: "Email to customers and fans", tech: "The studio's own mail server (on the VPS)", ready: true, detail: "Sends from hello@" + LONGWORD.toLowerCase() + ".co.uk. " + PARA(1), last: iso(11, 9), test: true },
   { id: "push", name: "Phone notifications", tech: "Web Push (VAPID)", ready: true, detail: "3 phones subscribed.", last: iso(11, 10) },
   { id: "acuity", name: "Bookings", tech: "Acuity Scheduling API + calendar feed", ready: "partly", detail: "The calendar feed works; the API key is missing, so approvals can't change bookings yet." },
   { id: "google", name: "Google Calendar, Gmail and Docs", tech: "Google OAuth", ready: false, detail: "Not connected yet." },
   { id: "ai", name: "Nova Agent and NovaBot", tech: "Claude", ready: true, detail: "Answers questions and drafts replies." },
   { id: "voice", name: "Voice", tech: "Speech to text " + LONGWORD, ready: "partly", detail: "" },
   { id: "storage", name: "Files and memory", tech: "SQLite + object storage", ready: true, detail: "Index has 12,345 memories." },
-  { id: "mailerlite", name: "MailerLite (old newsletter list)", tech: "MailerLite", ready: false, detail: "Retired in favour of Resend campaigns." },
+  { id: "mailerlite", name: "MailerLite (old newsletter list)", tech: "MailerLite", ready: false, detail: "Retired in favour of Nova's own campaigns." },
 ];
 function linksBody() {
   const items = (n, g) =>
@@ -627,7 +627,7 @@ const INVOICES = MONEY_STATUSES.map((status, i) => ({
   note: status === "rejected" ? PARA(1) : null,
   sentAt: ["sent", "part_paid", "paid"].includes(status) ? "2026-10-02T09:00:00.000Z" : null,
   paidAt: status === "paid" ? "2026-10-08T09:00:00.000Z" : null,
-  error: status === "failed" ? "Resend didn't send it: " + LONGWORD : null,
+  error: status === "failed" ? "The studio's mail server didn't send it: " + LONGWORD : null,
   pageUrl: ["sent", "part_paid", "paid", "void"].includes(status) ? "https://novacane.example/invoice/" + "0123456789abcdef".repeat(2) : null,
 }));
 const MONEY_CATEGORIES = ["Equipment", "Software and subscriptions", "Studio rent and bills", "Marketing and ads", "Musicians and freelancers", "Travel", "Repairs and upkeep", "Food and hospitality", "Bank and payment fees", "Other"];

@@ -36,7 +36,7 @@ export const RULES = [
   "Colours come only from the theme tokens (var(--hi), var(--text), var(--line)…, from web/shared/themes.css), never hard-coded colours.",
   "Every screen works at phone width (390px) with no sideways scrolling; long content scrolls inside its own box.",
   "New logic gets tests (vitest, test/*.spec.ts in Nova Agent; test/*.spec.js in Nova Bot).",
-  "Never touch .env, secrets or keys, database migrations, saved data (data/), customer data, package.json or lock files, wrangler settings, or anything about payments, emails, Acuity, Resend or Stripe. Never change the Fixer itself (src/fixer, web/fixer, test/fixer*).",
+  "Never touch .env, secrets or keys, database migrations, saved data (data/), customer data, package.json or lock files, wrangler settings, or anything about payments, emails or the mail server, Acuity or Stripe. Never change the Fixer itself (src/fixer, web/fixer, test/fixer*).",
   "Don't run git (no add, commit, checkout, reset or push): the Fixer commits your edits itself. Never add node_modules.",
   "Keep the change as small as it can be while doing the job properly.",
 ];

@@ -10,8 +10,8 @@ import { randomUUID } from "node:crypto";
 import type { Card, Check, FileChange, Issue, QuestKind } from "./store";
 
 // ---- Off limits ----
-// Secrets and settings, database migrations, customer data, payments, emails, Acuity, Resend,
-// Stripe, the deploy setup, dependencies, and the Fixer itself (it never changes its own rules).
+// Secrets and settings, database migrations, customer data, payments, emails (and the mail
+// server), Acuity, Stripe, the deploy setup, dependencies, and the Fixer itself (it never changes its own rules).
 const OFF_LIMIT_PATHS: [RegExp, string][] = [
   [/(^|\/)\.env(\.|$)|(^|\/)\.dev\.vars/i, "secrets (.env)"],
   [/(^|\/)(secrets?|credentials?)(\/|\.|$)/i, "secrets"],
@@ -22,7 +22,7 @@ const OFF_LIMIT_PATHS: [RegExp, string][] = [
   [/(^|\/)(package(-lock)?\.json|wrangler\.jsonc?|tsconfig\.json|vitest\.config\.\w+)$/i, "the build and deploy setup"],
   [/(^|\/)deploy\//i, "the service setup"],
   [/stripe|payment|(^|[/_-])pay([/_.-]|$)|refund|invoice/i, "payments"],
-  [/e-?mails?|resend|mailerlite|campaign/i, "emails"],
+  [/e-?mails?|(^|\/)mail\/|mailerlite|campaign|unsubscribe/i, "emails"],
   [/acuity/i, "Acuity"],
   [/(^|\/)(clients|enquir|booking|referral|fans|feedback|manage-bookings|book-session)/i, "customer data"],
   [/(^|\/)src\/fixer\/|(^|\/)test\/fixer|(^|\/)web\/fixer\//i, "the Fixer itself"],
@@ -38,7 +38,7 @@ export function offLimits(files: { repo: string; path: string }[]): string[] {
 }
 
 // Added lines that mention these get a clear warning on the card (and a "reject" recommendation)
-const SENSITIVE_WORDS = /\b(stripe|acuity|resend|mailerlite|payment|refund|password|api[_-]?key|secret|token|AGENT_NOVA_KEY|ANTHROPIC_API_KEY)\b/i;
+const SENSITIVE_WORDS = /\b(stripe|acuity|MAIL_KEY|mailerlite|payment|refund|password|api[_-]?key|secret|token|AGENT_NOVA_KEY|ANTHROPIC_API_KEY)\b/i;
 export function sensitiveLines(diff: string): string[] {
   return diff
     .split("\n")

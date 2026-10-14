@@ -706,7 +706,7 @@
     button.textContent = d.account ? "Google settings" : d.setUp ? "Connect Google" : "Set up Google";
   }
 
-  // How it works: each part of Nova, the service behind it (Resend for email…), set up or not.
+  // How it works: each part of Nova, the service behind it (the studio's own mail server for email…), set up or not.
   // Never a key: Nova Bot only says yes or no (src/services.js).
   async function loadServices() {
     const list = $("tech-list");
@@ -740,7 +740,7 @@
     $("tech-result").textContent = "";
     loadServices();
   });
-  // Send me a test email: through Resend, to whoever pressed it (at most once a minute)
+  // Send me a test email: through the studio's mail server, to whoever pressed it (at most once a minute)
   $("tech-test-email").addEventListener("click", async () => {
     const b = $("tech-test-email");
     const say = (text) => ($("tech-result").textContent = text);

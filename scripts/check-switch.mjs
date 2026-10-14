@@ -27,7 +27,7 @@ const b = await chromium.launch();
 for (const [w, h] of [[1280, 820], [390, 844]]) {
   for (const [name, data] of [
     ["cloudflare live", { here: here(), vps, canAct: true }],
-    ["vps live, with a warning", { here: here({ where: "vps", live: "vps", warnings: ["Newsletters won't send: the Resend key here is from a Resend account without novacane.co.uk."] }), vps, canAct: true }],
+    ["vps live, with a warning", { here: here({ where: "vps", live: "vps", warnings: ["Newsletters are off: the studio's mail server isn't set up here (MAIL_API_URL and MAIL_KEY), or there's no from address (CAMPAIGN_FROM)."] }), vps, canAct: true }],
     ["standby VPS", { here: here({ where: "vps", live: "standby" }), vps, canAct: false }],
   ]) {
     const p = await b.newPage({ viewport: { width: w, height: h } });

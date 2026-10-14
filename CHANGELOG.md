@@ -16,7 +16,7 @@
 - Agent has five money tools: money_summary, list_invoices, draft_invoice, edit_invoice_draft and
   log_expense (unconfirmed). Nothing that sends, approves, reminds, voids, pays or changes settings.
 
-### Quest 3: email campaigns with an admin's approval (Resend, through Nova Bot)
+### Quest 3: email campaigns with an admin's approval (through Nova Bot; since 2026-10-14 sent by the studio's own mail server)
 
 - Agent has five campaign tools: suggest_campaign (who's opted in and how recent campaigns did;
   it saves nothing), create_campaign_draft, edit_campaign_draft, campaign_results (opened and

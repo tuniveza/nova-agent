@@ -1,4 +1,5 @@
-// Email campaigns (newsletters to fans and clients, sent through Resend by Nova Bot), for Agent.
+// Email campaigns (newsletters to fans and clients, sent by Nova Bot through the studio's own
+// mail server, a few a minute), for Agent.
 //
 // The campaigns live on Nova Bot's worker. Agent reads them and writes DRAFTS there with Nova
 // Agent's key (AGENT_NOVA_KEY), at:
@@ -32,6 +33,8 @@ export interface CampaignStats {
   bounced?: number;
   unsubscribed?: number;
   complained?: number;
+  failed?: number; // the mail server wouldn't take it for these addresses
+  skipped?: number; // unsubscribed after it was approved, before it reached them
   fetchedAt?: string | null;
 }
 export interface Campaign {
@@ -52,6 +55,8 @@ export interface Campaign {
   sentAt: string | null;
   error: string | null;
   stats: CampaignStats | null;
+  // Going out now: how many have gone, of how many (null otherwise)
+  sending?: { sent: number; total: number } | null;
   portalUrl: string;
 }
 // How many opted-in people each audience has
@@ -181,11 +186,12 @@ export function statsText(c: Campaign): string {
     `${opened} opened it${percent(opened, base) ? ` (${percent(opened, base)} ${baseWords})` : ""}`,
     `${clicked} clicked a link${percent(clicked, base) ? ` (${percent(clicked, base)})` : ""}`,
     `${Number(s.unsubscribed ?? 0) || 0} unsubscribed`,
+    Number(s.failed) ? `${s.failed} didn't go (the address was refused)` : "",
+    Number(s.skipped) ? `${s.skipped} unsubscribed before it reached them` : "",
     Number(s.bounced) ? `${s.bounced} bounced` : "",
     Number(s.complained) ? `${s.complained} marked it as spam` : "",
-  ].filter(Boolean);
-  const asOf = s.fetchedAt ? ` (figures from Resend as of ${ukWhen(s.fetchedAt)}; opens only count email apps that load images, so the real number is likely higher)` : " (Resend's figures haven't been fetched yet; they refresh every hour for two weeks after sending)";
-  return `It ${parts.join(", ")}.${asOf}`;
+  ].filter((p) => p && !(p.startsWith("0 opened") || p.startsWith("0 clicked")));
+  return `It ${parts.join(", ")}. (The studio's own mail server sent it; opens and clicks aren't tracked, unsubscribes are counted.)`;
 }
 
 // One campaign in a line
@@ -209,6 +215,7 @@ export function campaignLine(c: Campaign, a: Audiences | null = null): string {
 export function resultsText(c: Campaign): string {
   const head = `“${c.subject}” (#${c.id}, to ${AUDIENCE_NAMES[c.audience] || c.audience})`;
   if (c.status === "sent") return `${head} was sent ${c.sentAt ? ukWhen(c.sentAt) : ""}. ${statsText(c)}`.replace(" . ", ". ");
+  if (c.status === "scheduled" && c.sending) return `${head} is going out now, a few a minute: ${c.sending.sent} of ${c.sending.total} sent so far.`;
   if (c.status === "scheduled") return `${head} is approved and scheduled for ${c.sendAt ? ukWhen(c.sendAt) : "later"} (UK time), so there are no results yet.`;
   if (c.status === "failed") return `${head} didn't send${c.error ? `: ${c.error}` : ""}. There are no results.`;
   if (c.status === "rejected") return `${head} was rejected${c.decidedByName ? ` by ${c.decidedByName}` : ""}${c.note ? ` (“${c.note}”)` : ""}, so it wasn't sent.`;

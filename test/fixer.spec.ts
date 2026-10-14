@@ -440,7 +440,7 @@ describe("trivial: tiny CSS or on-screen wording only", () => {
 
 describe("off limits", () => {
   it("secrets, migrations, data, payments, emails, Acuity, the deploy setup and the Fixer itself", () => {
-    const paths = [".env", "migrations/0042_x.sql", "data/quests.json", "src/stripe.js", "src/booking-emails.js", "src/acuity-api.ts", "package.json", "wrangler.jsonc", "src/fixer/fixer.ts", "web/fixer/app.js", "src/resend-marketing.js", "node_modules/x/index.js"];
+    const paths = [".env", "migrations/0042_x.sql", "data/quests.json", "src/stripe.js", "src/booking-emails.js", "src/acuity-api.ts", "package.json", "wrangler.jsonc", "src/fixer/fixer.ts", "web/fixer/app.js", "vps/mail/server.mjs", "node_modules/x/index.js"];
     expect(offLimits(paths.map((path) => ({ repo: "na", path })))).toHaveLength(paths.length);
     expect(offLimits([{ repo: "na", path: "web/notes/css/app.css" }, { repo: "na", path: "src/quests/plan.ts" }])).toEqual([]);
   });
