@@ -426,7 +426,6 @@ const SHELL = {
     if (phone) {
       // On a phone the home shows one column at a time
       for (const pane of ["chat", "quests", "missions"]) out.push([`home: ${pane}`, async () => f.evaluate((pane) => document.querySelector(`.tabbar [data-tab="pane:${pane}"]`)?.click(), pane)]);
-      out.push(["More sheet", async () => f.evaluate(() => document.querySelector(".tabbar .more, .tabbar [data-tab=more], .tabbar [data-more]")?.click()), async () => f.evaluate(() => { for (const d of document.querySelectorAll("dialog[open]")) d.close(); })]);
     }
     const click = (sel) => async () => f.evaluate((sel) => { const b = document.querySelector(sel); b && b.click(); }, sel);
     const closeAll = async () => f.evaluate(() => { for (const d of document.querySelectorAll("dialog[open]")) d.close(); });

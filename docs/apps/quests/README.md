@@ -4,7 +4,7 @@ Every quest in one place. Write one the way you'd say it, tick it off, and choos
 
 ## What's new
 
-- **Quests opens in Today** (hour by hour) unless you choose another: Options (⋯) → **Opens in** Today, Focus, List or Board. Remembered on the device. Today's plan is no longer a separate icon in Plans: it's this view.
+- **Quests opens in Today** (hour by hour) unless you choose another: the options row under the bar → **Opens in** Today, Focus, List or Board. Remembered on the device. Today's plan is no longer a separate icon in Plans: it's this view.
 - **Quests is a panel of its own**, in Nova Agent's Plans (and on the phone's bar): quick add in everyday words, Focus, List, Board and Today, steps, tags, drag to reorder, Calm, and keyboard shortcuts. Today's plan beside Agent is still there (**Today** on the bar).
 
 ## What it does
@@ -25,7 +25,7 @@ Every quest in one place. Write one the way you'd say it, tick it off, and choos
 - **Find.** The magnifier (or **/**): words in names, notes and steps, or #tag. The tag chips under the box show only that tag.
 - **Calm.** The moon (or **C**): fewer things on screen, less colour, nothing moving, at most five in a group and only today in Today. Remembered on the device.
 - **Little celebrations.** A quiet word when you finish one (how many today, days in a row), and the days-in-a-row count at the top. Off in Options.
-- **Options** (⋯): Everyone's quests (admins), Little celebrations, Reminders on my phone, Show what's done, **Opens in** (Today, Focus, List or Board; Today unless you change it), Re-plan from now, Keyboard shortcuts.
+- **Options** (always on screen, in a row under the bar; it slides sideways if the screen is narrow): Everyone's quests (admins), Little celebrations, Reminders on my phone, Show what's done, **Opens in** (Today, Focus, List or Board; Today unless you change it), Re-plan from now, Keyboard shortcuts.
 
 ## Keyboard
 

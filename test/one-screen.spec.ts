@@ -59,4 +59,15 @@ describe("one screen, nothing scrolling the page", () => {
     expect(read("../web/agent/chat.html")).toContain("  .viewer > .viewer-body { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; border-radius: 24px; overflow: hidden; }");
     expect(read("../web/portal/app.css")).toContain(".view-enter { animation: none; }");
   });
+
+  it("no menus hiding places or options: every place on the phone bar, Quests' options on screen", () => {
+    const phone = read("../web/agent/assets/phone.js");
+    for (const gone of ["data-more", "in-more", "places-sheet"]) expect(phone).not.toContain(gone);
+    expect(read("../web/agent/assets/phone.css")).toContain("grid-template-columns: var(--row2,");
+    const q = read("../web/quests/index.html");
+    expect(q).not.toContain('id="more-btn"');
+    expect(q).not.toContain('role="menu"');
+    expect(q).toContain('<div class="opts" role="group" aria-label="Options">');
+    for (const id of ["opt-celebrate", "opt-phone", "opt-done", "opt-replan", "opt-keys"]) expect(q).toContain(`id="${id}"`);
+  });
 });

@@ -164,11 +164,11 @@ function render() {
   for (const b of document.querySelectorAll(".views [role=tab]")) b.setAttribute("aria-selected", String(b.dataset.view === view));
   for (const s of document.querySelectorAll(".view")) s.hidden = s.dataset.view !== view;
   $("opt-everyone").hidden = !state.canSeeEveryone;
-  $("opt-everyone").setAttribute("aria-checked", String(who === "everyone"));
-  $("opt-celebrate").setAttribute("aria-checked", String(celebrate));
-  for (const b of document.querySelectorAll("[data-start]")) b.setAttribute("aria-checked", String(b.dataset.start === start));
-  $("opt-done").setAttribute("aria-checked", String(showDone));
-  $("opt-phone").setAttribute("aria-checked", String(Boolean(state.rhythm?.phonePush)));
+  $("opt-everyone").setAttribute("aria-pressed", String(who === "everyone"));
+  $("opt-celebrate").setAttribute("aria-pressed", String(celebrate));
+  for (const b of document.querySelectorAll("[data-start]")) b.setAttribute("aria-pressed", String(b.dataset.start === start));
+  $("opt-done").setAttribute("aria-pressed", String(showDone));
+  $("opt-phone").setAttribute("aria-pressed", String(Boolean(state.rhythm?.phonePush)));
   renderStreak();
   renderTags();
   if (view === "focus") renderFocus();
@@ -635,24 +635,10 @@ $("search").addEventListener("keydown", (e) => {
   if (e.key === "Escape") toggleSearch(false);
 });
 
-// The options menu
-const menu = $("more-menu");
-function closeMenu() {
-  menu.hidden = true;
-  $("more-btn").setAttribute("aria-expanded", "false");
-}
-$("more-btn").addEventListener("click", () => {
-  menu.hidden = !menu.hidden;
-  $("more-btn").setAttribute("aria-expanded", String(!menu.hidden));
-  if (!menu.hidden) menu.querySelector("button:not([hidden])")?.focus();
-});
-document.addEventListener("click", (e) => {
-  if (!menu.hidden && !e.target.closest("#more-menu, #more-btn")) closeMenu();
-});
+// The options (always on screen, under the bar)
 $("opt-everyone").addEventListener("click", () => {
   who = who === "everyone" ? "mine" : "everyone";
   keep("who", who);
-  closeMenu();
   load();
 });
 for (const b of document.querySelectorAll("[data-start]"))
@@ -673,19 +659,16 @@ $("opt-done").addEventListener("click", () => {
 });
 $("opt-phone").addEventListener("click", async () => {
   const on = !state?.rhythm?.phonePush;
-  closeMenu();
   await post("/actions/rhythm", { phonePush: on });
   toast(on ? "Reminders go to your phone too (turn on Alerts in Nova Agent on the phone)." : "Phone reminders off.");
   load();
 });
 $("opt-replan").addEventListener("click", async () => {
-  closeMenu();
   await post("/actions/replan", {});
   toast("Re-planned from now.");
   load();
 });
 $("opt-keys").addEventListener("click", () => {
-  closeMenu();
   $("keys").showModal();
 });
 $("keys-close").addEventListener("click", () => $("keys").close());

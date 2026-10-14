@@ -37,26 +37,19 @@
       <span class="streak" id="streak" hidden></span>
       <button class="icon-btn" id="search-btn" type="button" aria-label="Find a quest (/)" title="Find (/)" aria-controls="search-row" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
       <button class="icon-btn" id="calm-btn" type="button" aria-pressed="false" aria-label="Calm: fewer things on screen (C)" title="Calm (C)"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
-      <button class="icon-btn" id="more-btn" type="button" aria-label="Options" title="Options" aria-haspopup="menu" aria-expanded="false" aria-controls="more-menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
-      <div class="menu" id="more-menu" role="menu" hidden>
-        <button role="menuitemcheckbox" type="button" id="opt-everyone" aria-checked="false" hidden>Everyone's quests</button>
-        <button role="menuitemcheckbox" type="button" id="opt-celebrate" aria-checked="true">Little celebrations</button>
-        <button role="menuitemcheckbox" type="button" id="opt-phone" aria-checked="false">Reminders on my phone</button>
-        <button role="menuitemcheckbox" type="button" id="opt-done" aria-checked="true">Show what's done</button>
-        <div class="menu-sep" role="separator"></div>
-        <div class="menu-label" id="start-label">Opens in</div>
-        <div role="group" aria-labelledby="start-label">
-          <button role="menuitemradio" type="button" data-start="today" aria-checked="true">Today</button>
-          <button role="menuitemradio" type="button" data-start="focus" aria-checked="false">Focus</button>
-          <button role="menuitemradio" type="button" data-start="list" aria-checked="false">List</button>
-          <button role="menuitemradio" type="button" data-start="board" aria-checked="false">Board</button>
-        </div>
-        <div class="menu-sep" role="separator"></div>
-        <button role="menuitem" type="button" id="opt-replan">Re-plan from now</button>
-        <button role="menuitem" type="button" id="opt-keys">Keyboard shortcuts</button>
-      </div>
     </div>
   </header>
+
+  <!-- Options: always on screen (no ⋯ menu); one row, sliding sideways inside itself if it's too wide -->
+  <div class="opts" role="group" aria-label="Options">
+    <button class="opt" type="button" id="opt-everyone" aria-pressed="false" hidden>Everyone's quests</button>
+    <button class="opt" type="button" id="opt-celebrate" aria-pressed="true" title="Little celebrations when you finish a quest">Celebrations</button>
+    <button class="opt" type="button" id="opt-phone" aria-pressed="false" title="Reminders on my phone too">Phone reminders</button>
+    <button class="opt" type="button" id="opt-done" aria-pressed="true" title="Show what's done">Show done</button>
+    <span class="opt-group" role="group" aria-labelledby="start-label"><span class="opt-label" id="start-label">Opens in</span><button type="button" data-start="today" aria-pressed="true">Today</button><button type="button" data-start="focus" aria-pressed="false">Focus</button><button type="button" data-start="list" aria-pressed="false">List</button><button type="button" data-start="board" aria-pressed="false">Board</button></span>
+    <button class="opt plain" type="button" id="opt-replan">Re-plan from now</button>
+    <button class="opt plain" type="button" id="opt-keys" title="Keyboard shortcuts">Shortcuts</button>
+  </div>
 
   <!-- Quick add: one line in everyday words -->
   <form class="add" id="add-form" autocomplete="off">

@@ -10,8 +10,6 @@
 (function () {
   'use strict';
   const PHONE = matchMedia('(max-width: 980px), (max-height: 480px)');
-  // A phone held upright: the bar keeps the everyday places and the rest go behind More (phone.css)
-  const NARROW = matchMedia('(max-width: 600px)');
   const STILL = matchMedia('(prefers-reduced-motion: reduce)');
   const $ = (id) => document.getElementById(id);
   const main = $('main'), shell = $('shell'), viewer = $('viewer');
@@ -217,8 +215,8 @@
   // ---- The bar along the bottom: every place in Nova Agent, always there, in four groups ----
   // Apps (Portal, Agent, Calendar, Notes, Index) · Plans (Quests, Today, Missions) · Tools (Lossless,
   // Visualizer, Console) · Helpers (Observatory, Manual). Any other panel joins Tools.
-  // On a narrow phone only Portal, Agent, Calendar, Notes and Quests stay on the bar, with a More
-  // button for the rest (a sheet with the same icons; they open just the same)
+  // Every place stays on the bar on every screen (no More menu): on a phone held upright it's two
+  // rows, Apps along the top and Plans, Tools and Helpers below
   const SKIP = ['/admin/links']; // All links: behind the gear
   const GROUPS = [
     ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
@@ -230,8 +228,7 @@
   bar.className = 'tabbar';
   bar.id = 'tabbar';
   bar.setAttribute('aria-label', 'Nova Agent');
-  const STAYS = ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/quests/']; // on the narrow bar; the rest are behind More
-  const item = (key, label, icon) => `<button type="button" data-tab="${key}"${STAYS.includes(key) ? '' : ' class="in-more"'}>${icon}<span>${label}</span></button>`;
+  const item = (key, label, icon) => `<button type="button" data-tab="${key}">${icon}<span>${label}</span></button>`;
   const glyph = (g) => `<span class="t-ico g" aria-hidden="true">${g}</span>`;
   // The panels' own icons (chat.html's .pico set: each its own colour, tinted by the theme)
   const pico = (k) => `<span class="pico t-ico" data-p="${k}" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-${k}"/></svg></span>`;
@@ -242,18 +239,13 @@
   };
   // The bar keeps its short labels: "Notes" in the launcher is "Notes" here
   const panelItem = (p) => (tile(p) ? item(p, nameOf(tile(p)).replace(/^Nova /, '').replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico')) : '');
-  const MORE_ORDER = ['pane:missions', '/board/', '/app/memory/', '/lossless/', '/visualizer', '/observatory/', 'manual'];
-  let moreKeys = [];
   function fillBar() {
     const placed = new Set(GROUPS.flatMap((g) => g[2]));
     const extra = tiles().map((a) => a.dataset.inside).filter((p) => !placed.has(p) && !SKIP.includes(p));
     bar.innerHTML = GROUPS.map(([id, label, keys]) => {
       const items = (id === 'tools' ? [...keys, ...extra] : keys).map((k) => (FIXED[k] ? FIXED[k]() : panelItem(k))).join('');
       return `<div class="tgroup" data-group="${id}" role="group" aria-label="${label}"><span class="tg-label" aria-hidden="true">${label}</span><div class="tg-items">${items}</div></div>`;
-    }).join('') +
-      `<div class="tgroup" data-group="more" role="group" aria-label="More"><span class="tg-label" aria-hidden="true">&nbsp;</span><div class="tg-items"><button type="button" class="tb-more" data-more aria-haspopup="dialog" aria-controls="places-sheet"><span class="t-ico g" aria-hidden="true">⋯</span><span>More</span></button></div></div>`;
-    // Behind More: Missions, Index, Lossless, Visualizer, Observatory, Manual (and any other panel)
-    moreKeys = [...MORE_ORDER, ...extra].filter((k) => bar.querySelector(`[data-tab="${k}"]`));
+    }).join('');
     current();
   }
   shell.append(bar);
@@ -279,7 +271,7 @@
     }
     sfx('open');
   }, true);
-  // A place on the bar (or in More) opens the same way wherever it's tapped
+  // A place on the bar opens the same way wherever it's tapped
   function go(t) {
     if (t === 'pane:quests') { open('/quests/'); return; } // (today's plan is Quests now)
     if (t.startsWith('pane:')) { closePanel(); setPane(t.slice(5)); sfx('open'); return; }
@@ -287,67 +279,34 @@
     open(t);
   }
   bar.addEventListener('click', (e) => {
-    if (e.target.closest('[data-more]')) { openMore(); return; }
     const b = e.target.closest('[data-tab]');
     if (!b) return;
     go(b.dataset.tab);
   });
-  // Each group's width follows how many places it holds (on a narrow phone, the ones still on the
-  // bar); and the bar's height for whatever sits above it (toasts)
+  // Each group's width follows how many places it holds; and the bar's height for whatever sits
+  // above it (toasts)
   function layout() {
-    const shown = NARROW.matches ? '[data-tab]:not(.in-more), [data-more]' : '[data-tab]';
-    for (const g of bar.querySelectorAll('.tgroup')) g.style.setProperty('--k', g.querySelectorAll(shown).length || 1);
+    const shown = '[data-tab]';
+    const k = {};
+    for (const g of bar.querySelectorAll('.tgroup')) g.style.setProperty('--k', (k[g.dataset.group] = g.querySelectorAll(shown).length || 1));
+    // The second row on a phone held upright: each group as wide as its places (phone.css)
+    bar.style.setProperty('--row2', ['tasks', 'tools', 'helpers'].map((id) => `minmax(0, ${k[id] || 1}fr)`).join(' '));
     // In one row (a tablet, a short or zoomed-in window, a phone on its side) every place is the same
     // width, whatever its group: phone.css shares the row out by how many places are showing
-    bar.style.setProperty('--tab-n', [...bar.querySelectorAll('.tgroup:not([data-group="more"])')].reduce((n, g) => n + g.querySelectorAll(shown).length, 0) || 14);
+    bar.style.setProperty('--tab-n', [...bar.querySelectorAll('.tgroup')].reduce((n, g) => n + g.querySelectorAll(shown).length, 0) || 14);
     document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight || 126}px`);
   }
   window.addEventListener('resize', layout);
-  NARROW.addEventListener('change', () => { if (!NARROW.matches && places.open) places.close(); current(); });
-
-  // ---- More (a narrow phone): the places that aren't on the bar, in a calm sheet ----
-  // Same icons and the same opening as on the bar; Escape, Close or a tap outside put it away
-  const places = document.createElement('dialog');
-  places.className = 'more-sheet places-sheet';
-  places.id = 'places-sheet';
-  places.setAttribute('aria-label', 'More places');
-  document.body.append(places);
-  function fillMore() {
-    const buttons = moreKeys.map((k) => bar.querySelector(`[data-tab="${k}"]`).outerHTML.replace(' class="in-more"', '')).join('');
-    places.innerHTML = `<div class="grab" aria-hidden="true"></div><h4>More</h4><div class="more-grid">${buttons}</div><button type="button" class="more-close" data-close>Close</button>`;
-    current();
-  }
-  function openMore() {
-    fillMore();
-    if (!places.open) places.showModal();
-    const here = places.querySelector('[aria-current="page"]') || places.querySelector('[data-tab]');
-    if (here) here.focus();
-    sfx('open');
-  }
-  places.addEventListener('click', (e) => {
-    if (e.target === places || e.target.closest('[data-close]')) { places.close(); return; }
-    const b = e.target.closest('[data-tab]');
-    if (!b) return;
-    places.close();
-    go(b.dataset.tab);
-  });
-  places.addEventListener('close', () => { const m = bar.querySelector('[data-more]'); if (m && NARROW.matches) m.focus({ preventScroll: true }); });
   if (typeof ResizeObserver === 'function') new ResizeObserver(layout).observe(bar);
 
   // ---- Which place is lit: the home's pane, or the open panel (and the bar shows it) ----
   function current() {
     const openName = !viewer.hidden ? $('viewer-name').textContent : '';
-    for (const b of [...bar.querySelectorAll('[data-tab]'), ...places.querySelectorAll('[data-tab]')]) {
+    for (const b of bar.querySelectorAll('[data-tab]')) {
       const t = b.dataset.tab;
       const on = t.startsWith('pane:') ? !openName && main.dataset.pane === t.slice(5) : Boolean(openName) && nameOf(tile(t)) === openName;
       if (on) b.setAttribute('aria-current', 'page');
       else b.removeAttribute('aria-current');
-    }
-    // On a narrow phone, a place behind More that's open lights More up
-    const more = bar.querySelector('[data-more]');
-    if (more) {
-      if (NARROW.matches && bar.querySelector('.in-more[aria-current="page"]')) more.setAttribute('aria-current', 'page');
-      else more.removeAttribute('aria-current');
     }
     clear.hidden = Boolean(openName) || main.dataset.pane !== 'chat';
     layout();

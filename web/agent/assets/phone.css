@@ -136,19 +136,13 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
 .more-close { display: block; width: 100%; margin-top: 14px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: none; color: var(--text); font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; cursor: pointer; }
 @media (max-width: 340px) { .more-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
-/* A phone held upright: Portal, Agent, Calendar, Notes and Quests on the bar, and More for the rest
-   (phone.js; the More sheet uses the gear's sheet look). Wider screens keep the whole bar. */
-.tabbar .tgroup[data-group="more"] { display: none; }
+/* A phone held upright: every place stays on the bar (no More menu), two rows: Apps along the top,
+   Plans, Tools and Helpers below (the grid above). Names too long for a narrow phone end in "…". */
 @media (max-width: 600px) {
-  .tabbar { grid-template-columns: minmax(0, 4fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "apps tasks more"; }
-  .tabbar .tgroup[data-group="tools"], .tabbar .tgroup[data-group="helpers"], .tabbar .in-more { display: none; }
-  .tabbar .tgroup[data-group="tasks"] { border-left: 1px solid var(--line); padding-left: 6px; }
-  .tabbar .tgroup[data-group="more"] { display: grid; grid-area: more; }
+  .tabbar { grid-template-columns: var(--row2, minmax(0, 2fr) minmax(0, 4fr) minmax(0, 2fr)); }
+  .tabbar .tgroup[data-group="tasks"] { border-left: 0; padding-left: 0; }
+  .tabbar button { font-size: clamp(8.5px, 2.5vw, 11px); }
 }
-.places-sheet .more-grid .t-ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; }
-.places-sheet .more-grid .t-ico.pico { box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tint) 55%, #fff 10%); }
-.places-sheet .more-grid .t-ico.g { color: #fff; background: color-mix(in srgb, var(--panel-2) 85%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
-.places-sheet .more-grid button:focus-visible, .places-sheet .more-close:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
 
 /* ---- The bar in one row: a tablet, a short or zoomed-in window, a phone on its side ----
    Every place is the same width whichever group it's in, each group is just as wide as its places,
@@ -159,7 +153,6 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
   .tabbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 2px 8px;
     --tab-w: clamp(46px, calc((100vw - 24px - 3 * 16px) / var(--tab-n, 14)), 84px); }
   .tabbar > .tgroup { flex: 0 0 auto; min-width: 0; }
-  .tabbar > .tgroup[data-group="more"] { display: none; }
   .tabbar > .tgroup + .tgroup { border-left: 1px solid var(--line); padding-left: 6px; }
   .tabbar > .status-line { flex: 1 0 100%; }
   .tabbar .tg-items { grid-template-columns: repeat(var(--k, 2), var(--tab-w)); grid-auto-flow: row; justify-content: start; gap: 0; }
