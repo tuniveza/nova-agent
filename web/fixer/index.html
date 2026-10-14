@@ -62,10 +62,20 @@
        (Needs you down the left), each scrolling inside itself, and no tabs -->
   <div class="panes" id="panes">
   <!-- Needs you: the approval cards first, then what's being worked on -->
+  <!-- Needs you: one fix at a time, as a big clear card (‹ › and the names along the top to go
+       between them); what's wrong, why, the fix and where, one before/after picture with the
+       problem outlined, and Approve / Reject / Tweak / Later always at the bottom -->
   <section class="pane" id="pane-needs" role="tabpanel" aria-label="Needs you">
     <h2 class="pane-h">Needs you</h2>
-    <div id="needs-list" class="stack"><p class="nt-loading">Looking…</p></div>
-    <div id="working" class="stack"></div>
+    <div class="deck" id="deck">
+      <div class="deck-nav" id="deck-nav" hidden>
+        <button type="button" class="deck-step" id="deck-prev" aria-label="Previous fix (←)">‹</button>
+        <span class="deck-count" id="deck-count" aria-live="polite"></span>
+        <button type="button" class="deck-step" id="deck-next" aria-label="Next fix (→)">›</button>
+        <div class="deck-strip" id="deck-strip" role="tablist" aria-label="Fixes"></div>
+      </div>
+      <div class="deck-card" id="deck-card"><p class="nt-loading">Looking…</p></div>
+    </div>
   </section>
 
   <section class="pane" id="pane-health" role="tabpanel" aria-label="Health" hidden>
@@ -159,6 +169,7 @@
 <dialog class="zoom" id="zoom" aria-label="Screenshot">
   <button type="button" class="icon-btn zoom-x" id="zoom-close" aria-label="Close">✕</button>
   <img id="zoom-img" alt="">
+  <div class="zoom-art" id="zoom-art" hidden></div>
   <p class="nt-note" id="zoom-cap"></p>
 </dialog>
 

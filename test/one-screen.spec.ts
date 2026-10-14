@@ -80,7 +80,8 @@ describe("one screen, nothing scrolling the page", () => {
     expect(js).toContain("p.hidden = !WIDE.matches && p.id !== `pane-${name}`;");
     const css = read("../web/fixer/fixer.css");
     expect(css).toContain("html.fx-wide .fx-tabs { display: none; }");
-    expect(css).toContain("html.fx-wide #pane-needs { grid-row: 1 / span 2; }");
+    // (Needs you down the left, every row: one fix at a time, as a big card; the other six beside it)
+    expect(css).toContain("html.fx-wide #pane-needs { grid-row: 1 / -1; }");
   });
 
   it("the home's welcome: sized once, kept while it still fits, never a hair too big", () => {

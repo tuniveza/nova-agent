@@ -169,9 +169,11 @@ html.fx-wide .top .nt-sub { margin: 0 auto; max-width: none; font-size: 12.5px; 
 html.fx-wide .glance { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 14px; padding: 10px 16px; margin-bottom: 10px; }
 html.fx-wide .glance > :not(.glance-row, .glance-actions) { grid-column: 1 / -1; }
 html.fx-wide .fx-tabs { display: none; }
-html.fx-wide .panes { display: grid; grid-template-columns: minmax(0, 1.15fr) repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10px; }
+html.fx-wide .panes { display: grid; grid-template-columns: minmax(0, 2.5fr) repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 10px; }
+/* (a big screen: Needs you gets more room still, the other six in three columns) */
+@media (min-width: 1800px) { html.fx-wide .panes { grid-template-columns: minmax(0, 2.8fr) repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); } }
 html.fx-wide .panes > .pane { margin: 0; padding: 10px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); gap: 10px; }
-html.fx-wide #pane-needs { grid-row: 1 / span 2; }
+html.fx-wide #pane-needs { grid-row: 1 / -1; }
 /* inside a part, its cards lie flat (the part is the box) and every heading is the same quiet line */
 html.fx-wide .panes > .pane .nt-card { padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
 html.fx-wide .pane-h, html.fx-wide .panes > .pane .nt-h { display: flex; justify-content: center; margin: 0 0 4px; font-family: var(--f-mono); font-stretch: 100%; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
@@ -217,4 +219,178 @@ html.fx-wide .panes .switch-row > input { flex: none; }
   .glance > p { flex-basis: 100%; margin: 0; }
   .glance-row { flex: 1 1 auto; display: flex; gap: 12px; }
   .glance-item { display: flex; flex-direction: column; }
+}
+
+/* ================= Needs you: one fix at a time, as a big clear card =================
+   ‹ 3 of 6 › and the fixes' names along the top; the card fills the rest: a vivid title, four
+   labelled rows (what's wrong, why, the fix, where), one big before/after picture with the problem
+   outlined, and Approve / Reject / Tweak / Later always at the bottom. Only the card's words area
+   (and Details) scrolls inside itself, never the page. */
+.panes > #pane-needs:not([hidden]) { display: flex; flex-direction: column; overflow: hidden; }
+.deck { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.deck-nav { flex: none; display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); align-items: center; gap: 8px; }
+.deck-nav[hidden] { display: none; }
+.nb-plain button.deck-step { min-width: 44px; min-height: 44px; padding: 0; border-radius: 14px; font-size: 24px; line-height: 1; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); color: var(--bright); }
+.deck-count { font-family: var(--f-mono); font-size: 14px; font-weight: 600; color: var(--bright); white-space: nowrap; min-width: 4.5em; text-align: center; }
+.deck-strip { display: flex; gap: 6px; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x proximity; padding: 2px; }
+.deck-strip::-webkit-scrollbar { display: none; }
+.nb-plain button.fx-pill { flex: none; max-width: 240px; min-height: 40px; padding: 6px 14px 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); color: var(--text); font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; scroll-snap-align: start; }
+.fx-pill::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; vertical-align: 1px; background: var(--muted); }
+.fx-pill.ready::before { background: var(--hi); } .fx-pill.ready.serious::before { background: var(--bad); }
+.fx-pill.live::before { background: var(--ok); } .fx-pill.bad::before { background: var(--bad); }
+.fx-pill.later { opacity: .6; }
+.nb-plain button.fx-pill[aria-selected="true"] { border-color: var(--hi); color: var(--bright); background: color-mix(in srgb, var(--hi) 20%, transparent); opacity: 1; }
+.deck-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.fx-empty { margin: auto; max-width: 46ch; font-size: 16px; }
+
+.fx-card { flex: 1 1 auto; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 12px; padding: 16px 18px; border-radius: 22px; text-align: left;
+  border: 1px solid var(--line); border-top: 5px solid var(--hi); background: color-mix(in srgb, var(--deep, var(--void)) 72%, transparent); container-type: inline-size; }
+.fx-card.sev-serious { border-top-color: var(--bad); } .fx-card.sev-small { border-top-color: var(--warn); }
+.fx-head { display: grid; gap: 8px; min-width: 0; }
+.fx-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.fx-sev, .fx-status, .fx-panel { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; letter-spacing: .02em; }
+.fx-sev.serious { background: var(--bad); color: var(--void); } .fx-sev.small { background: var(--warn); color: var(--void); }
+.fx-sev.quest, .fx-sev.none { background: color-mix(in srgb, var(--hi) 25%, transparent); color: var(--bright); }
+.fx-panel { border: 1px solid var(--line); color: var(--bright); font-weight: 700; }
+.fx-panel-ico { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--hi); color: var(--on-hi, var(--void)); font-size: 12px; font-weight: 900; }
+.fx-status { border: 1px solid var(--line); color: var(--muted); }
+.fx-status.ready { border-color: var(--hi); color: var(--bright); background: color-mix(in srgb, var(--hi) 18%, transparent); }
+.fx-status.live { border-color: var(--ok); color: var(--ok); } .fx-status.bad { border-color: var(--bad); color: var(--bad); }
+.fx-status.prep::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--hi); opacity: .8; }
+.fx-title { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 850; font-size: clamp(20px, 2.1vw, 30px); line-height: 1.18; color: var(--bright); overflow-wrap: anywhere; }
+
+/* The body: words on one side, the picture on the other where there's room; stacked on a narrow card */
+.fx-body { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(240px, 1fr); gap: 12px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.fx-side { display: grid; gap: 10px; align-content: start; min-width: 0; }
+@container (min-width: 620px) {
+  .fx-body { grid-template-columns: minmax(250px, .8fr) minmax(0, 1.4fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; }
+  .fx-side { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-right: 4px; }
+}
+.fx-facts { display: grid; gap: 8px; margin: 0; }
+.fx-row { display: grid; gap: 3px; padding: 10px 14px; border-radius: 14px; border-left: 5px solid var(--c); background: color-mix(in srgb, var(--c) 9%, color-mix(in srgb, var(--void) 50%, transparent)); }
+.fx-row.fx-r-wrong { --c: var(--bad); } .fx-row.fx-r-why { --c: var(--warn); } .fx-row.fx-r-fix { --c: var(--ok); } .fx-row.fx-r-where { --c: var(--hi); }
+.fx-row dt { font-family: var(--f-mono); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
+.fx-row dd { margin: 0; font-size: 17px; line-height: 1.42; color: var(--bright); overflow-wrap: anywhere; }
+.fx-wheres { display: flex; flex-wrap: wrap; gap: 6px; }
+.nb-plain button.fx-where, .fx-where { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); color: var(--text); font: inherit; font-size: 13.5px; font-weight: 600; }
+.nb-plain button.fx-where[aria-pressed="true"] { border-color: var(--hi); background: color-mix(in srgb, var(--hi) 24%, transparent); color: var(--bright); }
+
+.fx-pic { margin: 0; min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; }
+.fx-flip { justify-self: center; display: flex; gap: 4px; padding: 4px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 50%, transparent); }
+.nb-plain .fx-flip button { min-height: 40px; min-width: 96px; padding: 6px 16px; border-radius: 12px; background: none; color: var(--muted); font-size: 15px; font-weight: 800; }
+.nb-plain .fx-flip button[data-pic="before"][aria-selected="true"] { background: var(--bad); color: var(--void); }
+.nb-plain .fx-flip button[data-pic="after"][aria-selected="true"] { background: var(--ok); color: var(--void); }
+.fx-frame { min-height: 0; display: grid; place-items: center; padding: 6px; border-radius: 16px; border: 1px solid var(--line); background: var(--void); overflow: hidden; cursor: zoom-in; }
+.fx-svg, .fx-img { display: block; width: 100%; height: 100%; max-height: 100%; object-fit: contain; }
+.fx-box { fill: color-mix(in srgb, var(--bad) 16%, transparent); stroke: var(--bad); stroke-width: 4px; vector-effect: non-scaling-stroke; }
+.fx-box.ok { fill: color-mix(in srgb, var(--ok) 14%, transparent); stroke: var(--ok); }
+.fx-pic figcaption { text-align: center; font-size: 13.5px; color: var(--muted); }
+.fx-pic figcaption b.bad { color: var(--bad); } .fx-pic figcaption b.ok { color: var(--ok); }
+.fx-nopic { display: grid; place-items: center; min-height: 100%; padding: 18px; border-radius: 16px; border: 1px dashed var(--line); color: var(--muted); font-size: 15px; text-align: center; }
+.fx-nopic.big { min-height: 200px; }
+
+/* Details: the long version, folded away; it scrolls inside the words column */
+.fx-more { border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); }
+.fx-more > summary { min-height: 44px; display: flex; align-items: center; padding: 0 14px; cursor: pointer; font-weight: 700; color: var(--bright); }
+.fx-more-body { padding: 0 14px 12px; font-size: 14.5px; }
+.fx-more-body pre { max-height: 220px; overflow: auto; white-space: pre-wrap; font-size: 12px; }
+.fx-more-body .diff { white-space: pre; max-height: 320px; }
+
+/* The actions: always at the bottom of the card, big */
+.fx-actions { display: grid; grid-template-columns: 1.4fr 1fr 1fr .8fr; gap: 10px; }
+.fx-actions button { white-space: nowrap; }
+.fx-actions.quiet { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.nb-plain .fx-actions button { min-height: 54px; padding: 8px 12px; border-radius: 16px; font-size: 17px; font-weight: 850; letter-spacing: .01em; }
+.nb-plain .fx-actions button.fx-approve { background: var(--ok); color: var(--void); border-color: transparent; box-shadow: 0 12px 30px -16px var(--ok); }
+.nb-plain .fx-actions button.fx-reject { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); border-color: var(--bad); }
+.nb-plain .fx-actions button.fx-tweak-btn, .nb-plain .fx-actions button.fx-later { background: color-mix(in srgb, var(--void) 45%, transparent); color: var(--bright); border-color: var(--line); }
+.fx-wait { margin: 0; font-size: 15.5px; color: var(--muted); }
+.fx-tweak { display: grid; gap: 8px; padding: 12px; border-radius: 16px; border: 1px solid var(--hi); background: color-mix(in srgb, var(--hi) 8%, transparent); }
+.fx-tweak[hidden] { display: none; }
+.fx-tweak textarea { width: 100%; font-size: 16px; }
+.fx-tweak-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.fx-tweak-row button { flex: 1 1 auto; }
+/* (the tweak box replaces the buttons while it's open) */
+.fx-card:has(.fx-tweak:not([hidden])) > .fx-actions { display: none; }
+
+/* The message after a tap: a toast at the bottom, over everything */
+.message { position: fixed; z-index: 30; left: 50%; bottom: 16px; transform: translateX(-50%); width: max-content; max-width: min(92vw, 560px); margin: 0; padding: 12px 18px; border-radius: 16px; font-size: 15px; font-weight: 700;
+  color: var(--bright); background: var(--deep, var(--void)); border: 1px solid var(--hi); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .6); }
+.message.bad { border-color: var(--bad); }
+
+/* The big picture: the outlined picture, as large as the screen allows */
+.zoom-art { display: grid; place-items: center; }
+.zoom-art .fx-svg, .zoom-art .fx-img { width: min(92vw, 1400px); height: 80vh; height: 80dvh; }
+.zoom-art[hidden] { display: none; }
+
+/* Phones and short screens: the card a little snugger; the words and picture scroll together inside it */
+@media (max-width: 640px) {
+  .fx-card { padding: 12px; gap: 10px; border-radius: 18px; }
+  .fx-title { font-size: 20px; }
+  .fx-row { padding: 8px 12px; }
+  .fx-row dd { font-size: 16px; }
+  .fx-actions { grid-template-columns: 1.35fr 1fr 1fr .85fr; gap: 6px; }
+  .nb-plain .fx-actions button { min-height: 50px; padding: 6px 4px; font-size: 15px; }
+  .nb-plain button.fx-pill { max-width: 180px; }
+  .fx-body { grid-template-rows: auto minmax(260px, 62vh); }
+}
+@media (max-height: 520px) {
+  .fx-card { padding: 10px 12px; gap: 8px; grid-template-rows: auto minmax(0, 1fr) auto; }
+  .fx-title { font-size: 18px; }
+  .fx-row dd { font-size: 15.5px; }
+  .nb-plain .fx-actions button { min-height: 48px; font-size: 15px; }
+  .fx-body { grid-template-rows: auto minmax(220px, 80vh); }
+}
+@container (min-width: 620px) { .fx-body { grid-template-rows: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .fx-pill, .fx-card { transition: none; } }
+
+/* (Text follows the person's centring setting; the chips and places centre with it) */
+.fx-head { justify-items: center; }
+.fx-chips, .fx-wheres { justify-content: center; }
+/* A wide screen: the card's picture gets the most room, and the "Working on" line steps aside (the
+   fixes being prepared are in the card's row of names) */
+html.fx-wide #g-working { display: none; }
+
+/* A phone, or a short screen, with Needs you open: the card gets the room. The four numbers and Check
+   now step aside (the tabs still count, and Health has Check now); notices still show */
+@media (max-width: 640px), (max-height: 560px) {
+  html.fx-needs:not(.fx-wide) .glance-row, html.fx-needs:not(.fx-wide) .glance-actions, html.fx-needs:not(.fx-wide) #g-working { display: none; }
+  html.fx-needs:not(.fx-wide) .glance:not(:has(> p:not([hidden]):not(#g-working))) { display: none; }
+  html.embed.fx-needs:not(.fx-wide) .top { display: none; }
+  .fx-chips .nt-chip { display: none; }
+  .deck-nav { gap: 6px; }
+}
+/* Very short (a phone held sideways): one slim line above the card, the card's words smaller */
+@media (max-height: 400px) {
+  .deck-strip { display: none; }
+  .deck-nav { grid-template-columns: auto auto auto; justify-content: start; }
+  .fx-card { padding: 8px 10px; gap: 6px; border-top-width: 3px; }
+  .fx-chips .fx-panel { display: none; }
+  .fx-sev, .fx-status { min-height: 24px; padding: 2px 10px; font-size: 12px; }
+  .fx-title { font-size: 16px; }
+  .fx-head { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; }
+  .fx-body { grid-template-rows: auto minmax(200px, 90vh); }
+  .nb-plain .fx-actions button { min-height: 48px; font-size: 14.5px; }
+  html.fx-needs .fx-tabs { margin-bottom: 4px; }
+}
+
+@media (hover: hover) {
+  .nb-plain .fx-actions button.fx-approve:hover:not(:disabled) { background: color-mix(in srgb, var(--ok) 88%, white); color: var(--void); border-color: transparent; }
+  .nb-plain .fx-actions button.fx-reject:hover:not(:disabled) { background: color-mix(in srgb, var(--bad) 28%, transparent); color: var(--bad); border-color: var(--bad); }
+}
+/* A phone held sideways: plenty of width, little height, so the four buttons stand in a column on the
+   right and the words get the height */
+@media (max-height: 400px) and (min-width: 600px) {
+  .fx-card { grid-template-columns: minmax(0, 1fr) minmax(200px, 30%); grid-template-rows: auto minmax(0, 1fr); column-gap: 10px; }
+  .fx-head { grid-column: 1; grid-row: 1; }
+  .fx-body { grid-column: 1; grid-row: 2; grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; }
+  .fx-side { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .fx-row { padding: 6px 10px; }
+  .fx-row dd { font-size: 15px; }
+  .fx-flip { display: none; }
+  .fx-pic { grid-template-rows: minmax(0, 1fr); }
+  .fx-pic figcaption { display: none; }
+  .fx-actions, .fx-actions.quiet { grid-column: 2; grid-row: 1 / span 2; grid-template-columns: 1fr 1fr; align-content: center; gap: 6px; }
+  .fx-actions.quiet .fx-wait { grid-column: 1 / -1; font-size: 13.5px; }
+  .fx-tweak { grid-column: 1 / -1; grid-row: 1 / span 2; }
 }
