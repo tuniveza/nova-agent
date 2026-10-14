@@ -827,6 +827,14 @@ export function portalMock(pathWithQuery, method = "GET") {
   if (path === "tidy-api/state") return tidyBody("pc");
   hit = /^money\/invoices\/(\d+)$/.exec(path);
   if (hit) return moneyInvoiceBody(Number(hit[1]));
+  // The Invoicer: the price list, and an invoice at a stage (its page is check-fit's own stand-in)
+  if (path === "money/catalogue") return { depositPercent: 50, services: [{ id: "s-1", group: "Rap packages", name: "Rap Package - 1 song (1 hour recording with engineer + 1 hour mixing)", pricePence: 10000 }, { id: "production", group: "Production", name: "Custom music production, per song " + LONGWORD, pricePence: 25000, from: true }] };
+  hit = /^money\/invoices\/(\d+)\/stage$/.exec(path);
+  if (hit) {
+    const inv = INVOICES.find((x) => x.id === Number(hit[1])) || INVOICES[0];
+    const stage = ["deposit", "balance", "overdue", "paid"].includes(query.get("stage")) ? query.get("stage") : "balance";
+    return { stage, autoStage: "balance", invoice: inv, payments: [], sums: { totalPence: inv.totalPence, paidPence: 100000, depositPercent: 50, depositPence: 50000, dueNowPence: 9876543, dueBy: "2026-10-20", payments: [] }, email: { subject: "Balance due for invoice " + inv.number + ": £98,765.43 " + LONGWORD, body: "Hi " + LONGWORD + ",\n\n" + PARA(3) + "\n\nBest wishes,\nThe Novacane Studios team" } };
+  }
   if (path === "clients") return clientsBody(query);
   hit = /^clients\/(\d+)$/.exec(path);
   if (hit) return clientBody(Number(hit[1]));

@@ -403,6 +403,7 @@ const APPS = {
   lossless: { path: "/lossless/", ready: "body", dialogs: true },
   visualizer: { path: "/visualizer", ready: "body", dialogs: true },
   fixer: { path: "/fixer/", ready: "body", dialogs: true },
+  invoicer: { path: "/invoicer/", ready: "#doc:not([hidden])", dialogs: true },
   computer: {
     path: "/computer/",
     ready: "#board:not([hidden])",
@@ -534,6 +535,8 @@ async function newTab(w, h) {
     const body = u.pathname.endsWith("/state") ? computerSample() : computerView(u.pathname, u.search);
     return r.fulfill({ contentType: "application/json", body: JSON.stringify(body) });
   });
+  // Invoicer: the invoice's own page (Nova Bot draws it), a tall white stand-in
+  await tab.route(/\/app\/api\/money\/invoices\/\d+\/document/, (r) => r.fulfill({ contentType: "text/html", body: "<!doctype html><body style='margin:0;background:#ecebef'><main style='max-width:820px;height:1400px;margin:24px auto;background:#fff'></main></body>" }));
   await tab.route(/\/app\/api\/calendar\/items/, (r) => (r.request().method() === "GET" ? r.fulfill({ contentType: "application/json", body: JSON.stringify(calendarItems()) }) : r.fulfill({ contentType: "application/json", body: "{}" })));
   return { ctx, tab };
 }

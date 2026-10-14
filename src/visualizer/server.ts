@@ -229,6 +229,8 @@ registerFixerRoutes(app, currentFixer);
 registerTidyRoutes(app, currentFixer);
 // Computer: the VPS at a glance for admins: its Claude sessions (read-only), Claude Code, how busy it is, Nova (src/computer.ts)
 serveFolder("/computer", "computer/", "Computer is missing from web/computer.");
+// Invoicer: an invoice at each stage, branded, with its email (everything from Nova Bot's Money)
+serveFolder("/invoicer", "invoicer/", "Invoicer is missing from web/invoicer.");
 registerComputerRoutes(app);
 // Where Index was for a day
 app.get("/index/*", (c) => c.redirect("/app/memory/" + c.req.path.slice("/index/".length)));

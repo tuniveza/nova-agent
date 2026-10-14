@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <script src="/shared/inside.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <title>Invoicer</title>
+  <link rel="icon" href="data:,">
+  <!-- Nova Agent's fonts, colours (themes.css; look.js swaps them for the chosen theme) and the tools' look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110..125,700..900&family=Saira:wght@400..700&family=Source+Code+Pro:wght@400;600&display=swap">
+  <link rel="stylesheet" href="/shared/themes.css">
+  <link rel="stylesheet" href="/shared/tools.css">
+  <link rel="stylesheet" href="invoicer.css">
+  <link rel="stylesheet" href="/shared/buttons.css">
+  <link rel="stylesheet" href="/shared/scrollbars.css">
+  <link rel="stylesheet" href="/shared/fit.css"><script src="/shared/fit.js" defer></script>
+  <script src="/shared/spectrum.js"></script>
+  <script src="/shared/themes.js"></script>
+  <script src="/shared/look.js"></script>
+</head>
+<body class="nb-plain nb-tool">
+<!-- Invoicer: an invoice at each of its four stages (deposit due, balance due, overdue, paid), as the
+     studio's branded page to print or save as a PDF, with the email to go with it. Everything comes
+     from Nova Bot's Money (/app/api/money…, src/money.js and src/invoicer.js there): the sums are
+     worked out there, and nothing is emailed without an admin's Approve.
+     One screen: the page never scrolls; each box scrolls inside itself. -->
+<main id="main">
+  <header class="top">
+    <span class="nt-kicker">Money · Invoices</span>
+    <h1 class="nt-title">Invoicer</h1>
+  </header>
+  <p class="message" id="message" role="status" aria-live="polite" hidden></p>
+
+  <!-- A phone: one part at a time -->
+  <div class="iv-parts" id="parts" role="tablist" aria-label="Parts">
+    <button type="button" role="tab" data-part="list" aria-selected="true">Invoices</button>
+    <button type="button" role="tab" data-part="doc" aria-selected="false">Invoice</button>
+    <button type="button" role="tab" data-part="mail" aria-selected="false">Email</button>
+  </div>
+
+  <div class="board" id="board">
+    <!-- The invoices -->
+    <section class="nt-card col list-col" data-part="list" aria-label="Invoices">
+      <div class="col-head">
+        <h2 class="nt-h">Invoices</h2>
+        <button type="button" class="primary" id="new-btn">+ New invoice</button>
+      </div>
+      <input type="search" id="search" class="field" placeholder="Search artist or number" aria-label="Search invoices" autocomplete="off">
+      <div class="filters" id="filters" role="group" aria-label="Show">
+        <button type="button" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" data-filter="deposit" aria-pressed="false">Deposit</button>
+        <button type="button" data-filter="balance" aria-pressed="false">Balance</button>
+        <button type="button" data-filter="overdue" aria-pressed="false">Overdue</button>
+        <button type="button" data-filter="paid" aria-pressed="false">Paid</button>
+        <button type="button" data-filter="waiting" aria-pressed="false">To approve</button>
+      </div>
+      <ul class="scroll inv-list" id="list" aria-label="Invoices"></ul>
+    </section>
+
+    <!-- The invoice itself, at the stage chosen -->
+    <section class="nt-card col doc-col" data-part="doc" aria-label="The invoice">
+      <div class="col-head">
+        <div class="stages" id="stages" role="radiogroup" aria-label="Stage">
+          <button type="button" role="radio" data-stage="deposit" aria-checked="false"><i class="dot s-deposit" aria-hidden="true"></i>Deposit due</button>
+          <button type="button" role="radio" data-stage="balance" aria-checked="false"><i class="dot s-balance" aria-hidden="true"></i>Balance due</button>
+          <button type="button" role="radio" data-stage="overdue" aria-checked="false"><i class="dot s-overdue" aria-hidden="true"></i>Overdue</button>
+          <button type="button" role="radio" data-stage="paid" aria-checked="false"><i class="dot s-paid" aria-hidden="true"></i>Paid receipt</button>
+        </div>
+        <div class="doc-tools">
+          <button type="button" id="print-btn" disabled>Print / Save PDF</button>
+          <a class="btn ghost" id="open-btn" role="button" href="#" target="_blank" rel="noopener" aria-disabled="true">Open</a>
+        </div>
+      </div>
+      <p class="stage-note" id="stage-note"></p>
+      <div class="doc-frame">
+        <iframe id="doc" title="The invoice" hidden></iframe>
+        <p class="empty" id="doc-empty">Choose an invoice on the left, or make a new one.</p>
+      </div>
+    </section>
+
+    <!-- The email for that stage -->
+    <section class="nt-card col mail-col" data-part="mail" aria-label="The email">
+      <div class="col-head"><h2 class="nt-h">Email</h2><span class="nt-chip" id="mail-chip" hidden></span></div>
+      <label class="nt-label" for="subject">Subject</label>
+      <input id="subject" class="field" type="text" autocomplete="off">
+      <label class="nt-label" for="body">Message</label>
+      <textarea id="body" class="field scroll" spellcheck="true"></textarea>
+      <div class="mail-tools">
+        <button type="button" id="copy-btn" disabled>Copy email</button>
+        <button type="button" class="primary" id="send-btn" disabled>Send…</button>
+      </div>
+      <p class="send-note" id="send-note"></p>
+    </section>
+  </div>
+</main>
+
+<!-- A new invoice: the artist, the services from the price list, the dates -->
+<dialog id="new" aria-labelledby="new-title">
+  <form id="new-form" method="dialog" class="new-form">
+    <div class="col-head"><h2 class="nt-h" id="new-title">New invoice</h2><button type="button" class="ghost" id="new-close" aria-label="Close">✕</button></div>
+    <div class="new-scroll scroll">
+      <div class="grid2">
+        <div><label class="nt-label" for="n-name">Artist</label><input id="n-name" class="field" list="clients" required autocomplete="off" placeholder="Name"></div>
+        <div><label class="nt-label" for="n-email">Email</label><input id="n-email" class="field" type="email" autocomplete="off" placeholder="name@example.com"></div>
+      </div>
+      <datalist id="clients"></datalist>
+      <label class="nt-label" for="n-service">Add a service</label>
+      <div class="add-row">
+        <select id="n-service" class="field" aria-label="Service"></select>
+        <button type="button" id="n-add">Add</button>
+        <button type="button" class="ghost" id="n-custom">Something else</button>
+      </div>
+      <table class="lines" aria-label="What's on the invoice">
+        <thead><tr><th>What</th><th>Qty</th><th>Price (£)</th><th class="n">Amount</th><th><span class="sr">Remove</span></th></tr></thead>
+        <tbody id="n-lines"></tbody>
+        <tfoot><tr><td colspan="3">Total</td><td class="n" id="n-total">£0.00</td><td></td></tr><tr><td colspan="3" class="muted" id="n-deposit-label">Deposit (50%)</td><td class="n muted" id="n-deposit">£0.00</td><td></td></tr></tfoot>
+      </table>
+      <p class="muted small" id="n-hint"></p>
+      <div class="grid2">
+        <div><label class="nt-label" for="n-issue">Issued</label><input id="n-issue" class="field" type="date" required></div>
+        <div><label class="nt-label" for="n-due">Balance due (the session day)</label><input id="n-due" class="field" type="date" required></div>
+      </div>
+      <label class="nt-label" for="n-notes">Note on the invoice (optional)</label>
+      <textarea id="n-notes" class="field" rows="2" placeholder="Session on 21 October, 2pm"></textarea>
+    </div>
+    <p class="message bad" id="n-error" hidden></p>
+    <div class="mail-tools">
+      <button type="button" class="ghost" id="n-cancel">Cancel</button>
+      <button type="submit" class="primary" id="n-save">Make the invoice</button>
+    </div>
+    <p class="muted small">It waits for an admin's Approve in Portal → Money before anything is emailed.</p>
+  </form>
+</dialog>
+
+<script src="app.js" type="module"></script>
+</body>
+</html>
