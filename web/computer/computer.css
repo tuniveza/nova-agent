@@ -1,0 +1,155 @@
+/* Computer's own layout. The sky, cards, labels, chips and facts come from /shared/tools.css,
+   the buttons from /shared/buttons.css, and every colour is a theme token.
+   One screen: html and body never scroll; the screen, the jobs and each card scroll inside themselves. */
+
+html, body { height: 100%; }
+body { overflow: hidden; }
+main { height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; max-width: 1800px; margin: 0 auto; padding: 18px 18px 14px; min-height: 0; }
+.top { flex: none; text-align: center; }
+.top .nt-sub { margin: 4px auto 0; max-width: 70ch; }
+html.embed .top { display: none; } /* the title panel already says "Computer" */
+html.embed main { padding-top: 12px; }
+.message { flex: none; margin: 0; padding: 12px 16px; border-radius: 14px; text-align: center; font-size: 15px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 50%, transparent); }
+.message.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+
+/* Two columns: the screen on the left, the three cards on the right */
+.board { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); gap: 12px; }
+.board[hidden] { display: none; }
+.board, .term { text-align: left; }
+.nt-card { padding: 14px 16px; }
+.cp-screen { display: grid; grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 32%); gap: 10px; min-height: 0; }
+.cp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cp-head .nt-h { margin: 0; }
+.nt-chip.ok { --c: var(--ok); } .nt-chip.warn { --c: var(--warn); } .nt-chip.bad { --c: var(--bad); }
+#live-chip.paused { --c: var(--muted); }
+
+.cp-side { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.cp-box { display: flex; flex-direction: column; min-height: 0; flex: 1 1 0; }
+/* The VPS card is short and always whole; Claude Code and Nova share the rest */
+.cp-box.vps { flex: 0 0 auto; }
+.cp-box .nt-h { flex: none; margin-bottom: 8px; }
+.cp-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 10px; align-content: start; padding-right: 2px; }
+
+/* ---- The sessions (tmux windows) ---- */
+.cp-tabs { display: flex; gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding-bottom: 2px; }
+.cp-tabs::-webkit-scrollbar { display: none; }
+.nb-tool .cp-tabs button { flex: none; min-height: 40px; padding: 6px 14px; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); color: var(--text); }
+.nb-tool .cp-tabs button[aria-selected="true"] { border-color: var(--hi); color: var(--bright); background: color-mix(in srgb, var(--hi) 20%, transparent); }
+.cp-tabs .tab-dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: var(--muted); vertical-align: 1px; }
+.cp-tabs .tab-dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+
+/* The screen itself: a terminal, dark whatever the theme */
+.term {
+  margin: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: #07060c; color: #d7d4e4;
+  font-family: var(--f-mono), "Source Code Pro", ui-monospace, monospace; font-size: 12.5px; line-height: 1.45;
+  white-space: pre; tab-size: 4;
+}
+.term:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+.term .empty { color: #8c87a3; white-space: normal; }
+.term .bo { font-weight: 700; } .term .di { opacity: .65; } .term .it { font-style: italic; } .term .un { text-decoration: underline; }
+.term .c0 { color: #3b3a48; } .term .c1 { color: #ff6b81; } .term .c2 { color: #6fe6a6; } .term .c3 { color: #ffd166; }
+.term .c4 { color: #62b6ff; } .term .c5 { color: #d58cff; } .term .c6 { color: #5ee6e6; } .term .c7 { color: #d7d4e4; }
+.term .c8 { color: #6e6a85; } .term .c9 { color: #ff8fa0; } .term .c10 { color: #8ff0bd; } .term .c11 { color: #ffe08a; }
+.term .c12 { color: #8ccaff; } .term .c13 { color: #e3aaff; } .term .c14 { color: #8ff0f0; } .term .c15 { color: #ffffff; }
+.term .b0 { background: #1b1a24; } .term .b1 { background: #5a1d2a; } .term .b2 { background: #17442f; } .term .b3 { background: #4f4214; }
+.term .b4 { background: #173a5c; } .term .b5 { background: #45215c; } .term .b6 { background: #134646; } .term .b7 { background: #8c8a99; }
+.term .b8 { background: #2c2a38; } .term .b9 { background: #7a2a3b; } .term .b10 { background: #1f5c40; } .term .b11 { background: #6b5a1c; }
+.term .b12 { background: #1f4d7a; } .term .b13 { background: #5c2c7a; } .term .b14 { background: #1a5c5c; } .term .b15 { background: #c9c7d4; }
+.term .inv-fg { color: #07060c; } .term .inv-bg { background: #d7d4e4; }
+
+/* ---- Jobs ---- */
+.cp-jobs { display: flex; flex-direction: column; min-height: 0; }
+.cp-jobs .nt-label { flex: none; }
+.job-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; align-content: start; overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+.nb-tool .job { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 12px; text-align: left; font: inherit; cursor: pointer; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); color: var(--text); }
+.nb-tool .job[aria-pressed="true"] { border-color: var(--hi); background: color-mix(in srgb, var(--hi) 14%, transparent); }
+.job .job-name { font-weight: 700; color: var(--bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job .job-task { grid-column: 2 / 4; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job .job-time { font-family: var(--f-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.job .nt-chip { font-size: 11.5px; }
+.jobs-empty { color: var(--muted); font-size: 13.5px; padding: 6px 2px; }
+
+/* ---- Facts, gauges, dots ---- */
+.cp-box .nt-facts dd { text-align: left; }
+.nt-facts dd.ok { color: var(--ok); } .nt-facts dd.bad { color: var(--bad); } .nt-facts dd.warn { color: var(--warn); }
+.cp-phone { margin: 0; }
+.handoff { display: grid; gap: 6px; }
+.handoff-h { margin: 0; font-weight: 700; color: var(--bright); font-size: 14px; }
+.handoff-text { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; color: var(--text); }
+
+.gauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.gauge { display: grid; gap: 3px; padding: 8px 6px; border-radius: 14px; text-align: center; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); min-width: 0; }
+.gauge b { font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 19px; color: var(--bright); }
+.gauge b.warn { color: var(--warn); } .gauge b.bad { color: var(--bad); }
+.gauge small { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.gauge .bar { height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--line) 80%, transparent); overflow: hidden; }
+.gauge .bar i { display: block; height: 100%; border-radius: 3px; background: var(--hi); }
+
+.sparks { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.spark { display: grid; gap: 4px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); }
+.spark svg { width: 100%; height: 34px; display: block; }
+.spark .line { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.spark .area { opacity: .18; }
+.spark.cpu .line { stroke: var(--hi); } .spark.cpu .area { fill: var(--hi); }
+.spark.mem .line { stroke: var(--ok); } .spark.mem .area { fill: var(--ok); }
+.spark .nt-label { margin: 0; display: flex; justify-content: space-between; }
+
+.dots { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 12px; }
+.vps .dots .what small { display: inline; margin-left: 6px; }
+.vps .dots .what b { display: inline; }
+.dots li { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: 14px; }
+.dots .dot { flex: none; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: var(--muted); }
+.dots .dot.green, .dots .dot.active { background: var(--ok); box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 70%, transparent); }
+.dots .dot.amber, .dots .dot.activating, .dots .dot.reloading { background: var(--warn); }
+.dots .dot.red, .dots .dot.failed, .dots .dot.inactive { background: var(--bad); box-shadow: 0 0 8px color-mix(in srgb, var(--bad) 70%, transparent); }
+.dots .what { min-width: 0; }
+.dots .what b { display: block; color: var(--bright); font-weight: 600; }
+.dots .what small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.35; overflow-wrap: anywhere; }
+.parts { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+
+.overall { margin: 0; font-weight: 700; font-size: 15px; color: var(--bright); }
+.overall.bad { color: var(--bad); } .overall.ok { color: var(--ok); }
+.deploys { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.deploys li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: baseline; font-size: 13.5px; }
+.deploys .repo { font-family: var(--f-mono); font-size: 11px; color: var(--hi); white-space: nowrap; }
+.deploys .subj { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.deploys time { font-family: var(--f-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.fixer-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); font-size: 14px; }
+.fixer-row .grow { flex: 1 1 200px; min-width: 0; }
+.nb-tool .fixer-row a.btn { min-height: 40px; display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 12px; font-weight: 700; text-decoration: none; }
+
+/* ---- A tablet held upright: the three cards in a row under the screen ---- */
+@media (max-width: 1100px) {
+  .board { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.25fr) minmax(0, 1fr); }
+  .cp-side { flex-direction: row; }
+  .cp-box { flex: 1 1 0; min-width: 0; }
+  .gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sparks { grid-template-columns: minmax(0, 1fr); }
+}
+/* ---- A phone: one column that scrolls inside its box (never the page); the screen keeps a good height ---- */
+@media (max-width: 760px) {
+  main { padding: 8px 8px 8px; gap: 8px; }
+  .board { display: block; overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+  .board > * + * { margin-top: 10px; }
+  .cp-screen { height: min(78dvh, 640px); grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 34%); }
+  .cp-side { display: grid; gap: 10px; }
+  .cp-box { display: block; }
+  .cp-scroll { overflow: visible; }
+  .term { font-size: 11.5px; padding: 10px; }
+  .gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .handoff-text { max-height: 260px; }
+}
+/* ---- A phone held sideways: the screen and the cards side by side, each scrolling ---- */
+@media (max-height: 480px) and (min-width: 600px) {
+  main { padding: 6px 8px; }
+  .board { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); grid-template-rows: none; overflow: hidden; }
+  .board > * + * { margin-top: 0; }
+  .cp-screen { height: auto; grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 30%); }
+  .cp-head { display: none; }
+  .cp-side { display: block; overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+  .cp-side > * + * { margin-top: 10px; }
+  .cp-box { display: block; }
+  .cp-scroll { overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

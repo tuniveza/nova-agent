@@ -56,6 +56,7 @@ import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, receipts } from "../receipts";
 import { registerBoardRoutes } from "../board-routes";
 import { registerConsoleRoutes } from "../console";
 import { registerFixerRoutes } from "../fixer/routes";
+import { registerComputerRoutes } from "../computer";
 import { registerTidyRoutes } from "../tidy-routes";
 import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
 import { backupFilesToDrive, copyMissingBoardFilesToDrive, copyToDriveLater, dropFromDriveLater } from "../google";
@@ -226,6 +227,9 @@ serveFolder("/fixer", "fixer/", "The Fixer is missing from web/fixer.");
 registerFixerRoutes(app, currentFixer);
 // Test stuff: quests, calendar notes, Fixer jobs and files that look like tests (admins: src/tidy.ts)
 registerTidyRoutes(app, currentFixer);
+// Computer: the VPS at a glance for admins: its Claude sessions (read-only), Claude Code, how busy it is, Nova (src/computer.ts)
+serveFolder("/computer", "computer/", "Computer is missing from web/computer.");
+registerComputerRoutes(app);
 // Where Index was for a day
 app.get("/index/*", (c) => c.redirect("/app/memory/" + c.req.path.slice("/index/".length)));
 

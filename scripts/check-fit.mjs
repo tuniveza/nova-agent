@@ -17,6 +17,7 @@
 import { chromium } from "playwright";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { portalMock } from "./check-fit-portal-samples.mjs";
+import { computerSample } from "./check-fit-computer-sample.mjs";
 
 const args = process.argv.slice(2);
 const opt = (name) => { const i = args.indexOf(`--${name}`); return i >= 0 ? args[i + 1] : ""; };
@@ -402,6 +403,7 @@ const APPS = {
   lossless: { path: "/lossless/", ready: "body", dialogs: true },
   visualizer: { path: "/visualizer", ready: "body", dialogs: true },
   fixer: { path: "/fixer/", ready: "body", dialogs: true },
+  computer: { path: "/computer/", ready: "#board:not([hidden])" },
   quests: { path: "/quests/", ready: "body", dialogs: true },
 };
 
@@ -507,6 +509,8 @@ async function newTab(w, h) {
     const body = portalMock(u.pathname + u.search, r.request().method());
     return body ? r.fulfill({ contentType: "application/json", body: JSON.stringify(body) }) : r.fallback();
   });
+  // Computer: a busy VPS (the real one only answers on the VPS)
+  await tab.route(/\/computer-api\/state/, (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(computerSample()) }));
   await tab.route(/\/app\/api\/calendar\/items/, (r) => (r.request().method() === "GET" ? r.fulfill({ contentType: "application/json", body: JSON.stringify(calendarItems()) }) : r.fulfill({ contentType: "application/json", body: "{}" })));
   return { ctx, tab };
 }

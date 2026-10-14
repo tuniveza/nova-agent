@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="/shared/inside.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <title>Computer</title>
+  <link rel="icon" href="data:,">
+  <!-- Nova Agent's fonts, colours (themes.css; look.js swaps them for the chosen theme) and the tools' look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110..125,700..900&family=Saira:wght@400..700&family=Source+Code+Pro:wght@400;600&display=swap">
+  <link rel="stylesheet" href="/shared/themes.css">
+  <link rel="stylesheet" href="/shared/tools.css">
+  <link rel="stylesheet" href="computer.css">
+  <link rel="stylesheet" href="/shared/buttons.css">
+  <link rel="stylesheet" href="/shared/scrollbars.css">
+  <link rel="stylesheet" href="/shared/fit.css"><script src="/shared/fit.js" defer></script>
+  <script src="/shared/spectrum.js"></script>
+  <script src="/shared/themes.js"></script>
+  <script src="/shared/look.js"></script>
+</head>
+<body class="nb-plain nb-tool">
+<!-- Computer: the VPS at a glance (src/computer.ts). Read-only: it shows, it never types or restarts.
+     One screen: the page never scrolls; each box scrolls inside itself. -->
+<main id="main">
+  <header class="top">
+    <span class="nt-kicker">Tools · The VPS</span>
+    <h1 class="nt-title">Computer</h1>
+    <p class="nt-sub">What the VPS is doing right now: its Claude sessions, Claude Code, how busy it is, and Nova.</p>
+  </header>
+
+  <p class="message" id="message" hidden></p>
+
+  <div class="board" id="board" hidden>
+    <!-- The VPS's screen: its Claude sessions (tmux), live and read-only, and the jobs it ran -->
+    <section class="nt-card cp-screen" aria-labelledby="screen-h">
+      <div class="cp-head">
+        <h2 class="nt-h" id="screen-h">The VPS's screen</h2>
+        <span class="nt-chip" id="live-chip">Live</span>
+      </div>
+      <div class="cp-tabs" id="screen-tabs" role="tablist" aria-label="Sessions on the VPS"></div>
+      <pre class="term" id="term" tabindex="0" aria-live="off" aria-label="What this session shows"></pre>
+      <div class="cp-jobs">
+        <span class="nt-label">Jobs on the VPS</span>
+        <ul class="job-list" id="jobs"></ul>
+      </div>
+    </section>
+
+    <div class="cp-side">
+      <!-- Claude Code on the VPS -->
+      <section class="nt-card cp-box" aria-labelledby="claude-h">
+        <h2 class="nt-h" id="claude-h">Claude Code</h2>
+        <div class="cp-scroll">
+          <dl class="nt-facts" id="claude-facts"></dl>
+          <p class="nt-note cp-phone">On your phone: <strong>Claude app → Code → Nova-VPS</strong>.</p>
+          <div class="handoff" id="handoff" hidden>
+            <span class="nt-label">What it's working on (HANDOFF.md)</span>
+            <p class="handoff-h" id="handoff-h"></p>
+            <div class="handoff-text nt-well" id="handoff-text"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- The VPS: how busy it is, and its parts -->
+      <section class="nt-card cp-box vps" aria-labelledby="vps-h">
+        <h2 class="nt-h" id="vps-h">The VPS</h2>
+        <div class="cp-scroll">
+          <div class="gauges" id="gauges"></div>
+          <div class="sparks" id="sparks"></div>
+          <ul class="dots" id="services" aria-label="Parts running on the VPS"></ul>
+        </div>
+      </section>
+
+      <!-- Nova: the status page, the latest updates, the Fixer and the backups -->
+      <section class="nt-card cp-box" aria-labelledby="nova-h">
+        <h2 class="nt-h" id="nova-h">Nova</h2>
+        <div class="cp-scroll">
+          <p class="overall" id="overall"></p>
+          <ul class="dots parts" id="parts" aria-label="Every part of Nova"></ul>
+          <span class="nt-label">Latest updates</span>
+          <ul class="deploys" id="deploys"></ul>
+          <div class="fixer-row" id="fixer"></div>
+          <p class="nt-note" id="backup"></p>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script src="/shared/sfx.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
