@@ -118,12 +118,40 @@
     }
   };
 
-  // Refresh when Nova Agent changes something, unless an editor is open or a save is on its way
+  // Refresh when Nova Agent changes something, unless an editor is open or a save is on its way.
+  // Only for a real change: Nova Agent's copy is looked at first, and when it's this page's own
+  // (the same revision, or the same calendar), nothing reloads (no blink after every save)
   var pending = false;
+  var looking = false;
+  function sameCalendar(a, b) {
+    try {
+      var x = JSON.parse(a), y = JSON.parse(b);
+      delete x.rev;
+      delete y.rev;
+      return JSON.stringify(x) === JSON.stringify(y);
+    } catch (e) {
+      return false;
+    }
+  }
   function refresh() {
     var editing = Array.prototype.some.call(document.querySelectorAll('dialog'), function (d) { return d.open; });
-    if (editing || sending || waiting !== null) { pending = true; return; }
-    location.reload();
+    if (editing || sending || waiting !== null || looking) { pending = true; return; }
+    pending = false;
+    looking = true;
+    fetch('/calendar-api/data', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (text) {
+        looking = false;
+        if (!text) return;
+        var now = JSON.parse(text);
+        if (now.rev === rev) return;
+        if (sameCalendar(getItem.call(localStorage, KEY) || '', text)) { rev = now.rev; return; }
+        location.reload();
+      })
+      .catch(function () {
+        looking = false;
+        location.reload();
+      });
   }
   document.addEventListener('close', function () { if (pending) refresh(); }, true);
   setInterval(function () { if (pending) refresh(); }, 2000);
