@@ -29,8 +29,12 @@ type Frame =
   | { t: "cancel"; id: string }
   | { t: "here"; id: string; linked?: boolean };
 
-// How long an attempt may take, how often to ask "hello", how long to wait for "here"
-export const LINK_ATTEMPT_MS = 45_000;
+// How long an attempt may take (a working link opens in well under a second; one that hasn't after
+// 12 s is stuck, typically on a Nova Bot that's still starting after a deploy, so it's started again
+// rather than leaving Nova "off" for a minute), how long a scheduled retry may be waited for, how
+// often to ask "hello", how long to wait for "here"
+export const LINK_ATTEMPT_MS = 12_000;
+export const RETRY_WAIT_MS = 90_000;
 export const HELLO_EVERY_MS = 120_000;
 export const HERE_WITHIN_MS = 30_000;
 
@@ -38,7 +42,7 @@ export const HERE_WITHIN_MS = 30_000;
 // (none running or scheduled for a while); or give up on one that's stuck and start again
 export function linkWatch(s: { state: "none" | "connecting" | "open" | "closed"; since: number; scheduled: boolean; now: number }): "ok" | "connect" | "restart" {
   if (s.state === "open") return "ok";
-  if (s.state === "none") return s.scheduled && s.now - s.since < LINK_ATTEMPT_MS * 2 ? "ok" : "connect";
+  if (s.state === "none") return s.scheduled && s.now - s.since < RETRY_WAIT_MS ? "ok" : "connect";
   return s.now - s.since > LINK_ATTEMPT_MS ? "restart" : "ok";
 }
 
@@ -316,7 +320,7 @@ export function startRelay(handle: Handler): void {
     scheduled = true;
     attemptAt = Date.now();
     setTimeout(connect, delay);
-    delay = Math.min(delay * 2, 30_000);
+    delay = Math.min(delay * 2, 10_000); // (back within seconds once Nova Bot is: it's on the same server)
   }
 
   connect();
@@ -337,5 +341,5 @@ export function startRelay(handle: Handler): void {
     stopAll();
     delay = 1000;
     connect();
-  }, 15_000).unref?.();
+  }, 4_000).unref?.();
 }
