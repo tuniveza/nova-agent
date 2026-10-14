@@ -300,15 +300,14 @@ Built in Nova Bot's `src/google/` (`calendar.js`, `gmail.js`, `contacts.js`, `dr
 
 ## Computer
 
-Portal → **Computer** (in Admin; admins only; `?view=computer`) shows where Nova Bot runs: on
-Cloudflare and on the studio's VPS, side by side. At the top, **Live now** says which side the
-address everyone uses reaches, the one command to switch over (`vps/switch.sh`) or back
-(`vps/switch-back.sh`, run on the studio PC in Nova Bot's folder; each asks first), and any warnings
-(for example when newsletters can't send). Under it: each side's version, the studio PC link, the
-VPS's memory, disk, services, last data copy and backup, its timed jobs and recent problems, with
-**Back up now**, **Restart Nova Bot** and **Restart web front** (Restart asks twice). Console's
-`computer` command shows the same. It was called Desk once (inside it still is: `desk.js`,
-`/app/api/desk`).
+Portal → **Computer** (in Admin; admins only; `?view=computer`) is the studio's VPS: the server
+where Nova Bot and Nova Agent both run, day and night, with the laptop off. At the top, **Live now**
+says Nova's address, where Nova Agent runs (on the VPS), the one command to move it back to the
+studio PC (`vps/agent-switch-back.sh`, run in Nova Bot's folder; it asks first) and any warnings.
+Under it: the VPS's memory, disk and services (Nova Bot, Nova Agent, mail, backups, timed jobs),
+the last backup, each job's last run and recent problems, with **Back up now**, **Restart Nova
+Bot**, **Restart Nova Agent** and **Restart web front** (Restart asks twice). Console's `computer`
+command shows the same. It was called Desk once (inside it still is: `desk.js`, `/app/api/desk`).
 
 ## Live chat
 

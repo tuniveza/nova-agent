@@ -78,7 +78,7 @@ describe("reading what's typed", () => {
     await Nova.run(ctx, "desk");
     const out = printed.join("\n");
     expect(out).toMatch(/Live now/);
-    expect(out).toMatch(/on Nova's computer/);
+    expect(out).toMatch(/on the VPS/);
     expect(out).toMatch(/vps\/agent-switch-back\.sh/);
     expect(out).toMatch(/Newsletters won't send/);
     expect(out).not.toMatch(/cloudflare/i);

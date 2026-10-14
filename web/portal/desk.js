@@ -62,7 +62,7 @@
     return s;
   }
 
-  const agentWhere = (pc) => (pc && pc.connected ? (pc.where === "server" ? "On Nova's computer" : "On the studio PC") : "Not linked");
+  const agentWhere = (pc) => (pc && pc.connected ? (pc.where === "server" ? "On the VPS" : "On the studio PC") : "Not linked");
 
   // Nova Bot and Nova Agent on it: versions, the link, each job's last run
   function hereCard(h) {
@@ -88,14 +88,14 @@
     const card = el("section", "card dk-card dk-live");
     card.setAttribute("aria-label", "Live now");
     const head = el("div", "dk-head");
-    head.append(el("h3", "card-title", "Live now"), state(true, "Nova's own computer"));
+    head.append(el("h3", "card-title", "Live now"), state(true, "Your VPS"));
     card.append(head);
     card.append(row("Address", h.url || "?"));
     card.append(row("Nova Agent", agentWhere(h.pc)));
     const sw = h.agentSwitch;
     if (sw) {
       const onServer = h.pc && h.pc.where === "server";
-      card.append(row(onServer ? "Move Nova Agent to the studio PC" : "Move Nova Agent to Nova's computer", onServer ? sw.back : sw.to, `run on ${sw.from}; it asks before doing anything`));
+      card.append(row(onServer ? "Move Nova Agent to the studio PC" : "Move Nova Agent to the VPS", onServer ? sw.back : sw.to, `run on ${sw.from}; it asks before doing anything`));
     }
     for (const w of h.warnings || []) card.append(el("p", "dk-why dk-warn", `⚠ ${w}`));
     return card;

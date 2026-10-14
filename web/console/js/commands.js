@@ -160,7 +160,7 @@ export const COMMANDS = {
       const [s, q, c] = await Promise.allSettled([ctx.api("/status"), ctx.api("/quests/state"), ctx.api("/console-api/state")]);
       const rows = [];
       if (s.status === "fulfilled") rows.push({ part: "Agent", state: s.value.live ? "live" : "trying things out (dry run)" }, { part: "Online link", state: s.value.connected ? "linked to Nova Bot" : "not linked" }, { part: "Model", state: s.value.model || "" });
-      else rows.push({ part: "Studio PC", state: "can't be reached (it may be off)" });
+      else rows.push({ part: "Nova Agent", state: "can't be reached" });
       if (q.status === "fulfilled") {
         const open = (q.value.quests || []).filter((x) => x.status === "todo" || x.status === "doing");
         rows.push({ part: "Quests", state: `${open.length} to do${q.value.current ? ` · now: ${q.value.current.title}` : ""}` });
@@ -378,7 +378,7 @@ export const COMMANDS = {
     async run(ctx, [sub = "start"]) {
       if (sub === "status") {
         const s = await ctx.api("/status").catch(() => null);
-        return ctx.print(s ? "Lossless audio is ready: lossless start opens it" : "The studio computer can't be reached");
+        return ctx.print(s ? "Lossless audio is ready: lossless start opens it" : "Nova Agent can't be reached");
       }
       ctx.open("/lossless/");
       ctx.ok("Opened Lossless audio.");
@@ -480,7 +480,7 @@ export const COMMANDS = {
   },
 
   logs: {
-    help: "The studio computer's recent log (admins)",
+    help: "Nova Agent's recent log (admins)",
     usage: "logs [count]",
     async run(ctx, [n = "30"]) {
       adminOnly(ctx);
@@ -535,7 +535,7 @@ export const COMMANDS = {
         if (next) rows.push(["Next", `${next.title} · ${ukTime(next.start)}`]);
         const open = (s.quests || []).filter((x) => x.status === "todo" || x.status === "doing").length;
         rows.push(["Quests", `${open} to do${(s.overdue || []).length ? ` · ${s.overdue.length} overdue` : ""}`]);
-      } else rows.push(["Quests", "the studio computer can't be reached"]);
+      } else rows.push(["Quests", "Nova Agent can't be reached"]);
       if (cal.status === "fulfilled") {
         const day = ukDay(new Date());
         const list = (cal.value.notes || []).filter((n) => String(n.start || "").slice(0, 10) === day);
@@ -564,13 +564,13 @@ export const COMMANDS = {
       const s = await ctx.api("/status").catch(() => null);
       ctx.kv([
         ["Nova Agent", v ? `v${v.version} · build ${v.build}` : "not known here"],
-        ["Studio PC", s ? (s.version || s.rev || "running") : "can't be reached"],
+        ["Nova Agent", s ? (s.version || s.rev || "running") : "can't be reached"],
         ["Where you are", ctx.me?.online ? "online (through Nova Bot)" : "on the studio computer"],
       ]);
     },
   },
   computer: {
-    help: "Nova's own computer (the VPS): how it's doing, Nova Bot and Nova Agent on it, its jobs (admins)",
+    help: "The VPS: how it's doing, Nova Bot and Nova Agent on it, its jobs (admins)",
     usage: "computer",
     async run(ctx) {
       adminOnly(ctx);
@@ -581,7 +581,7 @@ export const COMMANDS = {
       ctx.heading("Live now");
       ctx.kv([
         ["Address", h.url || ""],
-        ["Nova Agent", h.pc?.connected ? `${onServer ? "on Nova's computer" : "on the studio PC"}${h.pc.since ? ` · linked since ${ukTime(h.pc.since)}` : ""}` : "not linked"],
+        ["Nova Agent", h.pc?.connected ? `${onServer ? "on the VPS" : "on the studio PC"}${h.pc.since ? ` · linked since ${ukTime(h.pc.since)}` : ""}` : "not linked"],
         ["Version", h.version ? `${h.version.id}${h.version.at ? ` · ${ukTime(h.version.at)}` : ""}` : ""],
         ...(h.agentSwitch ? [[onServer ? "Move Nova Agent to the PC" : "Move Nova Agent here", onServer ? h.agentSwitch.back : h.agentSwitch.to]] : []),
       ]);
