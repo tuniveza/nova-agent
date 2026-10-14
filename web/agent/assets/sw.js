@@ -9,7 +9,12 @@
 
 self.addEventListener("install", () => self.skipWaiting());
 // (navigation preload: a page's request goes out while this wakes up, so it never waits for it)
-self.addEventListener("activate", (event) => event.waitUntil(Promise.all([self.clients.claim(), self.registration.navigationPreload ? self.registration.navigationPreload.enable().catch(() => {}) : null])));
+// (and the panels' files fetched quietly a few seconds after it first starts, so even the first
+// visit's first panel opens fast)
+self.addEventListener("activate", (event) => {
+  event.waitUntil(Promise.all([self.clients.claim(), self.registration.navigationPreload ? self.registration.navigationPreload.enable().catch(() => {}) : null]));
+  if (!slowLink()) event.waitUntil(checkList().then(() => new Promise((r) => setTimeout(r, 5000))).then(warm).catch(() => {}));
+});
 
 // ---- Nova's files on the device ----
 // Every deploy writes /nova-build.json: each of Nova's own files (scripts, styles, icons, sounds)
@@ -128,7 +133,8 @@ async function warm() {
   };
   await Promise.all([next(), next(), next()]);
 }
-const slow = (request) => request.headers.get("Save-Data") === "on" || (self.navigator.connection && (self.navigator.connection.saveData || /(^|-)(2g|3g)$/.test(self.navigator.connection.effectiveType || "")));
+const slowLink = () => !!(self.navigator.connection && (self.navigator.connection.saveData || /(^|-)(2g|3g)$/.test(self.navigator.connection.effectiveType || "")));
+const slow = (request) => request.headers.get("Save-Data") === "on" || slowLink();
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
