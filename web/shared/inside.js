@@ -63,7 +63,7 @@ html.embed .embed-head > .top { position: relative; top: auto; }
   }
   html.embed .embed-head > .tabs::-webkit-scrollbar { display: none; }
   /* Every section on the row (no More): on a phone the row slides sideways inside itself */
-  html.embed .embed-head > .tabs > .tab { flex: 0 0 auto; }
+  html.embed .embed-head > .tabs > .tab { flex: 0 0 auto; min-width: 64px; padding: 4px 6px 2px; } /* (room for a count on the icon's corner) */
   html.embed .embed-head > .tabs > .tab.tab-more { display: flex; }
   html.embed .embed-head > .tabs > #tab-more { display: none; }
 }

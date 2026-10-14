@@ -64,6 +64,9 @@ describe("one screen, nothing scrolling the page", () => {
     const phone = read("../web/agent/assets/phone.js");
     for (const gone of ["data-more", "in-more", "places-sheet"]) expect(phone).not.toContain(gone);
     expect(read("../web/agent/assets/phone.css")).toContain("grid-template-columns: var(--row2,");
+    // a short phone: one row of every place, sliding sideways inside the bar
+    expect(read("../web/agent/assets/phone.css")).toContain("@media (max-width: 600px) and (max-height: 760px) {");
+    expect(phone).toContain("row.className = 'tg-row';");
     const q = read("../web/quests/index.html");
     expect(q).not.toContain('id="more-btn"');
     expect(q).not.toContain('role="menu"');

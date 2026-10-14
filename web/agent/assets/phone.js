@@ -228,6 +228,11 @@
   bar.className = 'tabbar';
   bar.id = 'tabbar';
   bar.setAttribute('aria-label', 'Nova Agent');
+  // The groups sit in a row of their own (so the status line under them is never redrawn with them).
+  // On a short phone held upright the row slides sideways inside the bar (phone.css)
+  const row = document.createElement('div');
+  row.className = 'tg-row';
+  bar.append(row);
   const item = (key, label, icon) => `<button type="button" data-tab="${key}">${icon}<span>${label}</span></button>`;
   const glyph = (g) => `<span class="t-ico g" aria-hidden="true">${g}</span>`;
   // The panels' own icons (chat.html's .pico set: each its own colour, tinted by the theme)
@@ -242,7 +247,7 @@
   function fillBar() {
     const placed = new Set(GROUPS.flatMap((g) => g[2]));
     const extra = tiles().map((a) => a.dataset.inside).filter((p) => !placed.has(p) && !SKIP.includes(p));
-    bar.innerHTML = GROUPS.map(([id, label, keys]) => {
+    row.innerHTML = GROUPS.map(([id, label, keys]) => {
       const items = (id === 'tools' ? [...keys, ...extra] : keys).map((k) => (FIXED[k] ? FIXED[k]() : panelItem(k))).join('');
       return `<div class="tgroup" data-group="${id}" role="group" aria-label="${label}"><span class="tg-label" aria-hidden="true">${label}</span><div class="tg-items">${items}</div></div>`;
     }).join('');
@@ -310,6 +315,12 @@
     }
     clear.hidden = Boolean(openName) || main.dataset.pane !== 'chat';
     layout();
+    // On a sliding row, the lit place is brought into view (inside the row only: the page never moves)
+    const lit = row.querySelector('[aria-current="page"]');
+    if (lit && row.scrollWidth > row.clientWidth + 1) {
+      const r = row.getBoundingClientRect(), b = lit.getBoundingClientRect();
+      if (b.left < r.left || b.right > r.right) row.scrollLeft += b.left - r.left - (r.width - b.width) / 2;
+    }
     if (sheet.open) fillGear();
   }
 
