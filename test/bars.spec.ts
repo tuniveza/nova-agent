@@ -32,9 +32,9 @@ describe("the top bars", () => {
   it("one title panel everywhere: the home's header and every panel's are the same height and width, with big targets and one Install", () => {
     const r = rules(top);
     const both = ".shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar";
-    // one size for both (computer 52px with 40px targets; phone 48px with 44px targets)
+    // one size for both (computer 52px with 40px targets; phone 52px with 48px targets, 48dp)
     expect(r).toMatch(/:root \{ --tp-h: 52px; --tp-btn: 40px;/);
-    expect(r).toMatch(/:root \{ --tp-h: 48px; --tp-btn: 44px;/);
+    expect(r).toMatch(/:root \{ --tp-h: 52px; --tp-btn: 48px;/);
     expect(r).toContain(`${both} {\n  --nv-top-h: var(--tp-h);`);
     expect(r).toMatch(/height: var\(--tp-h\); min-height: var\(--tp-h\);/);
     expect(r).toContain(`${both} .icon-btn {\n  flex: none; width: var(--tp-btn); height: var(--tp-btn);`);

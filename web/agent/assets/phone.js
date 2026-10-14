@@ -236,7 +236,7 @@
   const row = document.createElement('div');
   row.className = 'tg-row';
   bar.append(row);
-  const item = (key, label, icon) => `<button type="button" data-tab="${key}">${icon}<span>${label}</span></button>`;
+  const item = (key, label, icon) => `<button type="button" data-tab="${key}" aria-label="${label}">${icon}<span>${label}</span></button>`;
   const glyph = (g) => `<span class="t-ico g" aria-hidden="true">${g}</span>`;
   // The panels' own icons (chat.html's .pico set: each its own colour, tinted by the theme)
   const pico = (k) => `<span class="pico t-ico" data-p="${k}" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-${k}"/></svg></span>`;
@@ -394,19 +394,38 @@
     if (act === 'reload') location.reload();
   });
 
-  // ---- The phone's back button (or swipe) closes an open panel instead of leaving Nova Agent ----
+  // ---- The phone's back button (or swipe) closes what's open instead of leaving Nova Agent ----
+  // A window or sheet first (the settings, a mission, the Panels window...), then an open panel.
+  // On phones and on tablets (any touch screen), where Back is the system's own gesture.
+  const TOUCH = matchMedia('(pointer: coarse)');
+  const backOn = () => PHONE.matches || TOUCH.matches;
   let byBack = false;
+  let skipPop = 0; // our own history.back() (something closed by its own button): nothing more to close
+  const byBackDialogs = new WeakSet();
   function panelShown() {
-    if (!PHONE.matches) return;
+    if (!backOn()) return;
     if (!(history.state && history.state.novaPanel)) history.pushState({ novaPanel: true }, '', location.href);
   }
   function panelHidden() {
     if (byBack) { byBack = false; return; }
-    if (history.state && history.state.novaPanel) history.back();
+    if (history.state && history.state.novaPanel) { skipPop++; history.back(); }
   }
+  const openDialogs = () => [...document.querySelectorAll('dialog[open]')];
   window.addEventListener('popstate', () => {
+    if (skipPop) { skipPop--; return; }
+    const top = openDialogs().pop();
+    if (top) { byBackDialogs.add(top); top.close(); return; }
     if (!viewer.hidden) { byBack = true; closePanel(); }
   });
+  new MutationObserver((records) => {
+    for (const r of records) {
+      const d = r.target;
+      if (!(d instanceof HTMLDialogElement) || d.open === (r.oldValue !== null)) continue;
+      if (d.open) { if (backOn()) history.pushState({ novaDialog: true }, '', location.href); }
+      else if (byBackDialogs.has(d)) byBackDialogs.delete(d);
+      else if (history.state && history.state.novaDialog) { skipPop++; history.back(); }
+    }
+  }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'], attributeOldValue: true });
   let wasOpen = !viewer.hidden;
   new MutationObserver(() => {
     const isOpen = !viewer.hidden;

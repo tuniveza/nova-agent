@@ -61,9 +61,10 @@ for (const [w, h] of SIZES) {
     (two === 1 ? ok : fail)(`bars at the top with a panel open: ${two}`);
     const moved = Math.abs(homeTop.top - panelTop.top), wider = Math.abs(homeTop.w - panelTop.w);
     (moved <= 12 ? ok : fail)(`the top bar stays put when a panel opens (moved ${moved}px, ${homeTop.w}px wide → ${panelTop.w}px)`);
-    // Every control in the title panel is a big target: 40px on a computer, 44px on a phone
-    const need = phone ? 44 : 40;
-    const small = await tab.evaluate((need) => [...document.querySelectorAll(".shell > .topbar :is(button, a, .status, nova-portal-badge, nova-manual, [role=button])")]
+    // Every control in the title panel is a big target: 40px on a computer, 48px on a phone
+    // (a phone held sideways, a short and wide touch screen: 40px, so its 44px title panel leaves the panel the room)
+    const need = phone && !(w > h && h <= 500) ? 48 : 40; // (a phone: Android's 48dp)
+    const small = await tab.evaluate((need) => [...document.querySelectorAll(".shell > .topbar :is(button, a, nova-portal-badge, nova-manual, [role=button])")]
       .map((e) => ({ e, b: e.getBoundingClientRect() })).filter(({ b }) => b.width > 0 && b.height > 0 && (b.width < need - 0.5 || b.height < need - 0.5))
       .filter(({ e }) => !e.closest("nova-portal-badge, nova-manual") || e.matches("nova-portal-badge, nova-manual"))
       .map(({ e, b }) => `${e.id || e.tagName.toLowerCase()} ${Math.round(b.width)}×${Math.round(b.height)}`), need);

@@ -85,3 +85,13 @@ html[data-status="auto"].nav-away .shell > .status-line { display: none; opacity
 #suite-home > .status-line .sl-item { padding: 1px 8px; }
 #suite-home > .status-line .sl-ico { width: 12px; height: 12px; }
 .tabbar > .status-line { min-height: 20px; padding: 1px 4px; }
+
+/* A phone held upright: the status line is ONE line (readable, 11px) that slides sideways inside
+   itself when it's longer than the screen, instead of wrapping onto two or three rows and taking the
+   panel's room */
+@media (max-width: 600px) {
+  .tabbar > .status-line { flex-wrap: nowrap; justify-content: safe center; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+    font-size: 11px; min-height: 22px; white-space: nowrap; }
+  .tabbar > .status-line::-webkit-scrollbar { display: none; }
+  .tabbar > .status-line .sl-item { flex: none; }
+}

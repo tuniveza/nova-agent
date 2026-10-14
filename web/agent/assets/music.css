@@ -252,3 +252,8 @@
     linear-gradient(color-mix(in srgb, var(--panel) 62%, transparent), color-mix(in srgb, var(--void) 55%, transparent)) padding-box,
     linear-gradient(120deg, color-mix(in srgb, var(--hi) 60%, transparent), color-mix(in srgb, var(--accent-2) 28%, transparent) 30%, color-mix(in srgb, var(--line) 100%, transparent) 50%, color-mix(in srgb, var(--accent-2) 28%, transparent) 70%, color-mix(in srgb, var(--hi) 50%, transparent)) border-box !important;
 }
+
+/* A phone or tablet: the cards' small names readable (11px, not 9px), the same quiet spaced capitals */
+@media (pointer: coarse) {
+  .mw-k { font-size: 11px; letter-spacing: .08em; }
+}

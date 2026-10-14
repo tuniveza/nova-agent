@@ -109,12 +109,12 @@
    same places: left ← back (with a panel open), sound, music, Live; the middle the mark or the
    panel's icon and its name; right the Manual, the planet (sign in and out), Install, Reload (with
    a panel open) and the gear. Compact, but every control is a big, easy target (40px on a
-   computer, 44px on a phone): plain round buttons without their own borders, clearer words (13px
+   computer, 48px on a phone, Android's 48dp): plain round buttons without their own borders, clearer words (13px
    and up, no tiny spaced-out capitals). (The selector covers the home and a panel alike, and wins
    over the older per-place sizes above, in chat.html, phone.css and bar.css.) */
 :root { --tp-h: 52px; --tp-btn: 40px; --tp-mark: 32px; --tp-word: 18px; --tp-gap: 4px; --tp-pad: 0 6px; --tp-r: 16px; --tp-ico: 20px; }
 @media (max-width: 980px), (max-height: 480px) {
-  :root { --tp-h: 48px; --tp-btn: 44px; --tp-mark: 28px; --tp-word: 15px; --tp-gap: 0px; --tp-pad: 0 2px; --tp-r: 14px; } }
+  :root { --tp-h: 52px; --tp-btn: 48px; --tp-mark: 28px; --tp-word: 15px; --tp-gap: 0px; --tp-pad: 0 1px; --tp-r: 14px; } }
 .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar {
   --nv-top-h: var(--tp-h); --nv-mark: var(--tp-mark); --nv-word: var(--tp-word); --nv-top-r: var(--tp-r);
   box-sizing: border-box; height: var(--tp-h); min-height: var(--tp-h); padding: var(--tp-pad); border-radius: var(--tp-r);
@@ -181,4 +181,15 @@
   /* The smallest phones: the panel's name gets the room (its icon is on the navigation panel below) */
   .shell:has(> .main.viewing) > .topbar.nv-topbar .vn-ico { display: none; }
   .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar :is(.wordmark, .vn-text) { font-size: 14px; }
+}
+@media (max-width: 480px) {
+  /* A phone: the panel's name gets the room. Live is just its dot (it isn't a button, so it needs no
+     big target); Install is in the gear (Install or remove app), as is Reload's twin (Reload …) */
+  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .status { width: 22px; min-width: 22px; }
+  .shell > .topbar.nv-topbar > .top-side.right > .ni-open { display: none; }
+}
+/* A phone on its side (touch, short and wide): the title panel is 44px with 40px targets, so the
+   panel gets the room (the same on the home and with a panel open) */
+@media (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+  :root { --tp-h: 44px; --tp-btn: 40px; --tp-mark: 24px; --tp-word: 14px; }
 }

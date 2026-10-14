@@ -182,3 +182,8 @@ dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { o
 #suite-home .suite-group h4::before { content: ""; flex: 1; height: 1px; margin: 0; font-size: 0; text-shadow: none; -webkit-text-fill-color: initial;
   background: linear-gradient(270deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 40%, transparent) 50%, transparent); box-shadow: 0 0 6px color-mix(in srgb, var(--hi) 40%, transparent); }
 .tabbar .tg-label { text-align: center; padding-left: 0; }
+
+/* A touch screen showing the computer layout (a tablet on its side): pulling down at the top never
+   reloads the page (Chrome's pull-to-refresh), so a swipe in from the top edge only brings the title
+   panel (phones: phone.css) */
+html.is-touch, html.is-touch body { overscroll-behavior: none; }
