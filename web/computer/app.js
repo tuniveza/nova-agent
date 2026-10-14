@@ -205,9 +205,296 @@
     $("backup").innerHTML = n.backup ? `Last backup: <strong>${esc(london(n.backup.last, true))}</strong> (${esc(ago(n.backup.last))})` : "Last backup: not known from here.";
   }
 
+  // ================= The parts: Screen · Files · Programs · Disk =================
+  // Computer opens on the VPS's desktop (the chips switch to the other parts)
+  let part = "desktop";
+  function showPart(p) {
+    part = p;
+    for (const b of document.querySelectorAll("[data-part]")) b.setAttribute("aria-selected", String(b.dataset.part === p));
+    for (const id of ["desktop", "screen", "files", "programs", "disk"]) $(`part-${id}`).hidden = id !== p;
+    if (p === "desktop") desktop.open();
+    else desktop.close();
+    if (p === "files" && !files.loaded) openFolder(files.path);
+    if (p === "programs") loadProcs();
+    if (p === "disk") loadDisk(disk.path);
+  }
+
+  async function api(url) {
+    const res = await fetch(url, { cache: "no-store", credentials: "same-origin" });
+    const data = await res.json().catch(() => null);
+    if (!data) throw new Error(res.status === 403 ? "Computer is for admins." : "No answer just now. Try again in a moment.");
+    if (data.ok === false) throw new Error(data.message || "Couldn't read that.");
+    return data;
+  }
+  const q = (path) => encodeURIComponent(path);
+  function crumbs(el, path, attr) {
+    const parts = path.split("/").filter(Boolean);
+    let at = "";
+    el.innerHTML = [
+      `<button type="button" ${attr}="/" aria-label="The top of the VPS">/</button>`,
+      ...parts.map((name) => {
+        at += `/${name}`;
+        return `<button type="button" ${attr}="${esc(at)}">${esc(name)}</button>`;
+      }),
+    ].join(`<span class="sep" aria-hidden="true">›</span>`);
+  }
+
+  // ---- Desktop: noVNC (/vps-desktop/, admins only), loaded only while this part is open ----
+  const desktop = {
+    control: false,
+    url() {
+      return `/vps-desktop/vnc.html?path=vps-desktop/websockify&autoconnect=1&reconnect=1&resize=scale&view_only=${this.control ? 0 : 1}&show_dot=1`;
+    },
+    open() {
+      const f = $("desk-frame");
+      const want = this.url();
+      if (f.dataset.src === want) return;
+      f.hidden = true;
+      $("desk-wait").hidden = false;
+      f.dataset.src = want;
+      f.src = want;
+    },
+    close() {
+      const f = $("desk-frame");
+      if (!f.dataset.src) return;
+      f.dataset.src = "";
+      f.src = "about:blank";
+      f.hidden = true;
+      $("desk-wait").hidden = false;
+    },
+    setControl(on) {
+      this.control = on;
+      for (const b of document.querySelectorAll("#desk-mode [data-mode]")) b.setAttribute("aria-pressed", String((b.dataset.mode === "control") === on));
+      $("desk-warn").hidden = !on;
+      $("desk-box").classList.toggle("control", on);
+      if (part === "desktop") this.open();
+    },
+  };
+  $("desk-frame").addEventListener("load", () => {
+    const f = $("desk-frame");
+    if (!f.dataset.src) return;
+    f.hidden = false;
+    $("desk-wait").hidden = true;
+  });
+  $("desk-full").addEventListener("click", () => {
+    const box = $("desk-box");
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else if (box.requestFullscreen) box.requestFullscreen().catch(() => {});
+  });
+
+  // ---- Files ----
+  const files = { path: "/srv/nova-agent", entries: [], loaded: false, sort: "name", open: null };
+  try {
+    const p = localStorage.getItem("nova-computer-path");
+    if (p && p.startsWith("/")) files.path = p;
+  } catch {}
+  const ICONS = { folder: "📁", file: "📄", link: "↪", other: "◇" };
+  const IMG = /\.(png|jpe?g|gif|webp|svg|ico|avif|bmp)$/i;
+  async function openFolder(path) {
+    const note = $("files-note");
+    try {
+      const d = await api(`/computer-api/files?path=${q(path)}`);
+      files.path = d.path;
+      files.entries = d.entries;
+      files.loaded = true;
+      try {
+        localStorage.setItem("nova-computer-path", d.path);
+      } catch {}
+      crumbs($("crumbs"), d.path, "data-dir");
+      note.hidden = !(d.locked || d.capped);
+      note.className = `fx-note${d.locked ? " bad" : ""}`;
+      note.textContent = d.locked ? "🔒 Only root can see inside this folder." : d.capped ? `Showing the first ${d.entries.length} of ${d.total}.` : "";
+      $("files-filter").value = "";
+      drawFiles();
+    } catch (err) {
+      note.hidden = false;
+      note.className = "fx-note bad";
+      note.textContent = `${err.message.startsWith("Only root") ? "🔒 " : ""}${err.message}`;
+      if (!files.loaded && path !== "/") return openFolder("/");
+    }
+  }
+  function drawFiles() {
+    const f = $("files-filter").value.trim().toLowerCase();
+    const list = files.entries.filter((e) => !f || e.name.toLowerCase().includes(f));
+    const isDir = (e) => e.kind === "folder" || (e.kind === "link" && e.to === "folder");
+    list.sort((a, b) => {
+      if (isDir(a) !== isDir(b)) return isDir(a) ? -1 : 1;
+      if (files.sort === "size") return (b.size ?? -1) - (a.size ?? -1) || a.name.localeCompare(b.name);
+      if (files.sort === "modified") return String(b.modified || "").localeCompare(String(a.modified || "")) || a.name.localeCompare(b.name);
+      return a.name.localeCompare(b.name);
+    });
+    $("files-list").innerHTML = list.length
+      ? list
+          .map((e) => {
+            const ico = e.locked ? "🔒" : e.private ? "🙈" : e.kind === "file" && IMG.test(e.name) ? "🖼" : ICONS[e.kind] || "◇";
+            const tag = e.locked ? `<span class="tag">Only root</span>` : e.private ? `<span class="tag">Private</span>` : "";
+            const full = `${files.path.replace(/\/$/, "")}/${e.name}`;
+            const meta = [e.modified ? london(e.modified, true) : "", e.owner, e.kind === "link" && e.target ? `→ ${e.target}` : ""].filter(Boolean).join(" · ");
+            return `<li><button type="button" class="fx-item${e.locked ? " locked" : ""}${e.private ? " private" : ""}" data-entry="${esc(full)}" data-isdir="${isDir(e) ? "1" : ""}" aria-current="${files.open === full}"><span class="ico" aria-hidden="true">${ico}</span><span class="nm">${esc(e.name)}${tag}</span><span class="sz">${e.size == null ? "" : esc(size(e.size))}</span><span class="mt">${esc(meta)}</span></button></li>`;
+          })
+          .join("")
+      : `<li class="fx-empty">${f ? "Nothing here matches." : "This folder is empty."}</li>`;
+  }
+  async function openFile(path) {
+    files.open = path;
+    drawFiles();
+    const v = $("file-view");
+    v.innerHTML = `<p class="fx-empty nt-loading">Opening…</p>`;
+    const head = (extra) => `<div class="fx-head"><b>${esc(path)}</b><span>${extra}</span></div>`;
+    try {
+      const { file } = await api(`/computer-api/file?path=${q(path)}`);
+      if (file.kind === "hidden") v.innerHTML = head("") + `<p class="fx-empty">🙈 <b>Hidden: private.</b><br>Keys, passwords and settings like this show their name only.</p>`;
+      else if (file.kind === "binary") v.innerHTML = head(esc(size(file.size))) + `<p class="fx-empty">${esc(file.message)}</p>`;
+      else if (file.kind === "image")
+        v.innerHTML = head(`${esc(size(file.size))} · ${esc(london(file.modified, true))}`) + (file.tooBig ? `<p class="fx-empty">That picture is too big to show here (over 5 MB).</p>` : `<div class="pic"><img alt="${esc(path)}" src="/computer-api/image?path=${q(path)}"></div>`);
+      else v.innerHTML = head(`${esc(size(file.size))} · ${esc(london(file.modified, true))}${file.cut ? " · the first 200 KB" : ""}`) + `<pre class="code" tabindex="0">${highlight(file.text, file.language)}</pre>`;
+    } catch (err) {
+      v.innerHTML = head("") + `<p class="fx-empty">${err.message.startsWith("Only root") ? "🔒 " : ""}${esc(err.message)}</p>`;
+    }
+  }
+
+  // Syntax colours for the common kinds (plain rules, no library): comments, strings, numbers, keywords, keys
+  const KW = {
+    js: "const|let|var|function|return|if|else|for|while|import|export|from|class|new|await|async|try|catch|finally|throw|of|in|typeof|interface|type|extends|default|switch|case|break|continue|true|false|null|undefined",
+    py: "def|return|if|elif|else|for|while|import|from|class|try|except|finally|raise|with|as|in|not|and|or|None|True|False|lambda|yield",
+    sh: "if|then|else|elif|fi|for|while|do|done|case|esac|function|return|exit|export|local|set|echo|sudo|cd",
+    sql: "SELECT|FROM|WHERE|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|INDEX|ALTER|DROP|JOIN|LEFT|ON|AND|OR|NOT|NULL|PRIMARY|KEY|ORDER|BY|GROUP|LIMIT",
+  };
+  function rulesFor(lang) {
+    const str = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/;
+    const num = /\b\d+(?:\.\d+)?\b/;
+    const kw = (w, flags = "") => new RegExp(`\\b(?:${w})\\b`, flags);
+    switch (lang) {
+      case "js": return [[/\/\/[^\n]*|\/\*[\s\S]*?\*\//, "c"], [/`(?:[^`\\]|\\.)*`/, "s"], [str, "s"], [num, "n"], [kw(KW.js), "k"]];
+      case "json": return [[/"(?:[^"\\\n]|\\.)*"(?=\s*:)/, "a"], [str, "s"], [num, "n"], [/\b(?:true|false|null)\b/, "k"]];
+      case "css": return [[/\/\*[\s\S]*?\*\//, "c"], [str, "s"], [/@[\w-]+/, "h"], [/[\w-]+(?=\s*:)/, "a"], [num, "n"]];
+      case "html": return [[/<!--[\s\S]*?-->/, "c"], [/<\/?[A-Za-z][\w:-]*/, "t"], [str, "s"], [/[\w:-]+(?==)/, "a"]];
+      case "md": return [[/^#{1,6} [^\n]*/m, "h"], [/`[^`\n]+`/, "s"], [/\*\*[^*\n]+\*\*/, "k"], [/\[[^\]\n]+\]\([^)\n]+\)/, "a"]];
+      case "yaml": return [[/#[^\n]*/, "c"], [/^[ \t-]*[\w.-]+(?=:)/m, "a"], [str, "s"], [num, "n"], [/\b(?:true|false|null|yes|no)\b/, "k"]];
+      case "conf": return [[/(?:^|[ \t])[#;][^\n]*/m, "c"], [/^\[[^\]\n]+\]/m, "h"], [/^[ \t]*[\w.-]+(?=[ \t]*[=:])/m, "a"], [str, "s"], [num, "n"]];
+      case "sh": return [[/(?:^|[ \t])#[^\n]*/m, "c"], [str, "s"], [/\$\{?[\w@#?*!-]+\}?/, "a"], [kw(KW.sh), "k"], [num, "n"]];
+      case "py": return [[/#[^\n]*/, "c"], [/"""[\s\S]*?"""|'''[\s\S]*?'''/, "s"], [str, "s"], [num, "n"], [kw(KW.py), "k"]];
+      case "sql": return [[/--[^\n]*/, "c"], [str, "s"], [num, "n"], [kw(KW.sql, "i"), "k"]];
+      case "log": return [[/\b\d{4}-\d{2}-\d{2}[T ][\d:.]+Z?\b/, "n"], [/\b(?:ERROR|Error|error|FAIL|Failed|failed|fatal|panic)\b/, "t"], [/\b(?:WARN|Warning|warning)\b/, "k"], [str, "s"]];
+      default: return [];
+    }
+  }
+  function highlight(text, lang) {
+    const rules = rulesFor(lang);
+    if (!rules.length || text.length > 400000) return esc(text);
+    const flags = rules.some(([re]) => re.flags.includes("i")) ? "gim" : "gm";
+    const all = new RegExp(rules.map(([re]) => `(${re.source})`).join("|"), flags);
+    let out = "";
+    let last = 0;
+    for (let m = all.exec(text); m; m = all.exec(text)) {
+      if (!m[0]) {
+        all.lastIndex++;
+        continue;
+      }
+      let g = 1;
+      while (g <= rules.length && m[g] === undefined) g++;
+      out += esc(text.slice(last, m.index)) + `<span class="${rules[g - 1] ? rules[g - 1][1] : ""}">${esc(m[0])}</span>`;
+      last = all.lastIndex;
+    }
+    return out + esc(text.slice(last));
+  }
+
+  // ---- Programs ----
+  const procs = { sort: "cpu", group: "", data: null };
+  let busyProcs = false;
+  async function loadProcs() {
+    if (busyProcs) return;
+    busyProcs = true;
+    try {
+      procs.data = await api("/computer-api/procs");
+      drawProcs();
+    } catch (err) {
+      $("procs").innerHTML = `<tr><td colspan="7" class="fx-note bad">${esc(err.message)}</td></tr>`;
+    } finally {
+      busyProcs = false;
+    }
+  }
+  const ORDER = ["Nova Bot", "Nova Agent", "Claude", "web", "system"];
+  function drawProcs() {
+    const d = procs.data;
+    if (!d) return;
+    const groups = Object.entries(d.groups || {}).sort((a, b) => ORDER.indexOf(a[0]) - ORDER.indexOf(b[0]));
+    $("proc-groups").innerHTML = [
+      `<button type="button" data-group="" aria-pressed="${!procs.group}">All<small>${d.total}</small></button>`,
+      ...groups.map(([g, v]) => `<button type="button" data-group="${esc(g)}" aria-pressed="${procs.group === g}">${esc(g)}<small>${v.count} · ${Math.round(v.cpu)}%</small></button>`),
+    ].join("");
+    const f = $("proc-filter").value.trim().toLowerCase();
+    const rows = d.procs
+      .filter((p) => !procs.group || p.group === procs.group)
+      .filter((p) => !f || `${p.name} ${p.user} ${p.command} ${p.pid}`.toLowerCase().includes(f))
+      .sort((a, b) => (procs.sort === "memory" ? b.memory - a.memory : b.cpu - a.cpu || b.memory - a.memory))
+      .slice(0, 400);
+    $("procs").innerHTML = rows.length
+      ? rows.map((p) => `<tr class="${p.cpu >= 50 ? "hot" : ""}"><td class="nm">${esc(p.name)}</td><td class="gp">${esc(p.group)}</td><td class="us">${esc(p.user)}</td><td class="num">${p.cpu.toFixed(1)}%</td><td class="num">${esc(size(p.memory))}</td><td class="st">${p.started ? esc(london(p.started)) : ""}</td><td class="cmd" title="${esc(p.command)}">${esc(p.command)}</td></tr>`).join("")
+      : `<tr><td colspan="7" class="fx-note">Nothing matches.</td></tr>`;
+  }
+
+  // ---- Disk ----
+  const disk = { path: "/", timer: null };
+  async function loadDisk(path) {
+    clearTimeout(disk.timer);
+    disk.path = path;
+    for (const b of document.querySelectorAll("[data-root]")) b.setAttribute("aria-pressed", String(b.dataset.root === path));
+    crumbs($("disk-crumbs"), path, "data-disk");
+    const note = $("disk-note");
+    try {
+      const d = await api(`/computer-api/disk?path=${q(path)}`);
+      const r = d.result;
+      if (r) {
+        const max = Math.max(1, ...r.folders.map((x) => x.size));
+        $("disk-list").innerHTML = r.folders.length
+          ? r.folders.map((x) => `<li><button type="button" class="dk-row" data-disk="${esc(x.path)}"><span class="nm">${x.private ? "🙈 " : "📁 "}${esc(x.name)}</span><span class="sz">${esc(size(x.size))}</span><span class="bar" aria-hidden="true"><i style="width:${Math.max(1, (x.size / max) * 100).toFixed(1)}%"></i></span></button></li>`).join("")
+          : `<li class="fx-empty">No folders inside this one.</li>`;
+      } else $("disk-list").innerHTML = `<li class="fx-empty nt-loading">Measuring this folder… (slowly, so the VPS stays quick)</li>`;
+      note.className = "fx-note";
+      note.textContent = r ? `${size(r.total)} in all · measured ${ago(r.at)}${d.measuring ? " · measuring again…" : ""}${r.partial ? " · some folders only root can read, so sizes may be smaller" : ""}` : "";
+      if (d.measuring && part === "disk") disk.timer = setTimeout(() => loadDisk(disk.path), 3000);
+    } catch (err) {
+      note.className = "fx-note bad";
+      note.textContent = err.message;
+    }
+  }
+
   // ================= Taps =================
+  $("files-filter").addEventListener("input", drawFiles);
+  $("proc-filter").addEventListener("input", drawProcs);
   document.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-pick]");
+    const t = e.target;
+    const partBtn = t.closest("[data-part]");
+    if (partBtn) return showPart(partBtn.dataset.part);
+    const mode = t.closest("#desk-mode [data-mode]");
+    if (mode) return desktop.setControl(mode.dataset.mode === "control");
+    const crumb = t.closest("[data-dir]");
+    if (crumb) return openFolder(crumb.dataset.dir);
+    const entry = t.closest("[data-entry]");
+    if (entry) return entry.dataset.isdir ? openFolder(entry.dataset.entry) : openFile(entry.dataset.entry);
+    const fs = t.closest("#files-sort [data-sort]");
+    if (fs) {
+      files.sort = fs.dataset.sort;
+      for (const b of document.querySelectorAll("#files-sort [data-sort]")) b.setAttribute("aria-pressed", String(b === fs));
+      return drawFiles();
+    }
+    const ps = t.closest("#proc-sort [data-sort]");
+    if (ps) {
+      procs.sort = ps.dataset.sort;
+      for (const b of document.querySelectorAll("#proc-sort [data-sort]")) b.setAttribute("aria-pressed", String(b === ps));
+      return drawProcs();
+    }
+    const g = t.closest("[data-group]");
+    if (g) {
+      procs.group = g.dataset.group;
+      return drawProcs();
+    }
+    const root = t.closest("[data-root]");
+    if (root) return loadDisk(root.dataset.root);
+    const dk = t.closest("[data-disk]");
+    if (dk) return loadDisk(dk.dataset.disk);
+    const b = t.closest("[data-pick]");
     if (!b) return;
     picked = b.dataset.pick;
     stickToBottom = true;
@@ -229,7 +516,7 @@
     }
     $("live-chip").textContent = "Live";
     $("live-chip").classList.remove("paused");
-    load().finally(() => {
+    Promise.all([load(), part === "programs" ? loadProcs() : null]).finally(() => {
       timer = setTimeout(tick, EVERY);
     });
   }
@@ -237,5 +524,6 @@
   addEventListener("resize", () => {
     if (innerWidth && innerHeight && $("live-chip").classList.contains("paused")) tick();
   });
+  showPart(part);
   tick();
 })();

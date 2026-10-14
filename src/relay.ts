@@ -80,7 +80,7 @@ const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
   // The Fixer (src/fixer/routes.ts): admins only
   { methods: ["GET"], path: /^\/fixer-api\/(state|jobs\/[\w-]+|shots\/[\w-]+\/[\w-]+\.png)$/, admin: true },
   // Computer: the VPS at a glance (src/computer.ts), read-only, admins only
-  { methods: ["GET"], path: /^\/computer-api\/state$/, admin: true },
+  { methods: ["GET"], path: /^\/computer-api\/(state|files|file|image|procs|disk)$/, admin: true },
   { methods: ["POST"], path: /^\/actions\/fixer\/(check|settings|quests|(quests|suggestions|issues|jobs)\/[\w-]+)$/, admin: true },
   // Social posts' pictures and videos (src/social-media.ts): see them (Nova Bot too, for Meta), add one,
   // take one out of a draft

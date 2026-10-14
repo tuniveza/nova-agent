@@ -50,14 +50,14 @@ function deps(over: Partial<ComputerDeps> = {}): ComputerDeps {
 
 describe("Computer: secrets never leave", () => {
   it("hides the computer's own key values and things shaped like keys", () => {
-    const out = redact("key=abc123secretvalue sk-ant-api03-xyzxyzxyz Bearer abcdefghijkl AGENT_NOVA_KEY=zzzz token: 1234567 " + "aB3".repeat(16) + " " + "f".repeat(40), ["abc123secretvalue"]);
+    const out = redact("key=abc123secretvalue sk-ant-api03-xyzxyzxyz Bearer abcdefghijkl AGENT_NOVA_KEY=zzzz token: 1234567 " + "aB3".repeat(16) + " " + "f0".repeat(20), ["abc123secretvalue"]);
     expect(out).not.toContain("abc123secretvalue");
     expect(out).not.toContain("xyzxyzxyz");
     expect(out).not.toContain("abcdefghijkl");
     expect(out).not.toContain("zzzz");
     expect(out).not.toContain("1234567");
     expect(out).not.toContain("aB3".repeat(16));
-    expect(out).not.toContain("f".repeat(40));
+    expect(out).not.toContain("f0".repeat(20));
     expect(out).toContain("•••");
   });
   it("leaves ordinary words, short git hashes and paths alone", () => {

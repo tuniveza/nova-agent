@@ -33,17 +33,101 @@
   <p class="message" id="message" hidden></p>
 
   <div class="board" id="board" hidden>
-    <!-- The VPS's screen: its Claude sessions (tmux), live and read-only, and the jobs it ran -->
-    <section class="nt-card cp-screen" aria-labelledby="screen-h">
+    <!-- The main area: four parts, one at a time (Screen · Files · Programs · Disk); each shows
+         everything at once and only its own boxes scroll. All read-only. -->
+    <section class="nt-card cp-main" aria-label="The VPS">
       <div class="cp-head">
-        <h2 class="nt-h" id="screen-h">The VPS's screen</h2>
+        <div class="cp-parts" role="tablist" aria-label="What to look at">
+          <button type="button" role="tab" data-part="desktop" aria-selected="true">Desktop</button>
+          <button type="button" role="tab" data-part="screen" aria-selected="false">Screen</button>
+          <button type="button" role="tab" data-part="files" aria-selected="false">Files</button>
+          <button type="button" role="tab" data-part="programs" aria-selected="false">Programs</button>
+          <button type="button" role="tab" data-part="disk" aria-selected="false">Disk</button>
+        </div>
         <span class="nt-chip" id="live-chip">Live</span>
       </div>
-      <div class="cp-tabs" id="screen-tabs" role="tablist" aria-label="Sessions on the VPS"></div>
-      <pre class="term" id="term" tabindex="0" aria-live="off" aria-label="What this session shows"></pre>
-      <div class="cp-jobs">
-        <span class="nt-label">Jobs on the VPS</span>
-        <ul class="job-list" id="jobs"></ul>
+
+      <!-- Desktop: the VPS's own desktop (noVNC at /vps-desktop/, admins only, set up by Nova Bot's
+           vps/desktop-setup.sh). Loaded only while this part is open, so the desktop sleeps otherwise.
+           View only unless Control is switched on. -->
+      <div class="part part-desktop" id="part-desktop" role="tabpanel" aria-label="The VPS's desktop">
+        <div class="fx-bar">
+          <div class="sorts" id="desk-mode" role="group" aria-label="Look or control">
+            <button type="button" data-mode="view" aria-pressed="true">View only</button>
+            <button type="button" data-mode="control" aria-pressed="false">Control</button>
+          </div>
+          <p class="desk-warn" id="desk-warn" role="status" hidden>You're controlling the VPS: changes are real</p>
+          <button type="button" class="desk-full" id="desk-full" aria-label="Show the desktop full screen">Full screen</button>
+        </div>
+        <div class="desk-box" id="desk-box">
+          <p class="desk-wait" id="desk-wait"><span class="nt-loading">Starting the VPS's desktop…</span></p>
+          <iframe id="desk-frame" title="The VPS's desktop" allow="fullscreen; clipboard-read; clipboard-write" hidden></iframe>
+        </div>
+      </div>
+
+      <!-- Screen: the VPS's Claude sessions (tmux), live and read-only, and the jobs it ran -->
+      <div class="part part-screen" id="part-screen" role="tabpanel" aria-label="The VPS's screen" hidden>
+        <div class="cp-tabs" id="screen-tabs" role="tablist" aria-label="Sessions on the VPS"></div>
+        <pre class="term" id="term" tabindex="0" aria-live="off" aria-label="What this session shows"></pre>
+        <div class="cp-jobs">
+          <span class="nt-label">Jobs on the VPS</span>
+          <ul class="job-list" id="jobs"></ul>
+        </div>
+      </div>
+
+      <!-- Files: browse the VPS's folders and open text files and pictures (read-only; private files show their name only) -->
+      <div class="part part-files" id="part-files" role="tabpanel" aria-label="Files" hidden>
+        <div class="fx-bar">
+          <nav class="crumbs" id="crumbs" aria-label="Where you are"></nav>
+          <input type="search" id="files-filter" placeholder="Filter this folder" aria-label="Filter this folder" autocomplete="off" spellcheck="false">
+          <div class="sorts" id="files-sort" role="group" aria-label="Sort by">
+            <button type="button" data-sort="name" aria-pressed="true">Name</button>
+            <button type="button" data-sort="size" aria-pressed="false">Size</button>
+            <button type="button" data-sort="modified" aria-pressed="false">Changed</button>
+          </div>
+        </div>
+        <div class="fx-split">
+          <div class="fx-list-wrap">
+            <p class="fx-note" id="files-note" hidden></p>
+            <ul class="fx-list" id="files-list" aria-label="In this folder"></ul>
+          </div>
+          <div class="fx-view" id="file-view" aria-live="polite">
+            <p class="fx-empty">Pick a file to read it here. Only reading: nothing can be changed.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Programs: everything running on the VPS (view only) -->
+      <div class="part part-programs" id="part-programs" role="tabpanel" aria-label="Programs" hidden>
+        <div class="fx-bar">
+          <div class="groups" id="proc-groups" role="group" aria-label="Show"></div>
+          <input type="search" id="proc-filter" placeholder="Filter programs" aria-label="Filter programs" autocomplete="off" spellcheck="false">
+          <div class="sorts" id="proc-sort" role="group" aria-label="Sort by">
+            <button type="button" data-sort="cpu" aria-pressed="true">CPU</button>
+            <button type="button" data-sort="memory" aria-pressed="false">Memory</button>
+          </div>
+        </div>
+        <div class="proc-wrap">
+          <table class="procs" aria-label="Programs running on the VPS">
+            <thead><tr><th scope="col">Program</th><th scope="col">Group</th><th scope="col">User</th><th scope="col" class="num">CPU</th><th scope="col" class="num">Memory</th><th scope="col">Started</th><th scope="col">Command</th></tr></thead>
+            <tbody id="procs"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Disk: which folders fill the disk (measured slowly in the background, kept 10 minutes) -->
+      <div class="part part-disk" id="part-disk" role="tabpanel" aria-label="Disk" hidden>
+        <div class="fx-bar">
+          <div class="sorts" id="disk-roots" role="group" aria-label="Start from">
+            <button type="button" data-root="/" aria-pressed="true">/</button>
+            <button type="button" data-root="/srv" aria-pressed="false">/srv</button>
+            <button type="button" data-root="/var" aria-pressed="false">/var</button>
+            <button type="button" data-root="/home" aria-pressed="false">/home</button>
+          </div>
+          <nav class="crumbs" id="disk-crumbs" aria-label="Where you are"></nav>
+        </div>
+        <p class="fx-note" id="disk-note"></p>
+        <ul class="disk-list" id="disk-list" aria-label="Folders by size"></ul>
       </div>
     </section>
 

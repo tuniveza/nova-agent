@@ -36,3 +36,25 @@ export function computerSample(now = Date.now()) {
     },
   };
 }
+
+// Computer's views: a long folder, a long text file, many programs, many folders by size
+export function computerView(pathname, search) {
+  const p = new URLSearchParams(search).get("path") || "/";
+  const iso = (h) => new Date(Date.now() - h * 3600_000).toISOString();
+  if (pathname.endsWith("/files")) {
+    const names = ["na", "nb", "work", "data", ".claude", "fixer-jobs", "a-very-long-folder-name-that-goes-on-and-on-past-the-edge-of-a-phone", ".env", "secrets.txt", "notes.md", "pic.png", "big.log"];
+    return { ok: true, path: p, real: p, locked: false, total: 240, capped: false, entries: Array.from({ length: 60 }, (_, i) => {
+      const name = i < names.length ? names[i] : `file-${i}.json`;
+      const folder = i < 7;
+      return { name, kind: folder ? "folder" : "file", size: folder ? null : 1234 * (i + 1), modified: iso(i), owner: i % 5 ? "nova-agent" : "root", locked: i === 4, private: name === ".env" || name === "secrets.txt" };
+    }) };
+  }
+  if (pathname.endsWith("/file")) return { ok: true, file: { path: p, kind: "text", size: 54321, modified: iso(1), cut: false, language: "js", text: Array.from({ length: 200 }, (_, i) => `const line${i} = "a long string that runs past the edge of a phone screen and keeps going"; // comment ${i}`).join("\n") } };
+  if (pathname.endsWith("/procs")) {
+    const groups = ["Nova Bot", "Nova Agent", "Claude", "web", "system"];
+    const procs = Array.from({ length: 180 }, (_, i) => ({ pid: 100 + i, name: i % 7 ? `worker-${i}` : "a-very-long-program-name", user: i % 3 ? "nova-agent" : "root", group: groups[i % 5], cpu: Math.round(((180 - i) / 3) * 10) / 10, memory: (180 - i) * 1_000_000, started: iso(i / 10), command: `/usr/bin/node /srv/nova-agent/na/node_modules/.bin/tsx src/visualizer/server.ts --a-long-flag=${"x".repeat(60)}` }));
+    return { ok: true, at: iso(0), total: procs.length, memoryTotal: 6442450944, groups: Object.fromEntries(groups.map((g) => [g, { count: 36, cpu: 120.5, memory: 1e9 }])), procs };
+  }
+  if (pathname.endsWith("/disk")) return { ok: true, path: p, measuring: false, result: { path: p, at: iso(0.1), total: 9e9, partial: true, folders: Array.from({ length: 40 }, (_, i) => ({ name: i === 0 ? "a-very-long-folder-name-that-goes-on-and-on-past-the-edge" : `folder-${i}`, path: `${p.replace(/\/$/, "")}/folder-${i}`, size: Math.round(9e9 / (i + 1)), private: i === 3 })) } };
+  return null;
+}

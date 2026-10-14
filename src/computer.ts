@@ -4,6 +4,7 @@
 // (src/relay.ts); here, this computer's own page counts as an admin, like the Fixer.
 //
 //   GET /computer-api/state      everything the page shows (no secrets: every line passes redact())
+//   GET /computer-api/files|file|image|procs|disk   its read-only views of the VPS (src/computer-explore.ts)
 //
 // Read-only on purpose: nothing here types into a session, restarts anything or reads a key.
 // On the studio PC (not the server) it only says so: the VPS's Nova Agent has the real view.
@@ -17,6 +18,7 @@ import type { Hono } from "hono";
 import { config } from "./config";
 import { actorFor } from "./fixer/routes";
 import { claudeProblem, currentFixer, fixerPaths } from "./fixer/service";
+import { DiskSizes, listFolder, PathError, ProcSampler, readImage, readTextFile } from "./computer-explore";
 
 // ================= Secrets never leave =================
 // Values of this computer's own keys (read from its environment, never sent), then shapes that
@@ -35,16 +37,17 @@ const SHAPES: [RegExp, string][] = [
   [/\b(api[_-]?key|token|secret|password|passwd)(["']?\s*[:=]\s*["']?)[^\s"',;]+/gi, "$1$2•••"],
   [/\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{5,}/g, "•••"], // a JWT
   [/\bAKIA[0-9A-Z]{16}\b/g, "•••"],
-  [/\b[a-f0-9]{40,}\b/gi, "•••"], // long hex (keys, HMACs; git's short hashes are left alone)
 ];
 // A long run that looks random (base64 keys): letters of both cases and digits, not a path
 const LONG = /(?<![A-Za-z0-9+/_=-])[A-Za-z0-9+/_-]{40,}={0,2}(?![A-Za-z0-9+/_=-])/g;
+// (and long hex: keys and HMACs; git's short hashes are left alone)
+const HEX = /\b[a-f0-9]{40,}\b/gi;
 const looksRandom = (t: string) => /\d/.test(t) && /[A-Z]/.test(t) && /[a-z]/.test(t) && (t.match(/\//g) || []).length < 3;
 export function redact(text: string, secrets: string[] = []): string {
   let out = String(text ?? "");
   for (const s of secrets) if (s && s.length >= 6) out = out.split(s).join("•••");
   for (const [re, to] of SHAPES) out = out.replace(re, to);
-  return out.replace(LONG, (t) => (looksRandom(t) ? "•••" : t));
+  return out.replace(HEX, (t) => (/\d/.test(t) && /[a-f]/i.test(t) ? "•••" : t)).replace(LONG, (t) => (looksRandom(t) ? "•••" : t));
 }
 
 // ================= Terminal colours → HTML =================
@@ -449,14 +452,47 @@ export function realDeps(): ComputerDeps {
   };
 }
 
-export function registerComputerRoutes(app: Hono, deps: () => ComputerDeps = realDeps): void {
-  app.get("/computer-api/state", async (c) => {
+// The views of the VPS (src/computer-explore.ts): one each, kept for the server's life
+const procSampler = new ProcSampler();
+const diskSizes = new DiskSizes();
+export interface ExploreDeps { onServer: boolean; secrets: () => string[]; procs: ProcSampler; disk: DiskSizes }
+const realExplore = (): ExploreDeps => ({ onServer: config.onServer, secrets: () => secretValues(), procs: procSampler, disk: diskSizes });
+
+export function registerComputerRoutes(app: Hono, deps: () => ComputerDeps = realDeps, explore: () => ExploreDeps = realExplore): void {
+  const admin = (c: any) => {
     const actor = actorFor(c.req.raw);
-    if (!actor || !actor.admin) return c.json({ ok: false, message: "Computer is for admins." }, 403);
+    return !!actor && actor.admin;
+  };
+  const refuse = (c: any) => c.json({ ok: false, message: "Computer is for admins." }, 403);
+  const NO_STORE = { "Cache-Control": "no-store" };
+  app.get("/computer-api/state", async (c) => {
+    if (!admin(c)) return refuse(c);
     try {
-      return c.json(await computerState(deps()), 200, { "Cache-Control": "no-store" });
+      return c.json(await computerState(deps()), 200, NO_STORE);
     } catch (err) {
       return c.json({ ok: false, message: (err as Error).message }, 500);
     }
   });
+  // The views: admins only, and only on the VPS (on the studio PC there's nothing of the VPS to show)
+  const view = (fn: (c: any, e: ExploreDeps) => unknown) => async (c: any) => {
+    if (!admin(c)) return refuse(c);
+    const e = explore();
+    if (!e.onServer) return c.json({ ok: false, onServer: false, message: "Open this on the VPS's Nova." }, 200, NO_STORE);
+    try {
+      const out = await fn(c, e);
+      return out instanceof Response ? out : c.json({ ok: true, ...(out as object) }, 200, NO_STORE);
+    } catch (err) {
+      const status = err instanceof PathError ? err.status : 500;
+      return c.json({ ok: false, message: err instanceof PathError ? err.message : "Couldn't read that just now." }, status, NO_STORE);
+    }
+  };
+  app.get("/computer-api/files", view((c) => listFolder(c.req.query("path") || "/")));
+  app.get("/computer-api/file", view((c, e) => ({ file: readTextFile(c.req.query("path"), e.secrets(), redact) })));
+  app.get("/computer-api/image", view((c) => {
+    const img = readImage(c.req.query("path"));
+    // (shown in an <img> only; an SVG's scripts never run there, and this says so twice)
+    return new Response(new Uint8Array(img.bytes), { status: 200, headers: { "Content-Type": img.type, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox" } });
+  }));
+  app.get("/computer-api/procs", view((_c, e) => e.procs.snapshot(e.secrets(), redact)));
+  app.get("/computer-api/disk", view((c, e) => e.disk.ask(c.req.query("path") || "/")));
 }
