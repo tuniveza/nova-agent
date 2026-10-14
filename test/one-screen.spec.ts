@@ -116,5 +116,7 @@ describe("one screen, nothing scrolling the page", () => {
     expect(read("../web/index/memory.js")).toContain('document.querySelectorAll(".stat[data-stat]")');
     expect(read("../web/lossless/public/lossless/index.html")).toContain("html.embed main > .top { display: none; }");
     expect(read("../web/observatory/css/observatory.css")).toContain("html.embed .hero .brand { display: none; }");
+    const vis = read("../web/agent/page.html");
+    expect(vis.slice(vis.lastIndexOf("@media"), vis.indexOf("</style>"))).toContain("html.embed body > header.nt-card > .who { display: none; }");
   });
 });

@@ -217,6 +217,9 @@
     .nb-tool .actions button, body > header .actions button { min-height: 40px; }
     .status { font-size: 11px; }
   }
+/* Inside Nova Agent its title panel names it (one title panel only), at every size: no name of its
+   own here, just the status and the buttons as one slim row */
+html.embed body > header.nt-card > .who { display: none; }
 </style>
 <!-- Every button's look (buttons.css; body.nb-plain: plain buttons join in) -->
 <link rel="stylesheet" href="/shared/buttons.css">

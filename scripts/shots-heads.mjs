@@ -56,7 +56,7 @@ async function main() {
       for (const p of PANELS) {
         const page = await ctx.newPage();
         try {
-          await page.goto(`${URL_}/agent/${p === "index" ? "index" : p}`, { waitUntil: "load", timeout: 45000 });
+          await page.goto(`${URL_}/agent/${p === "index" ? "index" : p}`, { waitUntil: "domcontentloaded", timeout: 45000 });
           await page.waitForTimeout(3500);
           const frame = page.frames().find((f) => f !== page.mainFrame() && f.url() && !f.url().startsWith("about:") && page.mainFrame().childFrames().includes(f) && f.url().includes(HOST));
           let found = [];
