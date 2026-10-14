@@ -18,6 +18,7 @@
 
   const SCRIPT = document.currentScript;
   const DATA_SRC = SCRIPT && SCRIPT.src ? SCRIPT.src.replace(/manual(\.js)(\?.*)?$/, "manual-data$1") : "/portal/manual-data.js";
+  const ADDRESSES = "@addresses"; // the All addresses page (not an app)
   const SEEN_KEY = "nova-manual/seen";
   const PLACE_KEY = "nova-manual/place";
   const POPOVER = typeof HTMLElement.prototype.showPopover === "function";
@@ -319,6 +320,19 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
 .copy { position: absolute; top: 8px; right: 8px; z-index: 1; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--c-line); background: color-mix(in srgb, var(--c-panel) 85%, transparent); font-family: var(--f-m); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--c-muted); opacity: .75; transition: opacity .2s, color .2s, border-color .2s; }
 .code:hover .copy, .copy:focus-visible { opacity: 1; }
 .copy:hover { color: var(--c-bright); border-color: color-mix(in srgb, var(--c-hi) 50%, transparent); }
+/* All addresses: each one with its line, the address (Copy on it) and Open */
+.addr-note { margin: -4px 0 10px; font-size: 13.5px; line-height: 1.5; color: var(--c-muted); }
+.addr-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.addr { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--c-hi) 16%, var(--c-line)); background: color-mix(in srgb, var(--c-panel) 60%, transparent); min-width: 0; }
+.addr-words { display: grid; gap: 2px; min-width: 0; }
+.addr-words b { font-family: var(--f-d); font-weight: 800; font-size: 14.5px; color: var(--c-bright); }
+.addr-words span { font-size: 13.5px; line-height: 1.45; color: var(--c-text); }
+.addr .code { margin: 0; }
+.addr pre { margin: 0; padding: 9px 76px 9px 12px; border-radius: 10px; font-family: var(--f-m); font-size: 12.5px; line-height: 1.5; color: var(--c-bright); white-space: pre-wrap; overflow-wrap: anywhere; background: color-mix(in srgb, var(--c-void) 70%, transparent); border: 1px solid var(--c-line); user-select: all; }
+.addr .copy { top: 50%; transform: translateY(-50%); opacity: 1; }
+.addr-open { justify-self: start; font-size: 13px; color: var(--c-gold); text-underline-offset: 3px; }
+.addr-more { display: block; width: 100%; margin: 14px 0 0; padding: 12px 16px; border-radius: 16px; text-align: left; font-size: 14px; color: var(--c-bright); border: 1px dashed color-mix(in srgb, var(--c-hi) 40%, transparent); background: color-mix(in srgb, var(--c-hi) 7%, transparent); }
+.addr-more:hover { border-style: solid; }
 .prose blockquote { margin: .4em 0 1em; padding: 10px 16px; border-left: 3px solid var(--app); border-radius: 0 12px 12px 0; background: color-mix(in srgb, var(--app) 8%, transparent); color: var(--c-text); }
 .prose .table { overflow-x: auto; margin: .4em 0 1em; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--app) 18%, var(--c-line)); scrollbar-width: thin; }
 .prose table { width: 100%; border-collapse: collapse; font-size: 13.5px; line-height: 1.5; }
@@ -616,7 +630,7 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
           store.set(SEEN_KEY, new Date().toISOString());
           const dot = this.root.querySelector(".open .dot");
           if (dot) dot.remove();
-          if (this.app && !d.apps.some((a) => a.id === this.app)) this.app = "";
+          if (this.app && this.app !== ADDRESSES && !d.apps.some((a) => a.id === this.app)) this.app = "";
           this.drawRail();
           this.drawPage();
           this.drawNav();
@@ -743,6 +757,7 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
         `<button type="button" data-app="${id}" aria-current="${this.app === id && !this.query}" data-v="--c:${colour};animation-delay:${i * 35}ms"><span class="planet" aria-hidden="true">${glyph}</span><span class="words" title="${esc(small)}"><b>${esc(name)}</b><small>${esc(small)}</small></span>${extra}</button>`;
       rail.innerHTML =
         btn("", "Start here", "The suite, and what's new", "var(--c-hi)", "✺", 0, "") +
+        (this.d.addresses && this.d.addresses.length ? btn(ADDRESSES, "All addresses", "Every web address, to open or copy", "var(--c-hi)", "⌖", 1, "") : "") +
         `<div class="label">The apps</div>` +
         this.d.apps
           .map((a, i) => {
@@ -765,7 +780,7 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
       const on = this.root.querySelector('.rail button[aria-current="true"]');
       if (on && on.scrollIntoView && matchMedia("(max-width: 760px)").matches) on.scrollIntoView({ block: "nearest", inline: "nearest" });
       this.toc = null;
-      const body = this.query ? this.searchPage() : app ? this.appPage(app) : this.startPage();
+      const body = this.query ? this.searchPage() : app ? this.appPage(app) : this.app === ADDRESSES ? this.addressesPage() : this.startPage();
       const wide = !app || this.query || this.tab === "history";
       const toc = this.toc && this.toc.length > 1 ? this.toc : null;
       page.innerHTML = `<div class="layout${wide && !toc ? " wide" : ""}${toc ? " has-toc" : ""}"><article class="read">${this.crumbs(app)}${body}</article>${
@@ -787,6 +802,7 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
       let rest = "";
       if (this.query) rest = `${sep}<span aria-current="page">Search</span>`;
       else if (app) rest = `${sep}${this.tab === "guide" ? `<span>${esc(app.name)}</span>` : `<button type="button" data-app="${app.id}" data-tab="guide">${esc(app.name)}</button>`}${sep}<span aria-current="page">${esc(tabName(this.tab))}</span>`;
+      else if (this.app === ADDRESSES) rest = `${sep}<span aria-current="page">All addresses</span>`;
       else rest = `${sep}<span>Start here</span>`;
       return `<nav class="crumbs" aria-label="Where you are">${home}${rest}</nav>`;
     }
@@ -855,8 +871,28 @@ kbd { font-family: var(--f-m); font-size: 11px; font-weight: 600; color: var(--c
           <div class="pills"><span class="pill">${d.apps.length} apps</span><span class="pill">Updated ${esc(ago(d.built))}</span><span class="pill">Press <kbd>?</kbd> in any panel to open this</span></div></div></div>
         <div class="section-title">The apps</div>
         <div class="apps">${cards}</div>
+        ${d.addresses && d.addresses.length ? `<button type="button" class="addr-more" data-app="${ADDRESSES}"><span aria-hidden="true">⌖</span> All addresses: every web address in the suite, to open or copy</button>` : ""}
         ${feed.length ? `<div class="section-title">This week across the suite</div>${this.timeline(feed.slice(0, 30), true)}` : ""}
         ${s && s.chapters.length ? `<div class="section-title">How it all fits together</div>${s.intro ? `<div class="prose intro">${s.intro}</div>` : ""}${s.chapters.map((c, i) => this.chapter(c, i)).join("")}` : ""}`;
+    }
+
+    // All addresses: every web address in the suite (web/shared/addresses.js, through manual-data.js)
+    addressesPage() {
+      const groups = this.d.addresses || [];
+      return `
+        <div class="hero"><span class="big" data-v="--c:var(--c-hi)" aria-hidden="true">⌖</span><div class="who"><div class="kicker">Manual</div><h1>All addresses</h1><p>Every part of Nova is online at nova.novacane.co.uk. Copy an address, or open it. (Admins see a few more in Portal → Settings → Addresses.)</p></div></div>
+        ${groups
+          .map(
+            (g) => `<div class="section-title">${esc(g.title)}</div>${g.note ? `<p class="addr-note">${esc(g.note)}</p>` : ""}
+            <ul class="addr-list">${g.items
+              .map(
+                (i) => `<li class="addr"><div class="addr-words"><b>${esc(i.name)}</b><span>${esc(i.what)}</span></div>
+                  <div class="code"><button type="button" class="copy" aria-label="Copy ${esc(i.name)}">Copy</button><pre>${esc(i.code || i.url)}</pre></div>
+                  ${i.code ? "" : `<a class="addr-open" href="${esc(i.url)}" target="_blank" rel="noopener">Open ${esc(i.name)} ↗</a>`}</li>`,
+              )
+              .join("")}</ul>`,
+          )
+          .join("")}`;
     }
 
     appPage(a) {

@@ -79,7 +79,7 @@ And across all of them:
 ## Inside Nova Agent
 
 [Nova Agent](https://github.com/tuniveza/nova-agent) serves this folder at **`/observatory/`**
-(for example `http://localhost:4545/observatory/`) whenever it's running, so the Observatory is
+(<https://nova.novacane.co.uk/observatory/>) whenever it's running, so the Observatory is
 always on there with the latest scan. Nova Agent looks for it next to itself, in `../no`.
 
 ## Sound effects

@@ -10,6 +10,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
@@ -18,19 +19,20 @@ const WORKER = "https://nova.novacane.co.uk";
 
 // Nova Agent and its panels, in the order the manual lists them. `readme` is in this repo;
 // `paths` is what its history is about, and `joined` finds the commit that brought a panel's
-// own history in. Nova Bot is its own project (`repo`, next door).
-const PC = "http://localhost:4545";
+// own history in. Nova Bot is its own project (`repo`, next door). Every link is the online
+// address: Nova Agent and all its panels run on the studio's server.
+const PC = WORKER;
 const APPS = [
-  { id: "agent", name: "Nova Agent", readme: "README.md", paths: ["src", "web/agent", "test", "scripts", "package.json"], colour: "#FF5FA8", glyph: "✦", where: "On the studio computer, and online for phones", links: [["Open Nova Agent", `${PC}/`]] },
-  { id: "portal", name: "Portal", readme: "docs/apps/portal/README.md", paths: ["web/portal", "docs/apps/portal"], joined: "as web/portal", colour: "#9DB4FF", glyph: "◉", where: "A Nova Agent panel; online on the staff phones", links: [["Open Portal", `${PC}/portal/`], ["Online", `${WORKER}/portal/`]] },
+  { id: "agent", name: "Nova Agent", readme: "README.md", paths: ["src", "web/agent", "test", "scripts", "package.json"], colour: "#FF5FA8", glyph: "✦", where: "Online for everyone, on the studio's server", links: [["Open Nova Agent", `${PC}/agent/`]] },
+  { id: "portal", name: "Portal", readme: "docs/apps/portal/README.md", paths: ["web/portal", "docs/apps/portal"], joined: "as web/portal", colour: "#9DB4FF", glyph: "◉", where: "A Nova Agent panel; on the staff phones too", links: [["Open Portal", `${PC}/portal/`]] },
   { id: "calendar", name: "Calendar", readme: "docs/apps/calendar/README.md", paths: ["web/calendar", "docs/apps/calendar"], joined: "as web/calendar", colour: "#F2D9A0", glyph: "◷", where: "A Nova Agent panel", links: [["Open Calendar", `${PC}/calendar/`]] },
   { id: "notes", name: "Notes", readme: "docs/apps/notes/README.md", paths: ["web/notes", "docs/apps/notes"], joined: "as web/notes", colour: "#FF8CC6", glyph: "✎", where: "A Nova Agent panel", links: [["Open Notes", `${PC}/notes/`]] },
-  { id: "board", name: "Board", readme: "docs/apps/board/README.md", paths: ["web/board", "src/board.ts", "src/board-files.ts", "src/board-link.ts", "src/board-routes.ts", "docs/apps/board", "test/board.spec.ts"], colour: "#5FD8BD", glyph: "▦", where: "A Nova Agent panel; online too", links: [["Open Board", `${PC}/board/`]] },
-  { id: "index", name: "Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel; online too", links: [["Open Index", `${PC}/app/memory/`]] },
+  { id: "board", name: "Board", readme: "docs/apps/board/README.md", paths: ["web/board", "src/board.ts", "src/board-files.ts", "src/board-link.ts", "src/board-routes.ts", "docs/apps/board", "test/board.spec.ts"], colour: "#5FD8BD", glyph: "▦", where: "A Nova Agent panel", links: [["Open Board", `${PC}/board/`]] },
+  { id: "index", name: "Index", readme: "docs/apps/index/README.md", paths: ["web/index", "docs/apps/index"], joined: "as web/index", colour: "#5CFFC0", glyph: "≡", where: "A Nova Agent panel", links: [["Open Index", `${PC}/app/memory/`]] },
   { id: "observatory", name: "Observatory", readme: "docs/apps/observatory/README.md", paths: ["web/observatory", "docs/apps/observatory", "scripts/observatory"], joined: "as web/observatory", colour: "#FFB86B", glyph: "✧", where: "A Nova Agent panel", links: [["Open Observatory", `${PC}/observatory/`]] },
   { id: "fixer", name: "Fixer", readme: "docs/apps/fixer/README.md", paths: ["src/fixer", "web/fixer", "docs/apps/fixer", "test/fixer.spec.ts"], colour: "#B3F26B", glyph: "✦", where: "A Nova Agent panel, for admins", links: [["Open the Fixer", `${PC}/fixer/`]] },
-  { id: "console", name: "Console", readme: "docs/apps/console/README.md", paths: ["web/console", "src/console.ts", "docs/apps/console", "test/console.spec.ts"], colour: "#FF8CC6", glyph: "›", where: "A Nova Agent panel (Tools); terminals only on the studio PC", links: [["Open Console", `${PC}/console/`]] },
-  { id: "bot", name: "Nova Bot", repo: "nb/novacane-worker", colour: "#5CE1FF", glyph: "◎", where: "On the website and Cloudflare: Nova Agent's back end", links: [["Admin pages", `${WORKER}/admin`]] },
+  { id: "console", name: "Console", readme: "docs/apps/console/README.md", paths: ["web/console", "src/console.ts", "docs/apps/console", "test/console.spec.ts"], colour: "#FF8CC6", glyph: "›", where: "A Nova Agent panel (Tools); terminals through a private connection", links: [["Open Console", `${PC}/console/`]] },
+  { id: "bot", name: "Nova Bot", repo: "nb/novacane-worker", colour: "#5CE1FF", glyph: "◎", where: "On the website and the studio's server: Nova Agent's back end", links: [["Admin pages", `${WORKER}/admin`]] },
 ];
 
 // Which README sections go where
@@ -284,7 +286,14 @@ function build() {
       history: hist,
     });
   }
-  return { built: new Date().toISOString(), recentDays: RECENT_DAYS, suite: null, apps };
+  return { built: new Date().toISOString(), recentDays: RECENT_DAYS, suite: null, apps, addresses: addresses() };
+}
+
+// All addresses (web/shared/addresses.js): the list everyone sees (admins see more in Portal)
+function addresses() {
+  const box = { window: {} };
+  vm.runInNewContext(readFileSync(join(root, "web", "shared", "addresses.js"), "utf8"), box);
+  return box.window.NovaAddresses.list(false);
 }
 
 const data = build();

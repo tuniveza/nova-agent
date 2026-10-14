@@ -645,6 +645,8 @@
     if (self) loadGoogle();
     $("tech-card").hidden = !self;
     if (self && (changedPerson || fresh)) loadServices();
+    $("addresses-card").hidden = !self;
+    if (self && window.PortalAddresses) window.PortalAddresses.render(isAdmin());
 
     // Email and password: changed only here, signed in. Your own, or anyone's for an admin.
     const canChange = self || isAdmin();

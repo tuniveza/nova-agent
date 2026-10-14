@@ -22,10 +22,9 @@ Nova Agent is the studio's one app. Everything that used to be a separate Nova a
 panel of it: **Portal** (the staff app: enquiries, website chats, bookings, alerts, Ask
 NovaBot, sign-in, your planet and the team; Portal is part of it now), **Calendar**, **Notes**,
 **Index**, **Observatory**, **Lossless audio** and **Admin**. The panels only ever open
-inside Nova Agent. Nova Agent has one address in each place, `/agent/`:
-
-- online, for everyone: <https://nova.novacane.co.uk/agent/>
-- on the studio PC: `http://localhost:4545/agent/`
+inside Nova Agent. Nova Agent has one address, for everyone: <https://nova.novacane.co.uk/agent/>
+(every address in the suite: Manual → All addresses, or Portal → Settings → Addresses).
+It runs on the studio's server, so it works with every laptop off.
 
 `/agent/<panel>` (`/agent/calendar`, `/agent/portal`, `/agent/notes`, `/agent/index`...)
 opens Nova Agent with that panel. Nova Bot (the website chat) keeps the main address.
@@ -36,7 +35,7 @@ reaches them over a link the PC opens to Nova Bot (`src/relay.ts`, a WebSocket w
 other panels keep working. On the PC itself, its pages open the online Nova Agent, so there's one
 address; set `NOVA_LOCAL_UI=1` in `.env` to keep using the pages here (when the internet is down).
 
-On the studio PC, open `http://localhost:4545/agent/` and you get one screen that fits without
+Open <https://nova.novacane.co.uk/agent/> and you get one screen that fits without
 scrolling: **Missions** on the left, **Agent** in the middle, **Nova
 Quests** (today's plan) on the right, and the **panels** along the bottom.
 
@@ -483,7 +482,7 @@ Acuity pages and client names, which is why Nova Agent only ever listens on `127
 
 ### An app for your launcher
 
-Open `http://localhost:4545/agent/` (or the online address, on a phone: Share → Add to Home
+Open <https://nova.novacane.co.uk/agent/> (on a phone: Share → Add to Home
 Screen) and press **Install app**: Nova Agent opens
 in its own window, with shortcuts to Today, a new mission, Calendar and the visualizer.
 Its service worker shows reminders as system notifications; nothing is cached, because Nova

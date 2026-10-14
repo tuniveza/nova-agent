@@ -106,7 +106,7 @@ Every press makes a soft cosmic sound: a tap, a menu opening, a dialog closing, 
 
 ## Inside Nova Agent
 
-[Nova Agent](https://github.com/tuniveza/nova-agent), the studio computer's helper, serves its own copy of Notes at **`/notes/`** (for example `http://localhost:4545/notes/`) whenever it's running.
+[Nova Agent](https://github.com/tuniveza/nova-agent), the studio computer's helper, serves its own copy of Notes at **`/notes/`** (<https://nova.novacane.co.uk/notes/>).
 
 | | On the web | Inside Nova Agent |
 |---|---|---|

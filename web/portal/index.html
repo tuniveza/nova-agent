@@ -982,6 +982,18 @@
           </div>
         </section>
 
+        <!-- Addresses: every web address in the suite, to open or copy (addresses.js) -->
+        <section class="group" aria-labelledby="group-addresses-head">
+          <h2 class="group-head" id="group-addresses-head">Addresses</h2>
+          <div class="group-cards">
+            <section id="addresses-card" class="card addresses-card" aria-labelledby="addresses-title" hidden>
+              <h3 id="addresses-title" class="card-title">All addresses</h3>
+              <p class="hint">Every part of Nova, online at nova.novacane.co.uk. Tap Copy to copy an address, or Open to go there.</p>
+              <div id="addresses-list" class="addresses-list"></div>
+            </section>
+          </div>
+        </section>
+
         <!-- Admin (admins only): the crew and the admin pages; someone else's account -->
         <section class="group" aria-labelledby="group-admin-head">
           <h2 class="group-head" id="group-admin-head">Admin</h2>
@@ -1335,20 +1347,17 @@
         <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-c"/></svg>
         <div class="suite-words">
           <strong class="suite-name">Calendar</strong>
-          <p>Note cards and day cards. The web app keeps its own copy on each device; Nova Agent's copy (the one your quests go into) is on the studio computer.</p>
+          <p>Note cards and day cards, with your quests on them.</p>
         </div>
-        <div class="suite-opens">
-          <a class="btn small ghost suite-open" href="/calendar/" target="_blank" rel="noopener" aria-label="Open the Calendar web app">Web app</a>
-          <a class="btn small ghost suite-open" href="http://localhost:4545/calendar/" target="_blank" rel="noopener" aria-label="Open Calendar (on the studio computer)">Studio computer</a>
-        </div>
+        <a class="btn small ghost suite-open" href="https://nova.novacane.co.uk/calendar/" target="_blank" rel="noopener" aria-label="Open Calendar">Open</a>
       </li>
       <li class="suite-app">
         <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-a"/></svg>
         <div class="suite-words">
           <strong class="suite-name">Nova Agent</strong>
-          <p>The conversation, Missions and Quests, Acuity helper. It runs on the studio computer, so it opens there; from anywhere else, its quests are in the Quests tab.</p>
+          <p>The conversation, Missions and Quests, Acuity helper, and every panel. It runs on the studio's server, so it's always on.</p>
         </div>
-        <a class="btn small ghost suite-open" href="http://localhost:4545/" target="_blank" rel="noopener" aria-label="Open Nova Agent (on the studio computer)">Studio computer</a>
+        <a class="btn small ghost suite-open" href="https://nova.novacane.co.uk/agent/" target="_blank" rel="noopener" aria-label="Open Nova Agent">Open</a>
       </li>
       <li class="suite-app">
         <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-bot"/></svg>
@@ -1362,9 +1371,9 @@
         <span class="suite-badge suite-glyph" aria-hidden="true">✧</span>
         <div class="suite-words">
           <strong class="suite-name">Observatory</strong>
-          <p>Every project, its lines of code and the star map. Served by Nova Agent, on the studio computer.</p>
+          <p>Every project, its lines of code and the star map.</p>
         </div>
-        <a class="btn small ghost suite-open" href="http://localhost:4545/observatory/" target="_blank" rel="noopener" aria-label="Open Observatory (on the studio computer)">Studio computer</a>
+        <a class="btn small ghost suite-open" href="https://nova.novacane.co.uk/observatory/" target="_blank" rel="noopener" aria-label="Open Observatory">Open</a>
       </li>
       <li class="suite-app">
         <span class="suite-badge suite-glyph" aria-hidden="true">⚙</span>
@@ -1375,6 +1384,8 @@
         <a class="btn small ghost suite-open" href="/admin" target="_blank" rel="noopener" aria-label="Open the admin pages">Open</a>
       </li>
     </ul>
+    <!-- All addresses: every address in the suite with a copy button (Settings → Addresses) -->
+    <a class="links-admin suite-addresses" href="/portal/?view=me#addresses-card">All addresses, with copy buttons &rarr;</a>
     <!-- Every live and testing address, fetched from /app/api/links when opened (suite.js) -->
     <section class="links-section">
       <button id="links-toggle" class="links-toggle" type="button" aria-expanded="false" aria-controls="links-body">
@@ -1470,6 +1481,8 @@
 <script src="/portal/teststuff.js"></script>
 <script src="/portal/google.js"></script>
 <script src="/portal/desk.js"></script>
+<script src="/shared/addresses.js"></script>
+<script src="/portal/addresses.js"></script>
 <script src="/portal/portal.js"></script>
 <script src="/portal/tabbar.js"></script>
 <script src="/shared/badge.js" defer></script>

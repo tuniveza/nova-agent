@@ -262,7 +262,7 @@ Portal → **Google** (in Admin; admins only) connects the studio's Google accou
 1. **Switch on Google's features**: Calendar, Gmail, Drive, People (Contacts), Sheets, Docs, Tasks and YouTube, in a Google Cloud project called Nova Agent.
 2. **Google's permission screen**: app name Nova Agent, audience External.
 3. **Publish it** (otherwise Google stops the connection every 7 days).
-4. **Make the key**: a Web application, with Nova Bot's address and `http://localhost:4545` as its web addresses and `<Nova Bot>/admin/google/callback` to come back to.
+4. **Make the key**: a Web application, with <https://nova.novacane.co.uk> as its web address and <https://nova.novacane.co.uk/admin/google/callback> to come back to.
 5. **Paste the key** (Client ID and Client secret: the secret is kept encrypted on Nova Bot).
 6. **Connect Google**: Google's page opens in a small window; pick the studio's account and tick every box. ("This app isn't verified": press Advanced, then Go to Nova Agent. That's expected.)
 
