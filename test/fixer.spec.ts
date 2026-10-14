@@ -661,7 +661,7 @@ describe("fixer.json: old, odd or damaged files are safe", () => {
   const dir = () => mkdtempSync(join(tmpdir(), "fixer-store-"));
   it("an older file (fields missing) loads with the defaults", () => {
     const d = normaliseFixer({ version: 1, issues: [{ fingerprint: "a", title: "A" }], jobs: [{ id: "j1", status: "ready" }] });
-    expect(d.settings).toEqual({ hourlyChecks: true, autoPrepare: true, dailyCap: 10, timeLimitMinutes: 30 });
+    expect(d.settings).toEqual({ hourlyChecks: true, autoPrepare: true, dailyCap: 10, timeLimitMinutes: 30, looksChecks: true });
     expect(d.issues[0]).toMatchObject({ fingerprint: "a", severity: "minor", seenCount: 1, notified: false });
     expect(d.jobs[0]).toMatchObject({ id: "j1", status: "ready", attempt: 1, approval: null, landed: { na: null, nb: null } });
   });
@@ -855,5 +855,122 @@ describe("the Fixer on the server", () => {
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/isn't signed in on the server/);
     expect(w.log.some((l) => l.startsWith("/fake/claude"))).toBe(false);
+  });
+});
+
+// The looks check (src/fixer/looks.ts): what it finds becomes problems with pictures; a fix for one
+// is looked at again where it was seen, with before and after side by side; still only Approve
+// makes anything go live
+describe("the looks check", () => {
+  const GAP = "The top 62% of the panel is empty: its content sits low, with a big empty gap above it";
+  const looksWorld = (fixedAfter = true) => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    const calls: any[] = [];
+    w.deps.looks = async (o) => {
+      calls.push(o);
+      mkdirSync(o.shotsDir, { recursive: true });
+      if (!o.base) {
+        const out = [
+          { name: "Index", path: "/app/memory/", width: 2000, height: 1130, signedIn: true, ms: 900, problems: [{ kind: "top-gap" as const, severity: "serious" as const, text: GAP }], shot: "app-memory-2000x1130-in.png" },
+          { name: "Index", path: "/app/memory/", width: 1512, height: 1500, signedIn: true, ms: 800, problems: [{ kind: "top-gap" as const, severity: "serious" as const, text: GAP }], shot: "app-memory-1512x1500-in.png" },
+          { name: "Notes", path: "/notes/", width: 390, height: 844, signedIn: false, ms: 700, problems: [], shot: "" },
+        ];
+        for (const s of out) if (s.shot) writeFileSync(join(o.shotsDir, s.shot), "png");
+        return out;
+      }
+      // The job's copy, at the sizes where it was seen
+      return (o.sizes || []).map(([width, height]: [number, number]) => {
+        const shot = `${o.prefix}app-memory-${width}x${height}-out.png`;
+        writeFileSync(join(o.shotsDir, shot), "png");
+        return { name: "Index", path: "/app/memory/", width, height, signedIn: false, ms: 500, problems: fixedAfter ? [] : [{ kind: "top-gap" as const, severity: "serious" as const, text: GAP }], shot };
+      });
+    };
+    return Object.assign(w, { calls });
+  };
+
+  it("finds a gap at two sizes: one serious problem, its pictures, a calm ping, and a fix prepared that waits", async () => {
+    const w = looksWorld();
+    await w.fixer.check("looks");
+    const s = w.fixer.state();
+    const looks = s.issues.filter((i) => i.area === "looks");
+    expect(looks).toHaveLength(1);
+    expect(looks[0].severity).toBe("serious");
+    expect(looks[0].title).toMatch(/^Index: The top 62%.*other size/);
+    expect(looks[0].detail).toMatch(/2000×1130 signed in/);
+    expect(looks[0].detail).toMatch(/1512×1500 signed in/);
+    expect(s.looks?.screens).toBe(3);
+    expect(s.looks?.failed).toBe(2);
+    expect(w.fixer.shotFile("looks", "app-memory-2000x1130-in.png")).toBeTruthy();
+    expect(w.notes.some((n) => /doesn't look right/.test(n.title))).toBe(true);
+    // The live check was the live site (no address), with its pictures in the looks folder
+    expect(w.calls[0].base).toBeUndefined();
+    await idle(w.fixer);
+    const job = w.fixer.state().needsYou[0];
+    expect(job?.status).toBe("ready");
+    // Looked at again in the job's copy, only Index, only where it was seen
+    const again = w.calls.find((c) => c.base === "http://job.test");
+    expect(again).toMatchObject({ panels: ["/app/memory/"], auth: "out", mockPortal: true, shootAll: true });
+    expect(again.sizes).toEqual([[2000, 1130], [1512, 1500]]);
+    const check = job.card!.checks.find((c) => /^Looks check where it was seen/.test(c.name));
+    expect(check?.ok).toBe(true);
+    // Before (the live picture) and after (the job's copy), side by side, at each size
+    const pics = job.card!.screens.filter((x) => x.height);
+    expect(pics.map((x) => [x.width, x.height])).toEqual([[2000, 1130], [1512, 1500]]);
+    expect(pics[0].before).toBe("before-looks-app-memory-2000x1130-in.png");
+    expect(pics[0].after).toBe("after-looks-app-memory-2000x1130-out.png");
+    expect(pics[0].label).toMatch(/signed in/);
+    expect(w.fixer.shotFile(job.id, pics[0].before)).toBeTruthy();
+    expect(w.fixer.shotFile(job.id, pics[0].after)).toBeTruthy();
+    // Nothing went live by itself
+    expect(wentLive(w.log)).toEqual([]);
+  });
+
+  it("a fix that doesn't make the gap go away fails its looks check", async () => {
+    const w = looksWorld(false);
+    await w.fixer.check("looks");
+    await idle(w.fixer);
+    const job = w.fixer.state().needsYou[0];
+    const check = job.card!.checks.find((c) => /^Looks check where it was seen/.test(c.name));
+    expect(check?.ok).toBe(false);
+    expect(check?.detail).toMatch(/2000×1130: The top 62%/);
+    expect(job.card!.allPassed).toBe(false);
+  });
+
+  it("gone next time: the problem clears; couldn't run: last time's problems stay", async () => {
+    const w = looksWorld();
+    await w.fixer.check("looks");
+    const looks = w.deps.looks!;
+    w.deps.looks = async () => {
+      throw new Error("no browser");
+    };
+    await w.fixer.check("looks");
+    expect(w.fixer.state().issues.filter((i) => i.area === "looks")).toHaveLength(1);
+    expect(w.fixer.state().looks?.error).toMatch(/no browser/);
+    w.deps.looks = async (o) => (await looks(o)).map((x) => ({ ...x, problems: [] }));
+    await w.fixer.check("looks");
+    expect(w.fixer.state().issues.filter((i) => i.area === "looks")).toHaveLength(0);
+  });
+
+  it("runs after the hourly check when it's on, not when it's off; 'Check looks now' starts one", async () => {
+    const w = looksWorld();
+    w.fixer.setSettings({ autoPrepare: false }, ADMIN);
+    await w.fixer.hourly();
+    expect(w.calls.filter((c) => !c.base)).toHaveLength(1);
+    w.fixer.setSettings({ looksChecks: false }, ADMIN);
+    await w.fixer.hourly();
+    expect(w.calls.filter((c) => !c.base)).toHaveLength(1);
+    const app = new Hono();
+    registerFixerRoutes(app, () => w.fixer);
+    const res = await app.request("/actions/fixer/check", { method: "POST", headers: { "Content-Type": "application/json", Origin: "http://localhost", "Sec-Fetch-Site": "same-origin" }, body: JSON.stringify({ looks: true }) });
+    expect([200, 403]).toContain(res.status);
+  });
+
+  it("says when Claude Code isn't signed in (checks still run)", async () => {
+    const w = looksWorld();
+    const f = new Fixer(w.store, w.fixer.paths, w.deps, { dry: false, pcBase: "http://pc.test", claudeProblem: () => "Claude Code isn't signed in on the server." });
+    expect(f.state().claude).toMatch(/isn't signed in/);
+    await f.check("looks");
+    expect(f.state().looks?.screens).toBe(3);
+    expect(w.fixer.state().claude).toBe("");
   });
 });

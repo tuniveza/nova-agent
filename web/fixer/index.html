@@ -42,6 +42,8 @@
     </div>
     <p class="nt-note" id="g-working" hidden></p>
     <p class="inert" id="inert" hidden>The Fixer is inert here (FIXER_DRY=1): checks can run, but nothing is prepared, merged or deployed.</p>
+    <!-- Claude Code not installed or not signed in here: checks still run and report, fixes can't be prepared -->
+    <p class="inert" id="claude-off" hidden></p>
   </section>
 
   <nav class="seg fx-tabs" role="tablist" aria-label="Fixer">
@@ -76,6 +78,16 @@
       </div>
     </div>
     <div id="issues" class="stack"></div>
+    <!-- The looks check (src/fixer/looks.ts): every screen inside Nova Agent, signed in and out, at six
+         sizes; what looked wrong, with pictures -->
+    <div class="nt-card" id="looks-card">
+      <h2 class="nt-h">Looks</h2>
+      <p class="nt-note" id="looks-summary">Opens Nova Agent and every panel the way you see them, signed in and signed out, on phones, a tablet, laptops and big screens, and looks for empty gaps, blank panels, bars covering things, scrolling pages and cut-off text. It only looks: it can't change anything.</p>
+      <div class="row-btns">
+        <button type="button" id="looks-now">Check looks now</button>
+      </div>
+      <div id="looks" class="looks-grid"></div>
+    </div>
     <!-- The scripted checks (src/fixer/probes.ts): each one pass or fail, and why, in groups -->
     <div class="nt-card" id="checks-card">
       <h2 class="nt-h">Scripted checks</h2>
@@ -132,6 +144,7 @@
       <h2 class="nt-h">Settings</h2>
       <label class="switch-row"><input type="checkbox" class="nt-switch" id="s-hourly"> Hourly checks</label>
       <label class="switch-row"><input type="checkbox" class="nt-switch" id="s-auto"> Prepare fixes for new problems by itself</label>
+      <label class="switch-row"><input type="checkbox" class="nt-switch" id="s-looks"> Looks checks (every hour and after each update)</label>
       <div class="pair">
         <div><label class="nt-label" for="s-cap">Fixes prepared a day (at most)</label><input id="s-cap" type="number" min="0" max="50" inputmode="numeric"></div>
         <div><label class="nt-label" for="s-limit">Time for one fix (minutes)</label><input id="s-limit" type="number" min="5" max="120" inputmode="numeric"></div>

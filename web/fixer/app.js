@@ -88,9 +88,10 @@
         const show = flips.get(key) || "after";
         const fig = (which, file) =>
           `<figure class="shot ${which}"><figcaption>${which === "before" ? "Before" : "After"}</figcaption>${file ? `<img src="${esc(shot(job, file))}" alt="${esc(`${s.name} ${which} the change, ${s.width}px wide`)}" loading="lazy" data-zoom="${esc(`${s.name} · ${s.width}px · ${which}`)}">` : `<div class="none">No picture</div>`}</figure>`;
-        return `<div class="pair-shot"><span class="nt-label">${esc(s.name)} · ${s.width === 390 ? "phone" : "desktop"} (${s.width}px)</span>
+        const size = s.label ? s.label : `${s.width === 390 ? "phone" : "desktop"} (${s.width}px)`;
+        return `<div class="pair-shot"><span class="nt-label">${esc(s.name)} · ${esc(size)}</span>
           <div class="flip seg" role="tablist" aria-label="Before or after"><button type="button" role="tab" data-flip="${esc(key)}" data-show="before" aria-selected="${show === "before"}">Before</button><button type="button" role="tab" data-flip="${esc(key)}" data-show="after" aria-selected="${show === "after"}">After</button></div>
-          <div class="shots" data-show="${show}">${fig("before", s.before)}${fig("after", s.after)}</div></div>`;
+          <div class="shots${s.height ? " side" : ""}" data-show="${show}">${fig("before", s.before)}${fig("after", s.after)}</div></div>`;
       })
       .join("")}</div>`;
   }
@@ -179,6 +180,8 @@
   function render() {
     const s = state;
     $("inert").hidden = !s.dry;
+    $("claude-off").hidden = !s.claude || s.dry;
+    $("claude-off").textContent = s.claude ? `Sign Claude Code in to let me prepare fixes. Checks still run and report. ${s.claude}` : "";
     const serious = s.issues.filter((i) => i.severity === "serious").length;
     $("g-check").textContent = s.checking ? "Checking now…" : s.lastCheck ? ago(s.lastCheck.at) : "Not yet";
     const gi = $("g-issues");
@@ -224,6 +227,28 @@
           })
           .join("")
       : `<div class="nt-empty"><b>All clear.</b><br>No problems found${s.lastCheck ? ` at the last check (${esc(ago(s.lastCheck.at))})` : " yet"}.</div>`);
+
+    // The looks check: when, how many screens, and a picture of each one that looked wrong
+    const L = s.looks;
+    const lb = $("looks-now");
+    lb.disabled = s.checking;
+    lb.textContent = s.checking ? "Checking…" : "Check looks now";
+    if (L) {
+      const bad = L.results.filter((r) => r.problems.length);
+      $("looks-summary").textContent = L.error
+        ? `The last looks check couldn't run (${ago(L.at)}): ${L.error}`
+        : `${L.screens} screens checked ${ago(L.at)} (${clock(L.at)}), took ${Math.round(L.took / 60000) || "under a"} min. ${bad.length ? `${bad.length} didn't look right: they're below, and in the problems above.` : "Everything looked right."} ${s.settings.looksChecks ? "It runs after each hourly check and after each update." : "Looks checks are off (Settings)."}`;
+      put("looks", bad.length
+        ? bad
+            .slice(0, 60)
+            .map((r) => {
+              const where = `${r.name} · ${r.width}×${r.height} · ${r.signedIn ? "signed in" : "signed out"}`;
+              const img = r.shot ? `<img src="${esc(`/fixer-api/shots/looks/${encodeURIComponent(r.shot)}`)}" alt="${esc(where)}" loading="lazy" data-zoom="${esc(where)}">` : `<div class="none">No picture</div>`;
+              return `<figure class="look ${r.problems.some((p) => p.severity === "serious") ? "bad" : "warn"}">${img}<figcaption><b>${esc(where)}</b>${r.problems.map((p) => `<span>${esc(p.text)}</span>`).join("")}</figcaption></figure>`;
+            })
+            .join("")
+        : `<div class="nt-empty"><b>Everything looked right.</b></div>`);
+    } else put("looks", `<div class="nt-empty">Not run yet: tap <b>Check looks now</b>, or wait for the hourly check.</div>`);
 
     // The scripted checks, in groups: what failed first, then what passed
     const c = s.checks;
@@ -297,6 +322,7 @@
     if (!document.activeElement || !document.activeElement.closest(".settings")) {
       $("s-hourly").checked = s.settings.hourlyChecks;
       $("s-auto").checked = s.settings.autoPrepare;
+      $("s-looks").checked = s.settings.looksChecks !== false;
       $("s-cap").value = s.settings.dailyCap;
       $("s-limit").value = s.settings.timeLimitMinutes;
     }
@@ -402,6 +428,7 @@
   $("check-now").addEventListener("click", checkNow);
   $("check-now-2").addEventListener("click", checkNow);
   $("audio-now").addEventListener("click", () => act("/actions/fixer/check", { audio: true }, "Measuring the sound levels (a few minutes)."));
+  $("looks-now").addEventListener("click", () => act("/actions/fixer/check", { looks: true }, "Checking how everything looks, on every size, signed in and out (about ten minutes)."));
   $("checks-now").addEventListener("click", () => act("/actions/fixer/check", { checks: true }, "Running the quick checks (about a minute)."));
   $("checks-fails").addEventListener("click", () => {
     onlyFails = !onlyFails;
@@ -426,8 +453,8 @@
   });
 
   const saveSettings = () =>
-    act("/actions/fixer/settings", { hourlyChecks: $("s-hourly").checked, autoPrepare: $("s-auto").checked, dailyCap: Number($("s-cap").value), timeLimitMinutes: Number($("s-limit").value) }, "Saved.");
-  for (const id of ["s-hourly", "s-auto", "s-cap", "s-limit"]) $(id).addEventListener("change", saveSettings);
+    act("/actions/fixer/settings", { hourlyChecks: $("s-hourly").checked, autoPrepare: $("s-auto").checked, looksChecks: $("s-looks").checked, dailyCap: Number($("s-cap").value), timeLimitMinutes: Number($("s-limit").value) }, "Saved.");
+  for (const id of ["s-hourly", "s-auto", "s-looks", "s-cap", "s-limit"]) $(id).addEventListener("change", saveSettings);
 
   // ---- Keeping up to date ----
   function blocked(err) {

@@ -13,6 +13,7 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
+import type { LooksSummary } from "./looks";
 import type { ProbeResult } from "./probes";
 
 export const QUEST_KINDS = ["bug", "glitch", "change"] as const;
@@ -22,7 +23,7 @@ export type Priority = (typeof PRIORITIES)[number];
 export type Severity = "serious" | "minor";
 // (checks: the scripted checks a code change can fix; server: the scripted checks of the server itself,
 // which only get told about, like health; probes.ts)
-export type Area = "tests" | "typecheck" | "sweep" | "health" | "audio" | "checks" | "server";
+export type Area = "tests" | "typecheck" | "sweep" | "health" | "audio" | "checks" | "server" | "looks";
 
 export interface Issue {
   id: string;
@@ -59,8 +60,9 @@ export interface Settings {
   autoPrepare: boolean; // prepare fixes for new issues by itself (they still wait for Approve)
   dailyCap: number; // prepared fixes a day
   timeLimitMinutes: number; // for one preparation
+  looksChecks: boolean; // the looks check (looks.ts): every hour and after each deploy
 }
-export const DEFAULT_SETTINGS: Settings = { hourlyChecks: true, autoPrepare: true, dailyCap: 10, timeLimitMinutes: 30 };
+export const DEFAULT_SETTINGS: Settings = { hourlyChecks: true, autoPrepare: true, dailyCap: 10, timeLimitMinutes: 30, looksChecks: true };
 
 export type JobStatus =
   | "queued" // waiting its turn (one at a time, and the daily cap)
@@ -97,6 +99,8 @@ export interface Screen {
   name: string; // "Notes"
   path: string; // "/notes/"
   width: number;
+  height?: number; // the looks check's pictures: the screen's height too
+  label?: string; // what the picture is of, when it's not just the panel at a width ("2000×1130 signed in")
   before: string; // file name under the job's shots folder ("" = none)
   after: string;
 }
@@ -164,6 +168,8 @@ export interface FixerData {
   // The scripted checks' last run, every result (probes.ts)
   checks: { at: string; took: number; results: ProbeResult[] } | null;
   restarts: number; // the service's restart count last seen (systemd's NRestarts)
+  // The looks check's last run (looks.ts): every screen, and what was wrong with each
+  looks: LooksSummary | null;
 }
 
 const MAX_ACTIVITY = 300;
@@ -184,6 +190,7 @@ export function cleanSettings(s: any): Settings {
     autoPrepare: bool(s?.autoPrepare, DEFAULT_SETTINGS.autoPrepare),
     dailyCap: num(s?.dailyCap, DEFAULT_SETTINGS.dailyCap, 0, 50),
     timeLimitMinutes: num(s?.timeLimitMinutes, DEFAULT_SETTINGS.timeLimitMinutes, 5, 120),
+    looksChecks: bool(s?.looksChecks, DEFAULT_SETTINGS.looksChecks),
   };
 }
 
@@ -204,13 +211,35 @@ function cleanChecks(c: any): FixerData["checks"] {
   };
 }
 
+const LOOKS_KINDS = ["blank", "top-gap", "gap", "header-low", "covered", "unused", "title-count", "page-scrolls", "cut-off", "main-scrolls", "offscreen", "text-cut", "error", "slow", "open"] as const;
+export function cleanLooks(l: any): LooksSummary | null {
+  if (!l || typeof l.at !== "string" || !Array.isArray(l.results)) return null;
+  return {
+    at: text(l.at, 40),
+    took: num(l.took, 0, 0, 1e9),
+    screens: num(l.screens, 0, 0, 1e5),
+    failed: num(l.failed, 0, 0, 1e5),
+    error: text(l.error, 1000),
+    results: l.results.slice(0, 400).map((r: any) => ({
+      name: text(r?.name, 60),
+      path: text(r?.path, 100),
+      width: num(r?.width, 390, 200, 5000),
+      height: num(r?.height, 800, 200, 5000),
+      signedIn: bool(r?.signedIn, false),
+      ms: num(r?.ms, 0, 0, 1e7),
+      problems: (Array.isArray(r?.problems) ? r.problems : []).slice(0, 20).map((p: any) => ({ kind: oneOf(p?.kind, LOOKS_KINDS, "open"), severity: oneOf(p?.severity, ["serious", "minor"] as const, "minor"), text: text(p?.text, 400) })),
+      shot: /^[\w-]+\.png$/.test(String(r?.shot || "")) ? String(r.shot) : "",
+    })),
+  };
+}
+
 function cleanIssue(i: any): Issue | null {
   const fingerprint = text(i?.fingerprint, 400);
   if (!fingerprint) return null;
   return {
     id: text(i?.id, 64) || randomUUID(),
     fingerprint,
-    area: oneOf(i?.area, ["tests", "typecheck", "sweep", "health", "audio", "checks", "server"] as const, "health"),
+    area: oneOf(i?.area, ["tests", "typecheck", "sweep", "health", "audio", "checks", "server", "looks"] as const, "health"),
     severity: oneOf(i?.severity, ["serious", "minor"] as const, "minor"),
     title: text(i?.title, 300) || "A problem",
     detail: text(i?.detail, 4000),
@@ -254,7 +283,7 @@ function cleanCard(c: any): Card | null {
     why: text(c.why),
     files: (Array.isArray(c.files) ? c.files : []).map((f: any) => ({ repo: f?.repo === "nb" ? "nb" : "na", path: text(f?.path, 400), added: num(f?.added, 0, 0, 1e7), removed: num(f?.removed, 0, 0, 1e7) })),
     diff: text(c.diff, 200_000),
-    screens: (Array.isArray(c.screens) ? c.screens : []).map((s: any) => ({ name: text(s?.name, 60), path: text(s?.path, 100), width: num(s?.width, 390, 200, 4000), before: text(s?.before, 200), after: text(s?.after, 200) })),
+    screens: (Array.isArray(c.screens) ? c.screens : []).map((s: any) => ({ name: text(s?.name, 60), path: text(s?.path, 100), width: num(s?.width, 390, 200, 5000), ...(s?.height ? { height: num(s.height, 800, 200, 5000) } : {}), ...(s?.label ? { label: text(s.label, 80) } : {}), before: text(s?.before, 200), after: text(s?.after, 200) })),
     consequences: text(c.consequences),
     assessment: text(c.assessment),
     risks: strings(c.risks),
@@ -312,6 +341,7 @@ export function normaliseFixer(raw: any): FixerData {
     lastAudio: text(raw?.lastAudio, 10),
     checks: cleanChecks(raw?.checks),
     restarts: num(raw?.restarts, 0, 0, 1e9),
+    looks: cleanLooks(raw?.looks),
   };
 }
 

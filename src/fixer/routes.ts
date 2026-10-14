@@ -6,8 +6,9 @@
 //   GET  /fixer-api/state                      everything the Fixer app shows
 //   GET  /fixer-api/jobs/:id                   one prepared fix, with its whole diff
 //   GET  /fixer-api/shots/:id/:file.png        a before/after picture
-//   POST /actions/fixer/check                  { audio?, checks? }  check now (checks: only the scripted ones)
-//   POST /actions/fixer/settings               { hourlyChecks?, autoPrepare?, dailyCap?, timeLimitMinutes? }
+//   POST /actions/fixer/check                  { audio?, checks?, looks? }  check now (checks: only the scripted
+//                                              ones; looks: the looks check, src/fixer/looks.ts)
+//   POST /actions/fixer/settings               { hourlyChecks?, autoPrepare?, dailyCap?, timeLimitMinutes?, looksChecks? }
 //   POST /actions/fixer/quests                 { title, details, kind, priority, start? }
 //   POST /actions/fixer/quests/:id             { action: "update" | "remove" | "prepare", ... }
 //   POST /actions/fixer/suggestions/:id        { action: "adopt" | "dismiss" }
@@ -73,6 +74,10 @@ export function registerFixerRoutes(app: Hono, fixer: () => Fixer | null): void 
   app.post("/actions/fixer/check", (c) =>
     act(c, ({ fixer }, body) => {
       if (body.audio === true) void fixer.check("audio").catch(() => {});
+      else if (body.looks === true) {
+        if (fixer.busy) throw new Error("A check is running already: the looks check can start when it's done.");
+        void fixer.check("looks").catch(() => {});
+      }
       else if (body.checks === true) void fixer.check("checks").catch(() => {});
       else void fixer.check("full").catch(() => {});
       return { started: true };

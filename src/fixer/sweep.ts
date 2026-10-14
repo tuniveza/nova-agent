@@ -112,6 +112,9 @@ export const sweep: Sweep = async (base, opts = {}) => {
         try {
           // Every request to Nova Agent says it's the sweep (and only those: other sites never see it)
           await ctx.route(`${origin}/**`, (route) => route.continue({ headers: { ...route.request().headers(), [SWEEP_HEADER]: "1" } }));
+          // (Run with tsx, inspect() carries esbuild's __name helper: without one in the page it threw,
+          // and the layout checks below quietly found nothing)
+          await ctx.addInitScript({ content: "self.__name = self.__name || ((f) => f);" });
           await ctx.route(`${origin}/__fixer__/frame*`, (route) => route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: FRAME(screen.path) }));
           const page = await ctx.newPage();
           page.on("pageerror", (err) => add("pageerror", "serious", `script error: ${String(err.message || err).split("\n")[0].slice(0, 200)}`, String(err.stack || "").slice(0, 2000), blipError(String(err.message || err))));

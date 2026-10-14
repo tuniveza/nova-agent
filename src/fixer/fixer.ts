@@ -4,6 +4,10 @@
 //               sweep of every panel at phone and desktop width, and health (the PC's server, the
 //               online link, Nova Bot, restarts, disk space, data files); once a day, the audio
 //               levels. Problems become issues (one per fingerprint), cleared when they're gone.
+//   Looks       every hour and after each deploy: the live Nova Agent and every panel inside it,
+//               signed in and out, at six screen sizes, judged for gaps, blank panels, bars
+//               covering things, scrolling and cut-off text (looks.ts). Its problems are issues
+//               too, with a picture; a fix for one is checked at the sizes where it was seen.
 //   Preparing   for an issue or a fixer quest (by itself for new issues, if that's switched on):
 //               one job at a time, a daily cap and a time limit. Each job gets its own git
 //               worktrees and branch; Claude Code makes the change there (src/fixer/claude.ts),
@@ -16,17 +20,18 @@
 //
 // With FIXER_DRY=1 it's inert: checks may run, but nothing is prepared, merged or deployed.
 
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { briefText, claudeArgs, readAnswer } from "./claude";
 import { commandFindings } from "./health";
+import { type LooksScreen, looksFindings, shotName } from "./looks";
 import { probeFindings, type ProbeResult } from "./probes";
-import { affectedScreens, type Finding, isBlip, isTrivial, mergeIssues, offLimits, recommend, SCREENS, sensitiveLines, shouldRollBack, suggestions, type Suggestion } from "./rules";
+import { affectedScreens, type Finding, fingerprint, isBlip, isTrivial, mergeIssues, offLimits, recommend, SCREENS, sensitiveLines, shouldRollBack, suggestions, type Suggestion } from "./rules";
 import type { Run } from "./runner";
 import type { Sweep } from "./sweep";
-import { addActivity, type Card, type Check, cleanQuest, cleanSettings, type FileChange, type FixerData, type FixerQuest, FixerStore, type Issue, type Job, type QuestKind, type Settings } from "./store";
+import { addActivity, type Card, type Check, type Screen, cleanQuest, cleanSettings, type FileChange, type FixerData, type FixerQuest, FixerStore, type Issue, type Job, type QuestKind, type Settings } from "./store";
 
 export interface Paths {
   naMain: string; // ~/an/pj/ns/na: Nova Agent's main (the service runs from here)
@@ -46,9 +51,22 @@ export interface QuestLike {
   priority: string;
 }
 
+// The looks check (service.ts runs scripts/fixer-looks.ts with low priority). No base: the live
+// site, signed in as the looks account and signed out.
+export interface LooksRun {
+  base?: string;
+  sizes?: [number, number][];
+  panels?: string[];
+  auth?: "both" | "in" | "out";
+  shotsDir: string;
+  prefix?: string;
+  mockPortal?: boolean;
+  shootAll?: boolean;
+}
 export interface Deps {
   run: Run;
   sweep: Sweep;
+  looks?: (opts: LooksRun) => Promise<LooksScreen[]>;
   health: (restartsSeen: number) => Promise<{ findings: Finding[]; restarts: number }>;
   // The scripted checks (probes.ts); missing: none
   probes?: () => Promise<ProbeResult[]>;
@@ -145,6 +163,11 @@ export class Fixer {
     return data.day;
   }
 
+  // A check is running (the looks check after a deploy waits for it)
+  get busy(): boolean {
+    return this.checking;
+  }
+
   // ================= What the page shows =================
   state() {
     const data = this.store.read();
@@ -158,6 +181,9 @@ export class Fixer {
       checking: this.checking,
       lastCheck: data.lastCheck,
       checks: data.checks,
+      looks: data.looks,
+      // Why fixes can't be prepared here ("" = they can): Claude Code not installed or not signed in
+      claude: this.opts.claudeProblem?.() || "",
       today: { prepared: day.prepared, cap: data.settings.dailyCap },
       issues: [...data.issues].sort((a, b) => (a.severity === b.severity ? b.lastSeen.localeCompare(a.lastSeen) : a.severity === "serious" ? -1 : 1)),
       quests: [...data.quests].sort((a, b) => b.updated.localeCompare(a.updated)),
@@ -195,6 +221,7 @@ export class Fixer {
       if (before.autoPrepare !== d.settings.autoPrepare) said.push(`prepare fixes by itself ${d.settings.autoPrepare ? "on" : "off"}`);
       if (before.dailyCap !== d.settings.dailyCap) said.push(`daily cap ${d.settings.dailyCap}`);
       if (before.timeLimitMinutes !== d.settings.timeLimitMinutes) said.push(`time limit ${d.settings.timeLimitMinutes} min`);
+      if (before.looksChecks !== d.settings.looksChecks) said.push(`looks checks ${d.settings.looksChecks ? "on" : "off"}`);
       if (said.length) this.note(d, "settings", `${actor.name}: ${said.join(", ")}`);
       return d.settings;
     });
@@ -260,8 +287,8 @@ export class Fixer {
   // ================= Checks =================
   // full: the hourly check (tests, typecheck, sweep, health, the scripted checks). quick: the sweep and
   // health, used just before and after a change goes live. checks: only the scripted checks (about a
-  // minute; the Health tab's "Run the quick checks").
-  async check(kind: "full" | "quick" | "audio" | "checks" = "full"): Promise<{ findings: Finding[]; fresh: Issue[] }> {
+  // minute; the Health tab's "Run the quick checks"). looks: the looks check (about ten minutes).
+  async check(kind: "full" | "quick" | "audio" | "checks" | "looks" = "full"): Promise<{ findings: Finding[]; fresh: Issue[] }> {
     if (this.checking && kind !== "quick") return { findings: [], fresh: [] };
     if (kind !== "quick") this.checking = true;
     const started = Date.now();
@@ -287,6 +314,31 @@ export class Fixer {
       }
       if (kind === "checks") {
         // (only the scripted checks)
+      } else if (kind === "looks") {
+        if (!this.deps.looks) return { findings: [], fresh: [] };
+        const dir = join(this.paths.shotsDir, "looks");
+        // Last time's pictures go (a prepared fix keeps its own copies)
+        try {
+          for (const f of readdirSync(dir)) if (/\.png$/.test(f)) rmSync(join(dir, f), { force: true });
+        } catch {}
+        const t0 = Date.now();
+        let screens: LooksScreen[] = [];
+        let error = "";
+        try {
+          screens = await this.deps.looks({ shotsDir: dir });
+        } catch (err) {
+          error = String((err as Error).message || err).slice(0, 600);
+        }
+        // (It couldn't run: say so, and leave the problems it found last time as they are)
+        if (!error) {
+          areas.push("looks");
+          findings.push(...looksFindings(screens));
+        }
+        const failed = screens.filter((x) => x.problems.length).length;
+        this.store.update((d) => {
+          d.looks = { at: this.now().toISOString(), took: Date.now() - t0, screens: screens.length, failed, results: screens, error };
+          this.note(d, "check", error ? `The looks check couldn't run: ${short(error, 200)}` : `Looks check: ${screens.length} screens, ${failed ? `${failed} with something wrong` : "all looked right"}`);
+        });
       } else if (kind === "audio") {
         areas.push("audio");
         const a = await this.deps.run("node", ["scripts/audio-levels.mjs"], { cwd: this.paths.naMain, timeoutMs: 20 * 60_000, clean: true });
@@ -360,7 +412,8 @@ export class Fixer {
     if (tell.length) {
       this.store.update((d) => d.issues.forEach((i) => tell.some((t) => t.id === i.id) && (i.notified = true)));
       const first = tell[0];
-      await this.deps.notify(tell.length === 1 ? "Found a problem" : `Found ${tell.length} problems`, `${short(first.title, 200)}${tell.length > 1 ? ` (and ${tell.length - 1} more)` : ""}. ${data.settings.autoPrepare && !this.opts.dry ? "A fix is being prepared; it waits for your approval." : "Open the Fixer to look."}`, `issue-${first.id}`);
+      const looks = tell.every((i) => i.area === "looks");
+      await this.deps.notify(looks ? (tell.length === 1 ? "Something doesn't look right" : `${tell.length} things don't look right`) : tell.length === 1 ? "Found a problem" : `Found ${tell.length} problems`, `${short(first.title, 200)}${tell.length > 1 ? ` (and ${tell.length - 1} more)` : ""}. ${data.settings.autoPrepare && !this.opts.dry ? "A fix is being prepared; it waits for your approval." : "Open the Fixer to look."}`, `issue-${first.id}`);
     }
     // (Not for health or server problems, or blips: a network, disk, mail or Nova Bot outage isn't
     // something code changes fix)
@@ -372,6 +425,7 @@ export class Fixer {
     if (!data.settings.hourlyChecks) return;
     await this.check("full");
     if (this.store.read().lastAudio !== ukDate(this.now())) await this.check("audio");
+    if (this.store.read().settings.looksChecks) await this.check("looks");
   }
 
   // ================= Preparing a fix =================
@@ -509,6 +563,45 @@ export class Fixer {
     }
   }
 
+  // A looks problem (looks.ts): the live pictures where it was seen are the "before"; the job's copy,
+  // looked at again at those sizes, the "after", with a check that the problem's gone there. (The
+  // job's copy has no Nova Bot behind it: Portal gets sample answers, and it counts as the studio's
+  // own computer, so it's signed in.)
+  private async looksAgain(job: Job): Promise<{ check: Check; screens: Screen[] } | null> {
+    if (job.target.type !== "issue" || !this.deps.looks) return null;
+    const data = this.store.read();
+    const issue = data.issues.find((i) => i.id === job.target.id);
+    if (!issue || issue.area !== "looks") return null;
+    const hit = (r: LooksScreen) => r.problems.filter((p) => fingerprint("looks", r.path, p.kind) === issue.fingerprint);
+    const seen = (data.looks?.results || []).filter((r) => r.path === issue.panel && hit(r).length);
+    if (!seen.length) return null;
+    const dir = join(this.paths.shotsDir, job.id);
+    mkdirSync(dir, { recursive: true });
+    for (const r of seen) {
+      if (!r.shot || existsSync(join(dir, `before-looks-${r.shot}`))) continue;
+      try {
+        copyFileSync(join(this.paths.shotsDir, "looks", r.shot), join(dir, `before-looks-${r.shot}`));
+      } catch {}
+    }
+    const sizes = [...new Map(seen.map((r) => [`${r.width}x${r.height}`, [r.width, r.height] as [number, number]])).values()].slice(0, 6);
+    const server = await this.deps.startServer(job.worktrees.na);
+    let after: LooksScreen[] = [];
+    try {
+      after = await this.deps.looks({ base: server.base, sizes, panels: [issue.panel], auth: "out", mockPortal: true, shotsDir: dir, prefix: "after-looks-", shootAll: true });
+    } finally {
+      await server.stop();
+    }
+    const still = after.flatMap((r) => hit(r).map((p) => `${r.width}×${r.height}: ${p.text}`));
+    const where = sizes.map(([w, h]) => `${w}×${h}`).join(", ");
+    const check: Check = { name: `Looks check where it was seen (${where})`, ok: after.length > 0 && !still.length, detail: after.length ? still.slice(0, 8).join("\n") : "The job's copy of Nova Agent couldn't be looked at." };
+    const screens: Screen[] = sizes.map(([w, h]) => {
+      const b = seen.find((r) => r.width === w && r.height === h && r.shot);
+      const a = shotName("after-looks-", issue.panel, w, h, false);
+      return { name: seen[0].name, path: issue.panel, width: w, height: h, label: `${w}×${h}${b ? (b.signedIn ? ", signed in" : ", signed out") : ""}`, before: b ? `before-looks-${b.shot}` : "", after: existsSync(join(dir, a)) ? a : "" };
+    });
+    return { check, screens };
+  }
+
   private async prepare(job: Job): Promise<void> {
     const settings = this.store.read().settings;
     this.saveJob(job, { status: "preparing", startedAt: this.now().toISOString(), error: "" });
@@ -569,6 +662,9 @@ export class Fixer {
       const after = await this.shoot(job, "after");
       const newProblems = after.findings.filter((f) => !before.includes(f.fingerprint));
       checks.push({ name: "Sweep of every panel (390 and 1280)", ok: newProblems.length === 0, detail: newProblems.map((f) => f.title).slice(0, 8).join("\n") });
+      // A looks problem: looked at again where it was seen
+      const looked = await this.looksAgain(job).catch((err) => ({ check: { name: "Looks check where it was seen", ok: false, detail: short(String((err as Error).message), 400) }, screens: [] as Screen[] }));
+      if (looked) checks.push(looked.check);
 
       // The card
       const diffs: string[] = [];
@@ -595,7 +691,7 @@ export class Fixer {
         why: answer?.why || job.target.title,
         files,
         diff,
-        screens,
+        screens: [...(looked?.screens || []), ...screens],
         consequences: answer?.consequences || "",
         assessment: answer?.assessment || "",
         risks,

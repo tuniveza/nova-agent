@@ -180,3 +180,19 @@ html.fx-wide .pane .pair { grid-template-columns: minmax(0, 1fr); }
 html.fx-wide .pane .shots { grid-template-columns: minmax(0, 1fr); }
 html.fx-wide .panes .switch-row { justify-content: flex-start; text-align: left; }
 html.fx-wide .panes .switch-row > input { flex: none; }
+
+/* ---- The looks check: a picture of each screen that looked wrong, with what was wrong ---- */
+.looks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }
+.look { margin: 0; min-width: 0; display: grid; gap: 6px; padding: 8px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 50%, transparent); }
+.look.bad { border-color: color-mix(in srgb, var(--bad, #ff6b8a) 55%, transparent); }
+.look.warn { border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.look img { display: block; width: 100%; height: 150px; object-fit: cover; object-position: top; border-radius: 10px; background: var(--void); cursor: zoom-in; }
+.look .none { display: grid; place-items: center; height: 150px; border-radius: 10px; border: 1px dashed var(--line); color: var(--muted); font-size: 13px; }
+.look figcaption { display: grid; gap: 3px; font-size: 13px; line-height: 1.35; color: var(--soft, var(--muted)); min-width: 0; overflow-wrap: anywhere; }
+.look figcaption b { color: var(--bright); font-size: 13.5px; }
+/* A looks fix's before and after: side by side wherever there's room */
+@media (min-width: 700px) {
+  .pane .shots.side, html.fx-wide .pane .shots.side { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .shots.side[data-show] .shot.before, .shots.side[data-show] .shot.after { display: block; }
+  .pair-shot:has(> .shots.side) > .flip { display: none; }
+}
