@@ -388,6 +388,7 @@ const APPS = {
   lossless: { path: "/lossless/", ready: "body", dialogs: true },
   visualizer: { path: "/visualizer", ready: "body", dialogs: true },
   fixer: { path: "/fixer/", ready: "body", dialogs: true },
+  quests: { path: "/quests/", ready: "body", dialogs: true },
 };
 
 // Nova Agent itself: its home (Missions | Agent | Quests), the Panels window, its sheets and pop-ups
