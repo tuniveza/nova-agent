@@ -862,7 +862,7 @@
       tab: (k, v) => { hum(at([N.D3, N.A2], v), 0, { gain: 0.01, length: 0.9 }); drop(at([N.A4, N.Fs4], v), 0.02, { gain: 0.02, length: 0.5 }); },
       open: () => { swell([N.D3, N.A3, N.E4], 0, { gain: 0.014, length: 1.6 }); bell(N.A4, 0.1, { gain: 0.018, length: 1.4, attack: 0.08, warmth: 0.6 }); },
       send: () => { swell([N.D3, N.A3, N.Fs4], 0, { gain: 0.014, length: 1.8 }); bloom([N.A4, N.E5], 0.12, { gain: 0.02, length: 1.6, attack: 0.08, echo: 0.3 }); },
-      done: () => { hum(N.D2 * 2, 0, { gain: 0.014, length: 2.6 }); swell([N.D3, N.A3, N.Fs4, N.Cs5], 0, { gain: 0.013, length: 2.6 }); bloom([N.D5, N.A5, N.E6], 0.2, { gain: 0.015, length: 2.2, attack: 0.1, echo: 0.3 }); },
+      done: () => { hum(N.D2 * 2, 0, { gain: 0.016, length: 2.6 }); swell([N.D3, N.A3, N.Fs4, N.Cs5], 0, { gain: 0.016, length: 2.6 }); bloom([N.D5, N.A5, N.E6], 0.2, { gain: 0.018, length: 2.2, attack: 0.1, echo: 0.3 }); },
     },
   };
 
