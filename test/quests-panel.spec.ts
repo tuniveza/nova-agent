@@ -169,3 +169,14 @@ describe("what a quest keeps for the panel", () => {
     expect(relay.relayAllowed("POST", "/actions/quests/order", { id: "bea", name: "Bea", role: "staff" } as any)).toBe(true);
   });
 });
+
+describe("which view Quests opens in", () => {
+  it("Today unless the person picks another under Options → Opens in", async () => {
+    const { readFileSync } = await import("node:fs");
+    const html = readFileSync(new URL("../web/quests/index.html", import.meta.url), "utf8");
+    const js = readFileSync(new URL("../web/quests/js/quests.js", import.meta.url), "utf8");
+    for (const v of ["today", "focus", "list", "board"]) expect(html).toContain(`data-start="${v}"`);
+    expect(js).toContain('saved("start", "today")');
+    expect(js).not.toContain('keep("view"'); // switching views doesn't change where it opens
+  });
+});

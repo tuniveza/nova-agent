@@ -20,8 +20,10 @@
 .menu[hidden] { display: none; }
 .menu button { text-align: left; min-height: 42px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--text); font: 500 14px var(--f-body); cursor: pointer; }
 .menu button:hover, .menu button:focus-visible { background: var(--glass-2, rgba(255,255,255,.06)); }
-.menu [role=menuitemcheckbox]::before { content: ""; display: inline-block; width: 16px; margin-right: 8px; }
-.menu [role=menuitemcheckbox][aria-checked="true"]::before { content: "✓"; color: var(--hi); }
+.menu [role=menuitemcheckbox]::before, .menu [role=menuitemradio]::before { content: ""; display: inline-block; width: 16px; margin-right: 8px; }
+.menu [role=menuitemcheckbox][aria-checked="true"]::before, .menu [role=menuitemradio][aria-checked="true"]::before { content: "✓"; color: var(--hi); }
+.menu [role=group] { display: grid; }
+.menu-label { padding: 6px 12px 2px; font: 600 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted, var(--text)); opacity: .75; }
 .menu-sep { height: 1px; margin: 4px 6px; background: var(--line); }
 
 /* ===== Quick add ===== */

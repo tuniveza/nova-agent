@@ -44,6 +44,14 @@
         <button role="menuitemcheckbox" type="button" id="opt-phone" aria-checked="false">Reminders on my phone</button>
         <button role="menuitemcheckbox" type="button" id="opt-done" aria-checked="true">Show what's done</button>
         <div class="menu-sep" role="separator"></div>
+        <div class="menu-label" id="start-label">Opens in</div>
+        <div role="group" aria-labelledby="start-label">
+          <button role="menuitemradio" type="button" data-start="today" aria-checked="true">Today</button>
+          <button role="menuitemradio" type="button" data-start="focus" aria-checked="false">Focus</button>
+          <button role="menuitemradio" type="button" data-start="list" aria-checked="false">List</button>
+          <button role="menuitemradio" type="button" data-start="board" aria-checked="false">Board</button>
+        </div>
+        <div class="menu-sep" role="separator"></div>
         <button role="menuitem" type="button" id="opt-replan">Re-plan from now</button>
         <button role="menuitem" type="button" id="opt-keys">Keyboard shortcuts</button>
       </div>

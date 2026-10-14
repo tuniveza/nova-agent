@@ -27,7 +27,11 @@ const MODE_NAME = (m) => (Modes ? Modes.name(m) : m);
 
 let state = null; // the last /quests/state
 let who = saved("who", "mine");
-let view = saved("view", "list");
+const START_VIEWS = ["today", "focus", "list", "board"];
+let start = saved("start", "today"); // which view Quests opens in (Options → Opens in), Today unless changed
+if (!START_VIEWS.includes(start)) start = "today";
+const askedView = new URLSearchParams(location.search).get("view");
+let view = START_VIEWS.includes(askedView) ? askedView : start;
 let calm = saved("calm", false);
 let celebrate = saved("celebrate", true);
 let showDone = saved("showDone", true);
@@ -162,6 +166,7 @@ function render() {
   $("opt-everyone").hidden = !state.canSeeEveryone;
   $("opt-everyone").setAttribute("aria-checked", String(who === "everyone"));
   $("opt-celebrate").setAttribute("aria-checked", String(celebrate));
+  for (const b of document.querySelectorAll("[data-start]")) b.setAttribute("aria-checked", String(b.dataset.start === start));
   $("opt-done").setAttribute("aria-checked", String(showDone));
   $("opt-phone").setAttribute("aria-checked", String(Boolean(state.rhythm?.phonePush)));
   renderStreak();
@@ -570,7 +575,6 @@ async function saveEditor() {
 function setView(v) {
   view = v;
   focusSkip = 0;
-  keep("view", v);
   render();
 }
 for (const b of document.querySelectorAll(".views [role=tab]")) b.addEventListener("click", () => setView(b.dataset.view));
@@ -651,6 +655,12 @@ $("opt-everyone").addEventListener("click", () => {
   closeMenu();
   load();
 });
+for (const b of document.querySelectorAll("[data-start]"))
+  b.addEventListener("click", () => {
+    start = b.dataset.start;
+    keep("start", start);
+    setView(start);
+  });
 $("opt-celebrate").addEventListener("click", () => {
   celebrate = !celebrate;
   keep("celebrate", celebrate);
