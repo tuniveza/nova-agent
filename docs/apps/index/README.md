@@ -79,6 +79,19 @@ the differences lit up, and can put your edit on top of theirs in one tap, or ke
 - **Options**: the theme (shared with Portal), sound effects, refresh everything, open
   Portal and sign out. It installs as an app, with the suite's cosmic "I".
 
+### Smart extras
+
+- **Search that forgives.** Typos are fine ("evnings", "pricnig"), and so are other forms of a word ("evenings" finds "evening"). When nothing matches, Index offers **Did you mean …?** with the closest words it knows.
+- **Filters**, under the search: what kind of file (the studio, public facts, profiles, people, topics, areas), when it last changed (today, this week, this month, or 6+ months old), and **★ Pinned**. It shows how many files are left, with **Clear filters**.
+- **Ask Index.** Type a question ("when does Kai like to record?") and press Enter, or tap **✦ Ask Index**. The answer comes only from what's remembered, with numbered sources: tap one to open its file. A small, cheap AI writes the answer, and asking the same thing again is free until memory changes. Without a match it says so and asks no AI. It only reads: nothing is sent or saved. Each person only gets answers from what they're allowed to see (Nova Agent's key never reads customers').
+- **Pinned and recent.** **☆ Pin** a file (at the foot of an open file) to keep it at the top of Browse; the files you open most lately are listed under it. Kept in this browser only.
+- **Related.** An open file lists the other files about the same people and things.
+- **Hints.** Files that might be the same person or subject ("Kai" and "Kai M"), and files that haven't changed in 6 months (**Show them**). **✕** puts a hint away.
+- **Keys.** **Ctrl+K** (or **/**) jumps to the search from anywhere; **↓** goes to the first file, **↑ ↓ Home End** move between files, **Enter** opens one and **Esc** closes it (or clears the search).
+- **Approve:** a fact learned in a website chat has **Open the chat**, to see what was said in Portal.
+
+The logic is in `web/index/smart.js` (tested on its own: `test/index-smart.spec.ts`); Ask Index's answers come from Nova Bot (`src/memory/ask.js`, `POST /app/api/memory/ask`).
+
 ## How the memory works
 
 ```

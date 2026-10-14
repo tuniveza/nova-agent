@@ -339,6 +339,11 @@ app.all("/app/api/memory/*", async (c) => {
     }
     return c.json({ scopes: [...by.values()], pending: 0, locked: true });
   }
+  // Ask Index: answered from the studio's and staff memory only (this key never reads customers')
+  if (route === "/ask" && c.req.method === "POST") {
+    const { status, data } = await toEngine("/ask", { method: "POST", body: await c.req.text() });
+    return c.json(data, status as any);
+  }
   if (route === "/index" || route === "/file") {
     const body = c.req.method === "PUT" ? await c.req.text() : undefined;
     const { status, data } = await toEngine(route + query, { method: c.req.method, body });

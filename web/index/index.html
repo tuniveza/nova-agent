@@ -147,9 +147,45 @@
         <label class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
           <span class="visually-hidden">Search memory</span>
-          <input id="search" type="search" placeholder="Search names, owners and facts" autocomplete="off" enterkeyhint="search">
+          <input id="search" type="search" placeholder="Search, or ask a question" autocomplete="off" enterkeyhint="search" aria-keyshortcuts="Control+K /" aria-describedby="search-help">
         </label>
+        <p class="visually-hidden" id="search-help">Typos are fine. End with a question mark and press Enter to ask Index. Ctrl+K or / jumps here; the arrow keys move between files.</p>
       </div>
+
+      <!-- Narrow it down: what kind of file, when it last changed, only the pinned ones -->
+      <div class="filters" id="filters" role="group" aria-label="Filters">
+        <label class="filter">
+          <span class="visually-hidden">Kind of file</span>
+          <select id="filter-kind">
+            <option value="any">Any kind</option>
+            <option value="studio">The studio</option>
+            <option value="public">Public facts</option>
+            <option value="profile">Profiles</option>
+            <option value="people">People</option>
+            <option value="topics">Topics</option>
+            <option value="areas">Areas</option>
+          </select>
+        </label>
+        <label class="filter">
+          <span class="visually-hidden">When it last changed</span>
+          <select id="filter-when">
+            <option value="any">Any time</option>
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+            <option value="old">6+ months old</option>
+          </select>
+        </label>
+        <button class="chip" type="button" id="filter-pinned" aria-pressed="false">★ Pinned</button>
+        <button class="chip" type="button" id="filter-clear" hidden>Clear filters</button>
+        <span class="filter-count" id="filter-count" aria-live="polite"></span>
+      </div>
+
+      <!-- Ask Index: a question answered only from memory, with the facts it came from -->
+      <section id="ask-box" class="card ask-box" aria-live="polite" aria-label="Ask Index" hidden></section>
+      <!-- Pinned and recently opened files, then gentle hints (files that might be the same, old ones) -->
+      <nav id="shelf" class="shelf" aria-label="Pinned and recent files" hidden></nav>
+      <div id="hints" class="hints" hidden></div>
 
       <!-- A new file: which memory, whose, what kind, and one line saying what's in it -->
       <form id="new-form" class="card new-form" hidden>
@@ -300,6 +336,7 @@
 <div id="toast" class="toast" role="status" hidden></div>
 
 <script src="/shared/sfx.js"></script>
+<script src="/app/memory/smart.js"></script>
 <script src="/app/memory/memory.js"></script>
 <script src="/shared/badge.js" defer></script>
 <script src="/shared/manual.js" defer></script>

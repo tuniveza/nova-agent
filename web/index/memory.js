@@ -13,6 +13,11 @@
 // Only people allowed can change a file (the listing says, per file: "editable"): their own
 // memory, or anything for an admin. Admins also get Tidy up (in Options): a check for empty
 // files, junk facts and repeats that shows what it would remove first, and the 30-day bin.
+// Smart extras (the logic is in smart.js, window.IndexSmart): search that forgives typos, with
+// "Did you mean …?"; filters (kind, when it changed, pinned); Ask Index (a question answered only
+// from memory, with the facts it came from: POST ask); pinned and recently opened files; related
+// files in an open one; hints about files that might be the same, or haven't changed in months;
+// keys (Ctrl+K or / to search, arrows between files, Esc); and "Open the chat" on Approve.
 // The site's security rules allow no scripts or styles written inside the page, so it's all here.
 (() => {
   "use strict";
@@ -41,6 +46,19 @@
   const LIVE_EVERY = 20_000;
 
   const $ = (id) => document.getElementById(id);
+  const S = window.IndexSmart;
+  // This browser's storage (pins, recent files, hints put away); a stand-in if it's blocked
+  const store = (() => {
+    try {
+      const s = window.localStorage;
+      s.getItem("nova-index-shelf");
+      return s;
+    } catch (err) {
+      const mem = new Map();
+      return { getItem: (k) => (mem.has(k) ? mem.get(k) : null), setItem: (k, v) => mem.set(k, String(v)) };
+    }
+  })();
+  const shelf = S.shelf(store);
   const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.getAttribute("data-motion") === "calm";
   const sfx = (name) => window.NovaSfx && window.NovaSfx.play(name);
 
@@ -64,6 +82,10 @@
     editingPending: new Set(),
     signedIn: false,
     admin: false, // an admin signed in to Portal (Tidy up is theirs)
+    kind: "any", // the filters: kind of file, when it changed, pinned only
+    when: "any",
+    pinnedOnly: false,
+    ask: null, // Ask Index: { q, loading } | { q, result } | { q, error }
   };
 
   // A file's key: which memory, whose, and which file
@@ -361,7 +383,7 @@
     // The server's search looks inside every file's facts (see loadBodiesForSearch)
     const hits = state.searchHits && state.searchHits.q === q ? (state.searchHits.map.get(keyOf(f)) || []).join("\n") : "";
     const hay = [f.name, f.path, f.description, aliasText(f.aliases), f.owner_id, ownerLabel(f.scope, f.owner_id), f.source_app, loaded ? loaded.body : "", hits].join("\n").toLowerCase();
-    return q.split(/\s+/).every((word) => hay.includes(word));
+    return S.fuzzyHas(hay, q);
   }
   // The first fact line that matches the search (shown on the card so you can see why it matched)
   function factHit(f, q) {
@@ -370,8 +392,7 @@
     const hits = state.searchHits && state.searchHits.q === q ? state.searchHits.map.get(keyOf(f)) : null;
     const body = loaded ? loaded.body : hits ? hits.join("\n") : "";
     if (!body) return null;
-    const words = q.split(/\s+/);
-    return parseBody(body).find((l) => words.some((w) => l.fact.toLowerCase().includes(w))) || null;
+    return parseBody(body).find((l) => S.lineHit(l.fact, q)) || null;
   }
   // The search text, with the matching words lit up
   function highlighted(text, q) {
@@ -395,15 +416,27 @@
     const box = $("browse-list");
     box.classList.toggle("animate", animate);
     const q = state.query.trim().toLowerCase();
-    const shown = state.files.filter((f) => (state.scope === "all" || f.scope === state.scope) && matches(f, q));
+    const shown = state.files.filter((f) => (state.scope === "all" || f.scope === state.scope) && passesFilters(f) && matches(f, q));
+    renderExtras(q, shown);
 
     if (!shown.length) {
       let message;
       if (!state.files.length) {
         message = el("div", "empty", [el("strong", "", "Memory is empty"), el("span", "", "As Nova Agent and Nova Bot talk to people, the facts worth keeping land here. You can add one yourself too.")]);
         message.append(button("btn small", "+ New file", openNewForm, { "data-sfx": "open" }));
+      } else if (q && (state.ask || S.looksLikeQuestion(q))) {
+        // A question: Ask Index (above) is the answer, not "nothing matches"
+        box.replaceChildren();
+        return;
       } else if (q) {
-        message = el("div", "empty", [el("strong", "", "Nothing matches"), el("span", "", `No file mentions “${state.query.trim()}”${state.scope === "all" ? "" : " in " + SCOPE_NAMES[state.scope]}.`)]);
+        message = el("div", "empty", [el("strong", "", "Nothing matches"), el("span", "", `No file mentions “${state.query.trim()}”${state.scope === "all" ? "" : " in " + SCOPE_NAMES[state.scope]}${filtering() ? " with these filters" : ""}.`)]);
+        // "Did you mean …?" (the closest words Index knows)
+        const better = S.suggest(q, S.vocabulary(state.files, (f) => (state.bodies.get(keyOf(f)) || {}).body || ""));
+        if (better) message.append(button("btn small ghost", `Did you mean “${better}”?`, () => searchFor(better)));
+        if (filtering()) message.append(button("btn small ghost", "Clear filters", clearFilters));
+      } else if (filtering()) {
+        message = el("div", "empty", [el("strong", "", "Nothing with these filters"), el("span", "", "Try another kind or time, or clear them.")]);
+        message.append(button("btn small ghost", "Clear filters", clearFilters));
       } else {
         message = el("div", "empty", [el("strong", "", "Nothing here yet"), el("span", "", `No ${SCOPE_NAMES[state.scope].toLowerCase()} files yet.`)]);
       }
@@ -488,6 +521,7 @@
       return;
     }
     state.open = key;
+    shelf.touch(key);
     renderBrowse();
     scrollToCard(key);
     if (state.drafts.has(key)) return;
@@ -586,6 +620,7 @@
       box.append(list);
       box.append(el("p", "read-only", readOnlyNote(f)));
       box.append(el("p", "file-info", `Last written by ${f.source_app || "someone"} · ${ago(f.updated_at)}`));
+      box.append(smartFoot(key, f));
       return box;
     }
 
@@ -689,6 +724,7 @@
     }, { "data-sfx": "open" }));
     box.append(el("div", "editor-foot", [actions, el("span", "unsaved" + (isDirty ? "" : " is-clean"), isDirty ? "Unsaved changes" : "")]));
     box.append(el("p", "file-info", `Last written by ${f.source_app || "someone"} · ${ago(f.updated_at)}`));
+    box.append(smartFoot(key, f));
     return box;
   }
 
@@ -1094,6 +1130,8 @@
   let searchTimer = 0;
   $("search").addEventListener("input", () => {
     state.query = $("search").value;
+    // A different search puts the last answer away (opening one of its files keeps it)
+    if (state.ask && state.ask.q !== state.query.trim()) state.ask = null;
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
       renderBrowse(true);
@@ -1114,6 +1152,237 @@
       if (state.query.trim().toLowerCase() === q) renderBrowse();
     } catch (err) {}
   }
+
+  // ===== Smart extras: filters, Ask Index, pinned and recent files, hints, keys =====
+
+  const kindOf = (f) => String(f.path || "").split("/")[0];
+  const filtering = () => state.kind !== "any" || state.when !== "any" || state.pinnedOnly;
+  function passesFilters(f) {
+    if (state.kind !== "any" && kindOf(f) !== state.kind) return false;
+    if (!S.changedWithin(f.updated_at, state.when)) return false;
+    if (state.pinnedOnly && !shelf.isPinned(keyOf(f))) return false;
+    return true;
+  }
+  function setFilters({ kind = state.kind, when = state.when, pinnedOnly = state.pinnedOnly } = {}) {
+    state.kind = kind;
+    state.when = when;
+    state.pinnedOnly = pinnedOnly;
+    $("filter-kind").value = kind;
+    $("filter-when").value = when;
+    $("filter-pinned").classList.toggle("active", pinnedOnly);
+    $("filter-pinned").setAttribute("aria-pressed", String(pinnedOnly));
+    renderBrowse(true);
+  }
+  const clearFilters = () => setFilters({ kind: "any", when: "any", pinnedOnly: false });
+  $("filter-kind").addEventListener("change", () => setFilters({ kind: $("filter-kind").value }));
+  $("filter-when").addEventListener("change", () => setFilters({ when: $("filter-when").value }));
+  $("filter-pinned").addEventListener("click", () => setFilters({ pinnedOnly: !state.pinnedOnly }));
+  $("filter-clear").addEventListener("click", clearFilters);
+
+  // Search for something (a suggestion, a hint) as if it had been typed
+  function searchFor(text) {
+    $("search").value = text;
+    $("search").dispatchEvent(new Event("input"));
+    $("search").focus();
+  }
+
+  // Everything around the list: the count, the shelf, the hints and Ask Index
+  function renderExtras(q, shown) {
+    const total = state.files.filter((f) => state.scope === "all" || f.scope === state.scope).length;
+    $("filter-count").textContent = q || filtering() ? `${shown.length} of ${plural(total, "file")}` : "";
+    $("filter-clear").hidden = !filtering();
+    renderShelf(q);
+    renderHints(q);
+    renderAsk();
+  }
+
+  // A file as a small button that opens it
+  function fileChip(f, className = "shelf-item") {
+    const b = button("chip " + className, "", () => openByKey(keyOf(f)), { "aria-label": `Open ${titleOf(f)} (${ownerLabel(f.scope, f.owner_id) || SCOPE_NAMES[f.scope]}, ${f.path})`, title: f.path });
+    const sub = f.owner_id ? ownerLabel(f.scope, f.owner_id) : f.path;
+    b.append(el("span", "shelf-name", titleOf(f)));
+    if (sub && sub !== titleOf(f)) b.append(el("span", "shelf-path", sub));
+    return b;
+  }
+  const fileFor = (key) => state.files.find((x) => keyOf(x) === key);
+
+  // Pinned files, then the ones opened most lately (only on the plain Browse view)
+  function renderShelf(q) {
+    const box = $("shelf");
+    const pins = shelf.pins().map(fileFor).filter(Boolean);
+    const recent = shelf.top(8).filter((k) => !shelf.isPinned(k)).map(fileFor).filter(Boolean).slice(0, 6);
+    box.hidden = Boolean(q) || filtering() || (!pins.length && !recent.length);
+    if (box.hidden) return box.replaceChildren();
+    const rows = [];
+    if (pins.length) rows.push(el("div", "shelf-row", [el("span", "shelf-label", "★ Pinned"), ...pins.map((f) => fileChip(f))]));
+    if (recent.length) rows.push(el("div", "shelf-row", [el("span", "shelf-label", "Recent"), ...recent.map((f) => fileChip(f))]));
+    box.replaceChildren(...rows);
+  }
+
+  // Gentle hints: files that might be the same person or subject, and files that haven't changed in months
+  function hintsOff() {
+    try {
+      return new Set(JSON.parse(store.getItem("nova-index-hints-off") || "[]"));
+    } catch (err) {
+      return new Set();
+    }
+  }
+  function putHintAway(id) {
+    const off = hintsOff();
+    off.add(id);
+    try {
+      store.setItem("nova-index-hints-off", JSON.stringify([...off].slice(-50)));
+    } catch (err) {}
+    renderHints("");
+  }
+  function renderHints(q) {
+    const box = $("hints");
+    const off = hintsOff();
+    const items = [];
+    if (!q && !filtering()) {
+      const visible = state.files.filter((f) => state.scope === "all" || f.scope === state.scope);
+      for (const [a, b] of S.lookAlikes(visible)) {
+        const id = [keyOf(a), keyOf(b)].sort().join("|");
+        if (off.has(id)) continue;
+        items.push(el("p", "smart-hint", [el("span", "hint-text", "These might be the same:"), fileChip(a, "hint-file"), fileChip(b, "hint-file"), button("icon-btn hint-off", "✕", () => putHintAway(id), { "aria-label": "Not the same: hide this hint", title: "Not the same" })]));
+        if (items.length >= 2) break;
+      }
+      const old = visible.filter((f) => S.changedWithin(f.updated_at, "old")).length;
+      if (old && !off.has("old:" + old)) {
+        items.push(el("p", "smart-hint", [el("span", "hint-text", `${plural(old, "file")} ${old === 1 ? "hasn't" : "haven't"} changed in 6 months.`), button("btn small ghost", "Show them", () => setFilters({ when: "old" })), button("icon-btn hint-off", "✕", () => putHintAway("old:" + old), { "aria-label": "Hide this hint" })]));
+      }
+    }
+    box.hidden = !items.length;
+    box.replaceChildren(...items);
+  }
+
+  // ----- Ask Index -----
+
+  async function askIndex() {
+    const q = state.query.trim();
+    if (q.length < 3) return;
+    state.ask = { q, loading: true };
+    renderAsk();
+    sfx("send");
+    try {
+      const data = await must(API + "/ask", { method: "POST", body: { q } });
+      if (state.ask && state.ask.q === q) state.ask = { q, result: data };
+    } catch (err) {
+      if (state.ask && state.ask.q === q) state.ask = { q, error: err.message };
+    }
+    renderAsk();
+  }
+  const factKey = (f) => `${f.scope}\u0001${f.owner_id || ""}\u0001${f.path}`;
+  function closeAsk() {
+    state.ask = null;
+    renderAsk();
+  }
+  function renderAsk() {
+    const box = $("ask-box");
+    const q = state.query.trim();
+    const a = state.ask;
+    if (!a) {
+      // A question typed but not asked yet: offer to ask it
+      box.hidden = !S.looksLikeQuestion(q);
+      if (box.hidden) return box.replaceChildren();
+      const go = button("btn small ask-go", `✦ Ask Index: “${q.length > 80 ? q.slice(0, 80) + "…" : q}”`, askIndex, { "data-sfx": "open" });
+      box.replaceChildren(el("div", "ask-offer", [go, el("span", "ask-help", "or press Enter. It answers only from what's remembered.")]));
+      return;
+    }
+    box.hidden = false;
+    const head = el("div", "ask-head", [el("p", "kicker", "Ask Index"), button("icon-btn ask-close", "✕", closeAsk, { "aria-label": "Close the answer", "data-sfx": "close" })]);
+    const parts = [head, el("p", "ask-q", a.q)];
+    if (a.loading) parts.push(el("p", "ask-loading", "Looking through memory…"));
+    else if (a.error) parts.push(el("p", "error", a.error), button("btn small ghost", "Try again", askIndex));
+    else if (a.result) {
+      const r = a.result;
+      const facts = r.facts || [];
+      const byN = new Map(facts.map((f) => [f.n, f]));
+      if (r.answer) {
+        // "[2]" in the answer: a little button that opens that fact's file
+        const p = el("p", "ask-answer");
+        for (const part of String(r.answer).split(/(\[\d+\])/)) {
+          const n = Number((part.match(/^\[(\d+)\]$/) || [])[1]);
+          const f = n && byN.get(n);
+          if (f) p.append(button("ask-ref", String(n), () => openByKey(factKey(f)), { "aria-label": `Source ${n}: ${f.name} (open it)`, title: f.fact }));
+          else p.append(document.createTextNode(part));
+        }
+        parts.push(p);
+      } else parts.push(el("p", "ask-note", r.note || "Index doesn't remember anything about that yet."));
+      if (facts.length) {
+        const used = new Set(r.used || []);
+        const list = el("ol", "ask-facts");
+        for (const f of [...facts].sort((x, y) => Number(used.has(y.n)) - Number(used.has(x.n)) || x.n - y.n).slice(0, 8)) {
+          const li = el("li", "ask-fact" + (used.has(f.n) ? " used" : ""), [el("span", "ask-n", String(f.n)), tagPill(f.tag), el("span", "ask-fact-text", f.fact), button("chip ask-file", f.name || f.path, () => openByKey(factKey(f)), { "aria-label": `Open ${f.name || f.path}` })]);
+          list.append(li);
+        }
+        parts.push(el("p", "ask-from", r.answer ? "From what Index remembers" : "What Index remembers that matches"), list);
+      }
+      parts.push(el("p", "ask-small", "Answered only from memory. Nothing is sent or saved."));
+    }
+    box.replaceChildren(...parts);
+  }
+
+  // ----- An open file: pin it, and the files about the same people and things -----
+  function smartFoot(key, f) {
+    const pinned = shelf.isPinned(key);
+    const pin = button("chip pin" + (pinned ? " active" : ""), pinned ? "★ Pinned" : "☆ Pin", () => {
+      const on = shelf.toggle(key);
+      toast(on ? "Pinned: it stays at the top of Browse." : "Unpinned.");
+      renderBrowse();
+    }, { "aria-pressed": String(pinned), "data-sfx": pinned ? "close" : "done" });
+    const foot = el("div", "smart-foot", [pin]);
+    const rel = S.related(f, state.files, (x) => (state.bodies.get(keyOf(x)) || {}).body || "");
+    if (rel.length) foot.append(el("div", "related", [el("span", "related-label", "Related"), ...rel.map((r) => fileChip(r, "related-item"))]));
+    return foot;
+  }
+
+  // ----- Keys -----
+  // Ctrl+K (or ⌘K) or / : jump to search, from anywhere (not while typing somewhere else)
+  const typing = (t) => t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+  document.addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (((e.ctrlKey || e.metaKey) && k === "k") || (k === "/" && !typing(e.target) && !e.ctrlKey && !e.metaKey && !e.altKey)) {
+      if ($("app").hidden) return;
+      e.preventDefault();
+      setTab("browse");
+      $("search").focus();
+      $("search").select();
+    }
+  });
+  const heads = () => [...$("browse-list").querySelectorAll(".file-head")];
+  $("search").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && S.looksLikeQuestion($("search").value)) {
+      e.preventDefault();
+      state.query = $("search").value;
+      askIndex();
+    } else if (e.key === "ArrowDown" && heads().length) {
+      e.preventDefault();
+      heads()[0].focus();
+    } else if (e.key === "Escape" && $("search").value) {
+      e.preventDefault();
+      searchFor("");
+    }
+  });
+  // Arrow keys between files; Esc closes the open one
+  $("browse-list").addEventListener("keydown", (e) => {
+    const head = e.target.closest && e.target.closest(".file-head");
+    if (!head || e.target !== head) return;
+    const all = heads();
+    const i = all.indexOf(head);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const next = all[i + (e.key === "ArrowDown" ? 1 : -1)];
+      if (next) next.focus();
+      else if (e.key === "ArrowUp") $("search").focus();
+    } else if (e.key === "Home" || e.key === "End") {
+      e.preventDefault();
+      all[e.key === "Home" ? 0 : all.length - 1].focus();
+    } else if (e.key === "Escape" && head.getAttribute("aria-expanded") === "true") {
+      e.preventDefault();
+      head.click();
+    }
+  });
 
   // ===== Live =====
 
@@ -1238,7 +1507,14 @@
     }
     const ref = String(p.source_ref || "").replace(/^chat[-:_]?/i, "");
     const from = [p.source_app ? "From " + p.source_app : "", ref ? "chat " + ref.slice(0, 8) : "", ago(p.created_at)].filter(Boolean).join(" · ");
-    card.append(el("p", "pending-meta", from));
+    const meta = el("p", "pending-meta", from);
+    // Learned from a website chat: open that chat in Portal, to see what was said
+    if (p.source_app === "NovaBot" && p.source_ref) {
+      const link = el("a", "pending-chat", "Open the chat");
+      link.href = "/portal/?view=chats&chat=" + encodeURIComponent(p.source_ref);
+      meta.append(" · ", link);
+    }
+    card.append(meta);
 
     const approve = button("btn small ok", editing ? "✓ Approve edited" : "✓ Approve", () => decide(p, "approve", card), { "data-sfx": "done" });
     const edit = editing
