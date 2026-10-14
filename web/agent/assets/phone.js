@@ -69,7 +69,10 @@
   function fresh() {
     const frame = document.createElement('iframe');
     for (const attr of ['title', 'allow']) if (first.hasAttribute(attr)) frame.setAttribute(attr, first.getAttribute(attr));
-    (first.parentElement || viewer).append(frame); // beside the first, in the panel's box
+    // Always in the panel's box (#viewer-body), never beside it: the first frame goes too once more
+    // than KEEP panels have been opened, and a frame put in the viewer itself sat in a second row
+    // under an empty box, running on behind the navigation panel
+    ($('viewer-body') || first.parentElement || viewer).append(frame);
     return frame;
   }
   function loading(frame) {

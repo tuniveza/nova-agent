@@ -46,7 +46,8 @@ describe("the top bars", () => {
     expect(statusJs).toContain('const box = PHONE.matches ? $("tabbar") : $("suite-home");');
     expect(statusCss).toContain("#suite-home > .status-line, .tabbar > .status-line {");
     expect(statusCss).not.toMatch(/#viewer-body > \.status-line/);
-    expect(phoneJs).toContain("(first.parentElement || viewer).append(frame);");
+    // always in the panel's box, even after the first frame has been let go (the big-gap bug, 2026-10-14)
+    expect(phoneJs).toContain("($('viewer-body') || first.parentElement || viewer).append(frame);");
   });
 
   it("the title panel is as wide as Nova Agent's header on the home, so the panel below starts in the same place", () => {
