@@ -210,3 +210,7 @@ html[data-motion="calm"] .qx * { animation: none !important; transition: none !i
   .q::before { background: CanvasText; }
 }
 .qx [hidden] { display: none !important; }
+
+/* Inside Nova Agent its top bar already says "Nova Agent · Quests" (/shared/topbar.css): the name isn't
+   shown twice, but stays for screen readers. */
+html.embed .title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
