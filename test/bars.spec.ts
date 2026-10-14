@@ -102,3 +102,18 @@ describe("the panels bar along the bottom", () => {
     expect(read("../web/agent/assets/glow.css")).toContain("grid-template-columns: var(--tg-cols, 5fr 2fr 2fr 2fr)");
   });
 });
+
+describe("Plans", () => {
+  it("is Quests and Missions: today's plan isn't a place of its own any more (Quests opens on Today)", () => {
+    expect(phoneJs).toContain("['tasks', 'Plans', ['/quests/', 'pane:missions']],");
+    expect(phoneJs).not.toMatch(/'pane:quests': \(\) =>/);
+    expect(phoneJs).not.toMatch(/MORE_ORDER = \['pane:quests'/);
+    expect(html).not.toContain("Today's plan");
+  });
+
+  it("old ways to today's plan (a link, a phone that was on it) open Quests instead", () => {
+    expect(phoneJs).toContain("if (t === 'pane:quests') { open('/quests/'); return; }");
+    expect(phoneJs).toContain("if (pane === 'quests') { open('/quests/'); return; }");
+    expect(phoneJs).toContain("if (toQuests && PHONE.matches && viewer.hidden) open('/quests/');");
+  });
+});

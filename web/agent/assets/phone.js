@@ -189,7 +189,10 @@
   }
   let saved = 'chat';
   try { saved = sessionStorage.getItem(PANE_KEY) || 'chat'; } catch (e) {}
-  if (!['chat', 'quests', 'missions'].includes(saved)) saved = 'chat';
+  // (today's plan used to be a pane here; it's Quests now, which opens on Today: a phone that was on
+  // it opens Quests instead, once the page is ready)
+  const toQuests = saved === 'quests';
+  if (!['chat', 'missions'].includes(saved)) saved = 'chat';
 
   // ---- The header: a fresh-chat button (on the chat) and the gear (settings) ----
   const left = document.querySelector('.topbar .top-side.left');
@@ -221,7 +224,7 @@
   const SKIP = ['/admin/links']; // All links: behind the gear
   const GROUPS = [
     ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
-    ['tasks', 'Plans', ['/quests/', 'pane:quests', 'pane:missions']],
+    ['tasks', 'Plans', ['/quests/', 'pane:missions']],
     ['tools', 'Tools', ['/lossless/', '/visualizer', '/console/']],
     ['helpers', 'Helpers', ['/observatory/', 'manual']],
   ];
@@ -236,13 +239,12 @@
   const pico = (k) => `<span class="pico t-ico" data-p="${k}" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-${k}"/></svg></span>`;
   const FIXED = {
     'pane:chat': () => item('pane:chat', 'Agent', pico('chat')),
-    'pane:quests': () => item('pane:quests', 'Today', pico('quests')),
     'pane:missions': () => item('pane:missions', 'Missions', pico('missions')),
     manual: () => item('manual', 'Manual', pico('manual')),
   };
   // The bar keeps its short labels: "Notes" in the launcher is "Notes" here
   const panelItem = (p) => (tile(p) ? item(p, nameOf(tile(p)).replace(/^Nova /, '').replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico')) : '');
-  const MORE_ORDER = ['pane:quests', 'pane:missions', '/board/', '/app/memory/', '/lossless/', '/visualizer', '/observatory/', 'manual'];
+  const MORE_ORDER = ['pane:missions', '/board/', '/app/memory/', '/lossless/', '/visualizer', '/observatory/', 'manual'];
   let moreKeys = [];
   function fillBar() {
     const placed = new Set(GROUPS.flatMap((g) => g[2]));
@@ -270,6 +272,7 @@
     if (a.dataset.act === 'manual') { if (window.NovaManual) window.NovaManual.open(); return; }
     if (!viewer.hidden) $('viewer-close').click();
     const pane = a.dataset.pane;
+    if (pane === 'quests') { open('/quests/'); return; } // (old links to today's plan: Quests, on Today)
     if (PHONE.matches) { setPane(pane); sfx('open'); return; }
     const box = $(pane === 'quests' ? 'quests-panel' : 'missions-panel');
     if (box) {
@@ -280,6 +283,7 @@
   }, true);
   // A place on the bar (or in More) opens the same way wherever it's tapped
   function go(t) {
+    if (t === 'pane:quests') { open('/quests/'); return; } // (today's plan is Quests now)
     if (t.startsWith('pane:')) { closePanel(); setPane(t.slice(5)); sfx('open'); return; }
     if (t === 'manual') { if (window.NovaManual) window.NovaManual.open(); return; }
     open(t);
@@ -455,5 +459,6 @@
     if (!viewer.hidden) panelShown();
     setPane(main.dataset.pane);
     fit();
+    if (toQuests && PHONE.matches && viewer.hidden) open('/quests/');
   });
 })();

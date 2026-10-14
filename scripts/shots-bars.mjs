@@ -14,7 +14,7 @@ const SIZES = (opt("sizes") || "1440x900,390x844").split(",").map((s) => s.split
 mkdirSync(OUT, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const PANELS = {
-  home: "", portal: "/portal/", calendar: "/calendar/", notes: "/notes/", board: "/board/", console: "/console/",
+  home: "", portal: "/portal/", calendar: "/calendar/", notes: "/notes/", quests: "/quests/", board: "/board/", console: "/console/",
   index: "/app/memory/", observatory: "/observatory/", fixer: "/fixer/", lossless: "/lossless/",
 };
 const browser = await chromium.launch();
