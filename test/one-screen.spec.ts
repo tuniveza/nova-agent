@@ -44,6 +44,16 @@ describe("one screen, nothing scrolling the page", () => {
     expect(css).toContain(".month > .dayplan { flex: 0 1 auto; min-height: 0; max-height: 42%;");
   });
 
+  it("Index on a wide screen: Browse, Live and Approve all at once, side by side (no tabs to go between)", () => {
+    const js = read("../web/index/memory.js");
+    expect(js).toContain('const WIDE = matchMedia("(min-width: 1200px) and (min-height: 560px)");');
+    expect(js).toContain('$("view-live").hidden = !showing("live");');
+    expect(js).toContain('if (!state.signedIn || !showing("live") || document.visibilityState !== "visible" || liveBusy) return;');
+    const css = read("../web/index/memory.css");
+    expect(css).toContain("html.embed.ix-wide .app > main > #view-live { grid-column: 2; grid-row: 2; }");
+    expect(css).toContain("html.embed.ix-wide nav.tabs { display: none; }");
+  });
+
   it("panels show at once when they open: no fade in", () => {
     for (const f of ["../web/shared/inside.js", "../web/calendar/js/embed.js"]) expect(read(f)).not.toContain("nova-panel-in");
     expect(read("../web/agent/chat.html")).toContain("  .viewer > .viewer-body { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; border-radius: 24px; overflow: hidden; }");

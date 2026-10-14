@@ -732,3 +732,18 @@ html.embed .app { height: 100vh; height: 100dvh; min-height: 0; }
 html.embed .app > main { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 14px; }
 html.embed .app > main > * { flex: none; }
 html.embed .app > main > .view:not([hidden]) { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; align-content: start; padding: 2px; }
+
+/* ---- A wide screen inside Nova Agent (memory.js: html.ix-wide): Browse, Live and Approve all at
+   once. The numbers along the top, Browse on the left, Live and Approve on the right, one above the
+   other, each scrolling inside itself; no tabs needed along the bottom ---- */
+html.embed.ix-wide .app > main {
+  display: grid; max-width: 1400px; padding-bottom: 12px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 16px; row-gap: 12px; }
+html.embed.ix-wide .app > main > .stats { grid-column: 1 / -1; grid-row: 1; }
+html.embed.ix-wide .app > main > #view-browse { grid-column: 1; grid-row: 2 / 4; }
+html.embed.ix-wide .app > main > #view-live { grid-column: 2; grid-row: 2; }
+html.embed.ix-wide .app > main > #view-approve { grid-column: 2; grid-row: 3; }
+html.embed.ix-wide .app > main > .view { min-height: 0; overflow-y: auto; padding: 10px 12px; border-radius: 20px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel, #1C1129) 40%, transparent); }
+html.embed.ix-wide .app > main > .view { grid-auto-rows: max-content; align-content: start; }
+html.embed.ix-wide nav.tabs { display: none; }

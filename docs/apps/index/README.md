@@ -30,6 +30,11 @@ All the pictures here use made-up files and people.
 
 ## What it does
 
+- **All at once on a wide screen.** Inside Nova Agent on a computer (1200px wide or more), Browse,
+  Live and Approve show together: the numbers along the top, Browse on the left, Live and Approve
+  on the right, each scrolling inside itself, and no tabs along the bottom. Narrower, the tabs are
+  back. The page itself never scrolls; the open view does, inside its own box.
+
 ### Browse
 
 Studio, staff and customer files as cards, grouped by who they're about, with counts at the

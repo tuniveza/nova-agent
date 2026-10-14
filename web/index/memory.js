@@ -63,6 +63,7 @@
   const sfx = (name) => window.NovaSfx && window.NovaSfx.play(name);
 
   // What the page knows
+  const WIDE = matchMedia("(min-width: 1200px) and (min-height: 560px)");
   const state = {
     files: [], // the listing (no bodies), newest first
     stats: null,
@@ -320,7 +321,7 @@
         arrivals++;
       }
     }
-    if (arrivals && state.tab === "live") {
+    if (arrivals && showing("live")) {
       const orb = document.querySelector(".orb");
       if (orb) {
         orb.classList.add("surge");
@@ -332,6 +333,7 @@
   }
 
   function renderAll() {
+    placeViews();
     renderStats();
     renderBrowse(true);
     renderLive();
@@ -1444,7 +1446,7 @@
   // Every 20 seconds while Live is on screen: look for new memory
   let liveBusy = false;
   async function liveTick() {
-    if (!state.signedIn || state.tab !== "live" || document.visibilityState !== "visible" || liveBusy) return;
+    if (!state.signedIn || !showing("live") || document.visibilityState !== "visible" || liveBusy) return;
     liveBusy = true;
     try {
       await Promise.all([loadIndex(), loadStats()]);
@@ -1455,7 +1457,7 @@
     liveBusy = false;
   }
   setInterval(liveTick, LIVE_EVERY);
-  setInterval(() => state.tab === "live" && renderLiveChecked(), 5000);
+  setInterval(() => showing("live") && renderLiveChecked(), 5000);
   document.addEventListener("visibilitychange", () => {
     renderLiveChecked();
     if (document.visibilityState === "visible" && Date.now() - state.lastCheck > LIVE_EVERY) liveTick();
@@ -1586,6 +1588,19 @@
   }
 
   // ===== Tabs =====
+  // On a wide screen inside Nova Agent, Browse, Live and Approve all show at once, side by side (no
+  // tabs to go between); the tabs (and the numbers) still pick which one is lit
+  function sideBySide() { return WIDE.matches && document.documentElement.classList.contains("embed"); }
+  function showing(tab) { return state.tab === tab || sideBySide(); }
+  function placeViews() {
+    document.documentElement.classList.toggle("ix-wide", sideBySide());
+    $("view-browse").hidden = !showing("browse");
+    $("view-live").hidden = !showing("live");
+    $("view-approve").hidden = !showing("approve");
+    if (sideBySide()) renderLive();
+  }
+  WIDE.addEventListener("change", placeViews);
+  placeViews();
 
   function setTab(tab) {
     if (state.tab === tab) return;
@@ -1596,10 +1611,10 @@
       if (on) b.setAttribute("aria-current", "page");
       else b.removeAttribute("aria-current");
     }
-    $("view-browse").hidden = tab !== "browse";
-    $("view-live").hidden = tab !== "live";
-    $("view-approve").hidden = tab !== "approve";
-    window.scrollTo({ top: 0 });
+    placeViews();
+    const view = $(`view-${tab}`);
+    if (sideBySide() && view) view.scrollIntoView({ block: "nearest" });
+    else window.scrollTo({ top: 0 });
     if (tab === "live") {
       renderLive();
       liveTick();
