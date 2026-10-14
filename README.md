@@ -341,6 +341,15 @@ its own box under it (`#viewer-body`). Index and Quests don't repeat their names
 Nova feel laggy). Always hidden is still a choice in the Panels window, for the panels bar and the
 top bar.
 
+**One screen:** inside Nova Agent a panel's page never scrolls, and neither does its `<main>`: the
+panel fills the space between the bars, and only a box inside it scrolls when it has more than fits
+(Portal's open section, a list, a column, a card). Where there's room things sit side by side:
+Portal's Today (numbers left, today's calendar and new enquiries right), Quests' groups and days as
+columns, Lossless's four cards in a row, the Visualizer's three columns; Calendar's month shares the
+screen with the day's plan on phones; the Fixer's open tab scrolls under its numbers and tabs.
+Panels and Portal's sections show at once when they open (no fade in). `scripts/check-fit.mjs`
+fails a page or a `<main>` that scrolls inside Nova Agent.
+
 **The status line** is the bottom row of the navigation bar, inside its frame, below the icons
 (the panels strip on a computer, the bar on a phone), on the home and with any panel open: the
 version and build, the latest change in a few still words (for the group or panel you point at,

@@ -724,3 +724,11 @@ html.embed .top .brand-text { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .ask-loading { animation: none; } }
 html[data-motion="calm"] .ask-loading { animation: none; }
+
+/* ---- One screen inside Nova Agent: the page never scrolls. The numbers stay put and the open view
+   (Browse, Live, Approve) scrolls inside its own box above the tabs ---- */
+html.embed, html.embed body { height: 100%; min-height: 0; overflow: hidden; }
+html.embed .app { height: 100vh; height: 100dvh; min-height: 0; }
+html.embed .app > main { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 14px; }
+html.embed .app > main > * { flex: none; }
+html.embed .app > main > .view:not([hidden]) { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; align-content: start; padding: 2px; }

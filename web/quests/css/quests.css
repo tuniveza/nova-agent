@@ -214,3 +214,35 @@ html[data-motion="calm"] .qx * { animation: none !important; transition: none !i
 /* Inside Nova Agent its top bar already says "Nova Agent · Quests" (/shared/topbar.css): the name isn't
    shown twice, but stays for screen readers. */
 html.embed .title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ===== One screen, nothing scrolling the page =====
+   Quests fills the space it's given exactly: the bar, the add box and the views stay put, and only
+   a view's own lists scroll when they have more than fits. Where there's room the groups and days
+   sit side by side as columns, so you see them all at once (each column scrolls by itself); a phone
+   keeps them one under another, scrolling inside the view's box. */
+html, body { height: 100%; }
+body { overflow: hidden; }
+.qx { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; padding-bottom: 12px; }
+.qx > .bar, .qx > .add, .qx > .search-row, .qx > .filters { flex: none; }
+.views-wrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.views-wrap > .view:not([hidden]) { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.views-wrap > #view-board:not([hidden]) { overflow: hidden; display: flex; flex-direction: column; }
+#view-board > .board { flex: 1 1 auto; min-height: 0; align-items: stretch; }
+#view-board .col { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+#view-board .col > ul, #view-board .col > .qs { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+@media (min-width: 900px) and (min-height: 420px) {
+  /* List: a column for each group (Now, Overdue, Today, Coming up, Any time, Done) */
+  #view-list:not([hidden]):has(> .group) { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 12px; overflow: auto hidden; }
+  #view-list > .group { display: flex; flex-direction: column; min-height: 0; margin: 0; padding: 6px 8px 8px; border-radius: var(--r); background: var(--glass, rgba(255,255,255,.03)); border: 1px solid var(--line); }
+  #view-list > .group > .g-head { margin-top: 4px; }
+  #view-list > .group > .qs { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+  /* Today: a column for each day, the ones without a time last */
+  #view-today:not([hidden]):has(> .day) { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(260px, 1fr); gap: 12px; overflow: auto hidden; }
+  #view-today > .day { display: flex; flex-direction: column; min-height: 0; margin: 0; padding: 6px 8px 8px; border-radius: var(--r); background: var(--glass, rgba(255,255,255,.03)); border: 1px solid var(--line); }
+  #view-today > .day > .g-head { margin-top: 4px; }
+  #view-today > .day > .timeline, #view-today > .day > .qs { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; align-content: start; }
+  /* In a day's column the time sits on its own small line above the quest */
+  #view-today > .day .slot { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  #view-today > .day .slot-time { display: flex; gap: 6px; align-items: baseline; justify-content: flex-start; text-align: left; padding: 0 6px; font-size: 12.5px; }
+  #view-today > .day .slot-time small::before { content: "– "; }
+}

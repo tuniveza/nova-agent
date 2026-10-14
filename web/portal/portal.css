@@ -181,7 +181,7 @@
 }
 .pv .reassure svg { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--ok); }
 .pv .gone { text-align: center; }
-.pv .screen-in { animation: pv-screen-in 0.4s ease-out backwards; }
+.pv .screen-in { animation: none; } /* (shows at once) */
 @keyframes pv-screen-in { from { opacity: 0; } }
 /* A problem with a form: its edge warms for a moment, then settles (nothing shakes) */
 .pv .attention { animation: pv-attention 1.6s ease-out; }

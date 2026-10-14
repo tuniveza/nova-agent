@@ -53,9 +53,27 @@
     .notes { display: grid; gap: 10px; margin-top: 14px; }
     /* Inside Nova Agent its viewer already names the panel: a slimmer start */
     html.embed main { padding-top: 18px; }
+    /* One screen, the page never scrolls: the heading and the notes stay put, the cards fill the
+       rest. On a wide screen the four cards (Room, Live, Sound devices, The connection) sit side by
+       side, each scrolling inside itself if it has more than fits; narrower, the cards' area
+       scrolls inside its own box. */
+    html, body { height: 100%; }
+    body { overflow: hidden; }
+    main { height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; max-width: 1440px; padding-bottom: 12px; }
+    main > .top, main > .notes { flex: none; }
+    main > .grid { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 2px; margin: -2px; }
+    main > .notes { max-height: 28%; overflow-y: auto; scrollbar-width: thin; }
+    @media (min-width: 1000px) and (min-height: 480px) {
+      main > .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; overflow: hidden; }
+      main > .grid > .col { display: contents; }
+      main > .grid .nt-card { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+      main > .notes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      html.embed .top { margin-bottom: 12px; }
+      html.embed main { padding-top: 12px; }
+    }
     /* Phones: snug margins, big buttons, boxes at 16px so phones don't zoom in */
     @media (max-width: 640px) {
-      main { padding: 14px 12px 28px; }
+      main { padding: 14px 12px 12px; }
       .nt-card { padding: 16px; }
       .nb-tool button { min-height: 44px; }
       .nb-tool :is(input, select) { font-size: 16px; }

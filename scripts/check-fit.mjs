@@ -85,6 +85,16 @@ function inspect(skip) {
   // Up one level, out of a shadow root to its host when need be (the badge, the Manual)
   const up = (e) => e.parentElement || (e.parentNode && e.parentNode.host) || null;
   const docScrollsY = se.scrollHeight > vh + 1 && cs(document.documentElement).overflowY !== "hidden" && cs(document.body).overflowY !== "hidden";
+  // One screen: inside Nova Agent (a panel, or Nova Agent's own page) the page itself and its <main>
+  // never scroll; only a box inside them does (a list, a card, a column)
+  if (document.documentElement.classList.contains("embed") || /^\/agent\/?$/.test(location.pathname)) {
+    if (docScrollsY) out.push(`the page scrolls up and down (${se.scrollHeight - vh}px more than the screen): only a box inside it should`);
+    for (const m of document.querySelectorAll("main")) {
+      if (!m.getClientRects().length || m.closest("[hidden], dialog:not([open])")) continue;
+      const ms = cs(m);
+      if (/auto|scroll/.test(ms.overflowY) && m.scrollHeight > m.clientHeight + 1) out.push(`its <main>${m.id ? "#" + m.id : ""} scrolls (${m.scrollHeight - m.clientHeight}px more): only a box inside it should`);
+    }
+  }
   const label = (e) => {
     if (!e || e.nodeType !== 1) return "?";
     let s = e.tagName.toLowerCase();

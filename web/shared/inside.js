@@ -15,13 +15,11 @@
       localStorage.removeItem(OLD + k);
     }
   } catch (err) {}
-  // Motion for every panel inside Nova Agent (cheap: only scale and opacity move, never layout): the
-  // panel fades in as it opens, and buttons, tabs and chips press in softly. Off when the device asks
-  // for less motion or Portal's Options → Animations is off. (Zero-specificity rules, so a panel's own
-  // transitions always win.)
+  // Motion for every panel inside Nova Agent (cheap: only scale moves, never layout): buttons, tabs
+  // and chips press in softly. A panel shows at once when it opens (no fade in: nothing to wait for).
+  // Off when the device asks for less motion or Portal's Options → Animations is off.
+  // (Zero-specificity rules, so a panel's own transitions always win.)
   const MOTION = `@media (prefers-reduced-motion: no-preference) {
-    :where(html.embed:not([data-motion="calm"])) body { animation: nova-panel-in .4s cubic-bezier(.2,.8,.2,1) backwards; }
-    @keyframes nova-panel-in { from { opacity: 0; } }
     :where(html:not([data-motion="calm"])) :where(button, [role="button"], [role="tab"], .btn, .chip, .tab) { transition: scale .16s cubic-bezier(.2,.8,.2,1); }
     :where(html:not([data-motion="calm"])) :where(button, [role="button"], [role="tab"], .btn, .chip, .tab):not(:disabled):active { scale: .96; }
   }`;

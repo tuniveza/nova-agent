@@ -1,0 +1,63 @@
+/* Portal inside Nova Agent (html.embed): it fills the space between Nova Agent's bars exactly and
+   the page itself never scrolls. The header and the sections' tabs stay put; the open section
+   scrolls inside its own box when it has more than fits, nothing else moves. On a computer the
+   page uses the width: Today shows its numbers, today's calendar and the new enquiries side by
+   side, so they're all on screen at once. (portal.js: portalTop() scrolls the open section, not
+   the window.) */
+html.embed, html.embed body { height: 100%; min-height: 0; overflow: hidden; }
+html.embed .app { height: 100vh; height: 100dvh; min-height: 0; }
+html.embed .app > .top, html.embed .app > nav.tabs { flex: none; }
+html.embed main { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+html.embed #main > .view:not([hidden]) {
+  flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--hi, #FF5FA8) 45%, transparent) transparent;
+  /* (room for focus rings and glows at the edges, inside the scroller) */
+  padding: 2px 4px 8px;
+}
+@media (min-width: 761px) {
+  html.embed main { padding-bottom: 12px; }
+  /* Sticky bits stick to the top of the section's own box now, not under the page's header */
+  html.embed #view-calendar > .cal { top: 0; }
+}
+
+/* ---- Today, side by side on a computer: the numbers on the left, today's calendar and the new
+   enquiries on the right, each list scrolling inside itself ---- */
+@media (min-width: 1100px) and (min-height: 520px) {
+  html.embed #view-today:not([hidden]) {
+    display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 22px; overflow: hidden; }
+  html.embed #view-today > .view-head { grid-column: 1 / -1; display: flex; flex-direction: row; justify-content: center; align-items: baseline; gap: 14px; }
+  html.embed #view-today > .today-groups { grid-column: 1; grid-row: 2; grid-template-columns: minmax(0, 1fr); align-content: start; margin: 0;
+    min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+  html.embed #view-today > .today-groups .group:first-child .today-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  html.embed #view-today > section.group { grid-column: 2; min-height: 0; display: flex; flex-direction: column; margin: 0; }
+  html.embed #view-today > section.group:not([hidden]) ~ section.group { margin-top: 14px; }
+  html.embed #view-today > section.group > .list { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; grid-auto-rows: max-content; align-content: start; }
+  /* Two lists on the right share its height (each scrolls inside itself) */
+  html.embed #view-today:has(> #today-calendar-wrap:not([hidden])) { grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); }
+  html.embed #view-today:has(> #today-calendar-wrap:not([hidden])) > .today-groups { grid-row: 2 / 4; }
+  html.embed #view-today > #today-calendar-wrap { grid-row: 2; }
+  html.embed #view-today > section.group:last-child { grid-row: 2; }
+  html.embed #view-today:has(> #today-calendar-wrap:not([hidden])) > section.group:last-child { grid-row: 3; }
+}
+
+/* ---- The sections' lanes, compact inside Nova Agent: every section still on screen, in less
+   height, so the open section gets the room ---- */
+@media (min-width: 761px) {
+  html.embed #portal-tabs.tg-rows { row-gap: 2px; padding-top: 6px; padding-bottom: 6px; margin-top: 6px; }
+  html.embed #portal-tabs.tg-rows > div.tg-br.on { margin: 2px 0; }
+  html.embed #portal-tabs.tg-rows > .tab { min-height: 28px; padding: 0 9px; gap: 6px; }
+  html.embed #portal-tabs.tg-rows > .tab > span:not(.badge) { font-size: 12.5px; }
+  html.embed #portal-tabs.tg-rows > .tab-group { height: 20px; }
+  html.embed #portal-tabs.tg-rows > .tab.embed-only { width: 28px; min-width: 28px; min-height: 28px; }
+  html.embed main { padding-top: 12px; }
+  /* A section's title and its line under it share one row */
+  html.embed #main > .view > .view-head:has(> h2 + p) { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: 14px; row-gap: 4px; margin-bottom: 10px; }
+  html.embed #main > .view > .view-head > h2 { font-size: 21px; }
+  html.embed #main > .view > .view-head:has(> h2 + p) > h2 { margin-inline: 0 !important; }
+  html.embed #main > .view > .view-head > h2 + p { margin: 0; }
+}
+/* (the profile's planet sits a touch higher than its box: inside the section's own scroller it starts level) */
+html.embed #view-profile .pv .stage, html.embed .pv .hero > .stage { margin-top: 0; }
+/* (Today's wide chips wrap inside the section on a narrow phone) */
+html.embed #view-today .today-tools { max-width: 100%; white-space: normal; height: auto; min-height: 34px; }

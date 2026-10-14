@@ -19,6 +19,14 @@
 // The site's security rules allow no scripts or styles written inside the page, so it's all here.
 (() => {
   "use strict";
+  // Back to the top of the page, or (inside Nova Agent, where the page doesn't scroll: frame.css)
+  // of the open section's own box
+  function portalTop() {
+    const v = document.querySelector("#main > .view:not([hidden])");
+    if (v) v.scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+  window.portalTop = portalTop;
 
   const $ = (id) => document.getElementById(id);
   const root = document.documentElement;
@@ -483,7 +491,7 @@
     if (url !== location.pathname + location.search) history[replace ? "replaceState" : "pushState"](null, "", url);
     if (state.screen !== "app") return;
     renderRoute();
-    window.scrollTo({ top: 0, behavior: "auto" });
+    portalTop();
   }
   window.addEventListener("popstate", () => {
     if (state.screen === "app") renderRoute();

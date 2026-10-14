@@ -1128,8 +1128,9 @@ html[data-align="center"] .q-tags { justify-content: center; }
 /* ===================== Calm and in groups ===================== */
 /* A view fades in once when you go to it; a list's first content fades in over its placeholders.
    (Opacity only: nothing slides, bounces or replays on a refresh.) */
-.view-enter { animation: view-enter 0.28s ease-out; }
-.list.filled { animation: view-enter 0.3s ease-out; }
+/* (a section and its lists show at once: no fade in, nothing to wait for) */
+.view-enter { animation: none; }
+.list.filled { animation: none; }
 @keyframes view-enter { from { opacity: 0; } }
 /* Placeholders that hold a list's place while it loads, so nothing jumps when it arrives */
 .skeleton {

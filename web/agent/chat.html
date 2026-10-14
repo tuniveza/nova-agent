@@ -213,7 +213,7 @@
      the panel in its own box */
   .viewer { display: grid; grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, 1fr); gap: 12px; min-height: 0; }
   .viewer[hidden] { display: none; }
-  .viewer > .viewer-body { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; border-radius: 24px; overflow: hidden; animation: quest-in .26s cubic-bezier(.2,.8,.2,1) both; }
+  .viewer > .viewer-body { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; border-radius: 24px; overflow: hidden; }
   .viewer-body > iframe { grid-area: 1 / 1 / 2 / 2; }
   .main.viewing > .chat, .main.viewing > .board { display: none; }
   /* The title panel's back (←) */

@@ -68,6 +68,7 @@
 
   /* Anatomy diagram */
   .anatomy { padding: 14px; display: flex; flex-direction: column; align-items: stretch; }
+  .anatomy > * { flex-shrink: 0; }
   .node {
     position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 9px 12px 9px 15px;
     background: color-mix(in srgb, var(--void) 40%, transparent); overflow: hidden;
@@ -118,6 +119,47 @@
   td:nth-child(3) { font-family: var(--f-mono); color: var(--bright); white-space: nowrap; }
   td:nth-child(4) { color: var(--muted); font-size: 12px; }
 
+  /* One screen, the page never scrolls: the heading and the four numbers stay put, the three
+     columns fill the rest and each card scrolls inside itself. Narrower, the cards' area scrolls
+     inside its own box. */
+  html, body { height: 100%; }
+  body { overflow: hidden; display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  body > header, body > .counters { flex: none; }
+  body > main { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-bottom: 12px; }
+  @media (min-width: 1101px) and (min-height: 480px) {
+    body > main { align-items: stretch; overflow: hidden; }
+    body > main > section.nt-card, body > main > .right > section.nt-card { display: flex; flex-direction: column; min-height: 0; }
+    body > main > section.nt-card > :not(h2), body > main > .right > section.nt-card > :not(h2) { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+    body > main > .right { display: grid; grid-template-rows: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; min-height: 0; }
+    .timeline { max-height: none; min-height: 0; }
+  }
+  /* Narrower than three columns: the four cards share the height, one above another, each
+     scrolling inside itself (the page and its main box stay put) */
+  @media (max-width: 1100px) {
+    body > main { overflow: hidden; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); align-items: stretch; }
+    body > main > .right { display: contents; }
+    body > main section.nt-card { display: flex; flex-direction: column; min-height: 0; }
+    body > main section.nt-card > :not(h2) { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+    body > main section > h2.nt-h { padding: 8px 14px 6px; }
+    .timeline { max-height: none; min-height: 0; }
+    .anatomy > * { flex-shrink: 0; }
+  }
+  /* A phone: a slim heading (its buttons in one row that slides sideways inside itself) and the four
+     numbers in one row, so the cards get the room */
+  @media (max-width: 640px) {
+    body > header { gap: 8px; padding: 10px 12px; }
+    body > header .actions { flex-wrap: nowrap; justify-content: flex-start !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    body > header .actions button { flex: none; min-height: 32px; padding: 5px 11px; font-size: 12px; }
+    body > .counters { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+    body > .counters > span { padding: 6px 6px; font-size: 8px; letter-spacing: .08em; }
+    body > .counters b { font-size: 16px; }
+    body > main .anatomy, body > main .shot { padding: 6px 10px; }
+    body > main .timeline { padding: 2px 0; }
+  }
+  /* A short phone: the four cards two by two */
+  @media (max-width: 640px) and (max-height: 700px) {
+    body > main { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  }
   /* Phones: snug padding, two numbers a row, the steps table scrolls inside its own box */
   @media (max-width: 640px) {
     header { margin: 10px 8px 0; padding: 12px 14px; }

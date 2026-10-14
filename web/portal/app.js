@@ -2466,7 +2466,7 @@
       setMode("reply");
       loadSaved();
       threadTimer = setInterval(() => !document.hidden && running && currentView === "enquiries" && loadThread(), THREAD_POLL_MS);
-      window.scrollTo(0, 0);
+      if (window.portalTop) window.portalTop(); else window.scrollTo(0, 0);
     }
     await loadThread();
   }
@@ -3106,7 +3106,7 @@
         card.appendChild(line);
       });
       reconcile(list, [bar, card, liveBox(chatId, data.live || { mode: "bot" })]);
-      if (fresh) window.scrollTo(0, 0);
+      if (fresh) { if (window.portalTop) window.portalTop(); else window.scrollTo(0, 0); }
       watchChat(chatId, data.live);
     } catch (err) {
       if (err.message !== "signed out") emptyState(list, err.message);

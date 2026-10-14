@@ -695,10 +695,15 @@
     bringIntoView($("money-invoice-form"));
   }
 
-  // Scroll Portal itself (never the page around it, inside Nova Agent) so a box shows, only if it doesn't
+  // Scroll Portal itself (never the page around it, inside Nova Agent) so a box shows, only if it doesn't.
+  // Inside Nova Agent the page doesn't scroll (frame.css): the open section's own box does.
   function bringIntoView(node, center) {
     const r = node.getBoundingClientRect();
     if (!center && r.top >= 60 && r.top < innerHeight - 120) return;
+    if (document.documentElement.classList.contains("embed")) {
+      node.scrollIntoView({ block: center ? "center" : "start", behavior: K().calm() ? "auto" : "smooth" });
+      return;
+    }
     const top = scrollY + r.top - (center ? Math.max(60, (innerHeight - r.height) / 2) : 80);
     scrollTo({ top: Math.max(0, top), behavior: K().calm() ? "auto" : "smooth" });
   }
