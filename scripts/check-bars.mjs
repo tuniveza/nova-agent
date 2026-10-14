@@ -87,10 +87,20 @@ for (const [w, h] of SIZES) {
   });
   const stateNow = () => tab.evaluate(() => ({ tucked: document.documentElement.classList.contains("bar-tucked"), top: document.documentElement.classList.contains("top-tucked") }));
   const before = await stateNow();
-  if (phone) {
+  // (the panel's frame: by its address, else the viewer's frame)
+  const fr = tab.frames().find((f) => f !== tab.mainFrame() && f.url().includes(PANEL.replace(/\/$/, "")))
+    || (await (await tab.$("#viewer-frame"))?.contentFrame());
+  if (phone && !fr) console.log("  (the panel's frame wasn't found: scrolling not tried)");
+  if (phone && fr) {
     // Scroll the panel's page down a good way, then up a little, then down again
-    const fr = tab.frames().find((f) => f !== tab.mainFrame() && f.url().includes(PANEL.replace(/\/$/, "")));
-    const box = await tab.evaluate(() => { const b = document.getElementById("viewer-frame").getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; });
+    const box = await tab.evaluate(() => { const b = document.getElementById("viewer-frame").getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2, b.left, b.top]; });
+    // (a touch on a quiet spot of the panel, not on a button or link: a tap there would do something)
+    const quiet = await fr.evaluate(() => {
+      const busy = (e) => !e || e.closest("a, button, input, select, textarea, label, summary, [role=button], [role=tab], [tabindex]");
+      for (let y = innerHeight / 2; y < innerHeight - 4; y += 12) for (let x = 8; x < innerWidth; x += 24) if (!busy(document.elementFromPoint(x, y))) return [x, y];
+      return null;
+    });
+    if (quiet) { box[0] = box[2] + quiet[0]; box[1] = box[3] + quiet[1]; }
     const swipe = async (dy) => {
       for (let i = 0; i < 6; i++) {
         await tab.touchscreen.tap(box[0], box[1]).catch(() => {});
