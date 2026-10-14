@@ -1,20 +1,17 @@
-// The panels bar (along the bottom on a computer, the bar on a phone) shows and hides itself:
-//   Auto (the default): always there on Nova Agent's home. With a panel open it follows what you
-//     do: on a computer it comes when you rest the mouse at the bottom edge, stays while the mouse
-//     is on or near it, and steps aside when you work higher up or scroll down; on a phone it steps
-//     aside when you scroll down a good way and comes back when you scroll up a little, reach the
-//     top, or tap the handle at the bottom.
-//   Over an open panel the bars float and only slide (bar.css): the panel never changes size when
-//     they come or go, so nothing in it jumps, and nothing is measured while they move.
-//   Always shown: it stays, as before.   Always hidden: it stays out of the way everywhere (on a
-//     phone the little handle at the bottom still brings it up, to get around).
+// The panels bar (along the bottom on a computer, the bar on a phone) and the top bar: always
+//   there by default, in the page (not floating), so nothing slides, hides or waits: you can tap
+//   them straight away from any panel. (The old Auto, which hid them while you scrolled or worked
+//   higher up, is gone: it made Nova feel laggy. A device that had Auto now has Always shown.)
+//   Always hidden is still there for anyone who picks it: the bars stay out of the way everywhere
+//   (on a phone the little handle at the bottom still brings the bar up, to get around).
 // Chosen in the Panels window (the PANELS button) or the phone's gear; remembered on the device.
-//   window.NovaBar = { mode(), setMode('auto'|'shown'|'hidden'), next(), name(), reveal() }
+//   window.NovaBar = { mode(), setMode('shown'|'hidden'), next(), name(), reveal() }
 (() => {
   "use strict";
   const KEY = "nova-bar";
-  const MODES = ["auto", "shown", "hidden"];
-  const NAMES = { auto: "Auto", shown: "Always shown", hidden: "Always hidden" };
+  const MODES = ["shown", "hidden"];
+  const NAMES = { shown: "Always shown", hidden: "Always hidden" };
+  const pick = (m) => (MODES.includes(m) ? m : "shown"); // nothing saved, or the old Auto: shown
   const root = document.documentElement;
   const main = document.getElementById("main");
   const strip = document.getElementById("suite-home");
@@ -23,17 +20,16 @@
 
   function mode() {
     try {
-      const m = localStorage.getItem(KEY);
-      return MODES.includes(m) ? m : "auto";
+      return pick(localStorage.getItem(KEY));
     } catch (err) {
-      return "auto";
+      return "shown";
     }
   }
   let current = mode();
   root.dataset.bar = current;
   // The top bar (Nova Agent's header) has its own: Auto, Always shown or Always hidden
   const TOP = "nova-top";
-  let topMode = (() => { try { const m = localStorage.getItem(TOP); return MODES.includes(m) ? m : "auto"; } catch (err) { return "auto"; } })();
+  let topMode = (() => { try { return pick(localStorage.getItem(TOP)); } catch (err) { return "shown"; } })();
   root.dataset.top = topMode;
   let topOut = true;
   const topbar = document.querySelector(".shell > .topbar");

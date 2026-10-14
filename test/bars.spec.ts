@@ -83,12 +83,14 @@ describe("the panels bar along the bottom", () => {
     expect(barJs).toMatch(/if \(\+\+tries > 30\) \{ clearInterval\(timer\)/);
   });
 
-  it("on the home it stays put while you type (the page doesn't shift under you)", () => {
-    expect(barJs).toContain('current === "auto" ? viewing() && (!out || typing) : false');
+  it("always shown by default: nothing hides, slides or waits (a device that had the old Auto gets Always shown)", () => {
+    expect(barJs).toContain('const MODES = ["shown", "hidden"];');
+    expect(barJs).toContain('const pick = (m) => (MODES.includes(m) ? m : "shown");');
+    expect(html).not.toContain('data-bar-mode="auto"');
+    expect(html).not.toContain('data-top-mode="auto"');
   });
 
-  it("keeps its three choices and its handle: Auto, Always shown, Always hidden, for the bar and the top bar", () => {
-    expect(barJs).toContain('const MODES = ["auto", "shown", "hidden"];');
+  it("keeps its two choices and its handle: Always shown, Always hidden, for the bar and the top bar", () => {
     for (const k of ["setMode", "setTopMode", "reveal: show", "nextTop"]) expect(barJs).toContain(k);
     expect(barJs).toContain('peek.id = "bar-peek";');
   });
