@@ -706,6 +706,14 @@ export const GROUPS = [
   ["Admin", ["admin"]],
   ["Console", ["clear", "history"]],
 ];
+// The buttons above the Nova tab, in groups (the same groups as help), each with the command it types
+// (one ending in a space waits for the rest to be typed)
+export const QUICK = [
+  ["Start here", [["Today", "today"], ["Now", "now"], ["Quests", "quests"], ["Search…", "search "], ["Help", "help"]]],
+  ["Apps", [["Calendar", "calendar week"], ["Notes", "notes"], ["Boards", "board"], ["Ask Agent…", "ask "]]],
+  ["Studio", [["Enquiries", "enquiries"], ["Clients", "clients"], ["Money", "money"], ["Social", "social"], ["Approvals", "approvals"]]],
+  ["Tools", [["Google", "google"], ["Computer", "computer"], ["Clear", "clear"]]],
+];
 export const EXAMPLES = {
   help: "help quests", today: "today", now: "now", status: "status", search: "search mixing", whoami: "whoami", version: "version",
   quests: 'quests add "Mix the EP" --minutes 60', missions: 'missions new "Release the EP by December"', plans: "plans",

@@ -121,6 +121,17 @@ describe("every command runs", () => {
   });
 });
 
+describe("the buttons above the Nova tab", () => {
+  it("are in groups, every one types a real command, and none of the old ones is gone", () => {
+    const groups = Nova.QUICK.map(([title]) => title);
+    expect(groups).toEqual(["Start here", "Apps", "Studio", "Tools"]);
+    const labels = Nova.QUICK.flatMap(([, b]) => b.map(([label]) => label));
+    for (const old of ["Today", "Now", "Quests", "Calendar", "Notes", "Boards", "Enquiries", "Clients", "Money", "Social", "Approvals", "Google", "Computer", "Search…", "Ask Agent…", "Help", "Clear"]) expect(labels).toContain(old);
+    for (const [, buttons] of Nova.QUICK)
+      for (const [, cmd] of buttons) expect(Nova.COMMANDS[Nova.resolveName(cmd.trim().split(" ")[0])]?.help, cmd).toBeTruthy();
+  });
+});
+
 describe("the commands", () => {
   it("adds a quest with its length, and finds one by the start of its id", async () => {
     const quests = [{ id: "abcd1234-xyz", title: "Mix", status: "todo" }];

@@ -146,3 +146,11 @@ html.is-touch .quick .q { height: 40px; }
   .keys { padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); }
   .screen .term { top: 6px; bottom: 4px; }
 }
+/* The quick commands in groups: a small name before each group, room between groups;
+   a group wraps to the next line whole */
+.quick { align-items: center; gap: 6px 26px; }
+.quick .qg { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+.quick .qg-t {
+  font: 600 10.5px var(--f-body, "Saira", sans-serif); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted, #b997b5); white-space: nowrap; margin-right: 2px;
+}

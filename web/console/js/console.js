@@ -261,7 +261,55 @@ function wrap(text, n) {
   }
   return out;
 }
+// Everything a terminal's writer prints is remembered, so when the width changes (the window, the
+// text size, or the first fit after the welcome was written) it is all laid out again, centred for
+// the new width. One writer per terminal.
+const writers = new WeakMap();
 function writer(term) {
+  if (!writers.has(term)) writers.set(term, rememberAll(term, layout(term)));
+  return writers.get(term);
+}
+function rememberAll(term, methods) {
+  const log = [];
+  let depth = 0;
+  let replaying = false;
+  const remember = (fn) => {
+    if (replaying) return;
+    log.push(fn);
+    if (log.length > 600) log.splice(0, log.length - 600);
+  };
+  const out = {};
+  for (const [k, fn] of Object.entries(methods))
+    out[k] = (...args) => {
+      if (!depth) remember(() => out[k](...args));
+      depth++;
+      try {
+        return fn.apply(out, args);
+      } finally {
+        depth--;
+      }
+    };
+  // Something already on screen, to be drawn again (by fn) after a change of width
+  out.remember = remember;
+  // Plain text written now and again after a change of width
+  out.raw = (text) => {
+    remember(() => term.write(text));
+    term.write(text);
+  };
+  out.forget = () => void (log.length = 0);
+  out.relayout = () => {
+    replaying = true;
+    // (in the stream, not term.reset(): that runs at once, before writing still queued, which then lands on the cleared screen)
+    term.write("\x1bc\x1b[3J");
+    try {
+      for (const fn of log) fn();
+    } finally {
+      replaying = false;
+    }
+  };
+  return out;
+}
+function layout(term) {
   const cols = () => Math.max(20, term.cols);
   const readable = () => Math.min(cols() - 4, 92);
   // A block of already-coloured lines, centred as a block
@@ -360,6 +408,11 @@ function novaTab(me) {
   const tab = addTab({ id: "nova", title: "Nova", closable: false, kind: "nova" });
   const term = tab.term;
   const out = writer(term);
+  // The prompt lines up with the left edge of the centred text above it
+  const indent = () => {
+    const c = Math.max(20, term.cols);
+    return " ".repeat(Math.max(0, Math.floor((c - Math.min(c - 4, 92)) / 2)));
+  };
   const history = store.get("nova-console-history", []).slice(-200);
   let line = "";
   let cursor = 0;
@@ -367,8 +420,9 @@ function novaTab(me) {
   let busy = false;
   let asking = null; // { resolve, prompt }
 
-  const prompt = () => (asking ? asking.prompt : PROMPT);
-  const promptLen = () => (asking ? asking.len : PROMPT_LEN);
+  const promptOf = (a) => indent() + (a ? a.prompt : PROMPT);
+  const prompt = () => promptOf(asking);
+  const promptLen = () => indent().length + (asking ? asking.len : PROMPT_LEN);
   // Where the cursor was drawn (prompt + text before it), so a long line that wraps is redrawn whole
   let drawnAt = 0;
   function redraw() {
@@ -388,6 +442,13 @@ function novaTab(me) {
     term.write(`\r${at % cols ? `\x1b[${at % cols}C` : ""}`);
     drawnAt = at;
   }
+  // A fresh prompt on a new line
+  function freshPrompt() {
+    line = "";
+    cursor = 0;
+    drawnAt = 0;
+    redraw();
+  }
   function setLine(v) {
     line = v;
     cursor = v.length;
@@ -398,7 +459,10 @@ function novaTab(me) {
     me,
     api,
     ...out,
-    clear: () => term.clear(),
+    clear: () => {
+      out.forget();
+      term.clear();
+    },
     history: () => history.slice(),
     ask: (question) =>
       new Promise((resolve) => {
@@ -430,6 +494,8 @@ function novaTab(me) {
 
   async function submit() {
     const text = line;
+    const was = asking;
+    out.remember(() => term.write(`${promptOf(was)}${text}\r\n`));
     term.write("\r\n");
     line = "";
     cursor = 0;
@@ -452,10 +518,7 @@ function novaTab(me) {
       out.error(err.message || String(err));
     }
     busy = false;
-    if (!asking) {
-      term.write(PROMPT);
-      drawnAt = PROMPT_LEN;
-    }
+    if (!asking) freshPrompt();
   }
 
   function complete() {
@@ -485,7 +548,7 @@ function novaTab(me) {
 
   tab.input = (data) => {
     if (busy && !asking) {
-      if (data === "\x03") term.write(`${C.dim}^C (it carries on in the background)${C.reset}\r\n`);
+      if (data === "\x03") out.raw(`${C.dim}^C (it carries on in the background)${C.reset}\r\n`);
       return;
     }
     switch (data) {
@@ -539,22 +602,23 @@ function novaTab(me) {
       case "\x15":
         return setLine("");
       case "\x0c":
+        out.forget();
         term.clear();
         return redraw();
-      case "\x03":
+      case "\x03": {
+        const a = asking;
+        const text = line;
+        out.remember(() => term.write(`${promptOf(a)}${text}${C.dim}^C${C.reset}\r\n`));
         term.write(`${C.dim}^C${C.reset}\r\n`);
         if (asking) {
-          const a = asking;
           asking = null;
           line = "";
           cursor = 0;
           a.resolve("");
           return;
         }
-        line = "";
-        cursor = 0;
-        drawnAt = PROMPT_LEN;
-        return void term.write(PROMPT);
+        return freshPrompt();
+      }
       case "\x1b":
         return setLine("");
     }
@@ -574,9 +638,19 @@ function novaTab(me) {
   out.print("Everything in Nova Agent, typed.");
   out.dim(`Signed in as ${me.name} (${me.role})${me.online ? " · online" : " · on the studio computer"}`);
   out.dim("Type help · or tap a command above · try: today · quests · enquiries · computer");
-  term.write("\r\n");
-  term.write(PROMPT);
-  drawnAt = PROMPT_LEN;
+  out.raw("\r\n");
+  freshPrompt();
+  // A new width (the first fit, the window, the text size): everything again, centred for it
+  let laidOutFor = term.cols;
+  tab.onResize = (cols) => {
+    if (cols === laidOutFor) return;
+    laidOutFor = cols;
+    out.relayout();
+    if (!busy || asking) {
+      drawnAt = 0;
+      redraw();
+    }
+  };
   return tab;
 }
 
@@ -705,21 +779,30 @@ addEventListener("storage", (e) => e.key === "nova-look" && setTimeout(retheme, 
 new MutationObserver(() => retheme()).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-look", "style"] });
 
 // ---- Quick commands: tap one to run it (the Nova tab) ----
-const QUICK = [
-  ["Today", "today"], ["Now", "now"], ["Quests", "quests"], ["Calendar", "calendar week"], ["Notes", "notes"], ["Boards", "board"],
-  ["Enquiries", "enquiries"], ["Clients", "clients"], ["Money", "money"], ["Social", "social"], ["Approvals", "approvals"],
-  ["Google", "google"], ["Computer", "computer"], ["Search…", "search "], ["Ask Agent…", "ask "], ["Help", "help"], ["Clear", "clear"],
-];
+// (in groups, from commands.js; hovering one says what it does)
 function quickRow() {
   const row = $("quick");
   if (!row) return;
-  row.replaceChildren(
-    ...QUICK.map(([label, cmd]) => {
+  row.replaceChildren(...Nova.QUICK.map(([title, buttons]) => quickGroup(title, buttons)));
+}
+function quickGroup(title, buttons) {
+  const g = document.createElement("div");
+  g.className = "qg";
+  g.setAttribute("role", "group");
+  g.setAttribute("aria-label", title);
+  const label = document.createElement("span");
+  label.className = "qg-t";
+  label.textContent = title;
+  label.setAttribute("aria-hidden", "true");
+  g.append(
+    label,
+    ...buttons.map(([label, cmd]) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "q";
       b.textContent = label;
-      b.title = cmd.trim();
+      const what = Nova.COMMANDS[Nova.resolveName(cmd.trim().split(" ")[0])]?.help;
+      b.title = what ? `${what} (types: ${cmd.trim()})` : cmd.trim();
       b.addEventListener("click", () => {
         const nova = tabs.find((t) => t.kind === "nova");
         if (!nova) return;
@@ -732,6 +815,7 @@ function quickRow() {
       return b;
     })
   );
+  return g;
 }
 const showQuick = () => {
   const row = $("quick");
