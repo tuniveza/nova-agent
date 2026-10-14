@@ -260,7 +260,8 @@ function chapter(s, i) {
 function build() {
   const apps = [];
   for (const app of APPS) {
-    const dir = app.repo ? join(ns, app.repo) : root;
+    // (Nova Bot is ns/nb/novacane-worker on the laptop; on the VPS the work copy nb is that folder itself)
+    const dir = !app.repo ? root : [join(ns, app.repo), join(ns, app.repo.split("/")[0])].find((d) => existsSync(join(d, "README.md"))) || join(ns, app.repo);
     const file = join(dir, app.repo ? "README.md" : app.readme);
     if (!existsSync(file)) {
       console.log(`skip ${app.name}: no README at ${file}`);
