@@ -79,4 +79,16 @@ describe("one screen, nothing scrolling the page", () => {
     expect(css).toContain("html.fx-wide .fx-tabs { display: none; }");
     expect(css).toContain("html.fx-wide #pane-needs { grid-row: 1 / span 2; }");
   });
+
+  it("the home's welcome: sized once, kept while it still fits, never a hair too big", () => {
+    const js = read("../web/agent/assets/music.js");
+    expect(js).toContain("let fitting = 0, lastZ = 0;");
+    expect(js).toContain("const r3 = (z) => Math.floor(z * 1000) / 1000;");
+    expect(js).not.toContain("Math.round(z * 1000) / 1000");
+  });
+
+  it("Portal's lanes share lines when there's room", () => {
+    const js = read("../web/portal/tabbar.js");
+    expect(js).toContain("const fit = w <= room ? lines.find((l) => l.used + apart + gap + w + 8 <= room) : null;");
+  });
 });

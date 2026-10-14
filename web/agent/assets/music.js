@@ -217,7 +217,7 @@
 
   // The whole front page fits the chat's space with no scrolling, and fills it: drawn smaller when
   // it's taller than the room, bigger when there's room to spare
-  let fitting = 0;
+  let fitting = 0, lastZ = 0;
   function fit() {
     cancelAnimationFrame(fitting);
     fitting = requestAnimationFrame(() => {
@@ -237,17 +237,28 @@
       };
       // Fills the room: smaller when there's too little (never below 65%), bigger when there's
       // plenty (up to 140%), always all of it in view
+      const done = (z, h) => { lastZ = z; log.classList.toggle("mw-scroll", h > room + 2); };
+      const r3 = (z) => Math.floor(z * 1000) / 1000; // (down: a size that fits, never a hair over it)
+      // Most of the time nothing has changed: the last size still fits and a touch bigger doesn't.
+      // Two layouts instead of a dozen (this runs on every resize, font and picture load)
+      if (lastZ) {
+        if (lastZ >= 1.4) { const h = measure(1.4); if (!h) return; if (h <= room) return done(1.4, h); }
+        else if (measure(r3(Math.min(1.4, lastZ * 1.02))) > room) {
+          const h = measure(lastZ);
+          if (!h) return;
+          if (h <= room || lastZ <= 0.65) return done(lastZ, h);
+        }
+      }
       // The biggest size (65% to 140%) at which all of it is in view. Text rewraps as the size
       // changes, so it's searched for rather than worked out
-      const need = measure(1);
-      if (!need) return;
       let lo = 0.65, hi = 1.4;
-      if (measure(hi) <= room) lo = hi;
-      else for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (measure(mid) <= room) lo = mid; else hi = mid; }
-      const z = lo;
-      measure(Math.round(z * 1000) / 1000);
+      const top = measure(hi);
+      if (!top) return;
+      if (top <= room) return done(hi, top);
+      for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (measure(mid) <= room) lo = mid; else hi = mid; }
+      const z = r3(lo);
       // Only on a very small screen, where even smaller would be unreadable, can it scroll
-      log.classList.toggle("mw-scroll", measure(Math.round(z * 1000) / 1000) > room + 2);
+      done(z, measure(z));
     });
   }
   new ResizeObserver(fit).observe(log);

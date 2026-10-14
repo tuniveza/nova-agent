@@ -87,9 +87,9 @@
   }).observe(bar, { subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
 
   // ---- Every section at once (tabs on top): lanes ----
-  // The groups with one tab (Today · You · Admin) share the first lane; then a lane each for the
-  // groups with several (Studio · Plans · the settings icons inside Nova Agent), with a soft line
-  // between lanes (.tg-br). Each group's name is a small chip; in the lanes the chips are all one
+  // The groups with one tab (Today · You · Admin) share the first lane; then the groups with several
+  // (Studio · Plans · the settings icons inside Nova Agent), each on the first line with room for it,
+  // with a soft line between lines (.tg-br). Each group's name is a small chip; in the lanes the chips are all one
   // width, so the tabs line up. A lane wider than the bar splits into two even halves, the second
   // lined up under the first (.tg-mid, then .tg-indent). The whole block sits in the middle of the
   // bar (--tg-inset). Only for the tab bar on a computer or tablet: the side menu and the phone's
@@ -145,25 +145,43 @@
       w1 += (i ? apart : 0) + lab + gap + x.tabs[0].getBoundingClientRect().width + (i ? gap : 0);
     });
     widest = Math.min(w1, room);
-    // Then a lane each
-    lanes.forEach((x, i) => {
+    // Then the lanes, packed: a lane goes on the first line with room for it (after what's there),
+    // else it starts a line of its own; so short lanes (Plans, Admin, the settings icons) share a
+    // line and the block is as short as it can be. lines: { order, used } (used: the line's last row)
+    const lines = singles.length ? [{ order: 0, used: w1 }] : [];
+    lanes.forEach((x) => {
       const { g, tabs } = x;
-      for (const el of [g.br, g.label, ...g.tabs, g.mid]) place(el, i + 1);
-      set(g.label, "tg-apart", false);
-      set(g.br, "on", singles.length > 0 || i > 0);
       const widths = tabs.map((t) => t.getBoundingClientRect().width);
       const line = (a, b) => widths.slice(a, b).reduce((n, v) => n + v, 0) + gap * Math.max(0, b - a - 1);
       const all = line(0, tabs.length);
+      const w = lab + gap + all;
+      const fit = w <= room ? lines.find((l) => l.used + apart + gap + w + 8 <= room) : null;
+      if (fit) {
+        for (const el of [g.br, g.label, ...g.tabs, g.mid]) place(el, fit.order);
+        set(g.label, "tg-apart", true);
+        set(g.br, "on", false);
+        set(g.mid, "on", false);
+        for (const t of g.tabs) set(t, "tg-indent", false);
+        fit.used += apart + gap + w + 4;
+        widest = Math.max(widest, Math.min(fit.used, room));
+        return;
+      }
+      const order = lines.length ? lines[lines.length - 1].order + 1 : 1;
+      for (const el of [g.br, g.label, ...g.tabs, g.mid]) place(el, order);
+      set(g.label, "tg-apart", false);
+      set(g.br, "on", lines.length > 0);
       let split = -1;
-      if (lab + gap + all > room) {
+      if (w > room) {
         let run = 0;
         for (let j = 0; j < tabs.length; j++) { run += widths[j] + gap; if (run >= all / 2) { split = Math.min(j + 1, tabs.length - 1); break; } }
       }
       if (split > 0 && g.mid.nextElementSibling !== tabs[split]) tabs[split].before(g.mid);
       set(g.mid, "on", split > 0);
       for (const t of g.tabs) set(t, "tg-indent", split > 0 && t === tabs[split]);
-      const w = lab + gap + (split > 0 ? Math.max(line(0, split), line(split, tabs.length)) : all);
-      widest = Math.max(widest, Math.min(w, room));
+      const first = split > 0 ? lab + gap + line(0, split) : w;
+      const last = split > 0 ? lab + gap + line(split, tabs.length) : w;
+      lines.push({ order, used: last });
+      widest = Math.max(widest, Math.min(Math.max(first, last), room));
     });
     // (a little room to spare, so a lane never wraps over a pixel or two of rounding)
     const inset = `${Math.max(0, Math.floor((room - widest) / 2) - 10)}px`;
