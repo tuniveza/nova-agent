@@ -185,3 +185,5 @@ body.nb-tool {
   .nt-loading::before { animation-duration: 3s; }
   .nb-tool summary::before, .nt-bar > div { transition: none; }
 }
+/* Touch screens: the small labels readable on a phone */
+@media (pointer: coarse) { .nt-kicker, .nt-chip { font-size: 11px; } }

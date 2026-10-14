@@ -41,3 +41,11 @@
 @media (prefers-reduced-motion: reduce) {
   .lib-scope button, .note-kind { transition: none; }
 }
+/* Touch screens: a finger-sized button */
+@media (pointer: coarse) { .note-kind { min-height: 40px; min-width: 40px; justify-content: center; } }
+/* A phone held sideways inside Nova Agent: just the icon (its name is still read out), so the one-row header fits */
+@media (max-height: 500px) and (min-width: 641px) {
+  html.embed .note-kind { flex: none; margin-left: 4px; padding: 0 10px; }
+  html.embed .note-kind > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  html.embed .doc-head .doc-title { flex: 1 1 auto; min-width: 0; width: auto; }
+}

@@ -151,7 +151,7 @@
     body > header .actions { flex-wrap: nowrap; justify-content: flex-start !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
     body > header .actions button { flex: none; min-height: 32px; padding: 5px 11px; font-size: 12px; }
     body > .counters { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 8px; }
-    body > .counters > span { padding: 6px 6px; font-size: 8px; letter-spacing: .08em; }
+    body > .counters > span { padding: 6px 6px; font-size: 11px; letter-spacing: .04em; }
     body > .counters b { font-size: 16px; }
     body > main .anatomy, body > main .shot { padding: 6px 10px; }
     body > main .timeline { padding: 2px 0; }
@@ -172,6 +172,42 @@
     .pair-arrows { display: none; }
     section:has(table) { overflow-x: auto; }
     .row { grid-template-columns: 54px 64px minmax(0, 1fr); padding: 6px 10px; margin: 0 2px; }
+  }
+  /* A short screen (a phone held sideways, or a small phone's panel): the heading is one slim row
+     (inside Nova Agent the title panel already names it), its buttons slide sideways inside it, and
+     the four numbers are one slim row, so the cards keep the room. The page still never scrolls */
+  @media (max-height: 500px) {
+    body > header.nt-card { flex-wrap: nowrap; align-items: center; gap: 8px; margin: 6px 8px 0; padding: 4px 8px; }
+    body > header .nt-kicker { display: none; }
+    body > header h1 { font-size: 16px; white-space: nowrap; }
+    html.embed body > header .who { display: none; }
+    body > header .spacer { display: none; }
+    body > header .actions { flex: 1 1 auto; width: auto; min-width: 0; flex-wrap: nowrap; justify-content: flex-start !important; overflow-x: auto; scrollbar-width: none; }
+    body > header .actions button { flex: none; }
+    body > .counters { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 6px 8px; }
+    body > .counters > span { display: flex; align-items: baseline; gap: 6px; padding: 3px 8px; border-radius: 10px; font-size: 11px; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    body > .counters b { font-size: 15px; }
+    body > main section > h2.nt-h { padding: 6px 12px 4px; }
+  }
+  /* Short and narrow (a small phone's panel): the slim numbers two by two, so their words fit */
+  @media (max-height: 500px) and (max-width: 640px) {
+    body > .counters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  /* A phone held sideways: the four cards side by side, each scrolling inside itself */
+  @media (max-height: 500px) and (min-width: 641px) {
+    body > main { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 8px; padding: 6px 8px 8px; }
+  }
+  /* Cards narrower than a step's three columns (side by side, or two by two on a phone): the time
+     and the tag on one line, the words under them at the card's full width */
+  @media (max-height: 500px) and (min-width: 641px), (max-width: 640px) and (max-height: 700px) {
+    .row { grid-template-columns: auto auto minmax(0, 1fr); gap: 2px 8px; padding: 4px 8px; margin: 0; }
+    .row .msg, .row .more, .row > pre { grid-column: 1 / -1; }
+    body > main section > h2.nt-h { font-size: 12px; letter-spacing: .1em; }
+  }
+  /* Touch screens: buttons big enough for a finger */
+  @media (pointer: coarse) {
+    .nb-tool .actions button, body > header .actions button { min-height: 40px; }
+    .status { font-size: 11px; }
   }
 </style>
 <!-- Every button's look (buttons.css; body.nb-plain: plain buttons join in) -->

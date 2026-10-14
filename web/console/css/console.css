@@ -115,3 +115,34 @@ html body .screen .xterm, html body .screen .xterm * { text-align: left !importa
   .quick .q { flex: none; }
 }
 html.is-touch .quick .q { height: 40px; }
+/* Touch screens: every button at least 40px */
+@media (pointer: coarse) {
+  .tab, .chip, .icon-btn { height: 40px; }
+  .icon-btn { min-width: 40px; }
+  .keys button { height: 40px; }
+}
+/* A short screen (a phone held sideways): the quick commands share the top row with the tabs (each
+   slides sideways inside itself), the note is one line and the keys are slim, so the terminal keeps
+   the room (before this it had none at 780×360) */
+@media (max-height: 500px) and (min-width: 561px) {
+  .console-app { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; }
+  .bar { grid-row: 1; grid-column: 1; flex-wrap: nowrap; padding: 4px 8px; max-width: 60vw; }
+  .console-app:has(.quick[hidden]) .bar { grid-column: 1 / -1; max-width: none; }
+  .tabs { flex: 0 1 auto; }
+  .tools { flex-wrap: nowrap; flex: none; }
+  .quick { grid-row: 1; grid-column: 2; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; align-items: center; padding: 4px 8px; border-bottom: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.16); }
+  .quick .q { flex: none; }
+  .note, .screens, .keys { grid-column: 1 / -1; }
+  .note { grid-row: 2; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; white-space: nowrap; scrollbar-width: none; padding: 4px 12px; font-size: 13px; }
+  .note .here { min-height: 32px; }
+  .screens { grid-row: 3; }
+  .keys { grid-row: 4; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); }
+  .screen .term { top: 6px; bottom: 4px; }
+}
+/* A short, narrow panel (a small phone upright): slimmer rows round the terminal */
+@media (max-height: 500px) and (max-width: 560px) {
+  .note { padding: 4px 10px; font-size: 13px; }
+  .quick { padding: 4px 8px; }
+  .keys { padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); }
+  .screen .term { top: 6px; bottom: 4px; }
+}

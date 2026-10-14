@@ -700,6 +700,26 @@ html.embed .page-wrap { padding: 14px clamp(8px, 2vw, 18px) 90px; }
   html.embed .topbar { row-gap: 2px; padding-top: 4px; padding-bottom: 2px; }
 }
 
+/* A phone held sideways inside Nova Agent: the header is ONE row (notes list, the note's name, the
+   menus sliding sideways inside themselves, then the buttons; Nova Agent's title panel already names
+   Notes), so the page gets the height (before this it had 34px of a 254px frame) */
+@media (max-height: 500px) and (min-width: 641px) {
+  html.embed .topbar { grid-template-columns: auto minmax(140px, 1fr) minmax(0, auto) auto; grid-template-areas: "lib doc menu actions"; row-gap: 0; column-gap: 8px; align-items: center; }
+  html.embed .topbar .brand { display: none; }
+  html.embed .topbar .doc-head { grid-area: doc; min-width: 0; }
+  html.embed .topbar .save-state > span { display: none; }
+  html.embed .menubar { grid-area: menu; min-width: 0; margin-left: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  html.embed .menubar > button { flex: none; padding-inline: 8px; }
+}
+
+/* A short frame on a narrow screen (a phone on its side, or bigger text): the notes list slides in
+   at the frame's full height and scrolls as one (it used to get the writing area's height, leaving
+   its list 0px tall); tapping beside it still closes it */
+@media (max-height: 500px) and (max-width: 880px) {
+  .library { position: fixed; top: 6px; bottom: 6px; left: 6px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .library .lib-list { flex: none; overflow: visible; }
+}
+
 /* ---------- THE PAGE STAYS PUT ----------
    At every size the whole of Notes fits its window (or Nova Agent's frame): the bars stay on top,
    the page sits whole in the space below, and nothing hangs off the side or the bottom. The only
@@ -789,3 +809,5 @@ dialog.dlg.guide .dlg-foot { justify-content: center; }
   dialog.dlg.guide .dlg-head { padding-top: 8px; padding-bottom: 8px; }
   dialog.dlg.guide .dlg-kicker { display: none; }
 }
+/* Touch screens: the guide's topics finger-sized */
+@media (pointer: coarse) { .guide-toc button { min-height: 40px; } }
