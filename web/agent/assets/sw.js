@@ -8,15 +8,17 @@
 // /app/sw.js or /portal/sw.js, which sends taps here too.)
 
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+// (navigation preload: a page's request goes out while this wakes up, so it never waits for it)
+self.addEventListener("activate", (event) => event.waitUntil(Promise.all([self.clients.claim(), self.registration.navigationPreload ? self.registration.navigationPreload.enable().catch(() => {}) : null])));
 
 // ---- Nova's files on the device ----
 // Every deploy writes /nova-build.json: each of Nova's own files (scripts, styles, icons, sounds)
 // with a fingerprint of what's in it. A file is kept here once fetched and used straight from here
 // (no asking the server "has it changed?" for each of the 60+ files a page needs) for as long as
-// its fingerprint stays the same. A page being opened (Nova Agent, or a panel inside it) fetches
-// the list again first, so after a deploy only the files that changed are fetched; files that went
-// are dropped. Pages themselves, data and anything not on the list always come from Nova as before,
+// its fingerprint stays the same. A page being opened (Nova Agent, or a panel inside it) says which
+// deploy it's from (X-Nova-Build): the same as the list kept here, and the files are used at once;
+// a newer one, and the new list is fetched first, so after a deploy only the files that changed are
+// fetched; files that went are dropped. Pages themselves, data and anything not on the list always come from Nova as before,
 // and so does everything when the list can't be had (the studio PC, offline the first time).
 // After Nova Agent's page opens, the files of the panels not opened yet are fetched quietly too
 // (not on a slow or data-saving connection), so the first time a panel opens it's instant as well.
@@ -78,6 +80,14 @@ function checkList() {
   }
   return checking;
 }
+// The deploy a page says it's from: the list kept here if it's that one, else the new list
+async function listFor(build) {
+  if (!build) return checkList(); // a page that doesn't say: ask for the list
+  const now = await storedList();
+  if (now && now.build === build) return now;
+  checkedAt = 0;
+  return checkList();
+}
 
 // One of Nova's files: from here if it's kept and still the same, else fetched (and kept)
 async function novaFile(request, path) {
@@ -124,10 +134,14 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  // A page opening (Nova Agent or a panel): the list again, alongside the page itself
+  // A page opening (Nova Agent or a panel): fetched as always; what it says about its deploy decides
+  // whether the files kept here can be used at once or the new list is needed first
   if (req.mode === "navigate") {
     if (url.origin === location.origin) {
-      const check = checkList();
+      const page = Promise.resolve(event.preloadResponse).then((res) => res || fetch(req));
+      const check = page.then((res) => listFor(res.headers.get("X-Nova-Build")), () => list);
+      checking = check;
+      event.respondWith(page);
       event.waitUntil(check);
       // Nova Agent's own page: then the other panels' files, quietly (once per deploy)
       if (url.pathname === "/agent/" && !warming && !slow(req)) {

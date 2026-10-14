@@ -83,12 +83,31 @@ describe("Nova's files on the device", () => {
   it("pages, data and files that aren't on the list are left to Nova", async () => {
     const served: Record<string, () => Response> = { "/nova-build.json": list("b1", { "/shared/fit.js": "aaa" }), "/status.json": () => new Response("{}"), "/observatory/data/projects.js": () => new Response("x") };
     const sw = boot(served);
-    expect((await sw.event("/agent/", "navigate")).answer).toBeNull(); // pages: not answered here
+    const page = await (await sw.event("/agent/", "navigate")).answer!; // pages: Nova's own answer, passed on
+    expect(page.status).toBe(404); // (this test's Nova has no page there)
     expect((await sw.event("/quests/state")).answer).toBeNull(); // data
     expect((await sw.event("/status.json")).answer).toBeNull();
     const notListed = await (await sw.event("/observatory/data/projects.js")).answer!;
     expect(await notListed.text()).toBe("x");
     expect(sw.stores.get("nova-files")?.has(ORIGIN + "/observatory/data/projects.js")).toBeFalsy();
+  });
+
+  it("a page from the deploy whose list is kept: the files are used at once, no list asked for", async () => {
+    const page = (build: string) => () => new Response("<!doctype html>", { headers: { "Content-Type": "text/html", "X-Nova-Build": build } });
+    const served: Record<string, () => Response> = { "/nova-build.json": list("b1", { "/a.js": "1" }), "/agent/": page("b1"), "/calendar/": page("b1"), "/a.js": () => new Response("a1") };
+    const sw = boot(served);
+    await Promise.all((await sw.event("/agent/", "navigate")).waits.slice(0, 1));
+    await (await sw.event("/a.js")).answer;
+    const asked = sw.fetched.filter((p) => p === "/nova-build.json").length;
+    await Promise.all((await sw.event("/calendar/", "navigate")).waits);
+    expect(await (await (await sw.event("/a.js")).answer!).text()).toBe("a1");
+    expect(sw.fetched.filter((p) => p === "/nova-build.json").length).toBe(asked); // not asked again
+    // a page from a newer deploy: the new list first, and the changed file fetched
+    served["/nova-build.json"] = list("b2", { "/a.js": "2" });
+    served["/a.js"] = () => new Response("a2");
+    served["/calendar/"] = page("b2");
+    await Promise.all((await sw.event("/calendar/", "navigate")).waits);
+    expect(await (await (await sw.event("/a.js")).answer!).text()).toBe("a2");
   });
 
   it("with no list (the studio PC), nothing is kept", async () => {
