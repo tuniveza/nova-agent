@@ -178,3 +178,5 @@ html.fx-wide .pane-h, html.fx-wide .panes > .pane .nt-h { display: flex; justify
 html.fx-wide .panes > .pane .nt-h::before { display: none; }
 html.fx-wide .pane .pair { grid-template-columns: minmax(0, 1fr); }
 html.fx-wide .pane .shots { grid-template-columns: minmax(0, 1fr); }
+html.fx-wide .panes .switch-row { justify-content: flex-start; text-align: left; }
+html.fx-wide .panes .switch-row > input { flex: none; }
