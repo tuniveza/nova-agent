@@ -156,9 +156,7 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
 }
 /* A tablet, or a window between phone and computer size: the bar in one row, centred */
 @media (min-width: 601px) and (max-width: 980px) {
-  .tabbar { grid-template-columns: var(--tg-cols, 5fr 2fr 2fr 2fr); grid-template-areas: "apps tasks tools helpers"; padding-inline: max(6px, calc((100% - 880px) / 2)); }
-  /* (each place as wide as its name needs, the room left shared out between them) */
-  .tabbar .tg-items { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, auto); justify-content: space-around; }
+  /* (in one row, every place the same width: phone.css) */
   .tabbar .tgroup[data-group="tasks"] { border-left: 1px solid var(--line); padding-left: 6px; }
 }
 /* The welcome (and its row of suggestions) always spans the conversation's width, so a row you

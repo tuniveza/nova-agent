@@ -299,15 +299,9 @@
   function layout() {
     const shown = NARROW.matches ? '[data-tab]:not(.in-more), [data-more]' : '[data-tab]';
     for (const g of bar.querySelectorAll('.tgroup')) g.style.setProperty('--k', g.querySelectorAll(shown).length || 1);
-    // In one row (a tablet, a phone on its side) each group's share of the width follows its places
-    // and how long their names are, so a group of four (or a long name like Observatory) never
-    // squeezes into too little room
-    const share = (id) => {
-      const g = bar.querySelector(`.tgroup[data-group="${id}"]`);
-      const items = g ? [...g.querySelectorAll(shown)] : [];
-      return Math.max(1, items.reduce((n, b) => n + Math.max(1, (b.textContent.trim().length || 1) / 6.5), 0));
-    };
-    bar.style.setProperty('--tg-cols', ['apps', 'tasks', 'tools', 'helpers'].map((id) => `minmax(0, ${share(id).toFixed(2)}fr)`).join(' '));
+    // In one row (a tablet, a short or zoomed-in window, a phone on its side) every place is the same
+    // width, whatever its group: phone.css shares the row out by how many places are showing
+    bar.style.setProperty('--tab-n', [...bar.querySelectorAll('.tgroup:not([data-group="more"])')].reduce((n, g) => n + g.querySelectorAll(shown).length, 0) || 14);
     document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight || 126}px`);
   }
   window.addEventListener('resize', layout);

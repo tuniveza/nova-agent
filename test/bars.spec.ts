@@ -97,9 +97,13 @@ describe("the panels bar along the bottom", () => {
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*html \.main\.viewing > \.suite-home, html \.shell > \.tabbar, html \.shell > \.topbar/);
   });
 
-  it("in one row (a tablet, a phone on its side) each group's share follows its places and their names", () => {
-    expect(phoneJs).toContain("bar.style.setProperty('--tg-cols'");
-    expect(read("../web/agent/assets/glow.css")).toContain("grid-template-columns: var(--tg-cols, 5fr 2fr 2fr 2fr)");
+  it("in one row (a tablet, a short window, a phone on its side) every place is the same width and each group as wide as its places", () => {
+    expect(phoneJs).toContain("bar.style.setProperty('--tab-n'");
+    const phoneCss = rules(read("../web/agent/assets/phone.css"));
+    expect(phoneCss).toMatch(/\.tabbar > \.tgroup \{ flex: 0 0 auto;/);
+    expect(phoneCss).toMatch(/grid-template-columns: repeat\(var\(--k, 2\), var\(--tab-w\)\)/);
+    expect(phoneCss).toMatch(/text-overflow: ellipsis/);
+    expect(phoneCss + rules(read("../web/agent/assets/glow.css"))).not.toMatch(/5fr 2fr 2fr 2fr/);
   });
 });
 
