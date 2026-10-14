@@ -1,10 +1,12 @@
-// Portal → Admin → Computer (admins; called "desk" inside: this file, view=desk, /app/api/desk): where Nova Bot runs, all day and night — on Cloudflare and on the
-// studio's VPS — side by side (Nova Bot's src/desk.js: GET /app/api/desk says it all).
-// Each side: online or not, since when, how busy (processor, memory, disk), its version, the
-// last copy of the data and the last backup, its jobs' last runs, the PC link, and recent problems
-// in plain words. Buttons for admins (Portal open in a browser): restart Nova Bot on the VPS,
-// restart its web front, back up now (Restart asks twice). Above them: which side is live (the one
-// the address everyone uses reaches), the commands to switch over and back, and any warnings.
+// Portal → Admin → Computer (admins; called "desk" inside: this file, view=desk, /app/api/desk): Nova's
+// own computer, the studio's VPS, where Nova Bot and Nova Agent run all day and night (Nova Bot's
+// src/desk.js: GET /app/api/desk says it all).
+// Live now: Nova's address, where Nova Agent runs (the server or the studio PC), the commands to move
+// it, and any warnings. Then the VPS: online or not, since when, how busy (processor, memory, disk),
+// its services (Nova Bot, Nova Agent, the web front, the mail sender, timed jobs, backups), its
+// version, the last backup, recent problems in plain words; and Nova Bot's version, Nova Agent's
+// link and the jobs' last runs. Buttons for admins (Portal open in a browser): restart Nova Bot,
+// restart Nova Agent, restart the web front, back up now (restarts ask twice).
 // Plain buttons and text only (nothing from the server is drawn as HTML), words not colours.
 
 (function () {
@@ -60,15 +62,18 @@
     return s;
   }
 
+  const agentWhere = (pc) => (pc && pc.connected ? (pc.where === "server" ? "On Nova's computer" : "On the studio PC") : "Not linked");
+
+  // Nova Bot and Nova Agent on it: versions, the link, each job's last run
   function hereCard(h) {
     const card = el("section", "card dk-card");
-    card.setAttribute("aria-label", h.where === "vps" ? "Nova Bot on Nova's own computer" : "Nova Bot at the old host");
+    card.setAttribute("aria-label", "Nova Bot and Nova Agent");
     const head = el("div", "dk-head");
-    head.append(el("h3", "card-title", h.where === "vps" ? "Nova's computer" : "The old host"), state(true, "Online"));
+    head.append(el("h3", "card-title", "Nova Bot and Nova Agent"), state(true, "Online"));
     card.append(head);
     card.append(row("Address", h.url || "?"));
     if (h.version) card.append(row("Version", h.version.id, h.version.at ? `deployed ${ago(h.version.at)}` : ""));
-    card.append(row("Studio PC", h.pc && h.pc.connected ? "Linked" : "Not linked", h.pc && h.pc.since ? `since ${ago(h.pc.since)}` : ""));
+    card.append(row("Nova Agent", agentWhere(h.pc), h.pc && h.pc.connected && h.pc.since ? `linked since ${ago(h.pc.since)}` : ""));
     if (h.jobs && h.jobs.length) {
       card.append(el("h4", "dk-sub", "Jobs: last run"));
       const list = el("div", "dk-list");
@@ -78,26 +83,25 @@
     return card;
   }
 
-  // Which side the address everyone uses reaches, how to switch, and what needs doing
+  // Nova's address, where Nova Agent runs, how to move it, and what needs doing
   function liveCard(h) {
     const card = el("section", "card dk-card dk-live");
-    card.setAttribute("aria-label", "Which side is live");
-    const live = h.live || (h.where === "cloudflare" ? "cloudflare" : "standby");
-    const words = live === "cloudflare" ? "The old host" : live === "vps" ? "Nova's own computer (nova.novacane.co.uk)" : "The old host (Nova's computer is standing by)";
+    card.setAttribute("aria-label", "Live now");
     const head = el("div", "dk-head");
-    head.append(el("h3", "card-title", "Live now"), state(true, words));
+    head.append(el("h3", "card-title", "Live now"), state(true, "Nova's own computer"));
     card.append(head);
-    const sw = h.switchHelp;
+    card.append(row("Address", h.url || "?"));
+    card.append(row("Nova Agent", agentWhere(h.pc)));
+    const sw = h.agentSwitch;
     if (sw) {
-      const vpsLive = live === "vps";
-      card.append(row(vpsLive ? "Undo the move (back to the old host)" : "Move to Nova's own computer", vpsLive ? sw.back : sw.to, `run on ${sw.from}; it asks before doing anything`));
-      if (!vpsLive) card.append(row("Go back afterwards", sw.back));
+      const onServer = h.pc && h.pc.where === "server";
+      card.append(row(onServer ? "Move Nova Agent to the studio PC" : "Move Nova Agent to Nova's computer", onServer ? sw.back : sw.to, `run on ${sw.from}; it asks before doing anything`));
     }
     for (const w of h.warnings || []) card.append(el("p", "dk-why dk-warn", `⚠ ${w}`));
     return card;
   }
 
-  function vpsCard(v, canAct, live) {
+  function vpsCard(v, canAct) {
     const card = el("section", "card dk-card");
     card.setAttribute("aria-label", "The VPS");
     const head = el("div", "dk-head");
@@ -112,10 +116,15 @@
     const on = (k) => svc[k] === "active";
     card.append(row("Server", v.host || "?", `up ${dur(v.uptimeSeconds)}`));
     card.append(row("Nova Bot", on("nova") ? "Running" : svc.nova || "?", v.novaSince ? `since ${v.novaSince}` : ""));
+    if (svc["nova-agent"]) card.append(row("Nova Agent", on("nova-agent") ? "Running" : "Not running here", on("nova-agent") ? (v.agentSince ? `since ${v.agentSince}` : "") : "it runs on the studio PC"));
     card.append(row("Web front (HTTPS)", on("caddy") ? "Running" : svc.caddy || "?"));
-    const jobsNote = v.jobsOn ? "" : live === "vps" ? "The VPS is live but its timed jobs are off: on the VPS, systemctl enable --now nova-cron.timer" : "they switch on at the cutover, so the VPS and Cloudflare never both send";
-    card.append(row("Every-minute jobs", v.jobsOn ? "On" : "Off", jobsNote));
-    card.append(row("Nightly backup", on("nova-backup.timer") ? "On" : "Off", `last ${ago(v.lastBackup)}`));
+    card.append(row("Every-minute jobs", v.jobsOn ? "On" : "Off", v.jobsOn ? "" : "Timed jobs are off: on the VPS, systemctl enable --now nova-cron.timer"));
+    if (v.mail) {
+      const m = v.mail;
+      const notes = [m.queue != null ? `${m.queue} waiting` : "", `last sent ${ago(m.lastSent)}`, m.troubleToday ? `${m.troubleToday} delayed or bounced today` : ""].filter(Boolean);
+      card.append(row("Mail sender", m.sender === "active" && m.postfix === "active" ? "Running" : "Not running", notes.join(" · ")));
+    }
+    card.append(row("Nightly backup", on("nova-backup.timer") ? "On" : "Off", `last ${ago(v.lastBackup)}${v.backups && v.backups.length ? ` · ${v.backups.length} kept here` : ""}`));
     card.append(row("Last data copy", v.lastSync ? ago(v.lastSync) : "not yet"));
     if (v.cpu) card.append(row("Processors", `${v.cpu.count}`, `busy ${(v.cpu.load || []).join(" · ")} (1, 5, 15 min)`));
     if (v.memory) card.append(meter("Memory", v.memory.total - v.memory.free, v.memory.total, `${gb(v.memory.total - v.memory.free)} of ${gb(v.memory.total)}`));
@@ -135,7 +144,9 @@
         b.addEventListener("click", () => act(what, twice, label));
         return b;
       };
-      acts.append(btn("Back up now", "backup", false), btn("Restart Nova Bot", "restart", true), btn("Restart web front", "restart-web", true));
+      acts.append(btn("Back up now", "backup", false), btn("Restart Nova Bot", "restart", true));
+      if (on("nova-agent")) acts.append(btn("Restart Nova Agent", "restart-agent", true));
+      acts.append(btn("Restart web front", "restart-web", true));
       card.append(acts);
     } else card.append(el("p", "dk-why", "Restarting and backing up need Portal open in a browser, signed in as an admin."));
     return card;
@@ -167,7 +178,7 @@
     const box = $("desk-body");
     if (!box || !data) return;
     const grid = el("div", "dk-grid");
-    grid.append(hereCard(data.here), vpsCard(data.vps, data.canAct, data.here.live));
+    grid.append(vpsCard(data.vps, data.canAct), hereCard(data.here));
     box.replaceChildren(liveCard(data.here), grid);
   }
 

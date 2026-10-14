@@ -570,27 +570,22 @@ export const COMMANDS = {
     },
   },
   computer: {
-    help: "Nova Bot on Cloudflare and on the VPS, side by side, and which one is live (admins)",
+    help: "Nova's own computer (the VPS): how it's doing, Nova Bot and Nova Agent on it, its jobs (admins)",
     usage: "computer",
     async run(ctx) {
       adminOnly(ctx);
       const d = await ctx.api(P("desk"));
       const h = d.here || {};
       const v = d.vps || {};
-      if (h.live) {
-        ctx.heading("Live now");
-        ctx.kv([
-          ["Side", h.live === "vps" ? "the VPS" : h.live === "standby" ? "Cloudflare (the VPS is standing by)" : "Cloudflare"],
-          ...(h.switchHelp ? [[h.live === "vps" ? "Go back" : "Switch", h.live === "vps" ? h.switchHelp.back : h.switchHelp.to]] : []),
-        ]);
-        for (const w of h.warnings || []) ctx.warn(w);
-      }
-      ctx.heading(h.where === "vps" ? "This Nova Bot (VPS)" : "Cloudflare");
+      const onServer = h.pc?.where === "server";
+      ctx.heading("Live now");
       ctx.kv([
         ["Address", h.url || ""],
+        ["Nova Agent", h.pc?.connected ? `${onServer ? "on Nova's computer" : "on the studio PC"}${h.pc.since ? ` · linked since ${ukTime(h.pc.since)}` : ""}` : "not linked"],
         ["Version", h.version ? `${h.version.id}${h.version.at ? ` · ${ukTime(h.version.at)}` : ""}` : ""],
-        ["Studio PC", h.pc?.connected ? `linked${h.pc.since ? ` since ${ukTime(h.pc.since)}` : ""}` : "not linked"],
+        ...(h.agentSwitch ? [[onServer ? "Move Nova Agent to the PC" : "Move Nova Agent here", onServer ? h.agentSwitch.back : h.agentSwitch.to]] : []),
       ]);
+      for (const w of h.warnings || []) ctx.warn(w);
       ctx.heading("VPS");
       if (!v.reachable) return ctx.kv([["Address", v.url || ""], ["State", v.reason || "can't be reached"]]);
       const gb = (n) => (n ? `${(n / 1e9).toFixed(1)} GB` : "");
@@ -611,7 +606,7 @@ export const COMMANDS = {
     },
   },
   deploy: {
-    help: "What's live where: Cloudflare's version, the VPS's, this computer's",
+    help: "What's live: Nova Bot's version, the VPS's, Nova Agent's",
     usage: "deploy status",
     subs: ["status"],
     async run(ctx, [sub = "status"]) {
@@ -619,9 +614,9 @@ export const COMMANDS = {
       const [d, s] = await Promise.allSettled([ctx.api(P("desk")), ctx.api("/status")]);
       const desk = d.status === "fulfilled" ? d.value : null;
       ctx.kv([
-        ["Cloudflare", desk?.here?.version ? `${desk.here.version.id} · ${ukTime(desk.here.version.at)}` : d.status === "rejected" ? d.reason.message : "not known"],
+        ["Nova Bot", desk?.here?.version ? `${desk.here.version.id} · ${ukTime(desk.here.version.at)}` : d.status === "rejected" ? d.reason.message : "not known"],
         ["VPS", desk?.vps?.reachable ? desk.vps.version || "running" : desk?.vps?.reason || "not known"],
-        ["Studio PC", s.status === "fulfilled" ? s.value.version || s.value.rev || "running" : "can't be reached"],
+        ["Nova Agent", s.status === "fulfilled" ? s.value.version || s.value.rev || "running" : "can't be reached"],
       ]);
     },
   },

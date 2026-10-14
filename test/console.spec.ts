@@ -72,14 +72,16 @@ describe("reading what's typed", () => {
     expect(Nova.resolveName("desk")).toBe("computer");
     expect(Nova.resolveName("server")).toBe("computer");
   });
-  it("computer says which side is live, how to switch, and any warnings", async () => {
-    const here = { where: "cloudflare", live: "cloudflare", url: "https://x", switchHelp: { to: "vps/switch.sh", back: "vps/switch-back.sh" }, warnings: ["Newsletters won't send"], pc: { connected: true }, jobs: [] };
+  it("computer shows the VPS only: where Nova Agent runs, how to move it, and any warnings", async () => {
+    const here = { url: "https://x", agentSwitch: { to: "vps/agent-switch.sh", back: "vps/agent-switch-back.sh" }, warnings: ["Newsletters won't send"], pc: { connected: true, where: "server" }, jobs: [] };
     const { ctx, printed } = fakeCtx({ answers: { "/app/api/desk": { here, vps: { reachable: false, url: "https://v", reason: "down" } } } });
     await Nova.run(ctx, "desk");
     const out = printed.join("\n");
     expect(out).toMatch(/Live now/);
-    expect(out).toMatch(/vps\/switch\.sh/);
+    expect(out).toMatch(/on Nova's computer/);
+    expect(out).toMatch(/vps\/agent-switch-back\.sh/);
     expect(out).toMatch(/Newsletters won't send/);
+    expect(out).not.toMatch(/cloudflare/i);
   });
 });
 
