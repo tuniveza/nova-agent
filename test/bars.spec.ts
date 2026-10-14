@@ -17,10 +17,12 @@ const statusCss = read("../web/agent/assets/status.css");
 const rules = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, "");
 
 describe("the top bars", () => {
-  it("Nova Agent's header and the open panel's bar both wear the one shared top bar", () => {
+  it("one top bar: Nova Agent's header, which becomes the open panel's slim title panel (never two bars)", () => {
     expect(html).toContain('<link rel="stylesheet" href="/shared/topbar.css">');
     expect(html).toMatch(/<header class="topbar glass nv-topbar">/);
-    expect(html).toMatch(/<div class="viewer-bar nv-topbar">/);
+    expect(html).not.toMatch(/class="viewer-bar/);
+    expect(rules(top)).toContain(".shell:has(> .main.viewing) > .topbar > .brand { display: none; }");
+    expect(rules(top)).toMatch(/\.shell:has\(> \.main\.viewing\) > \.topbar \{\s*--nv-top-h: 48px;/);
     // its look, size and corners are defined once, for both
     for (const v of ["--nv-top-h", "--nv-top-r", "--nv-mark", "--nv-word"]) expect(top).toContain(v);
     expect(rules(top)).toMatch(/\.nv-topbar \.mark, \.nv-topbar \.vn-ico \{/);
@@ -32,21 +34,24 @@ describe("the top bars", () => {
     expect(html).not.toMatch(/vn-kicker/);
   });
 
-  it("the panel's bar keeps Back, the name that switches panels, and Reload", () => {
+  it("the title panel keeps Back, the name that switches panels, and Reload, with Nova Agent's own controls beside them", () => {
     for (const id of ["viewer-close", "viewer-name", "viewer-reload", "viewer-frame", "viewer-body"]) expect(html).toContain(`id="${id}"`);
+    const header = html.slice(html.indexOf('<header class="topbar'), html.indexOf("</header>"));
+    for (const id of ["viewer-close", "viewer-name", "viewer-reload", "sfx-btn", "music-btn", "status", "install", "suite-btn"]) expect(header).toContain(`id="${id}"`);
+    expect(header).toContain("<nova-portal-badge>");
     expect(html).toContain("$('viewer-name').addEventListener('click', () => $('suite').showModal());");
   });
 
-  it("the panel sits in its own box under the bar; the status line and a phone's kept panels go in it too", () => {
-    expect(statusJs).toContain('const box = $("viewer-body") || viewer;');
-    expect(statusCss).toContain("#viewer-body > .status-line");
-    expect(statusCss).not.toMatch(/#viewer > \.status-line/);
+  it("the status line is the bottom row of the navigation bar, on the home and with a panel open; a phone's kept panels go in the panel's box", () => {
+    expect(statusJs).toContain('const box = PHONE.matches ? $("tabbar") : $("suite-home");');
+    expect(statusCss).toContain("#suite-home > .status-line, .tabbar > .status-line {");
+    expect(statusCss).not.toMatch(/#viewer-body > \.status-line/);
     expect(phoneJs).toContain("(first.parentElement || viewer).append(frame);");
   });
 
-  it("the panel's bar is as wide as Nova Agent's header on the home, so opening a panel swaps one for the other in place", () => {
+  it("the title panel is as wide as Nova Agent's header on the home, so the panel below starts in the same place", () => {
     expect(barJs).toContain('root.style.setProperty("--top-w"');
-    expect(html).toContain("width: var(--top-w, var(--chat-w, 760px))");
+    expect(top).toContain("width: var(--top-w, fit-content)");
   });
 });
 

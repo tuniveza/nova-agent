@@ -328,31 +328,27 @@ picked takes the buttons, glows and highlights, so every colour choice clearly s
 cyan, Aurora green and violet, Eclipse gold. With "Each panel's own", the planet colours everything
 as before.
 
-**One top bar:** Nova Agent's header and the bar above every open panel (Portal, Calendar, Notes,
-Board, Console, Index, Observatory, Fixer, Lossless, Visualizer…) are the same bar
-(`web/shared/topbar.css`, class `nv-topbar`): the same glass capsule with the glowing edge, the
-same height, corners and size of mark and name, in the same place and as wide as the header is on
-the home, so opening a panel swaps one for the other without the top changing. A panel's bar has
-its icon, "Nova Agent" small above its name, Back on the left (←), Reload on the right, and its
-name opens the Panels window to switch; phones have it too. The panel sits in its own box under
-it (`#viewer-body`, with the status line along its bottom). Index doesn't repeat its name under it.
+**One top bar:** Nova Agent's header (`web/shared/topbar.css`, class `nv-topbar`: a glass capsule
+with the glowing edge). With a panel open (an app, a plan, a tool or a helper) there's no second
+bar: the header itself becomes that panel's slim **title panel** (48px on a computer, 44px on a
+phone): ← back, the panel's icon and name (tap it to switch panels) and Reload, with Nova Agent's
+own controls right there in it: sound, music, Live, the planet (sign in and out, your Portal
+account), Install, Panels and the gear. It stays as wide as the header is on the home, so the panel
+below starts in the same place. On a narrow phone Live shows as its coloured dot. The panel sits in
+its own box under it (`#viewer-body`). Index and Quests don't repeat their names under it.
 
-**The top bar** (Nova Agent's header) has the same choice as the panels bar: Auto (with a panel
-open it slides away while you work and comes back, floating over the panel's own bar, when the
-mouse goes to the top, or you scroll up on a phone), Always shown, or Always hidden (on a phone,
-Always shown puts Nova Agent's header in place of the panel's bar). Typing in a panel's box hides
-the panels bar until you're done or the mouse goes to the bottom.
+**The bars are always shown** (the old Auto, which hid them while you scrolled, is gone: it made
+Nova feel laggy). Always hidden is still a choice in the Panels window, for the panels bar and the
+top bar.
 
-**The status line** runs under the panels bar (inside the bar on a phone), one line tall: the
+**The status line** is the bottom row of the navigation bar, inside its frame, below the icons
+(the panels strip on a computer, the bar on a phone), on the home and with any panel open: the
 version and build, the latest change in a few still words (for the group or panel you point at,
-or the one that's open), when you came on and were last off, what
-you've done lately (tap it for the list), the date ("Mon 12 Oct") and a 12-hour clock
-(`web/agent/assets/status.js`; the words come from `web/shared/status-data.js`, made by
-`npm run status`, which `npm run manual` runs too). With a panel open (an app, a plan, a tool or a
-helper) the same line sits as a slim strip along the bottom of the panel, with that panel's news;
-the panel gives up that height, so nothing in it is covered. Narrow windows drop the version, the
-times and the activity first; the panel's name, the date and the clock stay. Always hidden hides it
-everywhere; each part (the date too) can be switched off in the Panels window.
+or the one that's open), when you came on and were last off, what you've done lately (tap it for
+the list), the date ("Mon 12 Oct") and a 12-hour clock (`web/agent/assets/status.js`; the words
+come from `web/shared/status-data.js`, made by `npm run status`, which `npm run manual` runs too).
+Every part shows; when the bar is narrower than the line it wraps onto a second row. Always hidden
+hides it everywhere; each part (the date too) can be switched off in the Panels window.
 
 **The icons** are little glowing scenes of space, each on its own small Novacane nebula (its own
 colour mixed with the theme's): the Novacane sigil in an orbiting orb (Agent), a ringed planet and

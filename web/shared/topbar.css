@@ -52,3 +52,53 @@
 }
 /* A phone on its side: Nova Agent's header shows its mark alone (phone.css); an open panel keeps its name, smaller */
 @media (max-height: 500px) { .nv-topbar .vn-text { font-size: 15px; } .nv-topbar .icon-btn { width: 30px; height: 30px; } }
+
+/* ---- One bar with a panel open: Nova Agent's header becomes that panel's title panel ----
+   Opening an app, a plan, a tool or a helper doesn't add a second bar: the header itself turns into
+   a slim title panel. Nova Agent's mark and name make way for ← back, the panel's icon and name (tap
+   to switch) and Reload, and everything else of Nova Agent's stays right there in it (sound, music,
+   Live, the planet to sign in and out, Install, Panels, the gear). On the home it's the header as
+   ever. (web/agent/chat.html: #viewer-close, #viewer-name and #viewer-reload live in the header.) */
+.topbar > .viewer-name, .topbar .viewer-back, .topbar .viewer-reload { display: none; }
+.shell:has(> .main.viewing) > .topbar {
+  --nv-top-h: 48px; --nv-top-pad: 4px 10px; --nv-top-r: 18px; --nv-mark: 30px; --nv-mark-r: 9px; --nv-word: 17px;
+  gap: 10px; }
+.shell:has(> .main.viewing) > .topbar > .brand { display: none; }
+.shell:has(> .main.viewing) > .topbar > .viewer-name { display: inline-flex; justify-self: center; gap: 8px; }
+.shell:has(> .main.viewing) > .topbar .viewer-back,
+.shell:has(> .main.viewing) > .topbar .viewer-reload { display: grid; place-items: center; }
+.shell:has(> .main.viewing) > .topbar .icon-btn { width: 32px; height: 32px; }
+.shell:has(> .main.viewing) > .topbar .vn-text::before { display: none; }
+.shell:has(> .main.viewing) > .topbar .top-side { gap: 6px; }
+.shell:has(> .main.viewing) > .topbar .btn { min-height: 32px; padding-block: 4px; }
+@media (min-width: 981px) and (min-height: 481px) {
+  /* As wide as the header is on the home, so the panel below starts in the same place */
+  .shell:has(> .main.viewing) > .topbar { width: var(--top-w, fit-content); min-width: max-content; max-width: 100%; grid-template-columns: auto minmax(0, 1fr) auto; }
+}
+@media (max-width: 980px), (max-height: 480px) {
+  .shell:has(> .main.viewing) > .topbar { --nv-top-h: 44px; --nv-top-pad: 4px 6px; --nv-mark: 26px; --nv-mark-r: 8px; --nv-word: 15px;
+    grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; }
+  .shell:has(> .main.viewing) > .topbar .icon-btn { width: 30px; height: 30px; }
+  .shell:has(> .main.viewing) > .topbar > .viewer-name { justify-self: stretch; justify-content: center; min-width: 0; }
+  /* Live keeps its dot and word, smaller */
+  .shell:has(> .main.viewing) > .topbar .status { padding: 3px 7px; font-size: 10px; }
+}
+@media (max-width: 980px), (max-height: 480px) {
+  /* The planet a little smaller in the slim bar */
+  .shell:has(> .main.viewing) > .topbar nova-portal-badge { zoom: .82; }
+}
+@media (max-width: 480px) {
+  /* A narrow phone: Live shows as its coloured dot (its word is in the tooltip), so the panel's name has room */
+  .shell:has(> .main.viewing) > .topbar .status { padding: 6px; }
+  .shell:has(> .main.viewing) > .topbar .status .label { display: none !important; }
+}
+/* The panel's name never spills out of its place: a touch smaller on the smallest phones, and cut
+   short neatly (…) only if it still can't fit */
+.shell:has(> .main.viewing) > .topbar .vn-text { min-width: 0; max-width: 100%; overflow: hidden; }
+.shell:has(> .main.viewing) > .topbar .vn-app { display: block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 400px) {
+  .shell:has(> .main.viewing) > .topbar { --nv-word: 13px; --nv-mark: 24px; gap: 4px; }
+  .shell:has(> .main.viewing) > .topbar .top-side { gap: 4px; }
+  .shell:has(> .main.viewing) > .topbar .icon-btn { width: 28px; height: 28px; }
+  .shell:has(> .main.viewing) > .topbar .viewer-name::after { display: none; }
+}

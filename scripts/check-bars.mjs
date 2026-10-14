@@ -53,14 +53,17 @@ for (const [w, h] of SIZES) {
   // Open the panel the way a tap does
   await tab.evaluate((p) => window.NovaAgent.open(p), PANEL);
   await sleep(2500);
-  const panelTop = await look("#viewer .viewer-bar");
+  const panelTop = await look(".shell > .topbar"); // the header, now the panel's slim title panel
   if (!homeTop || !panelTop) fail(`a top bar is missing (home ${!!homeTop}, panel ${!!panelTop})`);
   else if (!panelTop.shown) fail("the open panel has no top bar");
   else {
-    const same = Math.abs(homeTop.h - panelTop.h) <= 2 && homeTop.radius === panelTop.radius && (!homeTop.word || !panelTop.word || homeTop.word === panelTop.word) && Math.abs(homeTop.mark - panelTop.mark) <= 2 && homeTop.bg === panelTop.bg;
-    (same ? ok : fail)(`top bars: home ${homeTop.h}px, r ${homeTop.radius}, title ${homeTop.word}, mark ${homeTop.mark}px · panel ${panelTop.h}px, r ${panelTop.radius}, title ${panelTop.word}, mark ${panelTop.mark}px${homeTop.bg === panelTop.bg ? "" : " · different backgrounds"}`);
+    // One bar: with a panel open it's the slim title panel (no taller than the home header, the same look)
+    const slim = panelTop.h <= homeTop.h && panelTop.h <= 56 && homeTop.bg === panelTop.bg;
+    (slim ? ok : fail)(`one top bar: home ${homeTop.h}px · as the panel's title panel ${panelTop.h}px, title ${panelTop.word}, mark ${panelTop.mark}px${homeTop.bg === panelTop.bg ? "" : " · different backgrounds"}`);
+    const two = await tab.evaluate(() => [...document.querySelectorAll(".nv-topbar")].filter((e) => e.getBoundingClientRect().height > 0).length);
+    (two === 1 ? ok : fail)(`bars at the top with a panel open: ${two}`);
     const moved = Math.abs(homeTop.top - panelTop.top), wider = Math.abs(homeTop.w - panelTop.w);
-    (moved <= 12 && (phone || wider <= 4) ? ok : fail)(`the top bar stays put when a panel opens (moved ${moved}px, ${homeTop.w}px wide → ${panelTop.w}px)`);
+    (moved <= 12 ? ok : fail)(`the top bar stays put when a panel opens (moved ${moved}px, ${homeTop.w}px wide → ${panelTop.w}px)`);
   }
 
   // Watch the panel and the bars, frame by frame, while something happens

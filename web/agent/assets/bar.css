@@ -157,7 +157,7 @@ dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { o
   .tabbar button[aria-current="page"] { background: radial-gradient(55% 70% at 50% 35%, color-mix(in srgb, var(--hi) 24%, transparent), transparent 74%); box-shadow: none; }
 }
 /* The status line: the same glowing edge, quieter */
-.status-line:not(.tabbar > .status-line) { border: 1px solid transparent;
+.status-line:not(.tabbar > .status-line, #suite-home > .status-line) { border: 1px solid transparent;
   background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 70%, transparent), color-mix(in srgb, var(--void) 80%, transparent)) padding-box, var(--edge-glow) border-box; }
 /* On a phone the stars are smaller and fainter (so they never look like stray dots between buttons) */
 @media (max-width: 980px), (max-height: 480px) { .tabbar::before { opacity: .22; background-size: 340px 100%; } }

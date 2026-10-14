@@ -1,12 +1,10 @@
-// The status line: one line of small text under the panels bar (inside the bar on a phone), with
+// The status line: one line of small text along the bottom of the navigation bar, inside its frame, with
 //   Nova Agent's version and build,
 //   what changed lately, in a few still words, for the part of the bar you're on (Apps, Plans,
 //     Tools, Helpers, or the panel that's open),
 //   when you came on and when you were last off (remembered on this device),
 //   what you've been doing lately (tap for the list), the date and a 12-hour clock.
-// With a panel open (an app, a plan, a tool or a helper) it moves into the panel's frame: a slim
-// strip along its bottom, with that panel's news, so it's there on every panel (the panel gives up
-// that bit of height, so nothing in it is covered).
+// It stays there with a panel open (an app, a plan, a tool or a helper), showing that panel's news.
 // The words come from web/shared/status-data.js (made by scripts/build-status.mjs).
 // Also here: the look settings in the Panels window (theme for everything, planet colours, top bar).
 (() => {
@@ -88,19 +86,16 @@
   list.setAttribute("aria-label", "What you've been doing");
   document.body.append(list);
 
-  // Where it goes: with a panel open, a strip along the bottom of the panel's frame (on a computer
-  // and a phone alike); otherwise under the panels strip (computer), or inside the phone's bar (so
-  // they move together). Only the line moves (moving a panel's frame would reload it).
+  // Where it goes: always the bottom row of the navigation bar, inside its frame (one joined unit,
+  // the same on the home and with any panel open): the panels strip on a computer, the bar along
+  // the bottom on a phone. Only the line moves (moving a panel's frame would reload it).
   const viewer = $("viewer");
   const inPanel = () => Boolean(viewer && !viewer.hidden && $("main") && $("main").classList.contains("viewing"));
   function place() {
-    const bar = $("tabbar");
-    const panel = inPanel();
-    line.classList.toggle("sl-in-panel", panel);
-    const box = $("viewer-body") || viewer; // the panel's box, under its top bar
-    if (panel) { if (line.parentElement !== box) box.append(line); }
-    else if (PHONE.matches && bar) { if (line.parentElement !== bar) bar.append(line); }
-    else if (line.parentElement !== shell) shell.append(line);
+    const box = PHONE.matches ? $("tabbar") : $("suite-home");
+    line.classList.toggle("sl-in-panel", inPanel());
+    if (box && line.parentElement !== box) box.append(line);
+    else if (!box && line.parentElement !== shell) shell.append(line);
   }
   place();
   PHONE.addEventListener("change", place);
@@ -109,7 +104,7 @@
   if (viewer) new MutationObserver(place).observe(viewer, { attributes: true, attributeFilter: ["hidden"] });
   // The phone's bar redraws itself now and then: keep the line in it (when no panel is open)
   const barNow = $("tabbar");
-  if (barNow) new MutationObserver(() => PHONE.matches && !inPanel() && !barNow.contains(line) && barNow.append(line)).observe(barNow, { childList: true });
+  if (barNow) new MutationObserver(() => PHONE.matches && !barNow.contains(line) && barNow.append(line)).observe(barNow, { childList: true });
 
 
   // The date ("Mon 12 Oct") and the clock ("5:45 pm"); with the date switched off, the clock keeps

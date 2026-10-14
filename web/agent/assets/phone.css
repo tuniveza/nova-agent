@@ -16,13 +16,9 @@
   .shell:has(> .main.viewing) { height: var(--vv-h, 100dvh); grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px;
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left)); }
   .shell:has(> .main.viewing) > .topbar { display: grid; }
-  /* The panel's own top bar (the same as Nova Agent's header, /shared/topbar.css: back, its name to
-     switch, reload), then the panel. With the top bar set to Always shown, Nova Agent's header is
-     there instead (the bar's buttons are on the gear and the bar along the bottom). */
+  /* The header is the panel's title panel while it's open (/shared/topbar.css), then the panel */
   .main.viewing > .viewer > .viewer-body { border-radius: 18px; border: 1px solid var(--line); background: var(--void); }
-  .viewer { grid-template-rows: auto minmax(0, 1fr); gap: 8px; }
-  html[data-top="shown"] .viewer { grid-template-rows: minmax(0, 1fr); }
-  html[data-top="shown"] .viewer > .viewer-bar { display: none; }
+  .viewer { grid-template-rows: minmax(0, 1fr); gap: 8px; }
   /* Switching panels: the dark stays put and the panel fades in when it's ready (no white flash) */
   .viewer iframe { background: var(--void); transition: opacity .18s ease; }
   .viewer iframe.loading { opacity: 0; }

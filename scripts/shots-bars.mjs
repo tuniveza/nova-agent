@@ -15,7 +15,7 @@ mkdirSync(OUT, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const PANELS = {
   home: "", portal: "/portal/", calendar: "/calendar/", notes: "/notes/", quests: "/quests/", board: "/board/", console: "/console/",
-  index: "/app/memory/", observatory: "/observatory/", fixer: "/fixer/", lossless: "/lossless/",
+  index: "/app/memory/", observatory: "/observatory/", fixer: "/fixer/", lossless: "/lossless/", visualizer: "/visualizer",
 };
 const browser = await chromium.launch();
 for (const [w, h] of SIZES) {
