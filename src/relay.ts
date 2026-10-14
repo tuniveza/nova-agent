@@ -9,7 +9,11 @@
 // Only Nova Agent's own addresses are answered (RELAYED, the same list as Nova Bot's), and a
 // relayed request never counts as "from our page" (src/signin.ts), so the PC's Portal sign-in,
 // Portal's API and the staff pages can't be reached this way.
-// Dropped connection (Nova Bot redeployed, network gone): it reconnects by itself.
+// Dropped connection (Nova Bot redeployed, network gone): it reconnects by itself. Two things once
+// left it unlinked until a restart, so they're watched for too: an attempt that never finished (no
+// open, no close: the retries stopped), and a link the runtime kept open while Nova Bot itself had
+// lost it (Nova Bot crashed half-way through a deploy). Every couple of minutes Nova Agent says
+// "hello" and Nova Bot answers "here, linked"; no answer, or "not linked", and it links again.
 
 import { config } from "./config";
 import { markRelayed } from "./person";
@@ -22,7 +26,21 @@ type Frame =
   | { t: "req"; id: string; method: string; path: string; headers: Record<string, string>; staff: Staff; body: boolean }
   | { t: "body"; id: string; d: string }
   | { t: "end"; id: string }
-  | { t: "cancel"; id: string };
+  | { t: "cancel"; id: string }
+  | { t: "here"; id: string; linked?: boolean };
+
+// How long an attempt may take, how often to ask "hello", how long to wait for "here"
+export const LINK_ATTEMPT_MS = 45_000;
+export const HELLO_EVERY_MS = 120_000;
+export const HERE_WITHIN_MS = 30_000;
+
+// What the watcher does with the link right now (pure, for the tests): nothing; start an attempt
+// (none running or scheduled for a while); or give up on one that's stuck and start again
+export function linkWatch(s: { state: "none" | "connecting" | "open" | "closed"; since: number; scheduled: boolean; now: number }): "ok" | "connect" | "restart" {
+  if (s.state === "open") return "ok";
+  if (s.state === "none") return s.scheduled && s.now - s.since < LINK_ATTEMPT_MS * 2 ? "ok" : "connect";
+  return s.now - s.since > LINK_ATTEMPT_MS ? "restart" : "ok";
+}
 
 // The same list as RELAYED in Nova Bot's src/agent-relay.js (keep the two together)
 const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
@@ -115,6 +133,11 @@ export function startRelay(handle: Handler): void {
   let wasUp = false;
   let lastPong = 0;
   let beat: ReturnType<typeof setInterval> | undefined;
+  let attemptAt = Date.now(); // when the last attempt started (or was scheduled)
+  let scheduled = false;
+  let saidHere = false; // this Nova Bot answers "hello" (an older one doesn't, and that's fine)
+  let hello: { id: string; at: number } | null = null;
+  let helloAt = 0;
   const running = new Map<string, { stop: () => void }>();
   const incoming = new Map<string, { req: Extract<Frame, { t: "req" }>; parts: Buffer[]; size: number }>();
 
@@ -169,6 +192,16 @@ export function startRelay(handle: Handler): void {
   }
 
   function onFrame(frame: Frame) {
+    if (frame.t === "here") {
+      saidHere = true;
+      if (hello && frame.id === hello.id) hello = null;
+      // Nova Bot has lost this link (it would send nothing down it): link again
+      if (frame.linked === false && ws) {
+        trace("llm", "warn", "Nova Bot had lost Nova Agent's link; linking again");
+        ws.close();
+      }
+      return;
+    }
     if (frame.t === "req") {
       if (!frame.body) return void answer(frame);
       incoming.set(frame.id, { req: frame, parts: [], size: 0 });
@@ -216,17 +249,33 @@ export function startRelay(handle: Handler): void {
       return later(`couldn't start (${(err as Error).message})`);
     }
     ws = socket;
+    attemptAt = Date.now();
+    scheduled = false;
     socket.onopen = () => {
       relayLink.up = true;
       delay = 1000;
       lastPong = Date.now();
+      hello = null;
+      helloAt = 0;
       if (!wasUp) trace("llm", "ok", "Nova Agent is online: linked to Nova Bot, so it can be used from anywhere");
       wasUp = true;
       clearInterval(beat);
       beat = setInterval(() => {
         // No answer to the heartbeat for a minute: the connection is gone, start again
         if (Date.now() - lastPong > 60_000) return socket.close();
-        if (socket.readyState === WebSocket.OPEN) socket.send("ping");
+        if (socket.readyState !== WebSocket.OPEN) return;
+        socket.send("ping");
+        // "hello" now and then; no "here" in time (from a Nova Bot that answers it): link again
+        if (hello && saidHere && Date.now() - hello.at > HERE_WITHIN_MS) {
+          hello = null;
+          trace("llm", "warn", "Nova Bot didn't answer Nova Agent's link check; linking again");
+          return socket.close();
+        }
+        if (!hello && Date.now() - helloAt >= HELLO_EVERY_MS) {
+          helloAt = Date.now();
+          hello = { id: `hello-${helloAt}`, at: helloAt };
+          socket.send(JSON.stringify({ t: "hello", id: hello.id }));
+        }
       }, 25_000);
     };
     socket.onmessage = (event) => {
@@ -253,6 +302,8 @@ export function startRelay(handle: Handler): void {
       if (event.code === 4001 || event.code === 4002) {
         trace("llm", "warn", "Another Nova Agent linked to Nova Bot instead of this one; trying again in a minute");
         wasUp = false;
+        scheduled = true;
+        attemptAt = Date.now();
         return void setTimeout(connect, 60_000);
       }
       later(event.code === 1006 || !wasUp ? "no connection" : `closed (${event.code})`);
@@ -262,9 +313,29 @@ export function startRelay(handle: Handler): void {
   function later(why: string) {
     if (wasUp) trace("llm", "warn", `Nova Agent's online link dropped (${why}); reconnecting`);
     wasUp = false;
+    scheduled = true;
+    attemptAt = Date.now();
     setTimeout(connect, delay);
     delay = Math.min(delay * 2, 30_000);
   }
 
   connect();
+
+  // The watcher: an attempt that never finished, or no attempt at all, starts a new one
+  setInterval(() => {
+    const state = !ws ? "none" : ws.readyState === WebSocket.OPEN ? "open" : ws.readyState === WebSocket.CONNECTING ? "connecting" : "closed";
+    const what = linkWatch({ state, since: attemptAt, scheduled, now: Date.now() });
+    if (what === "ok") return;
+    trace("llm", "warn", "Nova Agent's online link was stuck; linking again");
+    const stuck = ws;
+    ws = null; // (its close, if it ever comes, is ignored: onclose checks ws)
+    try {
+      stuck?.close();
+    } catch {}
+    clearInterval(beat);
+    relayLink.up = false;
+    stopAll();
+    delay = 1000;
+    connect();
+  }, 15_000).unref?.();
 }

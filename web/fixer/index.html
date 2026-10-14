@@ -71,6 +71,16 @@
       </div>
     </div>
     <div id="issues" class="stack"></div>
+    <!-- The scripted checks (src/fixer/probes.ts): each one pass or fail, and why, in groups -->
+    <div class="nt-card" id="checks-card">
+      <h2 class="nt-h">Scripted checks</h2>
+      <p class="nt-note" id="checks-summary">Quick, plain checks with no AI: every address, Nova Agent's pages and data, the status page, bookings, the server, the mail records, the database and the Manual's links.</p>
+      <div class="row-btns">
+        <button type="button" id="checks-now">Run the quick checks</button>
+        <button type="button" id="checks-fails" aria-pressed="false">Only show what failed</button>
+      </div>
+      <div id="checks" class="checks"></div>
+    </div>
   </section>
 
   <section class="pane" id="pane-quests" role="tabpanel" hidden>

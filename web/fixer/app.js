@@ -9,6 +9,7 @@
   let tab = "needs";
   try { tab = sessionStorage.getItem("fixer-tab") || "needs"; } catch (e) {}
   const openDiffs = new Set();
+  let onlyFails = false; // (the scripted checks: only what failed)
   const flips = new Map(); // which picture a phone shows, per job and screen
 
   const STATUS = {
@@ -214,11 +215,36 @@
               <h3>${esc(i.title)}</h3>
               <span class="meta">First seen ${esc(ago(i.firstSeen))} · seen ${i.seenCount} time${i.seenCount === 1 ? "" : "s"}</span>
               ${i.detail ? `<details><summary>Details</summary><pre>${esc(i.detail)}</pre></details>` : ""}
-              <div class="row-btns">${open ? `<span class="state-word">${esc(STATUS[job.status] || job.status)}</span>` : s.dry ? "" : `<button type="button" data-act="prepare-issue" data-id="${esc(i.id)}">Prepare a fix</button>`}</div>
+              <div class="row-btns">${open ? `<span class="state-word">${esc(STATUS[job.status] || job.status)}</span>` : s.dry ? "" : i.area === "server" ? `<span class="meta">The server itself: a code change can't fix this one</span>` : `<button type="button" data-act="prepare-issue" data-id="${esc(i.id)}">Prepare a fix</button>`}</div>
             </article>`;
           })
           .join("")
       : `<div class="nt-empty"><b>All clear.</b><br>No problems found${s.lastCheck ? ` at the last check (${esc(ago(s.lastCheck.at))})` : " yet"}.</div>`);
+
+    // The scripted checks, in groups: what failed first, then what passed
+    const c = s.checks;
+    if (c) {
+      const failed = c.results.filter((r) => !r.ok).length;
+      $("checks-summary").textContent = `${c.results.length - failed} of ${c.results.length} passed, ${ago(c.at)} (${clock(c.at)}), took ${Math.round(c.took / 1000)} s.${failed ? ` ${failed} failed: they're in the problems above.` : ""}`;
+      const groups = [];
+      for (const r of c.results) {
+        if (onlyFails && r.ok) continue;
+        let g = groups.find((x) => x.name === r.group);
+        if (!g) groups.push((g = { name: r.group, rows: [] }));
+        g.rows.push(r);
+      }
+      put("checks", groups.length
+        ? groups
+            .map((g) => {
+              const bad = g.rows.filter((r) => !r.ok).length;
+              return `<section class="check-group"><h3>${esc(g.name)} <span class="nt-chip ${bad ? "bad" : "ok"}">${bad ? `${bad} failed` : "all passed"}</span></h3><ul>${g.rows
+                .sort((a, b) => Number(a.ok) - Number(b.ok))
+                .map((r) => `<li class="${r.ok ? "pass" : r.severity === "serious" ? "fail" : "warn"}"><span class="mark" aria-label="${r.ok ? "Passed" : "Failed"}">${r.ok ? "✓" : "✗"}</span><b>${esc(r.name)}</b><span class="why">${esc(r.detail)}</span></li>`)
+                .join("")}</ul></section>`;
+            })
+            .join("")
+        : `<div class="nt-empty"><b>Nothing failed.</b></div>`);
+    } else put("checks", `<div class="nt-empty">Not run yet: tap <b>Run the quick checks</b>, or wait for the hourly check.</div>`);
 
     // Fixer quests
     put("quests", s.quests.length
@@ -372,6 +398,13 @@
   $("check-now").addEventListener("click", checkNow);
   $("check-now-2").addEventListener("click", checkNow);
   $("audio-now").addEventListener("click", () => act("/actions/fixer/check", { audio: true }, "Measuring the sound levels (a few minutes)."));
+  $("checks-now").addEventListener("click", () => act("/actions/fixer/check", { checks: true }, "Running the quick checks (about a minute)."));
+  $("checks-fails").addEventListener("click", () => {
+    onlyFails = !onlyFails;
+    $("checks-fails").setAttribute("aria-pressed", String(onlyFails));
+    $("checks-fails").textContent = onlyFails ? "Show every check" : "Only show what failed";
+    if (state) render();
+  });
 
   $("quest-form").addEventListener("submit", async (e) => {
     e.preventDefault();

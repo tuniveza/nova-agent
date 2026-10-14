@@ -331,6 +331,8 @@ export const SCREENS: { name: string; path: string; folders: RegExp }[] = [
   { name: "Portal", path: "/portal/", folders: /^web\/portal\// },
   { name: "Calendar", path: "/calendar/", folders: /^web\/calendar\// },
   { name: "Notes", path: "/notes/", folders: /^web\/notes\// },
+  { name: "Board", path: "/board/", folders: /^web\/board\// },
+  { name: "Console", path: "/console/", folders: /^web\/console\// },
   { name: "Index", path: "/app/memory/", folders: /^web\/index\// },
   { name: "Observatory", path: "/observatory/", folders: /^web\/observatory\// },
   { name: "Lossless", path: "/lossless/", folders: /^web\/lossless\// },

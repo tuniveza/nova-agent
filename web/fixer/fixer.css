@@ -121,3 +121,16 @@ html.embed main { padding-top: 18px; }
   .actions button { flex: 1 1 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .shot img { transition: none; } }
+
+/* ---- The scripted checks: groups of pass / fail rows, the reason under each name ---- */
+.checks { display: grid; gap: 12px; margin-top: 12px; text-align: left; }
+.check-group h3 { margin: 0 0 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; color: var(--bright); }
+.check-group ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.check-group li { display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 8px; padding: 7px 10px; border-radius: 12px; background: color-mix(in srgb, var(--void) 40%, transparent); font-size: 13px; }
+.check-group li .mark { grid-row: span 2; font-weight: 800; text-align: center; }
+.check-group li b { color: var(--bright); font-weight: 650; overflow-wrap: anywhere; }
+.check-group li .why { color: var(--muted); font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.check-group li.pass .mark { color: var(--ok); }
+.check-group li.warn .mark { color: var(--warn); }
+.check-group li.fail .mark { color: var(--bad); }
+.check-group li.fail, .check-group li.warn { border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent); }

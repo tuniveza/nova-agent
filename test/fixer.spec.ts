@@ -546,6 +546,38 @@ describe("settings are respected", () => {
     expect(w.fixer.state().issues).toHaveLength(0);
   });
 
+  it("the scripted checks: kept with every result; server fails are told, never prepared; code fails get a fix", async () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    const results = [
+      { group: "Server", name: "Mail queue", area: "server" as const, ok: false, detail: "60 emails waiting to go", severity: "serious" as const, ms: 3 },
+      { group: "Addresses", name: "Privacy", area: "checks" as const, ok: true, detail: "200", severity: "serious" as const, ms: 5 },
+    ];
+    w.deps.probes = async () => results;
+    w.fixer.setSettings({ autoPrepare: false }, ADMIN);
+    await w.fixer.check("checks");
+    await idle(w.fixer);
+    let s = w.fixer.state();
+    expect(s.checks!.results).toHaveLength(2);
+    expect(s.issues.map((i) => [i.area, i.title])).toEqual([["server", "Server: Mail queue: 60 emails waiting to go"]]);
+    expect(s.lastCheck).toBeNull(); // (only the quick checks ran)
+    expect(w.notes).toHaveLength(1);
+    // automatic fixes on: a server problem still isn't prepared, a code one is
+    w.fixer.setSettings({ autoPrepare: true }, ADMIN);
+    w.deps.probes = async () => [...results, { group: "Manual", name: "Links to Nova's pages", area: "checks" as const, ok: false, detail: "broken: /gone (404)", severity: "minor" as const, ms: 9 }];
+    await w.fixer.check("checks");
+    await idle(w.fixer);
+    s = w.fixer.state();
+    const manual = s.issues.find((i) => i.area === "checks")!;
+    expect(manual.jobId).not.toBe("");
+    expect(s.issues.find((i) => i.area === "server")!.jobId).toBe("");
+    // passing again clears them; a quick check (sweep and health) leaves them alone
+    w.deps.probes = async () => results.map((r) => ({ ...r, ok: true }));
+    await w.fixer.check("quick");
+    expect(w.fixer.state().issues.some((i) => i.area === "server")).toBe(true);
+    await w.fixer.check("checks");
+    expect(w.fixer.state().issues.filter((i) => i.area === "server" || i.area === "checks")).toHaveLength(0);
+  });
+
   it("settings are kept within sensible limits, and only admins change them", () => {
     const w = world(SCENARIOS["a small CSS change (trivial)"]);
     expect(w.fixer.setSettings({ dailyCap: 999, timeLimitMinutes: 1 }, ADMIN)).toMatchObject({ dailyCap: 50, timeLimitMinutes: 5 });

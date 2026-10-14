@@ -22,6 +22,7 @@ import { readQuests } from "../quests/store";
 import { trace } from "../trace";
 import { Fixer, SERVER_RESTART, type Paths } from "./fixer";
 import { healthFindings } from "./health";
+import { buildProbes, runProbes } from "./probes";
 import { cleanEnv, runCommand } from "./runner";
 import { FixerStore } from "./store";
 import { sweep } from "./sweep";
@@ -127,6 +128,11 @@ export function startFixer(): Fixer {
           underSystemd: Boolean(process.env.INVOCATION_ID),
           onServer: config.onServer,
         }),
+      probes: () =>
+        runProbes(
+          buildProbes({ fetch, run: runCommand, naDir: fixerPaths.naMain, dataDir: config.paths.dataDir, pcBase, onServer: Boolean(config.onServer), sleep: (ms) => new Promise((r) => setTimeout(r, ms)) }),
+          { sleep: (ms) => new Promise((r) => setTimeout(r, ms)) },
+        ),
       notify,
       quests: () => readQuests().quests,
       startServer,

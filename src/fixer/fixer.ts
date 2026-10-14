@@ -22,6 +22,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { briefText, claudeArgs, readAnswer } from "./claude";
 import { commandFindings } from "./health";
+import { probeFindings, type ProbeResult } from "./probes";
 import { affectedScreens, type Finding, isBlip, isTrivial, mergeIssues, offLimits, recommend, SCREENS, sensitiveLines, shouldRollBack, suggestions, type Suggestion } from "./rules";
 import type { Run } from "./runner";
 import type { Sweep } from "./sweep";
@@ -49,6 +50,8 @@ export interface Deps {
   run: Run;
   sweep: Sweep;
   health: (restartsSeen: number) => Promise<{ findings: Finding[]; restarts: number }>;
+  // The scripted checks (probes.ts); missing: none
+  probes?: () => Promise<ProbeResult[]>;
   notify: (title: string, message: string, tag: string) => Promise<void>;
   quests: () => QuestLike[];
   startServer: (dir: string) => Promise<{ base: string; stop: () => Promise<void> }>;
@@ -154,6 +157,7 @@ export class Fixer {
       running: this.running,
       checking: this.checking,
       lastCheck: data.lastCheck,
+      checks: data.checks,
       today: { prepared: day.prepared, cap: data.settings.dailyCap },
       issues: [...data.issues].sort((a, b) => (a.severity === b.severity ? b.lastSeen.localeCompare(a.lastSeen) : a.severity === "serious" ? -1 : 1)),
       quests: [...data.quests].sort((a, b) => b.updated.localeCompare(a.updated)),
@@ -254,9 +258,10 @@ export class Fixer {
   }
 
   // ================= Checks =================
-  // full: the hourly check (tests, typecheck, sweep, health). Otherwise the quick one (sweep and
-  // health), used just before and after a change goes live.
-  async check(kind: "full" | "quick" | "audio" = "full"): Promise<{ findings: Finding[]; fresh: Issue[] }> {
+  // full: the hourly check (tests, typecheck, sweep, health, the scripted checks). quick: the sweep and
+  // health, used just before and after a change goes live. checks: only the scripted checks (about a
+  // minute; the Health tab's "Run the quick checks").
+  async check(kind: "full" | "quick" | "audio" | "checks" = "full"): Promise<{ findings: Finding[]; fresh: Issue[] }> {
     if (this.checking && kind !== "quick") return { findings: [], fresh: [] };
     if (kind !== "quick") this.checking = true;
     const started = Date.now();
@@ -272,7 +277,17 @@ export class Fixer {
         const nb = await this.deps.run("npx", ["vitest", "run"], { cwd: this.paths.nbMain, timeoutMs: 15 * 60_000, env: testEnv(), clean: true });
         findings.push(...commandFindings("tests", "nb", nb.code, nb.out));
       }
-      if (kind === "audio") {
+      if ((kind === "full" || kind === "checks") && this.deps.probes) {
+        areas.push("checks", "server");
+        const at = this.now().toISOString();
+        const t0 = Date.now();
+        const results = await this.deps.probes().catch((err) => [{ group: "Checks", name: "Running the checks", area: "checks" as const, ok: false, detail: String((err as Error).message), severity: "minor" as const, ms: 0 }]);
+        findings.push(...probeFindings(results));
+        this.store.update((d) => void (d.checks = { at, took: Date.now() - t0, results }));
+      }
+      if (kind === "checks") {
+        // (only the scripted checks)
+      } else if (kind === "audio") {
         areas.push("audio");
         const a = await this.deps.run("node", ["scripts/audio-levels.mjs"], { cwd: this.paths.naMain, timeoutMs: 20 * 60_000, clean: true });
         findings.push(...commandFindings("audio", "na", a.code, a.out));
@@ -290,11 +305,12 @@ export class Fixer {
       const merged = this.store.update((d) => {
         const m = mergeIssues(d.issues, findings, areas, this.now());
         d.issues = m.issues;
-        if (kind !== "audio") d.lastCheck = kind === "full" ? { at: this.now().toISOString(), took: Date.now() - started, serious: m.issues.filter((i) => i.severity === "serious").length, minor: m.issues.filter((i) => i.severity === "minor").length } : d.lastCheck;
+        if (kind !== "audio" && kind !== "checks") d.lastCheck = kind === "full" ? { at: this.now().toISOString(), took: Date.now() - started, serious: m.issues.filter((i) => i.severity === "serious").length, minor: m.issues.filter((i) => i.severity === "minor").length } : d.lastCheck;
         for (const i of m.fresh) this.note(d, "issue", `New ${i.severity === "serious" ? "serious problem" : "small problem"}: ${i.title}`);
         for (const i of m.cleared) this.note(d, "issue", `Gone: ${i.title}`);
         this.closeGoneJobs(d);
         if (kind === "full") this.note(d, "check", `Hourly check: ${m.issues.length ? `${m.issues.length} open problem${m.issues.length === 1 ? "" : "s"}` : "all clear"}`);
+        if (kind === "checks" && d.checks) this.note(d, "check", `Quick checks: ${d.checks.results.filter((r) => r.ok).length} of ${d.checks.results.length} passed`);
         return m;
       });
       if (kind !== "quick") await this.afterCheck(merged.fresh);
@@ -346,8 +362,9 @@ export class Fixer {
       const first = tell[0];
       await this.deps.notify(tell.length === 1 ? "Found a problem" : `Found ${tell.length} problems`, `${short(first.title, 200)}${tell.length > 1 ? ` (and ${tell.length - 1} more)` : ""}. ${data.settings.autoPrepare && !this.opts.dry ? "A fix is being prepared; it waits for your approval." : "Open the Fixer to look."}`, `issue-${first.id}`);
     }
-    // (Not for health problems or blips: a network, disk or Nova Bot outage isn't something code changes fix)
-    if (data.settings.autoPrepare && !this.opts.dry) for (const i of fresh.filter((x) => x.area !== "health" && !x.blip)) this.enqueue({ type: "issue", id: i.id }, null);
+    // (Not for health or server problems, or blips: a network, disk, mail or Nova Bot outage isn't
+    // something code changes fix)
+    if (data.settings.autoPrepare && !this.opts.dry) for (const i of fresh.filter((x) => x.area !== "health" && x.area !== "server" && !x.blip)) this.enqueue({ type: "issue", id: i.id }, null);
   }
 
   async hourly(): Promise<void> {

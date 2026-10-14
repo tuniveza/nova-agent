@@ -13,13 +13,16 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
+import type { ProbeResult } from "./probes";
 
 export const QUEST_KINDS = ["bug", "glitch", "change"] as const;
 export type QuestKind = (typeof QUEST_KINDS)[number];
 export const PRIORITIES = ["critical", "high", "normal", "low"] as const;
 export type Priority = (typeof PRIORITIES)[number];
 export type Severity = "serious" | "minor";
-export type Area = "tests" | "typecheck" | "sweep" | "health" | "audio";
+// (checks: the scripted checks a code change can fix; server: the scripted checks of the server itself,
+// which only get told about, like health; probes.ts)
+export type Area = "tests" | "typecheck" | "sweep" | "health" | "audio" | "checks" | "server";
 
 export interface Issue {
   id: string;
@@ -158,6 +161,8 @@ export interface FixerData {
   day: { date: string; prepared: number };
   lastCheck: { at: string; took: number; serious: number; minor: number } | null;
   lastAudio: string; // the UK date the audio levels were last measured
+  // The scripted checks' last run, every result (probes.ts)
+  checks: { at: string; took: number; results: ProbeResult[] } | null;
   restarts: number; // the service's restart count last seen (systemd's NRestarts)
 }
 
@@ -182,13 +187,30 @@ export function cleanSettings(s: any): Settings {
   };
 }
 
+function cleanChecks(c: any): FixerData["checks"] {
+  if (!c || typeof c.at !== "string" || !Array.isArray(c.results)) return null;
+  return {
+    at: text(c.at, 40),
+    took: num(c.took, 0, 0, 1e9),
+    results: c.results.slice(0, 300).map((r: any) => ({
+      group: text(r?.group, 60),
+      name: text(r?.name, 120),
+      ok: bool(r?.ok, false),
+      detail: text(r?.detail, 1500),
+      severity: oneOf(r?.severity, ["serious", "minor"] as const, "minor"),
+      area: oneOf(r?.area, ["checks", "server"] as const, "checks"),
+      ms: num(r?.ms, 0, 0, 1e9),
+    })),
+  };
+}
+
 function cleanIssue(i: any): Issue | null {
   const fingerprint = text(i?.fingerprint, 400);
   if (!fingerprint) return null;
   return {
     id: text(i?.id, 64) || randomUUID(),
     fingerprint,
-    area: oneOf(i?.area, ["tests", "typecheck", "sweep", "health", "audio"] as const, "health"),
+    area: oneOf(i?.area, ["tests", "typecheck", "sweep", "health", "audio", "checks", "server"] as const, "health"),
     severity: oneOf(i?.severity, ["serious", "minor"] as const, "minor"),
     title: text(i?.title, 300) || "A problem",
     detail: text(i?.detail, 4000),
@@ -288,6 +310,7 @@ export function normaliseFixer(raw: any): FixerData {
     day: { date: text(raw?.day?.date, 10), prepared: num(raw?.day?.prepared, 0, 0, 1000) },
     lastCheck: raw?.lastCheck && typeof raw.lastCheck.at === "string" ? { at: text(raw.lastCheck.at, 40), took: num(raw.lastCheck.took, 0, 0, 1e9), serious: num(raw.lastCheck.serious, 0, 0, 1e6), minor: num(raw.lastCheck.minor, 0, 0, 1e6) } : null,
     lastAudio: text(raw?.lastAudio, 10),
+    checks: cleanChecks(raw?.checks),
     restarts: num(raw?.restarts, 0, 0, 1e9),
   };
 }
