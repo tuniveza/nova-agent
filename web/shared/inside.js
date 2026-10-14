@@ -62,6 +62,10 @@ html.embed .embed-head > .top { position: relative; top: auto; }
     background: rgba(var(--deep-rgb), 0.97); backdrop-filter: none; -webkit-backdrop-filter: none;
   }
   html.embed .embed-head > .tabs::-webkit-scrollbar { display: none; }
+  /* Every section on the row (no More): on a phone the row slides sideways inside itself */
+  html.embed .embed-head > .tabs > .tab { flex: 0 0 auto; }
+  html.embed .embed-head > .tabs > .tab.tab-more { display: flex; }
+  html.embed .embed-head > .tabs > #tab-more { display: none; }
 }
 /* Tablet widths: every tab stays on screen, wrapping onto a second centred row (phones keep the sliding row) */
 @media (min-width: 761px) and (max-width: 980px) {
@@ -70,8 +74,6 @@ html.embed .embed-head > .top { position: relative; top: auto; }
     flex: 0 0 auto; flex-direction: row; gap: 6px; min-height: 36px; padding: 0 12px; overflow: visible;
     border-radius: 999px; border: 1px solid var(--line); scroll-snap-align: start;
   }
-  html.embed .embed-head > .tabs > .tab.tab-more { display: flex; }
-  html.embed .embed-head > .tabs > #tab-more { display: none; }
   html.embed .embed-head > .tabs > .tab svg, html.embed .embed-head > .tabs > .tab img { width: 18px; height: 18px; }
   html.embed .embed-head > .tabs > .tab > span:not(.badge) { font-size: 12.5px; }
   html.embed .embed-head > .tabs > .tab.active { border-color: var(--hi); background: radial-gradient(120% 140% at 50% 0%, rgba(var(--hi-rgb), 0.26), rgba(var(--accent-2-rgb), 0.1) 65%, transparent 100%); } /* the same soft pill as Portal's tab bar on a computer */

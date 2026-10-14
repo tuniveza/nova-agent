@@ -91,4 +91,11 @@ describe("one screen, nothing scrolling the page", () => {
     const js = read("../web/portal/tabbar.js");
     expect(js).toContain("const fit = w <= room ? lines.find((l) => l.used + apart + gap + w + 8 <= room) : null;");
   });
+
+  it("Portal on a phone inside Nova Agent: every section on its sliding row, no More", () => {
+    const js = read("../web/shared/inside.js");
+    const phone = js.slice(js.indexOf("@media (max-width: 980px)"), js.indexOf("@media (min-width: 761px) and (max-width: 980px)"));
+    expect(phone).toContain("html.embed .embed-head > .tabs > .tab.tab-more { display: flex; }");
+    expect(phone).toContain("html.embed .embed-head > .tabs > #tab-more { display: none; }");
+  });
 });
