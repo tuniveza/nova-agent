@@ -545,7 +545,7 @@ function drawTimeGrid(n) {
           const height = Math.max(18, (Math.max(15, minutesBetween(p.start, p.end)) / 60) * hh - 2);
           const w = 100 / p.cols;
           const e = p.orig;
-          return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="top:${top}px;height:${height}px;left:calc(${p.col * w}% + 2px);width:calc(${w}% - 4px)" tabindex="0" role="button" aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${esc(titleOf(e))}</strong><small>${fmtTime(e.start)}–${fmtTime(e.end)}${e.item.location ? ` · ${esc(e.item.location)}` : ""}</small>${whatOf(e) && whatOf(e) !== e.item.location ? `<em class="ev-what">${esc(whatOf(e))}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
+          return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="top:${top}px;height:${height}px;left:calc(${p.col * w}% + 2px);width:calc(${w}% - 4px)" tabindex="0" role="button" aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong data-edges-ok>${esc(titleOf(e))}</strong><small>${fmtTime(e.start)}–${fmtTime(e.end)}${e.item.location ? ` · ${esc(e.item.location)}` : ""}</small>${whatOf(e) && whatOf(e) !== e.item.location ? `<em class="ev-what">${esc(whatOf(e))}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
         })
         .join("");
       const line = d === t ? `<div class="now-line" style="top:${(minutesBetween(`${d}T00:00`, now) / 60) * hh}px"></div>` : "";
@@ -555,6 +555,8 @@ function drawTimeGrid(n) {
   view.innerHTML = `<div class="tg" style="--cols:${n};--hh:${hh}px">
     <div class="tg-head" style="grid-column:1/-1;display:grid;grid-template-columns:inherit"><span></span>${head}<div class="allday">${alldayCols}</div></div>
     <div class="hours">${hours}</div>${cols}</div>`;
+  // (A card's title is cut short with … to fit its time on purpose, so the edges check lets it be:
+  // the whole title is in its label and opens with a tap.)
   // Cards squeezed narrow (several at once, or a phone's week) show just their title, wrapped,
   // so it can still be read; too thin even for that, just their colour (tap one to read it)
   for (const el of view.querySelectorAll(".col .ev")) {
