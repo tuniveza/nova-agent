@@ -102,10 +102,12 @@ ${GLOW}`);
       head.className = "embed-head";
       top.before(head);
       head.append(top, tabs);
-      // The chosen section stays in view along the row
+      // The chosen section stays in view along the row (or, rows that scroll up and down: Portal's
+      // grid on a phone, which is its own offsetParent, in them)
       const follow = () => {
         const on = tabs.querySelector(".tab.active");
         if (on && tabs.scrollWidth > tabs.clientWidth) tabs.scrollTo({ left: on.offsetLeft - (tabs.clientWidth - on.offsetWidth) / 2, behavior: "smooth" });
+        else if (on && tabs.scrollHeight > tabs.clientHeight && on.offsetParent === tabs) tabs.scrollTo({ top: on.offsetTop - (tabs.clientHeight - on.offsetHeight) / 2, behavior: "smooth" });
       };
       new MutationObserver(follow).observe(tabs, { subtree: true, attributes: true, attributeFilter: ["class"] });
       follow();

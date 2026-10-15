@@ -57,6 +57,25 @@ html.embed #main > .view:not([hidden]) {
   html.embed #main > .view > .view-head:has(> h2 + p) > h2 { margin-inline: 0 !important; }
   html.embed #main > .view > .view-head > h2 + p { margin: 0; }
 }
+/* ---- The sections' row on a phone inside Nova Agent: every section on screen, never past the
+   side (no sideways sliding). A grid of icons with their names, two rows and a peek of the third
+   tall; the rest scrolls up and down inside it (inside.js keeps the chosen one in view). A phone
+   on its side: the pills wrap onto more rows (they scroll away with the panel). #portal-tabs
+   (tabbar.js) wins over inside.js's sliding row; Index's row is as before. ---- */
+@media (max-width: 760px) {
+  html.embed .embed-head > #portal-tabs {
+    position: relative; inset: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 4px;
+    max-height: 136px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: none;
+  }
+  html.embed .embed-head > #portal-tabs > .tab-group { display: none; }
+  html.embed .embed-head > #portal-tabs > .tab { min-width: 0; padding: 5px 2px 6px; }
+  html.embed .embed-head > #portal-tabs > .tab > span:not(.badge) {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; text-align: center; line-height: 1.15;
+  }
+}
+@media (min-width: 761px) and (max-width: 980px) and (max-height: 500px) and (orientation: landscape) {
+  html.embed .embed-head > #portal-tabs { flex-wrap: wrap; justify-content: center; row-gap: 6px; overflow: visible; scroll-snap-type: none; }
+}
 /* (the profile's planet sits a touch higher than its box: inside the section's own scroller it starts level) */
 html.embed #view-profile .pv .stage, html.embed .pv .hero > .stage { margin-top: 0; }
 /* (Today's wide chips wrap inside the section on a narrow phone) */
