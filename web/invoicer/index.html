@@ -69,7 +69,7 @@
           <button type="button" role="radio" data-stage="paid" aria-checked="false"><i class="dot s-paid" aria-hidden="true"></i>Paid receipt</button>
         </div>
         <div class="doc-tools">
-          <button type="button" id="print-btn" disabled>Print / Save PDF</button>
+          <button type="button" id="print-btn" disabled title="Print, or save as a PDF">PDF</button>
           <a class="btn ghost" id="open-btn" role="button" href="#" target="_blank" rel="noopener" aria-disabled="true">Open</a>
         </div>
       </div>
@@ -83,27 +83,25 @@
     <!-- The email for that stage -->
     <section class="nt-card col mail-col" data-part="mail" aria-label="The note and the email">
       <!-- On the invoice: its look (themes a shade apart) and the words in its Notes box -->
-      <div class="col-head"><h2 class="nt-h">On the invoice</h2><button type="button" class="ghost small-btn" id="theme-save" hidden>Use for every invoice</button></div>
+      <div class="col-head"><h2 class="nt-h">On the invoice</h2>
+        <div class="modes" id="modes" role="radiogroup" aria-label="Bright or dark">
+          <button type="button" role="radio" data-mode="bright" aria-checked="true" aria-label="Bright" title="Bright: a white page">☀</button>
+          <button type="button" role="radio" data-mode="dark" aria-checked="false" aria-label="Dark" title="Dark: the website's near-black page">☾</button>
+        </div>
+      </div>
       <!-- How clients pay: the bank details on every invoice (an admin adds them here) -->
       <button type="button" class="paybar" id="bank-btn"><span class="pb-k">How clients pay</span><span class="pb-v" id="bank-state">…</span></button>
-      <div class="modes" id="modes" role="radiogroup" aria-label="Bright or dark">
-        <button type="button" role="radio" data-mode="bright" aria-checked="true">☀ Bright</button>
-        <button type="button" role="radio" data-mode="dark" aria-checked="false">☾ Dark</button>
-      </div>
-      <div class="themes" id="themes" role="radiogroup" aria-label="Look"></div>
-      <label class="nt-label" for="note">Notes</label>
-      <textarea id="note" class="field" rows="3" maxlength="800" placeholder="Thank you for choosing Novacane Studios. Any questions about this invoice, just get in touch."></textarea>
+      <div class="look-row"><div class="themes" id="themes" role="radiogroup" aria-label="Look"></div><span class="look-name" id="look-name"></span><button type="button" class="ghost small-btn" id="theme-save" hidden>Use for all</button></div>
+      <textarea id="note" class="field" rows="2" maxlength="800" aria-label="Notes on the invoice" placeholder="Notes on the invoice (a thank-you shows if empty)"></textarea>
       <div class="col-head"><h2 class="nt-h">Email</h2><span class="nt-chip" id="mail-chip" hidden></span></div>
-      <label class="nt-label" for="subject">Subject</label>
-      <input id="subject" class="field" type="text" autocomplete="off">
-      <label class="nt-label" for="body">Message</label>
-      <textarea id="body" class="field scroll" spellcheck="true"></textarea>
-      <div class="mail-tools">
+      <input id="subject" class="field" type="text" autocomplete="off" aria-label="Subject" placeholder="Subject">
+      <textarea id="body" class="field scroll" spellcheck="true" aria-label="Message" placeholder="Message"></textarea>
+      <div class="mail-tools small-tools">
         <button type="button" id="email-btn">See the email</button>
         <button type="button" id="test-btn" hidden>Send me a test</button>
-        <button type="button" id="copy-btn" disabled>Copy email</button>
-        <button type="button" class="primary" id="send-btn" disabled>Send…</button>
+        <button type="button" id="copy-btn" disabled aria-label="Copy the email" title="Copy the email">⧉</button>
       </div>
+      <button type="button" class="primary send-wide" id="send-btn" disabled>Send…</button>
       <p class="send-note" id="send-note"></p>
     </section>
   </div>

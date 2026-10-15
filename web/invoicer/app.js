@@ -196,7 +196,7 @@ function drawSend(inv, detail, stage) {
   const receiptSent = reminders.some((r) => r.kind === "receipt" && r.status === "sent");
   $("test-btn").hidden = !admin;
   // (it sends the stage shown: at Paid receipt, the receipt)
-  $("test-btn").textContent = stage === "paid" ? "Send me a test receipt" : stage === "deposit" ? "Send me a test" : "Send me a test reminder";
+  $("test-btn").textContent = stage === "paid" ? "Send me a test receipt" : "Send me a test";
   $("test-btn").title = stage === "paid" ? "The receipt email, to your own address only" : "This email, to your own address only";
   btn.hidden = false;
   btn.disabled = false;
@@ -312,7 +312,8 @@ function drawThemes() {
       const sw = el("span", { class: "sw", "aria-hidden": "true" });
       sw.style.setProperty("--b", t.band);
       sw.style.setProperty("--a", t.accent);
-      b.append(sw, t.name, t.id === studioTheme ? el("span", { class: "star", "aria-label": "(every invoice)", text: "★" }) : "");
+      b.setAttribute("aria-label", t.name + (t.id === studioTheme ? " (every invoice)" : ""));
+      b.append(sw);
       b.addEventListener("click", () => {
         theme = t.id;
         try {
@@ -325,6 +326,8 @@ function drawThemes() {
     })
   );
   for (const b of $("modes").querySelectorAll("button")) b.setAttribute("aria-checked", String(b.dataset.mode === (mode || studioMode)));
+  const shown = themes.find((t) => t.id === (theme || studioTheme));
+  $("look-name").textContent = shown ? `${shown.name}${shown.id === studioTheme ? " ★" : ""} · ${(mode || studioMode) === "dark" ? "Dark" : "Bright"}` : "";
   // An admin can make the one shown every invoice's look
   $("theme-save").hidden = !(data?.canDecide && ((theme && theme !== studioTheme) || (mode && mode !== studioMode)));
 }

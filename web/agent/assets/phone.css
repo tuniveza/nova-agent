@@ -237,3 +237,6 @@ html body .tabbar .tgroup[data-group="solo"] .tg-items, html body .tabbar .tgrou
 html body .tabbar .tgroup[data-group="solo"], html body .tabbar .tgroup[data-group="end"] { width: auto; flex: none; }
 html body .tabbar .tgroup[data-group="solo"] [data-tab], html body .tabbar .tgroup[data-group="end"] [data-tab] { min-width: 48px; padding-inline: 4px; }
 html body .tabbar .tgroup[data-group="solo"] [data-tab] > span:last-child, html body .tabbar .tgroup[data-group="end"] [data-tab] > span:last-child { overflow: visible; text-overflow: clip; max-width: none; }
+
+/* The lines between the groups fade out at both ends (not square-edged) */
+.tabbar .tgroup + .tgroup, .tabbar .tgroup[data-group="tasks"], .tabbar .tgroup[data-group="solo"] { border-image: linear-gradient(180deg, transparent, var(--line) 30%, var(--line) 70%, transparent) 1; }

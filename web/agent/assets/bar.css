@@ -133,9 +133,11 @@ dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { o
 #suite-home .suite-groups .suite-app.open::after { inset: auto 32% 1px 32%; height: 2px; border-radius: 2px; background: var(--hi);
   box-shadow: 0 0 10px var(--hi), 0 0 3px var(--hi); opacity: .7; }
 #suite-home .suite-group + .suite-group { position: relative; }
-#suite-home .suite-group + .suite-group::before { content: ""; position: absolute; left: -9px; top: 8%; bottom: 8%; width: 1px;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--hi) 55%, transparent) 45%, color-mix(in srgb, var(--accent-2) 45%, transparent) 70%, transparent);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--hi) 35%, transparent); }
+/* (a glow that fades with the line itself, soft at both ends, not a square-edged box) */
+#suite-home .suite-group + .suite-group::before { content: ""; position: absolute; left: -9px; top: 0; bottom: 0; width: 1px;
+  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--hi) 22%, transparent) 22%, color-mix(in srgb, var(--hi) 60%, transparent) 48%, color-mix(in srgb, var(--accent-2) 45%, transparent) 72%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--hi) 55%, transparent)); }
 /* The phone's bar: the same night sky, a glowing top edge, and a lit pill for where you are */
 @media (max-width: 980px), (max-height: 480px) {
   .tabbar { position: relative; isolation: isolate; border-top: 0;

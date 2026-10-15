@@ -77,6 +77,8 @@
   dialog.rhythm.suite-dlg { width: min(860px, calc(100vw - 24px)); }
   .suite-top { position: relative; display: grid; justify-items: center; text-align: center; gap: 4px; }
   .suite-top p { margin: 0; }
+  .bar-mode.music-set input[type="range"] { width: min(220px, 42vw); accent-color: var(--hi); }
+  .bar-mode.music-set output { min-width: 2.2em; font-variant-numeric: tabular-nums; color: var(--muted); }
   .suite-x { position: absolute; right: 0; top: 0; }
   .suite-dlg .suite-groups { max-height: min(64vh, 640px); max-height: min(64dvh, 640px); overflow-y: auto; padding: 4px; }
   .suite-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
@@ -135,6 +137,40 @@
   .pico[data-p="invoicer"] { --own: #b77bff; }
   /* Invoicer, on its own (no group name): level with the places under the group names */
   .suite-home .suite-group.solo { align-self: flex-end; }
+  /* A big screen (1600px wide, 860px tall or more): the navigation panel's icons bigger, its names a touch bigger */
+  @media (min-width: 1600px) and (min-height: 860px) {
+    html body .main > .suite-home .suite-grid { grid-auto-columns: 74px; }
+    html body .main.viewing > .suite-home .suite-grid { grid-auto-columns: 70px; }
+    html body .main > .suite-home .suite-app > .pico, html body .main.viewing > .suite-home .suite-app > .pico { width: 38px; height: 38px; border-radius: 10px; }
+    html body .main > .suite-home .suite-app b { font-size: 11px; }
+    html body .main > .suite-home .suite-group h4 { font-size: 10px; }
+  }
+  @media (min-width: 2200px) and (min-height: 1100px) {
+    html body .main > .suite-home .suite-grid, html body .main.viewing > .suite-home .suite-grid { grid-auto-columns: 84px; }
+    html body .main > .suite-home .suite-app > .pico, html body .main.viewing > .suite-home .suite-app > .pico { width: 44px; height: 44px; border-radius: 12px; }
+    html body .main > .suite-home .suite-app b { font-size: 12px; }
+  }
+  /* The navigation panel's names: each a gentle tint of its own icon's colour, blended with the
+     theme's text colour (so it reads in every theme); the open one stays bright */
+  .suite-app:has(> .pico[data-p="chat"]), .tabbar [data-tab]:has(> .pico[data-p="chat"]) { --tint: var(--hi); }
+  .suite-app:has(> .pico[data-p="portal"]), .tabbar [data-tab]:has(> .pico[data-p="portal"]) { --tint: #ff5fae; }
+  .suite-app:has(> .pico[data-p="calendar"]), .tabbar [data-tab]:has(> .pico[data-p="calendar"]) { --tint: #8c7dff; }
+  .suite-app:has(> .pico[data-p="notes"]), .tabbar [data-tab]:has(> .pico[data-p="notes"]) { --tint: #ffb36b; }
+  .suite-app:has(> .pico[data-p="board"]), .tabbar [data-tab]:has(> .pico[data-p="board"]) { --tint: #5fd8bd; }
+  .suite-app:has(> .pico[data-p="index"]), .tabbar [data-tab]:has(> .pico[data-p="index"]) { --tint: #45d3c4; }
+  .suite-app:has(> .pico[data-p="quests"]), .tabbar [data-tab]:has(> .pico[data-p="quests"]) { --tint: #ffd166; }
+  .suite-app:has(> .pico[data-p="missions"]), .tabbar [data-tab]:has(> .pico[data-p="missions"]) { --tint: #ff7a6b; }
+  .suite-app:has(> .pico[data-p="lossless"]), .tabbar [data-tab]:has(> .pico[data-p="lossless"]) { --tint: #62b6ff; }
+  .suite-app:has(> .pico[data-p="visualizer"]), .tabbar [data-tab]:has(> .pico[data-p="visualizer"]) { --tint: #6fe6a6; }
+  .suite-app:has(> .pico[data-p="observatory"]), .tabbar [data-tab]:has(> .pico[data-p="observatory"]) { --tint: #5b63ff; }
+  .suite-app:has(> .pico[data-p="fixer"]), .tabbar [data-tab]:has(> .pico[data-p="fixer"]) { --tint: #b3f26b; }
+  .suite-app:has(> .pico[data-p="computer"]), .tabbar [data-tab]:has(> .pico[data-p="computer"]) { --tint: #7fd8ff; }
+  .suite-app:has(> .pico[data-p="invoicer"]), .tabbar [data-tab]:has(> .pico[data-p="invoicer"]) { --tint: #b77bff; }
+  .suite-app:has(> .pico[data-p="console"]), .tabbar [data-tab]:has(> .pico[data-p="console"]) { --tint: #ff8cc6; }
+  .suite-app:has(> .pico[data-p="manual"]), .tabbar [data-tab]:has(> .pico[data-p="manual"]) { --tint: #e6cf9f; }
+  #suite-home .suite-app b, .tabbar [data-tab] > span:last-child { color: color-mix(in srgb, var(--tint, var(--text)) 40%, var(--text)); }
+  #suite-home .suite-app:hover b, .tabbar [data-tab]:hover > span:last-child { color: color-mix(in srgb, var(--tint, var(--text)) 55%, var(--bright, #fff)); }
+  html body #suite-home .suite-groups .suite-app.open b, html body .tabbar [data-tab].on > span:last-child, html body .tabbar [data-tab][aria-current="page"] > span:last-child { color: var(--bright, #fff); }
   /* On the navigation panel the Invoicer's name is written "invoicer" (the user's choice, 15 Oct 2026);
      its title and the Panels window keep "Invoicer" */
   #suite-home a.suite-app[data-inside="/invoicer/"] b, #tabbar [data-tab="/invoicer/"] > span:last-child { text-transform: lowercase; }
@@ -999,6 +1035,19 @@
         <button type="button" class="chip" role="radio" data-bar-mode="auto" data-sfx="tab">Auto</button>
         <button type="button" class="chip" role="radio" data-bar-mode="shown" data-sfx="tab">Always shown</button>
         <button type="button" class="chip" role="radio" data-bar-mode="hidden" data-sfx="tab">Always hidden</button>
+      </div>
+      <!-- The music (ambient.js): its volume, and how long the same music plays -->
+      <div class="bar-mode music-set">
+        <span>Music volume</span>
+        <input type="range" id="music-vol" min="0" max="100" step="1" aria-label="Music volume">
+        <output id="music-vol-n" for="music-vol">40</output>
+      </div>
+      <div class="bar-mode" role="radiogroup" aria-label="Same music for">
+        <span>Same music for</span>
+        <button type="button" class="chip" role="radio" data-music-keep="visit" data-sfx="tab">Each visit</button>
+        <button type="button" class="chip" role="radio" data-music-keep="day" data-sfx="tab">A day</button>
+        <button type="button" class="chip" role="radio" data-music-keep="week" data-sfx="tab">A week</button>
+        <button type="button" class="chip" role="radio" data-music-keep="always" data-sfx="tab">Always</button>
       </div>
       <div class="bar-mode" role="radiogroup" aria-label="Top bar">
         <span>Top bar</span>
@@ -2545,6 +2594,25 @@
   window.addEventListener('novasfxchange', sfxState);
   sfxState();
 
+  // ---- The music's volume and how long the same music plays (the Panels window; Portal's Options
+  // shares the volume: "nova-options".volume, 0-100) ----
+  (() => {
+    const vol = $('music-vol'), n = $('music-vol-n');
+    const savedVol = () => { try { const v = JSON.parse(localStorage.getItem('nova-options') || '{}').volume; return typeof v === 'number' ? v : 40; } catch (e) { return 40; } };
+    const drawKeep = () => { const m = window.NovaAmbient && window.NovaAmbient.keepMode ? window.NovaAmbient.keepMode() : 'visit'; document.querySelectorAll('[data-music-keep]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.musicKeep === m))); };
+    const draw = () => { vol.value = savedVol(); n.textContent = vol.value; drawKeep(); };
+    vol.addEventListener('input', () => {
+      n.textContent = vol.value;
+      try { const o = JSON.parse(localStorage.getItem('nova-options') || '{}'); o.volume = Number(vol.value); localStorage.setItem('nova-options', JSON.stringify(o)); } catch (e) {}
+      if (window.NovaAmbient) window.NovaAmbient.setVolume(Number(vol.value) / 100);
+    });
+    document.querySelectorAll('[data-music-keep]').forEach((b) => b.addEventListener('click', () => { if (window.NovaAmbient && window.NovaAmbient.keepFor) window.NovaAmbient.keepFor(b.dataset.musicKeep); drawKeep(); }));
+    window.addEventListener('novaambientseed', drawKeep);
+    $('suite').addEventListener('toggle', draw);
+    new MutationObserver(() => $('suite').open && draw()).observe($('suite'), { attributes: true, attributeFilter: ['open'] });
+    draw();
+  })();
+
   // ---- Ambient music: the switch in the header (and in the phone's gear menu) ----
   function musicState() {
     const on = window.NovaAmbient ? window.NovaAmbient.isPlaying() : false;
@@ -2595,8 +2663,33 @@
     box.setAttribute('aria-label', name + ' (switch panel)');
   }
 
+  // ---- Each place's own address and tab title (Nova Bot's src/index.js PLACES: the same table) ----
+  // While a place is open the address bar shows where it lives (/agent/tools/fixer) and the tab says
+  // "Fixer · Tools · Nova Agent"; opening, reloading or sharing that address opens it again.
+  const PLACES = [
+    ['portal', 'apps', '/portal/'], ['calendar', 'apps', '/calendar/'], ['notes', 'apps', '/notes/'], ['board', 'apps', '/board/'], ['index', 'apps', '/app/memory/'],
+    ['quests', 'plans', '/quests/'], ['fixer', 'tools', '/fixer/'], ['computer', 'tools', '/computer/'], ['lossless', 'tools', '/lossless/'],
+    ['observatory', 'helpers', '/observatory/'], ['console', 'helpers', '/console/'], ['invoicer', '', '/invoicer/'], ['nova', '', '/visualizer'],
+  ];
+  const GROUP_NAMES = { apps: 'Apps', plans: 'Plans', tools: 'Tools', helpers: 'Helpers' };
+  function placeOf(href) {
+    let path = '';
+    try { path = new URL(href, location.origin).pathname; } catch { return null; }
+    let best = null;
+    for (const p of PLACES) if ((path === p[2] || path.startsWith(p[2].endsWith('/') ? p[2] : p[2] + '/')) && (!best || p[2].length > best[2].length)) best = p;
+    return best;
+  }
+  function showPlace(place, name) {
+    try {
+      const path = place ? `/agent/${place[1] ? place[1] + '/' : ''}${place[0]}` : '/agent/';
+      if (location.pathname !== path) history.replaceState(history.state, '', path + (place ? '' : location.search) + location.hash);
+    } catch {}
+    document.title = place ? `${name} · ${place[1] ? GROUP_NAMES[place[1]] + ' · ' : ''}Nova Agent` : 'Nova Agent';
+  }
+
   function openInside(href, name) {
     setViewerName(name);
+    showPlace(placeOf(href), name);
     // Ad blockers block any address with "view=ad…" in it (they take it for an advert), so Portal's
     // Admin is "view=manage"; old links and remembered places still say "admin"
     href = String(href).replace(/([?&]view=)admin\b/, '$1manage');
@@ -2610,6 +2703,7 @@
     if ($('suite').open) $('suite').close();
   }
   function closeViewer() {
+    showPlace(null);
     $('viewer').hidden = true;
     $('viewer-frame').src = 'about:blank';
     $('main').classList.remove('viewing');
@@ -2685,10 +2779,14 @@
   // Launcher shortcuts: ?view=calendar opens Calendar (Today and Missions are always on screen)
   if (new URLSearchParams(location.search).get('view') === 'calendar') openCalendar();
   // Opened at a panel's address: that panel, inside (the address is tidied back to Nova Agent's own)
+  // (Agent, Missions and the Manual have places too: /agent/apps/agent, /agent/plans/missions, /agent/helpers/manual)
   const opening = new URLSearchParams(location.search).get('open');
   if (opening !== null) {
-    openAddress(opening + (opening.includes('#') ? '' : location.hash));
     window.history.replaceState(window.history.state, '', '/agent/');
+    if (opening === 'manual') setTimeout(() => window.NovaManual && window.NovaManual.open(), 300);
+    else if (opening === 'pane:chat') setTimeout(() => showAgent(), 300);
+    else if (opening === 'pane:missions') setTimeout(() => document.querySelector('#tabbar [data-tab="pane:missions"]')?.click(), 300);
+    else openAddress(opening + (opening.includes('#') ? '' : location.hash));
   }
   loadPlan();
   input.focus();

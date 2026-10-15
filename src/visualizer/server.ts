@@ -155,6 +155,11 @@ const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/ca
 app.get("/", (c) => c.redirect("/agent/"));
 app.get("/agent", (c) => c.redirect("/agent/"));
 app.get("/agent/", (c) => c.html(readFileSync(chatFile, "utf8")));
+// /agent/<group>/<name> (the address Nova Agent shows while a place is open: /agent/tools/fixer)
+app.get("/agent/:group{apps|plans|tools|helpers}/:name{[a-z]+}", (c, next) => {
+  const panel = PANEL_NAMES[c.req.param("name")];
+  return panel ? c.redirect("/agent/?open=" + encodeURIComponent(panel + new URL(c.req.url).search)) : next();
+});
 app.get("/agent/:name{[a-z]+}", (c, next) => {
   const panel = PANEL_NAMES[c.req.param("name")];
   return panel ? c.redirect("/agent/?open=" + encodeURIComponent(panel + new URL(c.req.url).search)) : next();

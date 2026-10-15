@@ -63,6 +63,9 @@
       setSeed: (s) => call('setSeed', s),
       newSeed: () => call('newSeed'),
       keepSeed: (on) => call('keepSeed', on),
+      keepFor: (mode) => call('keepFor', mode),
+      keepMode: () => call('keepMode'),
+      volume: () => call('volume'),
       keptSeed: () => call('keptSeed'),
       piece: () => call('piece'),
       pieces: main.pieces,
@@ -1010,7 +1013,26 @@
 
   // This session's seed: the kept one, or a fresh one
   function keptSeed() { try { return cleanSeed(localStorage.getItem(SEED_KEY)); } catch (e) { return null; } }
-  let seed = keptSeed() || randomSeed();
+  // How long the same music plays (the gear's "Same music for"): each visit (a new one every time,
+  // the start), a day, a week, or always (the kept seed). A day or a week keeps the seed with an end
+  // time ("nova-music-keep": { mode, seed, until }); after it, a fresh one starts the next stretch.
+  const KEEP_KEY = 'nova-music-keep';
+  const KEEP_MS = { day: 24 * 3600e3, week: 7 * 24 * 3600e3 };
+  function keepRecord() { try { return JSON.parse(localStorage.getItem(KEEP_KEY) || 'null'); } catch (e) { return null; } }
+  function keepMode() { return keptSeed() ? 'always' : (keepRecord() && KEEP_MS[keepRecord().mode] ? keepRecord().mode : 'visit'); }
+  function startingSeed() {
+    const kept = keptSeed();
+    if (kept) return kept;
+    const r = keepRecord();
+    if (r && KEEP_MS[r.mode]) {
+      if (cleanSeed(r.seed) && Date.now() < r.until) return cleanSeed(r.seed);
+      const fresh = randomSeed();
+      remember(KEEP_KEY, JSON.stringify({ mode: r.mode, seed: fresh, until: Date.now() + KEEP_MS[r.mode] }));
+      return fresh;
+    }
+    return randomSeed();
+  }
+  let seed = startingSeed();
 
   // The theme's colour, as a tilt from warm (−1) to cool (+1), for a subtle tint
   function themeTone() {
@@ -1210,6 +1232,8 @@
     const wasKept = keptSeed() === seed;
     seed = s;
     if (wasKept) remember(SEED_KEY, s);
+    const r = keepRecord();
+    if (r && KEEP_MS[r.mode]) remember(KEEP_KEY, JSON.stringify({ ...r, seed: s }));
     if (ctx) {
       remember(LAST_KEY, s);
       const old = engine;
@@ -1234,6 +1258,16 @@
     } catch (e) { /* private window */ }
     tellSeed();
     return Boolean(on);
+  }
+  function keepFor(mode) {
+    if (mode === 'always') { keepSeed(true); try { localStorage.removeItem(KEEP_KEY); } catch (e) {} }
+    else {
+      keepSeed(false);
+      if (KEEP_MS[mode]) remember(KEEP_KEY, JSON.stringify({ mode, seed, until: Date.now() + KEEP_MS[mode] }));
+      else try { localStorage.removeItem(KEEP_KEY); } catch (e) {}
+    }
+    tellSeed();
+    return keepMode();
   }
   function piece() {
     if (!engine || !ctx) return null;
@@ -1323,7 +1357,7 @@
 
   const api = {
     start: () => start(true), stop, toggle, setVolume, isPlaying: () => playing, wanted, nudge,
-    seed: () => seed, setSeed, newSeed: () => setSeed(randomSeed()), keepSeed, keptSeed, piece,
+    seed: () => seed, setSeed, newSeed: () => setSeed(randomSeed()), keepSeed, keptSeed, keepFor, keepMode, volume: () => volume, piece,
     pieces: Object.keys(PIECE_NAMES).map((id) => ({ id, name: PIECE_NAMES[id] })),
     onchange: null,
     _render: render
