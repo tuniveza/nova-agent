@@ -45,7 +45,7 @@
     <section class="nt-card col list-col" data-part="list" aria-label="Invoices">
       <div class="col-head">
         <h2 class="nt-h">Invoices</h2>
-        <button type="button" class="primary" id="new-btn">+ New invoice</button>
+        <button type="button" class="primary" id="new-btn" title="Make a new invoice: the artist, the services, the dates">New invoice</button>
       </div>
       <input type="search" id="search" class="field" placeholder="Search artist or number" aria-label="Search invoices" autocomplete="off">
       <div class="filters" id="filters" role="group" aria-label="Show">
@@ -72,7 +72,7 @@
         </div>
         <div class="doc-tools">
           <button type="button" id="print-btn" disabled title="Print, or save as a PDF">PDF</button>
-          <a class="btn ghost" id="open-btn" role="button" href="#" target="_blank" rel="noopener" aria-disabled="true">Open</a>
+          <a class="btn ghost" id="open-btn" role="button" href="#" target="_blank" rel="noopener" aria-disabled="true" title="Open the invoice on its own page">Open</a>
           <button type="button" id="share-btn" disabled title="Send its link by WhatsApp, a message, Instagram… (once it's approved)">Share</button>
           <button type="button" id="edit-btn" disabled title="Change it: its artist, lines, dates and notes">Edit</button>
           <button type="button" id="remove-btn" hidden title="Remove it (kept on record, marked removed)">Remove</button>
@@ -100,7 +100,7 @@
       <div class="look-row">
         <label class="paper-pick"><span>Paper</span><select id="paper" class="field" aria-label="Paper"></select></label>
         <span class="look-name" id="look-name"></span>
-        <button type="button" class="ghost small-btn" id="theme-save" hidden>Use for all</button>
+        <button type="button" class="ghost small-btn" id="theme-save" hidden title="Make this look every new invoice's look">Use for all</button>
       </div>
       <textarea id="note" class="field" rows="2" maxlength="800" aria-label="Notes on the invoice" placeholder="Notes on the invoice (a thank-you shows if empty)"></textarea>
       <button type="button" class="ghost small-btn" id="note-save" hidden>Save notes</button>
@@ -108,8 +108,8 @@
       <input id="subject" class="field" type="text" autocomplete="off" aria-label="Subject" placeholder="Subject">
       <textarea id="body" class="field scroll" spellcheck="true" aria-label="Message" placeholder="Message"></textarea>
       <div class="mail-tools small-tools">
-        <button type="button" id="email-btn">See the email</button>
-        <button type="button" id="test-btn" hidden>Send me a test</button>
+        <button type="button" id="email-btn" title="See the email as the client gets it">See the email</button>
+        <button type="button" id="test-btn" hidden title="Email it to yourself only, marked [TEST]">Send me a test</button>
         <button type="button" id="copy-btn" disabled aria-label="Copy the email" title="Copy the email">⧉</button>
       </div>
       <button type="button" class="primary send-wide" id="send-btn" disabled>Send…</button>

@@ -113,16 +113,19 @@ function drawList() {
   });
   list.replaceChildren();
   if (!rows.length) {
-    list.append(el("li", { class: "empty", text: data?.invoices?.length ? "None like that." : "No invoices yet: make the first with + New invoice." }));
+    list.append(el("li", { class: "empty", text: data?.invoices?.length ? "None like that." : "No invoices yet: make the first with New invoice." }));
     return;
   }
   for (const inv of rows) {
     const waiting = WAITING.includes(inv.status);
     const stage = stageOf(inv, today);
     const chip = waiting ? el("span", { class: "tag waiting", text: inv.status === "rejected" ? "Rejected" : inv.status === "failed" ? "Didn't send" : "To approve" }) : el("span", { class: `tag s-${stage}`, text: STAGE_NAMES[stage] });
+    // (a round badge with the artist's initials, in the colour of where the invoice is)
+    const initials = (inv.billTo.name || "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase() || "?";
     const btn = el(
       "button",
-      { type: "button", class: "inv", "aria-current": chosen && chosen.id === inv.id ? "true" : "false", "data-id": inv.id },
+      { type: "button", class: "inv", "aria-current": chosen && chosen.id === inv.id ? "true" : "false", "data-id": inv.id, "data-st": waiting ? "waiting" : stage },
+      el("span", { class: "av", "aria-hidden": "true", text: initials }),
       el("span", { class: "who" }, el("b", { text: inv.billTo.name }), el("small", { text: `${inv.number} · ${dayText(inv.issueDate)}` })),
       el("span", { class: "amt" }, el("b", { text: pounds(inv.totalPence) }), chip)
     );
