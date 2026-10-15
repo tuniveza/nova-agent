@@ -71,6 +71,16 @@ textarea.field { resize: none; line-height: 1.5; }
 .nb-tool .modes button[aria-checked="true"] { color: var(--bright); border-color: var(--hi); background: color-mix(in srgb, var(--hi) 18%, transparent); }
 .nb-tool .col-head > button.small-btn { min-height: 32px; padding: 2px 12px; font-size: 12.5px; }
 
+/* ---- How clients pay ---- */
+.nb-tool button.paybar { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 6px 14px; border-radius: 12px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); color: var(--text); font: inherit; font-size: 13.5px; cursor: pointer; text-align: left; }
+.paybar .pb-k { color: var(--muted); font-size: 12px; letter-spacing: .06em; }
+.paybar .pb-v { font-weight: 700; }
+.paybar.missing { border-color: color-mix(in srgb, var(--warn, #f2c14e) 70%, transparent); }
+.paybar.missing .pb-v { color: var(--warn, #f2c14e); }
+#bank { width: min(520px, calc(100vw - 24px)); padding: 0; border-radius: 20px; border: 1px solid var(--line); background: var(--deep, #120a1a); color: var(--text); }
+#bank::backdrop { background: rgb(0 0 0 / .55); }
+.bank-form { gap: 8px; }
+
 /* ---- The email ---- */
 .mail-col .nt-label { margin: 2px 0 -4px; }
 #body { flex: 1 1 auto; min-height: 90px; }

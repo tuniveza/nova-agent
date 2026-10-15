@@ -91,6 +91,7 @@ async function load(keep = true) {
     return;
   }
   drawList();
+  drawBank();
   if (keep && chosen) await choose(chosen.id, chosen.stage, true);
 }
 
@@ -582,6 +583,44 @@ $("new-form").addEventListener("submit", async (e) => {
     problem(e2.message);
   } finally {
     $("n-save").disabled = false;
+  }
+});
+
+// ---- How clients pay: the bank details (Money's settings), added here by an admin ----
+function drawBank() {
+  const st = data?.settings || {};
+  const bank = st.bank || {};
+  const ways = [st.bankReady && "Bank transfer", data?.cardReady && "Card"].filter(Boolean);
+  $("bank-state").textContent = ways.length ? `${ways.join(" and ")} ✓` : data?.canDecide ? "Add bank details" : "Not set up yet (an admin adds it)";
+  $("bank-btn").classList.toggle("missing", !ways.length);
+  $("bank-btn").disabled = !data?.canDecide;
+  $("bank-btn").title = data?.canDecide ? "The bank details on every invoice" : "An admin adds these";
+}
+$("bank-btn").addEventListener("click", () => {
+  const b = data?.settings?.bank || {};
+  $("b-name").value = b.accountName || "";
+  $("b-sort").value = b.sortCode || "";
+  $("b-acc").value = b.accountNumber || "";
+  $("b-note").value = b.note || "";
+  $("b-error").hidden = true;
+  $("bank").showModal();
+  $("b-name").focus();
+});
+for (const id of ["bank-close", "bank-cancel"]) $(id).addEventListener("click", () => $("bank").close());
+$("bank-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("bank-save").disabled = true;
+  try {
+    await api("money/settings", { method: "POST", body: { bank: { accountName: $("b-name").value.trim(), sortCode: $("b-sort").value.trim(), accountNumber: $("b-acc").value.replace(/\s/g, ""), note: $("b-note").value.trim() } } });
+    $("bank").close();
+    say("Bank details saved: they're on every invoice now.");
+    await load();
+    if (chosen) refreshDoc();
+  } catch (err) {
+    $("b-error").textContent = err.message;
+    $("b-error").hidden = false;
+  } finally {
+    $("bank-save").disabled = false;
   }
 });
 

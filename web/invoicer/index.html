@@ -84,6 +84,8 @@
     <section class="nt-card col mail-col" data-part="mail" aria-label="The note and the email">
       <!-- On the invoice: its look (themes a shade apart) and the words in its Notes box -->
       <div class="col-head"><h2 class="nt-h">On the invoice</h2><button type="button" class="ghost small-btn" id="theme-save" hidden>Use for every invoice</button></div>
+      <!-- How clients pay: the bank details on every invoice (an admin adds them here) -->
+      <button type="button" class="paybar" id="bank-btn"><span class="pb-k">How clients pay</span><span class="pb-v" id="bank-state">…</span></button>
       <div class="modes" id="modes" role="radiogroup" aria-label="Bright or dark">
         <button type="button" role="radio" data-mode="bright" aria-checked="true">☀ Bright</button>
         <button type="button" role="radio" data-mode="dark" aria-checked="false">☾ Dark</button>
@@ -106,6 +108,24 @@
     </section>
   </div>
 </main>
+
+<!-- The bank details on every invoice (Money's settings; admins) -->
+<dialog id="bank" aria-labelledby="bank-title">
+  <form id="bank-form" method="dialog" class="new-form bank-form">
+    <div class="col-head"><h2 class="nt-h" id="bank-title">Bank details</h2><button type="button" class="ghost" id="bank-close" aria-label="Close">✕</button></div>
+    <p class="muted small">Shown on every invoice, its page and its email, so clients can pay by bank transfer.</p>
+    <label class="nt-label" for="b-name">Account name</label>
+    <input id="b-name" class="field" autocomplete="off" maxlength="120">
+    <div class="grid2">
+      <div><label class="nt-label" for="b-sort">Sort code</label><input id="b-sort" class="field" inputmode="numeric" autocomplete="off" placeholder="12-34-56" maxlength="20"></div>
+      <div><label class="nt-label" for="b-acc">Account number</label><input id="b-acc" class="field" inputmode="numeric" autocomplete="off" placeholder="12345678" maxlength="34"></div>
+    </div>
+    <label class="nt-label" for="b-note">Note (optional)</label>
+    <input id="b-note" class="field" autocomplete="off" maxlength="200" placeholder="Bank: Monzo">
+    <p class="message bad" id="b-error" hidden></p>
+    <div class="mail-tools"><button type="button" class="ghost" id="bank-cancel">Cancel</button><button type="submit" class="primary" id="bank-save">Save</button></div>
+  </form>
+</dialog>
 
 <!-- A new invoice: the artist, the services from the price list, the dates -->
 <dialog id="new" aria-labelledby="new-title">
