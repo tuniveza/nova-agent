@@ -96,10 +96,11 @@ async function load(keep = true) {
   }
   drawList();
   drawBank();
-  $("restart-btn").hidden = !data?.canDecide || !(data.invoices || []).some((i) => /^NS-/.test(i.number));
+  restartBtn.hidden = !data?.canDecide || !(data.invoices || []).some((i) => /^NS-/.test(i.number));
   if (keep && chosen) await choose(chosen.id, chosen.stage, true);
 }
 
+const restartBtn = $("restart-btn");
 function drawList() {
   const list = $("list");
   const q = $("search").value.trim().toLowerCase();
@@ -131,6 +132,8 @@ function drawList() {
     });
     list.append(el("li", {}, btn));
   }
+  // (Start numbers again sits at the end of the list, so it scrolls with it on a short screen)
+  list.append(el("li", { class: "restart-li" }, restartBtn));
 }
 
 // ---- One invoice, at a stage ----
@@ -191,6 +194,9 @@ function drawStage(first = false) {
   $("edit-btn").disabled = inv.status === "paid" || inv.status === "void";
   $("edit-btn").title = inv.status === "paid" ? "Paid in full: it can't change" : inv.status === "void" ? "Removed" : "Change it: its artist, lines, dates and notes";
   $("remove-btn").hidden = !data?.canDecide || inv.status === "void" || inv.paidPence > 0;
+  // Share: once it's approved (its page opens), or an admin approves it to share
+  $("share-btn").disabled = inv.status === "void" || !(inv.pageUrl || (data?.canDecide && WAITING.includes(inv.status) && inv.status !== "rejected"));
+  $("share-btn").title = inv.pageUrl ? "Send its link by WhatsApp, a message, Instagram…" : data?.canDecide ? "Approve it to share, then send its link" : "It can be shared once an admin approves it";
   $("open-btn").href = src;
   $("open-btn").removeAttribute("aria-disabled");
   // The email
@@ -709,8 +715,8 @@ $("new-form").addEventListener("submit", async (e) => {
 });
 
 // Start the numbers again (admins, while testing): pressed twice, like every button that can't be undone here
-$("restart-btn").addEventListener("click", async () => {
-  const btn = $("restart-btn");
+restartBtn.addEventListener("click", async () => {
+  const btn = restartBtn;
   if (!btn.dataset.armed) {
     btn.dataset.armed = "1";
     btn.textContent = "Yes: make them all TEST invoices, next is NS-0001";
@@ -734,6 +740,86 @@ $("restart-btn").addEventListener("click", async () => {
     btn.textContent = "Start numbers again at NS-0001";
   }
 });
+
+// ---- Share: the invoice's page, sent by you (WhatsApp, Telegram, a text, email, the device's own list) ----
+function shareMessage(inv) {
+  const sums = chosen.staged.sums;
+  const first = (inv.billTo.name || "").trim().split(/\s+/)[0] || "there";
+  const due = sums.dueNowPence > 0 ? `${pounds(sums.dueNowPence)} due now` : "paid in full, thank you";
+  return `Hi ${first}, here's your invoice ${inv.number} from Novacane Studios (${due}). See it and pay here: ${inv.pageUrl}`;
+}
+function drawShare() {
+  const inv = chosen.staged.invoice;
+  $("share-ready").hidden = !inv.pageUrl;
+  $("share-wait").hidden = Boolean(inv.pageUrl);
+  if (!inv.pageUrl) {
+    $("share-wait-note").textContent = `${inv.number} hasn't been approved yet, so its page isn't open. Approving it here sends no email: it counts as sent, and you share its link yourself.`;
+    return;
+  }
+  const text = shareMessage(inv);
+  $("share-text").value = text;
+  drawShareLinks();
+  $("share-device").hidden = !navigator.share;
+}
+function drawShareLinks() {
+  const inv = chosen.staged.invoice;
+  const text = $("share-text").value.trim();
+  const e = encodeURIComponent;
+  $("share-wa").href = `https://wa.me/?text=${e(text)}`;
+  $("share-tg").href = `https://t.me/share/url?url=${e(inv.pageUrl)}&text=${e(text.replace(inv.pageUrl, "").trim())}`;
+  $("share-sms").href = `sms:?&body=${e(text)}`;
+  $("share-mail").href = `mailto:${e(inv.billTo.email || "")}?subject=${e(`Invoice ${inv.number} from Novacane Studios`)}&body=${e(text)}`;
+}
+$("share-text").addEventListener("input", drawShareLinks);
+$("share-btn").addEventListener("click", () => {
+  if (!chosen) return;
+  drawShare();
+  $("share").showModal();
+});
+$("share-close").addEventListener("click", () => $("share").close());
+$("share-approve").addEventListener("click", async () => {
+  const inv = chosen.staged.invoice;
+  const btn = $("share-approve");
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = "1";
+    btn.textContent = `Yes, approve ${inv.number} (no email)`;
+    setTimeout(() => {
+      delete btn.dataset.armed;
+      btn.textContent = "Approve it to share (no email)";
+    }, 5000);
+    return;
+  }
+  delete btn.dataset.armed;
+  btn.disabled = true;
+  try {
+    await api(`money/invoices/${inv.id}/approve`, { method: "POST", body: { byHand: true } });
+    say(`${inv.number} approved to share. No email was sent.`);
+    chosen.detail = null;
+    await load();
+    drawShare();
+  } catch (err) {
+    say(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Approve it to share (no email)";
+  }
+});
+$("share-device").addEventListener("click", async () => {
+  const inv = chosen.staged.invoice;
+  try {
+    await navigator.share({ title: `Invoice ${inv.number}`, text: $("share-text").value.trim().replace(inv.pageUrl, "").trim(), url: inv.pageUrl });
+  } catch {}
+});
+async function copyText(text, what) {
+  try {
+    await navigator.clipboard.writeText(text);
+    say(`${what} copied.`);
+  } catch {
+    say("Couldn't copy here: select it and copy it yourself.", true);
+  }
+}
+$("share-copy").addEventListener("click", () => copyText($("share-text").value.trim(), "The message"));
+$("share-link").addEventListener("click", () => copyText(chosen.staged.invoice.pageUrl, "The link"));
 
 // ---- How clients pay: the bank details (Money's settings), added here by an admin ----
 function drawBank() {
