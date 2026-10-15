@@ -235,7 +235,7 @@
   bar.id = 'tabbar';
   bar.setAttribute('aria-label', 'Nova Agent');
   // The groups sit in a row of their own (so the status line under them is never redrawn with them).
-  // On a short phone held upright the row slides sideways inside the bar (phone.css)
+  // It's only a holder (phone.css): the groups lay out in the bar itself, so it never slides sideways
   const row = document.createElement('div');
   row.className = 'tg-row';
   bar.append(row);

@@ -64,9 +64,13 @@ describe("one screen, nothing scrolling the page", () => {
     const phone = read("../web/agent/assets/phone.js");
     for (const gone of ["data-more", "in-more", "places-sheet"]) expect(phone).not.toContain(gone);
     expect(read("../web/agent/assets/phone.css")).toContain("grid-template-columns: var(--row2,");
-    // a short phone: one row of every place, sliding sideways inside the bar
-    expect(read("../web/agent/assets/phone.css")).toContain("@media (max-width: 600px) and (max-height: 760px) {");
+    // a short phone: the same two rows, a little slimmer (the groups' row never slides sideways: every
+    // place in sight, the edges check's "Index", "Quests"… out of sight at 360×740, 15 Oct 2026)
+    const css = read("../web/agent/assets/phone.css");
+    expect(css).toContain("@media (max-width: 600px) and (max-height: 760px) {");
     expect(phone).toContain("row.className = 'tg-row';");
+    expect(css).toContain(".tabbar > .tg-row { display: contents; }");
+    expect(css).not.toMatch(/\.tg-row[^{]*\{[^}]*overflow/);
     const q = read("../web/quests/index.html");
     expect(q).not.toContain('id="more-btn"');
     expect(q).not.toContain('role="menu"');
