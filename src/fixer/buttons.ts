@@ -73,8 +73,10 @@ export const isPortalUrl = (u: string) => /\/portal(\/|\?|#|$)/.test(u.replace(/
 export function judgePress(s: PressSeen, says = ""): { verdict: Verdict; why: string } {
   if (s.portal && !SAYS_PORTAL.test(says)) return { verdict: "goes-to-portal", why: "opens Portal instead" };
   const did = s.changed > 0 || s.requests > 0 || s.blocked > 0 || s.went || s.dialogs > 0 || s.state || s.focus || s.calls > 0 || s.downloads > 0;
-  // (a save turned away by this check can make the page's own code complain: that's this check, not a fault)
-  const errors = s.blocked > 0 ? [] : s.errors.filter((e) => !/only looks|fixerSweep|pcOffline|\b503\b|Failed to fetch|NetworkError|AbortError|aborted/i.test(e));
+  // (a save turned away by this check can make the page's own code complain: that's this check, not a
+  // fault; so can a live connection, which this check closes: the remote desktop's, a live feed's; or
+  // a sign-in window, which this check doesn't open: Google's)
+  const errors = s.blocked > 0 ? [] : s.errors.filter((e) => !/only looks|fixerSweep|pcOffline|\b503\b|Failed to fetch|NetworkError|AbortError|aborted|WebSocket|websock|Raw channel|popup/i.test(e));
   if (errors.length) return { verdict: "click-error", why: errors[0] };
   if (s.failed?.length) return { verdict: "click-error", why: `asked for something and got an error: ${s.failed[0]}` };
   if (s.said?.length && !s.blocked) return { verdict: "click-error", why: `says “${s.said[0]}”` };
@@ -120,7 +122,7 @@ export function rollButtons(kept: ButtonsScreen[], fresh: (LooksScreen & { press
 // sharing, copying, new windows and alert/confirm/prompt (counted; nothing waits for a person)
 export const PRESS_SHIM = `(() => {
   if (window.__press) return;
-  const P = (window.__press = { muts: 0, calls: 0, sounds: 0, stores: 0, errors: [], bad: [], opened: [], token: Math.random().toString(36).slice(2), noisy: new WeakSet(), watching: false });
+  const P = (window.__press = { muts: 0, attrs: 0, all: 0, calls: 0, sounds: 0, stores: 0, errors: [], bad: [], opened: [], token: Math.random().toString(36).slice(2), noisy: new WeakSet(), watching: false });
   const count = () => (P.calls++, undefined);
   window.print = () => count();
   window.open = (u) => (count(), P.opened.push(String(u || "")), null);
@@ -132,6 +134,7 @@ export const PRESS_SHIM = `(() => {
   try { const ec = document.execCommand.bind(document); document.execCommand = (c, ...a) => (/copy|cut/i.test(c) && count(), ec(c, ...a)); } catch (e) {}
   try { const play = HTMLMediaElement.prototype.play; HTMLMediaElement.prototype.play = function () { P.sounds++; try { return play.call(this).catch(() => {}); } catch (e) { return Promise.resolve(); } }; } catch (e) {}
   try { const start = AudioScheduledSourceNode.prototype.start; AudioScheduledSourceNode.prototype.start = function (...a) { P.sounds++; return start.apply(this, a); }; } catch (e) {}
+  try { if (HTMLInputElement.prototype.showPicker) HTMLInputElement.prototype.showPicker = function () { count(); }; } catch (e) {}
   try { if (window.Notification && Notification.requestPermission) { const ask = Notification.requestPermission.bind(Notification); Notification.requestPermission = (...a) => (count(), ask(...a)); } } catch (e) {}
   try { const set = Storage.prototype.setItem; Storage.prototype.setItem = function (...a) { if (P.watching) P.stores++; return set.apply(this, a); }; } catch (e) {}
   addEventListener("error", (e) => P.errors.push(String((e && (e.message || (e.error && e.error.message))) || "error").slice(0, 200)));
@@ -140,14 +143,17 @@ export const PRESS_SHIM = `(() => {
     new MutationObserver((list) => {
       for (const m of list) {
         const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        if (m.type !== "attributes" || (m.attributeName !== "style" && !/^data-press/.test(m.attributeName || ""))) P.all++;
         if (!el || P.noisy.has(el)) continue;
         if (P.baseline) { P.noisy.add(el); continue; }
         // (only what can be seen: not style ticks of an animation, not the counters' own marks)
         if (m.type === "attributes" && (m.attributeName === "style" || /^data-press/.test(m.attributeName || ""))) continue;
-        P.muts++;
+        // (a class or state changed on something: kept apart, so a redraw on every press can't hide it)
+        if (m.type === "attributes") P.attrs++;
+        else P.muts++;
         // (a message saying it went wrong, put up just now)
         const t = m.type === "characterData" ? m.target.textContent : m.type === "childList" ? [...m.addedNodes].map((n) => n.textContent || "").join(" ") : "";
-        if (t && t.length < 400 && /\\b(couldn['’]?t|could not|failed|went wrong|isn['’]?t working|something's wrong)\\b/i.test(t) && !/only looks|fixer/i.test(t)) P.bad.push(t.trim().replace(/\\s+/g, " ").slice(0, 120));
+        if (t && t.length < 400 && /\\b(couldn['’]?t|could not|went wrong|failed to|isn['’]?t working|something's wrong)\\b/i.test(t) && !/only looks|fixer|not supported|not allowed|permission|popup/i.test(t)) P.bad.push(t.trim().replace(/\\s+/g, " ").slice(0, 120));
       }
     }).observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
   };
@@ -162,11 +168,12 @@ export interface Pressable {
   label: string;
   primary: boolean;
   says: string; // its own words: label, aria-label, title
+  submits: boolean; // it sends a form
   chosen: boolean; // a tab or choice that's already the one chosen (pressing it again rightly does nothing)
   link: string; // a link inside Nova Agent to check by asking for it ("" = press it)
   skip: string; // why it isn't pressed ("" = it is)
 }
-export function listPressables(opts: { max: number; host: boolean }): Pressable[] {
+export function listPressables(opts: { max: number; host: boolean; inDialog?: boolean }): Pressable[] {
   const cssPath = (el: Element): string => {
     if (el.id) return `#${CSS.escape(el.id)}`;
     const parts: string[] = [];
@@ -202,6 +209,8 @@ export function listPressables(opts: { max: number; host: boolean }): Pressable[
     // (Nova Agent's navigation panel opens the panels: the looks check opens every one of them)
     if (opts.host && el.closest("#suite-home, .tabbar, .viewer")) continue;
     if (!shown(el)) continue;
+    // (what a dialog that just opened holds: only what's in it, the rest is behind it)
+    if (opts.inDialog && !el.closest("dialog[open], [role=dialog]:not([hidden]), [role=menu]:not([hidden]), [popover]")) continue;
     const words = (el.getAttribute("aria-label") || (el as HTMLElement).innerText || el.getAttribute("title") || "").trim().replace(/\s+/g, " ");
     const label = words.slice(0, 50) || (el.id ? `#${el.id}` : el.tagName.toLowerCase());
     const tag = el.tagName.toLowerCase();
@@ -223,7 +232,8 @@ export function listPressables(opts: { max: number; host: boolean }): Pressable[
     const says = [words, el.getAttribute("aria-label") || "", el.getAttribute("title") || ""].join(" ");
     const role = el.getAttribute("role") || "";
     const chosen = (/^(tab|radio|option)$/.test(role) || (el instanceof HTMLInputElement && el.type === "radio")) && (el.getAttribute("aria-selected") === "true" || el.getAttribute("aria-checked") === "true" || el.getAttribute("aria-current") === "true" || (el as HTMLInputElement).checked === true);
-    out.push({ sel, what, label, primary, says, chosen, link, skip });
+    const submits = !!(el as HTMLButtonElement).form && ((el as HTMLButtonElement).type === "submit" || (el instanceof HTMLInputElement && el.type === "submit"));
+    out.push({ sel, what, label, primary, says, chosen, submits, link, skip });
   }
   return out;
 }
@@ -232,6 +242,9 @@ export function listPressables(opts: { max: number; host: boolean }): Pressable[
 export interface DocState {
   token: string;
   muts: number;
+  attrs: number; // classes and states changed
+  all: number; // every change, the ones that happen by themselves too
+  words: string; // what the page says (numbers left out: a clock's ticking isn't a change), in short
   calls: number; // printed, shared, copied, a new window, alert/confirm/prompt, asked to show pop-ups
   sounds: number;
   stores: number; // choices remembered (this browser's storage)
@@ -245,7 +258,7 @@ export interface DocState {
   opened: string[]; // addresses window.open was asked for
 }
 export function docState(sel: string | null): DocState {
-  const P = (window as any).__press || { token: "", muts: 0, calls: 0, sounds: 0, stores: 0, errors: [], opened: [] };
+  const P = (window as any).__press || { token: "", muts: 0, attrs: 0, all: 0, calls: 0, sounds: 0, stores: 0, errors: [], opened: [] };
   const el = sel ? (document.querySelector(sel) as HTMLElement | null) : null;
   const a = el ? ["aria-pressed", "aria-expanded", "aria-selected", "aria-checked", "aria-current", "open", "class"].map((n) => el.getAttribute(n) ?? "").join("|") + `|${(el as HTMLInputElement).checked ?? ""}|${el.isConnected}` : "";
   const f = document.activeElement;
@@ -254,6 +267,14 @@ export function docState(sel: string | null): DocState {
   return {
     token: P.token,
     muts: P.muts,
+    attrs: P.attrs || 0,
+    all: P.all || 0,
+    words: (() => {
+      const t = ((document.body && document.body.innerText) || "").replace(/\d+/g, "#").slice(0, 40000);
+      let h = 0;
+      for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0;
+      return `${t.length}:${h}`;
+    })(),
     calls: P.calls,
     sounds: P.sounds || 0,
     stores: P.stores || 0,
@@ -284,6 +305,10 @@ export function saidSince(n: number): string[] {
 }
 // Tidy up after a press: dialogs it opened closed, folds it opened shut again, the focus let go
 export function tidyUp() {
+  // (Escape inside this page: a menu or a fold that closes on it does. Never on Nova Agent's own
+  // page from a panel: there Escape closes the panel itself)
+  const at = (document.activeElement as HTMLElement | null) || document.body;
+  if (at) at.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true, cancelable: true }));
   for (const d of document.querySelectorAll("dialog[open]")) {
     try {
       (d as HTMLDialogElement).close();
@@ -386,19 +411,34 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
     let popups = 0;
     let downloads = 0;
     const popupUrls: string[] = [];
-    const page = await ctx.newPage();
+    let page = await ctx.newPage();
+    let making = false; // (the page being made again: not a new tab)
     ctx.on("page", (p) => {
-      if (p === page) return;
+      if (p === page || making) return;
       popups++;
       popupUrls.push(p.url());
       void p.waitForLoadState("domcontentloaded", { timeout: 3000 }).then(() => popupUrls.push(p.url())).catch(() => {}).finally(() => void p.close().catch(() => {}));
     });
-    page.on("download", (d) => {
-      downloads++;
-      void d.cancel().catch(() => {});
-    });
     const pageErrors: string[] = [];
-    page.on("pageerror", (err) => pageErrors.push(String(err.message || err).split("\n")[0].slice(0, 200)));
+    // (the page the panels open in; made again if it's closed or stuck)
+    const attach = (pg: import("playwright").Page) => {
+      pg.on("download", (d) => {
+        downloads++;
+        void d.cancel().catch(() => {});
+      });
+      pg.on("pageerror", (err) => pageErrors.push(String(err.message || err).split("\n")[0].slice(0, 200)));
+    };
+    attach(page);
+    const freshPage = async () => {
+      await page.close().catch(() => {});
+      making = true;
+      try {
+        page = await ctx.newPage();
+      } finally {
+        making = false;
+      }
+      attach(page);
+    };
 
     const goHome = async () => {
       await page.goto(`${base}/agent/`, { waitUntil: "load", timeout: 45_000 });
@@ -434,7 +474,7 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
     const state = async (f: import("playwright").Frame, sel: string | null): Promise<DocState | null> => f.evaluate(docState, sel).catch(() => null);
     // A stand-in button with nothing behind it, pressed once each time a panel opens: whatever happens
     // then (a sound on every press, a class on every tap) happens for every button, so it's taken off
-    const idle = { changed: 0, sounds: 0, stores: 0 };
+    const idle = { changed: 0, attrs: 0, sounds: 0, stores: 0 };
     const measureIdle = async (f: import("playwright").Frame) => {
       const ok = await f
         .evaluate(() => {
@@ -456,15 +496,21 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
       const b = await state(f, null);
       const hb = f === page.mainFrame() ? null : await state(page.mainFrame(), null);
       idle.changed = (a && b ? b.muts - a.muts : 0) + (ha && hb ? hb.muts - ha.muts : 0);
+      idle.attrs = (a && b ? b.attrs - a.attrs : 0) + (ha && hb ? hb.attrs - ha.attrs : 0);
       idle.sounds = (a && b ? b.sounds - a.sounds : 0) + (ha && hb ? hb.sounds - ha.sounds : 0);
       idle.stores = (a && b ? b.stores - a.stores : 0) + (ha && hb ? hb.stores - ha.stores : 0);
       await f.evaluate(() => document.querySelectorAll("[data-press-dummy]").forEach((x) => x.remove())).catch(() => {});
       await page.waitForTimeout(100);
     };
+    let idleRate = 0; // changes a millisecond, by themselves
     const settle = async (f: import("playwright").Frame) => {
-      // (a second of the page left alone: what changes by itself then is noise)
+      // (a moment of the page left alone: what changes by itself then is noise)
       await Promise.all([f.evaluate(settleNoise, true).catch(() => {}), f === page.mainFrame() ? null : page.evaluate(settleNoise, true).catch(() => {})]);
+      const a0 = await state(f, null);
+      const t0 = Date.now();
       await page.waitForTimeout(700);
+      const a1 = await state(f, null);
+      idleRate = a0 && a1 ? Math.max(0, a1.all - a0.all) / Math.max(1, Date.now() - t0) : 0;
       await Promise.all([f.evaluate(settleNoise, false).catch(() => {}), f === page.mainFrame() ? null : page.evaluate(settleNoise, false).catch(() => {})]);
       await measureIdle(f);
     };
@@ -473,11 +519,18 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
       if (Date.now() - started > budget) break;
       const results: ButtonResult[] = [];
       let frame = await openPanel(p.path, true).catch(() => null);
+      // (couldn't: the page made again, and tried once more)
+      if (!frame) {
+        await freshPage().catch(() => {});
+        frame = await openPanel(p.path, true).catch(() => null);
+      }
       if (!frame) {
         out.push({ name: p.name, path: p.path, width, height, signedIn, ms: 0, problems: [], shot: "", pressed: 0, results });
         log(`${p.name}: couldn't be opened (the looks check reports that)`);
         continue;
       }
+      // (a welcome or guide that opens by itself on a first visit: closed, as a person would)
+      await frame.evaluate(tidyUp).catch(() => {});
       await settle(frame);
       const host = p.path === HOME.path;
       const list: Pressable[] = await frame.evaluate(listPressables, { max, host }).catch((err) => (process.env.BUTTONS_DEBUG && log(`    couldn't list: ${String(err).slice(0, 200)}`), []));
@@ -487,6 +540,7 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
       const known = new Set(list.map((x) => x.sel));
       let kids = 0;
       let sinceOpen = 0;
+      const retried = new Set<string>();
       for (let qi = 0; qi < queue.length; qi++) {
         const item = queue[qi];
         if (Date.now() - started > budget + 60_000) break;
@@ -498,7 +552,8 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
         }
         if (item.link) {
           const res = await ctx.request.get(item.link, { headers: { [SWEEP_HEADER]: "1" }, timeout: 15_000, maxRedirects: 5 }).catch(() => null);
-          if (res && res.status() >= 400) results.push({ what: item.what, label: item.label, primary: item.primary, verdict: "broken-link", why: `the page answers ${res.status()}` });
+          // (asking to sign in first isn't a missing page)
+          if (res && (res.status() === 404 || res.status() === 410 || res.status() >= 500)) results.push({ what: item.what, label: item.label, primary: item.primary, verdict: "broken-link", why: `the page answers ${res.status()}` });
           continue;
         }
         // Fresh every 12 presses, or when the last press went somewhere
@@ -509,10 +564,12 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
           sinceOpen = 0;
         }
         const f = frame;
+        // (gone from sight since the list was made, say another view was chosen: not pressed)
+        if (!item.via && !(await f.locator(item.sel).first().isVisible().catch(() => false))) continue;
         const press = async (waits: number[]): Promise<PressSeen> => {
           // (inside a menu or dialog: it's opened first, the way a person gets there)
           if (item.via) {
-            await f.locator(item.via.sel).first().click({ timeout: 3000 });
+            await f.locator(item.via.sel).first().click({ timeout: 1500 });
             await page.waitForTimeout(450);
           }
           const before = await state(f, item.sel);
@@ -520,7 +577,7 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
           const t0 = Date.now(), p0 = popups, d0 = downloads, e0 = pageErrors.length, pu0 = popupUrls.length;
           pressing = true;
           const frameUrl = f.isDetached() ? "" : f.url();
-          await f.locator(item.sel).first().click({ timeout: 3000 }).catch((err) => {
+          await f.locator(item.sel).first().click({ timeout: 1500 }).catch((err) => {
             pressing = false;
             throw err;
           });
@@ -535,8 +592,14 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
               ...(hostBefore && hostAfter ? await page.evaluate(errorsSince, hostBefore.errors).catch(() => [] as string[]) : []),
               ...pageErrors.slice(e0),
             ];
+            // (changes to what changed by itself while settling count too, when there are clearly more
+            // of them than it makes by itself: a calendar redrawn for the next month)
+            const allNow = after && before ? after.all - before.all : 0;
+            const ownNow = (after && before ? after.muts - before.muts : 0) + (hostAfter && hostBefore ? hostAfter.muts - hostBefore.muts : 0);
+            const attrsNow = (after && before ? after.attrs - before.attrs : 0) + (hostAfter && hostBefore ? hostAfter.attrs - hostBefore.attrs : 0);
             seen = {
-              changed: (after && before ? after.muts - before.muts : 0) + (hostAfter && hostBefore ? hostAfter.muts - hostBefore.muts : 0),
+              // (what the page says changed: the next month's name, a new list; counted as one change)
+              changed: Math.max(0, ownNow - idle.changed) + Math.max(0, attrsNow - idle.attrs) || (allNow > Math.max(6, 4 * idleRate * (Date.now() - t0)) + idle.changed ? allNow - idle.changed : 0) || (after && before && after.words !== before.words ? 1 : 0) || (hostAfter && hostBefore && hostAfter.words !== hostBefore.words ? 1 : 0),
               requests: madeSince(t0, false),
               blocked: madeSince(t0, true),
               went: Boolean(went),
@@ -568,8 +631,6 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
             if (judgePress(seen, item.says).verdict !== "does-nothing") break;
           }
           pressing = false;
-          // (what a press on nothing at all does here, a stand-in button: not this button's doing)
-          seen!.changed = Math.max(0, seen!.changed - idle.changed);
           return seen!;
         };
         let verdict: Verdict | "broken-link" = "works";
@@ -580,7 +641,6 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
           // Nothing? Pressed once more, and given longer
           if (j.verdict === "does-nothing") {
             if (item.via) {
-              await page.keyboard.press("Escape").catch(() => {});
               await f.evaluate(tidyUp).catch(() => {});
               await page.waitForTimeout(300);
             }
@@ -596,11 +656,16 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
             verdict = "works";
             why = "already the one chosen";
           }
+          // (a form not filled in yet: the browser itself points out what's missing)
+          if (verdict === "does-nothing" && item.submits && (await f.evaluate((sel) => !!(document.querySelector(sel) as HTMLButtonElement | null)?.form?.querySelector(":invalid"), item.sel).catch(() => false))) {
+            verdict = "works";
+            why = "the form asks for what's missing";
+          }
           if (process.env.BUTTONS_DEBUG) log(`    seen ${JSON.stringify(seen)} idle ${JSON.stringify(idle)}`);
           if (seen.went) sinceOpen = 99;
           // It opened something (a menu, a dialog, a fold): what's in it is pressed next
-          else if (!item.via && j.verdict === "works" && (seen.dialogs || seen.state || seen.changed) && kids < 20) {
-            const inside: Pressable[] = await f.evaluate(listPressables, { max: 80, host }).catch(() => []);
+          else if (!item.via && j.verdict === "works" && (seen.dialogs || seen.state) && kids < 20) {
+            const inside: Pressable[] = await f.evaluate(listPressables, { max: 80, host, inDialog: seen.dialogs > 0 }).catch(() => []);
             const fresh = inside.filter((x) => !known.has(x.sel) && !x.skip).slice(0, 8);
             for (const x of fresh) {
               known.add(x.sel);
@@ -611,9 +676,17 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
         } catch (err) {
           const m = String((err as Error).message || err);
           // (something lies over it: a finger can't reach it either; or it's gone from the page by now)
+          // (a dialog this check didn't open, a welcome on a first visit, in the way: closed, and pressed again)
+          if (/<dialog[^>]*>[^\n]{0,80}\bintercepts pointer events/i.test(m) && !item.via && !retried.has(item.sel)) {
+            retried.add(item.sel);
+            await f.evaluate(tidyUp).catch(() => {});
+            qi--;
+            continue;
+          }
           if (/intercepts pointer events/.test(m)) {
             verdict = "does-nothing";
-            why = "something lies over it";
+            const over = (m.match(/(<[a-z][^>]{0,120}>)[^\n]{0,80}\bintercepts pointer events/i) || [])[1] || "";
+            why = `something lies over it${over ? `: ${over.replace(/\s+/g, " ").slice(0, 100)}` : ""}`;
           } else {
             if (process.env.BUTTONS_DEBUG) log(`    couldn't press ${item.what}: ${m.split("\n")[0].slice(0, 160)}`);
             sinceOpen = 99;
@@ -625,9 +698,9 @@ export async function runButtons(opts: ButtonsOptions): Promise<{ screens: Butto
         log(`  ${p.name} · ${item.what}: ${verdict}${why ? ` (${why})` : ""}`);
         // Tidy up: Escape, anything it opened closed
         if (!frame.isDetached()) {
-          await page.keyboard.press("Escape").catch(() => {});
           await frame.evaluate(tidyUp).catch(() => {});
-          if (frame !== page.mainFrame()) await page.evaluate(tidyUp).catch(() => {});
+          // (Nova Agent's own dialogs a panel's press opened: closed, without its Escape)
+          if (frame !== page.mainFrame()) await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => (d as HTMLDialogElement).close())).catch(() => {});
         }
       }
       const pressed = results.length;
