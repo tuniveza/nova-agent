@@ -317,6 +317,8 @@ html.fx-wide .panes .switch-row > input { flex: none; }
 .message { position: fixed; z-index: 30; left: 50%; bottom: 16px; transform: translateX(-50%); width: max-content; max-width: min(92vw, 560px); margin: 0; padding: 12px 18px; border-radius: 16px; font-size: 15px; font-weight: 700;
   color: var(--bright); background: var(--deep, var(--void)); border: 1px solid var(--hi); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .6); }
 .message.bad { border-color: var(--bad); }
+/* (only words: a tap goes through it to the button under it, never blocked by it) */
+.message { pointer-events: none; }
 
 /* The big picture: the outlined picture, as large as the screen allows */
 .zoom-art { display: grid; place-items: center; }

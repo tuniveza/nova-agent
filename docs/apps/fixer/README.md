@@ -4,6 +4,7 @@ Nova Agent's caretaker. It checks Nova Agent every hour, keeps a list of what it
 
 ## What's new
 
+- **Every button pressed, every 5 minutes.** The buttons check opens three panels at a time (so each panel about every half hour, at a computer, phone and tablet size in turn) and presses every button, tab, toggle and link people can see, and what their menus and dialogs open. Each one has to do something. It finds a button that does nothing, one that goes wrong when pressed, a link to a page that isn't there, and one that takes you to Portal instead of doing what it says. It only looks: every save is turned away before it leaves.
 - **Nothing out of sight, every 15 minutes.** The edges check opens every panel at three screen sizes each quarter of an hour (so every size, every hour), opens its dialogs, menus and tabs, and turns the phone or makes the window smaller, and finds anything off the screen, cut off by its box, or in a row you'd have to scroll sideways to see. Anything you'd tap or type into counts as serious.
 - **Invoices and emails, every hour.** The hourly check now asks Nova Bot for its health (read-only, nothing sent), and checks:
   - that the invoice draws at every stage, bright and dark, with no blank or broken amounts;

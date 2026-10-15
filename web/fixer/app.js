@@ -161,7 +161,7 @@
       out.push({ label, width: sc.width, height: sc.height || 0, before: sc.before ? shot(job, sc.before) : "", after: sc.after ? shot(job, sc.after) : "", boxes: sc.boxes || [] });
     }
     const a = job.about;
-    const seenBy = a && a.area === "edges" ? "edges" : "looks";
+    const seenBy = a && a.area === "edges" ? "edges" : a && a.area === "buttons" ? "buttons" : "looks";
     if (!out.length && a && a.kind && s && s[seenBy]) {
       for (const r of s[seenBy].results || []) {
         if (r.path !== a.panel || !r.shot) continue;
@@ -434,6 +434,14 @@
       : E.error
         ? `The last edges check couldn't run (${ago(E.at)}): ${E.error}`
         : `Nothing out of sight: ${E.screens} screens checked ${ago(E.at)} (${clock(E.at)}${E.sizes && E.sizes.length ? `, at ${E.sizes.map((x) => x.replace("x", "×")).join(", ")}` : ""}). ${E.failed ? `${E.failed} had something out of sight: they're in the problems above.` : "Everything was in sight."} It runs every 15 minutes${s.settings.looksChecks ? "" : " (off: looks checks are off in Settings)"}.`;
+
+    // The buttons check (every 5 minutes): when, which panels and size, how many pressed, how many broken
+    const B = s.buttons;
+    $("buttons-summary").textContent = !B
+      ? `Every button pressed: every 5 minutes, three panels at a time (each one about every half hour), every button, tab and toggle is pressed to see that it does something, doesn't go wrong, and doesn't take you to Portal instead.${s.settings.looksChecks ? "" : " (Off: looks checks are off in Settings.)"}`
+      : B.error
+        ? `The last buttons check couldn't run (${ago(B.at)}): ${B.error}`
+        : `Every button pressed: ${B.pressed} pressed ${ago(B.at)} (${clock(B.at)}) in ${B.panels && B.panels.length ? B.panels.join(", ") : "the panels"}${B.size ? ` at ${B.size.replace("x", "×")}` : ""}. ${B.failed ? `${B.failed} had a button that's broken: they're in the problems above.` : "Every one did what it should."} It runs every 5 minutes${s.settings.looksChecks ? "" : " (off: looks checks are off in Settings)"}.`;
 
     // The scripted checks, in groups: what failed first, then what passed
     const c = s.checks;

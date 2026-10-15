@@ -615,6 +615,13 @@ $("today").addEventListener("click", () => {
   cursor = today();
   scrolledFor = "";
   render();
+  // (today, wherever it is on screen, glows softly for a moment: so Today always shows where it is)
+  for (const el of document.querySelectorAll(".cell.today, .col.today, .tg-day.today")) {
+    el.classList.remove("here");
+    void el.offsetWidth;
+    el.classList.add("here");
+    setTimeout(() => el.classList.remove("here"), 1400);
+  }
 });
 document.querySelector(".views").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-view]");

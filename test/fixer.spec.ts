@@ -995,6 +995,53 @@ describe("the looks check", () => {
   });
 });
 
+// The buttons check (every 5 minutes): three panels a run at this turn's size; a broken button is a
+// problem of its own ("buttons"), made from every panel pressed through in the last 100 minutes
+describe("the buttons check", () => {
+  it("presses this turn's panels; a broken button stays while its panel's last press-through found it; pressed again and fine, it's gone", async () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    const calls: any[] = [];
+    let broken = true;
+    w.deps.buttons = async (o) => {
+      calls.push(o);
+      const names = ["Nova Agent", "Invoicer", "Portal", "Calendar", "Notes", "Board"].slice(o.from, o.from + o.count);
+      return {
+        total: 6,
+        screens: names.map((name) => ({
+          name, path: `/${name.toLowerCase()}/`, width: o.size[0], height: o.size[1], signedIn: true, ms: 0, shot: "", pressed: 12,
+          problems: broken && name === "Invoicer" ? [{ kind: "does-nothing" as const, severity: "serious" as const, text: "Does nothing when pressed in Invoicer: button “See the email” (#email-btn)" }] : [],
+        })),
+      };
+    };
+    w.now = new Date("2026-10-15T09:20:00Z"); // (this turn: the first three panels, at a tablet size)
+    await w.fixer.check("buttons");
+    expect(calls[0]).toMatchObject({ from: 0, count: 3, size: [800, 1280] });
+    const b = w.fixer.state().issues.filter((i) => i.area === "buttons");
+    expect(b).toHaveLength(1);
+    expect(b[0].severity).toBe("serious");
+    expect(b[0].title).toMatch(/^Invoicer: Does nothing when pressed/);
+    expect(w.fixer.state().buttons).toMatchObject({ pressed: 36, total: 6 });
+    // Turn after turn: the Invoicer's problem stays while it's in the window, until it's pressed through again fine
+    broken = false;
+    let t = w.now.getTime();
+    for (let i = 0; i < 6; i++) {
+      t += 5 * 60_000;
+      w.now = new Date(t);
+      await w.fixer.check("buttons");
+    }
+    expect(calls.some((c) => c.from === 0)).toBe(true);
+    expect(w.fixer.state().issues.filter((i) => i.area === "buttons")).toHaveLength(0);
+    // (a run still going: the next one is skipped, not run twice at once)
+    let release: () => void = () => {};
+    w.deps.buttons = () => new Promise((r) => (release = () => r({ total: 6, screens: [] })));
+    const one = w.fixer.check("buttons");
+    const two = await w.fixer.check("buttons");
+    expect(two.findings).toEqual([]);
+    release();
+    await one;
+  });
+});
+
 // The edges check (every 15 minutes): anything out of sight becomes a problem of its own ("edges"),
 // made from every screen seen in the last 75 minutes, so a problem at a size this quarter hour
 // didn't look at isn't "gone"; a fix for one is looked at again with the edges check

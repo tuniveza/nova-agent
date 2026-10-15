@@ -6,7 +6,7 @@
 //   GET  /fixer-api/state                      everything the Fixer app shows
 //   GET  /fixer-api/jobs/:id                   one prepared fix, with its whole diff
 //   GET  /fixer-api/shots/:id/:file.png        a before/after picture
-//   POST /actions/fixer/check                  { audio?, checks?, looks?, edges? }  check now (checks: only the scripted
+//   POST /actions/fixer/check                  { audio?, checks?, looks?, edges?, buttons? }  check now (checks: only the scripted
 //                                              ones; looks: the looks check, src/fixer/looks.ts)
 //   POST /actions/fixer/settings               { hourlyChecks?, autoPrepare?, dailyCap?, timeLimitMinutes?, looksChecks? }
 //   POST /actions/fixer/quests                 { title, details, kind, priority, start? }
@@ -80,6 +80,7 @@ export function registerFixerRoutes(app: Hono, fixer: () => Fixer | null): void 
       }
       else if (body.checks === true) void fixer.check("checks").catch(() => {});
       else if (body.edges === true) void fixer.check("edges").catch(() => {});
+      else if (body.buttons === true) void fixer.check("buttons").catch(() => {});
       else void fixer.check("full").catch(() => {});
       return { started: true };
     }),

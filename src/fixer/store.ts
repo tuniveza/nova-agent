@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { EdgesScreen, LooksSummary } from "./looks";
+import type { ButtonsScreen } from "./buttons";
 import type { ProbeResult } from "./probes";
 
 export const QUEST_KINDS = ["bug", "glitch", "change"] as const;
@@ -23,7 +24,7 @@ export type Priority = (typeof PRIORITIES)[number];
 export type Severity = "serious" | "minor";
 // (checks: the scripted checks a code change can fix; server: the scripted checks of the server itself,
 // which only get told about, like health; probes.ts)
-export type Area = "tests" | "typecheck" | "sweep" | "health" | "audio" | "checks" | "server" | "looks" | "edges";
+export type Area = "tests" | "typecheck" | "sweep" | "health" | "audio" | "checks" | "server" | "looks" | "edges" | "buttons";
 
 export interface Issue {
   id: string;
@@ -179,6 +180,9 @@ export interface FixerData {
   // The edges check (every 15 minutes, looks.ts measureEdges): its last run, and the screens it saw
   // in the last 75 minutes (each run looks at some of the sizes), the newest of each
   edges: EdgesSummary | null;
+  // The buttons check (every 5 minutes, buttons.ts): its last run, and the panels it pressed through
+  // in the last 100 minutes (each run presses a few panels at one size), the newest of each
+  buttons: ButtonsSummary | null;
 }
 
 const MAX_ACTIVITY = 300;
@@ -220,7 +224,7 @@ function cleanChecks(c: any): FixerData["checks"] {
   };
 }
 
-const LOOKS_KINDS = ["blank", "top-gap", "gap", "header-low", "covered", "unused", "title-count", "page-scrolls", "cut-off", "main-scrolls", "offscreen", "text-cut", "text-overlap", "text-crammed", "text-small", "text-faint", "error", "slow", "open", "out-of-sight"] as const;
+const LOOKS_KINDS = ["blank", "top-gap", "gap", "header-low", "covered", "unused", "title-count", "page-scrolls", "cut-off", "main-scrolls", "offscreen", "text-cut", "text-overlap", "text-crammed", "text-small", "text-faint", "error", "slow", "open", "out-of-sight", "does-nothing", "click-error", "broken-link", "goes-to-portal"] as const;
 export interface EdgesSummary extends LooksSummary {
   results: EdgesScreen[];
   sizes: string[]; // the last run's sizes ("1440x900")
@@ -236,6 +240,25 @@ export function cleanEdges(l: any): EdgesSummary | null {
       const raw = l.results[i];
       return { ...r, at: text(raw?.at, 40) || base.at, problems: r.problems.map((p, j) => ({ ...p, ...(BOX(raw?.problems?.[j]?.box) ? { box: BOX(raw.problems[j].box) } : {}) })) };
     }),
+  };
+}
+export interface ButtonsSummary extends LooksSummary {
+  results: ButtonsScreen[];
+  size: string; // the last run's size ("1440x900")
+  panels: string[]; // the last run's panels' names
+  pressed: number; // buttons pressed in the last run
+  total: number; // panels there are to press through (the rotation)
+}
+export function cleanButtons(l: any): ButtonsSummary | null {
+  const base = cleanLooks(l);
+  if (!base) return null;
+  return {
+    ...base,
+    size: typeof l.size === "string" && /^\d+x\d+$/.test(l.size) ? l.size : "",
+    panels: (Array.isArray(l.panels) ? l.panels : []).filter((x: unknown) => typeof x === "string").slice(0, 12).map((x: string) => text(x, 60)),
+    pressed: num(l.pressed, 0, 0, 1e6),
+    total: num(l.total, 0, 0, 200),
+    results: base.results.map((r, i) => ({ ...r, at: text(l.results[i]?.at, 40) || base.at, pressed: num(l.results[i]?.pressed, 0, 0, 1000) })),
   };
 }
 export function cleanLooks(l: any): LooksSummary | null {
@@ -265,7 +288,7 @@ function cleanIssue(i: any): Issue | null {
   return {
     id: text(i?.id, 64) || randomUUID(),
     fingerprint,
-    area: oneOf(i?.area, ["tests", "typecheck", "sweep", "health", "audio", "checks", "server", "looks", "edges"] as const, "health"),
+    area: oneOf(i?.area, ["tests", "typecheck", "sweep", "health", "audio", "checks", "server", "looks", "edges", "buttons"] as const, "health"),
     severity: oneOf(i?.severity, ["serious", "minor"] as const, "minor"),
     title: text(i?.title, 300) || "A problem",
     detail: text(i?.detail, 4000),
@@ -369,6 +392,7 @@ export function normaliseFixer(raw: any): FixerData {
     restarts: num(raw?.restarts, 0, 0, 1e9),
     looks: cleanLooks(raw?.looks),
     edges: cleanEdges(raw?.edges),
+    buttons: cleanButtons(raw?.buttons),
   };
 }
 

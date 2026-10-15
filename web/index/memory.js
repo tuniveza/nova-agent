@@ -1510,10 +1510,15 @@
     const ref = String(p.source_ref || "").replace(/^chat[-:_]?/i, "");
     const from = [p.source_app ? "From " + p.source_app : "", ref ? "chat " + ref.slice(0, 8) : "", ago(p.created_at)].filter(Boolean).join(" · ");
     const meta = el("p", "pending-meta", from);
-    // Learned from a website chat: open that chat in Portal, to see what was said
+    // Learned from a website chat: that chat, read right here (the studio's chat page, over Index),
+    // to see what was said; without that, the chat in Portal
     if (p.source_app === "NovaBot" && p.source_ref) {
-      const link = el("a", "pending-chat", "Open the chat");
-      link.href = "/portal/?view=chats&chat=" + encodeURIComponent(p.source_ref);
+      const link = el("button", "pending-chat linkish", "Open the chat");
+      link.type = "button";
+      link.addEventListener("click", () => {
+        if (window.NovaInPlace && window.NovaInPlace.open("/admin/conversations?chat=" + encodeURIComponent(p.source_ref), "The website chat")) return;
+        location.href = "/portal/?view=chats&chat=" + encodeURIComponent(p.source_ref);
+      });
       meta.append(" · ", link);
     }
     card.append(meta);
