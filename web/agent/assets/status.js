@@ -167,7 +167,7 @@
   // ---- What's new, for the part of the bar you're on ----
   const AREA_NAMES = { apps: "Apps", tasks: "Plans", tools: "Tools", helpers: "Helpers" };
   // An area's news names the panel it's about (the simple words come after)
-  const PANEL_NAMES = { chat: "Nova Agent", portal: "Portal", calendar: "Calendar", notes: "Notes", index: "Index", quests: "Quests", missions: "Missions", lossless: "Lossless", visualizer: "Visualizer", observatory: "Observatory", manual: "Manual", look: "Look & sound" };
+  const PANEL_NAMES = { chat: "Nova Agent", portal: "Portal", calendar: "Calendar", notes: "Notes", index: "Index", quests: "Quests", missions: "Missions", lossless: "Lossless", visualizer: "Nova", observatory: "Observatory", manual: "Manual", look: "Look & sound" };
   const areaLabel = line.querySelector(".sl-area");
   const wordsEl = line.querySelector(".sl-words");
   let shownKey = null;

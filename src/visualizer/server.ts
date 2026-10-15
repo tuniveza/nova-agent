@@ -151,7 +151,7 @@ app.use("*", async (c, next) => {
 
 // The pages. Read from disk each time, so edits show on refresh.
 // Nova Agent's page is /agent/, the same address as online; /agent/<panel> opens it with that panel
-const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", quests: "/quests/", board: "/board/", console: "/console/", index: "/app/memory/", observatory: "/observatory/", lossless: "/lossless/", visualizer: "/visualizer", admin: "/admin", fixer: "/fixer/", computer: "/computer/", invoicer: "/invoicer/" };
+const PANEL_NAMES: Record<string, string> = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", quests: "/quests/", board: "/board/", console: "/console/", index: "/app/memory/", observatory: "/observatory/", lossless: "/lossless/", visualizer: "/visualizer", admin: "/admin", fixer: "/fixer/", computer: "/computer/", invoicer: "/invoicer/", nova: "/visualizer" };
 app.get("/", (c) => c.redirect("/agent/"));
 app.get("/agent", (c) => c.redirect("/agent/"));
 app.get("/agent/", (c) => c.html(readFileSync(chatFile, "utf8")));
