@@ -384,16 +384,3 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
 /* A booking's name: a long word breaks inside the card instead of being cut at its side, and what
    doesn't fit in its lines ends with … (tap the card for all of it) */
 .pill span { overflow-wrap: anywhere; text-overflow: ellipsis; }
-
-/* ================= Nothing out of sight (the edges check) ================= */
-/* The month at a glance wraps onto rows instead of running off the side: two rows show, more scroll
-   up and down inside it (one row on a short screen, so the month keeps its room) */
-.strip { flex-wrap: wrap; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; max-height: 86px; padding-right: 10px; -webkit-mask: none; mask: none; }
-.strip-item { max-width: 100%; min-width: 0; }
-.strip-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (max-width: 719px) { .strip { max-height: 78px; padding-right: 8px; } }
-@media (max-height: 500px) { .strip { max-height: 42px; } }
-/* The chosen day's rows and the list show each title and its line underneath in full (they scroll
-   inside their own box), instead of hiding the rest past the card's edge */
-.row-item strong { display: block; -webkit-line-clamp: none; line-clamp: none; overflow: visible; }
-.row-item small { white-space: normal; overflow: visible; }
