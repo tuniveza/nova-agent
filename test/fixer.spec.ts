@@ -591,7 +591,7 @@ describe("settings are respected", () => {
 
   it("settings are kept within sensible limits, and only admins change them", () => {
     const w = world(SCENARIOS["a small CSS change (trivial)"]);
-    expect(w.fixer.setSettings({ dailyCap: 999, timeLimitMinutes: 1 }, ADMIN)).toMatchObject({ dailyCap: 50, timeLimitMinutes: 5 });
+    expect(w.fixer.setSettings({ dailyCap: 999, timeLimitMinutes: 1 }, ADMIN)).toMatchObject({ dailyCap: 100, timeLimitMinutes: 5 });
     expect(() => w.fixer.setSettings({ dailyCap: 3 }, STAFF)).toThrow(/admin/);
   });
 });
@@ -672,13 +672,13 @@ describe("fixer.json: old, odd or damaged files are safe", () => {
   const dir = () => mkdtempSync(join(tmpdir(), "fixer-store-"));
   it("an older file (fields missing) loads with the defaults", () => {
     const d = normaliseFixer({ version: 1, issues: [{ fingerprint: "a", title: "A" }], jobs: [{ id: "j1", status: "ready" }] });
-    expect(d.settings).toEqual({ hourlyChecks: true, autoPrepare: true, dailyCap: 10, timeLimitMinutes: 30, looksChecks: true });
+    expect(d.settings).toEqual({ hourlyChecks: true, autoPrepare: true, dailyCap: 30, timeLimitMinutes: 30, looksChecks: true });
     expect(d.issues[0]).toMatchObject({ fingerprint: "a", severity: "minor", seenCount: 1, notified: false });
     expect(d.jobs[0]).toMatchObject({ id: "j1", status: "ready", attempt: 1, approval: null, landed: { na: null, nb: null } });
   });
   it("odd values are put right, unknown states don't count as approved", () => {
     const d = normaliseFixer({ settings: { dailyCap: "lots", timeLimitMinutes: 9999, hourlyChecks: "yes" }, jobs: [{ id: "../x", status: "ready" }, { id: "j2", status: "merged-by-magic", approval: "yes" }], issues: [{ title: "no fingerprint" }] });
-    expect(d.settings).toMatchObject({ dailyCap: 10, timeLimitMinutes: 120, hourlyChecks: true });
+    expect(d.settings).toMatchObject({ dailyCap: 30, timeLimitMinutes: 120, hourlyChecks: true });
     expect(d.jobs.map((j) => j.id)).toEqual(["j2"]);
     expect(d.jobs[0]).toMatchObject({ status: "failed", approval: null });
     expect(d.issues).toEqual([]);

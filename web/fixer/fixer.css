@@ -407,3 +407,10 @@ html.fx-wide #g-working { display: none; }
 /* ---- Inside Nova Agent, at every size: no title of its own (Nova Agent's title panel names it; one
    title panel only). Its one-line note stays ---- */
 html.embed .top .nt-kicker, html.embed .top .nt-title { display: none; }
+
+/* Approve all it suggests (or why nothing's ready: today's limit), above the fixes */
+.deck-all { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; }
+.deck-all[hidden] { display: none; }
+.deck-all-note { font-size: 13px; color: var(--muted); text-align: center; }
+/* (the fixes' strip wraps instead of sliding sideways: nothing out of sight) */
+.deck-strip { flex-wrap: wrap; overflow-x: hidden; overflow-y: auto; max-height: 84px; scroll-snap-type: none; }

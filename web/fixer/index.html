@@ -68,6 +68,12 @@
   <section class="pane" id="pane-needs" role="tabpanel" aria-label="Needs you">
     <h2 class="pane-h">Needs you</h2>
     <div class="deck" id="deck">
+      <!-- Approve all it suggests: every ready fix whose checks all passed, approved with one (double) tap;
+           they go live one after another. A person still taps: nothing goes live by itself. -->
+      <div class="deck-all" id="deck-all" hidden>
+        <button type="button" class="fx-approve" id="approve-all" data-act="approve-all" data-id="all">✓ Approve all it suggests</button>
+        <span class="deck-all-note" id="deck-all-note"></span>
+      </div>
       <div class="deck-nav" id="deck-nav" hidden>
         <button type="button" class="deck-step" id="deck-prev" aria-label="Previous fix (←)">‹</button>
         <span class="deck-count" id="deck-count" aria-live="polite"></span>
@@ -157,7 +163,7 @@
       <label class="switch-row"><input type="checkbox" class="nt-switch" id="s-auto"> Prepare fixes for new problems by itself</label>
       <label class="switch-row"><input type="checkbox" class="nt-switch" id="s-looks"> Looks checks (every hour and after each update)</label>
       <div class="pair">
-        <div><label class="nt-label" for="s-cap">Fixes prepared a day (at most)</label><input id="s-cap" type="number" min="0" max="50" inputmode="numeric"></div>
+        <div><label class="nt-label" for="s-cap">Fixes prepared a day (at most)</label><input id="s-cap" type="number" min="0" max="100" inputmode="numeric"></div>
         <div><label class="nt-label" for="s-limit">Time for one fix (minutes)</label><input id="s-limit" type="number" min="5" max="120" inputmode="numeric"></div>
       </div>
       <p class="nt-note">Every change waits for an admin to tap <strong>Approve</strong>, trivial ones included. The only thing the Fixer does by itself is undo a change that made things worse right after it went live, and it tells you when it does.</p>
