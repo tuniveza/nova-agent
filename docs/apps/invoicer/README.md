@@ -9,7 +9,18 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
   - then a calm white page that's easy to read.
 - **Stages, quietly:** each stage is one quiet coloured line under the band and one word in the amount box, not a loud banner. The amount to pay and when are at the top right.
 - **A Notes box** on every invoice: the invoice's own note, or words you type in **Notes** (right, above the email) for the copy you print or save. With nothing typed, it says thank you.
-- **Eight looks**, a shade apart: Night, Violet, Plum, Ink, Ember, Rose, Dusk and Paper (a light band, with the colour logo).
+- **A spectrum of looks:** eight colours round the colour wheel, then two extras.
+  - **Ruby** (red), **Amber** (orange), **Gold** (yellow), **Jade** (green), **Teal**, **Sapphire** (blue), **Violet** (purple) and **Night** (the website's pink-magenta).
+  - **Paper:** a light band, with the colour logo.
+  - **Black & white:** no colour.
+  - Each colour runs through the logo, the band's sky and texture, the headings, the amount and the tints.
+  - Every one is dark enough to read on white.
+  - Plum, Ink, Ember, Rose and Dusk became their nearest new colour (Plum and Dusk: Violet; Ink: Sapphire; Ember: Amber; Rose: Ruby).
+- **More of the look:**
+  - The website's logo is drawn as a shape: sharp in print, in the theme's colours, in a soft glow.
+  - The band is Novacane's night sky: nebulae, stars, sparkles and a soft texture.
+  - The page is like paper made of moon dust and stardust, barely there.
+  - On screen, the invoice lies on a soft surface under the sky.
 - **☀ Bright or ☾ Dark:**
   - Bright is a white page.
   - Dark is the website's near-black page with light words. It prints and saves to PDF dark too.
