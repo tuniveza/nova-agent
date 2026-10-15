@@ -194,6 +194,9 @@ function drawSend(inv, detail, stage) {
   const waiting = reminders.find((r) => r.status === "pending_approval" && (r.kind || "reminder") === kind);
   const receiptSent = reminders.some((r) => r.kind === "receipt" && r.status === "sent");
   $("test-btn").hidden = !admin;
+  // (it sends the stage shown: at Paid receipt, the receipt)
+  $("test-btn").textContent = stage === "paid" ? "Send me a test receipt" : stage === "deposit" ? "Send me a test" : "Send me a test reminder";
+  $("test-btn").title = stage === "paid" ? "The receipt email, to your own address only" : "This email, to your own address only";
   btn.hidden = false;
   btn.disabled = false;
   chip.hidden = true;
@@ -260,7 +263,7 @@ $("test-btn").addEventListener("click", async () => {
   b.disabled = true;
   try {
     const r = await api("money/invoices/test-send", { method: "POST", body: { id: chosen.id, stage: chosen.staged.stage, body: forMoney($("body").value) } });
-    say(r.message || "Test sent: check your inbox.");
+    say(`${chosen.staged.stage === "paid" ? "Test receipt" : "Test"} sent to ${r.to || "you"}: check your inbox.`);
   } catch (err) {
     say(err.message, true);
   } finally {

@@ -4,6 +4,9 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
 
 ## What's new
 
+- **The email is the invoice.** Every invoice email (the invoice, reminders, receipts) is the Nova invoice itself, with a text version for email apps that can't show it. **See the email** shows it as the client gets it.
+- **Receipts.** When an invoice is paid in full, its receipt is written by itself and waits for an admin's Approve.
+- **Send me a test** (admins): the email at the stage shown, to your own address only. At **Paid receipt** it's **Send me a test receipt**.
 - **A new look**, in the style of novacane.co.uk:
   - a slim near-black band with the website's white ring logo and NOVACANE STUDIOS in spaced capitals, in Jost (the free font closest to the website's Futura);
   - then a calm white page that's easy to read.
