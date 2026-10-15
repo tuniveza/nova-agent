@@ -57,6 +57,8 @@
         <button type="button" data-filter="waiting" aria-pressed="false">To approve</button>
       </div>
       <ul class="scroll inv-list" id="list" aria-label="Invoices"></ul>
+      <!-- Testing (admins): every invoice so far becomes TEST-0001…, the next is NS-0001 -->
+      <button type="button" class="ghost small-btn" id="restart-btn" hidden title="While testing: the invoices so far become test invoices (TEST-0001…, nothing is deleted) and the next one is NS-0001">Start numbers again at NS-0001</button>
     </section>
 
     <!-- The invoice itself, at the stage chosen -->
@@ -100,6 +102,7 @@
         <button type="button" class="ghost small-btn" id="theme-save" hidden>Use for all</button>
       </div>
       <textarea id="note" class="field" rows="2" maxlength="800" aria-label="Notes on the invoice" placeholder="Notes on the invoice (a thank-you shows if empty)"></textarea>
+      <button type="button" class="ghost small-btn" id="note-save" hidden>Save notes</button>
       <div class="col-head"><h2 class="nt-h">Email</h2><span class="nt-chip" id="mail-chip" hidden></span></div>
       <input id="subject" class="field" type="text" autocomplete="off" aria-label="Subject" placeholder="Subject">
       <textarea id="body" class="field scroll" spellcheck="true" aria-label="Message" placeholder="Message"></textarea>

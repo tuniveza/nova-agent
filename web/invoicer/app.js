@@ -15,7 +15,7 @@ let filter = "all";
 let chosen = null; // { id, stage, staged (the /stage answer), detail (the /invoices/:id answer) }
 let themes = []; // the invoice's looks, from the price list's answer: [{ id, name, band, accent }]
 let studioTheme = "night"; // the one every invoice uses (Money's settings)
-let theme = null; // the one shown here (this browser remembers it)
+let theme = null; // the one shown here: the chosen invoice's own (it's saved on it), else this browser's last pick
 let studioMode = "bright"; // every invoice's page: bright (white) or dark (the website's near-black)
 let mode = null; // the one shown here
 let papers = []; // the paper's styles (minerals), from the price list's answer
@@ -96,6 +96,7 @@ async function load(keep = true) {
   }
   drawList();
   drawBank();
+  $("restart-btn").hidden = !data?.canDecide || !(data.invoices || []).some((i) => /^NS-/.test(i.number));
   if (keep && chosen) await choose(chosen.id, chosen.stage, true);
 }
 
@@ -171,8 +172,15 @@ function drawStage(first = false) {
   parts.push(staged.stage === "paid" ? "nothing left to pay" : `due now ${pounds(sums.dueNowPence)}`);
   if (staged.stage !== staged.autoStage) parts.push(`(it's really at ${STAGE_NAMES[staged.autoStage]})`);
   $("stage-note").textContent = parts.join(" · ");
-  // (a new invoice: its own note in the Notes box)
-  if (first) $("note").value = inv.notes || "";
+  // (a new invoice: its own note in the Notes box, and its own look)
+  if (first) {
+    $("note").value = inv.notes || "";
+    theme = inv.look?.theme || null;
+    mode = inv.look?.mode || null;
+    paper = inv.look?.paper || null;
+    drawThemes();
+  }
+  drawNoteSave();
   const src = docSrc();
   const frame = $("doc");
   if (frame.getAttribute("src") !== src) frame.src = src;
@@ -330,6 +338,7 @@ function drawThemes() {
         } catch {}
         drawThemes();
         refreshDoc();
+        saveLook();
       });
       return b;
     })
@@ -350,6 +359,7 @@ $("paper").addEventListener("change", () => {
   } catch {}
   drawThemes();
   refreshDoc();
+  saveLook();
 });
 $("modes").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-mode]");
@@ -360,7 +370,29 @@ $("modes").addEventListener("click", (e) => {
   } catch {}
   drawThemes();
   refreshDoc();
+  saveLook();
 });
+// The look chosen is saved on the invoice that's open: its email, its page, its PDF and its receipt
+// all use it (only how it looks: no approval needed again)
+let lookTimer = 0;
+function saveLook() {
+  if (!chosen) return;
+  const inv = chosen.staged.invoice;
+  if (inv.status === "void") return;
+  const look = { theme: theme || studioTheme, mode: mode || studioMode, paper: paper || studioPaper };
+  clearTimeout(lookTimer);
+  lookTimer = setTimeout(async () => {
+    try {
+      const r = await api(`money/invoices/${inv.id}/look`, { method: "POST", body: { look } });
+      inv.look = r.invoice?.look || look;
+      const name = `${themes.find((t) => t.id === look.theme)?.name || look.theme}, ${look.mode === "dark" ? "Dark" : "Bright"}, ${papers.find((x) => x.id === look.paper)?.name || look.paper} paper`;
+      const sent = ["sent", "part_paid", "paid"].includes(inv.status);
+      say(`Saved on ${inv.number}: ${name}.${sent ? " Its page shows it now; emails from now on use it." : " It's sent like this."}`);
+    } catch (err) {
+      say(err.message, true);
+    }
+  }, 350);
+}
 function refreshDoc() {
   if (!chosen) return;
   const src = docSrc();
@@ -371,6 +403,37 @@ let noteTimer = 0;
 $("note").addEventListener("input", () => {
   clearTimeout(noteTimer);
   noteTimer = setTimeout(refreshDoc, 400);
+  drawNoteSave();
+});
+// The Notes box's words saved on the invoice (not sent yet: straight in; sent: it goes for an admin's
+// Approve again, then the client gets the updated invoice). Paid or removed: they're for this copy only.
+function drawNoteSave() {
+  const btn = $("note-save");
+  const inv = chosen?.staged.invoice;
+  const can = inv && !["paid", "void"].includes(inv.status);
+  btn.hidden = !can || $("note").value.trim() === (inv.notes || "").trim();
+  if (inv && WAITING.includes(inv.status)) btn.textContent = "Save notes";
+  else btn.textContent = "Save notes (sends the updated invoice after Approve)";
+}
+$("note-save").addEventListener("click", () => {
+  if (!chosen) return;
+  const inv = chosen.staged.invoice;
+  const notes = $("note").value.trim();
+  const btn = $("note-save");
+  if (WAITING.includes(inv.status)) {
+    btn.disabled = true;
+    api(`money/invoices/${inv.id}/edit`, { method: "POST", body: { notes } })
+      .then(async () => {
+        say(`Notes saved on ${inv.number}. It waits for an admin's Approve.`);
+        chosen = null;
+        await load(false);
+        await choose(inv.id);
+      })
+      .catch((err) => say(err.message, true))
+      .finally(() => (btn.disabled = false));
+    return;
+  }
+  confirmThen(btn, "Yes, save: it goes for Approve again", () => api(`money/invoices/${inv.id}/edit`, { method: "POST", body: { notes } }), `Notes saved on ${inv.number}. Once an admin approves, the client gets the updated invoice.`);
 });
 $("theme-save").addEventListener("click", async () => {
   try {
@@ -627,6 +690,8 @@ $("new-form").addEventListener("submit", async (e) => {
     notes: $("n-notes").value.trim(),
   };
   if (client) body.clientId = client.id;
+  // (a new one keeps the look it was made in)
+  if (!editing) body.look = { theme: theme || studioTheme, mode: mode || studioMode, paper: paper || studioPaper };
   $("n-save").disabled = true;
   try {
     const made = editing ? await api(`money/invoices/${editing.id}/edit`, { method: "POST", body }) : await api("money/invoices", { method: "POST", body });
@@ -640,6 +705,33 @@ $("new-form").addEventListener("submit", async (e) => {
     problem(e2.message);
   } finally {
     $("n-save").disabled = false;
+  }
+});
+
+// Start the numbers again (admins, while testing): pressed twice, like every button that can't be undone here
+$("restart-btn").addEventListener("click", async () => {
+  const btn = $("restart-btn");
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = "1";
+    btn.textContent = "Yes: make them all TEST invoices, next is NS-0001";
+    setTimeout(() => {
+      delete btn.dataset.armed;
+      btn.textContent = "Start numbers again at NS-0001";
+    }, 5000);
+    return;
+  }
+  delete btn.dataset.armed;
+  btn.disabled = true;
+  try {
+    const r = await api("money/invoices/renumber", { method: "POST", body: { confirm: "start again" } });
+    say(`${r.renumbered} invoice${r.renumbered === 1 ? " is" : "s are"} now TEST invoices (kept, nothing deleted). The next one is NS-0001.`);
+    chosen = null;
+    await load(false);
+  } catch (err) {
+    say(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Start numbers again at NS-0001";
   }
 });
 
