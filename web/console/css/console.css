@@ -154,3 +154,27 @@ html.is-touch .quick .q { height: 40px; }
   font: 600 10.5px var(--f-body, "Saira", sans-serif); letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--muted, #b997b5); white-space: nowrap; margin-right: 2px;
 }
+
+/* Nothing slides sideways or runs past the edge (15 Oct 2026). On a phone or a short screen the quick
+   commands show one group at a time, picked from a menu (every command still a tap away), wrapping
+   if they need to; the extra keys share the row's width */
+.quick .qg-pick { display: none; }
+@media (max-width: 560px), (max-height: 500px) {
+  html body .quick { flex-wrap: wrap; overflow-x: visible; justify-content: flex-start; gap: 6px; }
+  .quick .qg-pick { display: block; flex: none; height: 34px; max-width: 46%; padding: 0 8px; border-radius: 999px; font: 600 12.5px var(--f-body, "Saira", sans-serif);
+    color: var(--text, #ebd3e7); background: rgba(var(--panel-rgb, 28, 17, 41), 0.9); border: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.35); }
+  .quick .qg { display: none; }
+  html body .quick .qg.open { display: flex; flex: 1 1 0; min-width: 0; flex-wrap: wrap; gap: 4px; }
+  .quick .qg.open .qg-t { display: none; }
+  html body .quick .qg .q { flex: none; height: 34px; padding: 0 10px; font-size: 12.5px; }
+  .keys { overflow-x: visible; gap: 4px; }
+  .keys button { flex: 1 1 0; min-width: 0; padding: 0 4px; }
+}
+@media (max-height: 500px) {
+  html body .quick { gap: 4px; }
+  html body .quick .qg-pick { height: 30px; max-width: 118px; padding: 0 6px; font-size: 12px; }
+  html.is-touch body .quick .qg .q, html body .quick .qg .q { height: 30px; padding: 0 8px; font-size: 12px; }
+  html.is-touch body .keys button, html body .keys button { height: 34px; }
+}
+html.is-touch body .quick .qg .q { height: 36px; }
+@media (max-height: 500px) { html.is-touch body .quick .qg .q { height: 30px; } }
