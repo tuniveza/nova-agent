@@ -4,6 +4,7 @@ Nova Agent's caretaker. It checks Nova Agent every hour, keeps a list of what it
 
 ## What's new
 
+- **Nothing out of sight, every 15 minutes.** The edges check opens every panel at three screen sizes each quarter of an hour (so every size, every hour), opens its dialogs, menus and tabs, and turns the phone or makes the window smaller, and finds anything off the screen, cut off by its box, or in a row you'd have to scroll sideways to see. Anything you'd tap or type into counts as serious.
 - **Invoices and emails, every hour.** The hourly check now asks Nova Bot for its health (read-only, nothing sent), and checks:
   - that the invoice draws at every stage, bright and dark, with no blank or broken amounts;
   - that the client's invoice page and the invoice email build, with their link;
@@ -48,6 +49,7 @@ Nova Agent's caretaker. It checks Nova Agent every hour, keeps a list of what it
 - **Approve** merges it, puts it live and checks again. If things got worse, the Fixer undoes it by itself and tells you: the only thing it ever does without a tap.
 - **Done** lists what went live (with **Undo**), what was rejected and what couldn't be prepared. **Activity** is its diary.
 - **Looks** (in Health): when the looks check last ran, how many screens it saw, and a picture of each one that didn't look right, with what was wrong. Tap a picture to see it big.
+  Under it, the edges check's last run: when, which sizes, and how many screens had something out of sight (those are in the problems).
 - **Settings**: hourly checks on or off, preparing fixes by itself on or off, looks checks on or off, how many a day, and how long each may take.
 
 ## Inside Nova Agent

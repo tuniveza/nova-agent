@@ -1,6 +1,7 @@
 // The Fixer inside Nova Agent's service: the real commands, browser, phones and quests behind
 // src/fixer/fixer.ts, its schedule (hourly checks; audio levels once a day; the looks check every
-// hour and after each deploy), and carrying on after a restart.
+// hour and after each deploy; the edges check, nothing out of sight, every 15 minutes), and carrying
+// on after a restart.
 //
 // Where things are (each can be changed in the environment):
 //   FIXER_NA_DIR       Nova Agent's main folder        ~/an/pj/ns/na  (the service runs from here)
@@ -138,10 +139,11 @@ export async function runLooksCheck(o: LooksRun, run = runCommand): Promise<Look
   if (o.panels?.length) args.push("--panels", o.panels.join(","));
   if (o.mockPortal) args.push("--mock-portal");
   if (o.shootAll) args.push("--shoot-all");
+  if (o.edges) args.push("--edges", "--resize-to", (o.resizeTo || []).map(([w, h]) => `${w}x${h}`).join(","));
   const session = live && o.auth !== "out" ? await looksSession("start") : null;
   args.push("--auth", session ? o.auth || "both" : "out");
   try {
-    const r = await run("nice", args, { cwd: fixerPaths.naMain, timeoutMs: 45 * 60_000, clean: true, env: session ? { LOOKS_COOKIE: session.token, LOOKS_COOKIE_NAME: session.cookie } : {} });
+    const r = await run("nice", args, { cwd: fixerPaths.naMain, timeoutMs: o.timeoutMs || 45 * 60_000, clean: true, env: session ? { LOOKS_COOKIE: session.token, LOOKS_COOKIE_NAME: session.cookie } : {} });
     if (!existsSync(out)) throw new Error(`The looks check stopped: ${r.out.trim().split("\n").slice(-3).join(" ").slice(0, 400)}`);
     return (JSON.parse(readFileSync(out, "utf8")) as { screens: LooksScreen[] }).screens;
   } finally {
@@ -218,8 +220,14 @@ export function startFixer(): Fixer {
       })().catch((err) => trace("task", "error", `Fixer looks check crashed: ${(err as Error).message}`));
     }, 60_000).unref();
   }
+  // The edges check every 15 minutes (nothing out of sight; three sizes a run, every size each hour),
+  // when looks checks are on. It runs beside the hourly check: it has its own guard
+  cron.schedule("2,17,32,47 * * * *", () => {
+    if (!f.store.read().settings.looksChecks) return;
+    void f.check("edges").catch((err) => trace("task", "error", `Fixer edges check crashed: ${(err as Error).message}`));
+  }, { timezone: config.timezone });
   // Carry on with anything a restart interrupted (a change being checked after going live)
   setTimeout(() => void f.resume().catch((err) => trace("task", "error", `Fixer couldn't resume: ${(err as Error).message}`)), 5000).unref();
-  console.log(`Fixer: hourly checks at :07, the looks check after them and after each deploy${fixerDry ? " (inert: FIXER_DRY=1, nothing is prepared, merged or deployed)" : ""}`);
+  console.log(`Fixer: hourly checks at :07, the looks check after them and after each deploy, the edges check every 15 minutes${fixerDry ? " (inert: FIXER_DRY=1, nothing is prepared, merged or deployed)" : ""}`);
   return f;
 }

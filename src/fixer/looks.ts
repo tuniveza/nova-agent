@@ -96,7 +96,8 @@ export type LooksKind =
   | "text-faint"
   | "error"
   | "slow"
-  | "open";
+  | "open"
+  | "out-of-sight";
 export interface LooksProblem {
   kind: LooksKind;
   severity: "serious" | "minor";
@@ -128,6 +129,9 @@ export interface LooksOptions {
   // while it's open (these sizes), the text checked again (default: 1280×800 and 1024×768; [] = none)
   resizeTo?: readonly (readonly [number, number])[];
   log?: (line: string) => void;
+  // The edges check only (measureEdges): anything out of sight, on opening, with dialogs open, after
+  // clicks, and after the window's made each of resizeTo's sizes of the same kind of device
+  edges?: boolean;
 }
 
 // ================= Measuring (runs inside the page) =================
@@ -300,6 +304,150 @@ export function measureFrame(): FrameExtras {
   const clipped = (el: Element | null) => (el && /hidden|clip/.test(getComputedStyle(el).overflowY) ? el.scrollHeight - el.clientHeight : 0);
   const docH = Math.max(se.scrollHeight, H + Math.max(clipped(document.body), clipped(main)));
   return { docH, docScrolls, mainScrolls, offscreen, textCut, titleBars, offscreenBoxes, textCutBoxes };
+}
+
+// ================= The edges check: nothing out of sight =================
+// Every button, link, field, picture and piece of text on the screen, each one wholly in sight:
+//   - side: partly past the window's left or right edge
+//   - bottom: partly past the window's bottom, with nothing to scroll it up into view
+//   - cut: partly cut off by the box it's in (a box that hides what doesn't fit)
+//   - sideways: in a row that scrolls sideways, and past what shows of it (the Invoicer's theme
+//     names, "Teal" cut in half, and its filters, "Pa…", 15 October 2026): a row has to fit
+// Scrolling up and down inside a box is fine (one screen per panel: inner boxes scroll). Left out:
+// Board's table you drag around ([data-pan]), anything hidden or tucked away (a drawer wholly off
+// the screen, a box folded shut), a picture cropped on purpose (it covers the box it's in), words
+// cut short with "…" (the text check's), screen-reader-only words, and [data-edges-ok].
+export type EdgeHow = "side" | "bottom" | "cut" | "sideways";
+export interface EdgeItem {
+  what: string;
+  how: EdgeHow;
+  control: boolean; // something you click or type into
+  box: Box;
+}
+export function measureEdges(): EdgeItem[] {
+  const W = innerWidth, H = innerHeight;
+  const CONTROL = "button, a[href], input:not([type=hidden]), select, textarea, [role=button], [role=tab], summary";
+  const MEDIA = new Set(["IMG", "SVG", "CANVAS", "VIDEO", "PICTURE"]);
+  const se = document.scrollingElement || document.documentElement;
+  const pageScrolls = se.scrollHeight > H + 2 && !/hidden|clip/.test(getComputedStyle(document.documentElement).overflowY) && !/hidden|clip/.test(getComputedStyle(document.body).overflowY);
+  const out: (EdgeItem & { el: Element })[] = [];
+  const boxOf = (l: number, t: number, r: number, b: number): Box => ({ x: Math.round(l), y: Math.round(t), w: Math.round(r - l), h: Math.round(b - t) });
+  const name = (el: Element) => {
+    const label = (el.getAttribute("aria-label") || el.getAttribute("title") || el.getAttribute("alt") || el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 40);
+    return `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${label ? ` “${label}”` : ""}`;
+  };
+  const where = (p: Element | null) => {
+    if (!p) return "";
+    if (p.id) return ` in #${p.id}`;
+    const c = [...p.classList].find((x) => !/^(is-|has-)/.test(x));
+    return c ? ` in .${c}` : ` in ${p.tagName.toLowerCase()}`;
+  };
+  // Its own words' box (not its whole block's), so a long line with short words isn't counted
+  const ownText = (el: Element) => {
+    let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+    for (const n of el.childNodes) {
+      if (n.nodeType !== 3 || (n.textContent || "").trim().length < 2) continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      for (const q of range.getClientRects()) {
+        if (q.width < 1 || q.height < 1) continue;
+        l = Math.min(l, q.left), t = Math.min(t, q.top), r = Math.max(r, q.right), b = Math.max(b, q.bottom);
+      }
+    }
+    return l < r ? { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t } : null;
+  };
+  for (const el of document.body.querySelectorAll("*")) {
+    if (out.length >= 6) break;
+    const media = MEDIA.has(el.tagName.toUpperCase()) && !el.parentElement?.closest("svg");
+    const control = el.matches(CONTROL);
+    const text = !control && !media ? ownText(el) : null;
+    if (!control && !media && !text) continue;
+    if (el.closest("[hidden], [aria-hidden=true], [inert], dialog:not([open]), [data-pan], [data-edges-ok], template, noscript, script, style")) continue;
+    if (out.some((o) => o.el.contains(el))) continue; // (said once: the button, not its words too)
+    if ((el as any).checkVisibility && !(el as any).checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden" || cs.clipPath !== "none" || cs.clip !== "auto") continue;
+    if (media && (el.getAttribute("role") === "presentation" || (cs.pointerEvents === "none" && /absolute|fixed/.test(cs.position)))) continue; // decoration
+    const r = text || el.getBoundingClientRect();
+    if (r.width < 3 || r.height < 3) continue;
+    if (media && r.width >= W && r.height >= H) continue; // a backdrop
+    let how: EdgeHow | null = null;
+    let at: Element | null = null;
+    let scrollsDown = pageScrolls;
+    for (let p = el.parentElement, from: Element = el; p && p !== document.documentElement; from = p, p = p.parentElement) {
+      // (a fixed box isn't held in by the boxes around it, only by the window)
+      if (getComputedStyle(from).position === "fixed") break;
+      if (p === document.body) continue; // (the page's own box is the window: said below)
+      const ps = getComputedStyle(p);
+      if (ps.overflowX === "visible" && ps.overflowY === "visible") continue;
+      const pr = p.getBoundingClientRect();
+      const L = pr.left + p.clientLeft, T = pr.top + p.clientTop, R = L + p.clientWidth, B = T + p.clientHeight;
+      const covers = (a: number, b: number, lo: number, hi: number) => a <= lo + 2 && b >= hi - 2;
+      if (ps.overflowX !== "visible" && (r.left < L - 2 || r.right > R + 2)) {
+        const sideways = /auto|scroll/.test(ps.overflowX) && p.scrollWidth > p.clientWidth + 1;
+        const partly = r.right > L + 2 && r.left < R - 2;
+        if (sideways && !(media && covers(r.left, r.right, L, R))) (how = "sideways"), (at = p);
+        else if (!sideways && partly && ps.textOverflow !== "ellipsis" && !(media && covers(r.left, r.right, L, R))) (how = "cut"), (at = p);
+      }
+      if (!how && ps.overflowY !== "visible") {
+        if (/auto|scroll/.test(ps.overflowY)) scrollsDown = true;
+        else if (!scrollsDown && (r.top < T - 2 || r.bottom > B + 2) && r.bottom > T + 2 && r.top < B - 2 && ps.webkitLineClamp === "none" && !(media && covers(r.top, r.bottom, T, B))) (how = "cut"), (at = p);
+      }
+      if (how) break;
+    }
+    if (!how) {
+      if (r.left < -2 || r.right > W + 2) {
+        if (r.right <= 0 || r.left >= W) continue; // wholly away: a drawer tucked off the screen
+        how = "side";
+      } else if (r.bottom > H + 2 && r.top < H - 2 && !scrollsDown) how = "bottom";
+    }
+    if (!how) continue;
+    out.push({ el, what: name(el) + where(at), how, control, box: boxOf(Math.max(0, r.left), Math.max(0, r.top), Math.min(W, r.right), Math.min(H, r.bottom)) });
+  }
+  return out.map(({ el: _el, ...o }) => o);
+}
+const EDGE_SAYS: Record<EdgeHow, string> = {
+  side: "partly off the side of the screen",
+  bottom: "partly off the bottom of the screen",
+  cut: "cut off by the box it's in",
+  sideways: "needs sideways scrolling",
+};
+// What the edges check saw at one step (on opening, after a resize, with a dialog open, after a
+// click), as the Fixer's problems: serious when it's something you click or type into
+export function edgesProblems(items: EdgeItem[], step: string, where = ""): LooksProblem[] {
+  return items.map((i) => ({
+    kind: "out-of-sight" as const,
+    severity: i.control ? ("serious" as const) : ("minor" as const),
+    text: `Out of sight (${EDGE_SAYS[i.how]}): ${i.what}${where ? ` (${where})` : ""}, ${step}`,
+    box: i.box,
+  }));
+}
+// Which sizes a 15-minute run looks at: three each quarter of an hour, so every size is looked at
+// every hour; and what the window is changed to while a panel's open (a phone turned on its side,
+// a laptop window made smaller)
+export function edgesPlan(at: Date): { sizes: [number, number][]; resizeTo: [number, number][] } {
+  const q = Math.floor(at.getUTCMinutes() / 15) % 4;
+  const n = LOOKS_SIZES.length;
+  const sizes = [0, 1, 2].map((i) => [...LOOKS_SIZES[(q * 3 + i) % n]] as [number, number]);
+  const resizeTo = ([[780, 360], [390, 844], [1024, 768], [1280, 720]] as [number, number][]).filter(([w, h]) => !sizes.some(([a, b]) => a === w && b === h));
+  return { sizes, resizeTo };
+}
+// The window sizes to change to, for a screen opened at width×height: the same kind of device
+// (a phone turned, a computer's window made smaller), at most two
+export function resizeFor(width: number, height: number, to: readonly (readonly [number, number])[]): [number, number][] {
+  const touch = looksDevice(width, height).touch;
+  return to.filter(([w, h]) => (w !== width || h !== height) && looksDevice(w, h).touch === touch).slice(0, 2).map(([w, h]) => [w, h]);
+}
+// The edges check's screens kept for the last 75 minutes (a run looks at only some sizes), newest
+// for each panel, size and signed in or out: the problems are made from all of them, so one isn't
+// "gone" just because this quarter hour looked at other sizes
+export const EDGES_WINDOW_MS = 75 * 60_000;
+export type EdgesScreen = LooksScreen & { at: string };
+export function rollEdges(kept: EdgesScreen[], fresh: LooksScreen[], at: Date, windowMs = EDGES_WINDOW_MS): EdgesScreen[] {
+  const key = (s: LooksScreen) => `${s.path}|${s.width}x${s.height}|${s.signedIn ? 1 : 0}`;
+  const now = at.toISOString();
+  const seen = new Set(fresh.map(key));
+  return [...kept.filter((s) => !seen.has(key(s)) && at.getTime() - Date.parse(s.at) < windowMs), ...fresh.map((s) => ({ ...s, at: now }))];
 }
 
 // Nova Agent's own page: its title panels, the navigation panel, the open panel's frame
@@ -586,6 +734,7 @@ export async function runLooks(opts: LooksOptions): Promise<LooksScreen[]> {
   const states = (auth === "both" ? [false, true] : [auth === "in"]).filter((s) => !s || opts.cookie);
   const log = opts.log || (() => {});
   const settle = opts.settleMs ?? 1500;
+  const shrinkList = opts.resizeTo ?? [[1280, 800], [1024, 768]];
   if (opts.shotsDir) mkdirSync(opts.shotsDir, { recursive: true });
   const out: LooksScreen[] = [];
   const browser = await chromium.launch({ args: ["--disable-gpu", "--mute-audio"] });
@@ -646,6 +795,144 @@ export async function runLooks(opts: LooksOptions): Promise<LooksScreen[]> {
             out.push({ name: s.name, path: s.path, width, height, signedIn, ms, problems, shot });
             log(`${s.name} ${width}×${height} ${signedIn ? "signed in" : "signed out"}: ${problems.length ? problems.map((p) => p.text).join("; ") : "fine"}`);
           };
+          // The edges check (edges: true): only "is anything out of sight?", on opening each panel,
+          // then with each of its dialogs open, after clicking what opens or switches something, and
+          // after the window's size changes while it's open
+          if (opts.edges) {
+            const steps = resizeFor(width, height, shrinkList);
+            type Found = (items: EdgeItem[], step: string, where?: string, by?: { x: number; y: number } | null) => Promise<void>;
+            const edgeScreen = async (s: { name: string; path: string }, ms: number, run: (found: Found) => Promise<void>) => {
+              const problems: LooksProblem[] = [];
+              const said = new Set<string>();
+              let shot = "";
+              // (each thing said once, at the first step it was seen at)
+              const found: Found = async (items, step, where = "", by = null) => {
+                const fresh = shiftBoxes(edgesProblems(items.filter((i) => !said.has(i.what) && said.add(i.what)), step, where), by);
+                if (!fresh.length) return;
+                // (the picture is taken the first time something's seen, so its boxes match it)
+                if (!shot && opts.shotsDir) {
+                  const file = shotName(opts.shotPrefix || "", s.path, width, height, signedIn);
+                  await page.screenshot({ path: join(opts.shotsDir, file) }).then(() => (shot = file), () => {});
+                  problems.push(...fresh);
+                } else problems.push(...fresh.map(({ box: _b, ...p }) => p));
+              };
+              try {
+                await run(found);
+              } catch (err) {
+                problems.push({ kind: "open", severity: "serious", text: `Couldn't be looked at (${String((err as Error).message).split("\n")[0].slice(0, 160)})` });
+              }
+              errors = []; // (script errors are the looks check's to report)
+              if (opts.shootAll && !shot && opts.shotsDir) {
+                const file = shotName(opts.shotPrefix || "", s.path, width, height, signedIn);
+                await page.screenshot({ path: join(opts.shotsDir, file) }).then(() => (shot = file), () => {});
+              }
+              out.push({ name: s.name, path: s.path, width, height, signedIn, ms, problems: problems.slice(0, 12), shot });
+              log(`${s.name} ${width}×${height} ${signedIn ? "signed in" : "signed out"}: ${problems.length ? problems.map((p) => p.text).join("; ") : "nothing out of sight"}`);
+            };
+            const hostEdges = (): Promise<EdgeItem[]> => page.evaluate(measureEdges).catch(() => []);
+            // Nova Agent's own bars: said under the home, once per size (seen with a panel open too)
+            const barsSeen = new Set<string>();
+            const barsLater: LooksProblem[] = [];
+            const bars = (items: EdgeItem[], step: string) => {
+              const fresh = items.filter((i) => !barsSeen.has(i.what) && barsSeen.add(i.what));
+              barsLater.push(...edgesProblems(fresh, step, "Nova Agent's bars").map(({ box: _b, ...p }) => p));
+            };
+            if (!opts.panels || opts.panels.includes(HOME.path)) {
+              await edgeScreen(HOME, Date.now() - t0, async (found) => {
+                const first = await hostEdges();
+                await found(first, "on opening", "Nova Agent's bars");
+                first.forEach((i) => barsSeen.add(i.what));
+                for (const [w2, h2] of steps) {
+                  await page.setViewportSize({ width: w2, height: h2 });
+                  await page.waitForTimeout(700);
+                  const more = await hostEdges();
+                  await found(more, `after the window was made ${w2}×${h2}`, "Nova Agent's bars");
+                  more.forEach((i) => barsSeen.add(i.what));
+                }
+                await page.setViewportSize({ width, height });
+                await page.waitForTimeout(300);
+              });
+            }
+            for (const p of panels) {
+              const started = Date.now();
+              await edgeScreen(p, 0, async (found) => {
+                if (!(await page.evaluate((path) => !!(window as any).NovaAgent?.open(path), p.path))) throw new Error("it didn't open from the navigation panel");
+                const handle = await page.waitForSelector(".main.viewing .viewer iframe:not([hidden])", { timeout: 20_000 });
+                const frame = await handle.contentFrame();
+                if (!frame) throw new Error("no frame");
+                await frame.waitForLoadState("load", { timeout: 30_000 }).catch(() => {});
+                await page.waitForTimeout(settle);
+                const look = async (step: string) => {
+                  const host = await page.evaluate(measureHost).catch(() => null);
+                  await found(await frame.evaluate(measureEdges).catch(() => []), step, "", host?.frame || null);
+                  bars(await hostEdges(), `with ${p.name} open, ${step}`);
+                };
+                await look("on opening");
+                // Each dialog, opened (up to four)
+                const dialogs: string[] = await frame.evaluate(() => [...document.querySelectorAll("dialog:not([open])")].slice(0, 4).map((d, i) => (d.getAttribute("aria-label") || d.querySelector("h1,h2,h3,legend")?.textContent || `dialog ${i + 1}`).trim().replace(/\s+/g, " ").slice(0, 40))).catch(() => []);
+                for (let i = 0; i < dialogs.length; i++) {
+                  const opened = await frame.evaluate((n) => {
+                    const d = [...document.querySelectorAll("dialog:not([open])")][n] as HTMLDialogElement | undefined;
+                    if (!d) return false;
+                    d.setAttribute("data-edges-opened", "");
+                    try { d.showModal(); } catch { return false; }
+                    return true;
+                  }, i).catch(() => false);
+                  if (!opened) continue;
+                  await page.waitForTimeout(350);
+                  await look(`with the dialog “${dialogs[i]}” open`);
+                  await frame.evaluate(() => document.querySelectorAll("dialog[data-edges-opened]").forEach((d) => ((d as HTMLDialogElement).close(), d.removeAttribute("data-edges-opened")))).catch(() => {});
+                }
+                // What opens or switches something (up to six): a fold, a menu, a tab
+                const toggles: string[] = await frame.evaluate(() => {
+                  const W = innerWidth, H = innerHeight;
+                  return [...document.querySelectorAll('summary, [aria-expanded="false"], [aria-haspopup]:not(a), [role=tab]:not([aria-selected="true"])')]
+                    .filter((el) => !el.closest("[hidden], [aria-hidden=true], [inert], dialog:not([open]), [data-edges-ok]") && !(el instanceof HTMLAnchorElement && el.href && !el.getAttribute("href")!.startsWith("#")) && !(el as HTMLButtonElement).disabled)
+                    .filter((el) => { const r = el.getBoundingClientRect(); return r.width > 2 && r.height > 2 && r.right > 0 && r.left < W && r.bottom > 0 && r.top < H; })
+                    .slice(0, 6)
+                    .map((el, i) => (el.setAttribute("data-edges-toggle", String(i)), (el.getAttribute("aria-label") || el.textContent || el.tagName).trim().replace(/\s+/g, " ").slice(0, 40)));
+                }).catch(() => []);
+                for (let i = 0; i < toggles.length; i++) {
+                  const clicked = await frame.evaluate((n) => {
+                    const el = document.querySelector(`[data-edges-toggle="${n}"]`) as HTMLElement | null;
+                    if (!el) return false;
+                    el.click();
+                    return true;
+                  }, i).catch(() => false);
+                  if (!clicked) continue;
+                  await page.waitForTimeout(400);
+                  await look(`after clicking “${toggles[i]}”`);
+                  // (put back: a fold or menu closed again, Escape for anything that opened over it)
+                  await frame.evaluate((n) => {
+                    const el = document.querySelector(`[data-edges-toggle="${n}"]`) as HTMLElement | null;
+                    if (el && (el.tagName === "SUMMARY" || el.getAttribute("aria-expanded") === "true")) el.click();
+                    document.querySelectorAll("dialog[open]").forEach((d) => (d as HTMLDialogElement).close());
+                  }, i).catch(() => {});
+                  await page.keyboard.press("Escape").catch(() => {});
+                  await page.waitForTimeout(150);
+                }
+                // The window made another size while it's open (no reload), then put back
+                for (const [w2, h2] of steps) {
+                  await page.setViewportSize({ width: w2, height: h2 });
+                  await page.waitForTimeout(700);
+                  await look(`after the window was made ${w2}×${h2}`);
+                }
+                if (steps.length) {
+                  await page.setViewportSize({ width, height });
+                  await page.waitForTimeout(300);
+                }
+              }).then(() => {
+                const s = out[out.length - 1];
+                if (s && s.path === p.path && !s.ms) s.ms = Date.now() - started;
+              });
+            }
+            if (barsLater.length) {
+              const home = out.find((x) => x.path === HOME.path && x.width === width && x.height === height && x.signedIn === signedIn);
+              if (home) home.problems.push(...barsLater.slice(0, Math.max(0, 12 - home.problems.length)));
+              else out.push({ name: HOME.name, path: HOME.path, width, height, signedIn, ms: 0, problems: barsLater.slice(0, 12), shot: "" });
+            }
+            continue;
+          }
           // The home
           if (!opts.panels || opts.panels.includes(HOME.path)) {
             const host = await page.evaluate(measureHost);
@@ -691,7 +978,7 @@ export async function runLooks(opts: LooksOptions): Promise<LooksScreen[]> {
           }
           // Made smaller while open (the biggest computer size only): each panel's text checked again
           const biggest = sizes.filter(([w, h]) => looksDevice(w, h).kind === "computer").sort((a, b) => b[0] * b[1] - a[0] * a[1])[0];
-          const shrinkTo = opts.resizeTo ?? [[1280, 800], [1024, 768]];
+          const shrinkTo = shrinkList;
           if (biggest && biggest[0] === width && biggest[1] === height && shrinkTo.length) {
             for (const p of panels) {
               try {
@@ -731,7 +1018,7 @@ export async function runLooks(opts: LooksOptions): Promise<LooksScreen[]> {
 // One problem per panel and kind, saying every size (and signed in or out) it was seen at, so a gap
 // seen at four sizes is one problem with one fix
 const sizeName = (s: LooksScreen) => `${s.width}×${s.height} ${s.signedIn ? "signed in" : "signed out"}`;
-export function looksFindings(screens: LooksScreen[]): Finding[] {
+export function looksFindings(screens: LooksScreen[], area: "looks" | "edges" = "looks"): Finding[] {
   const groups = new Map<string, { s: LooksScreen; p: LooksProblem }[]>();
   for (const s of screens) for (const p of s.problems) {
     const key = `${s.path}|${p.kind}`;
@@ -747,17 +1034,17 @@ export function looksFindings(screens: LooksScreen[]): Finding[] {
     const where = [...new Set(g.map((x) => sizeName(x.s)))];
     const lines = g.slice(0, 12).map((x) => `- ${sizeName(x.s)}: ${x.p.text}${x.s.shot ? ` (picture: ${x.s.shot})` : ""}`);
     out.push({
-      fingerprint: fingerprint("looks", path, kind),
-      area: "looks",
+      fingerprint: fingerprint(area, path, kind),
+      area,
       severity: serious ? "serious" : "minor",
       title: `${first.s.name}: ${first.p.text}${where.length > 1 ? ` (and at ${where.length - 1} other size${where.length === 2 ? "" : "s"})` : ""}`,
       detail: [
-        `What the Fixer's looks check saw on ${first.s.name} (${path}), opened inside Nova Agent at these screen sizes:`,
+        `What the Fixer's ${area === "edges" ? "edges check (nothing out of sight)" : "looks check"} saw on ${first.s.name} (${path}), opened inside Nova Agent at these screen sizes:`,
         ...lines,
         ...(g.length > 12 ? [`- and ${g.length - 12} more`] : []),
         "",
         `How to see it: open ${path === HOME.path ? "Nova Agent's home" : `${first.s.name} inside Nova Agent (/agent/, then its icon in the navigation panel)`} at ${where[0]}.`,
-        `How to check a fix: npx tsx scripts/fixer-looks.ts <a running copy's address> --panels ${path} --sizes ${[...new Set(g.map((x) => `${x.s.width}x${x.s.height}`))].join(",")} --auth out --mock-portal`,
+        `How to check a fix: npx tsx scripts/fixer-looks.ts <a running copy's address> --panels ${path} --sizes ${[...new Set(g.map((x) => `${x.s.width}x${x.s.height}`))].join(",")} --auth out --mock-portal${area === "edges" ? " --edges" : ""}`,
       ].join("\n"),
       panel: path,
       panels: [path],

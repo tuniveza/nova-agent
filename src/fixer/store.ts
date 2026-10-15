@@ -13,7 +13,7 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
-import type { LooksSummary } from "./looks";
+import type { EdgesScreen, LooksSummary } from "./looks";
 import type { ProbeResult } from "./probes";
 
 export const QUEST_KINDS = ["bug", "glitch", "change"] as const;
@@ -23,7 +23,7 @@ export type Priority = (typeof PRIORITIES)[number];
 export type Severity = "serious" | "minor";
 // (checks: the scripted checks a code change can fix; server: the scripted checks of the server itself,
 // which only get told about, like health; probes.ts)
-export type Area = "tests" | "typecheck" | "sweep" | "health" | "audio" | "checks" | "server" | "looks";
+export type Area = "tests" | "typecheck" | "sweep" | "health" | "audio" | "checks" | "server" | "looks" | "edges";
 
 export interface Issue {
   id: string;
@@ -176,6 +176,9 @@ export interface FixerData {
   restarts: number; // the service's restart count last seen (systemd's NRestarts)
   // The looks check's last run (looks.ts): every screen, and what was wrong with each
   looks: LooksSummary | null;
+  // The edges check (every 15 minutes, looks.ts measureEdges): its last run, and the screens it saw
+  // in the last 75 minutes (each run looks at some of the sizes), the newest of each
+  edges: EdgesSummary | null;
 }
 
 const MAX_ACTIVITY = 300;
@@ -217,7 +220,24 @@ function cleanChecks(c: any): FixerData["checks"] {
   };
 }
 
-const LOOKS_KINDS = ["blank", "top-gap", "gap", "header-low", "covered", "unused", "title-count", "page-scrolls", "cut-off", "main-scrolls", "offscreen", "text-cut", "error", "slow", "open"] as const;
+const LOOKS_KINDS = ["blank", "top-gap", "gap", "header-low", "covered", "unused", "title-count", "page-scrolls", "cut-off", "main-scrolls", "offscreen", "text-cut", "text-overlap", "text-crammed", "text-small", "text-faint", "error", "slow", "open", "out-of-sight"] as const;
+export interface EdgesSummary extends LooksSummary {
+  results: EdgesScreen[];
+  sizes: string[]; // the last run's sizes ("1440x900")
+}
+const BOX = (b: any) => (b && [b.x, b.y, b.w, b.h].every((v) => typeof v === "number" && Number.isFinite(v)) ? { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.w), h: Math.round(b.h) } : undefined);
+export function cleanEdges(l: any): EdgesSummary | null {
+  const base = cleanLooks(l);
+  if (!base) return null;
+  return {
+    ...base,
+    sizes: (Array.isArray(l.sizes) ? l.sizes : []).filter((x: unknown) => typeof x === "string" && /^\d+x\d+$/.test(x)).slice(0, 12),
+    results: base.results.map((r, i) => {
+      const raw = l.results[i];
+      return { ...r, at: text(raw?.at, 40) || base.at, problems: r.problems.map((p, j) => ({ ...p, ...(BOX(raw?.problems?.[j]?.box) ? { box: BOX(raw.problems[j].box) } : {}) })) };
+    }),
+  };
+}
 export function cleanLooks(l: any): LooksSummary | null {
   if (!l || typeof l.at !== "string" || !Array.isArray(l.results)) return null;
   return {
@@ -245,7 +265,7 @@ function cleanIssue(i: any): Issue | null {
   return {
     id: text(i?.id, 64) || randomUUID(),
     fingerprint,
-    area: oneOf(i?.area, ["tests", "typecheck", "sweep", "health", "audio", "checks", "server", "looks"] as const, "health"),
+    area: oneOf(i?.area, ["tests", "typecheck", "sweep", "health", "audio", "checks", "server", "looks", "edges"] as const, "health"),
     severity: oneOf(i?.severity, ["serious", "minor"] as const, "minor"),
     title: text(i?.title, 300) || "A problem",
     detail: text(i?.detail, 4000),
@@ -348,6 +368,7 @@ export function normaliseFixer(raw: any): FixerData {
     checks: cleanChecks(raw?.checks),
     restarts: num(raw?.restarts, 0, 0, 1e9),
     looks: cleanLooks(raw?.looks),
+    edges: cleanEdges(raw?.edges),
   };
 }
 

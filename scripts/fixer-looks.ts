@@ -3,6 +3,11 @@
 //
 //   npx tsx scripts/fixer-looks.ts <address> [--out results.json] [--shots folder] [--prefix before-]
 //     [--sizes 390x844,2000x1130] [--panels /portal/,/app/memory/] [--auth both|in|out] [--mock-portal] [--shoot-all]
+//     [--edges] [--resize-to 1024x768,780x360]
+//
+// --edges: the edges check only (is anything out of sight: off the screen, cut off by its box, or in a
+// row that scrolls sideways), on opening, with each dialog open, after clicking what opens or switches
+// something, and after the window's made each --resize-to size of the same kind of device.
 //
 // Signed in: the cookie comes in the environment (LOOKS_COOKIE_NAME, LOOKS_COOKIE), never on the
 // command line and never printed. --mock-portal: sample answers for Portal (a job's copy of Nova
@@ -20,6 +25,7 @@ if (!base) {
   console.error("Which address? e.g. npx tsx scripts/fixer-looks.ts http://localhost:4721");
   process.exit(2);
 }
+const pairs = (v: string) => v.split(",").map((s) => s.split("x").map(Number) as [number, number]);
 const sizes = opt("sizes") ? opt("sizes").split(",").map((s) => s.split("x").map(Number) as [number, number]) : undefined;
 const value = process.env.LOOKS_COOKIE || "";
 const options: LooksOptions = {
@@ -31,6 +37,8 @@ const options: LooksOptions = {
   shotsDir: opt("shots") || undefined,
   shotPrefix: opt("prefix") || "",
   shootAll: args.includes("--shoot-all"),
+  edges: args.includes("--edges"),
+  ...(opt("resize-to") ? { resizeTo: pairs(opt("resize-to")) } : args.includes("--resize-to") ? { resizeTo: [] } : {}),
   log: (line) => console.log(line),
 };
 if (args.includes("--mock-portal")) {

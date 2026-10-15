@@ -3,7 +3,7 @@
 // numbers pushed down behind the navigation panel) is caught, and an ordinary empty state isn't.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser, Page } from "playwright";
-import { LOOKS_SIZES, judgeContent, judgeFrame, judgeHost, looksDevice, looksFindings, measureContent, measureFrame, measureHost, type FrameMeasure, type LooksScreen } from "../src/fixer/looks";
+import { LOOKS_SIZES, edgesPlan, edgesProblems, judgeContent, judgeFrame, judgeHost, looksDevice, looksFindings, measureContent, measureEdges, measureFrame, measureHost, resizeFor, rollEdges, type FrameMeasure, type LooksScreen } from "../src/fixer/looks";
 
 let browser: Browser;
 let page: Page;
@@ -149,5 +149,79 @@ describe("the sizes it looks at, and how each is opened", () => {
     expect(tab.userAgent).toMatch(/Android/);
     expect(tab.userAgent).not.toMatch(/Mobile/);
     for (const [w, h] of [[1024, 768], [1440, 900], [2000, 1130]] as const) expect(looksDevice(w, h)).toEqual({ kind: "computer", touch: false, dpr: 1 });
+  });
+});
+
+// The edges check: nothing out of sight (off the screen, cut off by its box, or in a row that scrolls
+// sideways: the Invoicer's theme names and filters, 15 October 2026); scrolling up and down inside a
+// box is fine
+describe("the edges check: nothing out of sight", () => {
+  const edgesOf = async (html: string) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.setContent(`<!doctype html><style>html,body{margin:0;height:100%;overflow:hidden;font:16px sans-serif}button{width:120px;flex:none}</style>${html}`);
+    const items = await page.evaluate(measureEdges);
+    await page.setViewportSize({ width: 1500, height: 1000 });
+    return items;
+  };
+
+  it("finds a row that scrolls sideways, a button cut off by its box, and one past the right edge", async () => {
+    const items = await edgesOf(`
+      <div class="themes" style="display:flex;gap:8px;width:300px;overflow-x:auto"><button>Ruby</button><button>Amber</button><button>Teal</button></div>
+      <div style="width:200px;height:60px;overflow:hidden;display:flex"><button>One</button><button>Cut</button></div>
+      <div style="position:absolute;left:740px;top:300px"><button>Past</button></div>`);
+    const said = (re: RegExp) => items.find((i) => re.test(i.what));
+    expect(said(/Teal/)).toMatchObject({ how: "sideways", control: true });
+    expect(said(/Teal/)!.what).toMatch(/in \.themes/);
+    expect(said(/Cut/)).toMatchObject({ how: "cut" });
+    expect(said(/Past/)).toMatchObject({ how: "side" });
+    expect(said(/Ruby|Amber|One/)).toBeUndefined();
+    const problems = edgesProblems(items, "on opening");
+    expect(problems.every((p) => p.kind === "out-of-sight" && p.severity === "serious")).toBe(true);
+    expect(problems.find((p) => /Teal/.test(p.text))!.text).toMatch(/^Out of sight \(needs sideways scrolling\): button “Teal” in \.themes, on opening$/);
+  });
+
+  it("leaves alone: a list scrolling up and down, words cut short with …, a cropped picture, a drawer tucked away, [data-edges-ok], Board's table", async () => {
+    const items = await edgesOf(`
+      <ul style="height:100px;overflow-y:auto;margin:0">${Array.from({ length: 30 }, (_, i) => `<li><button>Item ${i}</button></li>`).join("")}</ul>
+      <div style="width:80px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">A very long name that is cut short</div>
+      <div style="width:100px;height:60px;overflow:hidden"><img alt="cover" style="display:block;width:300px;height:200px" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'/%3E"></div>
+      <nav style="position:fixed;left:-300px;top:0;width:260px"><button>Drawer</button></nav>
+      <div data-edges-ok style="display:flex;width:200px;overflow-x:auto"><button>A</button><button>B</button><button>C</button></div>
+      <div data-pan style="position:relative;width:200px;height:50px;overflow:hidden"><button style="position:absolute;left:180px">Card</button></div>
+      <div style="height:0;overflow:hidden"><button>Folded away</button></div>`);
+    expect(items).toEqual([]);
+  });
+
+  it("three sizes each quarter hour, every size each hour; the resizes of the same kind of device", () => {
+    const seen = new Set<string>();
+    for (const m of [0, 15, 30, 45]) {
+      const plan = edgesPlan(new Date(`2026-10-15T10:${String(m).padStart(2, "0")}:00Z`));
+      expect(plan.sizes).toHaveLength(3);
+      for (const [w, h] of plan.sizes) seen.add(`${w}x${h}`);
+      for (const [w, h] of plan.resizeTo) expect(plan.sizes.some(([a, b]) => a === w && b === h)).toBe(false);
+    }
+    expect(seen.size).toBe(LOOKS_SIZES.length);
+    // A phone is turned (a phone size), a computer's window made smaller (a computer size)
+    expect(resizeFor(390, 844, [[780, 360], [390, 844], [1024, 768]])).toEqual([[780, 360]]);
+    expect(resizeFor(1440, 900, [[780, 360], [1024, 768], [1280, 720]])).toEqual([[1024, 768], [1280, 720]]);
+  });
+
+  it("keeps the newest screen of each panel and size for 75 minutes", () => {
+    const s = (path: string, width: number, bad: boolean): LooksScreen => ({ name: path, path, width, height: 800, signedIn: true, ms: 0, problems: bad ? [{ kind: "out-of-sight", severity: "minor", text: "x" }] : [], shot: "" });
+    const t = (m: number) => new Date(Date.UTC(2026, 9, 15, 9, m));
+    let kept = rollEdges([], [s("/a/", 1440, true), s("/a/", 390, false)], t(0));
+    kept = rollEdges(kept, [s("/a/", 390, true)], t(15));
+    expect(kept.map((k) => [k.width, k.problems.length])).toEqual([[1440, 1], [390, 1]]);
+    kept = rollEdges(kept, [s("/a/", 1440, false)], t(30));
+    expect(kept.map((k) => [k.width, k.problems.length])).toEqual([[390, 1], [1440, 0]]);
+    // 75 minutes after it was seen, a screen not looked at again goes
+    kept = rollEdges(kept, [], new Date(t(15).getTime() + 76 * 60_000));
+    expect(kept.map((k) => k.width)).toEqual([1440]);
+    kept = rollEdges(kept, [], new Date(t(30).getTime() + 76 * 60_000));
+    expect(kept.map((k) => k.width)).toEqual([]);
+    // As the Fixer's problems: its own kind of problem, said with --edges
+    const f = looksFindings([s("/a/", 1440, true)], "edges");
+    expect(f[0]).toMatchObject({ area: "edges", panel: "/a/" });
+    expect(f[0].detail).toMatch(/--edges/);
   });
 });

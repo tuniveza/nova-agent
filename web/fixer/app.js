@@ -96,6 +96,7 @@
     "page-scrolls": "the whole page scrolls", "main-scrolls": "the whole page scrolls", "cut-off": "cut off at the bottom",
     offscreen: "buttons off the screen", "text-cut": "text cut off", covered: "hidden behind the bars", "title-count": "two title panels at once",
     unused: "wasted empty space", error: "a script error", slow: "slow to open", open: "won't open",
+    "out-of-sight": "something out of sight",
   };
   const KIND_CAUSE = {
     blank: "The page loaded but drew nothing: usually a script stopping early, or its content hidden by mistake.",
@@ -113,6 +114,7 @@
     error: "A script on the page failed while it opened.",
     slow: "It loads a lot, or waits for a slow answer, before it shows.",
     open: "Nova Agent couldn't open it, or it didn't finish loading.",
+    "out-of-sight": "A row doesn't fit its box: part of it runs off the screen, is clipped by its box, or needs scrolling sideways to see.",
   };
   const cleanTitle = (t) => String(t || "").replace(/\s*\(and at \d+ other sizes?\)\s*$/, "").trim();
   const firstSentence = (t) => {
@@ -159,12 +161,13 @@
       out.push({ label, width: sc.width, height: sc.height || 0, before: sc.before ? shot(job, sc.before) : "", after: sc.after ? shot(job, sc.after) : "", boxes: sc.boxes || [] });
     }
     const a = job.about;
-    if (!out.length && a && a.kind && s && s.looks) {
-      for (const r of s.looks.results || []) {
+    const seenBy = a && a.area === "edges" ? "edges" : "looks";
+    if (!out.length && a && a.kind && s && s[seenBy]) {
+      for (const r of s[seenBy].results || []) {
         if (r.path !== a.panel || !r.shot) continue;
         const ps = r.problems.filter((p) => p.kind === a.kind);
         if (!ps.length) continue;
-        out.push({ label: `${r.width}×${r.height}, ${r.signedIn ? "signed in" : "signed out"}`, width: r.width, height: r.height, before: `/fixer-api/shots/looks/${encodeURIComponent(r.shot)}`, after: "", boxes: ps.map((p) => p.box).filter(Boolean) });
+        out.push({ label: `${r.width}×${r.height}, ${r.signedIn ? "signed in" : "signed out"}`, width: r.width, height: r.height, before: `/fixer-api/shots/${seenBy}/${encodeURIComponent(r.shot)}`, after: "", boxes: ps.map((p) => p.box).filter(Boolean) });
         if (out.length >= 8) break;
       }
     }
@@ -410,6 +413,13 @@
             .join("")
         : `<div class="nt-empty"><b>Everything looked right.</b></div>`);
     } else put("looks", `<div class="nt-empty">Not run yet: tap <b>Check looks now</b>, or wait for the hourly check.</div>`);
+    // The edges check (every 15 minutes): when, which sizes, and how many had something out of sight
+    const E = s.edges;
+    $("edges-summary").textContent = !E
+      ? `Nothing out of sight: every 15 minutes, three sizes at a time, each panel is opened, its dialogs and menus opened, and the window resized, looking for anything off the screen, cut off, or needing sideways scrolling.${s.settings.looksChecks ? "" : " (Off: looks checks are off in Settings.)"}`
+      : E.error
+        ? `The last edges check couldn't run (${ago(E.at)}): ${E.error}`
+        : `Nothing out of sight: ${E.screens} screens checked ${ago(E.at)} (${clock(E.at)}${E.sizes && E.sizes.length ? `, at ${E.sizes.map((x) => x.replace("x", "×")).join(", ")}` : ""}). ${E.failed ? `${E.failed} had something out of sight: they're in the problems above.` : "Everything was in sight."} It runs every 15 minutes${s.settings.looksChecks ? "" : " (off: looks checks are off in Settings)"}.`;
 
     // The scripted checks, in groups: what failed first, then what passed
     const c = s.checks;

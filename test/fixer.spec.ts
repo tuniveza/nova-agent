@@ -994,3 +994,73 @@ describe("the looks check", () => {
     expect(w.fixer.state().claude).toBe("");
   });
 });
+
+// The edges check (every 15 minutes): anything out of sight becomes a problem of its own ("edges"),
+// made from every screen seen in the last 75 minutes, so a problem at a size this quarter hour
+// didn't look at isn't "gone"; a fix for one is looked at again with the edges check
+describe("the edges check", () => {
+  const TEAL = "Out of sight (needs sideways scrolling): button “Teal” in .themes, on opening";
+  const edgesWorld = () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    const calls: any[] = [];
+    let tealAt = "1440x900";
+    w.deps.looks = async (o) => {
+      calls.push(o);
+      mkdirSync(o.shotsDir, { recursive: true });
+      return (o.sizes || []).map(([width, height]: [number, number]) => {
+        const bad = !o.base && `${width}x${height}` === tealAt;
+        const shot = bad ? `invoicer-${width}x${height}-in.png` : "";
+        if (shot) writeFileSync(join(o.shotsDir, shot), "png");
+        return { name: "Invoicer", path: "/invoicer/", width, height, signedIn: !o.base, ms: 500, problems: bad ? [{ kind: "out-of-sight" as const, severity: "serious" as const, text: TEAL, box: { x: 10, y: 20, w: 30, h: 40 } }] : [], shot };
+      });
+    };
+    return Object.assign(w, { calls, setTeal: (s: string) => void (tealAt = s) });
+  };
+
+  it("looks at this quarter hour's sizes, with resizes; a problem at a size not looked at next time stays; 75 minutes on, it's gone", async () => {
+    const w = edgesWorld();
+    w.now = new Date("2026-10-15T09:30:00Z"); // quarter 2: 1366×768, 1440×900, 1512×1500
+    await w.fixer.check("edges");
+    expect(w.calls[0]).toMatchObject({ edges: true, auth: "in" });
+    expect(w.calls[0].sizes).toEqual([[1366, 768], [1440, 900], [1512, 1500]]);
+    expect(w.calls[0].resizeTo.length).toBeGreaterThan(0);
+    let edges = w.fixer.state().issues.filter((i) => i.area === "edges");
+    expect(edges).toHaveLength(1);
+    expect(edges[0].severity).toBe("serious");
+    expect(edges[0].title).toMatch(/^Invoicer: Out of sight.*Teal/);
+    expect(w.fixer.state().edges?.failed).toBe(1);
+    expect(w.fixer.shotFile("edges", "invoicer-1440x900-in.png")).toBeTruthy();
+    await idle(w.fixer);
+    // (a fix for it was prepared by itself: looked at again with the edges check, where it was seen)
+    const again = w.calls.find((c) => c.base === "http://job.test");
+    expect(again).toMatchObject({ edges: true, panels: ["/invoicer/"] });
+    expect(again.sizes).toEqual([[1440, 900]]);
+    // Next quarter hour: other sizes, all fine; the 1440×900 problem is still in the window
+    w.now = new Date("2026-10-15T09:45:00Z");
+    await w.fixer.check("edges");
+    expect(w.calls.at(-1).sizes).toEqual([[2000, 1130], [360, 740], [390, 844]]);
+    edges = w.fixer.state().issues.filter((i) => i.area === "edges");
+    expect(edges).toHaveLength(1);
+    // 1440×900 looked at again and fine (fixed): gone
+    w.setTeal("");
+    w.now = new Date("2026-10-15T10:30:00Z");
+    await w.fixer.check("edges");
+    expect(w.fixer.state().issues.filter((i) => i.area === "edges")).toHaveLength(0);
+    expect(wentLive(w.log)).toEqual([]);
+  });
+
+  it("couldn't run: last time's problems stay; other checks' problems are never touched", async () => {
+    const w = edgesWorld();
+    w.now = new Date("2026-10-15T09:30:00Z");
+    await w.fixer.check("edges");
+    const looks = w.deps.looks!;
+    w.deps.looks = async () => {
+      throw new Error("browser fell over");
+    };
+    w.now = new Date("2026-10-15T09:45:00Z");
+    await w.fixer.check("edges");
+    expect(w.fixer.state().issues.filter((i) => i.area === "edges")).toHaveLength(1);
+    expect(w.fixer.state().edges?.error).toMatch(/browser fell over/);
+    w.deps.looks = looks;
+  });
+});

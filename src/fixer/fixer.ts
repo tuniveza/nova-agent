@@ -8,6 +8,10 @@
 //               signed in and out, at eight screen sizes (phones upright and sideways and an Android tablet as Chrome on Android shows them), judged for gaps, blank panels, bars
 //               covering things, scrolling and cut-off text (looks.ts). Its problems are issues
 //               too, with a picture; a fix for one is checked at the sizes where it was seen.
+//   Edges       every 15 minutes: nothing out of sight (off the screen, cut off by its box, or in a
+//               row that scrolls sideways) on opening each panel, with its dialogs open, after
+//               clicks, and after the window's size changes (looks.ts measureEdges). Three sizes a
+//               run, every size each hour; its problems come from the last 75 minutes' screens.
 //   Preparing   for an issue or a fixer quest (by itself for new issues, if that's switched on):
 //               one job at a time, a daily cap and a time limit. Each job gets its own git
 //               worktrees and branch; Claude Code makes the change there (src/fixer/claude.ts),
@@ -26,7 +30,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { briefText, claudeArgs, readAnswer } from "./claude";
 import { commandFindings } from "./health";
-import { type LooksScreen, looksFindings, shotName } from "./looks";
+import { edgesPlan, type EdgesScreen, type LooksScreen, looksFindings, rollEdges, shotName } from "./looks";
 import { probeFindings, type ProbeResult } from "./probes";
 import { affectedScreens, type Finding, fingerprint, isBlip, isTrivial, mergeIssues, offLimits, recommend, SCREENS, sensitiveLines, shouldRollBack, suggestions, type Suggestion } from "./rules";
 import type { Run } from "./runner";
@@ -63,6 +67,9 @@ export interface LooksRun {
   prefix?: string;
   mockPortal?: boolean;
   shootAll?: boolean;
+  edges?: boolean; // the edges check (nothing out of sight)
+  resizeTo?: [number, number][];
+  timeoutMs?: number;
 }
 export interface Deps {
   run: Run;
@@ -120,6 +127,7 @@ const BLIP_WAIT_MS = 40_000;
 export class Fixer {
   private running: string | null = null; // the job being prepared
   private checking = false;
+  private edging = false; // the edges check (its own: it runs beside the hourly check)
   private landing: Promise<unknown> = Promise.resolve();
 
   constructor(
@@ -178,8 +186,9 @@ export class Fixer {
       if (j.target.type !== "issue") return null;
       const i = data.issues.find((x) => x.id === j.target.id);
       if (!i) return null;
-      const seen = i.area === "looks" ? (data.looks?.results || []).filter((r) => r.path === i.panel && r.problems.some((p) => fingerprint("looks", r.path, p.kind) === i.fingerprint)) : [];
-      const p = seen[0]?.problems.find((x) => fingerprint("looks", seen[0].path, x.kind) === i.fingerprint);
+      const from = i.area === "looks" ? data.looks?.results || [] : i.area === "edges" ? data.edges?.results || [] : [];
+      const seen = from.filter((r) => r.path === i.panel && r.problems.some((p) => fingerprint(i.area, r.path, p.kind) === i.fingerprint));
+      const p = seen[0]?.problems.find((x) => fingerprint(i.area, seen[0].path, x.kind) === i.fingerprint);
       return {
         severity: i.severity,
         area: i.area,
@@ -200,6 +209,7 @@ export class Fixer {
       lastCheck: data.lastCheck,
       checks: data.checks,
       looks: data.looks,
+      edges: data.edges ? { ...data.edges, results: data.edges.results.filter((r) => r.problems.length) } : null,
       // Why fixes can't be prepared here ("" = they can): Claude Code not installed or not signed in
       claude: this.opts.claudeProblem?.() || "",
       today: { prepared: day.prepared, cap: data.settings.dailyCap },
@@ -306,7 +316,8 @@ export class Fixer {
   // full: the hourly check (tests, typecheck, sweep, health, the scripted checks). quick: the sweep and
   // health, used just before and after a change goes live. checks: only the scripted checks (about a
   // minute; the Health tab's "Run the quick checks"). looks: the looks check (about ten minutes).
-  async check(kind: "full" | "quick" | "audio" | "checks" | "looks" = "full"): Promise<{ findings: Finding[]; fresh: Issue[] }> {
+  async check(kind: "full" | "quick" | "audio" | "checks" | "looks" | "edges" = "full"): Promise<{ findings: Finding[]; fresh: Issue[] }> {
+    if (kind === "edges") return this.edgesCheck();
     if (this.checking && kind !== "quick") return { findings: [], fresh: [] };
     if (kind !== "quick") this.checking = true;
     const started = Date.now();
@@ -387,6 +398,51 @@ export class Fixer {
       return { findings, fresh: merged.fresh };
     } finally {
       if (kind !== "quick") this.checking = false;
+    }
+  }
+
+  // The edges check (every 15 minutes, service.ts): this quarter hour's three sizes, signed in when it
+  // can be, each panel opened, its dialogs, clicks and a resize; the problems made from every screen
+  // seen in the last 75 minutes (so a problem at a size not looked at this time isn't "gone")
+  private async edgesCheck(): Promise<{ findings: Finding[]; fresh: Issue[] }> {
+    if (this.edging || !this.deps.looks) return { findings: [], fresh: [] };
+    this.edging = true;
+    try {
+      const plan = edgesPlan(this.now());
+      const dir = join(this.paths.shotsDir, "edges");
+      const t0 = Date.now();
+      let screens: LooksScreen[] = [];
+      let error = "";
+      try {
+        screens = await this.deps.looks({ shotsDir: dir, edges: true, sizes: plan.sizes, resizeTo: plan.resizeTo, auth: "in", timeoutMs: 14 * 60_000 });
+      } catch (err) {
+        error = String((err as Error).message || err).slice(0, 600);
+      }
+      const findings: Finding[] = [];
+      const merged = this.store.update((d) => {
+        const kept: EdgesScreen[] = error ? d.edges?.results || [] : rollEdges(d.edges?.results || [], screens, this.now());
+        const failed = screens.filter((x) => x.problems.some((p) => p.kind === "out-of-sight")).length;
+        d.edges = { at: this.now().toISOString(), took: Date.now() - t0, screens: screens.length, failed, results: kept, error, sizes: plan.sizes.map(([w, h]) => `${w}x${h}`) };
+        // (pictures no screen kept points to any more go)
+        try {
+          const keep = new Set(kept.map((r) => r.shot).filter(Boolean));
+          for (const f of readdirSync(dir)) if (/\.png$/.test(f) && !keep.has(f)) rmSync(join(dir, f), { force: true });
+        } catch {}
+        this.note(d, "check", error ? `The edges check couldn't run: ${short(error, 200)}` : `Edges check: ${screens.length} screens, ${failed ? `${failed} with something out of sight` : "nothing out of sight"}`);
+        // (It couldn't run: the problems it found last time stay as they are)
+        if (error) return null;
+        findings.push(...looksFindings(kept.map((r) => ({ ...r, problems: r.problems.filter((p) => p.kind === "out-of-sight") })), "edges"));
+        const m = mergeIssues(d.issues, findings, ["edges"], this.now());
+        d.issues = m.issues;
+        for (const i of m.fresh) this.note(d, "issue", `New ${i.severity === "serious" ? "serious problem" : "small problem"}: ${i.title}`);
+        for (const i of m.cleared) this.note(d, "issue", `Gone: ${i.title}`);
+        this.closeGoneJobs(d);
+        return m;
+      });
+      if (merged) await this.afterCheck(merged.fresh);
+      return { findings, fresh: merged?.fresh || [] };
+    } finally {
+      this.edging = false;
     }
   }
 
@@ -590,16 +646,17 @@ export class Fixer {
     if (job.target.type !== "issue" || !this.deps.looks) return null;
     const data = this.store.read();
     const issue = data.issues.find((i) => i.id === job.target.id);
-    if (!issue || issue.area !== "looks") return null;
-    const hit = (r: LooksScreen) => r.problems.filter((p) => fingerprint("looks", r.path, p.kind) === issue.fingerprint);
-    const seen = (data.looks?.results || []).filter((r) => r.path === issue.panel && hit(r).length);
+    if (!issue || (issue.area !== "looks" && issue.area !== "edges")) return null;
+    const area = issue.area;
+    const hit = (r: LooksScreen) => r.problems.filter((p) => fingerprint(area, r.path, p.kind) === issue.fingerprint);
+    const seen = ((area === "edges" ? data.edges?.results : data.looks?.results) || []).filter((r) => r.path === issue.panel && hit(r).length);
     if (!seen.length) return null;
     const dir = join(this.paths.shotsDir, job.id);
     mkdirSync(dir, { recursive: true });
     for (const r of seen) {
       if (!r.shot || existsSync(join(dir, `before-looks-${r.shot}`))) continue;
       try {
-        copyFileSync(join(this.paths.shotsDir, "looks", r.shot), join(dir, `before-looks-${r.shot}`));
+        copyFileSync(join(this.paths.shotsDir, area, r.shot), join(dir, `before-looks-${r.shot}`));
       } catch {}
     }
     const sizes = [...new Map(seen.map((r) => [`${r.width}x${r.height}`, [r.width, r.height] as [number, number]])).values()].slice(0, 6);
@@ -609,13 +666,13 @@ export class Fixer {
       // Seen signed in: Portal's sample answers stand in for being signed in. Seen signed out: none
       // (the copy has no Nova Bot to sign in to), so the "after" shows the same signed-out screen
       const signedIn = seen.every((r) => r.signedIn);
-      after = await this.deps.looks({ base: server.base, sizes, panels: [issue.panel], auth: "out", mockPortal: signedIn, shotsDir: dir, prefix: "after-looks-", shootAll: true });
+      after = await this.deps.looks({ base: server.base, sizes, panels: [issue.panel], auth: "out", mockPortal: signedIn, shotsDir: dir, prefix: "after-looks-", shootAll: true, ...(area === "edges" ? { edges: true, resizeTo: edgesPlan(this.now()).resizeTo } : {}) });
     } finally {
       await server.stop();
     }
     const still = after.flatMap((r) => hit(r).map((p) => `${r.width}×${r.height}: ${p.text}`));
     const where = sizes.map(([w, h]) => `${w}×${h}`).join(", ");
-    const check: Check = { name: `Looks check where it was seen (${where})`, ok: after.length > 0 && !still.length, detail: after.length ? still.slice(0, 8).join("\n") : "The job's copy of Nova Agent couldn't be looked at." };
+    const check: Check = { name: `${area === "edges" ? "Edges check" : "Looks check"} where it was seen (${where})`, ok: after.length > 0 && !still.length, detail: after.length ? still.slice(0, 8).join("\n") : "The job's copy of Nova Agent couldn't be looked at." };
     const screens: Screen[] = sizes.map(([w, h]) => {
       const b = seen.find((r) => r.width === w && r.height === h && r.shot);
       const a = shotName("after-looks-", issue.panel, w, h, false);
