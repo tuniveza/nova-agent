@@ -300,3 +300,6 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
   #quests-panel > .side-head > * { grid-column: auto !important; }
   #quests-panel > .side-head .strip-tools { gap: 3px; }
 }
+/* A narrow side pane (Quests beside the chat at 1024 wide): its buttons wrap inside the pane instead
+   of being cut off at its edge (15 Oct 2026) */
+.side-head .strip-tools { flex-wrap: wrap; justify-content: center; min-width: 0; max-width: 100%; }

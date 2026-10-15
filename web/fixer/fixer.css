@@ -85,7 +85,7 @@ main { max-width: 1040px; margin: 0 auto; padding: 28px 20px 56px; }
 
 /* The new quest form and settings */
 #quest-form, .settings { display: grid; gap: 10px; }
-#quest-form input, #quest-form textarea, #quest-form select, .settings input[type=number] { width: 100%; }
+#quest-form input:not(.nt-switch), #quest-form textarea, #quest-form select, .settings input[type=number] { width: 100%; }
 #quest-form .nt-label, .settings .nt-label { margin: 4px 0 0; }
 .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .switch-row { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 6px 0; cursor: pointer; }
@@ -200,14 +200,14 @@ html.fx-wide .panes .switch-row > input { flex: none; }
 }
 
 /* ---- Phones, tablets and short screens inside Nova Agent ----
-   The title panel already says "Fixer", so the big heading steps aside; the tabs are one row that
-   slides sideways inside itself (never two rows, never past the edge); tap targets are full size */
+   The title panel already says "Fixer", so the big heading steps aside; the tabs wrap onto compact
+   rows (never sliding sideways, never past the edge) */
 @media (max-width: 760px), (max-height: 700px) {
   html.embed .top .nt-kicker, html.embed .top .nt-title { display: none; }
   html.embed .top { margin-bottom: 6px; }
-  .fx-tabs { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x proximity; justify-content: flex-start; }
-  .fx-tabs::-webkit-scrollbar { display: none; }
-  .fx-tabs button { flex: none; min-height: 40px; padding: 4px 14px; font-size: 13.5px; scroll-snap-align: start; }
+  /* (the tabs wrap onto two compact rows: every one in sight, never sliding sideways; 15 Oct 2026) */
+  .fx-tabs { flex-wrap: wrap; overflow-x: visible; justify-content: center; gap: 3px; padding: 4px; }
+  .fx-tabs button { flex: none; min-height: 34px; padding: 3px 10px; font-size: 12.5px; }
   .glance-item .nt-label { font-size: 10px; letter-spacing: .06em; }
   .glance-actions button { min-height: 40px; }
 }

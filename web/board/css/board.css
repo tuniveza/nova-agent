@@ -274,3 +274,8 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   .rename .chip { flex: none; padding-inline: 10px; }
   .rename input { flex: 1 1 80px; width: 0; min-width: 0; } /* (width 0: its natural width no longer stretches the bar) */
 }
+/* (the empty table's words are one sentence, centred, not a stack of separate pieces; a short frame:
+   smaller, so the whole of it fits; 15 Oct 2026) */
+.empty { display: block; align-content: center; overflow-y: auto; }
+.empty[hidden] { display: none; }
+@media (max-height: 500px) { .empty { padding: 8px 16px; font-size: 13px; line-height: 1.5; } }

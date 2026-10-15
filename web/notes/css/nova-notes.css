@@ -688,13 +688,18 @@ html.embed .shell { padding-left: 6px; padding-right: 6px; }
 html.embed .toolbar { flex-wrap: wrap; justify-content: center; row-gap: 2px; border-radius: 16px; overflow-x: visible; }
 html.embed .page { min-height: max(320px, calc(100dvh - 250px)); padding: clamp(26px, 5vw, 72px) clamp(18px, 5.5vw, 84px) clamp(36px, 6vw, 90px); }
 html.embed .page-wrap { padding: 14px clamp(8px, 2vw, 18px) 90px; }
-@media (max-width: 640px) { html.embed .toolbar { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; } }
+/* (a phone too: the tools wrap onto rows, every one in sight, never sliding sideways; 15 Oct 2026) */
+@media (max-width: 640px) { html.embed .toolbar { flex-wrap: wrap; overflow-x: visible; justify-content: center; -webkit-mask-image: none; mask-image: none; } html.embed #toolbar .tb { width: 36px; height: 36px; min-width: 0; min-height: 0; } html.embed #toolbar .tb-group { padding: 0 1px; } }
 /* A short frame (a phone on its side, or Android's bigger text): the toolbar is one row that slides
    sideways inside itself (a second row would leave the page no room), and the page needs no
    minimum height of its own (it takes what's left and scrolls inside itself) */
 @media (max-height: 500px) {
-  html.embed .toolbar { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; justify-content: flex-start; scrollbar-width: none; }
-  html.embed .toolbar::-webkit-scrollbar { display: none; }
+  html.embed .toolbar { flex-wrap: wrap; overflow-x: visible; justify-content: center; row-gap: 0; padding-top: 2px; padding-bottom: 2px; -webkit-mask-image: none; mask-image: none; }
+  html.embed #toolbar .tb { width: 32px; height: 32px; min-width: 0; min-height: 0; }
+  html.embed #toolbar .tb-group { padding: 0 2px; }
+  /* (the everyday tools here, as on a phone: the rest are in the menus, Format, Insert and View) */
+  html.embed [data-cmd="print"], html.embed .tb-group:has(#tb-zoom), html.embed #tb-font, html.embed .tb-group.size, html.embed [data-cmd="strikeThrough"],
+  html.embed .tb-group:has([data-cmd="align"]), html.embed [data-cmd="outdent"], html.embed [data-cmd="indent"] { display: none !important; }
   html.embed .page { min-height: 0; padding-top: 18px; padding-bottom: 28px; }
   html.embed .page-wrap { padding-top: 6px; padding-bottom: 12px; }
   html.embed .topbar { row-gap: 2px; padding-top: 4px; padding-bottom: 2px; }
@@ -795,13 +800,11 @@ dialog.dlg.guide .dlg-foot { justify-content: center; }
 @media (prefers-reduced-motion: reduce) { dialog.dlg.guide .dlg-body { scroll-behavior: auto; } .guide-sec.flash { animation: none; } }
 .themes.flash { animation: guide-flash 1.2s ease-out; border-radius: 999px; }
 
-/* The Welcome guide on a phone or a short frame: its topics are one row that slides sideways inside
-   itself (not three rows squeezing the guide), and the head is slimmer, so the guide has the room */
+/* The Welcome guide on a phone or a short frame: its topics wrap onto compact rows (every one in
+   sight, never sliding sideways), and the head is slimmer, so the guide has the room */
 @media (max-width: 640px), (max-height: 560px) {
-  .guide-toc { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 8px 12px; scroll-snap-type: x proximity; }
-  .guide-toc::-webkit-scrollbar { display: none; }
-  .guide-toc { flex: none; }
-  .guide-toc button { flex: none; scroll-snap-align: start; }
+  .guide-toc { flex: none; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 6px 10px; }
+  html body .guide-toc button { flex: none; min-height: 32px; padding: 3px 10px; font-size: 12.5px; }
   dialog.dlg.guide .dlg-head .app-mark.lg { width: 34px; height: 34px; }
   dialog.dlg.guide .dlg-head h2 { font-size: 18px; }
 }

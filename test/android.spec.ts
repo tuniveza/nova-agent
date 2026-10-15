@@ -48,8 +48,9 @@ describe("Android", () => {
     expect(phoneJs).toContain('data-tab="${key}" aria-label="${label}"');
   });
 
-  it("a phone upright: the status line is one line that slides sideways inside itself", () => {
-    expect(status).toMatch(/@media \(max-width: 600px\) \{\s*\.tabbar > \.status-line \{ flex-wrap: nowrap;[^}]*overflow-x: auto;/);
+  it("a phone upright: the status line wraps onto a second short row, never sliding sideways", () => {
+    expect(status).toMatch(/@media \(max-width: 600px\) \{\s*\.tabbar > \.status-line \{ flex-wrap: wrap;[^}]*overflow: visible;/);
+    expect(status).not.toMatch(/\.tabbar > \.status-line \{[^}]*overflow-x: auto/);
   });
 
   it("the check covers Android phones, a phone on its side and tablets", () => {

@@ -783,7 +783,29 @@ new MutationObserver(() => retheme()).observe(document.documentElement, { attrib
 function quickRow() {
   const row = $("quick");
   if (!row) return;
-  row.replaceChildren(...Nova.QUICK.map(([title, buttons]) => quickGroup(title, buttons)));
+  const groups = Nova.QUICK.map(([title, buttons]) => quickGroup(title, buttons));
+  // On a phone or a short screen (console.css): one group at a time, picked from a menu, so the row
+  // never runs past the edge or slides sideways; every command is still a tap away
+  const pick = document.createElement("select");
+  pick.className = "qg-pick";
+  pick.setAttribute("aria-label", "Which commands");
+  pick.append(...Nova.QUICK.map(([title], i) => new Option(title, String(i))));
+  let open = 0;
+  try {
+    open = Math.min(groups.length - 1, Math.max(0, Number(localStorage.getItem("console-quick-group")) || 0));
+  } catch {}
+  const choose = (i) => {
+    groups.forEach((g, n) => g.classList.toggle("open", n === i));
+    pick.value = String(i);
+  };
+  pick.addEventListener("change", () => {
+    choose(Number(pick.value));
+    try {
+      localStorage.setItem("console-quick-group", pick.value);
+    } catch {}
+  });
+  row.replaceChildren(pick, ...groups);
+  choose(open);
 }
 function quickGroup(title, buttons) {
   const g = document.createElement("div");
