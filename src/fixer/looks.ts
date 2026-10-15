@@ -97,7 +97,12 @@ export type LooksKind =
   | "error"
   | "slow"
   | "open"
-  | "out-of-sight";
+  | "out-of-sight"
+  // (the buttons check's, buttons.ts)
+  | "does-nothing"
+  | "click-error"
+  | "broken-link"
+  | "goes-to-portal";
 export interface LooksProblem {
   kind: LooksKind;
   severity: "serious" | "minor";
@@ -1018,7 +1023,7 @@ export async function runLooks(opts: LooksOptions): Promise<LooksScreen[]> {
 // One problem per panel and kind, saying every size (and signed in or out) it was seen at, so a gap
 // seen at four sizes is one problem with one fix
 const sizeName = (s: LooksScreen) => `${s.width}×${s.height} ${s.signedIn ? "signed in" : "signed out"}`;
-export function looksFindings(screens: LooksScreen[], area: "looks" | "edges" = "looks"): Finding[] {
+export function looksFindings(screens: LooksScreen[], area: "looks" | "edges" | "buttons" = "looks"): Finding[] {
   const groups = new Map<string, { s: LooksScreen; p: LooksProblem }[]>();
   for (const s of screens) for (const p of s.problems) {
     const key = `${s.path}|${p.kind}`;
@@ -1039,12 +1044,14 @@ export function looksFindings(screens: LooksScreen[], area: "looks" | "edges" = 
       severity: serious ? "serious" : "minor",
       title: `${first.s.name}: ${first.p.text}${where.length > 1 ? ` (and at ${where.length - 1} other size${where.length === 2 ? "" : "s"})` : ""}`,
       detail: [
-        `What the Fixer's ${area === "edges" ? "edges check (nothing out of sight)" : "looks check"} saw on ${first.s.name} (${path}), opened inside Nova Agent at these screen sizes:`,
+        `What the Fixer's ${area === "edges" ? "edges check (nothing out of sight)" : area === "buttons" ? "buttons check (every button pressed)" : "looks check"} saw on ${first.s.name} (${path}), opened inside Nova Agent at these screen sizes:`,
         ...lines,
         ...(g.length > 12 ? [`- and ${g.length - 12} more`] : []),
         "",
         `How to see it: open ${path === HOME.path ? "Nova Agent's home" : `${first.s.name} inside Nova Agent (/agent/, then its icon in the navigation panel)`} at ${where[0]}.`,
-        `How to check a fix: npx tsx scripts/fixer-looks.ts <a running copy's address> --panels ${path} --sizes ${[...new Set(g.map((x) => `${x.s.width}x${x.s.height}`))].join(",")} --auth out --mock-portal${area === "edges" ? " --edges" : ""}`,
+        area === "buttons"
+          ? `How to check a fix: npx tsx scripts/fixer-buttons.ts <a running copy's address> --panels ${path} --size ${first.s.width}x${first.s.height} --mock-portal`
+          : `How to check a fix: npx tsx scripts/fixer-looks.ts <a running copy's address> --panels ${path} --sizes ${[...new Set(g.map((x) => `${x.s.width}x${x.s.height}`))].join(",")} --auth out --mock-portal${area === "edges" ? " --edges" : ""}`,
       ].join("\n"),
       panel: path,
       panels: [path],

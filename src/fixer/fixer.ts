@@ -31,6 +31,7 @@ import { randomUUID } from "node:crypto";
 import { briefText, claudeArgs, readAnswer } from "./claude";
 import { commandFindings } from "./health";
 import { edgesPlan, type EdgesScreen, type LooksScreen, looksFindings, rollEdges, shotName } from "./looks";
+import { buttonsPlan, type ButtonsScreen, rollButtons, slotAt } from "./buttons";
 import { probeFindings, type ProbeResult } from "./probes";
 import { affectedScreens, type Finding, fingerprint, isBlip, isTrivial, mergeIssues, offLimits, recommend, SCREENS, sensitiveLines, shouldRollBack, suggestions, type Suggestion } from "./rules";
 import type { Run } from "./runner";
@@ -75,6 +76,9 @@ export interface Deps {
   run: Run;
   sweep: Sweep;
   looks?: (opts: LooksRun) => Promise<LooksScreen[]>;
+  // The buttons check (buttons.ts): these panels (from, count of the navigation panel's, Nova Agent's
+  // own page first) at this size; and how many panels there are in all
+  buttons?: (opts: { size: [number, number]; from: number; count: number; timeoutMs?: number }) => Promise<{ screens: (LooksScreen & { pressed: number })[]; total: number }>;
   health: (restartsSeen: number) => Promise<{ findings: Finding[]; restarts: number }>;
   // The scripted checks (probes.ts); missing: none
   probes?: () => Promise<ProbeResult[]>;
@@ -128,6 +132,7 @@ export class Fixer {
   private running: string | null = null; // the job being prepared
   private checking = false;
   private edging = false; // the edges check (its own: it runs beside the hourly check)
+  private pressing = false; // the buttons check (its own too)
   private landing: Promise<unknown> = Promise.resolve();
 
   constructor(
@@ -186,7 +191,7 @@ export class Fixer {
       if (j.target.type !== "issue") return null;
       const i = data.issues.find((x) => x.id === j.target.id);
       if (!i) return null;
-      const from = i.area === "looks" ? data.looks?.results || [] : i.area === "edges" ? data.edges?.results || [] : [];
+      const from = i.area === "looks" ? data.looks?.results || [] : i.area === "edges" ? data.edges?.results || [] : i.area === "buttons" ? data.buttons?.results || [] : [];
       const seen = from.filter((r) => r.path === i.panel && r.problems.some((p) => fingerprint(i.area, r.path, p.kind) === i.fingerprint));
       const p = seen[0]?.problems.find((x) => fingerprint(i.area, seen[0].path, x.kind) === i.fingerprint);
       return {
@@ -210,6 +215,7 @@ export class Fixer {
       checks: data.checks,
       looks: data.looks,
       edges: data.edges ? { ...data.edges, results: data.edges.results.filter((r) => r.problems.length) } : null,
+      buttons: data.buttons ? { ...data.buttons, results: data.buttons.results.filter((r) => r.problems.length) } : null,
       // Why fixes can't be prepared here ("" = they can): Claude Code not installed or not signed in
       claude: this.opts.claudeProblem?.() || "",
       today: { prepared: day.prepared, cap: data.settings.dailyCap },
@@ -316,8 +322,9 @@ export class Fixer {
   // full: the hourly check (tests, typecheck, sweep, health, the scripted checks). quick: the sweep and
   // health, used just before and after a change goes live. checks: only the scripted checks (about a
   // minute; the Health tab's "Run the quick checks"). looks: the looks check (about ten minutes).
-  async check(kind: "full" | "quick" | "audio" | "checks" | "looks" | "edges" = "full"): Promise<{ findings: Finding[]; fresh: Issue[] }> {
+  async check(kind: "full" | "quick" | "audio" | "checks" | "looks" | "edges" | "buttons" = "full"): Promise<{ findings: Finding[]; fresh: Issue[] }> {
     if (kind === "edges") return this.edgesCheck();
+    if (kind === "buttons") return this.buttonsCheck();
     if (this.checking && kind !== "quick") return { findings: [], fresh: [] };
     if (kind !== "quick") this.checking = true;
     const started = Date.now();
@@ -398,6 +405,51 @@ export class Fixer {
       return { findings, fresh: merged.fresh };
     } finally {
       if (kind !== "quick") this.checking = false;
+    }
+  }
+
+  // The buttons check (every 5 minutes, service.ts): the next three panels at this turn's size, every
+  // button in them pressed (buttons.ts); the problems made from every panel pressed through in the
+  // last 100 minutes (so one isn't "gone" just because this run pressed other panels)
+  private async buttonsCheck(): Promise<{ findings: Finding[]; fresh: Issue[] }> {
+    if (this.pressing || !this.deps.buttons) return { findings: [], fresh: [] };
+    this.pressing = true;
+    try {
+      const total = this.store.read().buttons?.total || 15;
+      const plan = buttonsPlan(slotAt(this.now()), total);
+      const t0 = Date.now();
+      let screens: (LooksScreen & { pressed: number })[] = [];
+      let all = total;
+      let error = "";
+      try {
+        const r = await this.deps.buttons({ size: plan.size, from: plan.from, count: plan.count, timeoutMs: 4 * 60_000 + 30_000 });
+        screens = r.screens;
+        all = r.total || total;
+      } catch (err) {
+        error = String((err as Error).message || err).slice(0, 600);
+      }
+      const findings: Finding[] = [];
+      const merged = this.store.update((d) => {
+        const kept: ButtonsScreen[] = error ? d.buttons?.results || [] : rollButtons(d.buttons?.results || [], screens, this.now());
+        const failed = screens.filter((x) => x.problems.length).length;
+        const pressed = screens.reduce((n, x) => n + (x.pressed || 0), 0);
+        d.buttons = { at: this.now().toISOString(), took: Date.now() - t0, screens: screens.length, failed, results: kept, error, size: `${plan.size[0]}x${plan.size[1]}`, panels: screens.map((x) => x.name), pressed, total: all };
+        // (a note only when something's wrong: every 5 minutes would fill the list)
+        if (error) this.note(d, "check", `The buttons check couldn't run: ${short(error, 200)}`);
+        else if (failed) this.note(d, "check", `Buttons check: ${pressed} pressed in ${screens.map((x) => x.name).join(", ")}; ${failed} with something broken`);
+        if (error) return null;
+        findings.push(...looksFindings(kept, "buttons"));
+        const m = mergeIssues(d.issues, findings, ["buttons"], this.now());
+        d.issues = m.issues;
+        for (const i of m.fresh) this.note(d, "issue", `New ${i.severity === "serious" ? "serious problem" : "small problem"}: ${i.title}`);
+        for (const i of m.cleared) this.note(d, "issue", `Gone: ${i.title}`);
+        this.closeGoneJobs(d);
+        return m;
+      });
+      if (merged) await this.afterCheck(merged.fresh);
+      return { findings, fresh: merged?.fresh || [] };
+    } finally {
+      this.pressing = false;
     }
   }
 

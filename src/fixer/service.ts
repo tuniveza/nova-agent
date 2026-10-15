@@ -1,7 +1,7 @@
 // The Fixer inside Nova Agent's service: the real commands, browser, phones and quests behind
 // src/fixer/fixer.ts, its schedule (hourly checks; audio levels once a day; the looks check every
-// hour and after each deploy; the edges check, nothing out of sight, every 15 minutes), and carrying
-// on after a restart.
+// hour and after each deploy; the edges check, nothing out of sight, every 15 minutes; the buttons
+// check, every button pressed, every 5 minutes), and carrying on after a restart.
 //
 // Where things are (each can be changed in the environment):
 //   FIXER_NA_DIR       Nova Agent's main folder        ~/an/pj/ns/na  (the service runs from here)
@@ -128,6 +128,33 @@ async function looksSession(action: "start" | "end"): Promise<{ token: string; c
     return null;
   }
 }
+// One looks session shared by the checks that run at the same time (the looks, edges and buttons
+// checks): starting a session ends the one before (Nova Bot keeps one), so a check never takes away
+// another's. A session is shared while it's under 30 minutes old (it lasts 45, and no check runs
+// longer than 15); older, a new one is started once nobody's using it, and until then a check that
+// wants one looks signed out. It's ended when the last check using it is done and it's old.
+let shared: { token: string; cookie: string; at: number } | null = null;
+let holders = 0;
+async function takeSession(): Promise<{ token: string; cookie: string } | null> {
+  if (shared && Date.now() - shared.at < 30 * 60_000) {
+    holders++;
+    return shared;
+  }
+  if (shared && holders > 0) return null;
+  const s = await looksSession("start");
+  if (!s) return null;
+  shared = { ...s, at: Date.now() };
+  holders = 1;
+  return shared;
+}
+async function giveBack(): Promise<void> {
+  holders = Math.max(0, holders - 1);
+  if (!holders && shared && Date.now() - shared.at >= 25 * 60_000) {
+    shared = null;
+    await looksSession("end");
+  }
+}
+
 export async function runLooksCheck(o: LooksRun, run = runCommand): Promise<LooksScreen[]> {
   const live = !o.base;
   const base = o.base || config.workerUrl;
@@ -140,14 +167,33 @@ export async function runLooksCheck(o: LooksRun, run = runCommand): Promise<Look
   if (o.mockPortal) args.push("--mock-portal");
   if (o.shootAll) args.push("--shoot-all");
   if (o.edges) args.push("--edges", "--resize-to", (o.resizeTo || []).map(([w, h]) => `${w}x${h}`).join(","));
-  const session = live && o.auth !== "out" ? await looksSession("start") : null;
+  const session = live && o.auth !== "out" ? await takeSession() : null;
   args.push("--auth", session ? o.auth || "both" : "out");
   try {
     const r = await run("nice", args, { cwd: fixerPaths.naMain, timeoutMs: o.timeoutMs || 45 * 60_000, clean: true, env: session ? { LOOKS_COOKIE: session.token, LOOKS_COOKIE_NAME: session.cookie } : {} });
     if (!existsSync(out)) throw new Error(`The looks check stopped: ${r.out.trim().split("\n").slice(-3).join(" ").slice(0, 400)}`);
     return (JSON.parse(readFileSync(out, "utf8")) as { screens: LooksScreen[] }).screens;
   } finally {
-    if (session) await looksSession("end");
+    if (session) await giveBack();
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+// The buttons check (src/fixer/buttons.ts), as its own low-priority process, like the looks check:
+// signed in with the shared looks session when there is one
+export async function runButtonsCheck(o: { size: [number, number]; from: number; count: number; timeoutMs?: number }, run = runCommand): Promise<{ screens: (LooksScreen & { pressed: number })[]; total: number }> {
+  const tmp = mkdtempSync(join(tmpdir(), "fixer-buttons-"));
+  const out = join(tmp, "buttons.json");
+  const args = ["-n", "10", "npx", "--no-install", "tsx", "scripts/fixer-buttons.ts", config.workerUrl, "--out", out, "--size", `${o.size[0]}x${o.size[1]}`, "--from", String(o.from), "--count", String(o.count), "--budget-seconds", "200", "--quiet"];
+  const session = await takeSession();
+  try {
+    const r = await run("nice", args, { cwd: fixerPaths.naMain, timeoutMs: o.timeoutMs || 5 * 60_000, clean: true, env: session ? { LOOKS_COOKIE: session.token, LOOKS_COOKIE_NAME: session.cookie } : {} });
+    if (!existsSync(out)) throw new Error(`The buttons check stopped: ${r.out.trim().split("\n").slice(-3).join(" ").slice(0, 400)}`);
+    const j = JSON.parse(readFileSync(out, "utf8")) as { screens: (LooksScreen & { pressed: number; results?: unknown })[]; total: number };
+    // (what each press did stays in the run's own output; the Fixer keeps the problems)
+    return { screens: j.screens.map(({ results: _r, ...x }) => x), total: j.total };
+  } finally {
+    if (session) await giveBack();
     rmSync(tmp, { recursive: true, force: true });
   }
 }
@@ -174,6 +220,7 @@ export function startFixer(): Fixer {
       run: runCommand,
       sweep,
       looks: (o) => runLooksCheck(o),
+      buttons: (o) => runButtonsCheck(o),
       health: (restartsSeen) =>
         healthFindings({
           pcBase,
@@ -226,8 +273,16 @@ export function startFixer(): Fixer {
     if (!f.store.read().settings.looksChecks) return;
     void f.check("edges").catch((err) => trace("task", "error", `Fixer edges check crashed: ${(err as Error).message}`));
   }, { timezone: config.timezone });
+  // The buttons check every 5 minutes (every button pressed; three panels a run, so each panel about
+  // every half hour), when looks checks are on. Its own guard: a run still going means this one's skipped
+  if (config.onServer) {
+    cron.schedule("*/5 * * * *", () => {
+      if (!f.store.read().settings.looksChecks) return;
+      void f.check("buttons").catch((err) => trace("task", "error", `Fixer buttons check crashed: ${(err as Error).message}`));
+    }, { timezone: config.timezone });
+  }
   // Carry on with anything a restart interrupted (a change being checked after going live)
   setTimeout(() => void f.resume().catch((err) => trace("task", "error", `Fixer couldn't resume: ${(err as Error).message}`)), 5000).unref();
-  console.log(`Fixer: hourly checks at :07, the looks check after them and after each deploy, the edges check every 15 minutes${fixerDry ? " (inert: FIXER_DRY=1, nothing is prepared, merged or deployed)" : ""}`);
+  console.log(`Fixer: hourly checks at :07, the looks check after them and after each deploy, the edges check every 15 minutes${config.onServer ? ", the buttons check every 5 minutes" : ""}${fixerDry ? " (inert: FIXER_DRY=1, nothing is prepared, merged or deployed)" : ""}`);
   return f;
 }
