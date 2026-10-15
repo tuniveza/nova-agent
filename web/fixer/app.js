@@ -303,8 +303,22 @@
     const job = deckJob();
     if (job) pick.id = job.id;
     $("deck-nav").hidden = !jobs.length;
+    // Approve all it suggests: the ready fixes it says to approve
+    const suggested = s.needsYou.filter((j) => j.card?.recommendation?.verdict === "approve");
+    const others = s.needsYou.length - suggested.length;
+    $("deck-all").hidden = suggested.length < 2;
+    $("approve-all").textContent = `✓ Approve all it suggests (${suggested.length})`;
+    $("deck-all-note").textContent = `Every check passed on each; they go live one after another.${others ? ` ${others} more need${others === 1 ? "s" : ""} you to look first.` : ""}`;
+    // (none ready: say why, when today's limit is what's holding the rest back)
+    const waiting = s.working.filter((j) => j.status === "queued").length;
+    if (!s.needsYou.length && s.today && s.today.prepared >= s.today.cap && waiting && !false) {
+      $("deck-all").hidden = false;
+      $("approve-all").hidden = true;
+      $("deck-all-note").textContent = `Today's limit of ${s.today.cap} prepared fixes is used up: ${waiting} problem${waiting === 1 ? " waits" : "s wait"} until midnight. Raise the limit in Settings to have them prepared now.`;
+    } else $("approve-all").hidden = false;
     if (!jobs.length) {
-      put("deck-card", `<div class="nt-empty fx-empty"><b>Nothing waits for you.</b><br>${s.dry ? "The Fixer is inert here." : "When a fix is ready it shows here, one at a time, with what's wrong and a before and after picture."}</div>`);
+      const capped = s.today && s.today.prepared >= s.today.cap && waiting;
+      put("deck-card", `<div class="nt-empty fx-empty"><b>Nothing waits for you.</b><br>${s.dry ? "The Fixer is inert here." : capped ? `Today's limit of ${s.today.cap} prepared fixes is used up, so ${waiting} problem${waiting === 1 ? " waits" : "s wait"} until midnight. Raise the limit in Settings to have them prepared now.` : "When a fix is ready it shows here, one at a time, with what's wrong and a before and after picture."}</div>`);
       return;
     }
     const i = jobs.indexOf(job);
@@ -572,6 +586,25 @@
     const id = b.dataset.id;
     const job = (path) => `/actions/fixer/jobs/${encodeURIComponent(id)}`;
     switch (b.dataset.act) {
+      case "approve-all": {
+        if (!twice(b, "Tap again: approve them all")) return;
+        const ids = (state?.needsYou || []).filter((j) => j.card?.recommendation?.verdict === "approve").map((j) => j.id);
+        b.disabled = true;
+        return (async () => {
+          let ok = 0;
+          for (const one of ids) {
+            try {
+              await post(`/actions/fixer/jobs/${encodeURIComponent(one)}`, { action: "approve" });
+              ok++;
+            } catch (err) {
+              say(err.message, true);
+            }
+          }
+          say(`✓ Approved ${ok} fix${ok === 1 ? "" : "es"}: they go live one after another. Each card follows along.`);
+          b.disabled = false;
+          await load();
+        })();
+      }
       case "approve":
         b.disabled = true;
         b.textContent = "Going live…";

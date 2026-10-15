@@ -62,7 +62,7 @@ export interface Settings {
   timeLimitMinutes: number; // for one preparation
   looksChecks: boolean; // the looks check (looks.ts): every hour and after each deploy
 }
-export const DEFAULT_SETTINGS: Settings = { hourlyChecks: true, autoPrepare: true, dailyCap: 10, timeLimitMinutes: 30, looksChecks: true };
+export const DEFAULT_SETTINGS: Settings = { hourlyChecks: true, autoPrepare: true, dailyCap: 30, timeLimitMinutes: 30, looksChecks: true };
 
 export type JobStatus =
   | "queued" // waiting its turn (one at a time, and the daily cap)
@@ -197,7 +197,7 @@ export function cleanSettings(s: any): Settings {
   return {
     hourlyChecks: bool(s?.hourlyChecks, DEFAULT_SETTINGS.hourlyChecks),
     autoPrepare: bool(s?.autoPrepare, DEFAULT_SETTINGS.autoPrepare),
-    dailyCap: num(s?.dailyCap, DEFAULT_SETTINGS.dailyCap, 0, 50),
+    dailyCap: num(s?.dailyCap, DEFAULT_SETTINGS.dailyCap, 0, 100),
     timeLimitMinutes: num(s?.timeLimitMinutes, DEFAULT_SETTINGS.timeLimitMinutes, 5, 120),
     looksChecks: bool(s?.looksChecks, DEFAULT_SETTINGS.looksChecks),
   };
