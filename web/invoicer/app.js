@@ -13,6 +13,15 @@ let catalogue = { services: [], depositPercent: 50 };
 let clients = [];
 let filter = "all";
 let chosen = null; // { id, stage, staged (the /stage answer), detail (the /invoices/:id answer) }
+let themes = []; // the invoice's looks, from the price list's answer: [{ id, name, band, accent }]
+let studioTheme = "night"; // the one every invoice uses (Money's settings)
+let theme = null; // the one shown here (this browser remembers it)
+let studioMode = "bright"; // every invoice's page: bright (white) or dark (the website's near-black)
+let mode = null; // the one shown here
+try {
+  theme = localStorage.getItem("invoicer-theme");
+  mode = localStorage.getItem("invoicer-mode");
+} catch {}
 
 // ---- Talking to Nova Bot ----
 class Problem extends Error {}
@@ -129,10 +138,19 @@ async function choose(id, stage = null, quiet = false) {
     return;
   }
   for (const b of document.querySelectorAll(".inv")) b.setAttribute("aria-current", String(Number(b.dataset.id) === id));
-  drawStage();
+  drawStage(first);
 }
 
-function drawStage() {
+// The invoice's page: its stage, the theme shown here and the words in the Notes box
+function docSrc() {
+  const q = new URLSearchParams({ stage: chosen.staged.stage });
+  if (theme) q.set("theme", theme);
+  if (mode) q.set("mode", mode);
+  const note = $("note").value.trim();
+  if (note !== (chosen.staged.invoice.notes || "").trim()) q.set("note", note);
+  return `/app/api/money/invoices/${chosen.id}/document?${q}`;
+}
+function drawStage(first = false) {
   const { staged, detail } = chosen;
   const inv = staged.invoice;
   for (const b of $("stages").querySelectorAll("button")) {
@@ -147,7 +165,9 @@ function drawStage() {
   parts.push(staged.stage === "paid" ? "nothing left to pay" : `due now ${pounds(sums.dueNowPence)}`);
   if (staged.stage !== staged.autoStage) parts.push(`(it's really at ${STAGE_NAMES[staged.autoStage]})`);
   $("stage-note").textContent = parts.join(" · ");
-  const src = `/app/api/money/invoices/${inv.id}/document?stage=${staged.stage}`;
+  // (a new invoice: its own note in the Notes box)
+  if (first) $("note").value = inv.notes || "";
+  const src = docSrc();
   const frame = $("doc");
   if (frame.getAttribute("src") !== src) frame.src = src;
   frame.hidden = false;
@@ -252,6 +272,64 @@ function confirmThen(btn, ask, act, done) {
   }, 6000);
 }
 
+// ---- The themes and the note ----
+function drawThemes() {
+  const box = $("themes");
+  box.replaceChildren(
+    ...themes.map((t) => {
+      const b = el("button", { type: "button", role: "radio", "aria-checked": String(t.id === (theme || studioTheme)), title: t.id === studioTheme ? `${t.name}: every invoice's look` : `See it in ${t.name}` });
+      const sw = el("span", { class: "sw", "aria-hidden": "true" });
+      sw.style.setProperty("--b", t.band);
+      sw.style.setProperty("--a", t.accent);
+      b.append(sw, t.name, t.id === studioTheme ? el("span", { class: "star", "aria-label": "(every invoice)", text: "★" }) : "");
+      b.addEventListener("click", () => {
+        theme = t.id;
+        try {
+          localStorage.setItem("invoicer-theme", t.id);
+        } catch {}
+        drawThemes();
+        refreshDoc();
+      });
+      return b;
+    })
+  );
+  for (const b of $("modes").querySelectorAll("button")) b.setAttribute("aria-checked", String(b.dataset.mode === (mode || studioMode)));
+  // An admin can make the one shown every invoice's look
+  $("theme-save").hidden = !(data?.canDecide && ((theme && theme !== studioTheme) || (mode && mode !== studioMode)));
+}
+$("modes").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-mode]");
+  if (!b) return;
+  mode = b.dataset.mode;
+  try {
+    localStorage.setItem("invoicer-mode", mode);
+  } catch {}
+  drawThemes();
+  refreshDoc();
+});
+function refreshDoc() {
+  if (!chosen) return;
+  const src = docSrc();
+  $("doc").src = src;
+  $("open-btn").href = src;
+}
+let noteTimer = 0;
+$("note").addEventListener("input", () => {
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(refreshDoc, 400);
+});
+$("theme-save").addEventListener("click", async () => {
+  try {
+    const r = await api("money/settings", { method: "POST", body: { invoiceTheme: theme || studioTheme, invoiceMode: mode || studioMode } });
+    studioTheme = r.settings?.invoiceTheme || theme || studioTheme;
+    studioMode = r.settings?.invoiceMode || mode || studioMode;
+    say(`Every invoice now uses ${themes.find((t) => t.id === studioTheme)?.name || studioTheme}, ${studioMode}.`);
+    drawThemes();
+  } catch (err) {
+    say(err.message, true);
+  }
+});
+
 // ---- The buttons ----
 $("stages").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-stage]");
@@ -354,11 +432,58 @@ function drawLines() {
     body.append(el("tr", {}, el("td", {}, desc), el("td", {}, qty), el("td", {}, unit), el("td", { class: "n", text: pounds(amount) }), el("td", {}, rm)));
   }
   if (!lines.length) body.append(el("tr", {}, el("td", { colspan: "5", class: "muted", text: "Nothing yet: pick a service above and press Add." })));
+  livePreview();
   $("n-total").textContent = pounds(total);
   $("n-deposit").textContent = pounds(Math.round((total * catalogue.depositPercent) / 100));
   const from = lines.find((l) => catalogue.services.find((s) => s.id === l.id && s.from));
   $("n-hint").textContent = from ? "Custom production is from £250: type the price you agreed." : "";
 }
+// ---- The live preview: what's typed so far, drawn by Nova Bot as the invoice will look (nothing saved) ----
+let previewTimer = 0;
+let previewAsk = 0;
+function draft() {
+  return {
+    billName: $("n-name").value.trim(),
+    billEmail: $("n-email").value.trim(),
+    lines: lines.map((l) => ({ description: l.description.trim(), qty: Number(l.qty) || 1, unit: String(l.unit) })),
+    issueDate: $("n-issue").value,
+    dueDate: $("n-due").value,
+    notes: $("n-notes").value.trim(),
+    stage: "deposit",
+    theme: theme || studioTheme,
+    mode: mode || studioMode,
+  };
+}
+function livePreview() {
+  if (!$("new").open) return;
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(async () => {
+    const ask = ++previewAsk;
+    try {
+      const r = await api("money/invoices/preview", { method: "POST", body: draft() });
+      if (ask !== previewAsk || !r.html) return; // (a newer one is on its way)
+      $("n-preview").srcdoc = r.html;
+      $("np-state").textContent = `Deposit due · ${themes.find((t) => t.id === (theme || studioTheme))?.name || ""} · ${(mode || studioMode) === "dark" ? "Dark" : "Bright"}`;
+    } catch (err) {
+      $("np-state").textContent = err.message;
+    }
+  }, 250);
+}
+// The invoice shrinks to the preview's width, and the box scrolls down it
+function fitPreview() {
+  const box = $("np-frame");
+  const k = Math.max(0.25, Math.min(1, (box.clientWidth - 2) / 860));
+  box.style.setProperty("--k", k.toFixed(4));
+  const doc = $("n-preview").contentDocument;
+  const h = doc && doc.documentElement ? doc.documentElement.scrollHeight : 1180;
+  $("n-preview").style.setProperty("--h", `${h}px`);
+  $("n-preview").style.marginBottom = `${-(1 - k) * h}px`;
+}
+$("n-preview").addEventListener("load", fitPreview);
+new ResizeObserver(fitPreview).observe($("np-frame"));
+for (const id of ["n-name", "n-email", "n-issue", "n-due", "n-notes"]) $(id).addEventListener("input", livePreview);
+$("n-lines").addEventListener("input", livePreview);
+
 $("n-add").addEventListener("click", () => {
   const svc = catalogue.services.find((s) => s.id === $("n-service").value);
   if (!svc) return;
@@ -386,8 +511,8 @@ $("new-btn").addEventListener("click", async () => {
   $("n-error").hidden = true;
   $("n-issue").value = ukToday();
   $("n-due").value = addDays(ukToday(), 14);
-  drawLines();
   $("new").showModal();
+  drawLines();
   $("n-name").focus();
 });
 $("n-name").addEventListener("change", () => {
@@ -436,6 +561,12 @@ $("new-form").addEventListener("submit", async (e) => {
   try {
     catalogue = await api("money/catalogue");
     fillCatalogue();
+    themes = catalogue.themes || [];
+    studioTheme = catalogue.theme || "night";
+    studioMode = catalogue.mode || "bright";
+    if (mode && !(catalogue.modes || ["bright", "dark"]).includes(mode)) mode = null;
+    if (theme && !themes.some((t) => t.id === theme)) theme = null;
+    drawThemes();
   } catch {}
   try {
     const c = await api("clients?filter=all");

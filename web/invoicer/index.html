@@ -81,7 +81,16 @@
     </section>
 
     <!-- The email for that stage -->
-    <section class="nt-card col mail-col" data-part="mail" aria-label="The email">
+    <section class="nt-card col mail-col" data-part="mail" aria-label="The note and the email">
+      <!-- On the invoice: its look (themes a shade apart) and the words in its Notes box -->
+      <div class="col-head"><h2 class="nt-h">On the invoice</h2><button type="button" class="ghost small-btn" id="theme-save" hidden>Use for every invoice</button></div>
+      <div class="modes" id="modes" role="radiogroup" aria-label="Bright or dark">
+        <button type="button" role="radio" data-mode="bright" aria-checked="true">☀ Bright</button>
+        <button type="button" role="radio" data-mode="dark" aria-checked="false">☾ Dark</button>
+      </div>
+      <div class="themes" id="themes" role="radiogroup" aria-label="Look"></div>
+      <label class="nt-label" for="note">Notes</label>
+      <textarea id="note" class="field" rows="3" maxlength="800" placeholder="Thank you for choosing Novacane Studios. Any questions about this invoice, just get in touch."></textarea>
       <div class="col-head"><h2 class="nt-h">Email</h2><span class="nt-chip" id="mail-chip" hidden></span></div>
       <label class="nt-label" for="subject">Subject</label>
       <input id="subject" class="field" type="text" autocomplete="off">
@@ -100,6 +109,7 @@
 <dialog id="new" aria-labelledby="new-title">
   <form id="new-form" method="dialog" class="new-form">
     <div class="col-head"><h2 class="nt-h" id="new-title">New invoice</h2><button type="button" class="ghost" id="new-close" aria-label="Close">✕</button></div>
+    <div class="new-grid">
     <div class="new-scroll scroll">
       <div class="grid2">
         <div><label class="nt-label" for="n-name">Artist</label><input id="n-name" class="field" list="clients" required autocomplete="off" placeholder="Name"></div>
@@ -124,6 +134,12 @@
       </div>
       <label class="nt-label" for="n-notes">Note on the invoice (optional)</label>
       <textarea id="n-notes" class="field" rows="2" placeholder="Session on 21 October, 2pm"></textarea>
+    </div>
+    <!-- The live preview: the invoice as it will look, redrawn as you type (nothing is saved) -->
+    <section class="new-preview" aria-label="Live preview">
+      <div class="np-head"><span class="nt-label">Live preview</span><span class="np-state" id="np-state">Deposit due · as it will look</span></div>
+      <div class="np-frame" id="np-frame"><iframe id="n-preview" title="Live preview of the invoice" tabindex="-1"></iframe></div>
+    </section>
     </div>
     <p class="message bad" id="n-error" hidden></p>
     <div class="mail-tools">

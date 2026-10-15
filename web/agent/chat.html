@@ -135,6 +135,17 @@
   .pico[data-p="invoicer"] { --own: #b77bff; }
   /* Invoicer, on its own (no group name): level with the places under the group names */
   .suite-home .suite-group.solo { align-self: flex-end; }
+  /* The group names (Apps, Plans, Tools, Helpers) big enough to read: 9.5px, never smaller */
+  html body .main > .suite-home .suite-group h4, html body .main.viewing > .suite-home .suite-group h4 { font-size: 9.5px; }
+  /* A smaller computer screen: the groups a little closer, so Invoicer's place fits with the rest */
+  @media (min-width: 981px) and (max-width: 1360px) {
+    html body .main > .suite-home .suite-groups { gap: 10px; } html body #suite-home .suite-group + .suite-group::before { left: -6px; }
+    /* each place as wide as its own name needs (never a name running into the next one), the names a
+       touch smaller, so all 18 fit */
+    html body .main > .suite-home .suite-grid, html body .main.viewing > .suite-home .suite-grid { grid-auto-columns: minmax(40px, max-content); gap: 2px; }
+    html body .main > .suite-home .suite-app { min-width: 40px; padding-inline: 3px; }
+    html body .main > .suite-home .suite-app b { font-size: 9.5px; white-space: nowrap; letter-spacing: 0; }
+  }
   .pico[data-p="console"] { --own: #ff8cc6; }
   .pico[data-p="manual"] { --own: #e6cf9f; }
   .suite-app > .pico { width: 52px; height: 52px; border-radius: 14px; }

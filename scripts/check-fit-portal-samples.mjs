@@ -783,6 +783,8 @@ export function portalMock(pathWithQuery, method = "GET") {
 
   if (m !== "GET" && m !== "HEAD") {
     if (path === "chat") return { ok: true, reply: "Here's what I found:\n\n" + PARA(3) };
+    // The Invoicer's live preview: a tall white stand-in for the invoice
+    if (path === "money/invoices/preview") return { html: "<!doctype html><body style='margin:0;background:#ecebef'><main style='max-width:820px;height:1300px;margin:24px auto;background:#fff'></main></body>" };
     if (path === "ask") return { ok: true, answer: "Eric's session is on Thursday 22 October at 18:30. " + PARA(2) };
     return { ok: true };
   }
@@ -828,7 +830,7 @@ export function portalMock(pathWithQuery, method = "GET") {
   hit = /^money\/invoices\/(\d+)$/.exec(path);
   if (hit) return moneyInvoiceBody(Number(hit[1]));
   // The Invoicer: the price list, and an invoice at a stage (its page is check-fit's own stand-in)
-  if (path === "money/catalogue") return { depositPercent: 50, services: [{ id: "s-1", group: "Rap packages", name: "Rap Package - 1 song (1 hour recording with engineer + 1 hour mixing)", pricePence: 10000 }, { id: "production", group: "Production", name: "Custom music production, per song " + LONGWORD, pricePence: 25000, from: true }] };
+  if (path === "money/catalogue") return { theme: "night", themes: [["night", "Night", "#100806", "#B0367E"], ["violet", "Violet", "#0F0812", "#7B2CBF"], ["plum", "Plum", "#140A12", "#962F86"], ["ink", "Ink", "#0B0B10", "#4F46B8"], ["ember", "Ember", "#140806", "#B8405F"], ["rose", "Rose", "#12080B", "#C0457C"], ["dusk", "Dusk", "#0D0A14", "#6A4BC9"], ["paper", "Paper", "#F4F1EF", "#9A3381"]].map(([id, name, band, accent]) => ({ id, name, band, accent })), modes: ["bright", "dark"], mode: "bright", depositPercent: 50, services: [{ id: "s-1", group: "Rap packages", name: "Rap Package - 1 song (1 hour recording with engineer + 1 hour mixing)", pricePence: 10000 }, { id: "production", group: "Production", name: "Custom music production, per song " + LONGWORD, pricePence: 25000, from: true }] };
   hit = /^money\/invoices\/(\d+)\/stage$/.exec(path);
   if (hit) {
     const inv = INVOICES.find((x) => x.id === Number(hit[1])) || INVOICES[0];

@@ -4,6 +4,24 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
 
 ## What's new
 
+- **A new look**, in the style of novacane.co.uk:
+  - a slim near-black band with the website's white ring logo and NOVACANE STUDIOS in spaced capitals, in Jost (the free font closest to the website's Futura);
+  - then a calm white page that's easy to read.
+- **Stages, quietly:** each stage is one quiet coloured line under the band and one word in the amount box, not a loud banner. The amount to pay and when are at the top right.
+- **A Notes box** on every invoice: the invoice's own note, or words you type in **Notes** (right, above the email) for the copy you print or save. With nothing typed, it says thank you.
+- **Eight looks**, a shade apart: Night, Violet, Plum, Ink, Ember, Rose, Dusk and Paper (a light band, with the colour logo).
+- **☀ Bright or ☾ Dark:**
+  - Bright is a white page.
+  - Dark is the website's near-black page with light words. It prints and saves to PDF dark too.
+- Pick a look and Bright or Dark under **On the invoice** to see them. This browser remembers your choice.
+- An admin can press **Use for every invoice**. The ★ marks the studio's look.
+- **Also on the page now:**
+  - the artist's email under their name;
+  - the payment reference (the invoice number);
+  - a thank-you line;
+  - the studio's address, phone, email and website at the foot.
+- Everything fits on one A4 page.
+
 - **Invoicer** is new. It lists every invoice. Each one can be seen as:
   - **Deposit due**
   - **Balance due**
@@ -25,7 +43,7 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
     - past the due date with money still owed: Overdue;
     - all paid: Paid receipt.
   - Press another stage to see the invoice as it would be at that stage.
-  - The page is the studio's own, white, with a coloured banner for each stage:
+  - The page is the studio's own (the look above). Each stage has its own words and colour:
     - **Deposit due:** violet, "Action required: 50% deposit due to secure your booking". The total, the deposit due now and the balance due later.
     - **Balance due:** charcoal, "Balance payment notice". The total, each payment with its date, and the balance left.
     - **Overdue:** crimson, "Urgent notice: this invoice is past due". An Overdue notice badge, and the due date in red with how many days late it is.
