@@ -14,6 +14,11 @@
 //   - not exactly one title panel
 //   - the page (or its <main>) scrolling, or content cut off at the bottom
 //   - buttons part off the screen, text cut off
+//   - the text itself (measureText(), in the panel and on Nova Agent's own bars): words running into
+//     other words (the navigation panel's labels at 1024 wide, 15 October 2026), text too small to
+//     read, and text too faint against what's behind it
+//   - after the window is made smaller with the panel open (no reload): the same text checks again,
+//     so a layout that only breaks when it's resized is caught (Console's off-centre welcome)
 //   - script and console errors, and how long each panel took to open
 //
 // It only looks. Its browser stops every request that would change something before it leaves
@@ -37,6 +42,8 @@ export const LOOKS_SIZES: readonly (readonly [number, number])[] = [
   [780, 360], // a phone held sideways
   [800, 1280], // an Android tablet upright (Galaxy Tab S9)
   [1024, 768],
+  [1280, 800], // an Android tablet on its side, and a small laptop
+  [1366, 768], // the commonest laptop screen
   [1440, 900],
   [1512, 1500],
   [2000, 1130],
@@ -83,6 +90,10 @@ export type LooksKind =
   | "main-scrolls"
   | "offscreen"
   | "text-cut"
+  | "text-overlap"
+  | "text-crammed"
+  | "text-small"
+  | "text-faint"
   | "error"
   | "slow"
   | "open";
@@ -113,6 +124,9 @@ export interface LooksOptions {
   mockPortal?: (path: string, method: string) => unknown; // a job's copy has no Nova Bot: sample answers
   shootAll?: boolean; // a picture of every screen (a fix's "after"), not only the ones with something wrong
   settleMs?: number;
+  // After the panels at the biggest computer size: each opened again and the window made smaller
+  // while it's open (these sizes), the text checked again (default: 1280×800 and 1024×768; [] = none)
+  resizeTo?: readonly (readonly [number, number])[];
   log?: (line: string) => void;
 }
 
@@ -315,6 +329,166 @@ export function measureHost(): HostMeasure {
   return { vw: innerWidth, vh: innerHeight, docH: se.scrollHeight, titles, titleInDom: outer.length > 0, nav, navInDom: navs.some(Boolean), frame, offscreen };
 }
 
+// The text on a page (a panel's, or Nova Agent's own bars: a frame's own text isn't in its host's
+// page). Each line of visible text is a box (its text node's own lines, cut to what the boxes around
+// it let show). Three things, a few of each at most:
+//   overlap  two pieces of text whose lines run into each other, where both can be seen (the
+//            topmost thing at the meeting point is one of them, not a dialog or a menu over both)
+//   small    text under 9px
+//   faint    text whose colour is too close to the solid colour behind it (contrast under 3:1;
+//            over a picture, a gradient or a see-through panel it isn't judged: it can't be told)
+//   crammed  text from two separate places (not words in one sentence) with under 3px between
+//            them, like the navigation panel's names cut at their edges and meeting
+//            ("ComputerObservatory", 15 October 2026)
+//   cut      text cut off at its box's edge with no "…" (Nova Agent's bars; measureFrame has a panel's)
+export interface TextMeasure {
+  overlap: { a: string; b: string; box: Box }[];
+  crammed: { a: string; b: string; box: Box }[];
+  cut: { what: string; box: Box }[];
+  small: { what: string; px: number; box: Box }[];
+  faint: { what: string; ratio: number; box: Box }[];
+}
+export function measureText(): TextMeasure {
+  const W = innerWidth, H = innerHeight;
+  const boxOf = (r: { left: number; top: number; right: number; bottom: number }): Box => ({ x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.right - r.left), h: Math.round(r.bottom - r.top) });
+  const seen = new Map<Element, boolean>();
+  const visible = (el: Element): boolean => {
+    if (seen.has(el)) return seen.get(el)!;
+    let ok = !el.closest("[hidden], [aria-hidden=true], [inert], dialog:not([open]), template, noscript, script, style, .sr-only, .sr, .visually-hidden");
+    let o = 1;
+    for (let e: Element | null = el; ok && e; e = e.parentElement) {
+      const cs = getComputedStyle(e);
+      if (cs.display === "none" || (e === el && cs.visibility === "hidden")) ok = false;
+      o *= Number(cs.opacity);
+      if (o < 0.1) ok = false;
+      if (cs.clip !== "auto" && cs.position === "absolute") ok = false;
+    }
+    seen.set(el, ok);
+    return ok;
+  };
+  // What the boxes around an element let show of it (overflow hidden, clip, auto or scroll)
+  const clips = new Map<Element, { left: number; top: number; right: number; bottom: number }>();
+  const clipOf = (el: Element) => {
+    if (clips.has(el)) return clips.get(el)!;
+    let c = { left: 0, top: 0, right: W, bottom: H };
+    // (from the element itself: a name cut short with "…" shows only its own box)
+    for (let p: Element | null = el; p && p !== document.documentElement; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (cs.overflowX !== "visible" || cs.overflowY !== "visible") {
+        const r = p.getBoundingClientRect();
+        c = { left: Math.max(c.left, r.left), top: Math.max(c.top, r.top), right: Math.min(c.right, r.right), bottom: Math.min(c.bottom, r.bottom) };
+      }
+      if (cs.position === "fixed") break;
+    }
+    clips.set(el, c);
+    return c;
+  };
+  const name = (el: Element, text: string) => `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""} “${text.trim().replace(/\s+/g, " ").slice(0, 30)}”`;
+  type Run = { el: Element; text: string; l: number; t: number; r: number; b: number };
+  const runs: Run[] = [];
+  const small: TextMeasure["small"] = [];
+  const faint: TextMeasure["faint"] = [];
+  const judged = new Set<Element>();
+  // Colours: [r, g, b, a] from "rgb(…)"/"rgba(…)"; the solid colour behind an element, or null
+  const rgba = (c: string) => {
+    const m = c.match(/rgba?\(([^)]+)\)/);
+    if (!m) return null;
+    const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+    return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1];
+  };
+  const behind = (el: Element) => {
+    for (let e: Element | null = el; e; e = e.parentElement) {
+      const cs = getComputedStyle(e);
+      if (cs.backgroundImage !== "none" || cs.backdropFilter !== "none" && cs.backdropFilter) return null;
+      const c = rgba(cs.backgroundColor);
+      if (c && c[3] >= 0.95) return c;
+      if (c && c[3] > 0.05) return null; // see-through: what shows through can't be told
+    }
+    return [255, 255, 255, 1];
+  };
+  const lum = (c: number[]) => {
+    const f = (v: number) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  };
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const range = document.createRange();
+  for (let n = walker.nextNode(); n && runs.length < 1500; n = walker.nextNode()) {
+    const text = n.textContent || "";
+    if (text.trim().length < 2) continue;
+    const el = n.parentElement;
+    if (!el || !visible(el) || el.closest("svg, canvas, .xterm, [contenteditable=true], textarea, select, option")) continue;
+    const clip = clipOf(el);
+    range.selectNodeContents(n);
+    let any: Box | null = null;
+    for (const q of range.getClientRects()) {
+      const l = Math.max(q.left, clip.left), t = Math.max(q.top, clip.top), r = Math.min(q.right, clip.right), b = Math.min(q.bottom, clip.bottom);
+      if (r - l < 2 || b - t < 2) continue;
+      runs.push({ el, text, l, t, r, b });
+      any = any || boxOf({ left: l, top: t, right: r, bottom: b });
+    }
+    if (!any || judged.has(el)) continue;
+    judged.add(el);
+    const cs = getComputedStyle(el);
+    const px = parseFloat(cs.fontSize);
+    if (px < 9 && small.length < 3) small.push({ what: name(el, text), px: Math.round(px * 10) / 10, box: any });
+    if (faint.length < 3 && !/transparent/.test(cs.webkitTextFillColor || "") && cs.webkitTextFillColor !== "rgba(0, 0, 0, 0)") {
+      const fg = rgba(cs.color), bg = behind(el);
+      if (fg && bg) {
+        let o = fg[3];
+        for (let e: Element | null = el; e; e = e.parentElement) o *= Number(getComputedStyle(e).opacity);
+        const mix = [0, 1, 2].map((i) => fg[i] * o + bg[i] * (1 - o));
+        const [hi, lo] = [lum(mix), lum(bg)].sort((x, y) => y - x);
+        const ratio = (hi + 0.05) / (lo + 0.05);
+        if (ratio < 3) faint.push({ what: name(el, text), ratio: Math.round(ratio * 10) / 10, box: any });
+      }
+    }
+  }
+  // Text running into other text, or crammed against it
+  const overlap: TextMeasure["overlap"] = [];
+  const crammed: TextMeasure["crammed"] = [];
+  // (each piece of text's own block: words in one sentence share one, separate labels don't)
+  const blocks = new Map<Element, Element>();
+  const blockOf = (el: Element) => {
+    if (blocks.has(el)) return blocks.get(el)!;
+    let b: Element = el;
+    while (b.parentElement && /^(inline|contents)$/.test(getComputedStyle(b).display)) b = b.parentElement;
+    blocks.set(el, b);
+    return b;
+  };
+  const mine = (hit: Element | null, el: Element) => !!hit && (hit === el || el.contains(hit) || hit.contains(el));
+  runs.sort((a, b) => a.l - b.l);
+  for (let i = 0; i < runs.length && (overlap.length < 3 || crammed.length < 3); i++) {
+    const a = runs[i];
+    for (let j = i + 1; j < runs.length && runs[j].l < a.r; j++) {
+      const b = runs[j];
+      if (a.el === b.el || a.el.contains(b.el) || b.el.contains(a.el)) continue;
+      const ix = Math.min(a.r, b.r) - Math.max(a.l, b.l), iy = Math.min(a.b, b.b) - Math.max(a.t, b.t);
+      if (iy < 0.35 * Math.min(a.b - a.t, b.b - b.t)) continue;
+      if (ix < 2) {
+        // side by side on one line, under 3px apart, from separate blocks: crammed
+        if (ix > -3 && crammed.length < 3 && blockOf(a.el) !== blockOf(b.el) && !blockOf(a.el).contains(blockOf(b.el)) && !blockOf(b.el).contains(blockOf(a.el)))
+          crammed.push({ a: name(a.el, a.text), b: name(b.el, b.text), box: boxOf({ left: Math.min(a.l, b.l), top: Math.min(a.t, b.t), right: Math.max(a.r, b.r), bottom: Math.max(a.b, b.b) }) });
+        continue;
+      }
+      const cx = Math.max(a.l, b.l) + ix / 2, cy = Math.max(a.t, b.t) + iy / 2;
+      const hit = document.elementFromPoint(cx, cy);
+      if (!mine(hit, a.el) && !mine(hit, b.el)) continue; // something else is over both (a menu, a dialog)
+      if (overlap.length >= 3) continue;
+      overlap.push({ a: name(a.el, a.text), b: name(b.el, b.text), box: boxOf({ left: Math.min(a.l, b.l), top: Math.min(a.t, b.t), right: Math.max(a.r, b.r), bottom: Math.max(a.b, b.b) }) });
+      break;
+    }
+  }
+  // Cut off at its box's edge, with no "…"
+  const cut: TextMeasure["cut"] = [];
+  for (const el of judged) {
+    if (cut.length >= 3) break;
+    const cs = getComputedStyle(el);
+    if (!/hidden|clip/.test(cs.overflowX) || cs.textOverflow === "ellipsis" || el.clientWidth <= 4) continue;
+    if (el.scrollWidth > el.clientWidth + 2) cut.push({ what: name(el, el.textContent || ""), box: boxOf(el.getBoundingClientRect()) });
+  }
+  return { overlap, crammed, cut, small, faint };
+}
+
 // ================= Judging (plain rules) =================
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 // The smallest box around some boxes (what the Fixer's card outlines), or none
@@ -387,6 +561,18 @@ export function judgeHost(h: HostMeasure, insideTitles: number): LooksProblem[] 
 
 // ================= Running it (Playwright) =================
 const slug = (p: string) => p.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home";
+// The text checks' problems ("where": "the panel" or "Nova Agent's bars")
+// (cut: only for Nova Agent's own bars; a panel's text cut off is judgeFrame's)
+export function judgeText(t: TextMeasure, where: string, withCut = false): LooksProblem[] {
+  const out: LooksProblem[] = [];
+  if (t.crammed.length) out.push({ kind: "text-crammed", severity: "serious", text: `Text crammed against other text in ${where}: ${t.crammed.map((o) => `${o.a} against ${o.b}`).join("; ")}`, box: unionBox(t.crammed.map((o) => o.box)) });
+  if (withCut && t.cut.length) out.push({ kind: "text-cut", severity: "minor", text: `Text cut off in ${where}: ${t.cut.map((x) => x.what).join(", ")}`, box: unionBox(t.cut.map((x) => x.box)) });
+  if (t.overlap.length) out.push({ kind: "text-overlap", severity: "serious", text: `Text running into other text in ${where}: ${t.overlap.map((o) => `${o.a} into ${o.b}`).join("; ")}`, box: unionBox(t.overlap.map((o) => o.box)) });
+  if (t.small.length) out.push({ kind: "text-small", severity: "minor", text: `Text too small to read in ${where}: ${t.small.map((x) => `${x.what} (${x.px}px)`).join(", ")}`, box: unionBox(t.small.map((x) => x.box)) });
+  if (t.faint.length) out.push({ kind: "text-faint", severity: "minor", text: `Text too faint against its background in ${where}: ${t.faint.map((x) => `${x.what} (contrast ${x.ratio}:1)`).join(", ")}`, box: unionBox(t.faint.map((x) => x.box)) });
+  return out;
+}
+
 export const shotName = (prefix: string, path: string, w: number, h: number, signedIn: boolean) => `${prefix}${slug(path)}-${w}x${h}-${signedIn ? "in" : "out"}.png`;
 const LOOKING = new Set(["GET", "HEAD", "OPTIONS"]);
 export const NAME_SHIM = "self.__name = self.__name || ((f) => f);";
@@ -464,9 +650,19 @@ export async function runLooks(opts: LooksOptions): Promise<LooksScreen[]> {
           if (!opts.panels || opts.panels.includes(HOME.path)) {
             const host = await page.evaluate(measureHost);
             const main = await page.evaluate(measureContent, ".main").catch(() => null);
-            await screen(HOME, Date.now() - t0, [...judgeHost(host, 0), ...(main ? judgeContent(main, "home") : [])]);
+            const text = await page.evaluate(measureText).catch(() => null);
+            await screen(HOME, Date.now() - t0, [...judgeHost(host, 0), ...(main ? judgeContent(main, "home") : []), ...(text ? judgeText(text, "Nova Agent's page", true) : [])]);
           }
           errors = [];
+          // Nova Agent's own bars' text, with each panel open: reported under the home, once per size
+          const barsSeen = new Set<string>();
+          const barsText = async (with_: string) => {
+            const t = await page.evaluate(measureText).catch(() => null);
+            if (!t) return;
+            const fresh = judgeText(t, `Nova Agent's bars (with ${with_} open)`, true).filter((p) => !barsSeen.has(p.kind));
+            for (const p of fresh) barsSeen.add(p.kind);
+            if (fresh.length) await screen({ name: HOME.name, path: HOME.path }, 0, fresh);
+          };
           // Each panel, opened the way a tap opens it
           for (const p of panels) {
             const started = Date.now();
@@ -484,12 +680,39 @@ export async function runLooks(opts: LooksOptions): Promise<LooksScreen[]> {
               const ms = Date.now() - started;
               await page.waitForTimeout(settle);
               const inside: FrameMeasure = { ...(await frame.evaluate(measureContent, null)), ...(await frame.evaluate(measureFrame)) };
+              const text = await frame.evaluate(measureText).catch(() => null);
               const host = await page.evaluate(measureHost);
-              problems = [...problems, ...judgeHost(host, inside.titleBars), ...shiftBoxes(judgeFrame(inside), host.frame)];
+              problems = [...problems, ...judgeHost(host, inside.titleBars), ...shiftBoxes(judgeFrame(inside), host.frame), ...(text ? shiftBoxes(judgeText(text, "the panel"), host.frame) : [])];
               await screen(p, ms, problems);
+              await barsText(p.name);
             } catch (err) {
               await screen(p, Date.now() - started, [...problems, { kind: "open", severity: "serious", text: `Couldn't be opened (${String((err as Error).message).split("\n")[0].slice(0, 160)})` }]);
             }
+          }
+          // Made smaller while open (the biggest computer size only): each panel's text checked again
+          const biggest = sizes.filter(([w, h]) => looksDevice(w, h).kind === "computer").sort((a, b) => b[0] * b[1] - a[0] * a[1])[0];
+          const shrinkTo = opts.resizeTo ?? [[1280, 800], [1024, 768]];
+          if (biggest && biggest[0] === width && biggest[1] === height && shrinkTo.length) {
+            for (const p of panels) {
+              try {
+                await page.setViewportSize({ width, height });
+                if (!(await page.evaluate((path) => !!(window as any).NovaAgent?.open(path), p.path))) continue;
+                const handle = await page.waitForSelector(".main.viewing .viewer iframe:not([hidden])", { timeout: 20_000 });
+                const frame = await handle.contentFrame();
+                if (!frame) continue;
+                await page.waitForTimeout(settle);
+                for (const [w2, h2] of shrinkTo) {
+                  await page.setViewportSize({ width: w2, height: h2 });
+                  await page.waitForTimeout(700);
+                  const t = await frame.evaluate(measureText).catch(() => null);
+                  const hostT = await page.evaluate(measureText).catch(() => null);
+                  const host = await page.evaluate(measureHost);
+                  const found = [...(t ? shiftBoxes(judgeText(t, `the panel, after the window was made ${w2}×${h2}`), host.frame) : []), ...(hostT ? judgeText(hostT, `Nova Agent's bars, after the window was made ${w2}×${h2}`, true) : [])];
+                  if (found.length) await screen({ name: `${p.name} (made smaller while open, from ${width}×${height})`, path: p.path }, 0, found);
+                }
+              } catch {}
+            }
+            await page.setViewportSize({ width, height });
           }
         } catch (err) {
           out.push({ name: HOME.name, path: HOME.path, width, height, signedIn, ms: 0, problems: [{ kind: "open", severity: "serious", text: `Nova Agent didn't open (${String((err as Error).message).split("\n")[0].slice(0, 160)})` }], shot: "" });
