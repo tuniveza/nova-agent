@@ -135,6 +135,9 @@
   .pico[data-p="invoicer"] { --own: #b77bff; }
   /* Invoicer, on its own (no group name): level with the places under the group names */
   .suite-home .suite-group.solo { align-self: flex-end; }
+  /* On the navigation panel the Invoicer's name is written "invoicer" (the user's choice, 15 Oct 2026);
+     its title and the Panels window keep "Invoicer" */
+  #suite-home a.suite-app[data-inside="/invoicer/"] b, #tabbar [data-tab="/invoicer/"] > span:last-child { text-transform: lowercase; }
   /* The group names (Apps, Plans, Tools, Helpers) big enough to read: 9.5px, never smaller */
   html body .main > .suite-home .suite-group h4, html body .main.viewing > .suite-home .suite-group h4 { font-size: 9.5px; }
   /* A smaller computer screen: the groups a little closer, so Invoicer's place fits with the rest */
@@ -1039,8 +1042,6 @@
       <div class="suite-group tools">
         <h4>Tools</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="pico" data-p="lossless" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-lossless"/></svg></span><b>Lossless</b><small>Raw PCM between two devices, anywhere</small></a>
-          <a class="suite-app" href="/visualizer" data-inside="/visualizer"><span class="pico" data-p="visualizer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-visualizer"/></svg></span><b>Nova</b><small>Watch Nova's browser helper work, live: every step, what it remembers, what it sees</small></a>
           <a class="suite-app" href="/fixer/" data-inside="/fixer/"><span class="pico" data-p="fixer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-fixer"/></svg></span><b>Fixer</b><small>Hourly checks, and fixes that wait for an admin's Approve</small></a>
           <a class="suite-app" href="/computer/" data-inside="/computer/"><span class="pico" data-p="computer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-computer"/></svg></span><b>Computer</b><small>The VPS live: its Claude sessions, Claude Code, how busy it is, and Nova (admins)</small></a>
         </div>
@@ -1051,6 +1052,13 @@
           <a class="suite-app" href="/observatory/" data-inside="/observatory/"><span class="pico" data-p="observatory" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-observatory"/></svg></span><b>Observatory</b><small>Every project, lines of code and the star map</small></a>
           <a class="suite-app" href="/console/" data-inside="/console/"><span class="pico" data-p="console" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-console"/></svg></span><b>Console</b><small>Type commands for all of Nova Agent; terminals and the VPS on the studio PC</small></a>
           <a class="suite-app" href="/agent/" data-act="manual"><span class="pico" data-p="manual" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-manual"/></svg></span><b>Manual</b><small>How everything in Nova Agent works</small></a>
+        </div>
+      </div>
+      <!-- Lossless and Nova: on their own, in no group, at the right end of the navigation panel -->
+      <div class="suite-group tools solo end" data-group="end" aria-label="Lossless and Nova">
+        <div class="suite-grid">
+          <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="pico" data-p="lossless" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-lossless"/></svg></span><b>Lossless</b><small>Raw PCM between two devices, anywhere</small></a>
+          <a class="suite-app" href="/visualizer" data-inside="/visualizer"><span class="pico" data-p="visualizer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-visualizer"/></svg></span><b>Nova</b><small>Watch Nova's browser helper work, live: every step, what it remembers, what it sees</small></a>
         </div>
       </div>
     </div>
