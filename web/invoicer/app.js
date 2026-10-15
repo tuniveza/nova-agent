@@ -298,8 +298,10 @@ $("test-btn").addEventListener("click", async () => {
   }
 });
 // The email as the client will get it, in its own tab
+// (nothing chosen yet: say what to do, instead of nothing happening)
+const chooseFirst = () => say("Choose an invoice first: one on the left, or make a new one with New invoice.");
 $("email-btn").addEventListener("click", () => {
-  if (!chosen) return;
+  if (!chosen) return chooseFirst();
   const q = new URLSearchParams({ stage: chosen.staged.stage, body: forMoney($("body").value) });
   window.open(`/app/api/money/invoices/${chosen.id}/email?${q}`, "_blank", "noopener");
 });
@@ -461,6 +463,7 @@ $("theme-save").addEventListener("click", async () => {
 // ---- The buttons ----
 $("stages").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-stage]");
+  if (b && !chosen) return chooseFirst();
   if (b && chosen) choose(chosen.id, b.dataset.stage);
 });
 $("filters").addEventListener("click", (e) => {

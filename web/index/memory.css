@@ -595,6 +595,8 @@ main {
   color: #fff; font-weight: 600; font-size: 14px; text-align: center;
   box-shadow: 0 20px 50px -16px var(--shadow), 0 0 30px -10px var(--glow);
   animation: toast-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* (only words: a tap goes through it to whatever's under it, never blocked by it) */
+  pointer-events: none;
 }
 .toast.bad { background: linear-gradient(var(--deep), var(--deep)) padding-box, linear-gradient(120deg, var(--bad), var(--warn)) border-box; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px); } }
@@ -714,6 +716,7 @@ html.embed .top .brand-text { display: none; }
 .related { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
 .related-label { font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
 .pending-chat { color: var(--hi); text-decoration: underline; text-underline-offset: 3px; }
+button.pending-chat { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
 @media (max-width: 420px) {
   .filter select { padding-left: 12px; padding-right: 26px; font-size: 11px; letter-spacing: 0.02em; background-position: calc(100% - 13px) 52%, calc(100% - 8px) 52%, 0 0; }
   .filters { flex-wrap: wrap; }

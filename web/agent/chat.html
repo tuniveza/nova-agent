@@ -1948,7 +1948,18 @@
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(input.value); }
   });
-  $('composer').addEventListener('submit', (e) => { e.preventDefault(); send(input.value); });
+  // (Send with nothing typed: the box is pointed out, instead of nothing happening)
+  $('composer').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!input.value.trim()) {
+      const was = input.placeholder;
+      input.placeholder = 'Type your message here first…';
+      input.focus();
+      setTimeout(() => (input.placeholder = was), 2500);
+      return;
+    }
+    send(input.value);
+  });
   for (const c of document.querySelectorAll('.chip')) c.addEventListener('click', () => send(c.textContent));
   $('clear').addEventListener('click', () => {
     history = [];
@@ -2413,7 +2424,12 @@
   $('mission-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = $('mission-text').value.trim();
-    if (!text) return;
+    // (nothing written yet: say so, and put the cursor where it goes)
+    if (!text) {
+      $('mission-msg').textContent = 'Say what you want to achieve first, in the box above.';
+      $('mission-text').focus();
+      return;
+    }
     $('mission-go').disabled = true;
     $('mission-msg').innerHTML = 'Planning your mission: the strategy, tracks, milestones and every quest <span class="busy-dots"><span></span><span></span><span></span></span> this can take a minute or two.';
     const res = await api('/actions/missions', { request: text, deadline: $('mission-deadline').value || undefined });
@@ -2439,10 +2455,11 @@
 
   // Rhythm settings
   const rf = $('rhythm-form');
+  // (the plan not loaded yet, or no rhythm saved yet: the form opens with what's in it)
   $('btn-rhythm').addEventListener('click', () => {
-    if (!st) return;
-    for (const [k, v] of Object.entries(st.rhythm)) { const f = rf.elements[k]; if (!f) continue; if (f.type === 'checkbox') f.checked = v; else f.value = v; }
-    for (const b of document.querySelectorAll('[data-dayoff]')) b.checked = (st.rhythm.daysOff || []).includes(Number(b.dataset.dayoff));
+    const rhythm = (st && st.rhythm) || {};
+    for (const [k, v] of Object.entries(rhythm)) { const f = rf.elements[k]; if (!f) continue; if (f.type === 'checkbox') f.checked = v; else f.value = v; }
+    for (const b of document.querySelectorAll('[data-dayoff]')) b.checked = (rhythm.daysOff || []).includes(Number(b.dataset.dayoff));
     $('rhythm').showModal();
   });
   $('rhythm-cancel').addEventListener('click', () => $('rhythm').close());
@@ -2546,6 +2563,8 @@
     const p = await Notification.requestPermission();
     bellState();
     if (p === 'granted') { chime('mission'); toast({ title: 'Pop-up reminders on ✦', message: 'You’ll get a pop-up before each quest and a check-in when it should be done, even with this tab in the background.' }); }
+    // (turned down, now or before: say how to turn them on, instead of nothing happening)
+    else toast({ title: 'Pop-ups are off in this browser', message: 'Allow notifications for this site in the browser’s settings (the padlock or ⓘ by the address), then press the bell again. Reminders still appear here meanwhile.' });
   });
   bellState();
 

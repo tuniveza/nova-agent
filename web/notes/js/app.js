@@ -689,8 +689,10 @@
       { label: 'This note as a backup (.json)', icon: 'export', sfx: 'send', run: () => exportAs('json') }
     ];
   }
-  // All links: Portal → Admin, inside Nova Agent (or Nova Agent opened there, from Notes on its own)
+  // All links: shown right here in Notes (the page Portal → Admin shows), not by going to Portal;
+  // without that, Portal → Admin inside Nova Agent (or Nova Agent opened there)
   function openAllLinks() {
+    if (window.NovaInPlace && window.NovaInPlace.open('/admin/links', 'All links')) return;
     const page = '/portal/?view=manage&page=' + encodeURIComponent('/admin/links');
     try {
       if (window.top !== window && window.top.NovaAgent && window.top.NovaAgent.open) return window.top.NovaAgent.open(page);
