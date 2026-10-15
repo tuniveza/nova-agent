@@ -14,8 +14,8 @@ function world(over: Partial<ProbeDeps> & { status?: (url: string, init?: Reques
   const deps: ProbeDeps = {
     fetch: (async (url: string, init?: RequestInit) => {
       asked.push(`${init?.method || "GET"} ${url}`);
-      const status = over.status ? over.status(url, init) : 200;
-      const body = over.body ? over.body(url) : url.endsWith("/status.json") ? JSON.stringify({ parts: [{ id: "chat", name: "Website chat", state: "green", text: "ok" }] }) : url.includes("/booking-form/open") ? JSON.stringify({ form: { sessions: [{ id: 1 }] } }) : url.includes("/booking-form/times") ? JSON.stringify({ times: ["10:00"] }) : /\/(app-version|status|quests\/state|calendar-api\/data|board-api\/boards)$/.test(url) ? "{}" : "<!doctype html><html></html>";
+      const status = over.status ? over.status(url, init) : url.includes("/invoice/") ? 404 : 200;
+      const body = over.body ? over.body(url) : url.includes("/invoice/") ? "<h1>Invoice not found</h1>" : url.endsWith("/nova-agent/fixer-health") ? JSON.stringify({ checks: [{ group: "Invoices", name: "A way to pay", ok: true, severity: "serious", area: "server", detail: "bank" }] }) : url.endsWith("/status.json") ? JSON.stringify({ parts: [{ id: "chat", name: "Website chat", state: "green", text: "ok" }] }) : url.includes("/booking-form/open") ? JSON.stringify({ form: { sessions: [{ id: 1 }] } }) : url.includes("/booking-form/times") ? JSON.stringify({ times: ["10:00"] }) : /\/(app-version|status|quests\/state|calendar-api\/data|board-api\/boards)$/.test(url) ? "{}" : "<!doctype html><html></html>";
       return new Response(body, { status });
     }) as typeof fetch,
     run: async (cmd, args) => ({ code: 0, out: over.out ? over.out(cmd, args) : cmd === "mailq" ? "Mail queue is empty" : args[0] === "is-active" ? args.slice(1).map(() => "active").join("\n") : `LastTriggerUSec=${new Date(Date.now() - 30_000).toUTCString().replace(/^\w+, (\d+) (\w+) (\d+) /, "Wed $3-10-14 ")}\nResult=success\nResult=success` }),
@@ -55,7 +55,7 @@ describe("the scripted checks", () => {
     const results = await runProbes(buildProbes(w.deps), w.deps);
     const failed = results.filter((r) => !r.ok);
     expect(failed).toEqual([]);
-    expect(new Set(results.map((r) => r.group))).toEqual(new Set(["Addresses", "Nova Agent", "Status page", "Bookings", "Server", "Mail records", "Manual"]));
+    expect(new Set(results.map((r) => r.group))).toEqual(new Set(["Addresses", "Nova Agent", "Status page", "Bookings", "Server", "Mail records", "Invoices", "Manual"]));
     // (only reads: the two booking-card asks are the website's own, and change nothing)
     expect(w.asked.filter((a) => !a.startsWith("GET ")).every((a) => /\/booking-form\/(open|times)$/.test(a))).toBe(true);
     expect(probeFindings(results)).toEqual([]);
@@ -97,6 +97,40 @@ describe("the scripted checks", () => {
     const results = await runProbes(buildProbes(w.deps), w.deps);
     expect(results.find((r) => r.name === "Privacy")).toMatchObject({ ok: true });
     expect(tries).toBe(2);
+  });
+
+  it("asks Nova Bot's health once, with Nova Agent's key, and makes each of its answers a check", async () => {
+    const checks = [
+      { group: "Invoices", name: "A way to pay", ok: false, severity: "serious", area: "server", detail: "Clients have no way to pay" },
+      { group: "Invoices", name: "The invoice email", ok: false, severity: "serious", area: "checks", detail: "shows NaN" },
+      { group: "Nova Bot", name: "Google", ok: true, severity: "minor", area: "server", detail: "9 parts working" },
+    ];
+    const w = world({ agentKey: "k", botBase: "https://bot.test", body: (url) => (url.endsWith("/nova-agent/fixer-health") ? JSON.stringify({ checks }) : url.includes("/invoice/") ? "Invoice not found" : "{}") });
+    const results = await runProbes(buildProbes(w.deps).filter((p) => p.group === "Nova Bot"), w.deps);
+    expect(results.map((r) => r.name)).toEqual(["A way to pay", "The invoice email", "Google"]);
+    expect(w.asked.filter((a) => a.includes("fixer-health"))).toEqual(["POST https://bot.test/nova-agent/fixer-health", "POST https://bot.test/nova-agent/fixer-health"]); // (asked again once: some failed)
+    const f = probeFindings(results);
+    expect(f.map((x) => x.fingerprint)).toEqual(["server:invoices:a way to pay", "checks:invoices:the invoice email"]);
+    // Without the key it isn't asked
+    expect(buildProbes(world().deps).some((p) => p.group === "Nova Bot")).toBe(false);
+  });
+
+  it("on the server, reads the last hour's mail delivery (counts only): bounces and a count that's stopped", async () => {
+    const { mkdtempSync, writeFileSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const dir = mkdtempSync(join(tmpdir(), "mail-"));
+    const file = join(dir, "r.json");
+    const run = async (report: object) => {
+      writeFileSync(file, JSON.stringify(report));
+      const w = world({ onServer: true, mailReport: file });
+      return (await runProbes(buildProbes(w.deps).filter((p) => p.group === "Mail delivery"), w.deps))[0];
+    };
+    const now = new Date().toISOString();
+    expect(await run({ at: now, counts: { sent: 4, deferred: 0, bounced: 0, expired: 0 }, waiting: 0, problems: [] })).toMatchObject({ ok: true, detail: "4 delivered in the last hour" });
+    const b = await run({ at: now, counts: { sent: 1, deferred: 0, bounced: 1, expired: 0 }, waiting: 0, problems: [{ status: "bounced", domain: "example.com", why: "550 no such user" }] });
+    expect(b).toMatchObject({ ok: false, severity: "minor" });
+    expect(b.detail).toMatch(/bounced to example\.com: 550/);
+    expect(await run({ at: new Date(Date.now() - 3600_000).toISOString(), counts: {}, waiting: 0, problems: [] })).toMatchObject({ ok: false });
   });
 
   it("a check that throws is a fail with its reason, not a crash", async () => {

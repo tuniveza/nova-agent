@@ -185,7 +185,7 @@ export function startFixer(): Fixer {
         }),
       probes: () =>
         runProbes(
-          buildProbes({ fetch, run: runCommand, naDir: fixerPaths.naMain, dataDir: config.paths.dataDir, pcBase, onServer: Boolean(config.onServer), sleep: (ms) => new Promise((r) => setTimeout(r, ms)) }),
+          buildProbes({ fetch, run: runCommand, naDir: fixerPaths.naMain, dataDir: config.paths.dataDir, pcBase, onServer: Boolean(config.onServer), sleep: (ms) => new Promise((r) => setTimeout(r, ms)), botBase: config.workerUrl, agentKey: config.agentNovaKey || undefined }),
           { sleep: (ms) => new Promise((r) => setTimeout(r, ms)) },
         ),
       notify,

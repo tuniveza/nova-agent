@@ -30,6 +30,7 @@ import { type LooksScreen, looksFindings, shotName } from "./looks";
 import { probeFindings, type ProbeResult } from "./probes";
 import { affectedScreens, type Finding, fingerprint, isBlip, isTrivial, mergeIssues, offLimits, recommend, SCREENS, sensitiveLines, shouldRollBack, suggestions, type Suggestion } from "./rules";
 import type { Run } from "./runner";
+import { preparesByItself, scriptedFixFor } from "./scripted";
 import type { Sweep } from "./sweep";
 import { addActivity, type Card, type Check, type Screen, cleanQuest, cleanSettings, type FileChange, type FixerData, type FixerQuest, FixerStore, type Issue, type Job, type QuestKind, type Settings } from "./store";
 
@@ -434,7 +435,9 @@ export class Fixer {
     }
     // (Not for health or server problems, or blips: a network, disk, mail or Nova Bot outage isn't
     // something code changes fix)
-    if (data.settings.autoPrepare && !this.opts.dry) for (const i of fresh.filter((x) => x.area !== "health" && x.area !== "server" && !x.blip)) this.enqueue({ type: "issue", id: i.id }, null);
+    // (Scripts first: any problem a script can fix; Claude Code only for serious ones, so most of the work
+    // is plain scripts and a small problem waits for an admin's Prepare a fix: scripted.ts)
+    if (data.settings.autoPrepare && !this.opts.dry) for (const i of fresh.filter((x) => x.area !== "health" && x.area !== "server" && !x.blip && preparesByItself(x))) this.enqueue({ type: "issue", id: i.id }, null);
   }
 
   async hourly(): Promise<void> {
@@ -627,8 +630,11 @@ export class Fixer {
     this.saveJob(job, { status: "preparing", startedAt: this.now().toISOString(), error: "" });
     this.store.update((d) => this.note(d, "job", `Preparing a fix${job.attempt > 1 ? ` (attempt ${job.attempt})` : ""}: ${job.target.title}`));
     try {
+      // A problem with a known recipe is fixed by its script (scripted.ts), not by Claude Code
+      const issue = job.target.type === "issue" ? this.store.read().issues.find((i) => i.id === job.target.id) : null;
+      const script = job.notes.length ? null : scriptedFixFor({ ...job.target, fingerprint: issue?.fingerprint });
       // Claude Code installed and signed in here? (on the server: a one-time login over ssh)
-      const missing = this.opts.claudeProblem?.() || "";
+      const missing = script ? "" : this.opts.claudeProblem?.() || "";
       if (missing) throw new Error(missing);
       await this.worktrees(job);
       // Before: how the panels look (and what the sweep finds) before any change
@@ -642,12 +648,23 @@ export class Fixer {
         writeFileSync(beforeFile, JSON.stringify(before));
       }
 
-      // Claude Code makes the change, in the job's worktrees only
-      const brief = { title: job.target.title, details: job.target.details, kind: job.target.kind, notes: job.notes, naDir: job.worktrees.na, nbDir: job.worktrees.nb };
-      const ran = await this.deps.run(this.paths.claudeBin, claudeArgs(brief), { cwd: job.worktrees.na, timeoutMs: settings.timeLimitMinutes * 60_000, env: { ...testEnv(), CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1" }, clean: true });
-      if (ran.code === 124) throw new Error(`It ran out of time (${settings.timeLimitMinutes} minutes) before finishing.`);
-      const answer = readAnswer(ran.out);
-      if (ran.code !== 0 && !answer) throw new Error(`Claude Code stopped with a problem: ${short(ran.out.trim().split("\n").slice(-3).join(" "), 300)}`);
+      let answer: ReturnType<typeof readAnswer>;
+      if (script) {
+        // The script, in the job's worktrees only (no AI)
+        this.store.update((d) => this.note(d, "job", `Fixing by script (${script.name}): ${job.target.title}`));
+        for (const c of script.commands) {
+          const r = await this.deps.run(c.cmd, c.args, { cwd: job.worktrees[c.repo], timeoutMs: 10 * 60_000, env: testEnv(), clean: true });
+          if (r.code !== 0) throw new Error(`The script (${script.name}) stopped with a problem: ${short(r.out.trim().split("\n").slice(-3).join(" "), 300)}`);
+        }
+        answer = { ...script.card, why: job.target.title, consequences: "None beyond the fix: the script only rebuilds files from the code that's there.", assessment: "", risks: [], verdict: "", reasons: [], changed: true };
+      } else {
+        // Claude Code makes the change, in the job's worktrees only
+        const brief = { title: job.target.title, details: job.target.details, kind: job.target.kind, notes: job.notes, naDir: job.worktrees.na, nbDir: job.worktrees.nb };
+        const ran = await this.deps.run(this.paths.claudeBin, claudeArgs(brief), { cwd: job.worktrees.na, timeoutMs: settings.timeLimitMinutes * 60_000, env: { ...testEnv(), CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1" }, clean: true });
+        if (ran.code === 124) throw new Error(`It ran out of time (${settings.timeLimitMinutes} minutes) before finishing.`);
+        answer = readAnswer(ran.out);
+        if (ran.code !== 0 && !answer) throw new Error(`Claude Code stopped with a problem: ${short(ran.out.trim().split("\n").slice(-3).join(" "), 300)}`);
+      }
 
       // Off limits: never offered, and its edits are thrown away
       const { working } = await this.changedFiles(job);
@@ -663,7 +680,7 @@ export class Fixer {
         const wt = job.worktrees[repo];
         const add = await this.git(wt, ["add", "--", ...paths]);
         if (add.code !== 0) throw new Error(`Couldn't save the change: ${short(add.out, 300)}`);
-        const msg = `Fixer: ${short(job.target.title, 70)}${job.attempt > 1 ? ` (attempt ${job.attempt})` : ""}\n\n${short(answer?.summary || "", 600)}\n\nPrepared by the Fixer with Claude Code; waits for an admin's approval.\n\n${COAUTHOR}`;
+        const msg = `Fixer: ${short(job.target.title, 70)}${job.attempt > 1 ? ` (attempt ${job.attempt})` : ""}\n\n${short(answer?.summary || "", 600)}\n\nPrepared by the Fixer ${script ? `with a script (${script.name}; no AI)` : "with Claude Code"}; waits for an admin's approval.\n\n${COAUTHOR}`;
         const commit = await this.git(wt, ["commit", "-q", "-m", msg]);
         if (commit.code !== 0) throw new Error(`Couldn't save the change: ${short(commit.out, 300)}`);
       }

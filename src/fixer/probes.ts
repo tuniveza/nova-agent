@@ -13,7 +13,12 @@
 // Groups: Addresses (every address in All addresses, web/shared/addresses.js), Nova Agent (its
 // pages and data), Status page (each part of /status.json), Bookings (the booking card opens and
 // has free times), Server (services, timed jobs, memory, load, the mail queue), Mail records (SPF,
-// DKIM, DMARC), Data (Nova Agent's database), Manual (every link to a Nova page in the Manual).
+// DKIM, DMARC), Mail delivery (the last hour's emails: delivered, delayed, bounced, from the root
+// job vps/mail-report-setup.sh writes, counts only), Invoices and Nova Bot (Nova Bot's own health,
+// src/fixer-health.js there: the invoice drawn at every stage, its page and email, a way to pay,
+// emails stuck or failed, paid amounts adding up, overdue invoices, approvals waiting, Google,
+// enquiry emails, phone alerts, its database), Data (Nova Agent's database), Manual (every link to
+// a Nova page in the Manual).
 
 import { promises as dnsPromises } from "node:dns";
 import { existsSync, readFileSync } from "node:fs";
@@ -41,6 +46,8 @@ export interface Probe {
   severity: "serious" | "minor";
   // Throws (or returns { fail }) when it fails; returns what it saw when it passes
   run: () => Promise<string | { fail: string; severity?: "serious" | "minor" }>;
+  // (instead: one call that answers several checks at once, like Nova Bot's health)
+  many?: () => Promise<Omit<ProbeResult, "ms">[]>;
 }
 export interface ProbeDeps {
   fetch: typeof fetch;
@@ -53,6 +60,9 @@ export interface ProbeDeps {
   resolve4?: (name: string) => Promise<string[]>;
   sleep: (ms: number) => Promise<void>;
   retryAfterMs?: number;
+  botBase?: string; // Nova Bot (https://nova.novacane.co.uk), for its health
+  agentKey?: string; // Nova Agent's key for it (AGENT_NOVA_KEY); without it, its health isn't asked
+  mailReport?: string; // the mail delivery count (on the VPS: /var/lib/nova/mail-report.json)
 }
 
 const TIMEOUT = 15_000;
@@ -322,6 +332,59 @@ export function buildProbes(d: ProbeDeps): Probe[] {
     run: async () => ((await joined(`_dmarc.${domain}`)).some((r) => r.startsWith("v=DMARC1")) ? "there" : fail(`_dmarc.${domain} has no DMARC record`)),
   });
 
+  // ---- Mail delivery: the last hour's emails (counted by a root job; no addresses) ----
+  if (d.onServer) {
+    const file = d.mailReport || "/var/lib/nova/mail-report.json";
+    probes.push({
+      group: "Mail delivery",
+      name: "The last hour's emails",
+      area: "server",
+      severity: "minor",
+      run: async () => {
+        if (!existsSync(file)) return fail("The mail delivery count isn't there (run vps/mail-report-setup.sh on the VPS)");
+        const r = JSON.parse(readFileSync(file, "utf8")) as { at: string; counts: Record<string, number>; waiting: number | null; problems: { status: string; domain: string; why: string }[] };
+        const mins = Math.round((Date.now() - Date.parse(r.at)) / 60_000);
+        if (mins > 30) return fail(`The mail delivery count hasn't updated for ${mins} minutes (nova-mail-report.timer)`);
+        const c = r.counts || {};
+        const lost = (c.bounced || 0) + (c.expired || 0);
+        const why = r.problems.slice(0, 4).map((p) => `${p.status} to ${p.domain}: ${p.why}`).join("\n");
+        if (lost) return fail(`${lost} email${lost === 1 ? "" : "s"} bounced in the last hour (an address may be wrong, or the studio's mail was turned away):\n${why}`, lost >= 3 ? "serious" : "minor");
+        if ((c.deferred || 0) >= 3) return fail(`${c.deferred} emails delayed in the last hour (the receiving server said try later):\n${why}`);
+        return `${c.sent || 0} delivered in the last hour${c.deferred ? `, ${c.deferred} delayed` : ""}`;
+      },
+    });
+  }
+
+  // ---- Invoices: the client's invoice address answers (a made-up one: "not found", not an error) ----
+  probes.push({
+    group: "Invoices",
+    name: "The invoice address answers",
+    area: "server",
+    severity: "serious",
+    run: async () => {
+      const res = await get(`${d.botBase || base}/invoice/${"0".repeat(32)}`);
+      const text = await res.text();
+      return res.status === 404 && /not found/i.test(text) ? "it answers" : fail(`/invoice/… answered ${res.status} instead of its "not found" page`);
+    },
+  });
+
+  // ---- Invoices and Nova Bot: Nova Bot's own health (src/fixer-health.js there), one call ----
+  if (d.agentKey) {
+    probes.push({
+      group: "Nova Bot",
+      name: "Its health",
+      area: "server",
+      severity: "serious",
+      run: async () => "",
+      many: async () => {
+        const res = await get(`${d.botBase || base}/nova-agent/fixer-health`, { method: "POST", headers: { Authorization: `Bearer ${d.agentKey}`, "Content-Type": "application/json" }, body: "{}" });
+        if (!res.ok) return [{ group: "Nova Bot", name: "Its health", area: "server", ok: false, severity: "serious", detail: `Nova Bot's health didn't answer (${res.status})` }];
+        const body = (await res.json()) as { checks: { group: string; name: string; ok: boolean; severity: "serious" | "minor"; area: ProbeArea; detail: string }[] };
+        return body.checks.map((c) => ({ group: c.group, name: c.name, area: c.area === "checks" ? "checks" : "server", ok: c.ok, severity: c.severity === "serious" ? "serious" : "minor", detail: String(c.detail || "") }));
+      },
+    });
+  }
+
   // ---- Data: Nova Agent's database ----
   const db = join(d.dataDir, "nova.db");
   if (existsSync(db)) {
@@ -380,6 +443,20 @@ async function runOne(p: Probe): Promise<{ ok: boolean; detail: string; severity
 
 // Run every check (a few at a time); a fail is tried once more after a short wait
 export async function runProbes(probes: Probe[], d: Pick<ProbeDeps, "sleep" | "retryAfterMs">): Promise<ProbeResult[]> {
+  // (A check that answers several at once: asked once, and once more after a wait if any failed; each
+  // of its answers is its own result)
+  const several: ProbeResult[] = [];
+  for (const p of probes.filter((x) => x.many)) {
+    const started = Date.now();
+    const ask = () => p.many!().catch((err) => [{ group: p.group, name: p.name, area: p.area, ok: false, severity: p.severity, detail: String((err as Error).message || err).split("\n")[0].slice(0, 300) }]);
+    let got = await ask();
+    if (got.some((r) => !r.ok)) {
+      await d.sleep(d.retryAfterMs ?? 15_000);
+      got = await ask();
+    }
+    for (const r of got) several.push({ ...r, detail: r.detail.slice(0, 1500), ms: Date.now() - started });
+  }
+  probes = probes.filter((x) => !x.many);
   const out: ProbeResult[] = new Array(probes.length);
   let next = 0;
   const worker = async () => {
@@ -397,7 +474,7 @@ export async function runProbes(probes: Probe[], d: Pick<ProbeDeps, "sleep" | "r
     }
   };
   await Promise.all(Array.from({ length: 6 }, worker));
-  return out;
+  return [...out, ...several];
 }
 
 // The fails, as problems (one per check: the same check failing again is the same problem)

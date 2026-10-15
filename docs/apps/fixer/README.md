@@ -4,6 +4,15 @@ Nova Agent's caretaker. It checks Nova Agent every hour, keeps a list of what it
 
 ## What's new
 
+- **Invoices and emails, every hour.** The hourly check now asks Nova Bot for its health (read-only, nothing sent), and checks:
+  - that the invoice draws at every stage, bright and dark, with no blank or broken amounts;
+  - that the client's invoice page and the invoice email build, with their link;
+  - that emails can go out, and clients have a way to pay (bank details or card);
+  - that nothing is stuck sending, paid amounts add up, overdue invoices have a reminder, and nothing waits too long for an admin.
+- **The whole of Nova Bot too:** its database, enquiry emails, phone alerts, Google's parts, failed emails or posts in the last day, and approvals waiting more than two days.
+- **Mail delivery.** Every hour it reads how the studio's emails did in the last hour (delivered, delayed, bounced), from a count the server keeps with no addresses in it.
+- **Scripts first.** A problem with a known recipe (like the Manual out of date) is fixed by running that recipe, not by asking Claude Code. Claude Code is the fallback, and by itself only for serious problems: a small problem no script knows waits for an admin's **Prepare a fix**. Either way the fix waits for an admin's Approve.
+- **The text, read.** The looks check now reads every piece of text: words running into other words or crammed against them, cut off, too small or too faint, on each panel and on Nova Agent's own bars. It checks again after the window is made smaller with a panel open, at 1280×800 and 1024×768.
 - **Needs you is one clear card at a time.** Each fix fills the part as a big card, with no long list of pictures and text. Its name is in big letters, like "Portal's sign-in cut off on phones", with chips for how serious it is, which panel it's on, and where it's up to: **Preparing…**, **Checking**, **Ready for you**, **Going live…**, **Live** or **Rejected**. Under the name are four short rows:
   - **What's wrong**
   - **Why**

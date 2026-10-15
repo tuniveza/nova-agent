@@ -221,12 +221,23 @@ describe("nothing goes live without an admin's Approve", () => {
     });
   }
 
+  it("a small problem no script fixes waits for an admin's Prepare a fix (scripts first, Claude Code only for serious ones)", async () => {
+    const w = world(SCENARIOS["a small CSS change (trivial)"]);
+    w.healthFindings = [];
+    const sweep = w.deps.sweep;
+    w.deps.sweep = async (base, opts) => (opts?.shotsDir ? sweep(base, opts) : { findings: [{ fingerprint: "sweep:/notes/:#:sideways", area: "sweep", severity: "minor", title: "Notes at 390px: The page scrolls sideways", detail: "", panel: "/notes/" }], shots: [] });
+    await w.fixer.check("full");
+    await idle(w.fixer);
+    expect(w.fixer.state().issues).toHaveLength(1);
+    expect(w.fixer.state().needsYou).toHaveLength(0);
+  });
+
   it("issues found by the hourly check: prepared by themselves, never merged by themselves", async () => {
     const w = world(SCENARIOS["a small CSS change (trivial)"]);
     w.healthFindings = [];
-    // The live sweep finds a glitch
+    // The live sweep finds a serious glitch
     const sweep = w.deps.sweep;
-    w.deps.sweep = async (base, opts) => (opts?.shotsDir ? sweep(base, opts) : { findings: [{ fingerprint: "sweep:/notes/:#:sideways", area: "sweep", severity: "minor", title: "Notes at 390px: The page scrolls sideways", detail: "", panel: "/notes/" }], shots: [] });
+    w.deps.sweep = async (base, opts) => (opts?.shotsDir ? sweep(base, opts) : { findings: [{ fingerprint: "sweep:/notes/:#:sideways", area: "sweep", severity: "serious", title: "Notes at 390px: The page scrolls sideways", detail: "", panel: "/notes/" }], shots: [] });
     await w.fixer.check("full");
     await idle(w.fixer);
     expect(w.fixer.state().issues).toHaveLength(1);
