@@ -87,7 +87,7 @@
   .tabbar .tgroup[data-group="solo"] > .tg-label { display: none; }
   .tabbar .tgroup[data-group="solo"] .tg-items { grid-template-columns: minmax(48px, auto); }
   .tabbar .tgroup[data-group="solo"] { border-right: 1px solid var(--line); padding-right: 6px; }
-  /* Lossless and Nova, on their own: down the right of both rows, one above the other, no group name */
+  /* Nova, on its own: down the right of both rows, no group name (Lossless: in the Panels window) */
   .tabbar .tgroup[data-group="end"] { grid-area: end; grid-template-rows: minmax(0, 1fr); }
   .tabbar .tgroup[data-group="end"] > .tg-label { display: none; }
   .tabbar .tgroup[data-group="end"] .tg-items { grid-template-columns: minmax(48px, auto); }
@@ -172,10 +172,11 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
    and the groups sit together in the middle with a fine line between them (so no group is spread
    out while another is crushed). The width is the row shared out between the places showing
    (--tab-n, set by phone.js), between 46px and 84px; a name too long for it ends in "…". */
-/* (a tall tablet held upright, 1000px or taller, has the phone's two rows instead: room for every name) */
-@media (min-width: 601px) and (max-width: 980px) and (max-height: 999px), (min-width: 601px) and (max-height: 500px) {
+/* (a tablet or window held upright has the phone's two rows instead: room for every name) */
+@media (min-width: 601px) and (max-width: 980px) and (orientation: landscape), (min-width: 601px) and (max-height: 500px) {
   .tabbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 2px 8px;
-    --tab-w: clamp(46px, calc((100vw - 24px - 3 * 16px) / var(--tab-n, 14)), 84px); }
+    /* (six groups now: invoicer and Nova on their own at the ends, so the gaps count six times) */
+    --tab-w: clamp(42px, calc((100vw - 24px - 6 * 16px - 40px) / var(--tab-n, 14)), 84px); }
   .tabbar .tgroup { flex: 0 0 auto; min-width: 0; }
   .tabbar .tgroup + .tgroup { border-left: 1px solid var(--line); padding-left: 6px; }
   .tabbar > .status-line { flex: 1 0 100%; }
@@ -232,7 +233,7 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
    phone and tablet layout, so a name is never cut short ("Invoic…" on a 360px phone or an 800px tablet) */
 html body .tabbar .tgroup[data-group="solo"] .tg-items, html body .tabbar .tgroup[data-group="end"] .tg-items { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: max-content; }
 /* (a phone or a tall tablet held upright, two rows: Lossless above Nova, down the right of both rows) */
-@media (max-width: 600px) and (min-height: 761px), (min-width: 601px) and (max-width: 980px) and (min-height: 1000px) { html body .tabbar .tgroup[data-group="end"] .tg-items { grid-auto-flow: row; grid-template-columns: max-content; } }
+@media (max-width: 600px) and (min-height: 761px), (min-width: 601px) and (max-width: 980px) and (orientation: portrait) and (min-height: 501px) { html body .tabbar .tgroup[data-group="end"] .tg-items { grid-auto-flow: row; grid-template-columns: max-content; } }
 html body .tabbar .tgroup[data-group="solo"], html body .tabbar .tgroup[data-group="end"] { width: auto; flex: none; }
 html body .tabbar .tgroup[data-group="solo"] [data-tab], html body .tabbar .tgroup[data-group="end"] [data-tab] { min-width: 48px; padding-inline: 4px; }
 html body .tabbar .tgroup[data-group="solo"] [data-tab] > span:last-child, html body .tabbar .tgroup[data-group="end"] [data-tab] > span:last-child { overflow: visible; text-overflow: clip; max-width: none; }

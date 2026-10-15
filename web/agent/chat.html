@@ -138,6 +138,8 @@
   /* On the navigation panel the Invoicer's name is written "invoicer" (the user's choice, 15 Oct 2026);
      its title and the Panels window keep "Invoicer" */
   #suite-home a.suite-app[data-inside="/invoicer/"] b, #tabbar [data-tab="/invoicer/"] > span:last-child { text-transform: lowercase; }
+  /* Lossless isn't on the navigation panel (the user's choice, 15 Oct 2026): it's in the Panels window */
+  #suite-home a.suite-app[data-inside="/lossless/"] { display: none; }
   /* The group names (Apps, Plans, Tools, Helpers) big enough to read: 9.5px, never smaller */
   html body .main > .suite-home .suite-group h4, html body .main.viewing > .suite-home .suite-group h4 { font-size: 9.5px; }
   /* A smaller computer screen: the groups a little closer, so Invoicer's place fits with the rest */
@@ -1055,7 +1057,7 @@
         </div>
       </div>
       <!-- Lossless and Nova: on their own, in no group, at the right end of the navigation panel -->
-      <div class="suite-group tools solo end" data-group="end" aria-label="Lossless and Nova">
+      <div class="suite-group tools solo end" data-group="end" aria-label="Lossless and Nova (Lossless: in the Panels window only)">
         <div class="suite-grid">
           <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="pico" data-p="lossless" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-lossless"/></svg></span><b>Lossless</b><small>Raw PCM between two devices, anywhere</small></a>
           <a class="suite-app" href="/visualizer" data-inside="/visualizer"><span class="pico" data-p="visualizer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-visualizer"/></svg></span><b>Nova</b><small>Watch Nova's browser helper work, live: every step, what it remembers, what it sees</small></a>

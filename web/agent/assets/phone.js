@@ -217,18 +217,18 @@
 
   // ---- The bar along the bottom: every place in Nova Agent, always there, in four groups ----
   // Apps (Portal, Agent, Calendar, Notes, Index) · Plans (Quests, Today, Missions) · Tools (Fixer,
-  // Computer) · Helpers (Observatory, Console, Manual); Invoicer on its own at the left end, Lossless and
-  // Nova on their own at the right end. Any other panel joins Tools.
+  // Computer) · Helpers (Observatory, Console, Manual); Invoicer on its own at the left end, Nova on its
+  // own at the right end (Lossless: in the Panels window, behind the gear). Any other panel joins Tools.
   // Every place stays on the bar on every screen (no More menu): on a phone held upright it's two
   // rows, Apps along the top and Plans, Tools and Helpers below
-  const SKIP = ['/admin/links']; // All links: behind the gear
+  const SKIP = ['/admin/links', '/lossless/']; // All links and Lossless: behind the gear (the Panels window), not on the bar
   const GROUPS = [
     ['solo', '', ['/invoicer/']], // Invoicer: on its own, in no group, at the left end
     ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
     ['tasks', 'Plans', ['/quests/', 'pane:missions']],
     ['tools', 'Tools', []], // (Fixer and Computer: the panels not placed elsewhere join Tools)
     ['helpers', 'Helpers', ['/observatory/', '/console/', 'manual']],
-    ['end', '', ['/lossless/', '/visualizer']], // Lossless and Nova: on their own, in no group, at the right end
+    ['end', '', ['/visualizer']], // Nova: on its own, in no group, at the right end (Lossless: in the Panels window)
   ];
   const bar = document.createElement('nav');
   bar.className = 'tabbar';
@@ -256,7 +256,7 @@
     row.innerHTML = GROUPS.map(([id, label, keys]) => {
       const items = (id === 'tools' ? [...keys, ...extra] : keys).map((k) => (FIXED[k] ? FIXED[k]() : panelItem(k))).join('');
       // (a group with no name, like Invoicer's, keeps the room a name takes so its place lines up)
-      return `<div class="tgroup" data-group="${id}" role="group" aria-label="${label || (id === 'end' ? 'Lossless and Nova' : 'Invoicer')}"><span class="tg-label" aria-hidden="true">${label || '&nbsp;'}</span><div class="tg-items">${items}</div></div>`;
+      return `<div class="tgroup" data-group="${id}" role="group" aria-label="${label || (id === 'end' ? 'Nova' : 'Invoicer')}"><span class="tg-label" aria-hidden="true">${label || '&nbsp;'}</span><div class="tg-items">${items}</div></div>`;
     }).join('');
     current();
   }
