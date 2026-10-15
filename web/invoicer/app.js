@@ -188,7 +188,12 @@ function drawSend(inv, detail, stage) {
   const note = $("send-note");
   const chip = $("mail-chip");
   const admin = Boolean(data?.canDecide);
-  const waitingReminder = (detail?.reminders || []).find((r) => r.status === "pending_approval");
+  const reminders = detail?.reminders || [];
+  const receipt = inv.status === "paid" || stage === "paid";
+  const kind = receipt ? "receipt" : "reminder";
+  const waiting = reminders.find((r) => r.status === "pending_approval" && (r.kind || "reminder") === kind);
+  const receiptSent = reminders.some((r) => r.kind === "receipt" && r.status === "sent");
+  $("test-btn").hidden = !admin;
   btn.hidden = false;
   btn.disabled = false;
   chip.hidden = true;
@@ -198,7 +203,7 @@ function drawSend(inv, detail, stage) {
     chip.textContent = "Not sent yet";
     if (admin) {
       btn.textContent = "Approve and email it";
-      note.textContent = `Emails ${inv.billTo.email || "(no email address)"} the invoice with a link to its page, where they can pay. Your Approve is the check: nothing goes without it.`;
+      note.textContent = `Emails ${inv.billTo.email || "(no email address)"} the invoice itself (the Nova invoice, with a text version for email apps that can't show it) and a button to its page, where they can pay. Your Approve is the check: nothing goes without it.`;
       btn.onclick = () => confirmThen(btn, `Yes, email ${inv.number} to ${inv.billTo.email || "them"}`, () => api(`money/invoices/${inv.id}/approve`, { method: "POST", body: {} }), "Approved: it's on its way.");
     } else {
       btn.textContent = "Waiting for an admin";
@@ -207,45 +212,67 @@ function drawSend(inv, detail, stage) {
     }
     return;
   }
-  if (inv.status === "paid" || stage === "paid") {
+  if (receipt && receiptSent && !waiting) {
+    chip.hidden = false;
+    chip.textContent = "Receipt sent";
     btn.hidden = true;
-    note.textContent = "Receipts aren't emailed from here yet: copy the email, save the receipt as a PDF (Print / Save PDF) and send them from Gmail.";
+    note.textContent = `Its receipt went to ${inv.billTo.email || "the client"}.`;
     return;
   }
-  if (waitingReminder) {
+  if (waiting) {
     chip.hidden = false;
-    chip.textContent = "A reminder is waiting";
+    chip.textContent = receipt ? "The receipt is waiting" : "A reminder is waiting";
     if (admin) {
-      btn.textContent = "Approve the waiting reminder";
-      note.textContent = "Someone queued a reminder for this invoice. Approving emails exactly what they wrote.";
-      btn.onclick = () => confirmThen(btn, `Yes, email it to ${inv.billTo.email}`, () => api(`money/reminders/${waitingReminder.id}/approve`, { method: "POST", body: {} }), "Reminder sent.");
+      btn.textContent = receipt ? "Approve and email the receipt" : "Approve the waiting reminder";
+      note.textContent = receipt ? "It was written by itself when the invoice was paid in full: the receipt (the invoice, marked paid) with a thank-you. Approving emails exactly that." : "Someone queued a reminder for this invoice. Approving emails exactly what they wrote, with the invoice under it.";
+      btn.onclick = () => confirmThen(btn, `Yes, email it to ${inv.billTo.email}`, () => api(`money/reminders/${waiting.id}/approve`, { method: "POST", body: {} }), receipt ? "Receipt sent." : "Reminder sent.");
     } else {
       btn.textContent = "Waiting for an admin";
       btn.disabled = true;
-      note.textContent = "A reminder for it is already waiting for an admin's Approve.";
+      note.textContent = `${receipt ? "The receipt" : "A reminder"} for it is already waiting for an admin's Approve.`;
     }
     return;
   }
-  btn.textContent = "Send for approval";
-  note.textContent = `Queues this message for ${inv.billTo.email || "(no email address)"}, with a button to the invoice's page. An admin approves it before it goes. Its subject will be "Reminder: invoice ${inv.number}".`;
+  btn.textContent = receipt ? "Send the receipt for approval" : "Send for approval";
+  note.textContent = `Queues this message for ${inv.billTo.email || "(no email address)"}, with the ${receipt ? "receipt" : "invoice"} under it. An admin approves it before it goes.`;
   btn.onclick = () =>
-    confirmThen(btn, "Yes, queue it", () => api(`money/invoices/${inv.id}/reminder`, { method: "POST", body: { body: forMoney($("body").value) } }), admin ? "Queued: approve it with the button above." : "Queued: an admin approves it before it goes.");
+    confirmThen(btn, "Yes, queue it", () => api(`money/invoices/${inv.id}/reminder`, { method: "POST", body: { body: forMoney($("body").value), kind } }), admin ? "Queued: approve it with the button above." : "Queued: an admin approves it before it goes.");
 }
 // Money's email adds the button to the invoice's page and a sign-off itself
-// (so the link line and the sign-off are left out of what's queued)
+// (the invoice under the message has the link, the bank details and the studio's sign-off, so those
+// lines are left out of what's queued)
 function forMoney(text) {
   return text
     .split(/\n\s*\n/)
     .map((p) =>
       p
         .split("\n")
-        .filter((l) => !/^See and pay it online:/.test(l))
-        .map((l) => l.replace(/^Or by bank transfer/, "You can also pay by bank transfer"))
+        .filter((l) => !/^(See and pay it online:|Or by bank transfer)/.test(l))
         .join("\n")
     )
     .filter((p) => p.trim() && !/^Best wishes,?\n/i.test(p))
     .join("\n\n");
 }
+// A test, to the admin's own email address only: the email at this stage with this message
+$("test-btn").addEventListener("click", async () => {
+  if (!chosen) return;
+  const b = $("test-btn");
+  b.disabled = true;
+  try {
+    const r = await api("money/invoices/test-send", { method: "POST", body: { id: chosen.id, stage: chosen.staged.stage, body: forMoney($("body").value) } });
+    say(r.message || "Test sent: check your inbox.");
+  } catch (err) {
+    say(err.message, true);
+  } finally {
+    b.disabled = false;
+  }
+});
+// The email as the client will get it, in its own tab
+$("email-btn").addEventListener("click", () => {
+  if (!chosen) return;
+  const q = new URLSearchParams({ stage: chosen.staged.stage, body: forMoney($("body").value) });
+  window.open(`/app/api/money/invoices/${chosen.id}/email?${q}`, "_blank", "noopener");
+});
 // One press asks, the second does it (it goes back after a few seconds)
 function confirmThen(btn, ask, act, done) {
   if (btn.dataset.armed) {

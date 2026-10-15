@@ -209,7 +209,7 @@
     card.dataset.key = "mn-r-" + r.id;
     card.dataset.sig = k.sig(r, data.canDecide, inv && inv.updatedAt);
     const top = k.el("div", "card-top");
-    const title = k.el("h3", "card-title", "Reminder · " + (inv ? inv.number + " · " + inv.billTo.name : "invoice #" + r.invoiceId));
+    const title = k.el("h3", "card-title", (r.kind === "receipt" ? "Receipt · " : "Reminder · ") + (inv ? inv.number + " · " + inv.billTo.name : "invoice #" + r.invoiceId));
     title.appendChild(k.el("span", "pill-draft", "Waiting for approval"));
     top.append(title, k.el("span", "card-meta", k.ukWhen(r.createdAt)));
     card.append(top);
@@ -223,7 +223,7 @@
           b.textContent = "Email it to " + (inv ? inv.billTo.email : "them") + " now?";
           return;
         }
-        act(card, "money/reminders/" + r.id + "/approve", {}, "Reminder sent");
+        act(card, "money/reminders/" + r.id + "/approve", {}, r.kind === "receipt" ? "Receipt sent" : "Reminder sent");
       });
       button(row, "Reject", "ghost", () => act(card, "money/reminders/" + r.id + "/reject", {}, "Reminder rejected"));
     } else card.appendChild(k.el("p", "card-foot", "An admin approves reminders, signed in to Portal in a browser. Nothing is emailed until then."));
