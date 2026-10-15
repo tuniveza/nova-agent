@@ -184,3 +184,11 @@ html body .lines .n { text-align: right !important; }
   .board { grid-template-rows: minmax(0, 1.25fr) minmax(0, 1fr); }
   .mail-col { overflow-y: auto; }
 }
+
+/* The colours: each a dot and its name, all on one row that slides sideways; the paper as a menu */
+.themes.one-row { flex: none; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 4px; padding-bottom: 1px; }
+.themes.one-row::-webkit-scrollbar { display: none; }
+.nb-tool .themes.one-row button { flex: none; min-height: 30px; padding: 2px 10px 2px 4px; gap: 6px; font-size: 12.5px; }
+.themes.one-row .sw { width: 20px; height: 20px; }
+.paper-pick { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); letter-spacing: .04em; flex: none; }
+.paper-pick select.field { min-height: 32px; width: auto; padding: 2px 8px; font-size: 13px; border-radius: 10px; }

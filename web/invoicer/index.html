@@ -71,6 +71,8 @@
         <div class="doc-tools">
           <button type="button" id="print-btn" disabled title="Print, or save as a PDF">PDF</button>
           <a class="btn ghost" id="open-btn" role="button" href="#" target="_blank" rel="noopener" aria-disabled="true">Open</a>
+          <button type="button" id="edit-btn" disabled title="Change it: its artist, lines, dates and notes">Edit</button>
+          <button type="button" id="remove-btn" hidden title="Remove it (kept on record, marked removed)">Remove</button>
         </div>
       </div>
       <p class="stage-note" id="stage-note"></p>
@@ -91,7 +93,12 @@
       </div>
       <!-- How clients pay: the bank details on every invoice (an admin adds them here) -->
       <button type="button" class="paybar" id="bank-btn"><span class="pb-k">How clients pay</span><span class="pb-v" id="bank-state">…</span></button>
-      <div class="look-row"><div class="themes" id="themes" role="radiogroup" aria-label="Look"></div><span class="look-name" id="look-name"></span><button type="button" class="ghost small-btn" id="theme-save" hidden>Use for all</button></div>
+      <div class="themes one-row" id="themes" role="radiogroup" aria-label="Colour"></div>
+      <div class="look-row">
+        <label class="paper-pick"><span>Paper</span><select id="paper" class="field" aria-label="Paper"></select></label>
+        <span class="look-name" id="look-name"></span>
+        <button type="button" class="ghost small-btn" id="theme-save" hidden>Use for all</button>
+      </div>
       <textarea id="note" class="field" rows="2" maxlength="800" aria-label="Notes on the invoice" placeholder="Notes on the invoice (a thank-you shows if empty)"></textarea>
       <div class="col-head"><h2 class="nt-h">Email</h2><span class="nt-chip" id="mail-chip" hidden></span></div>
       <input id="subject" class="field" type="text" autocomplete="off" aria-label="Subject" placeholder="Subject">
@@ -166,7 +173,7 @@
       <button type="button" class="ghost" id="n-cancel">Cancel</button>
       <button type="submit" class="primary" id="n-save">Make the invoice</button>
     </div>
-    <p class="muted small">It waits for an admin's Approve in Portal → Money before anything is emailed.</p>
+    <p class="muted small" id="n-foot">It waits for an admin's Approve in Portal → Money before anything is emailed.</p>
   </form>
 </dialog>
 

@@ -18,8 +18,12 @@ let studioTheme = "night"; // the one every invoice uses (Money's settings)
 let theme = null; // the one shown here (this browser remembers it)
 let studioMode = "bright"; // every invoice's page: bright (white) or dark (the website's near-black)
 let mode = null; // the one shown here
+let papers = []; // the paper's styles (minerals), from the price list's answer
+let studioPaper = "moonstone";
+let paper = null; // the one shown here
 try {
   theme = localStorage.getItem("invoicer-theme");
+  paper = localStorage.getItem("invoicer-paper");
   mode = localStorage.getItem("invoicer-mode");
 } catch {}
 
@@ -147,6 +151,7 @@ function docSrc() {
   const q = new URLSearchParams({ stage: chosen.staged.stage });
   if (theme) q.set("theme", theme);
   if (mode) q.set("mode", mode);
+  if (paper) q.set("paper", paper);
   const note = $("note").value.trim();
   if (note !== (chosen.staged.invoice.notes || "").trim()) q.set("note", note);
   return `/app/api/money/invoices/${chosen.id}/document?${q}`;
@@ -174,6 +179,10 @@ function drawStage(first = false) {
   frame.hidden = false;
   $("doc-empty").hidden = true;
   $("print-btn").disabled = false;
+  // Edit: until it's paid in full or removed; Remove (admins): until money's been paid on it
+  $("edit-btn").disabled = inv.status === "paid" || inv.status === "void";
+  $("edit-btn").title = inv.status === "paid" ? "Paid in full: it can't change" : inv.status === "void" ? "Removed" : "Change it: its artist, lines, dates and notes";
+  $("remove-btn").hidden = !data?.canDecide || inv.status === "void" || inv.paidPence > 0;
   $("open-btn").href = src;
   $("open-btn").removeAttribute("aria-disabled");
   // The email
@@ -312,8 +321,8 @@ function drawThemes() {
       const sw = el("span", { class: "sw", "aria-hidden": "true" });
       sw.style.setProperty("--b", t.band);
       sw.style.setProperty("--a", t.accent);
-      b.setAttribute("aria-label", t.name + (t.id === studioTheme ? " (every invoice)" : ""));
-      b.append(sw);
+      b.title = t.id === studioTheme ? `${t.name}: every invoice's colour` : `See it in ${t.name}`;
+      b.append(sw, t.name, t.id === studioTheme ? el("span", { class: "star", "aria-label": "(every invoice)", text: "★" }) : "");
       b.addEventListener("click", () => {
         theme = t.id;
         try {
@@ -326,11 +335,22 @@ function drawThemes() {
     })
   );
   for (const b of $("modes").querySelectorAll("button")) b.setAttribute("aria-checked", String(b.dataset.mode === (mode || studioMode)));
-  const shown = themes.find((t) => t.id === (theme || studioTheme));
-  $("look-name").textContent = shown ? `${shown.name}${shown.id === studioTheme ? " ★" : ""} · ${(mode || studioMode) === "dark" ? "Dark" : "Bright"}` : "";
+  // The paper menu
+  const sel = $("paper");
+  if (sel.options.length !== papers.length) sel.replaceChildren(...papers.map((x) => el("option", { value: x.id, text: x.name + (x.id === studioPaper ? " ★" : "") })));
+  sel.value = paper || studioPaper;
+  $("look-name").textContent = (mode || studioMode) === "dark" ? "Dark" : "Bright";
   // An admin can make the one shown every invoice's look
-  $("theme-save").hidden = !(data?.canDecide && ((theme && theme !== studioTheme) || (mode && mode !== studioMode)));
+  $("theme-save").hidden = !(data?.canDecide && ((theme && theme !== studioTheme) || (mode && mode !== studioMode) || (paper && paper !== studioPaper)));
 }
+$("paper").addEventListener("change", () => {
+  paper = $("paper").value;
+  try {
+    localStorage.setItem("invoicer-paper", paper);
+  } catch {}
+  drawThemes();
+  refreshDoc();
+});
 $("modes").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-mode]");
   if (!b) return;
@@ -354,7 +374,9 @@ $("note").addEventListener("input", () => {
 });
 $("theme-save").addEventListener("click", async () => {
   try {
-    const r = await api("money/settings", { method: "POST", body: { invoiceTheme: theme || studioTheme, invoiceMode: mode || studioMode } });
+    const r = await api("money/settings", { method: "POST", body: { invoiceTheme: theme || studioTheme, invoiceMode: mode || studioMode, invoicePaper: paper || studioPaper } });
+    studioPaper = r.settings?.invoicePaper || paper || studioPaper;
+    $("paper").replaceChildren();
     studioTheme = r.settings?.invoiceTheme || theme || studioTheme;
     studioMode = r.settings?.invoiceMode || mode || studioMode;
     say(`Every invoice now uses ${themes.find((t) => t.id === studioTheme)?.name || studioTheme}, ${studioMode}.`);
@@ -539,7 +561,38 @@ function closeNew() {
 }
 $("new-close").addEventListener("click", closeNew);
 $("n-cancel").addEventListener("click", closeNew);
+// The form is for a new invoice, or for changing one (editing: { id, number, sent })
+let editing = null;
+function formFor(inv) {
+  editing = inv ? { id: inv.id, number: inv.number, sent: ["sent", "part_paid"].includes(inv.status) } : null;
+  $("new-title").textContent = inv ? `Edit ${inv.number}` : "New invoice";
+  $("n-save").textContent = inv ? "Save changes" : "Make the invoice";
+  $("n-foot").textContent = inv && editing.sent
+    ? "It was sent: saved, it goes to an admin's Approve again, then the client gets the updated invoice. Its link says it's being updated meanwhile."
+    : "It waits for an admin's Approve in Portal → Money before anything is emailed.";
+}
+$("edit-btn").addEventListener("click", () => {
+  if (!chosen) return;
+  const inv = chosen.staged.invoice;
+  formFor(inv);
+  lines = inv.lines.map((l) => ({ key: nextKey++, description: l.description, qty: String(l.qty), unit: (l.unitPence / 100).toFixed(2) }));
+  $("n-error").hidden = true;
+  $("n-name").value = inv.billTo.name || "";
+  $("n-email").value = inv.billTo.email || "";
+  $("n-issue").value = inv.issueDate;
+  $("n-due").value = inv.dueDate;
+  $("n-notes").value = inv.notes || "";
+  $("new").showModal();
+  drawLines();
+  $("n-name").focus();
+});
+$("remove-btn").addEventListener("click", () => {
+  if (!chosen) return;
+  const inv = chosen.staged.invoice;
+  confirmThen($("remove-btn"), `Yes, remove ${inv.number}`, () => api(`money/invoices/${inv.id}/void`, { method: "POST", body: {} }), `${inv.number} removed (kept on record).`);
+});
 $("new-btn").addEventListener("click", async () => {
+  formFor(null);
   lines = [];
   $("new-form").reset();
   $("n-error").hidden = true;
@@ -576,9 +629,10 @@ $("new-form").addEventListener("submit", async (e) => {
   if (client) body.clientId = client.id;
   $("n-save").disabled = true;
   try {
-    const made = await api("money/invoices", { method: "POST", body });
+    const made = editing ? await api(`money/invoices/${editing.id}/edit`, { method: "POST", body }) : await api("money/invoices", { method: "POST", body });
     closeNew();
-    say(`${made.invoice.number} is made. It waits for an admin's Approve before it's emailed.`);
+    say(editing ? `${made.invoice.number} saved. It waits for an admin's Approve${editing.sent ? ", then the client gets the updated invoice" : ""}.` : `${made.invoice.number} is made. It waits for an admin's Approve before it's emailed.`);
+    if (editing) chosen = null;
     await load(false);
     await choose(made.invoice.id);
     showPart("doc");
@@ -636,6 +690,9 @@ $("bank-form").addEventListener("submit", async (e) => {
     themes = catalogue.themes || [];
     studioTheme = catalogue.theme || "night";
     studioMode = catalogue.mode || "bright";
+    papers = catalogue.papers || [];
+    studioPaper = catalogue.paper || "moonstone";
+    if (paper && !papers.some((x) => x.id === paper)) paper = null;
     if (mode && !(catalogue.modes || ["bright", "dark"]).includes(mode)) mode = null;
     if (theme && !themes.some((t) => t.id === theme)) theme = null;
     drawThemes();

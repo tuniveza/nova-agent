@@ -339,18 +339,24 @@
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -20; comp.knee.value = 24; comp.ratio.value = 3;
     comp.attack.value = 0.05; comp.release.value = 0.6;
-    const warmBase = rr(prog, 5800, 6800);
+    // (a record's mix, not a game's: the low end lifted, a clearer top, a drier room)
+    const warmBase = rr(prog, 8800, 10400);
     const warm = filter('lowpass', warmBase * (1 + 0.07 * tone), 0.3);
-    comp.connect(warm).connect(fader);
+    // (and a trim after the compressor: the fuller mix sits as quietly as the old one did)
+    const trim = gain(0.42);
+    comp.connect(warm).connect(trim).connect(fader);
+    const weight = ctx.createBiquadFilter();
+    weight.type = 'lowshelf'; weight.frequency.value = 130; weight.gain.value = 5;
+    weight.connect(comp);
     // Reverb send/return: its size is part of the seed.
     const reverbIn = gain(1);
     const verb = ctx.createConvolver();
     const roomSize = rr(prog, 4.6, 7.2);
     verb.buffer = makeImpulse(roomSize, S('room'));
-    const verbOut = gain(0.9);
+    const verbOut = gain(0.55);
     reverbIn.connect(verb);
     verb.connect(verbOut);
-    verbOut.connect(comp);
+    verbOut.connect(weight);
     // Two soft, darkened echoes (one for the piece playing, one for the piece coming in), each
     // piece setting its own echo time while its line is quiet.
     const lines = [0, 1].map(() => {
@@ -358,10 +364,10 @@
       delay.delayTime.value = 0.52;                 // roughly a dotted eighth
       const echoTone = filter('lowpass', 2200, 0.3);
       const back = gain(0.35);
-      const echoOut = gain(0.5);
+      const echoOut = gain(0.3);
       delay.connect(echoTone).connect(back).connect(delay); // feedback loop
       echoTone.connect(echoOut);
-      echoOut.connect(comp);
+      echoOut.connect(weight);
       echoOut.connect(reverbIn);
       return { input: delay, back, echoTone };
     });
@@ -401,7 +407,7 @@
       const trim = TRIM[name] || 1;
       const p = { id: name, name: PIECE_NAMES[name], i, t0: t, end, fadeAt: end - fadeOut, r, line, schedule: () => {} };
       p.ins = [gain(0), gain(0), gain(0)];
-      p.ins[0].connect(comp); p.ins[1].connect(reverbIn); p.ins[2].connect(line.input);
+      p.ins[0].connect(weight); p.ins[1].connect(reverbIn); p.ins[2].connect(line.input);
       for (const g of p.ins) {
         g.gain.setValueCurveAtTime(equalPower(true, trim), t, Math.max(0.05, fadeIn));
         if (isFinite(end)) g.gain.setValueCurveAtTime(equalPower(false, trim), end - fadeOut, fadeOut);
@@ -596,20 +602,23 @@
     function bassNote(bus, midi, t, len, level) {
       stats.bass++;
       const f = mtof(midi);
-      const amp = gain(0), lp = filter('lowpass', 420 * bright(), 0.6);
+      const amp = gain(0), lp = filter('lowpass', 640 * bright(), 0.8);
       amp.gain.setValueAtTime(0, t);
       amp.gain.linearRampToValueAtTime(level, t + 0.018);
       amp.gain.setTargetAtTime(level * 0.7, t + 0.03, 0.35);
       amp.gain.setTargetAtTime(0, t + Math.max(0.1, len), 0.07);
-      const sub = osc('sine', f), body = osc('triangle', f), bodyAmt = gain(0.45), up = osc('sine', f * 2), upAmt = gain(0.16);
+      const sub = osc('sine', f), body = osc('sawtooth', f), bodyAmt = gain(0.32), up = osc('sine', f * 2), upAmt = gain(0.14);
+      // (the weight you feel: a sine an octave down, when that's still a note and not a rumble)
+      const deep = osc('sine', f >= 62 ? f / 2 : f), deepAmt = gain(f >= 62 ? 0.55 : 0.2);
       sub.connect(amp);
+      deep.connect(deepAmt).connect(amp);
       body.connect(bodyAmt).connect(lp);
       up.connect(upAmt).connect(lp);
       lp.connect(amp);
       amp.connect(bus);
       const end = t + Math.max(0.1, len) + 0.6;
-      for (const o of [sub, body, up]) { o.start(t); o.stop(end); }
-      disposeWhenDone(sub, [sub, body, bodyAmt, up, upAmt, lp, amp]);
+      for (const o of [sub, body, up, deep]) { o.start(t); o.stop(end); }
+      disposeWhenDone(sub, [sub, body, bodyAmt, up, upAmt, deep, deepAmt, lp, amp]);
     }
     // The lead voices
     function lead(kind, bus, midi, t, len, level, pan, r) {
@@ -695,15 +704,22 @@
     // The drums: all soft, warm and low
     function kick(bus, t, level) {
       stats.drum++;
-      const o = osc('sine', 110), amp = gain(0), lp = filter('lowpass', 180, 0.5);
-      o.frequency.setValueAtTime(110, t);
-      o.frequency.exponentialRampToValueAtTime(46, t + 0.11);
+      const o = osc('sine', 125), amp = gain(0), lp = filter('lowpass', 200, 0.5);
+      o.frequency.setValueAtTime(125, t);
+      o.frequency.exponentialRampToValueAtTime(44, t + 0.14);
       amp.gain.setValueAtTime(0, t);
       amp.gain.linearRampToValueAtTime(level, t + 0.004);
-      amp.gain.setTargetAtTime(0, t + 0.01, 0.085);
+      amp.gain.setTargetAtTime(0, t + 0.02, 0.15);
       o.connect(lp).connect(amp).connect(bus);
-      o.start(t); o.stop(t + 0.7);
-      disposeWhenDone(o, [o, lp, amp]);
+      // (the beater: a very short, soft click so the kick is heard on small speakers too)
+      const click = osc('triangle', 1700), clickAmp = gain(0);
+      clickAmp.gain.setValueAtTime(0, t);
+      clickAmp.gain.linearRampToValueAtTime(level * 0.12, t + 0.001);
+      clickAmp.gain.setTargetAtTime(0, t + 0.002, 0.006);
+      click.connect(clickAmp).connect(bus);
+      o.start(t); o.stop(t + 0.9);
+      click.start(t); click.stop(t + 0.06);
+      disposeWhenDone(o, [o, lp, amp, click, clickAmp]);
     }
     function noiseDrum(bus, t, level, pan, r, o) {
       stats.drum++;
@@ -911,7 +927,7 @@
           // Now and then a note is left out, so the line breathes
           if (pos > 0 && rb() < 0.1) return;
           const t = at(t0, pos) + loose();
-          if (p.alive(t)) bassNote(bassBus, m, t, len * beat * 0.9, 0.05 * rr(rv, 0.9, 1.05));
+          if (p.alive(t)) bassNote(bassBus, m, t, len * beat * 0.9, 0.075 * rr(rv, 0.9, 1.05));
         });
       }
       const kit = KITS[cfg.kit];
@@ -919,7 +935,7 @@
         // (none while the piece fades out: the next one comes in gently, without them)
         if (!section.drums || t0 > p.fadeAt - 1) return;
         const step = (s) => at(t0, s / 4) + loose();
-        for (const s of kit.kick || []) if (s === 0 || rd() > 0.12) kick(drumBus, step(s), s === 0 ? 0.05 : 0.036);
+        for (const s of kit.kick || []) if (s === 0 || rd() > 0.06) kick(drumBus, step(s), s === 0 ? 0.075 : 0.055);
         for (const s of kit.rim || []) if (rd() > 0.08) rim(drumBus, step(s), 0.011 * rr(rd, 0.8, 1.1), 0.15, rd);
         for (const s of kit.brush || []) brushHit(drumBus, step(s), 0.0065 * rr(rd, 0.7, 1.1), -0.2, rd);
         for (const s of kit.shaker || []) if (rd() > 0.15) shaker(drumBus, step(s), (s % 2 ? 0.0028 : 0.0045) * rr(rd, 0.7, 1.1), 0.35, rd);
