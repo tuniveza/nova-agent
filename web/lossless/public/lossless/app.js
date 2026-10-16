@@ -163,17 +163,6 @@ async function openInputOrDefault() {
   }
 }
 
-// What to tell the person when audio won't start. No microphone at all (or none
-// the browser can use) is a setup step, not a fault, so say what to do.
-function audioStartMessage(err) {
-  const name = (err && err.name) || "";
-  if (name === "NotAllowedError") return "Couldn't start audio: Microphone permission was denied.";
-  if (name === "NotFoundError" || name === "OverconstrainedError" || name === "NotReadableError") {
-    return "No microphone available. Plug one in (or close apps using it), then press Connect again.";
-  }
-  return "Couldn't start audio: " + ((err && err.message) || "unknown error");
-}
-
 // Wire an input stream into a fresh capture node, replacing any previous one.
 function attachInput(stream) {
   const ctx = S.ctx;
@@ -783,7 +772,8 @@ async function connect() {
     await startAudio();
   } catch (err) {
     console.error(err);
-    setStatus(audioStartMessage(err), "bad");
+    const why = err.name === "NotAllowedError" ? "Microphone permission was denied." : err.message;
+    setStatus("Couldn't start audio: " + why, "bad");
     await stopAudio();
     ui.connect.disabled = false;
     return;
