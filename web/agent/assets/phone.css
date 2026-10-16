@@ -340,3 +340,6 @@ html body .tabbar .tgroup[data-group="solo"] [data-tab] > span:last-child, html 
   html body .tabbar button > .t-ico > svg, html body .tabbar button > .t-ico > img { width: 18px; height: 18px; }
   html body .tabbar > .status-line { display: none !important; }
 }
+/* (an extremely thin or short window: the tiles' row scrolls inside itself, so their line sits just
+   inside its top edge, where it's never cut off) */
+@media (max-width: 299px), (max-height: 359px) { html body .tabbar > .dock-handle { top: 0; height: 12px; } }

@@ -520,7 +520,7 @@ async function newTab(w, h) {
   // (touch: phones, upright or sideways, and the Android tablets' sizes, as in src/fixer/looks.ts looksDevice)
   const touch = w < 800 || (w > h && h <= 500) || ["800x1280", "1280x800", "600x960"].includes(`${w}x${h}`);
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch });
-  if (BARS_AWAY) await ctx.addInitScript(() => { try { localStorage.setItem("nova-bar-3", "hidden"); localStorage.setItem("nova-top-3", "hidden"); } catch (err) {} });
+  if (BARS_AWAY) await ctx.addInitScript(() => { try { localStorage.setItem("nova-bar-4", "hidden"); localStorage.setItem("nova-top-4", "hidden"); } catch (err) {} });
   const tab = await ctx.newPage();
   await tab.route(/\/__fit\.html/, (r) => r.fulfill({ contentType: "text/html", body: FRAME(new URL(r.request().url()).searchParams.get("src")) }));
   // Nova Bot's answers for Portal (signed in as an admin, with long lists), from the samples file

@@ -17,15 +17,17 @@
 //   window.NovaBar = { mode(), setMode(m), next(), topMode(), setTopMode(m), nextTop(), name(m), reveal() }
 (() => {
   "use strict";
-  // "work" (the default since 16 Oct 2026): always shown, except while you work: typing in Agent,
-  // typing in Notes, moving around Board's table, or setting up an invoice (the bars step aside,
-  // and are back when you stop, or at once at the edge)
-  const MODES = ["work", "auto", "shown", "hidden"];
-  const NAMES = { work: "Shown, away while you work", auto: "Auto", shown: "Always shown", hidden: "Always hidden" };
-  // (new keys: the new default for everyone, also on a device that had picked another before)
-  const KEYS = { nav: "nova-bar-3", top: "nova-top-3" };
-  const pick = (m) => (MODES.includes(m) ? m : "work");
-  const load = (k) => { try { return pick(localStorage.getItem(k)); } catch (err) { return "work"; } };
+  // Always shown is the default (16 Oct 2026); the Nova tiles (a phone) or the Nova dock (a computer)
+  // hide with their own toggle, the slim line on their top edge (and come back with the same line at
+  // the bottom of the screen). Also: Auto (away while you work or when the mouse has gone, back at
+  // once at the edge or when you stop), "work" (shown, away only while you work: typing in Agent or
+  // Notes, moving around Board's table, setting up an invoice) and Always hidden.
+  const MODES = ["shown", "auto", "work", "hidden"];
+  const NAMES = { shown: "Always shown", auto: "Auto", work: "Shown, away while you work", hidden: "Hidden" };
+  // (new keys: always shown for everyone, also on a device that had picked another before)
+  const KEYS = { nav: "nova-bar-4", top: "nova-top-4" };
+  const pick = (m) => (MODES.includes(m) ? m : "shown");
+  const load = (k) => { try { return pick(localStorage.getItem(k)); } catch (err) { return "shown"; } };
   const root = document.documentElement;
   const main = document.getElementById("main");
   if (!main) return;
@@ -212,7 +214,8 @@
     if (!on && after) { resting = setTimeout(() => work(false), after); return; }
     if (on === working) return;
     working = on;
-    for (const b of [bars.top, bars.nav]) if (b.mode === "work") (on ? hide : show)(b);
+    // (Auto too: away while you work, back when you stop, as well as when the mouse has gone)
+    for (const b of [bars.top, bars.nav]) if (b.mode === "work" || b.mode === "auto") (on ? hide : show)(b);
   }
   const editable = (el) => !!el && (el.isContentEditable || /^(TEXTAREA|SELECT)$/.test(el.tagName) || (el.tagName === "INPUT" && !/^(button|submit|reset|checkbox|radio|range|color|file)$/i.test(el.type || "")));
   // Typing: on with the first key, off when the box is left (unless another box takes over)
@@ -295,11 +298,39 @@
     el.title = label;
     el.innerHTML = '<span aria-hidden="true"></span>';
     document.body.append(el);
-    // (the mouse touching it is the edge in pointerAt, above; a tap or a click here)
-    el.addEventListener("click", () => show(b));
+    // (the mouse touching it is the edge in pointerAt, above; a tap or a click here: hidden with the
+    // toggle, it's shown again for good)
+    el.addEventListener("click", () => (b.mode === "hidden" ? setFor(b, "shown", dockName()) : show(b)));
   }
   edge(bars.top, "top", "Show the title panel");
   edge(bars.nav, "bottom", "Show the navigation panel");
+
+  // ---- The toggle on the Nova tiles / Nova dock: a slim line on its top edge (no room of its own) ----
+  const dockName = () => (PHONE.matches ? "Nova tiles" : "Nova dock");
+  function handleFor(box) {
+    if (!box) return;
+    // (not a <button>: the tiles' own look is for buttons; this is a slim line, worked the same way)
+    const h = document.createElement("div");
+    h.setAttribute("role", "button");
+    h.tabIndex = 0;
+    h.className = "dock-handle";
+    h.dataset.sfx = "none";
+    const say = () => { const t = `Hide the ${dockName()}`; h.setAttribute("aria-label", t); h.title = t; };
+    say();
+    PHONE.addEventListener("change", say);
+    h.innerHTML = '<span aria-hidden="true"></span>';
+    h.addEventListener("click", (e) => { e.stopPropagation(); setFor(bars.nav, "hidden", dockName()); });
+    h.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); h.click(); } });
+    box.append(h);
+    // (the phone's bar redraws itself now and then: the line stays on it)
+    new MutationObserver(() => { if (!box.contains(h)) box.append(h); }).observe(box, { childList: true });
+  }
+  handleFor(tabEl);
+  handleFor(stripEl);
+  const peek = document.getElementById("bar-peek");
+  const peekSay = () => { if (peek) { const t = `Show the ${dockName()}`; peek.setAttribute("aria-label", t); peek.title = t; } };
+  peekSay();
+  PHONE.addEventListener("change", peekSay);
 
   // ---- The choices ----
   function apply(b) {
@@ -313,10 +344,10 @@
     try { localStorage.setItem(KEYS[b === bars.top ? "top" : "nav"], m); } catch (err) {}
     apply(b);
     window.dispatchEvent(new CustomEvent("novabarchange", { detail: b === bars.top ? { top: m } : { mode: m } }));
-    say(`${label}: ${NAMES[m]}`);
+    say(m === "hidden" && b === bars.nav ? `${label} hidden: the line at the bottom brings it back` : `${label}: ${NAMES[m]}`);
     return m;
   }
-  const setMode = (m) => setFor(bars.nav, m, "Panels bar");
+  const setMode = (m) => setFor(bars.nav, m, dockName());
   const setTopMode = (m) => setFor(bars.top, m, "Top bar");
   // A short note in the middle of the screen when the choice changes
   let note = null;

@@ -114,24 +114,32 @@ describe("the panels bar along the bottom", () => {
     expect(barJs).toMatch(/if \(\+\+tries > 30\) \{ clearInterval\(timer\)/);
   });
 
-  it("shown, away while you work, by default for both bars (new keys, so it's on for every device), with Auto, Always shown and Always hidden", () => {
-    expect(barJs).toContain('const MODES = ["work", "auto", "shown", "hidden"];');
-    expect(barJs).toContain('const pick = (m) => (MODES.includes(m) ? m : "work");');
-    expect(barJs).toContain('const KEYS = { nav: "nova-bar-3", top: "nova-top-3" };');
-    for (const m of ["work", "auto", "shown", "hidden"]) {
+  it("always shown by default for both bars (new keys, so it's on for every device), with Auto, away while you work, and hidden", () => {
+    expect(barJs).toContain('const MODES = ["shown", "auto", "work", "hidden"];');
+    expect(barJs).toContain('const pick = (m) => (MODES.includes(m) ? m : "shown");');
+    expect(barJs).toContain('const KEYS = { nav: "nova-bar-4", top: "nova-top-4" };');
+    for (const m of ["shown", "auto", "work", "hidden"]) {
       expect(html).toContain(`data-bar-mode="${m}"`);
       expect(html).toContain(`data-top-mode="${m}"`);
     }
     for (const k of ["setMode", "setTopMode", "reveal:", "nextTop", "next:"]) expect(barJs).toContain(k);
   });
 
-  it("while you work (the default): away while typing in Agent or Notes, moving around Board, setting up an invoice; never just because the mouse moved", () => {
+  it("the Nova tiles / Nova dock hide with their own slim line on their top edge, and the same line at the bottom brings them back", () => {
+    expect(barJs).toContain('h.className = "dock-handle";');
+    expect(barJs).toContain('setFor(bars.nav, "hidden", dockName())');
+    expect(barJs).toContain('(b.mode === "hidden" ? setFor(b, "shown", dockName()) : show(b))');
+    expect(barJs).toContain('const dockName = () => (PHONE.matches ? "Nova tiles" : "Nova dock");');
+  });
+
+  it("while you work (Auto and away while you work): away while typing in Agent or Notes, moving around Board, setting up an invoice; never just because the mouse moved", () => {
     expect(barJs).toContain('if (box) watchTyping(document, (el) => el === box);');
     expect(barJs).toContain('if (path.startsWith("/notes/")) watchTyping(doc, () => true);');
     expect(barJs).toContain('if (path.startsWith("/invoicer/")) {');
     expect(barJs).toContain('if (path.startsWith("/board/")) {');
     expect(barJs).toContain('if (b.mode === "work") continue; // (away only while you work: below)');
     expect(barJs).toContain('if (b.timer || b.state !== "in" || b.mode !== "auto") return;');
+    expect(barJs).toContain('if (b.mode === "work" || b.mode === "auto") (on ? hide : show)(b);');
   });
 
   it("comes back at once: the mouse at the edge, a tap or swipe at the edge, Tab into it, scrolling up", () => {

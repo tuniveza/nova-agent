@@ -154,7 +154,7 @@ for (const [w, h] of SIZES) {
   // (a fresh window, already set to Always hidden: leaving a page with panels open can be held up)
   await ctx.close();
   ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: phone, isMobile: phone && w < 600 });
-  await ctx.addInitScript(() => { try { localStorage.setItem("nova-bar-3", "hidden"); localStorage.setItem("nova-top-3", "hidden"); } catch (err) {} });
+  await ctx.addInitScript(() => { try { localStorage.setItem("nova-bar-4", "hidden"); localStorage.setItem("nova-top-4", "hidden"); } catch (err) {} });
   tab = await ctx.newPage();
   await tab.mouse.move(w / 2, h / 2); // (not resting on the top edge, which brings the title panel)
   await tab.goto(`${BASE}/agent/`, { waitUntil: "domcontentloaded" });
