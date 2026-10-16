@@ -105,6 +105,16 @@ describe("one screen, nothing scrolling the page", () => {
     expect(phone).toContain("html.embed .embed-head > .tabs > #tab-more { display: none; }");
   });
 
+  it("Portal on a phone inside Nova Agent: no section past the side (a grid that scrolls up and down; wrapping pills on its side)", () => {
+    const css = read("../web/portal/frame.css");
+    const phone = css.slice(css.indexOf("@media (max-width: 760px) {\n  html.embed .embed-head > #portal-tabs"));
+    expect(phone).toContain("display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));");
+    expect(phone).toContain("max-height: 136px; overflow-x: hidden; overflow-y: auto;");
+    expect(phone).toContain("html.embed .embed-head > #portal-tabs { flex-wrap: wrap; justify-content: center; row-gap: 6px; overflow: visible;");
+    // the chosen section is scrolled into view in the grid too
+    expect(read("../web/shared/inside.js")).toContain("tabs.scrollTo({ top: on.offsetTop - (tabs.clientHeight - on.offsetHeight) / 2");
+  });
+
   it("one title panel: inside Nova Agent no panel shows a header of its own (Index, Lossless, Observatory)", () => {
     const fit = read("../scripts/check-fit.mjs");
     expect(fit).toContain("shows a header of its own inside Nova Agent");
