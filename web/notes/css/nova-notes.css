@@ -825,15 +825,32 @@ dialog.dlg.guide .dlg-foot { justify-content: center; }
 /* Touch screens: the guide's topics finger-sized */
 @media (pointer: coarse) { .guide-toc button { min-height: 40px; } }
 
-/* ---- A phone: every tool on one line, nothing sliding (16 Oct 2026) ----
-   The groups' separators step aside and the tools share the toolbar's width evenly (each as wide as
-   the row allows, its icon never bigger than it); the paragraph style is a compact menu. */
+/* ---- A phone: the tools as proper buttons, two neat rows at most (16 Oct 2026) ----
+   Each tool is its own small rounded button (a soft fill and a fine edge, lit when it's on), all the
+   same size in an even grid that fills the toolbar's width; the paragraph style takes three buttons'
+   room on the first row. Two rows on most phones (three on the smallest), never a strip that slides,
+   and never half the screen. */
 @media (max-width: 640px) {
-  html body #toolbar { flex-wrap: nowrap !important; justify-content: space-between; gap: 0; row-gap: 0; padding: 3px 4px; overflow: visible !important; -webkit-mask-image: none; mask-image: none; }
+  html body #toolbar { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px; padding: 5px; border-radius: 16px;
+    overflow: visible !important; -webkit-mask-image: none; mask-image: none; }
   html body #toolbar .tb-group { display: contents; }
-  html body #toolbar .tb { flex: 1 1 0; width: auto !important; min-width: 0 !important; height: 36px; padding: 0; }
-  html body #toolbar .tb .ico, html body #toolbar .tb svg { width: min(17px, 100%); height: 17px; }
-  html body #toolbar .tb.letter { font-size: 14px; }
-  html body #toolbar .tb.letter i { font-size: 16px; }
-  html body #toolbar #tb-style { flex: 0 0 auto; width: auto !important; min-width: 0; font-size: 12px !important; padding-inline: 4px 24px; background-position: right 5px center; text-overflow: clip; field-sizing: content; }
+  html body #toolbar .tb { width: auto !important; min-width: 0 !important; height: 36px; padding: 0; border-radius: 10px;
+    background: color-mix(in srgb, var(--void) 45%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 85%, transparent); }
+  html body #toolbar .tb:disabled { background: color-mix(in srgb, var(--void) 25%, transparent); }
+  html body #toolbar .tb[aria-pressed="true"], html body #toolbar .tb.on { background: color-mix(in srgb, var(--accent) 42%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi) 55%, transparent); }
+  html body #toolbar .tb .ico, html body #toolbar .tb svg { width: 18px; height: 18px; }
+  html body #toolbar .tb.letter { font-size: 15px; }
+  html body #toolbar #tb-style { grid-column: span 3; width: 100% !important; min-width: 0; height: 36px; border-radius: 10px; font-size: 13px !important;
+    padding-inline: 10px 24px; background-position: right 8px center; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 85%, transparent); }
+}
+/* The Shared / Local button on a phone (16 Oct 2026): a proper button in the toolbar's own style (a
+   soft fill and a fine edge, lit in the theme's colour when the note is shared), its icon and word
+   always whole: it's never squeezed; the note's title takes the room that's left */
+@media (max-width: 640px) {
+  html body .doc-head .note-kind { flex: none; height: 36px; min-height: 36px; min-width: 0; margin-left: 0; padding: 0 12px; gap: 6px; border: 0; border-radius: 12px;
+    font-family: inherit; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--muted);
+    background: color-mix(in srgb, var(--void) 45%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 85%, transparent); }
+  html body .doc-head .note-kind.is-shared { color: var(--text); background: color-mix(in srgb, var(--hi) 18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi) 55%, transparent); }
+  html body .doc-head .note-kind svg { width: 16px; height: 16px; }
+  html body .doc-head .doc-title { flex: 1 1 auto; min-width: 0; }
 }

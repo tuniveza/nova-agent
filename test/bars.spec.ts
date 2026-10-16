@@ -127,6 +127,8 @@ describe("the panels bar along the bottom", () => {
 
   it("the Nova tiles / Nova dock hide with their own slim line on their top edge, and the same line at the bottom brings them back", () => {
     expect(barJs).toContain('h.className = "dock-handle";');
+    // (a finger's drag stays with the handle: no button's touch rule may hand it to the page as scrolling)
+    expect(read("../web/agent/assets/bar.css")).toContain("html body .dock-handle, html body .dock-handle *, html body .bar-edge.bottom, html body .bar-edge.bottom * { touch-action: none !important; }");
     // (a drawer's handle, 16 Oct 2026: dragged down past a third of the way, or flicked, it closes; a tap
     // or click closes it; the edge it leaves at the bottom is pulled up (or tapped) to bring it back)
     expect(barJs).toContain('if (e.type === "pointerup" && (dy > box.offsetHeight / 3 || (dy > 12 && g.v > 0.5))) close();');

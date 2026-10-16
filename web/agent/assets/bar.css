@@ -245,3 +245,7 @@ html.nav-pulling .shell > .tabbar, html.nav-pulling .main > .suite-home { opacit
   .shell > .tabbar { position: relative; z-index: 8; }
   .dock-handle > .grip { width: 56px; height: 15px; }
 }
+
+/* (the drawer's handles keep a finger's drag for themselves, whatever a button's usual touch rules
+   say: otherwise a phone takes the drag as scrolling the page and lets go of the handle) */
+html body .dock-handle, html body .dock-handle *, html body .bar-edge.bottom, html body .bar-edge.bottom * { touch-action: none !important; }
