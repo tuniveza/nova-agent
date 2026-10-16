@@ -397,3 +397,10 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
 .cell.tight > .more { position: absolute; right: 3px; bottom: 3px; margin: 0; z-index: 1; }
 /* The day's list: a card's title is never cut off after two lines: it takes the lines it needs */
 .row-item strong { -webkit-line-clamp: none; line-clamp: none; display: block; overflow: visible; }
+/* (a very thin window, under 340px: each card in the day's list keeps its title and the line under
+   it on one line each, a long one sliding sideways inside its own box; the list itself never wraps
+   them, whatever the Calendar redraws) */
+@media (max-width: 340px) {
+  .row-item > span { min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .row-item strong, .row-item small { white-space: nowrap; overflow: visible; }
+}
