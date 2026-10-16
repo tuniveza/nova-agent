@@ -692,6 +692,7 @@
   .toast h5 { margin: 0 0 4px; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 14px; color: #fff; }
   .toast p { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
   .toast .x { float: right; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 16px; }
+  .toasts-more { display: none; justify-self: center; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 92%, transparent); color: var(--muted); font: 600 12px var(--f-body, inherit); cursor: pointer; }
 
   /* Rhythm settings */
   dialog.rhythm { padding: 0; border: 0; background: transparent; color: var(--text); width: min(560px, calc(100vw - 24px)); }
@@ -805,6 +806,11 @@
     .tl-item { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
     .now-line { margin-left: 52px; } .now-line::before { left: -52px; width: 44px; letter-spacing: .1em; }
     .toasts { right: 12px; left: 12px; bottom: 12px; width: auto; }
+    /* A phone, calm (16 Oct 2026): the newest two notices, smaller, and the rest behind "N more" */
+    .toasts:not(.all) > .toast:nth-last-child(n+3) { display: none; }
+    .toasts .toast { padding: 10px 12px; border-radius: 14px; }
+    .toasts .toast h5 { font-size: 13px; margin-bottom: 2px; }
+    .toasts .toast p { font-size: 12.5px; margin-bottom: 6px; }
   }
   @media (max-width: 600px) {
     .topbar { gap: 8px; padding: 8px 10px; }
@@ -2526,8 +2532,28 @@
     el.innerHTML = `<button class="x" aria-label="Close">×</button><h5>${escH(n.title)}</h5><p>${escH(n.message)}</p>${btns}`;
     el.querySelector('.x').addEventListener('click', () => el.remove());
     $('toasts').appendChild(el);
-    setTimeout(() => el.remove(), n.kind === 'checkin' || n.kind === 'starting' || n.kind === 'leave' ? 120000 : 12000);
+    // (on a phone, a notice that's only news goes sooner: less to look at)
+    const phoneNow = matchMedia('(max-width: 980px)').matches;
+    setTimeout(() => el.remove(), n.kind === 'checkin' || n.kind === 'starting' || n.kind === 'leave' ? 120000 : phoneNow ? 7000 : 12000);
   }
+  // A phone or tablet shows the newest two notices; the rest wait behind "N more" (tap it to see them all)
+  (() => {
+    const pile = $('toasts');
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'toasts-more';
+    pile.prepend(more);
+    const count = () => {
+      const n = pile.querySelectorAll(':scope > .toast').length;
+      const hidden = Math.max(0, n - 2);
+      if (!hidden) pile.classList.remove('all');
+      more.style.display = hidden && matchMedia('(max-width: 980px)').matches ? 'block' : 'none';
+      more.textContent = pile.classList.contains('all') ? 'Show fewer' : `${hidden} more notice${hidden === 1 ? '' : 's'}`;
+    };
+    more.addEventListener('click', () => { pile.classList.toggle('all'); count(); });
+    new MutationObserver(count).observe(pile, { childList: true });
+    addEventListener('resize', count);
+  })();
   // One card per pulse, updated on every beat (with a count), instead of a new pop-up each time
   const beats = {};
   function pulse(n) {

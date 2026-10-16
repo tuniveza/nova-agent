@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### A calmer phone: the drawer handle up where it's easy, notices placed where they're in the way least
+
+- Closed, the Nova tiles' handle is a bigger tab in a slim strip of its own a little way up the
+  screen (never over the message box, clear of the phone's swipe-home line); pulled up, the tiles
+  come up with the finger. Open, its hold area is bigger too.
+- Notices and overlays nobody's using go where they cover least: never where someone's typing, a
+  message box, the top panel or the tiles; a notice also over as few buttons and links as it can.
+- On a phone or tablet Agent shows the newest two notices, smaller, with the rest behind "N more";
+  a notice that's only news goes after 7 seconds.
+
 ### Notices that keep out of the way, a drawer's handle, plain tiles
 
 - Every notice (Agent's, each app's toasts, the bar's notes) keeps clear of where someone is typing,

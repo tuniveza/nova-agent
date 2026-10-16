@@ -316,14 +316,46 @@
     // toggle, it's shown again for good)
     const open = () => (b.mode === "hidden" ? setFor(b, "shown", dockName()) : show(b));
     el.addEventListener("click", open);
-    // (the bottom one is the drawer's handle while it's closed: pull it up and the tiles or dock come back)
+    // (the bottom one is the drawer's handle while it's closed: pull it up and the tiles or dock come
+    // up with the finger, like opening a drawer; let go past a third of the way, or with a flick up,
+    // and they open, else they slide back down. A tap opens them too.)
     if (side === "bottom") {
       let pull = null;
-      el.addEventListener("pointerdown", (e) => { if (e.button <= 0) { pull = { id: e.pointerId, y: e.clientY }; try { el.setPointerCapture(e.pointerId); } catch (err) {} } });
-      el.addEventListener("pointermove", (e) => { if (pull && e.pointerId === pull.id && pull.y - e.clientY > 18) { pull = null; open(); } });
-      const end = () => { pull = null; };
-      el.addEventListener("pointerup", end);
-      el.addEventListener("pointercancel", end);
+      const box = () => b.el();
+      el.addEventListener("pointerdown", (e) => {
+        if (e.button > 0) return;
+        pull = { id: e.pointerId, y: e.clientY, lastY: e.clientY, lastAt: performance.now(), v: 0, moved: false };
+        try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      el.addEventListener("pointermove", (e) => {
+        if (!pull || e.pointerId !== pull.id) return;
+        const up = pull.y - e.clientY;
+        if (!pull.moved && up < 5) return;
+        const d = box();
+        if (!d) return;
+        if (!pull.moved) { pull.moved = true; root.classList.add("dock-grabbed", "nav-pulling"); d.style.transition = "none"; }
+        const now = performance.now();
+        pull.v = (pull.lastY - e.clientY) / Math.max(1, now - pull.lastAt);
+        pull.lastY = e.clientY;
+        pull.lastAt = now;
+        const h = d.offsetHeight + 16;
+        d.style.transform = `translateY(${Math.max(0, h - Math.max(0, up))}px)`;
+        d.style.opacity = String(Math.min(1, 0.35 + Math.max(0, up) / h));
+      });
+      const letGo = (e) => {
+        if (!pull || e.pointerId !== pull.id) return;
+        const p = pull;
+        pull = null;
+        if (!p.moved) return; // (a tap: the click opens them)
+        el.addEventListener("click", (c) => c.stopImmediatePropagation(), { capture: true, once: true }); // (a pull isn't also a tap)
+        const d = box();
+        root.classList.remove("dock-grabbed", "nav-pulling");
+        if (d) d.style.transition = d.style.transform = d.style.opacity = "";
+        const up = p.y - e.clientY;
+        if (e.type === "pointerup" && d && (up > (d.offsetHeight + 16) / 3 || (up > 12 && p.v > 0.5))) open();
+      };
+      el.addEventListener("pointerup", letGo);
+      el.addEventListener("pointercancel", letGo);
     }
   }
   edge(bars.top, "top", "Show the title panel");

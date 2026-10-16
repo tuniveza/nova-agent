@@ -130,7 +130,8 @@ describe("the panels bar along the bottom", () => {
     // (a drawer's handle, 16 Oct 2026: dragged down past a third of the way, or flicked, it closes; a tap
     // or click closes it; the edge it leaves at the bottom is pulled up (or tapped) to bring it back)
     expect(barJs).toContain('if (e.type === "pointerup" && (dy > box.offsetHeight / 3 || (dy > 12 && g.v > 0.5))) close();');
-    expect(barJs).toContain("pull.y - e.clientY > 18");
+    // (closed, it's pulled up and the tiles come up with the finger: past a third, or a flick, they open)
+    expect(barJs).toContain("if (e.type === \"pointerup\" && d && (up > (d.offsetHeight + 16) / 3 || (up > 12 && p.v > 0.5))) open();");
     expect(barJs).toContain('setFor(bars.nav, "hidden", dockName())');
     expect(barJs).toContain('(b.mode === "hidden" ? setFor(b, "shown", dockName()) : show(b))');
     expect(barJs).toContain('const dockName = () => (PHONE.matches ? "Nova tiles" : "Nova dock");');

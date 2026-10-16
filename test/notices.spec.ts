@@ -29,18 +29,36 @@ const COMPOSER = `<form class="composer" style="position:fixed;left:0;right:0;bo
 const TOAST = `<div class="toast" style="position:fixed;left:50%;bottom:20px;translate:-50% 0;width:240px;height:50px">Saved</div>`;
 
 describe("out of the way of typing", () => {
-  it("a notice over the box being typed in slides just above it, still centred, and comes back after", async () => {
+  it("a notice over the box being typed in slides just above it, still centred; back home once nothing's in its way", async () => {
     await open(`<input id="box" style="position:fixed;left:40px;right:40px;bottom:16px;height:56px;box-sizing:border-box">` + TOAST);
     const before = await rect(".toast");
     await page.focus("#box");
     await settle();
     const moved = await rect(".toast");
-    const box = await rect("#box");
-    expect(moved.bottom).toBeLessThanOrEqual(box.top);
+    expect(moved.bottom).toBeLessThanOrEqual((await rect("#box")).top);
     expect(moved.left).toBe(before.left); // (its own centring kept)
-    await page.evaluate(() => (document.activeElement as HTMLElement).blur());
+    await page.evaluate(() => document.getElementById("box")!.remove());
+    await page.evaluate(() => (window as any).NovaNotices.place());
     await settle();
     expect(await rect(".toast")).toEqual(before);
+  });
+  it("it goes where it covers the fewest buttons (a row of buttons along the bottom: it rises above them)", async () => {
+    await open(`<div style="position:fixed;left:0;right:0;bottom:10px;display:flex;gap:4px">${"<button style='flex:1;height:60px'>Go</button>".repeat(4)}</div>` + TOAST);
+    await page.evaluate(() => (window as any).NovaNotices.place());
+    await settle();
+    expect((await rect(".toast")).bottom).toBeLessThanOrEqual(600 - 70);
+  });
+  it("never over Nova Agent's tiles or top panel", async () => {
+    await open(`<nav id="tabbar" style="position:fixed;left:0;right:0;bottom:0;height:120px"></nav>` + TOAST);
+    await page.evaluate(() => (window as any).NovaNotices.place());
+    await settle();
+    expect((await rect(".toast")).bottom).toBeLessThanOrEqual(600 - 120);
+  });
+  it("an overlay someone is using is never moved", async () => {
+    await open(COMPOSER + `<div data-overlay id="card" style="position:fixed;left:20px;right:20px;bottom:20px;height:60px"><input id="in"></div>`);
+    await page.focus("#in");
+    await settle();
+    expect((await rect("#card")).bottom).toBe(580);
   });
   it("a message box is kept clear even before it's tapped (a notice never sits over where someone's about to type)", async () => {
     await open(COMPOSER);

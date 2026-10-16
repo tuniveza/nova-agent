@@ -220,3 +220,28 @@ html.is-touch, html.is-touch body { overscroll-behavior: none; }
 /* The Nova tiles and the Nova dock: no small Nova sparkle in each icon's corner (16 Oct 2026, the
    user: just the icons). Everywhere else (the Panels window, beside section titles) it stays. */
 #tabbar .pico::before, #tabbar .pico::after, #suite-home .pico::before, #suite-home .pico::after { display: none !important; }
+
+/* ---- Phones and tablets: the drawer's handle is easy to reach and hold (16 Oct 2026) ----
+   Closed, it waits a little way up the screen (clear of the phone's own swipe-home line at the very
+   bottom), as a bigger tab with its grip, that's pulled up (the tiles come up with the finger) or
+   tapped; open, its hold area on the tiles' top edge is bigger too. While the tiles are being pulled
+   up they show, following the finger. */
+html.nav-pulling .shell > .tabbar, html.nav-pulling .main > .suite-home { opacity: 1; pointer-events: none; }
+@media (pointer: coarse), (max-width: 980px) {
+  html.nav-away .bar-edge.bottom, html[data-bar="hidden"].nav-away .bar-edge.bottom {
+    left: 50%; right: auto; width: 132px; margin-left: -66px; height: 40px; padding: 0;
+    bottom: calc(2px + env(safe-area-inset-bottom)); cursor: grab; touch-action: none; }
+  /* (the screen keeps a slim strip of its own at the bottom for it: it never sits over the message
+     box or anything else that's tapped, and it's clear of the phone's own swipe-home line) */
+  html.nav-away:not(.kb) .shell, html.nav-away:not(.kb) .shell:has(> .main.viewing) { padding-bottom: calc(42px + env(safe-area-inset-bottom)); }
+  html.nav-away .bar-edge.bottom > span, html[data-bar="hidden"].nav-away .bar-edge.bottom > span {
+    display: grid; gap: 3px; align-content: center; justify-items: center; width: 64px; height: 24px; opacity: .92; border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--hi) 45%, transparent); background: color-mix(in srgb, var(--panel, #1c1129) 88%, transparent);
+    box-shadow: 0 6px 18px -8px #000, 0 0 14px -6px var(--hi);
+    background-image: linear-gradient(color-mix(in srgb, var(--hi) 70%, #fff), color-mix(in srgb, var(--hi) 70%, #fff)), linear-gradient(color-mix(in srgb, var(--hi) 55%, #fff), color-mix(in srgb, var(--hi) 55%, #fff));
+    background-size: 26px 2px, 16px 2px; background-position: center calc(50% - 3px), center calc(50% + 3px); background-repeat: no-repeat; }
+  .dock-handle { width: 104px; height: 34px; margin-left: -52px; top: -33px; }
+  /* (the tiles sit above what's over them by a hair, so their handle can be held all over) */
+  .shell > .tabbar { position: relative; z-index: 8; }
+  .dock-handle > .grip { width: 56px; height: 15px; }
+}

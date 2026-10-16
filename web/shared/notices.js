@@ -1,6 +1,12 @@
-// Notices that keep out of the way (16 Oct 2026): every notification in Nova Agent (Agent's notices,
-// each app's "Saved" or "Moved…" toast, the bar's notes) stays where its app puts it, until it would
-// be in the way of what someone is doing:
+// Notices and overlays that keep out of the way (16 Oct 2026): every notification in Nova Agent
+// (Agent's notices, each app's "Saved" or "Moved…" toast, the bar's notes) and every overlay that
+// floats over a page without being asked for (a card marked data-overlay, a dialog opened without a
+// backdrop) is placed where it's in the way least:
+//   - never over where someone is typing, a message box, the Nova top panel or the Nova tiles/dock;
+//   - a notice also over as few buttons, boxes and links as it can be (in this page, and in a panel's
+//     page under it): it tries its own place first, then just above or below each of those, the top
+//     and the bottom, and takes the one that covers least, the nearest of equals;
+//   (an overlay someone is using, the cursor or the focus in it, is never moved)
 //   - typing: a notice over the box being typed in (or the box's whole composer: the message box and
 //     its Send button), or under a phone's keyboard, slides just above it (or just below, if there's
 //     no room above), and back to its own place when the typing stops;
@@ -17,6 +23,9 @@
   if (window.NovaNotices) return;
 
   const SEL = '.toast, .toasts, .bar-note, [data-notice]';
+  const OVERLAY = 'dialog[open]:not(:modal), [data-overlay]';
+  const KEEP_CLEAR = '.composer, [data-composer], #tabbar, #suite-home, .shell > .topbar';
+  const TAPPABLE = 'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="tab"], [role="link"], [contenteditable="true"]';
   const GAP = 8; // from what it keeps clear of, and from the screen's edges
   const style = document.createElement("style");
   style.textContent = `:where(${SEL}) { transition: translate .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease; }
@@ -28,15 +37,38 @@
   const editable = (el) => !!el && (el.isContentEditable || el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && !/^(button|submit|reset|checkbox|radio|range|color|file|image|hidden)$/i.test(el.type || "")));
   const floats = (el) => { const p = getComputedStyle(el).position; return p === "fixed" || p === "absolute"; };
 
-  // The notices on show (the outermost one: a pile of toasts, not each toast in it)
+  // The notices on show (the outermost one: a pile of toasts, not each toast in it), and the overlays
+  // nobody is using right now
   function notices() {
     const out = [];
-    for (const el of document.querySelectorAll(SEL)) {
-      if (el.parentElement && el.parentElement.closest(SEL)) continue;
+    for (const el of document.querySelectorAll(`${SEL}, ${OVERLAY}`)) {
+      if (el.parentElement && el.parentElement.closest(`${SEL}, ${OVERLAY}`)) continue;
       if (!floats(el)) continue;
       const r = el.getBoundingClientRect();
       if (r.width < 1 || r.height < 1) continue;
-      out.push(el);
+      const notice = el.matches(SEL);
+      if (!notice && (el.contains(document.activeElement) || el.matches(":hover"))) continue;
+      out.push({ el, notice });
+    }
+    return out;
+  }
+  // What's on the screen to tap (as boxes), here and in a panel's page under this one
+  function tappables(skip) {
+    const out = [];
+    const take = (doc, dx, dy) => {
+      for (const t of doc.querySelectorAll(TAPPABLE)) {
+        if (skip.some((n) => n.contains(t)) || t.closest(SEL) || t.closest(KEEP_CLEAR)) continue;
+        const r = t.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) continue;
+        out.push({ left: r.left + dx, right: r.right + dx, top: r.top + dy, bottom: r.bottom + dy });
+        if (out.length > 600) return;
+      }
+    };
+    take(document, 0, 0);
+    for (const f of document.querySelectorAll("iframe")) {
+      const fr = f.getBoundingClientRect();
+      if (fr.width < 2 || fr.height < 2) continue;
+      try { if (f.contentDocument) take(f.contentDocument, fr.left, fr.top); } catch (e) { /* (not one of ours) */ }
     }
     return out;
   }
@@ -87,15 +119,17 @@
     el.style.translate = `${x} calc(${y} + ${Math.round(dy)}px)`;
   }
 
+  const area = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
   function place() {
     queued = false;
     for (const el of moved.keys()) if (!el.isConnected) moved.delete(el);
     const list = notices();
     if (!list.length) return;
     const busy = typingArea();
-    // (what's always kept clear: a message box, whether or not it's being typed in yet)
+    // (what's always kept clear: where someone's typing, a message box whether or not it's being
+    // typed in yet, Nova Agent's top panel and its tiles or dock)
     const avoid = busy ? [busy] : [];
-    for (const c of document.querySelectorAll(".composer, [data-composer]")) {
+    for (const c of document.querySelectorAll(KEEP_CLEAR)) {
       if (c.closest(SEL)) continue;
       const r = c.getBoundingClientRect();
       if (r.width > 1 && r.height > 1) avoid.push({ left: r.left - GAP, right: r.right + GAP, top: r.top - GAP, bottom: r.bottom + GAP });
@@ -103,25 +137,28 @@
     const vv = window.visualViewport;
     const top = (vv ? vv.offsetTop : 0) + GAP;
     const bottom = (vv ? vv.offsetTop + vv.height : innerHeight) - GAP;
-    for (const el of list) {
+    let taps = null; // (worked out once, only if a notice needs it)
+    for (const { el, notice } of list) {
       const now = el.getBoundingClientRect();
       const had = (moved.get(el) || {}).dy || 0;
       const r = { left: now.left, right: now.right, top: now.top - had, bottom: now.bottom - had };
-      let dy = 0;
-      // Under a phone's keyboard while typing: just above it
-      if (busy && r.bottom > bottom) dy = bottom - r.bottom;
-      // Clear of each place to keep clear (a few times round: clearing one can land on another)
-      for (let round = 0; round < 3; round++) {
+      // Where it could go: its own place, just above or below each place to keep clear, the top, the
+      // bottom (and above a phone's keyboard while typing); only where it's wholly on the screen
+      const tries = [0, top - r.top, bottom - r.bottom];
+      for (const a of avoid) tries.push(a.top - r.bottom, a.bottom - r.top);
+      const fits = tries.filter((dy) => r.top + dy >= top - 0.5 && r.bottom + dy <= bottom + 0.5);
+      if (!fits.length) fits.push(top - r.top);
+      if (notice && !taps) taps = tappables(list.map((n) => n.el));
+      // What each place would cover: anything kept clear counts far more than a button or a link
+      let best = 0, bestScore = Infinity;
+      for (const dy of fits) {
         const at = { ...r, top: r.top + dy, bottom: r.bottom + dy };
-        const hit = avoid.find((a) => overlaps(at, a));
-        if (!hit) break;
-        const up = hit.top - r.bottom;
-        const down = hit.bottom - r.top;
-        if (r.top + up >= top) dy = up;
-        else if (r.bottom + down <= bottom) dy = down;
-        else { dy = top - r.top; break; } // (no room either side: as far up as it goes)
+        let score = avoid.reduce((n, a) => n + (overlaps(at, a) ? 1e6 + area(at, a) : 0), 0);
+        if (notice) for (const t of taps) if (overlaps(at, t)) score += 1000 + area(at, t) / 10;
+        score += Math.abs(dy) / 100; // (the nearest of equals: its own place when nothing's in the way)
+        if (score < bestScore) { bestScore = score; best = dy; }
       }
-      setDy(el, dy);
+      setDy(el, Math.round(best));
     }
   }
   let queued = false;
