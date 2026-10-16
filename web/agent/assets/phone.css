@@ -192,8 +192,10 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
    and the groups sit together in the middle with a fine line between them (so no group is spread
    out while another is crushed). The width is the row shared out between the places showing
    (--tab-n, set by phone.js), between 46px and 84px; a name too long for it ends in "…". */
-/* (a tablet or window held upright has the phone's two rows instead: room for every name) */
-@media (min-width: 601px) and (max-width: 980px) and (orientation: landscape), (min-width: 601px) and (max-height: 500px) {
+/* (a tablet or window held upright has the phone's two rows instead: room for every name; so does
+   a window under 820px wide, 16 Oct 2026: the one row only fits every tile from there, and below it
+   the last groups wrapped onto a second line) */
+@media (min-width: 820px) and (max-width: 980px) and (orientation: landscape), (min-width: 820px) and (max-height: 500px) {
   .tabbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 2px 8px;
     /* (six groups now: invoicer and Nova on their own at the ends, so the gaps count six times) */
     --tab-w: clamp(42px, calc((100vw - 24px - 6 * 16px - 40px - var(--tab-n, 14) * 5px) / var(--tab-n, 14)), 84px); }

@@ -19,10 +19,10 @@ Nova Agent's caretaker, started again from the ground up on 16 October 2026. It 
 ## What it does
 
 - **Checks every 5 minutes**, on the live site as everyone sees it. It signs in as the looks account, which can only look, and it never changes anything: every save is turned away before it leaves its browser.
-- **Looks at every place:** Agent, Portal, Calendar, Notes, Board, Index, Quests, Missions, Fixer, Computer, Lossless, Observatory, Console, the Manual, the Invoicer and Nova. It looks at each one at 10 sizes:
+- **Looks at every place:** Agent, Portal, Calendar, Notes, Board, Index, Quests, Missions, Fixer, Computer, Lossless, Observatory, Console, the Manual, the Invoicer and Nova. It looks at each one at 11 sizes:
   - phones: 360×640, 390×844, 412×915, and 844×390 on its side;
   - tablets: 768×1024 and 1024×768;
-  - computers: 1366×768 and 1920×1080;
+  - computers: 800×700 (a smaller or zoomed-in window), 1366×768 and 1920×1080;
   - extremely thin and short windows: 280×600 and 900×320.
 - **Shows each problem once**, with every size it was seen at. Tap a size to see that screen with the problem outlined in red.
 

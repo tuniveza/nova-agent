@@ -45,6 +45,7 @@ export const STRICT_SIZES: { w: number; h: number; kind: StrictKind }[] = [
   { w: 844, h: 390, kind: "phone" },
   { w: 768, h: 1024, kind: "tablet" },
   { w: 1024, h: 768, kind: "tablet" },
+  { w: 800, h: 700, kind: "computer" }, // (a smaller or zoomed-in window: between the tiles' layouts)
   { w: 1366, h: 768, kind: "computer" },
   { w: 1920, h: 1080, kind: "computer" },
   // Extremely thin and extremely short windows (made that small by hand): still nothing off the screen
