@@ -49,11 +49,20 @@ function cache() {
   keep(CURRENT, current);
   keep(CACHE, { current, boards: boards.map((b) => ({ ...b })), dirty: boards.filter((b) => b.dirty).map((b) => b.id) });
 }
+// (kept on this device a moment after the changes stop, not at every step of a pinch or a drag:
+// writing every board out costs a frame each time, 16 Oct 2026; always before the page goes)
+let cacheTimer = 0;
+function cacheSoon() {
+  clearTimeout(cacheTimer);
+  cacheTimer = setTimeout(() => { cacheTimer = 0; cache(); }, 400);
+}
+addEventListener("pagehide", () => { if (cacheTimer) { clearTimeout(cacheTimer); cacheTimer = 0; cache(); } });
+document.addEventListener("visibilitychange", () => { if (document.hidden && cacheTimer) { clearTimeout(cacheTimer); cacheTimer = 0; cache(); } });
 function changed(b = board(), soon = 700) {
   if (!b) return;
   b.dirty = true;
   b.updated = nowIso();
-  cache();
+  cacheSoon();
   clearTimeout(saveTimers.get(b.id));
   saveTimers.set(b.id, setTimeout(() => push(b), soon));
 }
@@ -261,7 +270,8 @@ function applyView() {
     gridLayer.setAttribute("aria-hidden", "true");
     table.prepend(gridLayer);
   }
-  if (gridSize !== `${grid}px`) { gridSize = `${grid}px`; table.style.setProperty("--grid", gridSize); }
+  // (on the grid layer itself: set on the table, every card would inherit it and be restyled at each step of a zoom)
+  if (gridSize !== `${grid}px` || !gridLayer.style.getPropertyValue("--grid")) { gridSize = `${grid}px`; gridLayer.style.setProperty("--grid", gridSize); }
   gridLayer.style.transform = `translate3d(${v.x % grid}px, ${v.y % grid}px, 0)`;
   const words = `${Math.round(v.zoom * 100)}%`;
   if (zoomWords !== words) { zoomWords = words; $("zoom-reset").textContent = words; }
@@ -280,7 +290,7 @@ function zoomAt(factor, sx, sy) {
   v.x = px - ((px - v.x) * z) / v.zoom;
   v.y = py - ((py - v.y) * z) / v.zoom;
   v.zoom = z;
-  applyView();
+  viewSoon(); // (once a frame: a pinch sends many)
   changed(board(), 1500);
 }
 function middle() {
@@ -318,6 +328,26 @@ function fitAll() {
 const touches = new Map();
 let pan = null;
 let pinch = null;
+// (16 Oct 2026, smooth on any phone: the view is drawn once a frame, however many touch events the
+// phone sends in one; and once a zoom has settled, the table is drawn again sharp at its new size)
+let viewFrame = 0, sharpen = 0;
+function viewSoon() {
+  if (viewFrame) return;
+  viewFrame = requestAnimationFrame(() => { viewFrame = 0; applyView(); });
+}
+// (while zooming, the cards' soft shadows step aside, the costliest thing to draw at each new size;
+// they're back the moment the zoom settles)
+function sharpLater() {
+  if (!table.classList.contains("zooming")) table.classList.add("zooming");
+  clearTimeout(sharpen);
+  sharpen = setTimeout(() => {
+    table.classList.remove("zooming");
+    world.style.willChange = "auto";
+    requestAnimationFrame(() => { world.style.willChange = ""; });
+  }, 220);
+}
+// (iPhone and iPad: a pinch on the table zooms the board, never the page)
+for (const g of ["gesturestart", "gesturechange", "gestureend"]) table.addEventListener(g, (e) => e.preventDefault());
 table.addEventListener("pointerdown", (e) => {
   if (e.target !== table && e.target !== world && !e.target.classList.contains("empty")) return;
   if (e.button !== 0 && e.pointerType === "mouse") return;
@@ -342,13 +372,14 @@ table.addEventListener("pointermove", (e) => {
     const d = Math.hypot(a.x - b.x, a.y - b.y);
     zoomAt(d / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2);
     pinch.d = d;
+    sharpLater();
     return;
   }
   if (!pan) return;
   const v = view();
   v.x = pan.x + (e.clientX - pan.sx);
   v.y = pan.y + (e.clientY - pan.sy);
-  applyView();
+  viewSoon();
 });
 const endPan = (e) => {
   touches.delete(e.pointerId);
@@ -375,6 +406,7 @@ table.addEventListener("wheel", (e) => {
   }
   const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
   zoomAt(Math.exp(-dy * 0.0015), e.clientX, e.clientY);
+  sharpLater();
 }, { passive: false });
 table.addEventListener("keydown", (e) => {
   if (e.target !== table) return;
@@ -694,20 +726,30 @@ function wireCard(c, node, handle) {
     if (e.target.closest(INTERACTIVE) || c.pinned) return;
     e.preventDefault();
     node.focus({ preventScroll: true });
-    drag = { sx: e.clientX, sy: e.clientY, x: c.x, y: c.y, moved: false };
+    drag = { sx: e.clientX, sy: e.clientY, x: c.x, y: c.y, moved: false, frame: 0 };
     node.setPointerCapture(e.pointerId);
     node.classList.add("lifted");
   });
+  // (while it's carried it slides on a layer of its own, once a frame: nothing else on the board is
+  // laid out again; where it is is written when it's put down)
   node.addEventListener("pointermove", (e) => {
     if (!drag) return;
     const z = view().zoom;
     c.x = Math.round(drag.x + (e.clientX - drag.sx) / z);
     c.y = Math.round(drag.y + (e.clientY - drag.sy) / z);
     drag.moved = true;
-    place(c, node);
+    if (drag.frame) return;
+    drag.frame = requestAnimationFrame(() => {
+      if (!drag) return;
+      drag.frame = 0;
+      node.style.translate = `${c.x - drag.x}px ${c.y - drag.y}px`;
+    });
   });
   const drop = () => {
     if (!drag) return;
+    if (drag.frame) cancelAnimationFrame(drag.frame);
+    node.style.translate = "";
+    place(c, node);
     node.classList.remove("lifted");
     if (drag.moved) {
       c.updated = nowIso();
@@ -731,10 +773,13 @@ function wireCard(c, node, handle) {
     const z = view().zoom;
     c.w = Math.round(Math.min(1400, Math.max(140, size.w + (e.clientX - size.sx) / z)));
     c.h = Math.round(Math.min(1400, Math.max(90, size.h + (e.clientY - size.sy) / z)));
-    place(c, node);
+    if (size.frame) return;
+    size.frame = requestAnimationFrame(() => { if (size) { size.frame = 0; place(c, node); } });
   });
   const sized = () => {
     if (!size) return;
+    if (size.frame) cancelAnimationFrame(size.frame);
+    place(c, node);
     size = null;
     changed();
   };

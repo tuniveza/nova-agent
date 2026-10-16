@@ -107,7 +107,9 @@
     el.addEventListener("transitionend", onEnd);
     setTimeout(settle, 200);
   }
-  function hide(b) {
+  // (keepRow: it slides away over the content but keeps its row, so the panel isn't resized; used
+  // while something is being dragged, where a panel resizing mid-drag costs frames, 16 Oct 2026)
+  function hide(b, keepRow = false) {
     if (b.timer) { clearTimeout(b.timer); b.timer = null; }
     if (b.state !== "in" || b.mode === "shown") return;
     // (coming in and still over the content: straight back out, no row to give up)
@@ -117,6 +119,7 @@
     const el = b.el();
     if (STILL.matches || !el) { root.classList.add(`${b.cls}-going`, `${b.cls}-away`); b.state = "away"; return; }
     root.classList.add(`${b.cls}-going`);
+    if (keepRow) return; // (state stays "going": show() brings it straight back, nothing to re-fit)
     // Its slide done: give up the row (the panel grows once)
     let done = false;
     const away = () => {
@@ -213,13 +216,13 @@
   // when the box is left (unless another takes over), 1.2 s after a drag or zoom, or at once at the
   // edge. (Scrolling a list isn't working: that's Auto's.)
   let working = false, resting = null;
-  function work(on, after = 0) {
+  function work(on, after = 0, hands = false) {
     if (resting) { clearTimeout(resting); resting = null; }
     if (!on && after) { resting = setTimeout(() => work(false), after); return; }
     if (on === working) return;
     working = on;
     // (Auto too: away while you work, back when you stop, as well as when the mouse has gone)
-    for (const b of [bars.top, bars.nav]) if (b.mode === "work" || b.mode === "auto") (on ? hide : show)(b);
+    for (const b of [bars.top, bars.nav]) if (b.mode === "work" || b.mode === "auto") (on ? hide(b, hands) : show(b));
   }
   const editable = (el) => !!el && (el.isContentEditable || /^(TEXTAREA|SELECT)$/.test(el.tagName) || (el.tagName === "INPUT" && !/^(button|submit|reset|checkbox|radio|range|color|file|image)$/i.test(el.type || "")));
   const inBars = (el) => !!el && el.ownerDocument === document && !!((topEl && topEl.contains(el)) || (stripEl && stripEl.contains(el)) || (tabEl && tabEl.contains(el)));
@@ -250,13 +253,13 @@
     // Dragging
     doc.addEventListener("pointermove", (e) => {
       if (!drag || !drag.ok || !e.buttons) return;
-      if (!drag.on && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 12) { drag.on = true; work(true); }
+      if (!drag.on && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 12) { drag.on = true; work(true, 0, true); }
     }, { capture: true, passive: true });
     const end = () => { if (drag && drag.on) { const a = doc.activeElement; if (!editable(a)) work(false, 1200); } drag = null; };
     doc.addEventListener("pointerup", end, true);
     doc.addEventListener("pointercancel", end, true);
     // Zooming a surface you drag around (Board's table) with the wheel
-    doc.addEventListener("wheel", (e) => { if (e.target.closest && e.target.closest("[data-pan]")) { work(true); work(false, 1200); } }, { capture: true, passive: true });
+    doc.addEventListener("wheel", (e) => { if (e.target.closest && e.target.closest("[data-pan]")) { work(true, 0, true); work(false, 1200); } }, { capture: true, passive: true });
   }
   watchWork(document);
   // Leaving a panel: nothing's being worked on there any more

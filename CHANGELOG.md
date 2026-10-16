@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Board smooth on any phone (Android, iPhone)
+
+- Pinching: the grid's size is set on the grid alone (set on the table, every card was restyled at
+  each step); on a slowed phone, slow frames in a pinch 80 to about 5.
+- The view, a carried card and a card being resized are drawn once a frame, however many touch
+  events a phone sends; a carried card slides on its own layer and its place is written when it's
+  put down; while zooming the cards' shadows step aside and the table is drawn sharp once it settles.
+- Dragging anything sends the top panel and the tiles away over the content without giving up their
+  rows, so the panel is never resized mid-drag; the board is kept on the device a moment after the
+  changes stop, not at every step.
+- iPhone and iPad: a pinch on the table zooms the board, never the page; holding the table never
+  selects text or opens the page's own menu.
+
 ### Faster on Android: tiles, Board, the drawer handle
 
 - Board's table moves without restyling anything: its grid is a layer of its own that slides, and

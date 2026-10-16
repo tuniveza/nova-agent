@@ -108,6 +108,13 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .card:hover { box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(var(--hi-rgb), 0.18); }
 .card:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(var(--hi-rgb), 0.75), 0 14px 30px -14px rgba(0, 0, 0, 0.95); }
 .card.lifted { cursor: grabbing; box-shadow: 0 26px 48px -18px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(var(--hi-rgb), 0.35); }
+/* (zooming: the cards' shadows step aside until the zoom settles, board.js) */
+.table.zooming .card { box-shadow: none !important; transition: none !important; }
+/* (a card being carried is a layer of its own: it slides without the board being drawn again) */
+.card.lifted { will-change: translate; }
+/* (iPhone: holding or dragging on the table never selects text or opens the page's own menus) */
+.table { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.table textarea, .table input, .table [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
 .card.pinned { cursor: default; }
 .card-head { display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 6px 6px 4px 12px; }
 .card-kind { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 10.5px var(--f-body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }

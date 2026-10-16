@@ -150,7 +150,10 @@ describe("the panels bar along the bottom", () => {
     expect(barJs).toContain("Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 12");
     expect(barJs).toContain('if (b.mode === "work") continue; // (away only while you work: below)');
     expect(barJs).toContain('if (b.timer || b.state !== "in" || b.mode !== "auto") return;');
-    expect(barJs).toContain('if (b.mode === "work" || b.mode === "auto") (on ? hide : show)(b);');
+    expect(barJs).toContain('if (b.mode === "work" || b.mode === "auto") (on ? hide(b, hands) : show(b));');
+    // (a drag sends them away over the content, keeping their rows: the panel is never resized mid-drag)
+    expect(barJs).toContain("drag.on = true; work(true, 0, true);");
+    expect(barJs).toContain('if (keepRow) return;');
   });
 
 
