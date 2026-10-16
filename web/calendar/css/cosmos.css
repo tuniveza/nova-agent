@@ -177,9 +177,16 @@ html[data-centred] .dp-moon, html[data-centred] .dp-add { justify-content: cente
   .pill-sym svg { width: 14px; height: 14px; }
   .cell { --sym: 1; }
 }
-/* The written-out day may take two lines; it keeps clear of the moon in the corner */
-.num > .n-long { white-space: normal; }
-.num { white-space: normal !important; max-width: calc(100% - 34px) !important; margin-inline: auto; line-height: 1.25; text-align: center; }
+/* The day's name keeps clear of the moon in the corner, on one line (Nova Agent's rule: never onto a
+   second line, never cut short): cal.js steps the whole month down to the longest form that fits
+   (data-num: 1 "16 Oct", 2 "16/10", 3 "16") */
+.num > .n-long { white-space: nowrap; }
+.num { white-space: nowrap !important; text-overflow: clip !important; max-width: calc(100% - 34px) !important; margin-inline: auto; line-height: 1.25; text-align: center; }
+.grid[data-num] .num > span { display: none !important; }
+.grid[data-num="1"] .num > .n-mid, .grid[data-num="2"] .num > .n-short, .grid[data-num="3"] .num > .n-min { display: inline !important; }
+/* A card's title on one line too (never two or three, never cut short): a day whose titles don't fit
+   steps down like any other (cal.js), to its cards' symbols, each title its tooltip */
+.pill span { display: block !important; white-space: nowrap !important; -webkit-line-clamp: none !important; line-clamp: none !important; text-overflow: clip !important; }
 
 /* ================= Every day fits (steps set by cal.js, the whole month alike) ================= */
 .cell.fit-1 .pill > small { display: none !important; }

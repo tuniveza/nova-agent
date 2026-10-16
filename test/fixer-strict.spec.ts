@@ -47,6 +47,9 @@ describe("1. never anything off the screen", () => {
     const f = await found(`<main data-pan style="position:relative;height:200px;overflow:hidden"><div style="position:absolute;left:600px;top:20px">A note</div></main>`);
     expect(f).toEqual([]);
   });
+  it("fine: words for screen readers only (in a 1px box that cuts them off, hidden on purpose)", async () => {
+    expect(await found(`<div style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)"><h2>Panels</h2></div>`)).toEqual([]);
+  });
   it("fine: hidden things, and what's marked aria-hidden", async () => {
     expect(await found(`<button style="position:absolute;left:900px" hidden>Away</button><div aria-hidden="true" style="position:absolute;left:900px">Decoration</div>`)).toEqual([]);
   });

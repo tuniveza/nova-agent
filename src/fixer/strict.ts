@@ -116,11 +116,14 @@ export function measureStrict(): StrictFound[] {
     const cs = getComputedStyle(el);
     if (hasText(el) && clips(cs.overflowX) && (el as HTMLElement).scrollWidth > (el as HTMLElement).clientWidth + 1) why = cs.textOverflow === "ellipsis" ? "its words are cut short with “…”" : "its words are cut off at its edge";
     // Each box it's in: one that scrolls can be scrolled to it (only what shows of that box counts
-    // from then on); one that doesn't cuts off what sticks out
+    // from then on); one that doesn't cuts off what sticks out. (Words in a 1px box that cuts them
+    // off are for screen readers only, hidden on purpose: never on the screen to begin with.)
+    let forReaders = false;
     for (let a = el.parentElement; a && a !== document.body && !why; a = a.parentElement) {
       const s = getComputedStyle(a);
       if (s.overflowX === "visible" && s.overflowY === "visible") continue;
       const ar = a.getBoundingClientRect();
+      if (ar.width <= 2 && ar.height <= 2 && clips(s.overflowX) && clips(s.overflowY)) { forReaders = true; break; }
       const pan = a.hasAttribute("data-pan");
       const sx = pan || scrolls(s.overflowX), sy = pan || scrolls(s.overflowY);
       if (!sx && clips(s.overflowX) && (left < ar.left - 1 || right > ar.right + 1)) why = `it's cut off by the box it's in (${name(a)})`;
@@ -129,6 +132,7 @@ export function measureStrict(): StrictFound[] {
       if (sy || clips(s.overflowY)) { top = Math.max(top, ar.top); bottom = Math.min(bottom, ar.bottom); }
       if (right <= left || bottom <= top) break; // (scrolled out of sight inside a box: it can be scrolled to)
     }
+    if (forReaders) continue;
     if (!why && right > left && bottom > top) {
       const past: string[] = [];
       if (left < -1) past.push(`${Math.round(-left)}px past the left edge`);
@@ -253,7 +257,13 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
       const barsSaid = new Set<string>();
       // Nova Agent's own page (its bars, and whatever's open in it); what was said about its bars once
       // per size isn't said again with each panel
-      const host = async () => (await page.evaluate(measureStrict).catch(() => [] as StrictFound[])).filter((f) => !barsSaid.has(f.rule + f.what + f.why) && barsSaid.add(f.rule + f.what + f.why));
+      // Each screen as a person sees it a moment later: after its auto-fix (web/shared/rules.js) has
+      // had its look at what just opened (it looks within about a second anyway; here, straight away)
+      const fixNow = (where: { evaluate: (fn: () => void) => Promise<void> }) => where.evaluate(() => void (window as any).NovaRules?.check?.()).catch(() => {});
+      const host = async () => {
+        await fixNow(page);
+        return (await page.evaluate(measureStrict).catch(() => [] as StrictFound[])).filter((f) => !barsSaid.has(f.rule + f.what + f.why) && barsSaid.add(f.rule + f.what + f.why));
+      };
       // How many parts a page fixed on its own as it drew (web/shared/rules.js)
       const fixedIn = (where: { evaluate: (fn: () => number) => Promise<number> }) => where.evaluate(() => Number((window as any).NovaRules?.fixed?.() || 0)).catch(() => 0);
       const shoot = async (place: string, found: StrictFound[]) => {
@@ -302,6 +312,7 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
           await frame.waitForLoadState("load", { timeout: 30_000 }).catch(() => {});
           await page.waitForTimeout(settle);
           const at = await handle.boundingBox();
+          await fixNow(frame);
           const inside = (await frame.evaluate(measureStrict).catch(() => [] as StrictFound[])).map((f) => ({ ...f, box: f.box && at ? { ...f.box, x: f.box.x + Math.round(at.x), y: f.box.y + Math.round(at.y) } : f.box }));
           await record(p.name, Date.now() - t, [...(await host()), ...inside], undefined, await fixedIn(frame));
         } catch (err) {

@@ -267,7 +267,7 @@ function pillHtml(e) {
     const p = presets().get(e.item.preset);
     return `<div class="daycard themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day">${iconOf(p.icon)}<span>${esc(titleOf(e))}</span></div>`;
   }
-  // The title in full (it wraps rather than being cut short) and, under it, what it's for
+  // The title on one line (a day too small for it shows the symbol; the title is its tooltip) and, under it, what it's for
   const what = whatOf(e);
   return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}"><i class="pill-sym" aria-hidden="true">${symbolIcon(e)}</i>${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
 }
@@ -345,8 +345,18 @@ function fitMonth() {
   const grid = view.querySelector(".month .grid");
   if (!grid) return;
   const cells = [...grid.children];
-  const over = (c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1;
+  // (a title that doesn't fit its one line counts as not fitting too)
+  const cutTitle = (c) => [...c.querySelectorAll(".pill:not(.fit-hide) > span, .daycard > span")].some((s) => s.offsetParent && s.scrollWidth > s.clientWidth + 1);
+  const over = (c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1 || cutTitle(c);
   grid.classList.remove("fit-4");
+  // The day's name: the longest form that fits on its one line, every day alike
+  delete grid.dataset.num;
+  const nums = cells.map((c) => c.querySelector(".num")).filter(Boolean);
+  const numCut = () => nums.some((n) => n.offsetParent && n.scrollWidth > n.clientWidth + 1);
+  if (nums.length && numCut()) {
+    const shown = [...nums[0].children].findIndex((s) => getComputedStyle(s).display !== "none");
+    for (let k = Math.max(1, shown + 1); k <= 3 && numCut(); k++) grid.dataset.num = String(k);
+  }
   grid.style.height = grid.style.flex = "";
   for (const c of cells) {
     c.classList.remove(...STEPS);
