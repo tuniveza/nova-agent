@@ -243,7 +243,7 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
       });
       await ctx.routeWebSocket(/.*/, (ws) => void ws.close());
       // (the bars shown, as most people see them; the measuring function carries tsx's __name helper)
-      await ctx.addInitScript({ content: `${NAME_SHIM} try { localStorage.setItem("nova-bar-4", "shown"); localStorage.setItem("nova-top-4", "shown"); } catch (e) {}` });
+      await ctx.addInitScript({ content: `${NAME_SHIM} try { localStorage.setItem("nova-bar-5", "shown"); localStorage.setItem("nova-top-5", "shown"); } catch (e) {}` });
       const page = await ctx.newPage();
       const t0 = Date.now();
       await page.goto(`${base}/agent/`, { waitUntil: "load", timeout: 45_000 });

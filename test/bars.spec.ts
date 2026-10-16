@@ -114,11 +114,11 @@ describe("the panels bar along the bottom", () => {
     expect(barJs).toMatch(/if \(\+\+tries > 30\) \{ clearInterval\(timer\)/);
   });
 
-  it("always shown by default for both bars (new keys, so it's on for every device), with Auto, away while you work, and hidden", () => {
-    expect(barJs).toContain('const MODES = ["shown", "auto", "work", "hidden"];');
-    expect(barJs).toContain('const pick = (m) => (MODES.includes(m) ? m : "shown");');
-    expect(barJs).toContain('const KEYS = { nav: "nova-bar-4", top: "nova-top-4" };');
-    for (const m of ["shown", "auto", "work", "hidden"]) {
+  it("away while you work by default for both bars (new keys, so it's on for every device), with always shown, Auto and hidden", () => {
+    expect(barJs).toContain('const MODES = ["work", "shown", "auto", "hidden"];');
+    expect(barJs).toContain('const pick = (m) => (MODES.includes(m) ? m : "work");');
+    expect(barJs).toContain('const KEYS = { nav: "nova-bar-5", top: "nova-top-5" };');
+    for (const m of ["work", "shown", "auto", "hidden"]) {
       expect(html).toContain(`data-bar-mode="${m}"`);
       expect(html).toContain(`data-top-mode="${m}"`);
     }
@@ -132,15 +132,17 @@ describe("the panels bar along the bottom", () => {
     expect(barJs).toContain('const dockName = () => (PHONE.matches ? "Nova tiles" : "Nova dock");');
   });
 
-  it("while you work (Auto and away while you work): away while typing in Agent or Notes, moving around Board, setting up an invoice; never just because the mouse moved", () => {
-    expect(barJs).toContain('if (box) watchTyping(document, (el) => el === box);');
-    expect(barJs).toContain('if (path.startsWith("/notes/")) watchTyping(doc, () => true);');
-    expect(barJs).toContain('if (path.startsWith("/invoicer/")) {');
-    expect(barJs).toContain('if (path.startsWith("/board/")) {');
+  it("while you work (the default, and Auto): away while typing or doing something hands-on anywhere in Nova Agent, back when you stop", () => {
+    expect(barJs).toContain("watchWork(document);");
+    expect(barJs).toContain("watchWork(doc);");
+    expect(barJs).toContain('doc.addEventListener("input", (e) => { if (editable(e.target) && !inBars(e.target)) work(true); }, true);');
+    expect(barJs).toContain("performance.now() - tapped < 800");
+    expect(barJs).toContain("Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 12");
     expect(barJs).toContain('if (b.mode === "work") continue; // (away only while you work: below)');
     expect(barJs).toContain('if (b.timer || b.state !== "in" || b.mode !== "auto") return;');
     expect(barJs).toContain('if (b.mode === "work" || b.mode === "auto") (on ? hide : show)(b);');
   });
+
 
   it("comes back at once: the mouse at the edge, a tap or swipe at the edge, Tab into it, scrolling up", () => {
     expect(barJs).toContain("const HIDE_AFTER = 1500, EDGE = 12, NEAR = 60;");

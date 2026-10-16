@@ -22,12 +22,14 @@
   // the bottom of the screen). Also: Auto (away while you work or when the mouse has gone, back at
   // once at the edge or when you stop), "work" (shown, away only while you work: typing in Agent or
   // Notes, moving around Board's table, setting up an invoice) and Always hidden.
-  const MODES = ["shown", "auto", "work", "hidden"];
-  const NAMES = { shown: "Always shown", auto: "Auto", work: "Shown, away while you work", hidden: "Hidden" };
-  // (new keys: always shown for everyone, also on a device that had picked another before)
-  const KEYS = { nav: "nova-bar-4", top: "nova-top-4" };
-  const pick = (m) => (MODES.includes(m) ? m : "shown");
-  const load = (k) => { try { return pick(localStorage.getItem(k)); } catch (err) { return "shown"; } };
+  // The default (16 Oct 2026, later): "work", shown, but away while you work anywhere in Nova Agent
+  // (typing, or doing something hands-on like dragging), back when you stop.
+  const MODES = ["work", "shown", "auto", "hidden"];
+  const NAMES = { work: "Shown, away while you work", shown: "Always shown", auto: "Auto", hidden: "Hidden" };
+  // (new keys: the new default for everyone, also on a device that had picked another before)
+  const KEYS = { nav: "nova-bar-5", top: "nova-top-5" };
+  const pick = (m) => (MODES.includes(m) ? m : "work");
+  const load = (k) => { try { return pick(localStorage.getItem(k)); } catch (err) { return "work"; } };
   const root = document.documentElement;
   const main = document.getElementById("main");
   if (!main) return;
@@ -204,10 +206,12 @@
   document.addEventListener("touchmove", (e) => touchMove(e.touches[0].clientY), { capture: true, passive: true });
   document.addEventListener("touchend", () => { touching = performance.now() + 900; swipe = null; }, { capture: true, passive: true });
 
-  // ---- While you work (the default, "work"): the bars step aside, and come back when you stop ----
-  // Typing in Agent's message box or in Notes, moving around Board's table (dragging or zooming),
-  // or setting up an invoice (Invoicer's New invoice or Edit). Back 1.2 s after the last move on
-  // Board, when the typing box is left, or when the invoice's window closes; at once at the edge.
+  // ---- While you work (the default, "work"; Auto too): the bars step aside, back when you stop ----
+  // Anywhere in Nova Agent, its home and every panel: typing in any box (or tapping into one to
+  // type), or doing something hands-on: dragging with a mouse or pen, dragging a surface made to be
+  // dragged on a touch screen (Board's table, a slider), zooming Board's table with the wheel. Back
+  // when the box is left (unless another takes over), 1.2 s after a drag or zoom, or at once at the
+  // edge. (Scrolling a list isn't working: that's Auto's.)
   let working = false, resting = null;
   function work(on, after = 0) {
     if (resting) { clearTimeout(resting); resting = null; }
@@ -217,34 +221,43 @@
     // (Auto too: away while you work, back when you stop, as well as when the mouse has gone)
     for (const b of [bars.top, bars.nav]) if (b.mode === "work" || b.mode === "auto") (on ? hide : show)(b);
   }
-  const editable = (el) => !!el && (el.isContentEditable || /^(TEXTAREA|SELECT)$/.test(el.tagName) || (el.tagName === "INPUT" && !/^(button|submit|reset|checkbox|radio|range|color|file)$/i.test(el.type || "")));
-  // Typing: on with the first key, off when the box is left (unless another box takes over)
-  function watchTyping(doc, where) {
-    doc.addEventListener("input", (e) => { if (editable(e.target) && where(e.target)) work(true); }, true);
-    doc.addEventListener("focusout", (e) => { if (editable(e.target) && where(e.target)) setTimeout(() => { const a = doc.activeElement; if (!(editable(a) && where(a))) work(false); }, 300); }, true);
+  const editable = (el) => !!el && (el.isContentEditable || /^(TEXTAREA|SELECT)$/.test(el.tagName) || (el.tagName === "INPUT" && !/^(button|submit|reset|checkbox|radio|range|color|file|image)$/i.test(el.type || "")));
+  const inBars = (el) => !!el && el.ownerDocument === document && !!((topEl && topEl.contains(el)) || (stripEl && stripEl.contains(el)) || (tabEl && tabEl.contains(el)));
+  // A surface made to be dragged on a touch screen (its own touch handling, or marked data-pan)
+  function dragSurface(el) {
+    for (let n = el, i = 0; n && n.nodeType === 1 && i < 6; n = n.parentElement, i++) {
+      if (n.hasAttribute("data-pan") || (n.tagName === "INPUT" && n.type === "range")) return true;
+      const ta = n.ownerDocument.defaultView.getComputedStyle(n).touchAction;
+      if (ta === "none" || ta === "pinch-zoom") return true;
+    }
+    return false;
   }
-  const box = document.getElementById("input");
-  if (box) watchTyping(document, (el) => el === box);
-  // A panel's own page: Notes (typing), Invoicer (an invoice being set up), Board (moving around)
   function watchWork(doc) {
-    const path = doc.location.pathname;
-    if (path.startsWith("/notes/")) watchTyping(doc, () => true);
-    if (path.startsWith("/invoicer/")) {
-      const setting = (el) => !!el.closest("dialog[open]");
-      watchTyping(doc, setting);
-      doc.addEventListener("focusin", (e) => { if (setting(e.target) && editable(e.target)) work(true); }, true);
-      doc.addEventListener("close", () => work(false), true);
-    }
-    if (path.startsWith("/board/")) {
-      const table = () => doc.getElementById("table");
-      let down = false;
-      const onTable = (e) => { const t = table(); return !!t && t.contains(e.target) && !e.target.closest("button, a, input, textarea, select, [contenteditable]"); };
-      doc.addEventListener("pointerdown", (e) => { down = onTable(e); }, true);
-      doc.addEventListener("pointermove", () => { if (down) work(true); }, { capture: true, passive: true });
-      doc.addEventListener("pointerup", () => { if (down) { down = false; work(false, 1200); } }, true);
-      doc.addEventListener("wheel", (e) => { if (onTable(e)) { work(true); work(false, 1200); } }, { capture: true, passive: true });
-    }
+    let tapped = 0, drag = null;
+    doc.addEventListener("pointerdown", (e) => {
+      tapped = performance.now();
+      drag = inBars(e.target) || e.target.closest?.(".dock-handle, .bar-edge") ? null : { x: e.clientX, y: e.clientY, on: false, ok: e.pointerType !== "touch" || dragSurface(e.target) };
+    }, true);
+    doc.addEventListener("keydown", () => { tapped = performance.now(); }, true);
+    // Typing (or tapping into a box to type: never the cursor a page puts in a box by itself)
+    doc.addEventListener("input", (e) => { if (editable(e.target) && !inBars(e.target)) work(true); }, true);
+    doc.addEventListener("focusin", (e) => { if (editable(e.target) && !inBars(e.target) && performance.now() - tapped < 800) work(true); }, true);
+    doc.addEventListener("focusout", (e) => {
+      if (!editable(e.target)) return;
+      setTimeout(() => { const a = doc.activeElement; if (!(editable(a) && !inBars(a)) && !(drag && drag.on)) work(false); }, 300);
+    }, true);
+    // Dragging
+    doc.addEventListener("pointermove", (e) => {
+      if (!drag || !drag.ok || !e.buttons) return;
+      if (!drag.on && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 12) { drag.on = true; work(true); }
+    }, { capture: true, passive: true });
+    const end = () => { if (drag && drag.on) { const a = doc.activeElement; if (!editable(a)) work(false, 1200); } drag = null; };
+    doc.addEventListener("pointerup", end, true);
+    doc.addEventListener("pointercancel", end, true);
+    // Zooming a surface you drag around (Board's table) with the wheel
+    doc.addEventListener("wheel", (e) => { if (e.target.closest && e.target.closest("[data-pan]")) { work(true); work(false, 1200); } }, { capture: true, passive: true });
   }
+  watchWork(document);
   // Leaving a panel: nothing's being worked on there any more
   new MutationObserver(() => { if (!viewing() && working) work(false); }).observe(main, { attributes: true, attributeFilter: ["class"] });
 

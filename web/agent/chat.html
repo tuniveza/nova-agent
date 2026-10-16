@@ -1043,15 +1043,16 @@
       <h3 id="suite-title">✦ Panels</h3>
       <p>Everything in Nova Agent, from here.</p>
       <!-- The navigation panel (the Nova tiles on a phone, the Nova dock on a computer) and the title
-           panel: always shown (the default; the tiles or dock hide with the slim line on their top
-           edge), Auto (away while you work or when the mouse has gone, back at once at the edge or
+           panel: away while you work (the default: shown, but away while typing or doing something
+           hands-on anywhere, back when you stop; the tiles or dock also hide with the slim line on
+           their top edge), always shown, Auto (away while you work or when the mouse has gone, back at once at the edge or
            when you stop), away only while you work (typing in Agent or Notes, moving around Board,
            setting up an invoice), or hidden (bar.js) -->
       <div class="bar-mode" role="radiogroup" aria-label="Panels bar">
         <span>Panels bar</span>
+        <button type="button" class="chip" role="radio" data-bar-mode="work" data-sfx="tab">Away while you work</button>
         <button type="button" class="chip" role="radio" data-bar-mode="shown" data-sfx="tab">Always shown</button>
         <button type="button" class="chip" role="radio" data-bar-mode="auto" data-sfx="tab">Auto</button>
-        <button type="button" class="chip" role="radio" data-bar-mode="work" data-sfx="tab">Away while you work</button>
         <button type="button" class="chip" role="radio" data-bar-mode="hidden" data-sfx="tab">Hidden</button>
       </div>
       <!-- The music (ambient.js): its volume, and how long the same music plays -->
@@ -1069,9 +1070,9 @@
       </div>
       <div class="bar-mode" role="radiogroup" aria-label="Top bar">
         <span>Top bar</span>
+        <button type="button" class="chip" role="radio" data-top-mode="work" data-sfx="tab">Away while you work</button>
         <button type="button" class="chip" role="radio" data-top-mode="shown" data-sfx="tab">Always shown</button>
         <button type="button" class="chip" role="radio" data-top-mode="auto" data-sfx="tab">Auto</button>
-        <button type="button" class="chip" role="radio" data-top-mode="work" data-sfx="tab">Away while you work</button>
         <button type="button" class="chip" role="radio" data-top-mode="hidden" data-sfx="tab">Always hidden</button>
       </div>
       <div class="bar-mode"><button type="button" class="chip" onclick="window.NovaInstall && NovaInstall.open()">Install or remove the apps</button><button type="button" class="chip" onclick="window.NovaInstall && NovaInstall.help()">App help</button></div>
