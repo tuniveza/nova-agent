@@ -34,12 +34,13 @@ export async function openLab() {
 
 // Runs fn(item, worker) for every item with at most `workers` running at once (worker is
 // 0..workers-1, each busy with one item at a time); the results come back in the items' order.
+// With `until` (a Date.now() time), items not started by then are skipped and come back undefined.
 //   await inTurns(seeds, labs.length, (seed, w) => labs[w].music({ seed, piece }))
-export async function inTurns(items, workers, fn) {
+export async function inTurns(items, workers, fn, { until = Infinity } = {}) {
   const out = new Array(items.length);
   let next = 0;
   const worker = async (w) => {
-    while (next < items.length) {
+    while (next < items.length && Date.now() < until) {
       const i = next++;
       out[i] = await fn(items[i], w);
     }
