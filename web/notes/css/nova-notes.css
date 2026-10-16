@@ -824,3 +824,16 @@ dialog.dlg.guide .dlg-foot { justify-content: center; }
 }
 /* Touch screens: the guide's topics finger-sized */
 @media (pointer: coarse) { .guide-toc button { min-height: 40px; } }
+
+/* ---- A phone: every tool on one line, nothing sliding (16 Oct 2026) ----
+   The groups' separators step aside and the tools share the toolbar's width evenly (each as wide as
+   the row allows, its icon never bigger than it); the paragraph style is a compact menu. */
+@media (max-width: 640px) {
+  html body #toolbar { flex-wrap: nowrap !important; justify-content: space-between; gap: 0; row-gap: 0; padding: 3px 4px; overflow: visible !important; -webkit-mask-image: none; mask-image: none; }
+  html body #toolbar .tb-group { display: contents; }
+  html body #toolbar .tb { flex: 1 1 0; width: auto !important; min-width: 0 !important; height: 36px; padding: 0; }
+  html body #toolbar .tb .ico, html body #toolbar .tb svg { width: min(17px, 100%); height: 17px; }
+  html body #toolbar .tb.letter { font-size: 14px; }
+  html body #toolbar .tb.letter i { font-size: 16px; }
+  html body #toolbar #tb-style { flex: 0 0 auto; width: auto !important; min-width: 0; font-size: 12px !important; padding-inline: 4px 24px; background-position: right 5px center; text-overflow: clip; field-sizing: content; }
+}

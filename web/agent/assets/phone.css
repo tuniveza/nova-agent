@@ -270,6 +270,11 @@ html body .tabbar .tgroup[data-group="solo"] [data-tab] > span:last-child, html 
 @media (max-width: 980px), (max-height: 500px) {
   .tabbar button { padding-inline: 1px; }
   html body .tabbar button > span:last-child { display: block; width: 100%; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: clip; letter-spacing: -.02em; text-align: center; }
+  /* (each name keeps clear of the tile's rounded corners, so none is clipped by them: fitNames
+     shrinks it, or takes letters off, to fit that inner width; 16 Oct 2026) */
+  html body .tabbar button > span:last-child { box-sizing: border-box; padding-inline: 3px; }
+  html body .tabbar button { border-radius: 10px; }
+}
 }
 @media (max-width: 600px) and (orientation: portrait) {
   .tabbar { grid-template-columns: auto minmax(0, 2fr) minmax(0, 2fr) minmax(0, 3fr) auto; }
@@ -350,3 +355,13 @@ html body .tabbar button { margin: 0 !important; }
 html body .tabbar .tg-items { gap: 5px !important; }
 html body .tabbar .tgroup { row-gap: 3px; }
 html body .tabbar { row-gap: max(5px, 0px) !important; column-gap: max(8px, 0px) !important; }
+
+/* A phone held upright (16 Oct 2026): more of the row for the tiles' names. The tall invoicer and Nova
+   tiles at the ends are slimmer, and the space between the groups is tighter (tiles still 5px apart). */
+@media (max-width: 600px) and (orientation: portrait) {
+  html body .tabbar { column-gap: 5px !important; padding-inline: 3px; }
+  html body .tabbar .tgroup[data-group] .tg-items { gap: 5px !important; }
+  html body .tabbar .tgroup[data-group="solo"] { padding-right: 4px; }
+  html body .tabbar .tgroup[data-group="end"] { padding-left: 4px; }
+  html body .tabbar .tgroup[data-group="tools"], html body .tabbar .tgroup[data-group="helpers"] { padding-left: 4px !important; }
+  html body .tabbar .tgroup[data-group="solo"] button, html body .tabbar .tgroup[data-group="end"] button { width: 46px !important; min-width: 46px; }
