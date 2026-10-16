@@ -55,23 +55,28 @@ html.nav-away .bar-edge.bottom > span { display: block; width: 44px; height: 4px
 @media (min-width: 981px) and (min-height: 481px) { html.nav-away:not(.is-touch) .bar-edge.bottom > span { opacity: .3; } }
 html.kb .bar-edge { display: none !important; }
 
-/* The toggle on the Nova tiles (a phone) / the Nova dock (a computer): a slim line sitting on the
-   seam above it, faint until it's pointed at, with a hit area bigger than it looks; it takes no room.
-   Tapped: the tiles or dock hide, and the same line waits at the bottom of the screen (the edge
-   above) to bring them back. */
-.dock-handle { position: absolute; grid-area: auto; top: -12px; left: 50%; z-index: 6; box-sizing: border-box; width: 64px; height: 20px; margin: 0 0 0 -32px; padding: 0; border: 0; background: none;
-  display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-.dock-handle > span { display: block; width: 30px; height: 4px; border-radius: 99px; opacity: .4;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--hi) 30%, transparent), color-mix(in srgb, var(--hi) 75%, var(--bright, #fff)), color-mix(in srgb, var(--hi) 30%, transparent));
-  box-shadow: 0 0 8px -1px color-mix(in srgb, var(--hi) 70%, transparent); transition: opacity .15s, width .15s, transform .15s; }
-.dock-handle:is(:hover, :focus-visible) > span { opacity: .95; width: 40px; }
-.dock-handle:active > span { transform: translateY(1px) scaleX(.9); }
+/* The toggle on the Nova tiles (a phone) / the Nova dock (a computer): a drawer's handle (16 Oct
+   2026), a small rounded tab on the seam above it with a grip of two short lines, that looks like
+   it can be held and pulled. Dragged down (a finger or the mouse) the tiles or dock follow it and
+   close like a drawer; a tap or click closes them too. It takes no room. While they're closed the
+   same handle waits at the bottom of the screen (the edge above): tap it or pull it up. */
+.dock-handle { position: absolute; grid-area: auto; top: -25px; left: 50%; z-index: 6; box-sizing: border-box; width: 72px; height: 26px; margin: 0 0 0 -36px; padding: 0; border: 0; background: none;
+  display: grid; place-items: end center; cursor: grab; -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none; -webkit-user-select: none; }
+.dock-handle > .grip { display: grid; gap: 2px; align-content: center; justify-items: center; width: 46px; height: 12px; box-sizing: border-box; border-radius: 8px 8px 0 0; border-bottom: 0; margin-bottom: -1px;
+  border: 1px solid color-mix(in srgb, var(--hi) 35%, transparent); background: color-mix(in srgb, var(--panel, #1c1129) 82%, transparent);
+  box-shadow: 0 -2px 10px -4px color-mix(in srgb, var(--hi) 60%, transparent); opacity: .7; transition: opacity .15s, transform .15s, box-shadow .15s; }
+.dock-handle > .grip > i { display: block; width: 20px; height: 2px; border-radius: 99px; background: color-mix(in srgb, var(--hi) 70%, var(--bright, #fff)); opacity: .85; }
+.dock-handle > .grip > i + i { width: 14px; opacity: .6; }
+.dock-handle:is(:hover, :focus-visible) > .grip { opacity: 1; transform: translateY(-1px); box-shadow: 0 -2px 14px -3px color-mix(in srgb, var(--hi) 80%, transparent); }
+html.dock-grabbed, html.dock-grabbed * { cursor: grabbing !important; }
+html.dock-grabbed .dock-handle > .grip { opacity: 1; transform: scale(1.06); }
 .dock-handle:focus-visible { outline: none; }
 html.nav-away .dock-handle, html.kb .dock-handle { display: none; }
-/* (on a computer the dock sits under the page's columns: its line is just inside its top edge) */
-#suite-home > .dock-handle { top: -2px; height: 14px; }
-/* (the line that brings them back: the same slim line, on every screen while they're hidden) */
+/* (on a computer the dock sits under the page's columns, which come down to just above it: its handle sits a little lower, half on its edge, where it can always be reached) */
+#suite-home > .dock-handle { top: -21px; }
+/* (the handle that brings them back while they're hidden: the same slim line at the bottom of the screen, on every screen; tap it or pull it up) */
 html[data-bar="hidden"].nav-away .bar-edge.bottom { left: 50%; right: auto; width: 64px; margin-left: -32px; height: calc(18px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); }
+html[data-bar="hidden"].nav-away .bar-edge.bottom { cursor: grab; touch-action: none; }
 html[data-bar="hidden"].nav-away .bar-edge.bottom > span { display: block; width: 30px; height: 4px; opacity: .45;
   background: linear-gradient(90deg, color-mix(in srgb, var(--hi) 30%, transparent), color-mix(in srgb, var(--hi) 75%, var(--bright, #fff)), color-mix(in srgb, var(--hi) 30%, transparent));
   box-shadow: 0 0 8px -1px color-mix(in srgb, var(--hi) 70%, transparent); transition: opacity .15s, width .15s; }
@@ -211,3 +216,7 @@ dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { o
    reloads the page (Chrome's pull-to-refresh), so a swipe in from the top edge only brings the title
    panel (phones: phone.css) */
 html.is-touch, html.is-touch body { overscroll-behavior: none; }
+
+/* The Nova tiles and the Nova dock: no small Nova sparkle in each icon's corner (16 Oct 2026, the
+   user: just the icons). Everywhere else (the Panels window, beside section titles) it stays. */
+#tabbar .pico::before, #tabbar .pico::after, #suite-home .pico::before, #suite-home .pico::after { display: none !important; }

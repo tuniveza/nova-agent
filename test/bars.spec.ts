@@ -127,6 +127,10 @@ describe("the panels bar along the bottom", () => {
 
   it("the Nova tiles / Nova dock hide with their own slim line on their top edge, and the same line at the bottom brings them back", () => {
     expect(barJs).toContain('h.className = "dock-handle";');
+    // (a drawer's handle, 16 Oct 2026: dragged down past a third of the way, or flicked, it closes; a tap
+    // or click closes it; the edge it leaves at the bottom is pulled up (or tapped) to bring it back)
+    expect(barJs).toContain('if (e.type === "pointerup" && (dy > box.offsetHeight / 3 || (dy > 12 && g.v > 0.5))) close();');
+    expect(barJs).toContain("pull.y - e.clientY > 18");
     expect(barJs).toContain('setFor(bars.nav, "hidden", dockName())');
     expect(barJs).toContain('(b.mode === "hidden" ? setFor(b, "shown", dockName()) : show(b))');
     expect(barJs).toContain('const dockName = () => (PHONE.matches ? "Nova tiles" : "Nova dock");');

@@ -451,3 +451,6 @@ html[data-motion="calm"] .view[data-anim] > * { animation: none !important; }/* 
   .row-item.note.has-art { grid-template-columns: 54px minmax(0, 1fr); padding: 10px 12px; min-height: 0; }
   .row-item.note.has-art .art { display: none; }
 }
+/* The day's list: a card's title and the line under it are never cut short with "…": a long one
+   takes a second line (it's the day's reading, not a button's name) */
+.row-item strong, .row-item small { white-space: normal; text-overflow: clip; overflow: visible; overflow-wrap: anywhere; }

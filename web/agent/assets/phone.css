@@ -125,9 +125,7 @@
   .tabbar button > .t-ico > svg, .tabbar button > .t-ico > img { width: 21px; height: 21px; }
   .tabbar button > img.t-ico { object-fit: contain; object-position: center 4px; padding: 0; }
   .tabbar button > .t-ico.g { background: color-mix(in srgb, var(--panel-2) 90%, transparent); }
-  /* The Nova sparkle stays small, in the tile's top-right corner */
-  .tabbar button > .pico::before { inset: 3px 3px auto auto; width: 11px; height: 11px; min-width: 0; min-height: 0; }
-  .tabbar button > .pico::after { inset: 5px 5px auto auto; width: 7px; height: 7px; min-width: 0; min-height: 0; }
+  /* (no Nova sparkle in the tile's corner: taken off at the user's request, 16 Oct 2026, bar.css) */
   html body .tabbar button > span:last-child { position: relative; color: #fff; font-size: clamp(9px, 2.5vw, 10.5px); text-shadow: 0 1px 2px rgba(0, 0, 0, .75), 0 0 6px rgba(0, 0, 0, .45); }
   /* The place that's open: a bright ring round its tile (instead of the line underneath) */
   .tabbar button[aria-current="page"] { background: none; box-shadow: 0 0 0 2px var(--hi), 0 0 12px -2px var(--hi); }

@@ -314,7 +314,17 @@
     document.body.append(el);
     // (the mouse touching it is the edge in pointerAt, above; a tap or a click here: hidden with the
     // toggle, it's shown again for good)
-    el.addEventListener("click", () => (b.mode === "hidden" ? setFor(b, "shown", dockName()) : show(b)));
+    const open = () => (b.mode === "hidden" ? setFor(b, "shown", dockName()) : show(b));
+    el.addEventListener("click", open);
+    // (the bottom one is the drawer's handle while it's closed: pull it up and the tiles or dock come back)
+    if (side === "bottom") {
+      let pull = null;
+      el.addEventListener("pointerdown", (e) => { if (e.button <= 0) { pull = { id: e.pointerId, y: e.clientY }; try { el.setPointerCapture(e.pointerId); } catch (err) {} } });
+      el.addEventListener("pointermove", (e) => { if (pull && e.pointerId === pull.id && pull.y - e.clientY > 18) { pull = null; open(); } });
+      const end = () => { pull = null; };
+      el.addEventListener("pointerup", end);
+      el.addEventListener("pointercancel", end);
+    }
   }
   edge(bars.top, "top", "Show the title panel");
   edge(bars.nav, "bottom", "Show the navigation panel");
@@ -332,9 +342,47 @@
     const say = () => { const t = `Hide the ${dockName()}`; h.setAttribute("aria-label", t); h.title = t; };
     say();
     PHONE.addEventListener("change", say);
-    h.innerHTML = '<span aria-hidden="true"></span>';
-    h.addEventListener("click", (e) => { e.stopPropagation(); setFor(bars.nav, "hidden", dockName()); });
-    h.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); h.click(); } });
+    h.innerHTML = '<span class="grip" aria-hidden="true"><i></i><i></i></span>';
+    // A drawer's handle (16 Oct 2026): grab it with a finger or the mouse and the tiles or dock follow
+    // it down; let go past a third of the way (or with a flick) and they close, else they spring back.
+    // A tap or a mouse click closes them too; Enter or Space from the keyboard as well.
+    const close = () => setFor(bars.nav, "hidden", dockName());
+    let grab = null;
+    h.addEventListener("pointerdown", (e) => {
+      if (e.button > 0) return;
+      e.stopPropagation();
+      grab = { id: e.pointerId, y: e.clientY, at: performance.now(), lastY: e.clientY, lastAt: performance.now(), v: 0, moved: false };
+      try { h.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    h.addEventListener("pointermove", (e) => {
+      if (!grab || e.pointerId !== grab.id) return;
+      const dy = e.clientY - grab.y;
+      if (!grab.moved && Math.abs(dy) < 5) return;
+      if (!grab.moved) { grab.moved = true; root.classList.add("dock-grabbed"); box.style.transition = "none"; }
+      const now = performance.now();
+      grab.v = (e.clientY - grab.lastY) / Math.max(1, now - grab.lastAt);
+      grab.lastY = e.clientY;
+      grab.lastAt = now;
+      // (down: it follows the finger; up: only a little give, it's already open)
+      const pull = dy > 0 ? dy : dy / 5;
+      box.style.transform = `translateY(${pull}px)`;
+      box.style.opacity = String(Math.max(0.4, 1 - Math.max(0, dy) / (box.offsetHeight * 1.6)));
+    });
+    const letGo = (e) => {
+      if (!grab || e.pointerId !== grab.id) return;
+      const g = grab;
+      grab = null;
+      root.classList.remove("dock-grabbed");
+      const dy = e.clientY - g.y;
+      // (back to its own slide: from wherever it was let go, either away or back into place)
+      box.style.transition = box.style.transform = box.style.opacity = "";
+      if (!g.moved) { if (e.type === "pointerup") close(); return; }
+      if (e.type === "pointerup" && (dy > box.offsetHeight / 3 || (dy > 12 && g.v > 0.5))) close();
+    };
+    h.addEventListener("pointerup", letGo);
+    h.addEventListener("pointercancel", letGo);
+    h.addEventListener("click", (e) => { e.stopPropagation(); if (e.detail === 0) close(); }); // (keyboard: Enter or Space)
+    h.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); close(); } });
     box.append(h);
     // (the phone's bar redraws itself now and then: the line stays on it)
     new MutationObserver(() => { if (!box.contains(h)) box.append(h); }).observe(box, { childList: true });
