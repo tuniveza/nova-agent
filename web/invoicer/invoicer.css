@@ -32,7 +32,7 @@ textarea.field { resize: none; line-height: 1.5; }
 
 /* ---- The invoices ---- */
 /* The filters: one row (never a second); a narrow screen scrolls it sideways inside itself */
-.filters { flex: none; display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+.filters { flex: none; display: flex; flex-wrap: wrap; gap: 4px; overflow-x: visible; overscroll-behavior-x: contain; scrollbar-width: none; }
 .filters::-webkit-scrollbar { display: none; }
 .filters > * { flex: none; }
 .nb-tool .filters button { min-height: 32px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
@@ -171,7 +171,7 @@ html body .lines .n { text-align: right !important; }
 
 /* ---- One screen: everything in reach without scrolling the columns (15 Oct 2026) ---- */
 .col { gap: 8px; }
-.nb-tool .filters { flex-wrap: nowrap; }
+.nb-tool .filters { flex-wrap: wrap; row-gap: 4px; }
 .nb-tool .filters::-webkit-scrollbar { display: none; }
 .nb-tool .filters button { flex: none; min-height: 30px; padding: 2px 10px; font-size: 12px; }
 .nb-tool .stages button { min-height: 34px; padding: 3px 10px; font-size: 13px; }
@@ -181,11 +181,11 @@ html body .lines .n { text-align: right !important; }
 .doc-tools { flex-wrap: wrap; justify-content: center; }
 .nb-tool .doc-tools button, .nb-tool .doc-tools .btn { min-height: 36px; padding: 4px 12px; }
 .stage-note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* The look: Bright/Dark beside the title, the themes as one row of colour dots and the chosen name */
+/* The look: Bright/Dark beside the title, the themes as colour dots (onto a second row when they need it) and the chosen name */
 .mail-col .col-head .modes { padding: 2px; }
 .nb-tool .mail-col .modes button { min-height: 30px; min-width: 34px; padding: 0 8px; font-size: 15px; }
 .look-row { flex: none; display: flex; align-items: center; gap: 8px; min-width: 0; }
-.look-row .themes { flex-wrap: nowrap; gap: 4px; }
+.look-row .themes { flex-wrap: wrap; gap: 4px; }
 .nb-tool .look-row .themes button { min-height: 0; width: 26px; height: 26px; padding: 0; border-radius: 50%; justify-content: center; }
 .nb-tool .look-row .themes button[aria-checked="true"] { box-shadow: 0 0 0 2px var(--hi); }
 .look-row .themes .sw { width: 20px; height: 20px; }

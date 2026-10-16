@@ -65,7 +65,7 @@
   .welcome { margin: auto 0 0; padding: 4px 0; gap: 8px; justify-items: stretch; text-align: left; }
   .welcome .mark, .welcome p { display: none; }
   .welcome h3 { margin: 0 2px; font-size: 14px; letter-spacing: .04em; }
-  .suggest { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; margin: 0 -10px; padding: 2px 10px 4px; scrollbar-width: none; scroll-snap-type: x proximity; }
+  .suggest { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; margin: 0; padding: 2px 10px 4px; scrollbar-width: none; }
   .suggest::-webkit-scrollbar { display: none; }
   .suggest .chip { flex: none; white-space: nowrap; scroll-snap-align: start; font-size: 13.5px; padding: 8px 12px; min-height: 40px; }
   .chat > .composer { padding: 8px; gap: 8px; }
@@ -198,7 +198,7 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
 @media (min-width: 601px) and (max-width: 980px) and (orientation: landscape), (min-width: 601px) and (max-height: 500px) {
   .tabbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 2px 8px;
     /* (six groups now: invoicer and Nova on their own at the ends, so the gaps count six times) */
-    --tab-w: clamp(42px, calc((100vw - 24px - 6 * 16px - 40px) / var(--tab-n, 14)), 84px); }
+    --tab-w: clamp(42px, calc((100vw - 24px - 6 * 16px - 40px - var(--tab-n, 14) * 5px) / var(--tab-n, 14)), 84px); }
   .tabbar .tgroup { flex: 0 0 auto; min-width: 0; }
   .tabbar .tgroup + .tgroup { border-left: 1px solid var(--line); padding-left: 6px; }
   .tabbar > .status-line { flex: 1 0 100%; }
@@ -343,3 +343,10 @@ html body .tabbar .tgroup[data-group="solo"] [data-tab] > span:last-child, html 
 /* (an extremely thin or short window: the tiles' row scrolls inside itself, so their line sits just
    inside its top edge, where it's never cut off) */
 @media (max-width: 299px), (max-height: 359px) { html body .tabbar > .dock-handle { top: 0; height: 12px; } }
+
+/* ---- The Nova tiles never touch (16 Oct 2026): at least 5px of space between any two tiles, at
+   every size and in every layout (two rows, one row on a phone on its side, the thin window's row) ---- */
+html body .tabbar button { margin: 0 !important; }
+html body .tabbar .tg-items { gap: 5px !important; }
+html body .tabbar .tgroup { row-gap: 3px; }
+html body .tabbar { row-gap: max(5px, 0px) !important; column-gap: max(8px, 0px) !important; }

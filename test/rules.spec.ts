@@ -43,19 +43,33 @@ describe("3. nothing onto the next line, fixed as it draws", () => {
     expect(await style("#b")).toMatch(/white-space: nowrap !important/);
     expect(await style("#b")).toMatch(/font-size: 1[0-4]\.\d+px !important/);
   });
-  it("a name too long even at its smallest: whole, on one line, and its row scrolls sideways", async () => {
+  it("a name too long even at its smallest: whole, on one line, sliding sideways in its own box (never widening what holds it)", async () => {
     const r = await fixed(`<div id="row" style="display:flex;width:200px;gap:6px"><button style="width:90px;flex:none">One</button><button id="b" style="width:90px">Very long name for a little button</button></div>`);
     expect(r.after).toEqual([]);
-    expect(await style("#row")).toMatch(/overflow-x: auto !important/);
+    expect(await style("#b")).toMatch(/overflow-x: auto !important/);
+    expect(await page.evaluate(() => document.getElementById("row")!.scrollWidth)).toBeLessThanOrEqual(201);
+    expect(await page.getAttribute("#b", "title")).toBe("Very long name for a little button");
   });
-  it("a row of chips that wraps: one row that scrolls inside itself", async () => {
+  it("a row kept on one line never makes what holds it wider (a list beside a column of times: the narrow window's Quests)", async () => {
+    const chips = Array.from({ length: 6 }, (_, i) => `<span style="padding:2px 8px;border:1px solid">Chip ${i + 1}</span>`).join("");
+    await fixed(`<div id="grid" style="display:grid;grid-template-columns:60px auto;width:300px"><b>9:00</b><div id="li"><div data-one-row style="display:flex;flex-wrap:wrap;gap:4px">${chips}</div></div></div>`);
+    expect(await page.evaluate(() => document.getElementById("grid")!.scrollWidth)).toBeLessThanOrEqual(301);
+    expect(await page.evaluate(() => document.getElementById("li")!.getBoundingClientRect().right)).toBeLessThanOrEqual(301);
+  });
+  it("a group of choices (chips, colours) is left to wrap onto more rows: every one stays in sight", async () => {
     const chips = Array.from({ length: 8 }, (_, i) => `<span style="padding:4px 10px;border:1px solid">Chip ${i + 1}</span>`).join("");
-    const r = await fixed(`<div id="row" role="toolbar" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;width:300px">${chips}</div>`);
+    const r = await fixed(`<div id="row" style="display:flex;flex-wrap:wrap;gap:6px;width:300px">${chips}</div>`);
+    expect(r.after).toEqual([]);
+    expect(await style("#row")).toBe("display:flex;flex-wrap:wrap;gap:6px;width:300px");
+  });
+  it("a row that must stay one row (marked data-one-row, like Nova Agent's bars): one row that slides inside itself", async () => {
+    const chips = Array.from({ length: 8 }, (_, i) => `<span style="padding:4px 10px;border:1px solid">Tile ${i + 1}</span>`).join("");
+    const r = await fixed(`<div id="row" data-one-row style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;width:300px">${chips}</div>`);
     expect(r.before.some((f) => f.rule === "oneline" && /wraps onto/.test(f.why))).toBe(true);
     expect(r.after).toEqual([]);
     expect(await style("#row")).toMatch(/flex-wrap: nowrap !important/);
     expect(await style("#row")).toMatch(/overflow-x: auto !important/);
-    expect(await style("#row")).toMatch(/justify-content: flex-start !important/); // (none of it past its left edge)
+    expect(await style("#row")).toMatch(/justify-content: flex-start !important/);
   });
   it("reading text is left to wrap", async () => {
     const r = await fixed(`<p id="p" style="width:150px">A long paragraph of reading text that is meant to wrap onto several lines.</p>`);

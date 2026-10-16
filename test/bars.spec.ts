@@ -135,8 +135,11 @@ describe("the panels bar along the bottom", () => {
   it("while you work (the default, and Auto): away while typing or doing something hands-on anywhere in Nova Agent, back when you stop", () => {
     expect(barJs).toContain("watchWork(document);");
     expect(barJs).toContain("watchWork(doc);");
-    expect(barJs).toContain('doc.addEventListener("input", (e) => { if (editable(e.target) && !inBars(e.target)) work(true); }, true);');
+    // (only a person's own typing: never a page filling in or focusing a box by itself as it loads,
+    // which turning a phone round or a slow load could otherwise mistake for typing)
+    expect(barJs).toContain('doc.addEventListener("input", (e) => { if (e.isTrusted && editable(e.target) && !inBars(e.target)) work(true); }, true);');
     expect(barJs).toContain("performance.now() - tapped < 800");
+    expect(barJs).toContain("let tapped = -Infinity, drag = null;");
     expect(barJs).toContain("Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 12");
     expect(barJs).toContain('if (b.mode === "work") continue; // (away only while you work: below)');
     expect(barJs).toContain('if (b.timer || b.state !== "in" || b.mode !== "auto") return;');

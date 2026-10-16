@@ -233,14 +233,15 @@
     return false;
   }
   function watchWork(doc) {
-    let tapped = 0, drag = null;
+    // (never tapped yet: a box a page focuses by itself as it loads is never "tapping into it")
+    let tapped = -Infinity, drag = null;
     doc.addEventListener("pointerdown", (e) => {
       tapped = performance.now();
       drag = inBars(e.target) || e.target.closest?.(".dock-handle, .bar-edge") ? null : { x: e.clientX, y: e.clientY, on: false, ok: e.pointerType !== "touch" || dragSurface(e.target) };
     }, true);
     doc.addEventListener("keydown", () => { tapped = performance.now(); }, true);
     // Typing (or tapping into a box to type: never the cursor a page puts in a box by itself)
-    doc.addEventListener("input", (e) => { if (editable(e.target) && !inBars(e.target)) work(true); }, true);
+    doc.addEventListener("input", (e) => { if (e.isTrusted && editable(e.target) && !inBars(e.target)) work(true); }, true);
     doc.addEventListener("focusin", (e) => { if (editable(e.target) && !inBars(e.target) && performance.now() - tapped < 800) work(true); }, true);
     doc.addEventListener("focusout", (e) => {
       if (!editable(e.target)) return;

@@ -9,7 +9,7 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
 - **Send me a test** (admins): the email at the stage shown, to your own address only. At **Paid receipt** it's **Send me a test receipt**.
 - **A new look**, in the style of novacane.co.uk:
   - a slim near-black band with the website's white ring logo and NOVACANE STUDIOS in spaced capitals, in Saira, Novacane's own type (NovaBot's on novacane.co.uk; it was Jost until 16 October 2026);
-  - every line centred, and each sentence on a line of its own (a line breaks after a full stop, never carrying the next sentence's first words);
+  - laid out as before (names and facts on the left, amounts on the right: it was centred for a few hours on 16 October 2026 and put back), and each sentence on a line of its own (a line breaks after a full stop, never carrying the next sentence's first words), on the invoice and in the email that goes with it;
   - behind it on screen, Novacane's night sky in the invoice's colours, moving very slowly (a nebula drifting, stars passing and twinkling; still for anyone who asks for less motion, gone in print), and the paper's moon-dust texture a little easier to see;
   - then a calm white page that's easy to read.
 - **Stages, quietly:** each stage is one quiet coloured line under the band and one word in the amount box, not a loud banner. The amount to pay and when are at the top right.

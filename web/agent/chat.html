@@ -684,6 +684,8 @@
 
   /* Pop-ups */
   .toasts { position: fixed; right: 18px; bottom: 18px; z-index: 50; display: grid; gap: 10px; width: min(380px, calc(100vw - 36px)); }
+  /* (a burst of notices never stacks up past the top of the screen: the pile scrolls inside itself, the newest at the bottom) */
+  .toasts { max-height: calc(100vh - 36px); max-height: calc(100dvh - 36px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; align-content: end; }
   .toast { padding: 14px 16px; border-radius: 18px; border: 1px solid transparent; animation: toast-in .35s cubic-bezier(.2, .8, .2, 1);
     background: linear-gradient(var(--deep), var(--deep)) padding-box, var(--edge) border-box; box-shadow: 0 30px 70px -20px #000, 0 0 40px -16px var(--hi); }
   @keyframes toast-in { from { opacity: 0; transform: translateY(16px) scale(.97); } }

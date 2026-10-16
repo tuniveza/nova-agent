@@ -17,7 +17,7 @@
 #calm-btn[aria-pressed="true"] { color: var(--hi); box-shadow: inset 0 0 0 1px var(--hi); }
 .streak { font: 600 12px var(--f-mono); color: var(--gold, var(--hi)); padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
 .opts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 2px 0 8px; }
-@media (max-width: 700px) { .opts { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } }
+@media (max-width: 700px) { .opts { flex-wrap: wrap; overflow-x: visible; overscroll-behavior-x: contain; scrollbar-width: none; } }
 .opts::-webkit-scrollbar { display: none; }
 .opts .opt, .opt-group button { flex: none; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); font: 500 13px var(--f-body); white-space: nowrap; cursor: pointer; }
 .opts .opt[hidden] { display: none; }
@@ -26,6 +26,8 @@
 .opts .opt[aria-pressed="true"], .opt-group button[aria-pressed="true"] { color: var(--text); border-color: color-mix(in srgb, var(--hi) 55%, var(--line)); background: color-mix(in srgb, var(--hi) 12%, transparent); }
 .opts .opt:hover, .opt-group button:hover { color: var(--text); }
 .opt-group { flex: none; display: inline-flex; align-items: center; gap: 3px; padding: 2px 3px 2px 10px; border-radius: 999px; border: 1px solid var(--line); }
+/* (a group of choices is never wider than the screen: its choices wrap onto another row instead) */
+.opt-group { flex-wrap: wrap; max-width: 100%; row-gap: 2px; }
 .opt-group button { min-height: 26px; padding: 0 9px; border-color: transparent; font-size: 12.5px; }
 .opt-label { font: 600 10.5px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 3px; }
 
@@ -270,4 +272,12 @@ body { overflow: hidden; }
 @media (max-width: 600px) {
   .board, #view-board > .board { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(150px, auto); scroll-snap-type: none; overflow-y: auto; align-items: start; }
   #view-board .col { max-height: 46dvh; }
+}
+
+/* A very thin window (under 340px wide): each quest's time sits on its own small line above it, as in
+   a day's column, so the quest has the whole width and nothing is pushed past the edge */
+@media (max-width: 340px) {
+  .slot { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .slot-time { display: flex; gap: 6px; align-items: baseline; justify-content: flex-start; text-align: left; padding: 0 6px; font-size: 12.5px; }
+  .slot-time small::before { content: "– "; }
 }

@@ -144,7 +144,7 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
   .welcome { gap: 8px; }
   .welcome .mark, .welcome p { display: none; }
   .welcome h3 { font-size: 15px; margin: 0; }
-  .welcome .suggest, .suggest { flex-wrap: nowrap; justify-content: safe center; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
+  .welcome .suggest, .suggest { flex-wrap: wrap; justify-content: safe center; overflow-x: visible; padding-bottom: 4px; }
   .welcome .suggest .chip { flex: none; scroll-snap-align: start; }
   .status-line { height: 24px; font-size: 11px; }
 }

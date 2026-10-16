@@ -8,9 +8,11 @@
 //                 you drag around, marked data-pan: Board's table).
 //   2. onescreen  One screen: the page itself never scrolls (only boxes inside it do).
 //   3. oneline    Nothing overflows onto the next line: a button, link, name, label, heading, tab or
-//                 bar item is on one line, and a row of things (a toolbar, the status line, a row of
-//                 chips) never wraps onto a second row. Reading text (a paragraph, a message, a note)
-//                 is left out: it's meant to wrap.
+//                 bar item keeps its words on one line, and Nova Agent's own bars (the Nova top panel,
+//                 the Nova tiles and dock, the status line, or a row an app marks data-one-row) stay one
+//                 row. Groups of choices (colours, filters, chips, toolbars) may wrap onto more rows: that
+//                 keeps every choice in sight instead of off to the side (the user, 16 Oct 2026). Reading
+//                 text (a paragraph, a message, a note) is left out: it's meant to wrap.
 //
 // It only looks: nothing that would change something leaves its browser (every request that isn't a
 // GET is turned away, live connections are closed). scripts/fixer-strict.ts runs it as its own
@@ -25,7 +27,7 @@ export type StrictRule = "offscreen" | "onescreen" | "oneline";
 export const STRICT_RULES: { id: StrictRule; title: string; text: string }[] = [
   { id: "offscreen", title: "Never anything off the screen", text: "Nothing sticks out past the screen's edges or is cut off by its box." },
   { id: "onescreen", title: "One screen", text: "The page never scrolls; only boxes inside it do." },
-  { id: "oneline", title: "Never onto the next line", text: "Buttons, names, labels, headings and rows stay on one line." },
+  { id: "oneline", title: "Never onto the next line", text: "Buttons, names, labels and headings keep their words on one line; Nova Agent's bars stay one row." },
 ];
 
 export type StrictBox = { x: number; y: number; w: number; h: number };
@@ -95,6 +97,16 @@ export function measureStrict(): StrictFound[] {
   const extraX = clips(pageX) ? 0 : se.scrollWidth - se.clientWidth;
   if (extraY > 1) out.push({ rule: "onescreen", what: "The page", why: `scrolls: it's ${extraY}px taller than the screen`, box: null });
   if (extraX > 1) out.push({ rule: "onescreen", what: "The page", why: `scrolls sideways: it's ${extraX}px wider than the screen`, box: null });
+  // (nor does a big part of it: a box most of the screen's height that slides sideways is the page
+  // being too wide in disguise; a row of things sliding sideways inside itself is fine)
+  for (const el of document.body.querySelectorAll("*")) {
+    const h = el as HTMLElement;
+    if (h.clientHeight < vh * 0.4 || h.scrollWidth <= h.clientWidth + 1 || h.closest("[data-pan]")) continue;
+    const s = getComputedStyle(h);
+    if (!scrolls(s.overflowX) || ignored(h) || !shown(h)) continue;
+    out.push({ rule: "onescreen", what: name(h), why: `scrolls sideways: what's in it is ${h.scrollWidth - h.clientWidth}px wider than it`, box: box(h.getBoundingClientRect()) });
+    break;
+  }
 
   // ---- 1. Never anything off the screen ----
   const all = [...document.body.querySelectorAll("*")];
@@ -184,9 +196,12 @@ export function measureStrict(): StrictFound[] {
     lineCount++;
     out.push({ rule: "oneline", what: name(el), why: `its words go onto ${n} lines`, box: box(el.getBoundingClientRect()) });
   }
-  // Rows of things (flex rows that may wrap): all on one row
+  // Nova Agent's own bars (the top panel, the tiles and dock, the status line, a row marked
+  // data-one-row): all on one row. (Other rows of things, groups of choices, may wrap.)
+  const ONE_ROW = '#tabbar, .tabbar, #suite-home, html:not(.embed) .topbar, .status-line, [data-one-row]';
   for (const el of all) {
     if (lineCount >= 40) break;
+    if (!el.matches(ONE_ROW)) continue;
     const s = getComputedStyle(el);
     if (!/flex/.test(s.display) || s.flexWrap === "nowrap" || /column/.test(s.flexDirection)) continue;
     if (ignored(el) || el.closest(READING) || !shown(el)) continue;
@@ -259,7 +274,15 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
       // per size isn't said again with each panel
       // Each screen as a person sees it a moment later: after its auto-fix (web/shared/rules.js) has
       // had its look at what just opened (it looks within about a second anyway; here, straight away)
-      const fixNow = (where: { evaluate: (fn: () => void) => Promise<void> }) => where.evaluate(() => void (window as any).NovaRules?.check?.()).catch(() => {});
+      // (once whatever's still appearing has finished: a window fading or scaling in is measured in place)
+      const fixNow = (where: { evaluate: (fn: () => Promise<void>) => Promise<void> }) =>
+        where
+          .evaluate(async () => {
+            const ending = document.getAnimations().filter((a) => a.playState === "running" && a.effect && isFinite(a.effect.getComputedTiming().endTime as number));
+            await Promise.race([Promise.all(ending.map((a) => a.finished.catch(() => {}))), new Promise((r) => setTimeout(r, 2000))]);
+            (window as any).NovaRules?.check?.();
+          })
+          .catch(() => {});
       const host = async () => {
         await fixNow(page);
         return (await page.evaluate(measureStrict).catch(() => [] as StrictFound[])).filter((f) => !barsSaid.has(f.rule + f.what + f.why) && barsSaid.add(f.rule + f.what + f.why));

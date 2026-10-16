@@ -56,6 +56,11 @@ describe("1. never anything off the screen", () => {
 });
 
 describe("2. one screen", () => {
+  it("a big part of the page sliding sideways is the page too wide in disguise (a row sliding sideways is fine)", async () => {
+    const f = await found(`<div id="shell" style="height:500px;overflow:auto"><div style="width:900px;height:100px">Wide</div></div>`);
+    expect(f).toEqual([expect.objectContaining({ rule: "onescreen", why: expect.stringContaining("scrolls sideways") })]);
+    expect(await found(`<div style="display:flex;overflow-x:auto;height:40px"><span style="flex:none;width:900px">Chips</span></div>`)).toEqual([]);
+  });
   it("the page scrolling is a problem", async () => {
     const f = await found(`<div style="height:1500px">Tall</div>`, true);
     expect(f).toEqual([expect.objectContaining({ rule: "onescreen", why: expect.stringContaining("900px taller than the screen") })]);
@@ -75,9 +80,13 @@ describe("3. never onto the next line", () => {
     const f = await found(`<h2 style="width:120px;margin:0">Using this with Logic Pro</h2>`);
     expect(rules(f)).toEqual(["oneline"]);
   });
-  it("a row of things that wraps onto a second row", async () => {
-    const f = await found(`<div style="display:flex;flex-wrap:wrap;width:200px;gap:4px">${["Today", "Week", "Month", "Year", "All"].map((t) => `<span style="padding:4px 10px">${t}</span>`).join("")}</div>`);
+  it("one of Nova Agent's bars (or a row marked data-one-row) wrapping onto a second row", async () => {
+    const f = await found(`<div class="status-line" style="display:flex;flex-wrap:wrap;width:200px;gap:4px">${["Today", "Week", "Month", "Year", "All"].map((t) => `<span style="padding:4px 10px">${t}</span>`).join("")}</div>`);
     expect(f.some((x) => x.rule === "oneline" && /^The row/.test(x.what) && /wraps onto 2 lines/.test(x.why))).toBe(true);
+  });
+  it("fine: a group of choices (colours, filters, chips) wrapping onto more rows", async () => {
+    const f = await found(`<div style="display:flex;flex-wrap:wrap;width:200px;gap:4px">${["Ruby", "Amber", "Gold", "Jade", "Teal"].map((t) => `<button style="padding:4px 10px">${t}</button>`).join("")}</div>`);
+    expect(f).toEqual([]);
   });
   it("the status line's words wrapping in a bar", async () => {
     const f = await found(`<footer style="width:90px"><span>Here since 3:58 am</span></footer>`);

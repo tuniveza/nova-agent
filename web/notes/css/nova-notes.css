@@ -658,7 +658,7 @@ html.embed .page-wrap { padding-top: 16px; }
   .menubar { margin-left: 0; gap: 0; }
   .menubar > button { padding: 6px 9px; font-size: 13px; }
   /* One row you can swipe sideways (the fade on the right says there's more) */
-  .toolbar { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; padding: 3px 6px; border-radius: 16px;
+  .toolbar { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; overscroll-behavior-x: contain; padding: 3px 6px; border-radius: 16px;
     -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
   .toolbar.at-end { -webkit-mask-image: none; mask-image: none; }
   .tb-group { padding: 0 2px; }
@@ -714,7 +714,7 @@ html.embed .page-wrap { padding: 14px clamp(8px, 2vw, 18px) 90px; }
   html.embed .topbar .brand { display: none; }
   html.embed .topbar .doc-head { grid-area: doc; min-width: 0; }
   html.embed .topbar .save-state > span { display: none; }
-  html.embed .menubar { grid-area: menu; min-width: 0; margin-left: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  html.embed .menubar { grid-area: menu; min-width: 0; margin-left: 0; flex-wrap: wrap; overflow-x: visible; scrollbar-width: none; }
   html.embed .menubar > button { flex: none; padding-inline: 8px; }
 }
 
@@ -793,6 +793,15 @@ dialog.dlg.guide .dlg-body { flex: 1 1 auto; min-height: 0; overscroll-behavior:
 @keyframes guide-flash { from { border-color: var(--hi); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 30%, transparent); } }
 .guide-try { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 2px; }
 .guide-try .btn { max-width: 100%; }
+/* (each part of the guide is as wide as the window lets it be, never as wide as its widest button) */
+.guide-sec { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.guide-body > * { min-width: 0; }
+/* (a very thin window: each shortcut's keys sit under what they do, so the table fits the guide) */
+@media (max-width: 340px) {
+  .guide-keys, .guide-keys tbody, .guide-keys tr, .guide-keys td { display: block; width: auto; }
+  .guide-keys td { border-bottom: 0; padding: 6px 8px 0; overflow-wrap: anywhere; }
+  .guide-keys td:last-child { text-align: left; white-space: normal; padding: 2px 8px 7px; border-bottom: 1px solid var(--line); }
+}
 .guide-keys { width: 100%; max-width: 440px; margin: 0 auto; border-collapse: collapse; }
 .guide-keys td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; }
 .guide-keys td:last-child { text-align: right; white-space: nowrap; }

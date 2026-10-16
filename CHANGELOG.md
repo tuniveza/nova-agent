@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Fixer: rows that make sense, nothing wider than the screen, the tiles never touching
+
+- Never onto the next line now means a name's own words, and Nova Agent's own bars staying one row.
+  Groups of choices (the Invoicer's colours and filters, chips, toolbars, Agent's suggestions,
+  Console's commands, Observatory's filters) wrap onto more rows again instead of sliding sideways.
+- One screen also counts a big part of a page sliding sideways (the page too wide in disguise).
+- Auto-fix never makes what holds a fix wider (Notes in a narrow window was pushed past the edge),
+  fixes a window or pop-up on the frame it opens and again once it's in, and waits for it to finish
+  appearing; the Fixer waits for that too.
+- The bars no longer go away on their own when a page puts the cursor in a box as it loads (turning a
+  phone or tablet round, or loading, could leave them hidden).
+- The Nova tiles are always at least 5px apart. Agent's notices never pile up past the top of the
+  screen. Quests, Notes' guide and Console fit a very thin window.
+
 ### Fixer: Auto-fix, with nothing to approve
 
 - Every screen of Nova Agent fixes what breaks the three rules as it draws (web/shared/rules.js,

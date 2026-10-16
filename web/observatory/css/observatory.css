@@ -368,7 +368,7 @@ html.embed .stats { margin-top: 14px; }
   .controls { gap: 8px; }
   .controls .sort select { letter-spacing: 0; padding-block: 6px; }
   .deck-foot > span:last-child { display: none; }
-  .filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .filters { flex-wrap: wrap; overflow-x: visible; scrollbar-width: none; }
   .filter { flex: none; padding: 6px 12px; font-size: 11px; letter-spacing: .1em; }
 }
 
@@ -405,7 +405,7 @@ html.embed .stats { margin-top: 14px; }
     box-shadow: 0 12px 30px -22px #000; }
   .search { flex: 1 1 200px; max-width: 380px; min-width: 150px; border: 0; background: color-mix(in srgb, var(--void) 45%, transparent); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .search input { padding: 8px 0; font-size: 14px; }
-  .filters { flex: 1 1 auto; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .filters { flex: 1 1 auto; flex-wrap: wrap; overflow-x: visible; scrollbar-width: none; min-width: 0; }
   .filters::-webkit-scrollbar { display: none; }
   .filter { flex: none; padding: 6px 12px; font-size: 11px; }
   .sort { flex: none; }
@@ -575,7 +575,7 @@ html.embed .stats { margin-top: 14px; }
   .controls .sort { width: auto; flex: 0 1 auto; order: 2; }
   .controls .sort > span { display: none; }
   .controls .sort select { max-width: 46vw; }
-  .filters { width: auto; flex: 1 1 0; min-width: 0; order: 1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .filters { width: auto; flex: 1 1 0; min-width: 0; order: 1; flex-wrap: wrap; overflow-x: visible; scrollbar-width: none; }
   .filters::-webkit-scrollbar { display: none; }
   .search { order: 0; }
   .deck-media { min-height: 80px; width: 84px; }

@@ -13,8 +13,10 @@
 //      - A button, link, name, label, heading or tab stays on one line, its words smaller when they
 //        need to be (never under 72% of their size, never under 9px). If it still can't fit, it
 //        keeps its whole name on one line and the row it's in scrolls sideways.
-//      - A row of things (a toolbar, chips) that would wrap stays one row, and scrolls sideways
-//        inside itself when it can't all fit.
+//      - Nova Agent's own bars (the top panel, the tiles and dock, the status line, a row an app
+//        marks data-one-row) stay one row, sliding sideways inside themselves when they can't all
+//        fit. Other rows, groups of choices (colours, filters, chips, toolbars), are left to wrap
+//        onto more rows: every choice stays in sight (16 Oct 2026).
 //   Reading text (paragraphs, messages, notes) is left to wrap, as the Fixer leaves it.
 //
 // Every change is a style on the part itself, and the page's own styles are kept: when the screen
@@ -37,6 +39,7 @@
   const LEAVE = '[aria-hidden="true"], [inert], template, noscript, script, style, [data-rules="off"]';
   const skip = (el) => !!el.closest(LEAVE) || (el.tagName.toUpperCase() !== "SVG" && !!el.closest("svg"));
   const MEDIA = /^(IMG|VIDEO|CANVAS|SVG|PICTURE|IFRAME)$/;
+  const ONE_ROW = '#tabbar, .tabbar, #suite-home, html:not(.embed) .topbar, .status-line, [data-one-row]';
   const SMALLEST = 0.72; // words never smaller than this much of their own size
   const TINY = 9; // or than this many px
 
@@ -49,6 +52,8 @@
     return r.width > 1 && r.height > 1;
   };
   const over = (box) => box.clientWidth > 0 && box.scrollWidth > box.clientWidth + 1;
+  // A part's own width, as laid out (not as a pop-up scaling in shows it for a moment)
+  const widthOf = (el) => (el.offsetWidth !== undefined ? el.offsetWidth : el.getBoundingClientRect().width);
   // The room inside a box for its words, and how wide el's words are (from the words themselves:
   // a button's scrollWidth doesn't show words spilling out of it)
   function room(box) {
@@ -132,11 +137,17 @@
   }
   // A row that holds something too wide for it: one row that scrolls sideways (from its start, so
   // nothing is past its left edge when it's centred)
+  // (a box that scrolls never makes what holds it wider: it keeps the width it had, never more; in
+  // px, since a browser working out natural widths ignores a cap with a percentage in it; it all
+  // goes back when the window changes size)
   function scrollRow(row) {
     if (!row || row === document.body || row === document.documentElement) return;
     const cs = getComputedStyle(row);
     if (scrolls(cs.overflowX) || row.hasAttribute("data-pan")) return;
+    const w0 = widthOf(row);
     set(row, "overflow-x", "auto");
+    set(row, "min-width", "0");
+    set(row, "max-width", w0 > 1 ? `${Math.floor(w0)}px` : "100%");
     if (cs.overflowY === "visible") set(row, "overflow-y", "hidden");
     set(row, "scrollbar-width", "thin");
     set(row, "overscroll-behavior-x", "contain");
@@ -179,15 +190,31 @@
     const h = el.getBoundingClientRect().height - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0) - (parseFloat(cs.borderTopWidth) || 0) - (parseFloat(cs.borderBottomWidth) || 0);
     return h > lh * 1.5 || cs.display === "inline" || cs.display === "contents";
   }
+  // The widths of a box and the few boxes around it (to see whether a change made any of them wider)
+  function widths(box) {
+    const out = [];
+    for (let a = box, i = 0; a && a !== document.body && i < 5; a = a.parentElement, i++) out.push([a, widthOf(a)]);
+    return out;
+  }
+  const grew = (list) => list.some(([a, w]) => widthOf(a) > w + 1);
   function oneLine(el) {
     if (!mayWrap(el) || lines(el) < 2) return;
-    set(el, "white-space", "nowrap");
     const box = boxOf(el);
     if (!box) return;
+    const before = widths(box);
+    set(el, "white-space", "nowrap");
+    // On one line it may only get smaller, never make what holds it wider: it keeps the width it had
+    if (grew(before)) set(box, "max-width", `${Math.floor(before[0][1])}px`);
     if (!shrink(el, box)) {
-      // Still too long at its smallest: its whole name on one line, and the row scrolls
-      set(box, "min-width", "max-content");
-      set(box, "flex-shrink", "0");
+      // Still too long at its smallest: its whole name on one line, in a box of its own that slides
+      // sideways (swipe it; the whole name is its tooltip), never making what holds it wider
+      const w0 = widthOf(box);
+      set(box, "overflow-x", "auto");
+      set(box, "text-overflow", "clip");
+      set(box, "scrollbar-width", "none");
+      set(box, "min-width", "0");
+      if (w0 > 1) set(box, "max-width", `${Math.floor(w0)}px`);
+      if (!box.title && !box.getAttribute("aria-label")) box.title = box.textContent.replace(/\s+/g, " ").trim();
     }
     const narrow = tooNarrow(box);
     if (narrow) scrollRow(narrow);
@@ -208,10 +235,11 @@
       else rows.push({ top: r.top, bottom: r.bottom });
     }
     if (rows.length < 2) return;
+    // One row that scrolls inside itself (made a scrolling box first, so the row can never grow and
+    // push the page wider than the screen)
+    scrollRow(el);
     set(el, "flex-wrap", "nowrap");
     for (const k of kids) set(k, "flex-shrink", "0");
-    if (over(el)) scrollRow(el);
-    else if (cs.overflowX === "visible") { const narrow = tooNarrow(el); if (narrow) scrollRow(narrow); }
   }
 
   // ---- 1. Nothing off the screen ----
@@ -293,7 +321,7 @@
       // Rows first, then each name, then what's cut off or off the screen
       for (const el of list) {
         const cs = getComputedStyle(el);
-        if (!/flex/.test(cs.display) || cs.flexWrap === "nowrap" || /column/.test(cs.flexDirection) || el.closest(READING)) continue;
+        if (!/flex/.test(cs.display) || cs.flexWrap === "nowrap" || /column/.test(cs.flexDirection) || el.closest(READING) || !el.matches(ONE_ROW)) continue;
         try { oneRow(el, cs); } catch (e) { /* never let fitting break a panel */ }
       }
       const said = [];
@@ -322,9 +350,28 @@
   let fresh = false; // (the screen changed size: put everything back first)
   let held = false; // (a finger or the mouse is down: wait until it's let go)
   let mo = null;
+  // Something still appearing (a window fading or scaling in, a panel sliding): how long until it's
+  // done (never the endless ones: a spinner, a drifting sky), so it's looked at once it's in place
+  function settling() {
+    let left = 0;
+    try {
+      for (const a of document.getAnimations()) {
+        if (a.playState !== "running" || !a.effect) continue;
+        const t = a.effect.getComputedTiming();
+        if (!isFinite(t.endTime)) continue;
+        const rest = t.endTime - Number(a.currentTime || 0);
+        if (rest > 0 && rest < 1500) left = Math.max(left, rest);
+      }
+    } catch (e) { /* (an older browser) */ }
+    return left;
+  }
+  let waits = 0;
   function run() {
     timer = 0;
     if (held) return later(400);
+    const left = settling();
+    if (left && waits < 4) { waits++; return later(Math.ceil(left) + 30); }
+    waits = 0;
     if (fresh) { fresh = false; putBack(); }
     look();
     if (mo) mo.takeRecords(); // (what it changed itself isn't a reason to look again)
@@ -345,7 +392,15 @@
 
   function start() {
     if (off) return;
-    mo = new MutationObserver(() => later(calm()));
+    // (a window or pop-up opening is fixed on the very next frame, before anyone sees it otherwise)
+    const POP = 'dialog, [role="dialog"], [role="menu"], [popover], [data-fit]';
+    const opened = (r) => (r.type === "attributes" ? r.attributeName === "open" && r.target.hasAttribute("open") : [...r.addedNodes].some((n) => n.nodeType === 1 && (n.matches(POP) || !!n.querySelector?.(POP))));
+    // (and looked at again once it has faded or slid in: while it's still see-through it's left alone)
+    mo = new MutationObserver((records) => {
+      if (!records.some(opened)) return later(calm());
+      later(0);
+      setTimeout(() => later(0), 450);
+    });
     mo.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["class", "hidden", "open", "aria-expanded", "aria-selected", "aria-pressed"] });
     const resized = () => { fresh = true; later(180); };
     addEventListener("resize", resized);

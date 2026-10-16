@@ -11,7 +11,8 @@ body {
 [hidden] { display: none !important; }
 button { font: inherit; color: inherit; }
 
-.console-app { position: fixed; inset: 0; display: grid; grid-template-rows: auto auto auto 1fr auto; min-width: 0; }
+.console-app { position: fixed; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto 1fr auto; min-width: 0; }
+/* (one column that is the screen's width, never wider than it: what's in it fits or scrolls inside) */
 /* Each in its own row, whether the note and the quick commands show or not */
 .bar { grid-row: 1; } .note { grid-row: 2; } .quick { grid-row: 3; } .screens { grid-row: 4; } .keys { grid-row: 5; }
 
@@ -111,7 +112,7 @@ html body .screen .xterm, html body .screen .xterm * { text-align: left !importa
 }
 .quick .q:hover, .quick .q:focus-visible { border-color: rgba(var(--hi-rgb, 255, 95, 168), 0.6); color: var(--bright, #fff); }
 @media (max-width: 560px) {
-  .quick { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; }
+  .quick { flex-wrap: wrap; overflow-x: visible; justify-content: flex-start; }
   .quick .q { flex: none; }
 }
 html.is-touch .quick .q { height: 40px; }
@@ -130,7 +131,7 @@ html.is-touch .quick .q { height: 40px; }
   .console-app:has(.quick[hidden]) .bar { grid-column: 1 / -1; max-width: none; }
   .tabs { flex: 0 1 auto; }
   .tools { flex-wrap: nowrap; flex: none; }
-  .quick { grid-row: 1; grid-column: 2; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; align-items: center; padding: 4px 8px; border-bottom: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.16); }
+  .quick { grid-row: 1; grid-column: 2; flex-wrap: wrap; overflow-x: visible; scrollbar-width: none; justify-content: flex-start; align-items: center; padding: 4px 8px; border-bottom: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.16); }
   .quick .q { flex: none; }
   .note, .screens, .keys { grid-column: 1 / -1; }
   .note { grid-row: 2; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; white-space: nowrap; scrollbar-width: none; padding: 4px 12px; font-size: 13px; }

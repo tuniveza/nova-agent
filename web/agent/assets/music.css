@@ -49,7 +49,7 @@
   .mw-quote blockquote { -webkit-line-clamp: 1; line-clamp: 1; }
 }
 /* With the music cards there, the chat's suggestions sit in one row you swipe, so it all fits */
-.welcome:has(.mworld) .suggest { flex-wrap: nowrap; overflow-x: auto; justify-content: safe center; padding-bottom: 4px; scroll-snap-type: x proximity; }
+.welcome:has(.mworld) .suggest { flex-wrap: wrap; overflow-x: visible; justify-content: safe center; padding-bottom: 4px; }
 .welcome:has(.mworld) .suggest .chip { flex: none; scroll-snap-align: start; }
 .welcome:has(.mworld) { gap: 8px; }
 
