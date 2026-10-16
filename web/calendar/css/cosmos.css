@@ -391,3 +391,9 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
 /* A booking's name: a long word breaks inside the card instead of being cut at its side, and what
    doesn't fit in its lines ends with … (tap the card for all of it) */
 .pill span { overflow-wrap: anywhere; text-overflow: ellipsis; }
+
+/* (16 Oct 2026) A day too small for its number and its "+N" one under the other (cal.js: tight): the
+   "+N" sits in the day's bottom corner, inside it, never cut off */
+.cell.tight > .more { position: absolute; right: 3px; bottom: 3px; margin: 0; z-index: 1; }
+/* The day's list: a card's title is never cut off after two lines: it takes the lines it needs */
+.row-item strong { -webkit-line-clamp: none; line-clamp: none; display: block; overflow: visible; }

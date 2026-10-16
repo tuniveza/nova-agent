@@ -399,6 +399,9 @@ function fitMonth() {
       }
       label();
     }
+    // A day too small even for its number and its "+N" one under the other: the "+N" sits in its
+    // corner instead, inside the day, never cut off
+    c.classList.toggle("tight", !!more && over(c));
   }
 }
 // This month at a glance: day cards, full moons and special days, each a tap away
