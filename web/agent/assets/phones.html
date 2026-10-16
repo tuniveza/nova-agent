@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Agent on phones</title>
+<!-- Nova Agent as a phone shows it, on a computer screen: the real thing (/agent/) in phone-sized
+     screens side by side, each one working (tap, type, open panels). All of them fit the window
+     (scaled down to fit, never a scroll). Address: /agent/phones.html (also /phones). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110..125,700..900&family=Saira:wght@400..700&display=swap">
+<link rel="stylesheet" href="/shared/themes.css">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--void, #06040D); color: var(--text, #EDE6F7); font-family: Saira, system-ui, sans-serif; }
+  body { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 10px 18px; border-bottom: 1px solid color-mix(in srgb, var(--hi, #FF5FA8) 25%, transparent); }
+  h1 { margin: 0; font: 800 17px/1.2 Archivo, sans-serif; letter-spacing: .02em; }
+  header p { margin: 0; font-size: 13px; opacity: .75; }
+  header .pick { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  header button { font: 600 13px Saira, sans-serif; color: inherit; background: color-mix(in srgb, var(--panel, #1a1030) 80%, transparent); border: 1px solid color-mix(in srgb, var(--hi, #FF5FA8) 30%, transparent); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+  header button[aria-pressed="true"] { background: color-mix(in srgb, var(--hi, #FF5FA8) 26%, transparent); border-color: var(--hi, #FF5FA8); }
+  main { position: relative; overflow: hidden; }
+  #row { position: absolute; left: 50%; top: 50%; display: flex; align-items: flex-end; gap: 36px; transform-origin: center; }
+  figure { margin: 0; display: grid; justify-items: center; gap: 10px; }
+  figure[hidden] { display: none; }
+  .phone { padding: 12px; border-radius: 44px; background: linear-gradient(160deg, #2a2338, #0d0a14); box-shadow: 0 0 0 2px #3a3148, 0 30px 60px -20px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .12); }
+  .phone.side { border-radius: 36px; }
+  iframe { display: block; border: 0; border-radius: 32px; background: #000; }
+  .side iframe { border-radius: 26px; }
+  figcaption { font-size: 15px; opacity: .8; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Nova Agent on phones</h1>
+  <p>The real Nova Agent at phone sizes. Each screen works: tap, type, open panels.</p>
+  <div class="pick" role="group" aria-label="Which phones">
+    <button type="button" data-show="all" aria-pressed="true">All</button>
+    <button type="button" data-show="iphone">iPhone</button>
+    <button type="button" data-show="android">Android</button>
+    <button type="button" data-show="small">Small phone</button>
+    <button type="button" data-show="side">On its side</button>
+    <button type="button" id="reload">Reload all</button>
+  </div>
+</header>
+<main>
+  <div id="row">
+    <figure data-k="iphone"><div class="phone"><iframe title="iPhone (390 × 844)" src="/agent/" width="390" height="844"></iframe></div><figcaption>iPhone · 390 × 844</figcaption></figure>
+    <figure data-k="android"><div class="phone"><iframe title="Android (412 × 915)" src="/agent/" width="412" height="915"></iframe></div><figcaption>Android · 412 × 915</figcaption></figure>
+    <figure data-k="small"><div class="phone"><iframe title="Small phone (360 × 640)" src="/agent/" width="360" height="640"></iframe></div><figcaption>Small phone · 360 × 640</figcaption></figure>
+    <figure data-k="side"><div class="phone side"><iframe title="A phone on its side (844 × 390)" src="/agent/" width="844" height="390"></iframe></div><figcaption>On its side · 844 × 390</figcaption></figure>
+  </div>
+</main>
+<script>
+(() => {
+  "use strict";
+  const row = document.getElementById("row");
+  const main = document.querySelector("main");
+  // Everything showing fits the window: scaled down (never up past life size), centred
+  function fit() {
+    row.style.transform = "translate(-50%, -50%)";
+    const w = row.scrollWidth, h = row.scrollHeight;
+    const s = Math.min(1, (main.clientWidth - 32) / w, (main.clientHeight - 24) / h);
+    row.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  for (const b of document.querySelectorAll("[data-show]")) b.addEventListener("click", () => {
+    for (const x of document.querySelectorAll("[data-show]")) x.setAttribute("aria-pressed", String(x === b));
+    for (const f of row.querySelectorAll("figure")) f.hidden = b.dataset.show !== "all" && f.dataset.k !== b.dataset.show;
+    fit();
+  });
+  document.getElementById("reload").addEventListener("click", () => { for (const f of row.querySelectorAll("iframe")) f.src = f.src; });
+  addEventListener("resize", fit);
+  fit();
+})();
+</script>
+</body>
+</html>

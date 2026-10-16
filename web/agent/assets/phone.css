@@ -107,8 +107,35 @@
   .tabbar .t-ico.pico { border-radius: 8px; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tint) 55%, #fff 10%); }
   .tabbar .t-ico.g { color: #fff; font-size: 14px; background: color-mix(in srgb, var(--panel-2) 85%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
 
+  /* A phone held upright: the navigation panel lighter (every place still there, all at once):
+     shorter buttons, the group names small and close, the status line's rows tight (status.css) */
+  @media (max-width: 600px) and (orientation: portrait) {
+    .tabbar { gap: 0 4px; padding-top: 2px; }
+    .tabbar .tgroup { gap: 0; }
+    .tabbar .tg-label { font-size: 8px; line-height: 10px; letter-spacing: .16em; }
+    .tabbar button { min-height: 40px; gap: 2px; padding: 3px 1px 4px; }
+    .tabbar .t-ico { width: 22px; height: 22px; font-size: 14px; }
+  }
+
+  /* Tiles (16 Oct 2026): on a phone or tablet each place on the navigation panel is one tile in
+     its own icon's colours, with its icon and its name inside it (not a small icon with the name
+     underneath). The icon's colours fill the tile; the name sits on it in white. */
+  .tabbar button { isolation: isolate; overflow: hidden; align-content: end; gap: 0; min-height: 44px; padding: 25px 2px 4px; margin: 1px; border-radius: 12px; }
+  .tabbar button > .t-ico { position: absolute; inset: 0; z-index: -1; width: auto; height: auto; border-radius: inherit; display: grid; place-items: start center; padding-top: 4px; font-size: 16px; }
+  .tabbar button > .t-ico > svg, .tabbar button > .t-ico > img { width: 21px; height: 21px; }
+  .tabbar button > img.t-ico { object-fit: contain; object-position: center 4px; padding: 0; }
+  .tabbar button > .t-ico.g { background: color-mix(in srgb, var(--panel-2) 90%, transparent); }
+  /* The Nova sparkle stays small, in the tile's top-right corner */
+  .tabbar button > .pico::before { inset: 3px 3px auto auto; width: 11px; height: 11px; min-width: 0; min-height: 0; }
+  .tabbar button > .pico::after { inset: 5px 5px auto auto; width: 7px; height: 7px; min-width: 0; min-height: 0; }
+  html body .tabbar button > span:last-child { position: relative; color: #fff; font-size: clamp(9px, 2.5vw, 10.5px); text-shadow: 0 1px 2px rgba(0, 0, 0, .75), 0 0 6px rgba(0, 0, 0, .45); }
+  /* The place that's open: a bright ring round its tile (instead of the line underneath) */
+  .tabbar button[aria-current="page"] { background: none; box-shadow: 0 0 0 2px var(--hi), 0 0 12px -2px var(--hi); }
+  .tabbar button[aria-current="page"]::after { display: none; }
+  .tabbar button:not([aria-current="page"]) > .t-ico { filter: saturate(.9) brightness(.92); }
+
   /* The keyboard is up: give the conversation the room (the bars come back when it's down) */
-  html.kb .shell { gap: 6px; padding-top: max(6px, env(safe-area-inset-top)); }
+  html.kb .shell, html.kb .shell:has(> .main.viewing) { gap: 6px; padding-top: max(6px, env(safe-area-inset-top)); padding-bottom: 6px; grid-template-rows: minmax(0, 1fr); }
   html.kb .tabbar, html.kb .topbar, html.kb .shell:has(> .main.viewing) > .topbar { display: none; }
 
   /* Pop-ups sit above the bar, and the dialogs fit the screen */
@@ -235,3 +262,37 @@ html body .tabbar .tgroup[data-group="solo"] [data-tab] > span:last-child, html 
 
 /* The lines between the groups fade out at both ends (not square-edged) */
 .tabbar .tgroup + .tgroup, .tabbar .tgroup[data-group="tasks"], .tabbar .tgroup[data-group="solo"] { border-image: linear-gradient(180deg, transparent, var(--line) 30%, var(--line) 70%, transparent) 1; }
+
+/* ---- Tiles: the names inside, never cut short (16 Oct 2026) ----
+   Each name on one line in its tile; one too wide for its tile is made smaller to fit (phone.js,
+   fitNames), never ending in "…". Upright, Helpers (three places) gets more of the row than Plans
+   and Tools (two each). On its side, each tile shows its name too, as wide as the row allows. */
+@media (max-width: 980px), (max-height: 500px) {
+  .tabbar button { padding-inline: 1px; }
+  html body .tabbar button > span:last-child { display: block; width: 100%; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: clip; letter-spacing: -.02em; text-align: center; }
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  .tabbar { grid-template-columns: auto minmax(0, 2fr) minmax(0, 2fr) minmax(0, 3fr) auto; }
+}
+@media (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+  .tabbar button { width: clamp(44px, calc((100vw - 96px) / var(--tab-n, 15)), 76px); min-width: 0; min-height: 46px; padding: 22px 2px 3px; }
+  html body .tabbar button > span:last-child { display: block; font-size: 9px; }
+  .tabbar button > .t-ico > svg, .tabbar button > .t-ico > img { width: 18px; height: 18px; }
+  .tabbar button > .t-ico { padding-top: 3px; }
+}
+
+/* ---- Tiles you could touch (16 Oct 2026) ----
+   Each tile has a surface: a fine stipple and a few soft dents, blended into its own colours (so
+   they follow the theme), and a raised edge, light along the top, shadowed underneath, like a key.
+   Pressed, it sinks in. Nothing moves the layout (only shadows and a 1px nudge). */
+@media (max-width: 980px), (max-height: 500px) {
+  .tabbar button::before { content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2264%22%20height%3D%2264%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22d%22%20cx%3D%2242%25%22%20cy%3D%2240%25%22%20r%3D%2260%25%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23000%22%20stop-opacity%3D%22.5%22/%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23000%22%20stop-opacity%3D%22.22%22/%3E%3Cstop%20offset%3D%22.78%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%22.28%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%220%22/%3E%3C/radialGradient%3E%3Cfilter%20id%3D%22n%22%20x%3D%220%22%20y%3D%220%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%221.1%22%20numOctaves%3D%222%22%20seed%3D%227%22%20stitchTiles%3D%22stitch%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%20.5%200%200%200%200%20.5%200%200%200%200%20.5%200%200%200%201.4%20-.55%22/%3E%3C/filter%3E%3C/defs%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20filter%3D%22url%28%23n%29%22/%3E%3Cg%20fill%3D%22url%28%23d%29%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2214%22%20r%3D%225%22/%3E%3Ccircle%20cx%3D%2246%22%20cy%3D%229%22%20r%3D%222.6%22/%3E%3Ccircle%20cx%3D%2252%22%20cy%3D%2240%22%20r%3D%226.5%22/%3E%3Ccircle%20cx%3D%2222%22%20cy%3D%2248%22%20r%3D%223.2%22/%3E%3Ccircle%20cx%3D%2234%22%20cy%3D%2228%22%20r%3D%221.8%22/%3E%3Ccircle%20cx%3D%226%22%20cy%3D%2236%22%20r%3D%222%22/%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2258%22%20r%3D%222.4%22/%3E%3C/g%3E%3C/svg%3E") 0 0 / 64px 64px; mix-blend-mode: overlay; opacity: .9; }
+  html body .tabbar button::after { content: ""; display: block; position: absolute; inset: 0; left: 0; bottom: 0; width: auto; height: auto; margin: 0; z-index: 0; border-radius: inherit; pointer-events: none; background: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .34), inset 1px 0 0 rgba(255, 255, 255, .1), inset -1px 0 0 rgba(0, 0, 0, .18), inset 0 -3px 4px -1px rgba(0, 0, 0, .45), inset 0 8px 12px -8px rgba(255, 255, 255, .22); }
+  html body .tabbar button > span:last-child { z-index: 1; }
+  .tabbar button { box-shadow: 0 2px 0 rgba(0, 0, 0, .55), 0 4px 10px -4px rgba(0, 0, 0, .6); transition: transform .08s, box-shadow .08s; }
+  .tabbar button:active { transform: translateY(1px) scale(.97); box-shadow: 0 1px 0 rgba(0, 0, 0, .55), 0 1px 4px -2px rgba(0, 0, 0, .6); }
+  html body .tabbar button:active::after { box-shadow: inset 0 2px 5px rgba(0, 0, 0, .55), inset 0 -1px 0 rgba(255, 255, 255, .12); }
+  .tabbar button[aria-current="page"] { box-shadow: 0 0 0 2px var(--hi), 0 0 12px -2px var(--hi), 0 2px 0 rgba(0, 0, 0, .55); }
+}

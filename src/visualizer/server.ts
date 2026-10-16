@@ -174,7 +174,8 @@ app.get("/sw.js", appFile("sw.js"));
 // Nova Agent's own icons (/app/ was Portal's old address)
 app.get("/agent/:file", (c) => {
   const name = c.req.param("file");
-  if (/^[\w-]+\.(png|svg|js|css)$/.test(name) && existsSync(appRoot + name)) return appFile(name)(c);
+  // (and one page: phones.html, Nova Agent at phone sizes on a computer)
+  if ((/^[\w-]+\.(png|svg|js|css)$/.test(name) || name === "phones.html") && existsSync(appRoot + name)) return appFile(name)(c);
   return c.text("Not found", 404);
 });
 

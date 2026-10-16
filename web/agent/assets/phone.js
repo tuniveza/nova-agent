@@ -132,13 +132,20 @@
 
   // ---- Sized to what's visible: the keyboard shrinks it, and the bars step aside while typing ----
   const vv = window.visualViewport;
+  // The keyboard is up when the visible part is well short of the tallest it's been at this width.
+  // (Not innerHeight: Android's Chrome shrinks the whole page with the keyboard, so on an Android
+  // phone that was always the same as the visible part and the bars never stepped aside.)
+  let tallest = 0, tallestAt = 0;
   function fit() {
     if (!vv) return;
     root.style.setProperty('--vv-h', `${Math.round(vv.height)}px`);
     root.style.setProperty('--vv-top', `${Math.round(vv.offsetTop)}px`);
+    const w = Math.round(window.innerWidth);
+    if (w !== tallestAt) { tallestAt = w; tallest = 0; }
+    tallest = Math.max(tallest, vv.height, window.innerHeight);
     // Typing here, or in a panel (its frame has the focus then)
     const typing = document.activeElement && /^(TEXTAREA|INPUT|SELECT|IFRAME)$/.test(document.activeElement.tagName);
-    root.classList.toggle('kb', PHONE.matches && typing && vv.height < window.innerHeight - 120);
+    root.classList.toggle('kb', PHONE.matches && typing && vv.height < tallest - 120);
   }
   if (vv) {
     vv.addEventListener('resize', fit);
@@ -306,7 +313,18 @@
     // In one row (a tablet, a short or zoomed-in window, a phone on its side) every place is the same
     // width, whatever its group: phone.css shares the row out by how many places are showing
     bar.style.setProperty('--tab-n', [...bar.querySelectorAll('.tgroup')].reduce((n, g) => n + g.querySelectorAll(shown).length, 0) || 14);
+    fitNames();
     document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight || 126}px`);
+  }
+  // Each name on one line inside its tile: one too wide for it is made smaller until it fits
+  // (never cut short with "…")
+  function fitNames() {
+    for (const name of bar.querySelectorAll('[data-tab] > span:last-child')) {
+      name.style.fontSize = '';
+      if (!name.offsetParent) continue;
+      let size = parseFloat(getComputedStyle(name).fontSize);
+      while (name.scrollWidth > name.clientWidth + 0.5 && size > 6) name.style.fontSize = `${(size -= 0.5)}px`;
+    }
   }
   window.addEventListener('resize', layout);
   if (typeof ResizeObserver === 'function') new ResizeObserver(layout).observe(bar);
