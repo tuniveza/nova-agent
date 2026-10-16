@@ -106,6 +106,9 @@ export class StrictFixer {
       runningSince: this.startedAt || null,
       last: s.last ? { id: s.last.id, at: lastAt, base: s.last.base, signedIn: s.last.signedIn, screens: s.last.screens.length, places: [...new Set(s.last.screens.map((x) => x.place))], errors: s.last.screens.filter((x) => x.error).map((x) => ({ place: x.place, size: `${x.width}×${x.height}`, error: x.error })) } : null,
       problems,
+      // How many parts the screens fixed on their own as they drew (web/shared/rules.js), in the last check
+      // (Missions and the Manual are Nova Agent's own page again: counted once, with Agent)
+      fixed: (s.last?.screens || []).filter((x) => x.place !== "Missions" && x.place !== "Manual").reduce((n, x) => n + (x.fixed || 0), 0),
       history: s.history.slice(-48),
       error: s.error && (!s.history.length || s.history[s.history.length - 1].error) ? s.error : null,
     };

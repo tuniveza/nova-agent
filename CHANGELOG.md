@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Fixer: Auto-fix, with nothing to approve
+
+- Every screen of Nova Agent fixes what breaks the three rules as it draws (web/shared/rules.js,
+  linked by /shared/fit.js): words a little smaller to stay on one line or uncut, a name that still
+  can't fit kept whole with its row scrolling sideways, wrapping rows of chips and buttons made one
+  row that scrolls inside, boxes that cut things off made to scroll, cards past the edge nudged in.
+  Reading text still wraps. Only how things are drawn changes; it's all worked out again when the
+  window changes size. On a local check of 96 screens: 115 problems with it off, a handful with it on.
+- The Fixer's page: Auto-fix: On / Off (this device only), and how many parts were fixed on their
+  own in the last check. The Notes list, slid away on a phone, is hidden too; the Invoicer keeps its
+  preview on a very short window.
+
 ### Money: invoices, payments and expenses (Portal → Money, through Nova Bot)
 
 - Portal → Money (Studio, after Clients): four tiles (in and out this month, owed, overdue), invoices

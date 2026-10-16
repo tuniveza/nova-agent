@@ -30,7 +30,8 @@ export const STRICT_RULES: { id: StrictRule; title: string; text: string }[] = [
 
 export type StrictBox = { x: number; y: number; w: number; h: number };
 export type StrictFound = { rule: StrictRule; what: string; why: string; box: StrictBox | null };
-export type StrictScreen = { place: string; width: number; height: number; kind: StrictKind; ms: number; found: StrictFound[]; shot: string; error?: string };
+// fixed: how many parts the screen fixed on its own as it drew (web/shared/rules.js), before it was looked at
+export type StrictScreen = { place: string; width: number; height: number; kind: StrictKind; ms: number; found: StrictFound[]; shot: string; fixed?: number; error?: string };
 export type StrictKind = "phone" | "tablet" | "computer";
 export type StrictRun = { startedAt: string; finishedAt: string; base: string; signedIn: boolean; screens: StrictScreen[] };
 
@@ -211,6 +212,7 @@ export type StrictOptions = {
   settleMs?: number;
   parallel?: number;
   log?: (line: string) => void;
+  rulesOff?: boolean; // (look with the screens' own fixing off: what they'd break without it)
 };
 
 export const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "x";
@@ -243,7 +245,7 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
       });
       await ctx.routeWebSocket(/.*/, (ws) => void ws.close());
       // (the bars shown, as most people see them; the measuring function carries tsx's __name helper)
-      await ctx.addInitScript({ content: `${NAME_SHIM} try { localStorage.setItem("nova-bar-5", "shown"); localStorage.setItem("nova-top-5", "shown"); } catch (e) {}` });
+      await ctx.addInitScript({ content: `${NAME_SHIM} try { localStorage.setItem("nova-bar-5", "shown"); localStorage.setItem("nova-top-5", "shown"); ${opts.rulesOff ? 'localStorage.setItem("nova-rules", "off");' : 'localStorage.removeItem("nova-rules");'} } catch (e) {}` });
       const page = await ctx.newPage();
       const t0 = Date.now();
       await page.goto(`${base}/agent/`, { waitUntil: "load", timeout: 45_000 });
@@ -252,6 +254,8 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
       // Nova Agent's own page (its bars, and whatever's open in it); what was said about its bars once
       // per size isn't said again with each panel
       const host = async () => (await page.evaluate(measureStrict).catch(() => [] as StrictFound[])).filter((f) => !barsSaid.has(f.rule + f.what + f.why) && barsSaid.add(f.rule + f.what + f.why));
+      // How many parts a page fixed on its own as it drew (web/shared/rules.js)
+      const fixedIn = (where: { evaluate: (fn: () => number) => Promise<number> }) => where.evaluate(() => Number((window as any).NovaRules?.fixed?.() || 0)).catch(() => 0);
       const shoot = async (place: string, found: StrictFound[]) => {
         if (!opts.shotsDir || !found.length || shots >= 40) return "";
         shots++;
@@ -272,15 +276,15 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
         await page.evaluate(() => document.getElementById("fixer-strict-marks")?.remove()).catch(() => {});
         return file;
       };
-      const record = async (place: string, ms: number, found: StrictFound[], error?: string) => {
+      const record = async (place: string, ms: number, found: StrictFound[], error?: string, fixed = 0) => {
         const list = found.slice(0, MAX_PER_SCREEN);
         const shot = await shoot(place, list);
-        screens.push({ place, width: size.w, height: size.h, kind: size.kind, ms, found: list, shot, ...(error ? { error } : {}) });
+        screens.push({ place, width: size.w, height: size.h, kind: size.kind, ms, found: list, shot, fixed, ...(error ? { error } : {}) });
         log(`${place} ${size.w}×${size.h}: ${error || (list.length ? `${list.length} problem${list.length === 1 ? "" : "s"}` : "fine")}`);
       };
       const want = (place: string) => !opts.places || opts.places.includes(place);
       // The home: Agent
-      if (want("Agent")) await record("Agent", Date.now() - t0, await host());
+      if (want("Agent")) await record("Agent", Date.now() - t0, await host(), undefined, await fixedIn(page));
       // Every panel Nova Agent lists (apps, plans, tools, helpers, Invoicer, Nova)
       const panels: { name: string; path: string }[] = await page
         .evaluate(() => [...document.querySelectorAll("#suite a.suite-app[data-inside]")].map((a) => ({ name: (a.querySelector("b")?.textContent || "").trim(), path: a.getAttribute("data-inside") || "" })))
@@ -299,7 +303,7 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
           await page.waitForTimeout(settle);
           const at = await handle.boundingBox();
           const inside = (await frame.evaluate(measureStrict).catch(() => [] as StrictFound[])).map((f) => ({ ...f, box: f.box && at ? { ...f.box, x: f.box.x + Math.round(at.x), y: f.box.y + Math.round(at.y) } : f.box }));
-          await record(p.name, Date.now() - t, [...(await host()), ...inside]);
+          await record(p.name, Date.now() - t, [...(await host()), ...inside], undefined, await fixedIn(frame));
         } catch (err) {
           await record(p.name, Date.now() - t, [], `couldn't be looked at (${String((err as Error).message).split("\n")[0].slice(0, 120)})`);
         }
@@ -318,7 +322,7 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
           .catch(() => false);
         if (!opened) continue;
         await page.waitForTimeout(settle);
-        await record(place, Date.now() - t, await host());
+        await record(place, Date.now() - t, await host(), undefined, await fixedIn(page));
         await page.keyboard.press("Escape").catch(() => {});
         await page.waitForTimeout(300);
       }

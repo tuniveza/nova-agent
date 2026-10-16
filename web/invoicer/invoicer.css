@@ -342,3 +342,10 @@ html body .inv .who, html body .inv .who b, html body .inv .who small { text-ali
 .iv-parts [data-part="list"] { --ic: var(--ic-list); }
 .iv-parts [data-part="doc"] { --ic: var(--ic-pdf); }
 .iv-parts [data-part="mail"] { --ic: var(--ic-mail); }
+
+/* A very short window (a laptop's window made short by hand): the invoice preview keeps room to be
+   seen, and its column scrolls inside instead of crushing it to nothing */
+@media (max-height: 420px) {
+  .board > .col { overflow-y: auto; overscroll-behavior: contain; }
+  .doc-frame { min-height: 140px; }
+}

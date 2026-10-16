@@ -569,8 +569,9 @@ dialog[open] .dlg-inner { animation: rise .22s ease-out; }
   .themes { display: none; }
   .doc-title { font-size: 16px; margin-left: 0; }
   .workspace, .shell.no-library .workspace, .shell.no-outline .workspace, .shell.no-library.no-outline .workspace { grid-template-columns: minmax(0, 1fr); }
-  .library { position: absolute; left: 0; top: 0; bottom: 0; width: min(320px, 86vw); z-index: 9; box-shadow: 0 30px 80px -10px #000; transform: translateX(-110%); transition: transform .25s ease; display: flex !important; }
-  .shell.show-library .library { transform: none; }
+  /* (slid away, it's hidden too: nothing of it is left off the screen, and it can't be tabbed to) */
+  .library { position: absolute; left: 0; top: 0; bottom: 0; width: min(320px, 86vw); z-index: 9; box-shadow: 0 30px 80px -10px #000; transform: translateX(-110%); visibility: hidden; transition: transform .25s ease, visibility 0s linear .25s; display: flex !important; }
+  .shell.show-library .library { transform: none; visibility: visible; transition: transform .25s ease, visibility 0s; }
   .toolbar { justify-content: flex-start; border-radius: 16px; }
   .page-wrap { padding: 14px 6px 90px; }
   .page { padding: 56px 26px 80px; border-radius: 20px; min-height: 70vh; }

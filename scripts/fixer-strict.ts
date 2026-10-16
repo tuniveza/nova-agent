@@ -2,7 +2,8 @@
 // runs it with low priority every 5 minutes).
 //
 //   npx tsx scripts/fixer-strict.ts <address> [--out results.json] [--shots folder]
-//     [--sizes 390x844,1920x1080] [--places Agent,Portal] [--parallel 2]
+//     [--sizes 390x844,1920x1080] [--places Agent,Portal] [--parallel 2] [--rules-off]
+//   (--rules-off: with the screens' own fixing, web/shared/rules.js, off: what they'd break without it)
 //
 // Signed in: the cookie comes in the environment (LOOKS_COOKIE_NAME, LOOKS_COOKIE), never on the
 // command line and never printed. Prints one line per screen; exits 1 if any rule is broken.
@@ -33,6 +34,7 @@ const run = await runStrict({
   cookie: value ? { name: process.env.LOOKS_COOKIE_NAME || "nova_session", value } : null,
   shotsDir: opt("shots") || undefined,
   parallel: Number(opt("parallel")) || 2,
+  rulesOff: args.includes("--rules-off"),
   log: (line) => console.log(line),
 });
 if (opt("out")) writeFileSync(opt("out"), JSON.stringify(run, null, 1));

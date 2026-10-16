@@ -35,9 +35,22 @@
     }).join("");
   }
 
+  // Auto-fix (/shared/rules.js): every screen of Nova Agent fixes what breaks the three rules as it
+  // draws, with nothing to approve. On for everyone; turned off here on this device only (to see
+  // what it fixes), and back on the same way.
+  const autoOn = () => {
+    try { return localStorage.getItem("nova-rules") !== "off"; } catch (e) { return true; }
+  };
+  function drawAuto() {
+    const on = autoOn();
+    $("auto").setAttribute("aria-pressed", String(on));
+    $("auto").textContent = on ? "Auto-fix: On" : "Auto-fix: Off";
+    $("auto").title = on ? "Every screen fixes what breaks the three rules as it draws. Tap to turn it off on this device." : "Off on this device only. Tap to turn it back on.";
+  }
+
   function drawWhen() {
     const s = state;
-    let text = s.last ? `Last check ${esc(london(s.last.at))} (${esc(ago(s.last.at))}) · ${s.last.screens} screens` : "Not checked yet";
+    let text = s.last ? `Last check ${esc(london(s.last.at))} (${esc(ago(s.last.at))}) · ${s.last.screens} screens${s.fixed ? ` · ${s.fixed} fixed on their own` : ""}` : "Not checked yet";
     if (s.running) text = `Checking now${s.runningSince ? ` (started ${esc(ago(s.runningSince))})` : ""}…`;
     else if (s.error) text = `The last check couldn't run: ${esc(s.error)}`;
     $("when").innerHTML = text;
@@ -114,6 +127,16 @@
     $("shot-img").alt = `${b.dataset.title}, its problems marked in red`;
     $("shot").showModal();
   });
+  $("auto").addEventListener("click", () => {
+    const on = !autoOn();
+    // (this page and Nova Agent's own, straight away; every other screen as it opens)
+    for (const w of [window, window.parent]) {
+      try { if (w.NovaRules) w.NovaRules.set(on); } catch (e) { /* (not Nova Agent's page) */ }
+    }
+    try { if (on) localStorage.removeItem("nova-rules"); else localStorage.setItem("nova-rules", "off"); } catch (e) { /* (storage blocked) */ }
+    drawAuto();
+  });
+  drawAuto();
   $("shot-close").addEventListener("click", () => $("shot").close());
   $("shot").addEventListener("click", (e) => { if (e.target === $("shot")) $("shot").close(); });
 

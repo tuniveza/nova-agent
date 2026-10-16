@@ -139,6 +139,12 @@ describe("the service", () => {
     expect(s.history).toHaveLength(1);
     expect(s.last?.id).toBe("20261016-100000");
   });
+  it("says how many parts the screens fixed on their own (Missions and the Manual are Agent's page again: not counted twice)", async () => {
+    const at = (place: string, fixed: number) => ({ place, width: 360, height: 640, kind: "phone" as const, ms: 1, found: [], shot: "", fixed });
+    const { f } = setup(() => run([at("Agent", 7), at("Quests", 20), at("Missions", 7), at("Manual", 7), at("Fixer", 0)]));
+    await f.check();
+    expect(f.state().fixed).toBe(27);
+  });
   it("a run still going: the next one is skipped", async () => {
     let release = () => {};
     let started = () => {};
