@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Notices that keep out of the way, a drawer's handle, plain tiles
+
+- Every notice (Agent's, each app's toasts, the bar's notes) keeps clear of where someone is typing,
+  of a phone's keyboard and of any message box (web/shared/notices.js, linked by /shared/fit.js),
+  sliding just above it and back afterwards; while something is dragged, notices fade and let the
+  pointer through. Only the notice moves; nothing else on the page does.
+- The Nova tiles' and dock's toggle is a drawer's handle: drag it down to close (or tap or click),
+  pull up the handle left at the bottom to open.
+- No Nova sparkle in the corner of each Nova tile and dock icon.
+
 ### Fixer: rows that make sense, nothing wider than the screen, the tiles never touching
 
 - Never onto the next line now means a name's own words, and Nova Agent's own bars staying one row.

@@ -140,6 +140,6 @@ describe("it never fights the panel", () => {
     expect(await page.evaluate(() => (window as any).NovaRules.on)).toBe(false);
   });
   it("is linked by /shared/fit.js, so every page that keeps things on screen keeps the rules too", () => {
-    expect(FIT).toContain('new URL("rules.js",');
+    expect(FIT).toContain('[["rules.js", "NovaRules"], ["notices.js", "NovaNotices"]]');
   });
 });

@@ -169,14 +169,18 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
   else start();
 
-  // The three rules, kept as each screen draws (the Fixer's "Fixes on its own"): /shared/rules.js,
-  // next to this file, so every page that has this has that
-  try {
-    if (!window.NovaRules && !document.querySelector('script[src*="/shared/rules.js"]')) {
-      const s = document.createElement("script");
-      s.src = new URL("rules.js", (document.currentScript && document.currentScript.src) || location.origin + "/shared/fit.js").href;
-      s.async = true;
-      (document.head || document.documentElement).append(s);
-    }
-  } catch (e) { /* (a page with no address of its own) */ }
+  // The three rules, kept as each screen draws (the Fixer's "Fixes on its own"): /shared/rules.js;
+  // and notices that keep out of the way of typing and dragging: /shared/notices.js. Next to this
+  // file, so every page that has this has those
+  const here = (document.currentScript && document.currentScript.src) || "";
+  for (const [file, has] of [["rules.js", "NovaRules"], ["notices.js", "NovaNotices"]]) {
+    try {
+      if (!window[has] && !document.querySelector(`script[src*="/shared/${file}"]`)) {
+        const s = document.createElement("script");
+        s.src = new URL(file, here || location.origin + "/shared/fit.js").href;
+        s.async = true;
+        (document.head || document.documentElement).append(s);
+      }
+    } catch (e) { /* (a page with no address of its own) */ }
+  }
 })();
