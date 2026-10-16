@@ -9,9 +9,13 @@
   const ctx = canvas.getContext('2d');
   const still = window.matchMedia('(prefers-reduced-motion: reduce)');
   let W = 0, H = 0, stars = [], pal = null, shooter = null, nextShot = 0, running = false;
+  // A phone or tablet (16 Oct 2026): the sky drawn at the screen's own size (not its extra-sharp
+  // pixels) and half as often, so it's light to draw; it looks the same
+  const lite = window.matchMedia('(pointer: coarse)').matches;
+  let frame = 0;
 
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = lite ? 1 : Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth;
     H = window.innerHeight;
     canvas.width = Math.round(W * dpr);
@@ -75,7 +79,7 @@
   }
 
   function loop(t) {
-    draw(t);
+    if (!lite || (frame++ & 1) === 0) draw(t);
     if (!still.matches) requestAnimationFrame(loop);
     else running = false;
   }

@@ -109,7 +109,8 @@ function makeTerminal(screen) {
     // (the weights the page loads, so bold letters are exactly as wide as the rest)
     fontWeight: "400",
     fontWeightBold: "600",
-    cursorBlink: !still,
+    // (a phone or tablet: a steady cursor; its blink redrew the terminal all the time, 16 Oct 2026)
+    cursorBlink: !still && !matchMedia("(pointer: coarse)").matches,
     cursorStyle: "bar",
     scrollback: 5000,
     allowProposedApi: false,

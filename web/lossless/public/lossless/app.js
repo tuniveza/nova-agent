@@ -897,8 +897,11 @@ function fmtKbps(bytes, secs) {
 function drawMeter(peak, bar, label) {
   const db = peak > 0 ? 20 * Math.log10(peak) : -Infinity;
   const pct = Math.max(0, Math.min(1, (db + 60) / 60)) * 100;
-  bar.style.width = pct.toFixed(1) + "%";
-  label.textContent = db > -90 ? db.toFixed(1) + " dBFS" : "–";
+  // (only when what it shows changes: silent, it costs nothing each frame)
+  const width = pct.toFixed(1) + "%";
+  const words = db > -90 ? db.toFixed(1) + " dBFS" : "–";
+  if (bar.style.width !== width) bar.style.width = width;
+  if (label.textContent !== words) label.textContent = words;
 }
 
 function meterLoop() {

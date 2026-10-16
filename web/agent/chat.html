@@ -307,6 +307,8 @@
   }
   @keyframes vn-shimmer { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
   @media (prefers-reduced-motion: reduce) { .viewer-name .vn-app, .sec-title { animation: none; } }
+  /* (a phone or tablet: the names hold still; their shimmer redrew the top panel every frame, 16 Oct 2026) */
+  @media (pointer: coarse) { .viewer-name .vn-app, .sec-title { animation: none; } }
   .viewer iframe { width: 100%; height: 100%; border: 0; background: var(--void); }
   /* While an app is open it gets the room: a slimmer bar above it, and the panels strip keeps its
      look but gets smaller. Only side by side: stacked on a phone or a small window, the viewer

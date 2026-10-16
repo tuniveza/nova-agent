@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Faster on Android
+
+- A panel kept in the background (so it opens again instantly) draws nothing until it's shown again
+  (/shared/fit.js holds its animation frames): Notes' sky and Lossless's meters kept drawing behind
+  every other panel. On a slowed phone, a panel sitting still: Notes 76% busy to 24%, Observatory
+  61% to 12%, Lossless 58% to 14%, Board 31% to 17%.
+- On a phone or tablet: the panel names in the top panel no longer shimmer (they redrew it every
+  frame), Notes' sky is drawn at the screen's own size and half as often, Console's cursor is steady,
+  and Lossless's meters are only touched when what they show changes.
+
 ### A calmer phone: the drawer handle up where it's easy, notices placed where they're in the way least
 
 - Closed, the Nova tiles' handle is a bigger tab in a slim strip of its own a little way up the

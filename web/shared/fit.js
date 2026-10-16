@@ -13,6 +13,42 @@
 // menus, pop-ups or marked. Modal dialogs are centred and capped by the browser and each panel.
 // The sums are in NovaFit.fitBox (tested in test/fit.spec.ts); the whole suite is checked at
 // phone, tablet and computer sizes by scripts/check-fit.mjs (scripts/check-fit-all.sh runs it).
+// A panel kept in the background (so it opens again instantly) draws nothing until it's on show again
+// (16 Oct 2026: on a phone, Notes' sky and Lossless's meters kept drawing behind other panels, every
+// frame): its requestAnimationFrame callbacks wait, and run the moment it's shown.
+(function () {
+  if (window === window.parent || typeof window.requestAnimationFrame !== "function" || window.__novaFrameGate) return;
+  window.__novaFrameGate = true;
+  const raf = window.requestAnimationFrame.bind(window);
+  const waiting = [];
+  let checkedAt = -1e9, awayNow = false, watching = 0;
+  const away = () => {
+    const now = performance.now();
+    if (now - checkedAt < 250) return awayNow;
+    checkedAt = now;
+    try {
+      const f = window.frameElement;
+      awayNow = !!f && (f.hidden || !!f.closest("[hidden]") || (typeof f.checkVisibility === "function" && !f.checkVisibility()));
+    } catch (e) { awayNow = false; }
+    return awayNow;
+  };
+  const wake = () => {
+    checkedAt = -1e9;
+    if (away()) return;
+    clearInterval(watching);
+    watching = 0;
+    for (const cb of waiting.splice(0)) raf(cb);
+  };
+  window.requestAnimationFrame = (cb) => {
+    if (away()) {
+      waiting.push(cb);
+      if (!watching) watching = setInterval(wake, 300);
+      return 0;
+    }
+    return raf(cb);
+  };
+})();
+
 (function () {
   "use strict";
   if (window.NovaFit) return;
