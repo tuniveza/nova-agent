@@ -200,7 +200,7 @@
       : `<li class="jobs-empty">No updates found.</li>`;
     const f = n.fixer;
     $("fixer").innerHTML = f
-      ? `<span class="grow"><b>Fixer</b> · ${f.needsYou ? `<strong>${f.needsYou} waiting for you</strong>` : "nothing waiting for you"}<br><small class="nt-note">Last check ${f.lastCheck ? esc(ago(f.lastCheck)) : "–"} · looks check ${f.looksAt ? `${esc(ago(f.looksAt))}${f.looksFailed ? `, ${f.looksFailed} problem${f.looksFailed === 1 ? "" : "s"}` : ", all fine"}` : "–"}</small></span><a class="btn primary" href="/agent/fixer" target="_top">Open the Fixer</a>`
+      ? `<span class="grow"><b>Fixer</b> · ${!f.lastCheck ? "hasn't checked yet" : f.looksFailed ? `<strong>${f.looksFailed} problem${f.looksFailed === 1 ? "" : "s"}</strong> with the three rules` : "the three rules all kept"}<br><small class="nt-note">Checks every 5 minutes · last ${f.lastCheck ? esc(ago(f.lastCheck)) : "–"}</small></span><a class="btn primary" href="/agent/fixer" target="_top">Open the Fixer</a>`
       : `<span class="grow"><b>Fixer</b> · not running here</span>`;
     $("backup").innerHTML = n.backup ? `Last backup: <strong>${esc(london(n.backup.last, true))}</strong> (${esc(ago(n.backup.last))})` : "Last backup: not known from here.";
   }

@@ -31,7 +31,10 @@ textarea.field { resize: none; line-height: 1.5; }
 .nb-tool .iv-parts button[aria-selected="true"] { color: var(--bright); border-color: var(--hi); background: color-mix(in srgb, var(--hi) 22%, transparent); }
 
 /* ---- The invoices ---- */
-.filters { flex: none; display: flex; flex-wrap: wrap; gap: 4px; }
+/* The filters: one row (never a second); a narrow screen scrolls it sideways inside itself */
+.filters { flex: none; display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filters > * { flex: none; }
 .nb-tool .filters button { min-height: 32px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
 .nb-tool .filters button[aria-pressed="true"] { color: var(--bright); border-color: var(--hi); background: color-mix(in srgb, var(--hi) 22%, transparent); }
 .inv-list { flex: 1 1 auto; min-height: 0; list-style: none; margin: 0; padding: 0 2px 0 0; display: grid; gap: 6px; align-content: start; }
@@ -168,7 +171,7 @@ html body .lines .n { text-align: right !important; }
 
 /* ---- One screen: everything in reach without scrolling the columns (15 Oct 2026) ---- */
 .col { gap: 8px; }
-.nb-tool .filters { flex-wrap: wrap; }
+.nb-tool .filters { flex-wrap: nowrap; }
 .nb-tool .filters::-webkit-scrollbar { display: none; }
 .nb-tool .filters button { flex: none; min-height: 30px; padding: 2px 10px; font-size: 12px; }
 .nb-tool .stages button { min-height: 34px; padding: 3px 10px; font-size: 13px; }

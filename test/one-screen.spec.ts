@@ -35,7 +35,7 @@ describe("one screen, nothing scrolling the page", () => {
   it("Lossless, the Visualizer and the Fixer: one screen, their cards or the open tab scroll inside themselves", () => {
     expect(read("../web/lossless/public/lossless/index.html")).toContain("main > .grid { grid-template-columns: repeat(4, minmax(0, 1fr));");
     expect(read("../web/agent/page.html")).toContain("body > main { overflow: hidden; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr));");
-    expect(read("../web/fixer/fixer.css")).toContain(".panes > .pane:not([hidden]) { flex: 1 1 auto; min-height: 0; overflow-y: auto;");
+    expect(read("../web/fixer/fixer.css")).toContain(".list { min-height: 0; overflow-y: auto;");
   });
 
   it("Calendar: whichever view is open scrolls inside its own box, never the calendar's page", () => {
@@ -74,15 +74,12 @@ describe("one screen, nothing scrolling the page", () => {
     for (const id of ["opt-celebrate", "opt-phone", "opt-done", "opt-replan", "opt-keys"]) expect(q).toContain(`id="${id}"`);
   });
 
-  it("Fixer: on a wide screen all seven parts at once, no tabs", () => {
-    const js = read("../web/fixer/app.js");
-    expect(js).toContain('const WIDE = matchMedia("(min-width: 1100px) and (min-height: 600px)");');
-    expect(js).toContain("p.hidden = !WIDE.matches && p.id !== `pane-${name}`;");
+  it("Fixer: one screen, only its list of problems scrolls (16 Oct 2026, from the ground up)", () => {
     const css = read("../web/fixer/fixer.css");
-    expect(css).toContain("html.fx-wide .fx-tabs { display: none; }");
-    // (Needs you down the left, every row: one fix at a time, as a big card; the other six beside it)
-    expect(css).toContain("html.fx-wide #pane-needs { grid-row: 1 / -1; }");
+    expect(css).toContain("html, body { height: 100%; margin: 0; overflow: hidden; }");
+    expect(css).toContain("grid-template-rows: auto auto auto auto minmax(0, 1fr);");
   });
+
 
   it("the home's welcome: sized once, kept while it still fits, never a hair too big", () => {
     const js = read("../web/agent/assets/music.js");

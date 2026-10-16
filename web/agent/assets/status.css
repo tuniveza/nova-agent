@@ -17,9 +17,11 @@
    "…"): the line never slides, grows or jumps to a second row under the pointer (16 Oct 2026) */
 .status-line .sl-news { flex: none; width: 27ch; min-width: 0; overflow: hidden; }
 .status-line .sl-area { flex: none; color: var(--hi); font-weight: 600; }
-.status-line .sl-track { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-line .sl-track { flex: 1 1 0; min-width: 0; overflow: hidden; white-space: nowrap; }
+/* (one line: a part that doesn't fit steps aside, status.js squeeze) */
+.status-line .sl-squeezed { display: none !important; }
 .status-line .sl-words { color: var(--text); }
-.status-line .sl-act-text { width: 24ch; max-width: 24ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.status-line .sl-act-text { width: 24ch; max-width: 24ch; white-space: nowrap; overflow: hidden; color: var(--text); }
 .status-line .sl-clock { color: #fff; font-weight: 600; }
 .sl-list { position: fixed; z-index: 70; width: 290px; max-height: 60vh; max-height: 60dvh; overflow: auto; padding: 10px 12px; border-radius: 16px;
   border: 1px solid var(--line-strong); background: color-mix(in srgb, var(--panel) 96%, var(--void)); box-shadow: 0 18px 50px -16px #000;
@@ -81,7 +83,7 @@ html[data-status="auto"].nav-away .shell > .status-line { display: none; opacity
 #suite-home:has(> .status-line) { grid-template-rows: minmax(0, 1fr) auto; }
 #suite-home > .status-line, .tabbar > .status-line {
   width: 0; min-width: 100%; height: auto; min-height: 24px; margin: 0; padding: 2px 10px; box-sizing: border-box;
-  flex-wrap: wrap; row-gap: 0; justify-content: center;
+  flex-wrap: nowrap; overflow: hidden; row-gap: 0; justify-content: center;
   border: 0; border-top: 1px solid color-mix(in srgb, var(--line) 85%, transparent); border-radius: 0;
   background: color-mix(in srgb, var(--void) 22%, transparent); }
 #suite-home > .status-line { font-size: 11px; }
@@ -92,7 +94,7 @@ html[data-status="auto"].nav-away .shell > .status-line { display: none; opacity
 /* A phone held upright: the status line is readable (11px) and, when it's longer than the screen,
    wraps onto a second short row (every part in sight, never sliding sideways; 15 Oct 2026) */
 @media (max-width: 600px) {
-  .tabbar > .status-line { flex-wrap: wrap; justify-content: center; overflow: visible; font-size: 10.5px; line-height: 1.2; min-height: 18px; height: auto; row-gap: 0; white-space: nowrap; }
+  .tabbar > .status-line { flex-wrap: nowrap; justify-content: center; overflow: hidden; font-size: 10.5px; line-height: 1.2; min-height: 18px; height: auto; row-gap: 0; white-space: nowrap; }
   .tabbar > .status-line .sl-item { flex: none; padding-block: 0; }
   .tabbar > .status-line .sl-news { width: min(22ch, 58vw); }
   /* (tight rows: the navigation panel was a quarter of the screen, 16 Oct 2026) */

@@ -1,73 +1,59 @@
 # Fixer
 
-Nova Agent's caretaker. It checks Nova Agent every hour, keeps a list of what it found, takes fixer quests from admins, and prepares fixes with Claude Code. **Nothing goes live until an admin taps Approve**: every change, trivial ones included, waits for a person.
+Nova Agent's caretaker, started again from the ground up on 16 October 2026. It checks all of Nova Agent against **three strict rules that are never compromised**, every 5 minutes, and shows what breaks them.
 
 ## What's new
 
-- **Every button pressed, every 5 minutes.** The buttons check opens three panels at a time (so each panel about every half hour, at a computer, phone and tablet size in turn) and presses every button, tab, toggle and link people can see, and what their menus and dialogs open. Each one has to do something. It finds a button that does nothing, one that goes wrong when pressed, a link to a page that isn't there, and one that takes you to Portal instead of doing what it says. It only looks: every save is turned away before it leaves.
-- **Nothing out of sight, every 15 minutes.** The edges check opens every panel at three screen sizes each quarter of an hour (so every size, every hour), opens its dialogs, menus and tabs, and turns the phone or makes the window smaller, and finds anything off the screen, cut off by its box, or in a row you'd have to scroll sideways to see. Anything you'd tap or type into counts as serious.
-- **Invoices and emails, every hour.** The hourly check now asks Nova Bot for its health (read-only, nothing sent), and checks:
-  - that the invoice draws at every stage, bright and dark, with no blank or broken amounts;
-  - that the client's invoice page and the invoice email build, with their link;
-  - that emails can go out, and clients have a way to pay (bank details or card);
-  - that nothing is stuck sending, paid amounts add up, overdue invoices have a reminder, and nothing waits too long for an admin.
-- **The whole of Nova Bot too:** its database, enquiry emails, phone alerts, Google's parts, failed emails or posts in the last day, and approvals waiting more than two days.
-- **Mail delivery.** Every hour it reads how the studio's emails did in the last hour (delivered, delayed, bounced), from a count the server keeps with no addresses in it.
-- **Scripts first.** A problem with a known recipe (like the Manual out of date) is fixed by running that recipe, not by asking Claude Code. Claude Code is the fallback, and by itself only for serious problems: a small problem no script knows waits for an admin's **Prepare a fix**. Either way the fix waits for an admin's Approve.
-- **The text, read.** The looks check now reads every piece of text: words running into other words or crammed against them, cut off, too small or too faint, on each panel and on Nova Agent's own bars. It checks again after the window is made smaller with a panel open, at 1280×800 and 1024×768.
-- **Needs you is one clear card at a time.** Each fix fills the part as a big card, with no long list of pictures and text. Its name is in big letters, like "Portal's sign-in cut off on phones", with chips for how serious it is, which panel it's on, and where it's up to: **Preparing…**, **Checking**, **Ready for you**, **Going live…**, **Live** or **Rejected**. Under the name are four short rows:
-  - **What's wrong**
-  - **Why**
-  - **The fix**
-  - **Where**: the screen sizes. Tap one to see that picture.
+- **From the ground up.** Everything the Fixer did before is off: no hourly checks, no looks, edges or buttons checks, no fixer quests, no fixes prepared by Claude Code, nothing waiting for Approve. What it had saved is kept aside on the server (`data/fixer-before-2026-10-16.json`), never deleted.
+- **Three rules, every 5 minutes.** On the server, every 5 minutes, it opens Nova Agent and every app, plan, tool and helper at phone, tablet and computer sizes, and checks them against the three rules below.
+- **Extremely thin or short windows too.** It also checks a 280px-wide window and a 320px-tall one. On a window that small, the navigation panel becomes one row of tiles that scrolls sideways inside itself. Each name shrinks to fit, and if it still can't fit it keeps its first few letters, at least one. The whole name stays the tile's tooltip.
 
-  Next to the rows is one big picture with the problem **outlined in red**. Tap **After** to see the same place, outlined in green, after the fix, and tap the picture to see it full screen. The long version (what changed, risks, the recommendation, the checks, the files and every line) is folded away under **Details**.
+## The three rules
 
-  **Approve** (green), **Reject** (red), **Tweak** (say what to change; it's prepared again) and **Later** (moved to the back for 3 hours) are always at the bottom, so they never scroll away. To move between fixes, use ‹ ›, the "2 of 5" counter, and the row of fix names above the card. On a computer, ← → also move between fixes, A twice approves, R twice rejects, and B / F switch between before and after.
-
-  A fix that's still being prepared shows the problem straight away, with the looks check's own picture, and says it's being prepared. Claude Code now writes each card's short name and its three one-line answers, and older cards get theirs from what the check saw.
-
-  The looks check now remembers where on the screen each problem is, so it can be outlined.
-- The page never scrolls. Only the card's words (and Details) scroll inside the card, on a big screen, a laptop, a tablet and a phone, including a phone held sideways, where the four buttons stand in a column on the right. On a phone or short screen, the four numbers at the top step aside while Needs you is open. The tabs still show the counts, and Check now is in Health.
-- **Looks**: the Fixer now checks how everything LOOKS, the way you see it. Every hour and a few minutes after each update, it opens Nova Agent and every panel inside it, signed in and signed out, at six sizes (360×740, 390×844, 1024×768, 1440×900, 1512×1500 and 2000×1130). It looks for big empty gaps, blank panels, a panel's header sitting low, the title panel or navigation panel covering a panel, more than one title panel, pages that scroll or are cut off at the bottom, buttons off the screen, cut-off text, errors and slow panels. Each problem comes with a picture and says every size it was seen at; a fix for it is looked at again at those sizes, with the before and after side by side. **Check looks now** is in Health; it can be switched off in Settings.
-- The looks check only looks: it signs in as a built-in test account that Nova Bot makes for that one check and deletes after. The account has no password and Nova Bot lets it do nothing but look (no emails, posts, bookings, approvals or saves), and the check's own browser stops anything that would change something before it leaves.
-- When Claude Code isn't signed in on the server, the Fixer says so at the top ("Sign Claude Code in to let me prepare fixes"); checks still run and report.
-- Everything at once on a wide screen: Needs you down the left, Health, Fixer quests and Suggested along the top, Done, Activity and Settings below, each scrolling inside itself. No tabs (on a phone the parts are still one at a time, behind the tabs).
-- One problem, wherever it's seen: a file that didn't load on Notes, Index and Observatory is one problem ("· on Notes, Index and Observatory at 390px") with one fix, not three.
-- A fix whose problem has gone by itself (fixed another way) is closed, instead of sitting "blocked".
-- No false alarms when Nova Bot blips: Nova Bot not answering, or a file failing with 502/503/504, is checked again (3 tries over about 2 minutes) before it counts, and never has a fix prepared.
-- The sweep only looks: its browser can't make notes, calendar items, quests or anything else (it once made 16 "Welcome to Notes" notes).
-- The Fixer joins Nova Agent: hourly checks, fixer quests, suggestions from Quests and Notes, approval cards with before and after pictures, and Undo.
+1. **Never anything off the screen.** Nothing sticks out past the screen's edges, and nothing is cut off by the box it's in, including words cut short with "…". What's further down a box that scrolls is fine, because it can be scrolled to, and so is what's on a surface you drag around (Board's table).
+2. **One screen.** The page itself never scrolls. Only boxes inside it do.
+3. **Never onto the next line.** Buttons, links, names, labels, headings, tabs and the bars' words stay on one line, and a row of things (a toolbar, the status line, a row of chips) never wraps onto a second row. Reading text, like a paragraph, a message or a note, is left out because it's meant to wrap.
 
 ## What it does
 
-- **Hourly check** (scripted, no AI, so it costs nothing): Nova Agent's and Nova Bot's tests, Nova Agent's typecheck, a sweep of every panel at phone (390) and desktop (1280) width (script errors, console errors, files that don't load, sideways scrolling, buttons off the screen), and health: Nova Agent's server, the online link, Nova Bot, restarts, disk space and the data files. Once a day it also measures the sound levels against the calm rules.
-- **Problems** are kept once each and cleared when they're gone. The same problem seen on several panels or widths is one problem that says where it was seen. Nova Bot not answering for a moment (or a file failing because of it) is checked again a few times before it counts. The admins' phones get one calm ping for a new serious problem, and one when a fix is ready to look at. Never repeated.
-- **Fixer quests**: an admin adds a bug, a glitch or a change, with its details and priority.
-- **Suggested**: quests (from Nova Agent and Notes) that look like work on Nova Agent itself. Tap **Adopt** to make one a fixer quest; nothing starts by itself.
-- **Preparing a fix**: for a problem or a fixer quest (by itself for new problems, if that's on in Settings). One at a time, at most 10 a day, 30 minutes each. Each fix is made in its own copy of the code, then tested, typechecked and swept there, with pictures before and after.
-- **Needs you**: the approval card says what changed and why, in plain English, shows the files and every line, the before and after pictures, what it means for you, whether it's a good idea (with the risks), and a recommendation. A tiny change to looks or wording is labelled **Trivial — safe to approve**. Tap **Approve**, **Reject**, or **Ask for a tweak** (your note goes with it and it's prepared again).
-- **Approve** merges it, puts it live and checks again. If things got worse, the Fixer undoes it by itself and tells you: the only thing it ever does without a tap.
-- **Done** lists what went live (with **Undo**), what was rejected and what couldn't be prepared. **Activity** is its diary.
-- **Looks** (in Health): when the looks check last ran, how many screens it saw, and a picture of each one that didn't look right, with what was wrong. Tap a picture to see it big.
-  Under it, the edges check's last run: when, which sizes, and how many screens had something out of sight (those are in the problems).
-- **Settings**: hourly checks on or off, preparing fixes by itself on or off, looks checks on or off, how many a day, and how long each may take.
+- **Checks every 5 minutes**, on the live site as everyone sees it. It signs in as the looks account, which can only look, and it never changes anything: every save is turned away before it leaves its browser.
+- **Looks at every place:** Agent, Portal, Calendar, Notes, Board, Index, Quests, Missions, Fixer, Computer, Lossless, Observatory, Console, the Manual, the Invoicer and Nova. It looks at each one at 10 sizes:
+  - phones: 360×640, 390×844, 412×915, and 844×390 on its side;
+  - tablets: 768×1024 and 1024×768;
+  - computers: 1366×768 and 1920×1080;
+  - extremely thin and short windows: 280×600 and 900×320.
+- **Shows each problem once**, with every size it was seen at. Tap a size to see that screen with the problem outlined in red.
 
 ## Inside Nova Agent
 
-The Fixer is in the Panels window and on the bar, under Tools. It's for admins: sign in to Portal as an admin. The Fixer runs on the VPS with Nova Agent, so it keeps checking with every laptop off.
+The Fixer is a tool (Tools → Fixer, or `/agent/tools/fixer`), for admins only. The page is one screen:
+
+- **The three rules** sit at the top, each one ✓ kept or ✕ with how many problems. Tap a rule to show only its problems.
+- **When it last checked**, and a **Check now** button.
+- **Phones, Tablets, Computers** filter the list.
+- **The list of problems**, by place, is the only part that scrolls.
+
+Computer shows the Fixer's line too: how many problems there are, and when it last checked.
 
 ## How it works
 
-- The sweep only looks: every request its browser makes to Nova Agent carries the `x-nova-fixer-sweep` header, and Nova Agent's server turns away anything that would change something (`src/fixer/sweep-guard.ts`).
-- The looks check: `src/fixer/looks.ts` measures each screen inside the page (where the content is, top to bottom; the bars; the panel's frame) and judges it with plain rules; `scripts/fixer-looks.ts` runs it as its own process, with low priority (`nice`), one browser and one page at a time. Its browser answers every write itself ("the Fixer's check only looks"), opens no WebSockets and runs no service worker. Signed in, it uses Nova Bot's looks account (`POST /nova-agent/looks-session`, Nova Agent's key; Nova Bot's `src/looks-account.js`): no password, a 45-minute session, deleted after the check, refused for anything but looking, and left out of the team list. The token goes to the check in its environment, never on a command line or in a log. After each update: the live pages' `X-Nova-Build` changes, and a few minutes later the check runs.
-- `src/fixer/fixer.ts` is the Fixer itself; `rules.ts` is its judgement (what's off limits, what's trivial, when to undo, what looks like Nova Agent work); `store.ts` keeps `data/fixer.json`; `sweep.ts` is the browser sweep; `health.ts` the health check; `claude.ts` how Claude Code is asked; `routes.ts` its addresses; `service.ts` the schedule.
-- Claude Code runs headless and confined: `claude -p --restricted --tools Read,Glob,Grep,Edit,Write,Bash --allowedTools Read Glob Grep Edit Write "Bash(npx vitest run)" "Bash(npx vitest run:*)" "Bash(npx tsc --noEmit)" --permission-mode acceptEdits --permission-prompts none --add-dir <the job's copies> --strict-mcp-config`, never with a skip-all-permissions flag, never with Nova Agent's keys. It doesn't run git: the Fixer commits its edits by name on the job's own branch, after checking nothing off limits was touched (secrets, migrations, data, payments, emails, Acuity, the deploy setup, the Fixer itself).
-- Going live is locked in code: only an Approve tap makes the approval that merging and deploying need.
-- `FIXER_DRY=1` makes it inert (checks can run; nothing is prepared, merged or deployed). `FIXER_NA_DIR`, `FIXER_NB_DIR`, `FIXER_RELEASE_DIR`, `FIXER_JOBS_DIR` and `FIXER_CLAUDE` say where things are.
+- `src/fixer/strict.ts` holds the three rules and the measuring. The measuring runs inside each page and inside each panel's own page, and leaves out what's hidden.
+- `scripts/fixer-strict.ts` runs it as its own process, with low priority.
+- `src/fixer/strict-service.ts` runs that every 5 minutes on the server. If a run is still going, the next one is skipped. It keeps the last run and a day of runs in `data/fixer-strict.json`, the pictures of the last few runs in `data/fixer-shots/strict/`, and answers `/fixer-api/state`, `/fixer-api/shots/…` and `/actions/fixer/check`. All of these are for admins only, and online Nova Bot passes them on.
+- The old Fixer's code (`src/fixer/fixer.ts` and the rest) is still in the repo, but it isn't started.
 
 ## Tests
 
-`test/fixer-card.spec.ts`: where a problem is on its picture (each kind), the card's short headline asked of Claude Code and read back (older answers still read), and the page's one-card deck with every part of the Fixer kept. `scripts/shots-fixer.mjs <out> [pictures]`: the card with sample fixes at six sizes (no server), checking the page never scrolls and Approve stays on screen. `test/fixer.spec.ts`: one problem wherever it's seen, closing fixes whose problem has gone, Nova Bot blips, nothing merges or deploys without Approve (every kind of change, trivial included), when it undoes by itself, the trivial label, suggestions, one job at a time and the daily cap, settings, admin-only addresses, and old or damaged `fixer.json` files. `test/fixer-sweep-guard.spec.ts`: a real sweep of a page that tries to save can't make shared notes, calendar items or quests. `test/fixer-looks.spec.ts`: real pages in a browser: the Index gap of 14 October (an empty box on top, its header and numbers low) is caught, an ordinary empty state and a centred sign-in card aren't, blank panels, gaps, bars covering a panel, unused space, scrolling and cut-off pages, cut-off text; one problem per panel and kind. The looks part of `test/fixer.spec.ts`: problems with pictures, a ping, a fix looked at again where it was seen with before and after, and still nothing goes live without Approve. Nova Bot's `test/looks-account.spec.js`: only Nova Agent's key makes the account, it can only look, it isn't listed, and it's gone after.
+`test/fixer-strict.spec.ts` checks the rules on real pages in a real browser:
 
-Inside Nova Agent there's no title of the Fixer's own at any size (the title panel names it); its one-line note stays.
+- a button past the edge, words cut short with "…", and something cut off by its box;
+- the page scrolling;
+- a button, heading, status-line word or row wrapping onto a second line;
+- and what's fine: a box that scrolls, Board's table, hidden things, reading text, and an icon above its name.
+
+It also checks the service:
+
+- each run is low priority and signed in through the environment, never the command line;
+- a run that's still going means the next one is skipped;
+- the old data is kept aside;
+- the addresses are for admins only.

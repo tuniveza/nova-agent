@@ -16,172 +16,44 @@
   <!-- Every button's look (buttons.css; body.nb-plain: plain buttons join in) -->
   <link rel="stylesheet" href="/shared/buttons.css">
   <link rel="stylesheet" href="/shared/scrollbars.css"><!-- Scrollbars: easy to grab, in the theme's colours -->
-<link rel="stylesheet" href="/shared/fit.css"><script src="/shared/fit.js" defer></script><!-- Fit on screen: nothing floats past the edge -->
+  <link rel="stylesheet" href="/shared/fit.css"><script src="/shared/fit.js" defer></script><!-- Fit on screen: nothing floats past the edge -->
   <script src="/shared/spectrum.js"></script>
   <script src="/shared/themes.js"></script>
   <script src="/shared/look.js"></script>
 </head>
 <body class="nb-plain nb-tool">
+<!-- The Fixer, from the ground up (16 Oct 2026): three strict rules, never compromised, checked on
+     all of Nova Agent every 5 minutes (src/fixer/strict.ts). One screen: only the list scrolls. -->
 <main>
   <header class="top">
-    <span class="nt-kicker">Tools · Caretaker</span>
     <h1 class="nt-title">Fixer</h1>
-    <p class="nt-sub">Looks after Nova Agent: checks it every hour and prepares fixes. <strong>Nothing goes live until an admin taps Approve.</strong></p>
+    <p class="nt-sub" id="sub">Checks all of Nova Agent every 5 minutes against three rules.</p>
   </header>
 
-  <!-- How things stand, at a glance -->
-  <section class="glance nt-card" aria-label="How things stand">
-    <div class="glance-row">
-      <div class="glance-item"><span class="nt-label">Last check</span><b id="g-check">–</b></div>
-      <div class="glance-item"><span class="nt-label">Problems</span><b id="g-issues">–</b></div>
-      <div class="glance-item"><span class="nt-label">Needs you</span><b id="g-needs">–</b></div>
-      <div class="glance-item"><span class="nt-label">Prepared today</span><b id="g-today">–</b></div>
-    </div>
-    <div class="glance-actions">
-      <button type="button" class="primary" id="check-now">Check now</button>
-    </div>
-    <p class="nt-note" id="g-working" hidden></p>
-    <p class="inert" id="inert" hidden>The Fixer is inert here (FIXER_DRY=1): checks can run, but nothing is prepared, merged or deployed.</p>
-    <!-- Claude Code not installed or not signed in here: checks still run and report, fixes can't be prepared -->
-    <p class="inert" id="claude-off" hidden></p>
-  </section>
+  <section class="rules" id="rules" aria-label="The three rules"></section>
 
-  <nav class="seg fx-tabs" role="tablist" aria-label="Fixer">
-    <button type="button" role="tab" data-tab="needs" aria-selected="true">Needs you <span class="count" id="c-needs"></span></button>
-    <button type="button" role="tab" data-tab="health" aria-selected="false">Health <span class="count" id="c-health"></span></button>
-    <button type="button" role="tab" data-tab="quests" aria-selected="false">Fixer quests <span class="count" id="c-quests"></span></button>
-    <button type="button" role="tab" data-tab="suggested" aria-selected="false">Suggested <span class="count" id="c-suggested"></span></button>
-    <button type="button" role="tab" data-tab="done" aria-selected="false">Done</button>
-    <button type="button" role="tab" data-tab="activity" aria-selected="false">Activity</button>
-    <button type="button" role="tab" data-tab="settings" aria-selected="false">Settings</button>
-  </nav>
-
-  <p class="message" id="message" role="status" hidden></p>
-
-  <!-- The parts: one at a time behind the tabs on a phone; on a wide screen all seven side by side
-       (Needs you down the left), each scrolling inside itself, and no tabs -->
-  <div class="panes" id="panes">
-  <!-- Needs you: the approval cards first, then what's being worked on -->
-  <!-- Needs you: one fix at a time, as a big clear card (‹ › and the names along the top to go
-       between them); what's wrong, why, the fix and where, one before/after picture with the
-       problem outlined, and Approve / Reject / Tweak / Later always at the bottom -->
-  <section class="pane" id="pane-needs" role="tabpanel" aria-label="Needs you">
-    <h2 class="pane-h">Needs you</h2>
-    <div class="deck" id="deck">
-      <!-- Approve all it suggests: every ready fix whose checks all passed, approved with one (double) tap;
-           they go live one after another. A person still taps: nothing goes live by itself. -->
-      <div class="deck-all" id="deck-all" hidden>
-        <button type="button" class="fx-approve" id="approve-all" data-act="approve-all" data-id="all">✓ Approve all it suggests</button>
-        <span class="deck-all-note" id="deck-all-note"></span>
-      </div>
-      <div class="deck-nav" id="deck-nav" hidden>
-        <button type="button" class="deck-step" id="deck-prev" aria-label="Previous fix (←)">‹</button>
-        <span class="deck-count" id="deck-count" aria-live="polite"></span>
-        <button type="button" class="deck-step" id="deck-next" aria-label="Next fix (→)">›</button>
-        <div class="deck-strip" id="deck-strip" role="tablist" aria-label="Fixes"></div>
-      </div>
-      <div class="deck-card" id="deck-card"><p class="nt-loading">Looking…</p></div>
-    </div>
-  </section>
-
-  <section class="pane" id="pane-health" role="tabpanel" aria-label="Health" hidden>
-    <div class="nt-card">
-      <h2 class="nt-h">Health</h2>
-      <p class="nt-note" id="health-summary"></p>
-      <div class="row-btns">
-        <button type="button" id="check-now-2">Check now</button>
-        <button type="button" id="audio-now">Measure the sound levels</button>
-      </div>
-    </div>
-    <div id="issues" class="stack"></div>
-    <!-- The looks check (src/fixer/looks.ts): every screen inside Nova Agent, signed in and out, at eight
-         sizes; what looked wrong, with pictures -->
-    <div class="nt-card" id="looks-card">
-      <h2 class="nt-h">Looks</h2>
-      <p class="nt-note" id="looks-summary">Opens Nova Agent and every panel the way you see them, signed in and signed out, on phones, a tablet, laptops and big screens, and looks for empty gaps, blank panels, bars covering things, scrolling pages and cut-off text. It only looks: it can't change anything.</p>
-      <p class="nt-note" id="edges-summary"></p>
-      <p class="nt-note" id="buttons-summary"></p>
-      <div class="row-btns">
-        <button type="button" id="looks-now">Check looks now</button>
-      </div>
-      <div id="looks" class="looks-grid"></div>
-    </div>
-    <!-- The scripted checks (src/fixer/probes.ts): each one pass or fail, and why, in groups -->
-    <div class="nt-card" id="checks-card">
-      <h2 class="nt-h">Scripted checks</h2>
-      <p class="nt-note" id="checks-summary">Quick, plain checks with no AI: every address, Nova Agent's pages and data, the status page, bookings, the server, the mail records, the database and the Manual's links.</p>
-      <div class="row-btns">
-        <button type="button" id="checks-now">Run the quick checks</button>
-        <button type="button" id="checks-fails" aria-pressed="false">Only show what failed</button>
-      </div>
-      <div id="checks" class="checks"></div>
-    </div>
-  </section>
-
-  <section class="pane" id="pane-quests" role="tabpanel" aria-label="Fixer quests" hidden>
-    <h2 class="pane-h">Fixer quests</h2>
-    <form class="nt-card" id="quest-form">
-      <h2 class="nt-h">New fixer quest</h2>
-      <label class="nt-label" for="q-title">What should change?</label>
-      <input id="q-title" maxlength="200" required placeholder="e.g. Notes: the toolbar hangs off a phone screen">
-      <label class="nt-label" for="q-details">Details</label>
-      <textarea id="q-details" rows="3" maxlength="4000" placeholder="Where it happens, what you expected, anything that helps"></textarea>
-      <div class="pair">
-        <div><label class="nt-label" for="q-kind">Kind</label>
-          <select id="q-kind"><option value="bug">Bug</option><option value="glitch">Glitch</option><option value="change">Change</option></select></div>
-        <div><label class="nt-label" for="q-priority">Priority</label>
-          <select id="q-priority"><option value="critical">Critical</option><option value="high">High</option><option value="normal" selected>Normal</option><option value="low">Low</option></select></div>
-      </div>
-      <label class="switch-row"><input type="checkbox" class="nt-switch" id="q-start" checked> Start preparing a fix straight away</label>
-      <button type="submit" class="primary">Add the fixer quest</button>
-      <p class="nt-note">A prepared fix always waits for an admin's Approve.</p>
-    </form>
-    <div id="quests" class="stack"></div>
-  </section>
-
-  <section class="pane" id="pane-suggested" role="tabpanel" aria-label="Suggested" hidden>
-    <h2 class="pane-h">Suggested</h2>
-    <p class="nt-note lead">Quests (from Nova Agent and Notes) that look like work on Nova Agent itself. Adopt one to make it a fixer quest: nothing starts by itself.</p>
-    <div id="suggested" class="stack"></div>
-  </section>
-
-  <section class="pane" id="pane-done" role="tabpanel" aria-label="Done" hidden>
-    <h2 class="pane-h">Done</h2>
-    <div id="done" class="stack"></div>
-  </section>
-
-  <section class="pane" id="pane-activity" role="tabpanel" aria-label="Activity" hidden>
-    <div class="nt-card">
-      <h2 class="nt-h">Activity</h2>
-      <ol class="activity" id="activity"></ol>
-    </div>
-  </section>
-
-  <section class="pane" id="pane-settings" role="tabpanel" aria-label="Settings" hidden>
-    <div class="nt-card settings">
-      <h2 class="nt-h">Settings</h2>
-      <label class="switch-row"><input type="checkbox" class="nt-switch" id="s-hourly"> Hourly checks</label>
-      <label class="switch-row"><input type="checkbox" class="nt-switch" id="s-auto"> Prepare fixes for new problems by itself</label>
-      <label class="switch-row"><input type="checkbox" class="nt-switch" id="s-looks"> Looks checks (every hour and after each update)</label>
-      <div class="pair">
-        <div><label class="nt-label" for="s-cap">Fixes prepared a day (at most)</label><input id="s-cap" type="number" min="0" max="100" inputmode="numeric"></div>
-        <div><label class="nt-label" for="s-limit">Time for one fix (minutes)</label><input id="s-limit" type="number" min="5" max="120" inputmode="numeric"></div>
-      </div>
-      <p class="nt-note">Every change waits for an admin to tap <strong>Approve</strong>, trivial ones included. The only thing the Fixer does by itself is undo a change that made things worse right after it went live, and it tells you when it does.</p>
-    </div>
-  </section>
+  <div class="bar">
+    <p class="when" id="when">–</p>
+    <button type="button" id="check" class="primary">Check now</button>
   </div>
+
+  <div class="filters" role="group" aria-label="Show">
+    <div class="seg" id="f-kind">
+      <button type="button" data-kind="all" aria-pressed="true">All</button>
+      <button type="button" data-kind="phone" aria-pressed="false">Phones</button>
+      <button type="button" data-kind="tablet" aria-pressed="false">Tablets</button>
+      <button type="button" data-kind="computer" aria-pressed="false">Computers</button>
+    </div>
+  </div>
+
+  <section class="list" id="list" aria-live="polite"></section>
 </main>
 
-<!-- A screenshot, big -->
-<dialog class="zoom" id="zoom" aria-label="Screenshot">
-  <button type="button" class="icon-btn zoom-x" id="zoom-close" aria-label="Close">✕</button>
-  <img id="zoom-img" alt="">
-  <div class="zoom-art" id="zoom-art" hidden></div>
-  <p class="nt-note" id="zoom-cap"></p>
+<dialog class="shot" id="shot">
+  <div class="shot-head"><p id="shot-title"></p><button type="button" id="shot-close" aria-label="Close">✕</button></div>
+  <div class="shot-body"><img id="shot-img" alt=""></div>
 </dialog>
 
-<script src="/shared/sfx.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

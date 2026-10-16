@@ -17,7 +17,8 @@ import { join } from "node:path";
 import type { Hono } from "hono";
 import { config } from "./config";
 import { actorFor } from "./fixer/routes";
-import { claudeProblem, currentFixer, fixerPaths } from "./fixer/service";
+import { claudeProblem, fixerPaths } from "./fixer/service";
+import { currentStrictFixer } from "./fixer/strict-service";
 import { DiskSizes, listFolder, PathError, ProcSampler, readImage, readTextFile } from "./computer-explore";
 
 // ================= Secrets never leave =================
@@ -431,18 +432,13 @@ export function realDeps(): ComputerDeps {
     deskUrl: "http://127.0.0.1:8788/status",
     deskToken: config.agentNovaKey ? createHmac("sha256", config.agentNovaKey).update("desk-status").digest("hex") : "",
     secrets: () => secretValues(),
+    // The Fixer (the three strict rules, every 5 minutes): when it last looked, and how many problems
     fixer: () => {
-      const f = currentFixer();
+      const f = currentStrictFixer();
       if (!f) return null;
       try {
-        const s: any = f.state();
-        return {
-          needsYou: Array.isArray(s.needsYou) ? s.needsYou.length : 0,
-          lastCheck: s.lastCheck?.at || null,
-          looksAt: s.looks?.at || null,
-          looksFailed: Number(s.looks?.failed || 0),
-          claude: String(s.claude || ""),
-        };
+        const s = f.state();
+        return { needsYou: 0, lastCheck: s.last?.at || null, looksAt: s.last?.at || null, looksFailed: s.problems.length, claude: "" };
       } catch {
         return null;
       }

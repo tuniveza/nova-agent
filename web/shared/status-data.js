@@ -1,61 +1,64 @@
 // Made by scripts/build-status.mjs: Nova Agent's version and what changed lately, per panel.
 window.NOVA_STATUS = {
  "version": "0.1.0",
- "build": 355,
- "date": "2026-10-13",
+ "build": 462,
+ "date": "2026-10-16",
  "panels": {
   "chat": [
-   "Google round two on the PC and…",
-   "Portal's Admin address is view=manage",
-   "Google, Portal → Admin → Google",
-   "Portal → Test stuff",
-   "Money, invoices"
+   "Buttons that do what they say",
+   "The address shows the place that's open",
+   "Addresses and tab title show the place…",
+   "Navigation panel",
+   "The Visualizer is called Nova"
   ],
   "portal": [
-   "Portal's README",
-   "Computer is called Computer now",
-   "Switch-over, Computer's Live now card",
-   "Portal → Admin → Computer",
-   "Google round two on the PC and…"
+   "Fixer, Portal",
+   "Invoicer, receipts",
+   "Android, the Fixer's looks check watches a…",
+   "Computer, the VPS at a glance",
+   "Android, the panels. A tap is a…"
   ],
   "calendar": [
-   "Google round two on the PC and…",
-   "Everything fits",
-   "Centred text reaches the last left-aligned corners",
-   "Dates and times written the British way",
-   "Plain app names again"
+   "Buttons that do what they say",
+   "Android, the Fixer's looks check watches a…",
+   "Android, the panels. A tap is a…",
+   "One screen everywhere",
+   "Fit on screen in every panel"
   ],
   "notes": [
-   "Google round two on the PC and…",
-   "Sizing, Portal's tabs never squash or cut…",
-   "Portal's Admin address is view=manage",
-   "Google, Portal → Admin → Google",
-   "a clickable Welcome guide instead of a…"
+   "Buttons that do what they say",
+   "Nothing out of sight",
+   "Android, the sideways phone. The Visualizer's heading…",
+   "Android, the panels. A tap is a…",
+   "Fit on screen in every panel"
   ],
   "board": [
-   "Board docs and Manual",
-   "Board, a table in Nova Agent's Apps…"
+   "Nothing out of sight",
+   "Android, the Fixer's looks check watches a…",
+   "Android, the panels. A tap is a…",
+   "Fit on screen in every panel",
+   "Board docs and Manual"
   ],
   "console": [
-   "Computer is called Computer now",
-   "Console docs and Manual",
-   "Console tests",
-   "Console, the terminal sizes itself to an…",
-   "Console, docs"
+   "Nothing out of sight",
+   "Console, everything it prints is laid out…",
+   "Android, the Fixer's looks check watches a…",
+   "Android, the sideways phone. The Visualizer's heading…",
+   "Fit on screen in every panel"
   ],
   "index": [
-   "Centred text in Index's header",
-   "Plain names",
-   "Dates and times written the British way",
-   "Plain app names again",
-   "Nova first in every app name"
+   "Buttons that do what they say",
+   "One title panel",
+   "signed out or loading",
+   "Android, the Fixer's looks check watches a…",
+   "Android, the sideways phone. The Visualizer's heading…"
   ],
   "quests": [
+   "a panel of its own",
    "Google round two on the PC and…",
    "P0-4, chats",
    "Plain app names again",
-   "Nova first in every app name",
-   "Quest 2"
+   "Nova first in every app name"
   ],
   "missions": [
    "Quest 1",
@@ -65,100 +68,100 @@ window.NOVA_STATUS = {
    "Portal is Studio"
   ],
   "lossless": [
-   "Centred text in Index's header",
-   "Plain app names again",
-   "Tools in the Nova Agent family",
-   "Nova first in every app name",
-   "Themes, a colour spectrum with a Custom…"
+   "One title panel",
+   "One screen everywhere",
+   "Fit on screen in every panel",
+   "Nova's own address in Nova Agent",
+   "Centred text in Index's header"
   ],
   "visualizer": [
-   "Google round two on the PC and…",
-   "Fixer, one problem wherever it's seen",
-   "Google, Portal → Admin → Google",
-   "Portal → Test stuff",
-   "Money, invoices"
+   "the navigation panel steps aside while typing…",
+   "Nothing out of sight",
+   "Addresses and tab title show the place…",
+   "The Visualizer is called Nova",
+   "Invoicer at the left end of the…"
   ],
   "observatory": [
-   "Everything fits",
-   "Centred text in Index's header",
-   "Dates and times written the British way",
-   "Plain app names again",
-   "Tools in the Nova Agent family"
+   "One title panel",
+   "Android, the panels. A tap is a…",
+   "One screen everywhere",
+   "Fit on screen in every panel",
+   "one modern line-icon set"
   ],
   "manual": [
-   "Board, a table in Nova Agent's Apps…",
-   "The Fixer",
-   "Centred text reaches the last left-aligned corners",
-   "Dates and times written the British way",
-   "Plain app names again"
+   "The Visualizer is called Nova",
+   "Invoicer, a panel on its own in…",
+   "Computer's README and the Manual",
+   "Computer, the VPS at a glance",
+   "Faster Nova"
   ],
   "look": [
-   "Board, a table in Nova Agent's Apps…",
-   "Portal's Admin address is view=manage",
-   "Music, a calm late-night studio band",
-   "Status line on every panel",
-   "Look, with the planet on"
+   "the navigation panel steps aside while typing…",
+   "Buttons that do what they say",
+   "Nothing out of sight",
+   "The address shows the place that's open",
+   "Addresses and tab title show the place…"
   ]
  },
  "areas": {
   "apps": [
    {
     "panel": "chat",
-    "words": "Google round two on the PC and…"
+    "words": "Buttons that do what they say"
    },
    {
     "panel": "chat",
-    "words": "Portal's Admin address is view=manage"
+    "words": "The address shows the place that's open"
    },
    {
     "panel": "portal",
-    "words": "Portal's README"
+    "words": "Fixer, Portal"
    },
    {
     "panel": "portal",
-    "words": "Computer is called Computer now"
+    "words": "Invoicer, receipts"
    },
    {
     "panel": "calendar",
-    "words": "Google round two on the PC and…"
+    "words": "Buttons that do what they say"
    },
    {
     "panel": "calendar",
-    "words": "Everything fits"
+    "words": "Android, the Fixer's looks check watches a…"
    },
    {
     "panel": "notes",
-    "words": "Google round two on the PC and…"
+    "words": "Buttons that do what they say"
    },
    {
     "panel": "notes",
-    "words": "Sizing, Portal's tabs never squash or cut…"
+    "words": "Nothing out of sight"
    },
    {
     "panel": "board",
-    "words": "Board docs and Manual"
+    "words": "Nothing out of sight"
    },
    {
     "panel": "board",
-    "words": "Board, a table in Nova Agent's Apps…"
+    "words": "Android, the Fixer's looks check watches a…"
    },
    {
     "panel": "index",
-    "words": "Centred text in Index's header"
+    "words": "Buttons that do what they say"
    },
    {
     "panel": "index",
-    "words": "Plain names"
+    "words": "One title panel"
    }
   ],
   "tasks": [
    {
     "panel": "quests",
-    "words": "Google round two on the PC and…"
+    "words": "a panel of its own"
    },
    {
     "panel": "quests",
-    "words": "P0-4, chats"
+    "words": "Google round two on the PC and…"
    },
    {
     "panel": "missions",
@@ -172,56 +175,56 @@ window.NOVA_STATUS = {
   "tools": [
    {
     "panel": "lossless",
-    "words": "Centred text in Index's header"
+    "words": "One title panel"
    },
    {
     "panel": "lossless",
-    "words": "Plain app names again"
+    "words": "One screen everywhere"
    },
    {
     "panel": "visualizer",
-    "words": "Google round two on the PC and…"
+    "words": "the navigation panel steps aside while typing…"
    },
    {
     "panel": "visualizer",
-    "words": "Fixer, one problem wherever it's seen"
+    "words": "Nothing out of sight"
    },
    {
     "panel": "console",
-    "words": "Computer is called Computer now"
+    "words": "Nothing out of sight"
    },
    {
     "panel": "console",
-    "words": "Console docs and Manual"
+    "words": "Console, everything it prints is laid out…"
    }
   ],
   "helpers": [
    {
     "panel": "observatory",
-    "words": "Everything fits"
+    "words": "One title panel"
    },
    {
     "panel": "observatory",
-    "words": "Centred text in Index's header"
+    "words": "Android, the panels. A tap is a…"
    },
    {
     "panel": "manual",
-    "words": "Board, a table in Nova Agent's Apps…"
+    "words": "The Visualizer is called Nova"
    },
    {
     "panel": "manual",
-    "words": "The Fixer"
+    "words": "Invoicer, a panel on its own in…"
    }
   ]
  },
  "everything": [
-  "Fixer, put fixes live with vps/deploy-live.sh",
-  "Portal's README",
-  "Computer is called Computer now",
-  "Switch-over, Computer's Live now card",
-  "Console docs and Manual",
-  "check-console.mjs reads everything printed in the tab…",
-  "Console, terminal check",
-  "Console tests"
+  "the navigation panel steps aside while typing…",
+  "Fixer, undo “Lossless",
+  "Fixer, Lossless",
+  "Fixer, Portal",
+  "Fixer, undo “Calendar",
+  "Fixer, Calendar",
+  "Buttons that do what they say",
+  "Fixer, the buttons check tuned against the…"
  ]
 };

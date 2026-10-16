@@ -138,12 +138,44 @@
   }
   drawSession();
 
+  // ---- One line, never cut short, never onto a second row (the Fixer's rules, 16 Oct 2026) ----
+  // What's new and what you've been doing keep their widths (pointing along the bar never moves
+  // anything): their words fit inside, smaller (What's new) or fewer (at least one word). If the
+  // whole line is still wider than its place, its least needed parts step aside: the version first,
+  // then Last left, Here since, the date, what you've been doing, What's new; the clock never.
+  const firstWords = (t) => { const w = t.split(" "); return w.slice(1).map((_, i) => w.slice(0, w.length - 1 - i).join(" ")); };
+  const lastWords = (t) => { const w = t.split(" "); return w.slice(1).map((_, i) => w.slice(i + 1).join(" ")); };
+  function fitWords(el, box, variants, shrink) {
+    const over = () => box.scrollWidth > box.clientWidth + 0.5;
+    for (const v of variants) {
+      el.textContent = v;
+      el.style.fontSize = "";
+      if (!box.offsetParent) return;
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      while (shrink && over() && size > 8) el.style.fontSize = `${(size -= 0.5)}px`;
+      if (!over()) return;
+    }
+  }
+  const SQUEEZE = [".sl-ver", ".sl-left", ".sl-sess", ".sl-date", ".sl-act", ".sl-news"];
+  function squeeze() {
+    for (const s of SQUEEZE) line.querySelector(s).classList.remove("sl-squeezed");
+    for (const s of SQUEEZE) {
+      if (line.scrollWidth <= line.clientWidth + 1) break;
+      line.querySelector(s).classList.add("sl-squeezed");
+    }
+  }
+  if (typeof ResizeObserver === "function") new ResizeObserver(() => squeeze()).observe(line);
+  addEventListener("resize", () => { const k = shownKey; shownKey = null; news(k); drawActivity(); squeeze(); });
+
   // Activity: the latest two in the line, the list on a tap
   const actBtn = line.querySelector(".sl-act");
   const actText = line.querySelector(".sl-act-text");
   function drawActivity() {
     const a = activity[0];
-    actText.textContent = a ? `${a.text} · ${ago(a.t) === "now" ? "just now" : ago(a.t) + " ago"}` : "Nothing yet";
+    const full = a ? `${a.text} · ${ago(a.t) === "now" ? "just now" : ago(a.t) + " ago"}` : "Nothing yet";
+    actText.title = full;
+    // (in its own width: the whole, then without when, then its last words, at least one)
+    fitWords(actText, actText, a ? [full, a.text, ...lastWords(a.text)] : [full], false);
     if (!list.hidden) drawList();
   }
   function drawList() {
@@ -179,7 +211,8 @@
     else if (PANEL_NAMES[key]) { label = PANEL_NAMES[key]; items = DATA.panels[key] || []; }
     areaLabel.textContent = label === "New" ? "New:" : `${label}:`;
     // Still, and as simple as it gets: the latest change in a few words
-    wordsEl.textContent = items.length ? simple(items[0]) : "All up to date";
+    const words = items.length ? simple(items[0]) : "All up to date";
+    fitWords(wordsEl, wordsEl.parentElement, [words, ...firstWords(words)], true);
     wordsEl.title = items.join(" · ");
   }
   function simple(text) {

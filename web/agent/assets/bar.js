@@ -1,7 +1,9 @@
 // The title panel (the top bar, on the home and over every panel) and the navigation panel (the
-// panels bar along the bottom, with its status row): Auto, Always shown or Always hidden, each
-// remembered on this device. Auto is the default: while you work they slide away and the panel (or
-// the home) grows into all the room they had; they're back the moment you want them.
+// panels bar along the bottom, with its status row): Shown (away while you work), Auto, Always shown
+// or Always hidden, each remembered on this device. The default (16 Oct 2026) is shown, away only
+// while you work (typing in Agent or Notes, moving around Board, setting up an invoice). Auto: while
+// you work they slide away and the panel (or the home) grows into all the room they had; they're
+// back the moment you want them.
 //   Back at once (no wait): the mouse at the top or bottom edge of the screen, a tap or swipe at
 //     the edge (the thin edge, or the little handle on a touch screen), Tab into a bar, or
 //     scrolling up inside a panel.
@@ -15,12 +17,15 @@
 //   window.NovaBar = { mode(), setMode(m), next(), topMode(), setTopMode(m), nextTop(), name(m), reveal() }
 (() => {
   "use strict";
-  const MODES = ["auto", "shown", "hidden"];
-  const NAMES = { auto: "Auto", shown: "Always shown", hidden: "Always hidden" };
-  // (new keys: Auto is on for everyone now, also on a device that had picked Always shown before)
-  const KEYS = { nav: "nova-bar-2", top: "nova-top-2" };
-  const pick = (m) => (MODES.includes(m) ? m : "auto");
-  const load = (k) => { try { return pick(localStorage.getItem(k)); } catch (err) { return "auto"; } };
+  // "work" (the default since 16 Oct 2026): always shown, except while you work: typing in Agent,
+  // typing in Notes, moving around Board's table, or setting up an invoice (the bars step aside,
+  // and are back when you stop, or at once at the edge)
+  const MODES = ["work", "auto", "shown", "hidden"];
+  const NAMES = { work: "Shown, away while you work", auto: "Auto", shown: "Always shown", hidden: "Always hidden" };
+  // (new keys: the new default for everyone, also on a device that had picked another before)
+  const KEYS = { nav: "nova-bar-3", top: "nova-top-3" };
+  const pick = (m) => (MODES.includes(m) ? m : "work");
+  const load = (k) => { try { return pick(localStorage.getItem(k)); } catch (err) { return "work"; } };
   const root = document.documentElement;
   const main = document.getElementById("main");
   if (!main) return;
@@ -122,7 +127,7 @@
   }
   // Away in a moment, if it's still not wanted then
   function later(b) {
-    if (b.timer || b.state !== "in" || b.mode === "shown") return;
+    if (b.timer || b.state !== "in" || b.mode !== "auto") return;
     b.timer = setTimeout(() => {
       b.timer = null;
       if (b.state !== "in" || b.mode === "shown") return;
@@ -141,6 +146,7 @@
       if (b.mode === "shown") continue;
       const fromEdge = b === bars.top ? y : H - y;
       if (fromEdge <= EDGE) { show(b); continue; }
+      if (b.mode === "work") continue; // (away only while you work: below)
       if (b.state !== "in") continue;
       if (fromEdge < b.h + NEAR) stay(b);
       else later(b);
@@ -196,6 +202,49 @@
   document.addEventListener("touchmove", (e) => touchMove(e.touches[0].clientY), { capture: true, passive: true });
   document.addEventListener("touchend", () => { touching = performance.now() + 900; swipe = null; }, { capture: true, passive: true });
 
+  // ---- While you work (the default, "work"): the bars step aside, and come back when you stop ----
+  // Typing in Agent's message box or in Notes, moving around Board's table (dragging or zooming),
+  // or setting up an invoice (Invoicer's New invoice or Edit). Back 1.2 s after the last move on
+  // Board, when the typing box is left, or when the invoice's window closes; at once at the edge.
+  let working = false, resting = null;
+  function work(on, after = 0) {
+    if (resting) { clearTimeout(resting); resting = null; }
+    if (!on && after) { resting = setTimeout(() => work(false), after); return; }
+    if (on === working) return;
+    working = on;
+    for (const b of [bars.top, bars.nav]) if (b.mode === "work") (on ? hide : show)(b);
+  }
+  const editable = (el) => !!el && (el.isContentEditable || /^(TEXTAREA|SELECT)$/.test(el.tagName) || (el.tagName === "INPUT" && !/^(button|submit|reset|checkbox|radio|range|color|file)$/i.test(el.type || "")));
+  // Typing: on with the first key, off when the box is left (unless another box takes over)
+  function watchTyping(doc, where) {
+    doc.addEventListener("input", (e) => { if (editable(e.target) && where(e.target)) work(true); }, true);
+    doc.addEventListener("focusout", (e) => { if (editable(e.target) && where(e.target)) setTimeout(() => { const a = doc.activeElement; if (!(editable(a) && where(a))) work(false); }, 300); }, true);
+  }
+  const box = document.getElementById("input");
+  if (box) watchTyping(document, (el) => el === box);
+  // A panel's own page: Notes (typing), Invoicer (an invoice being set up), Board (moving around)
+  function watchWork(doc) {
+    const path = doc.location.pathname;
+    if (path.startsWith("/notes/")) watchTyping(doc, () => true);
+    if (path.startsWith("/invoicer/")) {
+      const setting = (el) => !!el.closest("dialog[open]");
+      watchTyping(doc, setting);
+      doc.addEventListener("focusin", (e) => { if (setting(e.target) && editable(e.target)) work(true); }, true);
+      doc.addEventListener("close", () => work(false), true);
+    }
+    if (path.startsWith("/board/")) {
+      const table = () => doc.getElementById("table");
+      let down = false;
+      const onTable = (e) => { const t = table(); return !!t && t.contains(e.target) && !e.target.closest("button, a, input, textarea, select, [contenteditable]"); };
+      doc.addEventListener("pointerdown", (e) => { down = onTable(e); }, true);
+      doc.addEventListener("pointermove", () => { if (down) work(true); }, { capture: true, passive: true });
+      doc.addEventListener("pointerup", () => { if (down) { down = false; work(false, 1200); } }, true);
+      doc.addEventListener("wheel", (e) => { if (onTable(e)) { work(true); work(false, 1200); } }, { capture: true, passive: true });
+    }
+  }
+  // Leaving a panel: nothing's being worked on there any more
+  new MutationObserver(() => { if (!viewing() && working) work(false); }).observe(main, { attributes: true, attributeFilter: ["class"] });
+
   // ---- Each panel's page (same site): its mouse, scrolling and swipes count too ----
   function watchFrame(frame) {
     if (frame.dataset.barWatch) return;
@@ -222,6 +271,7 @@
         doc.addEventListener("touchmove", (e) => touchMove(top + e.touches[0].clientY), { capture: true, passive: true });
         doc.addEventListener("touchend", () => { touching = performance.now() + 900; swipe = null; }, { capture: true, passive: true });
         doc.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") pointerAt(top + e.clientY); }, { passive: true });
+        watchWork(doc);
       } catch (err) {} // not one of ours
     };
     frame.addEventListener("load", attach);

@@ -58,17 +58,6 @@ describe("the card's headline from Claude Code", () => {
   });
 });
 
-describe("the page: one fix at a time", () => {
-  const html = readFileSync(new URL("../web/fixer/index.html", import.meta.url), "utf8");
-  const js = readFileSync(new URL("../web/fixer/app.js", import.meta.url), "utf8");
-  it("has the deck (‹ › and a counter, the names to jump to, one card) instead of a long list", () => {
-    for (const id of ["deck-prev", "deck-next", "deck-count", "deck-strip", "deck-card"]) expect(html).toContain(`id="${id}"`);
-    expect(html).not.toContain('id="needs-list"');
-  });
-  it("each card has the four rows, the before/after picture and Approve / Reject / Tweak / Later", () => {
-    for (const s of ["What's wrong", ">Why<", "The fix", "Where", 'data-pic="before"', 'data-pic="after"', 'data-act="approve"', 'data-act="reject"', 'data-act="tweak-open"', 'data-act="later"', "fx-box"]) expect(js).toContain(s);
-  });
-  it("keeps every other part of the Fixer", () => {
-    for (const id of ["pane-health", "pane-quests", "pane-suggested", "pane-done", "pane-activity", "pane-settings", "check-now", "looks-now", "checks-now"]) expect(html).toContain(`id="${id}"`);
-  });
-});
+// (The old Fixer page, one fix at a time, went on 16 Oct 2026 when the Fixer started again from the
+// ground up: test/fixer-strict.spec.ts)
+

@@ -316,17 +316,35 @@
     fitNames();
     document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight || 126}px`);
   }
-  // Each name on one line inside its tile: one too wide for it is made smaller until it fits
-  // (never cut short with "…")
+  // Each name on one line inside its tile (never cut off with "…"). A name too wide for its tile is
+  // made smaller; on an extremely thin screen, if even the smallest is too wide, it keeps its first
+  // few letters, at least one (the whole name is still its tooltip and what's read out)
   function fitNames() {
     for (const name of bar.querySelectorAll('[data-tab] > span:last-child')) {
+      const full = name.dataset.full || (name.dataset.full = name.textContent);
+      if (name.textContent !== full) name.textContent = full;
       name.style.fontSize = '';
       if (!name.offsetParent) continue;
+      const btn = name.parentElement;
+      if (btn && !btn.title) btn.title = full;
+      const over = () => name.scrollWidth > name.clientWidth + 0.5;
       let size = parseFloat(getComputedStyle(name).fontSize);
-      while (name.scrollWidth > name.clientWidth + 0.5 && size > 6) name.style.fontSize = `${(size -= 0.5)}px`;
+      while (over() && size > 6) name.style.fontSize = `${(size -= 0.5)}px`;
+      if (!over()) continue;
+      name.style.fontSize = '8px';
+      for (let n = Math.min(4, full.length - 1); n >= 1; n--) {
+        name.textContent = full.slice(0, n);
+        if (!over()) break;
+      }
+      if (over()) name.style.fontSize = '6px';
     }
   }
+
   window.addEventListener('resize', layout);
+  // (the names are measured again once the fonts have loaded: measured before, a name could be
+  // shortened that fits)
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout).catch(() => {});
+  window.addEventListener('load', layout);
   if (typeof ResizeObserver === 'function') new ResizeObserver(layout).observe(bar);
 
   // ---- Which place is lit: the home's pane, or the open panel (and the bar shows it) ----

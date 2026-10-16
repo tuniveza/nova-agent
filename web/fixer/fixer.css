@@ -1,418 +1,83 @@
-/* The Fixer's own layout. The sky, cards, boxes, labels, chips and switches come from
-   /shared/tools.css, the buttons from /shared/buttons.css, and every colour is a theme token. */
+/* The Fixer's page (16 Oct 2026, from the ground up). One screen: the header, the three rules, the
+   bar and the filters stay put; only the list of problems scrolls. It keeps its own rules: nothing
+   off the screen, nothing onto a second line (long words in the list are reading text and wrap).
+   The sky, cards and chips come from /shared/tools.css, the buttons from /shared/buttons.css, and
+   every colour is a theme token. */
 
-main { max-width: 1040px; margin: 0 auto; padding: 28px 20px 56px; }
-.top { margin: 0 0 18px; text-align: center; }
-.stack { display: grid; gap: 14px; min-width: 0; }
-.stack + .stack:not(:empty) { margin-top: 14px; }
-.pane { display: grid; gap: 14px; min-width: 0; }
-.lead { text-align: center; max-width: 62ch; margin: 0 auto; }
-.nb-tool button { min-height: 42px; padding: 10px 16px; border-radius: 14px; border: 1px solid transparent; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.nb-tool button:disabled { cursor: default; opacity: .55; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+main { box-sizing: border-box; height: 100%; max-width: 1040px; margin: 0 auto; padding: 14px 16px 12px;
+  display: grid; grid-template-rows: auto auto auto auto minmax(0, 1fr); gap: 10px; }
+.top { margin: 0; text-align: center; }
+.top .nt-title { margin: 0; white-space: nowrap; }
+.top .nt-sub { margin: 2px auto 0; font-size: 13px; }
+.nb-tool button { font: inherit; cursor: pointer; white-space: nowrap; }
 
-/* ---- At a glance ---- */
-.glance { display: grid; gap: 14px; margin-bottom: 14px; }
-.glance-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; text-align: center; }
-.glance-item b { display: block; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 17px; color: var(--bright); overflow-wrap: anywhere; }
-.glance-item b.bad { color: var(--bad); } .glance-item b.good { color: var(--ok); } .glance-item b.warn { color: var(--warn); }
-.glance-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
-.inert { margin: 0; padding: 10px 14px; border-radius: 14px; text-align: center; font-size: 13px; color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+/* ---- The three rules ---- */
+.rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.rule { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 0; padding: 10px 12px; border-radius: 16px; text-align: left;
+  border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 55%, transparent); color: var(--text); }
+.rule[aria-pressed="true"] { border-color: var(--hi); box-shadow: 0 0 0 1px var(--hi); }
+.rule-mark { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font-weight: 800; font-size: 15px;
+  background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }
+.rule.kept .rule-mark { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+.rule.broken .rule-mark { background: color-mix(in srgb, var(--bad) 20%, transparent); color: var(--bad); }
+.rule-words { display: grid; min-width: 0; }
+.rule-words b { font-size: clamp(11px, 1.5vw, 14px); color: var(--bright); white-space: nowrap; }
+.rule-words small { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.rule.broken .rule-words small { color: var(--bad); }
 
-/* ---- Tabs: wrap onto two lines on a phone (never sideways; not the shared sliding row: every tab stays in view) ---- */
-.fx-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0 0 14px; padding: 6px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); }
-.fx-tabs button { min-height: 38px; padding: 8px 14px; font-size: 13px; }
-.count:empty { display: none; }
-.count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 4px; padding: 0 6px; border-radius: 999px; font-family: var(--f-mono); font-size: 11px; background: color-mix(in srgb, var(--hi) 22%, transparent); color: var(--bright); }
-.message { margin: 0 0 14px; padding: 10px 14px; border-radius: 14px; text-align: center; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 50%, transparent); }
-.message.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+/* ---- When it last looked, and Check now ---- */
+.bar { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.when { flex: 1 1 0; min-width: 0; margin: 0; font-size: 13px; color: var(--muted); }
+.bar button { flex: none; min-height: 38px; padding: 8px 16px; border-radius: 12px; font-weight: 600; font-size: 14px; }
+.bar button:disabled { opacity: .6; cursor: default; }
 
-/* ---- An approval card ---- */
-.card-head { display: grid; gap: 8px; justify-items: center; text-align: center; margin-bottom: 14px; }
-.card-head h3 { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 19px; line-height: 1.25; color: var(--bright); overflow-wrap: anywhere; }
-.chips-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.nt-chip.ok { --c: var(--ok); } .nt-chip.warn { --c: var(--warn); } .nt-chip.bad { --c: var(--bad); }
-.nt-chip.trivial { --c: var(--ok); font-size: 11.5px; padding: 4px 12px; }
-.summary { margin: 0 auto 6px; max-width: 70ch; font-size: 16px; line-height: 1.55; color: var(--text); }
-.why { margin: 0 auto 14px; max-width: 70ch; color: var(--muted); font-size: 14px; }
-.block { margin-top: 16px; }
-.block > h4 { margin: 0 0 8px; font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--hi); }
-.block p { margin: 0 0 6px; line-height: 1.55; }
-.block ul { margin: 0; padding-left: 20px; line-height: 1.55; }
-:root[data-centred] .block ul { list-style-position: inside; padding-left: 0; }
-.verdict { display: inline-block; margin-bottom: 6px; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; }
-.verdict.approve { color: var(--ok); } .verdict.tweak { color: var(--warn); } .verdict.reject { color: var(--bad); }
+/* ---- Phones, tablets, computers ---- */
+.filters { display: flex; justify-content: center; min-width: 0; }
+.seg { display: flex; gap: 4px; padding: 4px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.seg button { flex: none; min-height: 32px; padding: 4px 12px; border-radius: 10px; border: 0; background: none; color: var(--muted); font-size: 13px; font-weight: 600; }
+.seg button[aria-pressed="true"] { background: color-mix(in srgb, var(--hi) 22%, transparent); color: var(--bright); }
 
-/* Before and after: big, side by side on a wide screen; one at a time (Before | After) on a phone */
-.compare { display: grid; gap: 12px; }
-.pair-shot { display: grid; gap: 8px; }
-.pair-shot > .nt-label { text-align: center; margin: 0; }
-.shots { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
-.shot { position: relative; margin: 0; min-width: 0; }
-.shot img { display: block; width: 100%; height: auto; max-height: 520px; object-fit: contain; object-position: top; border-radius: 14px; border: 1px solid var(--line); background: var(--void); cursor: zoom-in; }
-.shot.after img { border-color: color-mix(in srgb, var(--hi) 55%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--hi) 25%, transparent), 0 18px 40px -26px var(--hi); }
-.shot figcaption { position: absolute; top: 8px; left: 8px; padding: 2px 10px; border-radius: 999px; font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--bright); background: color-mix(in srgb, var(--void) 78%, transparent); border: 1px solid var(--line); }
-.shot.after figcaption { color: var(--on-hi); background: var(--hi); border-color: transparent; }
-.shot .none { display: grid; place-items: center; min-height: 140px; border-radius: 14px; border: 1px dashed var(--line); color: var(--muted); font-size: 13px; }
-.flip { display: none; }
+/* ---- The problems (the one part that scrolls) ---- */
+.list { min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 12px; padding-right: 2px; }
+.place h2 { margin: 0 0 6px; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 15px; color: var(--bright); white-space: nowrap; }
+.place h2 .n { font-family: var(--f-mono); font-size: 11px; font-weight: 600; color: var(--muted); }
+.problem { padding: 8px 12px; margin-bottom: 6px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 50%, transparent); }
+.problem p { margin: 0; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.problem .what { color: var(--text); }
+.problem .why { color: var(--muted); }
+.tag { display: inline-block; margin-right: 4px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; vertical-align: 1px;
+  background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
+.tag.oneline { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.tag.onescreen { background: color-mix(in srgb, var(--hi) 18%, transparent); color: var(--hi); }
+.sizes { display: flex; gap: 4px; margin-top: 6px; overflow-x: auto; scrollbar-width: thin; }
+.size { flex: none; padding: 2px 8px; min-height: 24px; border-radius: 8px; font-family: var(--f-mono); font-size: 11px; border: 1px solid var(--line); background: none; color: var(--muted); }
+button.size { color: var(--text); border-color: color-mix(in srgb, var(--hi) 40%, transparent); }
+.list .nt-empty { margin: 0; text-align: center; }
 
-/* Checks and files */
-.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.checks li { display: grid; gap: 4px; }
-.checks .mark { font-weight: 700; }
-.checks .ok .mark { color: var(--ok); } .checks .no .mark { color: var(--bad); }
-.checks pre { margin: 0; max-height: 160px; text-align: left; }
-.files { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-family: var(--f-mono); font-size: 12.5px; }
-.files li { overflow-wrap: anywhere; }
-.files .add { color: var(--ok); } .files .del { color: var(--bad); }
-.diff { max-height: 460px; overflow: auto; text-align: left; white-space: pre; overflow-wrap: normal; font-size: 12px; }
-.diff .a { color: var(--ok); background: color-mix(in srgb, var(--ok) 9%, transparent); display: inline-block; min-width: 100%; }
-.diff .d { color: var(--bad); background: color-mix(in srgb, var(--bad) 9%, transparent); display: inline-block; min-width: 100%; }
-.diff .h { color: var(--hi); } .diff .f { color: var(--bright); font-weight: 600; }
+/* ---- A picture, its problems marked ---- */
+dialog.shot { width: min(96vw, 1400px); max-height: 92dvh; padding: 0; border-radius: 18px; border: 1px solid var(--line); background: var(--void); color: var(--text); overflow: hidden; }
+dialog.shot::backdrop { background: rgba(0, 0, 0, .6); }
+.shot-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.shot-head p { flex: 1 1 0; min-width: 0; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; }
+.shot-head button { flex: none; min-height: 36px; width: 36px; border-radius: 10px; border: 1px solid var(--line); background: none; color: var(--text); }
+.shot-body { max-height: calc(92dvh - 56px); overflow: auto; }
+.shot-body img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
 
-.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
-.actions button { min-width: 140px; }
-.tweak-box { display: grid; gap: 8px; margin-top: 12px; }
-.tweak-box textarea { width: 100%; }
-
-/* Lists: problems, quests, suggestions, done */
-.item { display: grid; gap: 8px; text-align: center; }
-.item h3 { margin: 0; font-size: 16px; color: var(--bright); overflow-wrap: anywhere; }
-.item .meta { font-size: 12.5px; color: var(--muted); }
-.item pre { max-height: 220px; text-align: left; margin: 0; }
-.item details > pre { margin-top: 8px; }
-.row-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 8px; }
-.state-word { font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--hi); }
-
-/* The new quest form and settings */
-#quest-form, .settings { display: grid; gap: 10px; }
-#quest-form input:not(.nt-switch), #quest-form textarea, #quest-form select, .settings input[type=number] { width: 100%; }
-#quest-form .nt-label, .settings .nt-label { margin: 4px 0 0; }
-.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
-.switch-row { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 6px 0; cursor: pointer; }
-
-/* Activity: scrolls inside its own box */
-.activity { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 60vh; overflow-y: auto; }
-.activity li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 7px 4px; border-bottom: 1px solid color-mix(in srgb, var(--text) 7%, transparent); font-size: 13.5px; text-align: left; }
-.activity time { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; padding-top: 2px; }
-.activity .rollback { color: var(--warn); }
-
-/* The big picture */
-.zoom { min-width: min(320px, 92vw); max-width: min(96vw, 1400px); max-height: 94vh; max-height: 94dvh; overflow: auto; padding: 56px 14px 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--deep); color: var(--text); }
-.zoom::backdrop { background: color-mix(in srgb, var(--void) 80%, transparent); }
-.zoom img { display: block; max-width: 100%; max-height: 80vh; margin: 0 auto; border-radius: 12px; }
-.zoom-x { position: absolute; right: 10px; top: 10px; }
-.zoom p { text-align: center; margin-top: 8px; }
-
-html.embed main { padding-top: 18px; }
-
-/* Phones: snug margins; before/after one at a time, with a Before | After switch */
+/* ---- A phone: the rules one above the other, smaller ---- */
 @media (max-width: 640px) {
-  main { padding: 14px 12px 28px; }
-  .nt-card { padding: 16px; }
-  .glance-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .nb-tool button { min-height: 44px; }
-  .nb-tool :is(input, select, textarea) { font-size: 16px; }
-  .pair { grid-template-columns: minmax(0, 1fr); }
-  .shots { grid-template-columns: minmax(0, 1fr); }
-  .flip { display: flex; justify-content: center; }
-  .flip.seg { gap: 4px; padding: 4px; border-radius: 14px; border: 1px solid var(--line); width: max-content; margin: 0 auto; }
-  .flip button { min-height: 36px; padding: 6px 16px; }
-  .shots[data-show="after"] .shot.before, .shots[data-show="before"] .shot.after { display: none; }
-  .actions button { flex: 1 1 100%; }
+  main { padding: 10px 10px 8px; gap: 8px; }
+  .top .nt-sub { font-size: 12px; }
+  .rules { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .rule { padding: 6px 10px; }
+  .rule-mark { width: 24px; height: 24px; font-size: 13px; }
+  .rule-words { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .rule-words b { font-size: 13px; }
+  .when { font-size: 12px; }
 }
-@media (prefers-reduced-motion: reduce) { .shot img { transition: none; } }
-
-/* ---- The scripted checks: groups of pass / fail rows, the reason under each name ---- */
-.checks { display: grid; gap: 12px; margin-top: 12px; text-align: left; }
-.check-group h3 { margin: 0 0 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; color: var(--bright); }
-.check-group ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.check-group li { display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 8px; padding: 7px 10px; border-radius: 12px; background: color-mix(in srgb, var(--void) 40%, transparent); font-size: 13px; }
-.check-group li .mark { grid-row: span 2; font-weight: 800; text-align: center; }
-.check-group li b { color: var(--bright); font-weight: 650; overflow-wrap: anywhere; }
-.check-group li .why { color: var(--muted); font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.check-group li.pass .mark { color: var(--ok); }
-.check-group li.warn .mark { color: var(--warn); }
-.check-group li.fail .mark { color: var(--bad); }
-.check-group li.fail, .check-group li.warn { border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent); }
-
-/* ---- One screen, the page never scrolls: the heading, the numbers and the tabs stay put, and the
-   open tab's part scrolls inside its own box when it has more than fits ---- */
-html, body { height: 100%; }
-body { overflow: hidden; }
-main { height: 100vh; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; padding-bottom: 12px; }
-main > * { flex: none; }
-.panes { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.panes > .pane:not([hidden]) { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; align-content: start; padding: 2px; margin: -2px; }
-.pane-h { display: none; }
-/* A short phone: the heading, the numbers and the tabs slimmer, so the open tab gets the room */
-@media (max-width: 640px), (max-height: 700px) {
-  main { padding-top: 10px; }
-  .top { margin-bottom: 8px; }
-  .top .nt-sub, .top .lead { font-size: 12px; margin-top: 2px; }
-  .glance { gap: 8px; margin-bottom: 8px; padding: 10px 12px; }
-  .glance-row { gap: 6px; }
-  .glance-item .nt-label { font-size: 8.5px; letter-spacing: .08em; }
-  .glance-item b { font-size: 14px; }
-  .glance-actions button { min-height: 34px; padding: 6px 12px; font-size: 13px; }
-  .inert { padding: 6px 10px; font-size: 11.5px; }
-  .fx-tabs { gap: 3px; margin-bottom: 8px; padding: 4px; }
-  .fx-tabs button { min-height: 30px; padding: 4px 9px; font-size: 12px; }
+/* A short screen (a phone on its side): the three rules in a row, no subtitle */
+@media (max-height: 500px) {
+  .top .nt-sub { display: none; }
+  .rules { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rule-words { display: grid; }
 }
-
-/* ---- A wide screen: all seven parts at once, no tabs. Needs you down the left; Health, Fixer
-   quests and Suggested along the top; Done, Activity and Settings below. Each scrolls inside itself.
-   The name is in the title panel already, so the heading is just the one line under it. ---- */
-html.fx-wide main { max-width: 1680px; padding-top: 10px; }
-html.fx-wide .top { margin-bottom: 8px; }
-html.fx-wide.embed .top .nt-kicker, html.fx-wide.embed .top .nt-title { display: none; }
-html.fx-wide .top .nt-sub { margin: 0 auto; max-width: none; font-size: 12.5px; }
-html.fx-wide .glance { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 14px; padding: 10px 16px; margin-bottom: 10px; }
-html.fx-wide .glance > :not(.glance-row, .glance-actions) { grid-column: 1 / -1; }
-html.fx-wide .fx-tabs { display: none; }
-html.fx-wide .panes { display: grid; grid-template-columns: minmax(0, 2.5fr) repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 10px; }
-/* (a big screen: Needs you gets more room still, the other six in three columns) */
-@media (min-width: 1800px) { html.fx-wide .panes { grid-template-columns: minmax(0, 2.8fr) repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); } }
-html.fx-wide .panes > .pane { margin: 0; padding: 10px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); gap: 10px; }
-html.fx-wide #pane-needs { grid-row: 1 / -1; }
-/* inside a part, its cards lie flat (the part is the box) and every heading is the same quiet line */
-html.fx-wide .panes > .pane .nt-card { padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
-html.fx-wide .pane-h, html.fx-wide .panes > .pane .nt-h { display: flex; justify-content: center; margin: 0 0 4px; font-family: var(--f-mono); font-stretch: 100%; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-html.fx-wide .panes > .pane .nt-h::before { display: none; }
-html.fx-wide .pane .pair { grid-template-columns: minmax(0, 1fr); }
-html.fx-wide .pane .shots { grid-template-columns: minmax(0, 1fr); }
-html.fx-wide .panes .switch-row { justify-content: flex-start; text-align: left; }
-html.fx-wide .panes .switch-row > input { flex: none; }
-
-/* ---- The looks check: a picture of each screen that looked wrong, with what was wrong ---- */
-.looks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }
-.look { margin: 0; min-width: 0; display: grid; gap: 6px; padding: 8px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 50%, transparent); }
-.look.bad { border-color: color-mix(in srgb, var(--bad, #ff6b8a) 55%, transparent); }
-.look.warn { border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
-.look img { display: block; width: 100%; height: 150px; object-fit: cover; object-position: top; border-radius: 10px; background: var(--void); cursor: zoom-in; }
-.look .none { display: grid; place-items: center; height: 150px; border-radius: 10px; border: 1px dashed var(--line); color: var(--muted); font-size: 13px; }
-.look figcaption { display: grid; gap: 3px; font-size: 13px; line-height: 1.35; color: var(--soft, var(--muted)); min-width: 0; overflow-wrap: anywhere; }
-.look figcaption b { color: var(--bright); font-size: 13.5px; }
-/* A looks fix's before and after: side by side wherever there's room */
-@media (min-width: 700px) {
-  .pane .shots.side, html.fx-wide .pane .shots.side { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .shots.side[data-show] .shot.before, .shots.side[data-show] .shot.after { display: block; }
-  .pair-shot:has(> .shots.side) > .flip { display: none; }
-}
-
-/* ---- Phones, tablets and short screens inside Nova Agent ----
-   The title panel already says "Fixer", so the big heading steps aside; the tabs wrap onto compact
-   rows (never sliding sideways, never past the edge) */
-@media (max-width: 760px), (max-height: 700px) {
-  html.embed .top .nt-kicker, html.embed .top .nt-title { display: none; }
-  html.embed .top { margin-bottom: 6px; }
-  /* (the tabs wrap onto two compact rows: every one in sight, never sliding sideways; 15 Oct 2026) */
-  .fx-tabs { flex-wrap: wrap; overflow-x: visible; justify-content: center; gap: 3px; padding: 4px; }
-  .fx-tabs button { flex: none; min-height: 34px; padding: 3px 10px; font-size: 12.5px; }
-  .glance-item .nt-label { font-size: 10px; letter-spacing: .06em; }
-  .glance-actions button { min-height: 40px; }
-}
-/* A short screen (a phone held sideways): the one line under the heading goes too, and the four
-   numbers and Check now share one row, so the open tab gets the room (notes still show) */
-@media (max-height: 480px) {
-  html.embed .top { display: none; }
-  .glance { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 10px; }
-  .glance > p { flex-basis: 100%; margin: 0; }
-  .glance-row { flex: 1 1 auto; display: flex; gap: 12px; }
-  .glance-item { display: flex; flex-direction: column; }
-}
-
-/* ================= Needs you: one fix at a time, as a big clear card =================
-   ‹ 3 of 6 › and the fixes' names along the top; the card fills the rest: a vivid title, four
-   labelled rows (what's wrong, why, the fix, where), one big before/after picture with the problem
-   outlined, and Approve / Reject / Tweak / Later always at the bottom. Only the card's words area
-   (and Details) scrolls inside itself, never the page. */
-.panes > #pane-needs:not([hidden]) { display: flex; flex-direction: column; overflow: hidden; }
-.deck { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
-.deck-nav { flex: none; display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); align-items: center; gap: 8px; }
-.deck-nav[hidden] { display: none; }
-.nb-plain button.deck-step { min-width: 44px; min-height: 44px; padding: 0; border-radius: 14px; font-size: 24px; line-height: 1; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); color: var(--bright); }
-.deck-count { font-family: var(--f-mono); font-size: 14px; font-weight: 600; color: var(--bright); white-space: nowrap; min-width: 4.5em; text-align: center; }
-.deck-strip { display: flex; gap: 6px; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x proximity; padding: 2px; }
-.deck-strip::-webkit-scrollbar { display: none; }
-.nb-plain button.fx-pill { flex: none; max-width: 240px; min-height: 40px; padding: 6px 14px 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); color: var(--text); font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; scroll-snap-align: start; }
-.fx-pill::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%; vertical-align: 1px; background: var(--muted); }
-.fx-pill.ready::before { background: var(--hi); } .fx-pill.ready.serious::before { background: var(--bad); }
-.fx-pill.live::before { background: var(--ok); } .fx-pill.bad::before { background: var(--bad); }
-.fx-pill.later { opacity: .6; }
-.nb-plain button.fx-pill[aria-selected="true"] { border-color: var(--hi); color: var(--bright); background: color-mix(in srgb, var(--hi) 20%, transparent); opacity: 1; }
-.deck-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.fx-empty { margin: auto; max-width: 46ch; font-size: 16px; }
-
-.fx-card { flex: 1 1 auto; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 12px; padding: 16px 18px; border-radius: 22px; text-align: left;
-  border: 1px solid var(--line); border-top: 5px solid var(--hi); background: color-mix(in srgb, var(--deep, var(--void)) 72%, transparent); container-type: inline-size; }
-.fx-card.sev-serious { border-top-color: var(--bad); } .fx-card.sev-small { border-top-color: var(--warn); }
-.fx-head { display: grid; gap: 8px; min-width: 0; }
-.fx-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.fx-sev, .fx-status, .fx-panel { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; letter-spacing: .02em; }
-.fx-sev.serious { background: var(--bad); color: var(--void); } .fx-sev.small { background: var(--warn); color: var(--void); }
-.fx-sev.quest, .fx-sev.none { background: color-mix(in srgb, var(--hi) 25%, transparent); color: var(--bright); }
-.fx-panel { border: 1px solid var(--line); color: var(--bright); font-weight: 700; }
-.fx-panel-ico { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--hi); color: var(--on-hi, var(--void)); font-size: 12px; font-weight: 900; }
-.fx-status { border: 1px solid var(--line); color: var(--muted); }
-.fx-status.ready { border-color: var(--hi); color: var(--bright); background: color-mix(in srgb, var(--hi) 18%, transparent); }
-.fx-status.live { border-color: var(--ok); color: var(--ok); } .fx-status.bad { border-color: var(--bad); color: var(--bad); }
-.fx-status.prep::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--hi); opacity: .8; }
-.fx-title { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 850; font-size: clamp(20px, 2.1vw, 30px); line-height: 1.18; color: var(--bright); overflow-wrap: anywhere; }
-
-/* The body: words on one side, the picture on the other where there's room; stacked on a narrow card */
-.fx-body { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(240px, 1fr); gap: 12px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-.fx-side { display: grid; gap: 10px; align-content: start; min-width: 0; }
-@container (min-width: 620px) {
-  .fx-body { grid-template-columns: minmax(250px, .8fr) minmax(0, 1.4fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; }
-  .fx-side { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-right: 4px; }
-}
-.fx-facts { display: grid; gap: 8px; margin: 0; }
-.fx-row { display: grid; gap: 3px; padding: 10px 14px; border-radius: 14px; border-left: 5px solid var(--c); background: color-mix(in srgb, var(--c) 9%, color-mix(in srgb, var(--void) 50%, transparent)); }
-.fx-row.fx-r-wrong { --c: var(--bad); } .fx-row.fx-r-why { --c: var(--warn); } .fx-row.fx-r-fix { --c: var(--ok); } .fx-row.fx-r-where { --c: var(--hi); }
-.fx-row dt { font-family: var(--f-mono); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
-.fx-row dd { margin: 0; font-size: 17px; line-height: 1.42; color: var(--bright); overflow-wrap: anywhere; }
-.fx-wheres { display: flex; flex-wrap: wrap; gap: 6px; }
-.nb-plain button.fx-where, .fx-where { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); color: var(--text); font: inherit; font-size: 13.5px; font-weight: 600; }
-.nb-plain button.fx-where[aria-pressed="true"] { border-color: var(--hi); background: color-mix(in srgb, var(--hi) 24%, transparent); color: var(--bright); }
-
-.fx-pic { margin: 0; min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; }
-.fx-flip { justify-self: center; display: flex; gap: 4px; padding: 4px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 50%, transparent); }
-.nb-plain .fx-flip button { min-height: 40px; min-width: 96px; padding: 6px 16px; border-radius: 12px; background: none; color: var(--muted); font-size: 15px; font-weight: 800; }
-.nb-plain .fx-flip button[data-pic="before"][aria-selected="true"] { background: var(--bad); color: var(--void); }
-.nb-plain .fx-flip button[data-pic="after"][aria-selected="true"] { background: var(--ok); color: var(--void); }
-.fx-frame { min-height: 0; display: grid; place-items: center; padding: 6px; border-radius: 16px; border: 1px solid var(--line); background: var(--void); overflow: hidden; cursor: zoom-in; }
-.fx-svg, .fx-img { display: block; width: 100%; height: 100%; max-height: 100%; object-fit: contain; }
-.fx-box { fill: color-mix(in srgb, var(--bad) 16%, transparent); stroke: var(--bad); stroke-width: 4px; vector-effect: non-scaling-stroke; }
-.fx-box.ok { fill: color-mix(in srgb, var(--ok) 14%, transparent); stroke: var(--ok); }
-.fx-pic figcaption { text-align: center; font-size: 13.5px; color: var(--muted); }
-.fx-pic figcaption b.bad { color: var(--bad); } .fx-pic figcaption b.ok { color: var(--ok); }
-.fx-nopic { display: grid; place-items: center; min-height: 100%; padding: 18px; border-radius: 16px; border: 1px dashed var(--line); color: var(--muted); font-size: 15px; text-align: center; }
-.fx-nopic.big { min-height: 200px; }
-
-/* Details: the long version, folded away; it scrolls inside the words column */
-.fx-more { border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); }
-.fx-more > summary { min-height: 44px; display: flex; align-items: center; padding: 0 14px; cursor: pointer; font-weight: 700; color: var(--bright); }
-.fx-more-body { padding: 0 14px 12px; font-size: 14.5px; }
-.fx-more-body pre { max-height: 220px; overflow: auto; white-space: pre-wrap; font-size: 12px; }
-.fx-more-body .diff { white-space: pre; max-height: 320px; }
-
-/* The actions: always at the bottom of the card, big */
-.fx-actions { display: grid; grid-template-columns: 1.4fr 1fr 1fr .8fr; gap: 10px; }
-.fx-actions button { white-space: nowrap; }
-.fx-actions.quiet { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
-.nb-plain .fx-actions button { min-height: 54px; padding: 8px 12px; border-radius: 16px; font-size: 17px; font-weight: 850; letter-spacing: .01em; }
-.nb-plain .fx-actions button.fx-approve { background: var(--ok); color: var(--void); border-color: transparent; box-shadow: 0 12px 30px -16px var(--ok); }
-.nb-plain .fx-actions button.fx-reject { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); border-color: var(--bad); }
-.nb-plain .fx-actions button.fx-tweak-btn, .nb-plain .fx-actions button.fx-later { background: color-mix(in srgb, var(--void) 45%, transparent); color: var(--bright); border-color: var(--line); }
-.fx-wait { margin: 0; font-size: 15.5px; color: var(--muted); }
-.fx-tweak { display: grid; gap: 8px; padding: 12px; border-radius: 16px; border: 1px solid var(--hi); background: color-mix(in srgb, var(--hi) 8%, transparent); }
-.fx-tweak[hidden] { display: none; }
-.fx-tweak textarea { width: 100%; font-size: 16px; }
-.fx-tweak-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.fx-tweak-row button { flex: 1 1 auto; }
-/* (the tweak box replaces the buttons while it's open) */
-.fx-card:has(.fx-tweak:not([hidden])) > .fx-actions { display: none; }
-
-/* The message after a tap: a toast at the bottom, over everything */
-.message { position: fixed; z-index: 30; left: 50%; bottom: 16px; transform: translateX(-50%); width: max-content; max-width: min(92vw, 560px); margin: 0; padding: 12px 18px; border-radius: 16px; font-size: 15px; font-weight: 700;
-  color: var(--bright); background: var(--deep, var(--void)); border: 1px solid var(--hi); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .6); }
-.message.bad { border-color: var(--bad); }
-/* (only words: a tap goes through it to the button under it, never blocked by it) */
-.message { pointer-events: none; }
-
-/* The big picture: the outlined picture, as large as the screen allows */
-.zoom-art { display: grid; place-items: center; }
-.zoom-art .fx-svg, .zoom-art .fx-img { width: min(92vw, 1400px); height: 80vh; height: 80dvh; }
-.zoom-art[hidden] { display: none; }
-
-/* Phones and short screens: the card a little snugger; the words and picture scroll together inside it */
-@media (max-width: 640px) {
-  .fx-card { padding: 12px; gap: 10px; border-radius: 18px; }
-  .fx-title { font-size: 20px; }
-  .fx-row { padding: 8px 12px; }
-  .fx-row dd { font-size: 16px; }
-  .fx-actions { grid-template-columns: 1.35fr 1fr 1fr .85fr; gap: 6px; }
-  .nb-plain .fx-actions button { min-height: 50px; padding: 6px 4px; font-size: 15px; }
-  .nb-plain button.fx-pill { max-width: 180px; }
-  .fx-body { grid-template-rows: auto minmax(260px, 62vh); }
-}
-@media (max-height: 520px) {
-  .fx-card { padding: 10px 12px; gap: 8px; grid-template-rows: auto minmax(0, 1fr) auto; }
-  .fx-title { font-size: 18px; }
-  .fx-row dd { font-size: 15.5px; }
-  .nb-plain .fx-actions button { min-height: 48px; font-size: 15px; }
-  .fx-body { grid-template-rows: auto minmax(220px, 80vh); }
-}
-@container (min-width: 620px) { .fx-body { grid-template-rows: minmax(0, 1fr); } }
-@media (prefers-reduced-motion: reduce) { .fx-pill, .fx-card { transition: none; } }
-
-/* (Text follows the person's centring setting; the chips and places centre with it) */
-.fx-head { justify-items: center; }
-.fx-chips, .fx-wheres { justify-content: center; }
-/* A wide screen: the card's picture gets the most room, and the "Working on" line steps aside (the
-   fixes being prepared are in the card's row of names) */
-html.fx-wide #g-working { display: none; }
-
-/* A phone, or a short screen, with Needs you open: the card gets the room. The four numbers and Check
-   now step aside (the tabs still count, and Health has Check now); notices still show */
-@media (max-width: 640px), (max-height: 560px) {
-  html.fx-needs:not(.fx-wide) .glance-row, html.fx-needs:not(.fx-wide) .glance-actions, html.fx-needs:not(.fx-wide) #g-working { display: none; }
-  html.fx-needs:not(.fx-wide) .glance:not(:has(> p:not([hidden]):not(#g-working))) { display: none; }
-  html.embed.fx-needs:not(.fx-wide) .top { display: none; }
-  .fx-chips .nt-chip { display: none; }
-  .deck-nav { gap: 6px; }
-}
-/* Very short (a phone held sideways): one slim line above the card, the card's words smaller */
-@media (max-height: 400px) {
-  .deck-strip { display: none; }
-  .deck-nav { grid-template-columns: auto auto auto; justify-content: start; }
-  .fx-card { padding: 8px 10px; gap: 6px; border-top-width: 3px; }
-  .fx-chips .fx-panel { display: none; }
-  .fx-sev, .fx-status { min-height: 24px; padding: 2px 10px; font-size: 12px; }
-  .fx-title { font-size: 16px; }
-  .fx-head { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; }
-  .fx-body { grid-template-rows: auto minmax(200px, 90vh); }
-  .nb-plain .fx-actions button { min-height: 48px; font-size: 14.5px; }
-  html.fx-needs .fx-tabs { margin-bottom: 4px; }
-}
-
-@media (hover: hover) {
-  .nb-plain .fx-actions button.fx-approve:hover:not(:disabled) { background: color-mix(in srgb, var(--ok) 88%, white); color: var(--void); border-color: transparent; }
-  .nb-plain .fx-actions button.fx-reject:hover:not(:disabled) { background: color-mix(in srgb, var(--bad) 28%, transparent); color: var(--bad); border-color: var(--bad); }
-}
-/* A phone held sideways: plenty of width, little height, so the four buttons stand in a column on the
-   right and the words get the height */
-@media (max-height: 400px) and (min-width: 600px) {
-  .fx-card { grid-template-columns: minmax(0, 1fr) minmax(200px, 30%); grid-template-rows: auto minmax(0, 1fr); column-gap: 10px; }
-  .fx-head { grid-column: 1; grid-row: 1; }
-  .fx-body { grid-column: 1; grid-row: 2; grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; }
-  .fx-side { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-  .fx-row { padding: 6px 10px; }
-  .fx-row dd { font-size: 15px; }
-  .fx-flip { display: none; }
-  .fx-pic { grid-template-rows: minmax(0, 1fr); }
-  .fx-pic figcaption { display: none; }
-  .fx-actions, .fx-actions.quiet { grid-column: 2; grid-row: 1 / span 2; grid-template-columns: 1fr 1fr; align-content: center; gap: 6px; }
-  .fx-actions.quiet .fx-wait { grid-column: 1 / -1; font-size: 13.5px; }
-  .fx-tweak { grid-column: 1 / -1; grid-row: 1 / span 2; }
-}
-/* A short, narrow frame (a small phone with bigger text): the four numbers in one row and the notes
-   under them one line each (… if long), so the tabs and the open tab keep their room */
-@media (max-height: 480px) and (max-width: 480px) {
-  .glance-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
-  .glance-item b { font-size: 14px; }
-  .glance > p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
-}
-/* Touch screens: the numbers' names readable (11px) */
-@media (pointer: coarse) { .glance-item .nt-label { font-size: 11px; letter-spacing: .04em; } }
-
-/* ---- Inside Nova Agent, at every size: no title of its own (Nova Agent's title panel names it; one
-   title panel only). Its one-line note stays ---- */
-html.embed .top .nt-kicker, html.embed .top .nt-title { display: none; }
-
-/* Approve all it suggests (or why nothing's ready: today's limit), above the fixes */
-.deck-all { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; }
-.deck-all[hidden] { display: none; }
-.deck-all-note { font-size: 13px; color: var(--muted); text-align: center; }
-/* (the fixes' strip wraps instead of sliding sideways: nothing out of sight) */
-.deck-strip { flex-wrap: wrap; overflow-x: hidden; overflow-y: auto; max-height: 84px; scroll-snap-type: none; }

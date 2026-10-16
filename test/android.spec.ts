@@ -48,8 +48,8 @@ describe("Android", () => {
     expect(phoneJs).toContain('data-tab="${key}" aria-label="${label}"');
   });
 
-  it("a phone upright: the status line wraps onto a second short row, never sliding sideways", () => {
-    expect(status).toMatch(/@media \(max-width: 600px\) \{\s*\.tabbar > \.status-line \{ flex-wrap: wrap;[^}]*overflow: visible;/);
+  it("a phone upright: the status line is one row (never a second, the Fixer's rules), never sliding sideways: what doesn't fit steps aside", () => {
+    expect(status).toMatch(/@media \(max-width: 600px\) \{\s*\.tabbar > \.status-line \{ flex-wrap: nowrap;[^}]*overflow: hidden;/);
     expect(status).not.toMatch(/\.tabbar > \.status-line \{[^}]*overflow-x: auto/);
   });
 

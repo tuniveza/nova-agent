@@ -55,13 +55,13 @@ import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile,
 import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, receipts } from "../receipts";
 import { registerBoardRoutes } from "../board-routes";
 import { registerConsoleRoutes } from "../console";
-import { registerFixerRoutes } from "../fixer/routes";
+import { currentStrictFixer, registerStrictRoutes, startStrictFixer } from "../fixer/strict-service";
 import { registerComputerRoutes } from "../computer";
 import { registerTidyRoutes } from "../tidy-routes";
 import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
 import { backupFilesToDrive, copyMissingBoardFilesToDrive, copyToDriveLater, dropFromDriveLater } from "../google";
 import { startTasksSync } from "../quests/googletasks";
-import { currentFixer, startFixer } from "../fixer/service";
+import { currentFixer } from "../fixer/service";
 import { standDownReason } from "../where";
 
 // Only one Nova Agent runs: when the server has it, the PC's copy doesn't start (src/where.ts)
@@ -228,9 +228,9 @@ registerConsoleRoutes(app);
 // Lossless audio: the page only; its signalling and relay setup are Nova Bot's (/lossless/ws, /lossless/ice)
 serveFolder("/lossless", "lossless/public/lossless/", "Lossless audio is missing from web/lossless.");
 serveFolder("/app/memory", "index/", "Index is missing from web/index.");
-// The Fixer: Nova Agent's caretaker (its addresses: src/fixer/routes.ts)
+// The Fixer: the three strict rules, checked on all of Nova Agent every 5 minutes (src/fixer/strict-service.ts)
 serveFolder("/fixer", "fixer/", "The Fixer is missing from web/fixer.");
-registerFixerRoutes(app, currentFixer);
+registerStrictRoutes(app, currentStrictFixer);
 // Test stuff: quests, calendar notes, Fixer jobs and files that look like tests (admins: src/tidy.ts)
 registerTidyRoutes(app, currentFixer);
 // Computer: the VPS at a glance for admins: its Claude sessions (read-only), Claude Code, how busy it is, Nova (src/computer.ts)
@@ -856,7 +856,8 @@ startPortalSync();
 void whoAmI().catch(() => {});
 // Online: Nova Bot passes staff members' requests to this server over a link the PC opens (src/relay.ts)
 startRelay(app.fetch);
-// The Fixer: hourly checks, fixes prepared for an admin's Approve (src/fixer/)
-startFixer();
+// The Fixer, from the ground up (16 Oct 2026): only the three strict rules, every 5 minutes. The old
+// Fixer (hourly checks, quests, prepared fixes) isn't started any more; its data is kept aside.
+startStrictFixer();
 // The watchdog: every 5 minutes, is Nova Bot's status page still all clear? (src/watchdog.ts)
 startWatchdog();
