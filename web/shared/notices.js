@@ -182,9 +182,14 @@
   }, true);
   addEventListener("pointermove", (e) => {
     if (!press || !e.buttons) return;
-    if (Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) document.documentElement.classList.add("notices-aside");
+    // (once: adding a class that's already there still counts as a change, and restyles the whole
+    // page on every move of a drag, 16 Oct 2026)
+    if (!press.aside && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) { press.aside = true; document.documentElement.classList.add("notices-aside"); }
   }, { capture: true, passive: true });
-  const letGo = () => { press = null; document.documentElement.classList.remove("notices-aside"); };
+  const letGo = () => {
+    press = null;
+    if (document.documentElement.classList.contains("notices-aside")) document.documentElement.classList.remove("notices-aside");
+  };
   addEventListener("pointerup", letGo, true);
   addEventListener("pointercancel", letGo, true);
 

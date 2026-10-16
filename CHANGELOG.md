@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Faster on Android: tiles, Board, the drawer handle
+
+- Board's table moves without restyling anything: its grid is a layer of its own that slides, and
+  its size and the zoom's label change only with the zoom (dragging the table on a slowed phone: 34
+  slow frames in 2 seconds to 2).
+- Notices no longer mark the whole page on every move of a drag (it restyled the page each move,
+  on Board and while dragging the tiles' handle); the handle moves the tiles on a layer of their own,
+  once a frame.
+- Tapping a tile: the tiles' names are measured all at once (not a half pixel at a time) and only
+  when something changed; the status line the same; the pop-up fitter only looks when a change is
+  about a pop-up; Remember waits for an app to finish opening. Reopening Board: 1.9 s to 0.5 s.
+
 ### Faster on Android
 
 - A panel kept in the background (so it opens again instantly) draws nothing until it's shown again

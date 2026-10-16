@@ -13,7 +13,7 @@
   // The app in view, and where it is now (its own address, as it moves between its own pages)
   function current() {
     const frames = [...viewer.querySelectorAll("iframe")].filter((f) => !f.hidden && f.src && !/^about:/.test(f.src));
-    const f = frames.find((x) => x.offsetParent !== null) || frames[0];
+    const f = frames.find((x) => !x.closest("[hidden]")) || frames[0];
     if (!f) return "";
     try {
       const l = f.contentWindow.location;
@@ -33,8 +33,11 @@
   if (again && !main.classList.contains("viewing")) window.NovaAgent.open(again);
 
   // Keep it up to date: an app opening or closing, switching apps, moving around inside one
-  new MutationObserver(remember).observe(main, { attributes: true, attributeFilter: ["class"] });
-  new MutationObserver(remember).observe(viewer, { attributes: true, subtree: true, childList: true, attributeFilter: ["src", "hidden"] });
+  // (a moment after the changes stop: opening an app makes many at once)
+  let soon = 0;
+  const later = () => { clearTimeout(soon); soon = setTimeout(remember, 250); };
+  new MutationObserver(later).observe(main, { attributes: true, attributeFilter: ["class"] });
+  new MutationObserver(later).observe(viewer, { attributes: true, subtree: true, childList: true, attributeFilter: ["src", "hidden"] });
   viewer.addEventListener("load", () => setTimeout(remember, 50), true);
   setInterval(() => !document.hidden && main.classList.contains("viewing") && remember(), 5000);
   addEventListener("pagehide", remember);

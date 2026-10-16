@@ -183,7 +183,16 @@
   const ro = "ResizeObserver" in window ? new ResizeObserver(soon) : null;
 
   function start() {
-    new MutationObserver(soon).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["open", "hidden", "class", "style", "aria-expanded", "popover"] });
+    // (only changes to what it looks after, or that show or hide one: not every style change on the
+    // page, such as each move while something is dragged on Board, 16 Oct 2026)
+    const mine = (n) => n.nodeType === 1 && (kept.has(n) || n.matches(SEL) || n.matches("[popover]"));
+    const relevant = (r) => {
+      if (r.type === "childList") { for (const n of r.addedNodes) if (n.nodeType === 1 && (mine(n) || n.querySelector(SEL))) return true; return false; }
+      const t = r.target;
+      if (mine(t)) return true;
+      return r.attributeName !== "style" && !!t.querySelector && !!t.querySelector(SEL);
+    };
+    new MutationObserver((records) => { if (records.some(relevant)) soon(); }).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["open", "hidden", "class", "style", "aria-expanded", "popover"] });
     addEventListener("resize", () => { insets = null; soon(); });
     addEventListener("orientationchange", () => { insets = null; soon(); });
     if (window.visualViewport) { visualViewport.addEventListener("resize", soon); visualViewport.addEventListener("scroll", soon); }

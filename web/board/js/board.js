@@ -248,14 +248,23 @@ $("board-delete").addEventListener("click", async () => {
 function view() {
   return board().view;
 }
+// (16 Oct 2026, speed: the grid is its own layer that slides; its size and the zoom's label are only
+// written when the zoom changes, so moving around restyles nothing)
+let gridLayer = null, gridSize = "", zoomWords = "";
 function applyView() {
   const v = view();
   world.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.zoom})`;
   const grid = 40 * v.zoom;
-  table.style.setProperty("--grid", `${grid}px`);
-  table.style.setProperty("--gx", `${v.x % grid}px`);
-  table.style.setProperty("--gy", `${v.y % grid}px`);
-  $("zoom-reset").textContent = `${Math.round(v.zoom * 100)}%`;
+  if (!gridLayer || !gridLayer.isConnected) {
+    gridLayer = document.createElement("div");
+    gridLayer.className = "grid-layer";
+    gridLayer.setAttribute("aria-hidden", "true");
+    table.prepend(gridLayer);
+  }
+  if (gridSize !== `${grid}px`) { gridSize = `${grid}px`; table.style.setProperty("--grid", gridSize); }
+  gridLayer.style.transform = `translate3d(${v.x % grid}px, ${v.y % grid}px, 0)`;
+  const words = `${Math.round(v.zoom * 100)}%`;
+  if (zoomWords !== words) { zoomWords = words; $("zoom-reset").textContent = words; }
 }
 const toWorld = (sx, sy) => {
   const r = table.getBoundingClientRect();

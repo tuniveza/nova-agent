@@ -333,24 +333,32 @@
         if (!pull.moved && up < 5) return;
         const d = box();
         if (!d) return;
-        if (!pull.moved) { pull.moved = true; root.classList.add("dock-grabbed", "nav-pulling"); d.style.transition = "none"; }
+        if (!pull.moved) { pull.moved = true; pull.h = d.offsetHeight + 16; root.classList.add("dock-grabbed", "nav-pulling"); d.style.transition = "none"; d.style.willChange = "transform, opacity"; }
         const now = performance.now();
         pull.v = (pull.lastY - e.clientY) / Math.max(1, now - pull.lastAt);
         pull.lastY = e.clientY;
         pull.lastAt = now;
-        const h = d.offsetHeight + 16;
-        d.style.transform = `translateY(${Math.max(0, h - Math.max(0, up))}px)`;
-        d.style.opacity = String(Math.min(1, 0.35 + Math.max(0, up) / h));
+        // (once a frame, on its own layer, as above)
+        pull.up = up;
+        if (pull.frame) return;
+        pull.frame = requestAnimationFrame(() => {
+          if (!pull) return;
+          pull.frame = 0;
+          const u = Math.max(0, pull.up), h = pull.h;
+          d.style.transform = `translate3d(0, ${Math.max(0, h - u)}px, 0)`;
+          d.style.opacity = String(Math.min(1, 0.35 + u / h));
+        });
       });
       const letGo = (e) => {
         if (!pull || e.pointerId !== pull.id) return;
         const p = pull;
         pull = null;
+        if (p.frame) cancelAnimationFrame(p.frame);
         if (!p.moved) return; // (a tap: the click opens them)
         el.addEventListener("click", (c) => c.stopImmediatePropagation(), { capture: true, once: true }); // (a pull isn't also a tap)
         const d = box();
         root.classList.remove("dock-grabbed", "nav-pulling");
-        if (d) d.style.transition = d.style.transform = d.style.opacity = "";
+        if (d) d.style.transition = d.style.transform = d.style.opacity = d.style.willChange = "";
         const up = p.y - e.clientY;
         if (e.type === "pointerup" && d && (up > (d.offsetHeight + 16) / 3 || (up > 12 && p.v > 0.5))) open();
       };
@@ -390,24 +398,32 @@
       if (!grab || e.pointerId !== grab.id) return;
       const dy = e.clientY - grab.y;
       if (!grab.moved && Math.abs(dy) < 5) return;
-      if (!grab.moved) { grab.moved = true; root.classList.add("dock-grabbed"); box.style.transition = "none"; }
+      if (!grab.moved) { grab.moved = true; grab.h = box.offsetHeight; root.classList.add("dock-grabbed"); box.style.transition = "none"; box.style.willChange = "transform, opacity"; }
       const now = performance.now();
       grab.v = (e.clientY - grab.lastY) / Math.max(1, now - grab.lastAt);
       grab.lastY = e.clientY;
       grab.lastAt = now;
-      // (down: it follows the finger; up: only a little give, it's already open)
-      const pull = dy > 0 ? dy : dy / 5;
-      box.style.transform = `translateY(${pull}px)`;
-      box.style.opacity = String(Math.max(0.4, 1 - Math.max(0, dy) / (box.offsetHeight * 1.6)));
+      // (down: it follows the finger; up: only a little give, it's already open). Once a frame, on
+      // its own layer (will-change): the phone moves the picture it has, nothing is drawn again
+      grab.dy = dy;
+      if (grab.frame) return;
+      grab.frame = requestAnimationFrame(() => {
+        if (!grab) return;
+        grab.frame = 0;
+        const d = grab.dy, pull = d > 0 ? d : d / 5;
+        box.style.transform = `translate3d(0, ${pull}px, 0)`;
+        box.style.opacity = String(Math.max(0.4, 1 - Math.max(0, d) / (grab.h * 1.6)));
+      });
     });
     const letGo = (e) => {
       if (!grab || e.pointerId !== grab.id) return;
       const g = grab;
       grab = null;
+      if (g.frame) cancelAnimationFrame(g.frame);
       root.classList.remove("dock-grabbed");
       const dy = e.clientY - g.y;
       // (back to its own slide: from wherever it was let go, either away or back into place)
-      box.style.transition = box.style.transform = box.style.opacity = "";
+      box.style.transition = box.style.transform = box.style.opacity = box.style.willChange = "";
       if (!g.moved) { if (e.type === "pointerup") close(); return; }
       if (e.type === "pointerup" && (dy > box.offsetHeight / 3 || (dy > 12 && g.v > 0.5))) close();
     };

@@ -367,13 +367,15 @@
     } catch (e) { /* (an older browser) */ }
     return left;
   }
-  let waits = 0;
+  let waits = 0, popping = false;
   function run() {
     timer = 0;
     if (held) return later(400);
-    const left = settling();
+    // (only just after a window or pop-up opened: asking the page for its animations costs time)
+    const left = popping ? settling() : 0;
     if (left && waits < 4) { waits++; return later(Math.ceil(left) + 30); }
     waits = 0;
+    popping = false;
     if (fresh) { fresh = false; putBack(); }
     look();
     if (mo) mo.takeRecords(); // (what it changed itself isn't a reason to look again)
@@ -400,6 +402,7 @@
     // (and looked at again once it has faded or slid in: while it's still see-through it's left alone)
     mo = new MutationObserver((records) => {
       if (!records.some(opened)) return later(calm());
+      popping = true;
       later(0);
       setTimeout(() => later(0), 450);
     });

@@ -151,8 +151,13 @@
       el.textContent = v;
       el.style.fontSize = "";
       if (!box.offsetParent) return;
-      let size = parseFloat(getComputedStyle(el).fontSize);
-      while (shrink && over() && size > 8) el.style.fontSize = `${(size -= 0.5)}px`;
+      // (how much smaller, worked out in one go from how much too wide it is: not a half pixel at a time)
+      if (shrink && over()) {
+        const size = parseFloat(getComputedStyle(el).fontSize);
+        const extra = box.scrollWidth - box.clientWidth, words = el.scrollWidth || el.getBoundingClientRect().width;
+        if (words > 0) el.style.fontSize = `${Math.max(8, Math.floor(size * Math.max(0.5, (words - extra) / words) * 2 - 0.2) / 2)}px`;
+        if (over() && size > 8) el.style.fontSize = "8px";
+      }
       if (!over()) return;
     }
   }

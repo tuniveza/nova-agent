@@ -138,8 +138,10 @@
   let tallest = 0, tallestAt = 0;
   function fit() {
     if (!vv) return;
-    root.style.setProperty('--vv-h', `${Math.round(vv.height)}px`);
-    root.style.setProperty('--vv-top', `${Math.round(vv.offsetTop)}px`);
+    // (only written when it changes: each write restyles the whole page)
+    const vh = `${Math.round(vv.height)}px`, vt = `${Math.round(vv.offsetTop)}px`;
+    if (root.style.getPropertyValue('--vv-h') !== vh) root.style.setProperty('--vv-h', vh);
+    if (root.style.getPropertyValue('--vv-top') !== vt) root.style.setProperty('--vv-top', vt);
     const w = Math.round(window.innerWidth);
     if (w !== tallestAt) { tallestAt = w; tallest = 0; }
     tallest = Math.max(tallest, vv.height, window.innerHeight);
@@ -304,47 +306,69 @@
   });
   // Each group's width follows how many places it holds; and the bar's height for whatever sits
   // above it (toasts)
+  // (16 Oct 2026, speed on a phone: nothing is written or measured again when nothing has changed,
+  // and the names are measured all together, once, not a half pixel at a time)
+  let laidOut = '';
   function layout() {
     const shown = '[data-tab]';
     const k = {};
-    for (const g of bar.querySelectorAll('.tgroup')) g.style.setProperty('--k', (k[g.dataset.group] = g.querySelectorAll(shown).length || 1));
+    const groups = [...bar.querySelectorAll('.tgroup')];
+    for (const g of groups) k[g.dataset.group] = g.querySelectorAll(shown).length || 1;
+    const n = groups.reduce((sum, g) => sum + g.querySelectorAll(shown).length, 0) || 14;
+    const key = `${innerWidth}x${innerHeight}|${bar.clientWidth}|${JSON.stringify(k)}|${bar.querySelectorAll('[data-tab] > span:last-child').length}`;
+    if (key === laidOut) return;
+    laidOut = key;
+    for (const g of groups) g.style.setProperty('--k', k[g.dataset.group]);
     // The second row on a phone held upright: each group as wide as its places (phone.css)
     bar.style.setProperty('--row2', ['tasks', 'tools', 'helpers'].map((id) => `minmax(0, ${k[id] || 1}fr)`).join(' ').replace(/^/, 'auto ') + ' auto');
     // In one row (a tablet, a short or zoomed-in window, a phone on its side) every place is the same
     // width, whatever its group: phone.css shares the row out by how many places are showing
-    bar.style.setProperty('--tab-n', [...bar.querySelectorAll('.tgroup')].reduce((n, g) => n + g.querySelectorAll(shown).length, 0) || 14);
+    bar.style.setProperty('--tab-n', n);
     fitNames();
-    document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight || 126}px`);
+    const h = `${bar.offsetHeight || 126}px`;
+    if (document.documentElement.style.getPropertyValue('--bar-h') !== h) document.documentElement.style.setProperty('--bar-h', h);
   }
   // Each name on one line inside its tile (never cut off with "…"). A name too wide for its tile is
-  // made smaller; on an extremely thin screen, if even the smallest is too wide, it keeps its first
-  // few letters, at least one (the whole name is still its tooltip and what's read out)
+  // made smaller (worked out from how much too wide it is, in one go); on an extremely thin screen,
+  // if even the smallest is too wide, it keeps its first few letters, at least one (the whole name is
+  // still its tooltip and what's read out)
   function fitNames() {
-    for (const name of bar.querySelectorAll('[data-tab] > span:last-child')) {
+    const names = [...bar.querySelectorAll('[data-tab] > span:last-child')];
+    for (const name of names) {
       const full = name.dataset.full || (name.dataset.full = name.textContent);
       if (name.textContent !== full) name.textContent = full;
       name.style.fontSize = '';
-      if (!name.offsetParent) continue;
       const btn = name.parentElement;
       if (btn && !btn.title) btn.title = full;
-      const over = () => name.scrollWidth > name.clientWidth + 0.5;
-      let size = parseFloat(getComputedStyle(name).fontSize);
-      while (over() && size > 6) name.style.fontSize = `${(size -= 0.5)}px`;
-      if (!over()) continue;
+    }
+    // (every measurement at once, then every change at once)
+    const seen = names.map((name) => {
+      if (!name.offsetParent) return null;
+      const cs = getComputedStyle(name);
+      const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      return { name, room: name.clientWidth - pad, need: name.scrollWidth - pad, size: parseFloat(cs.fontSize) };
+    });
+    const tooWide = seen.filter((x) => x && x.need > x.room + 0.5);
+    for (const x of tooWide) x.name.style.fontSize = `${Math.max(6, Math.floor(x.size * (x.room / x.need) * 2 - 0.2) / 2)}px`;
+    const over = (name) => name.scrollWidth > name.clientWidth + 0.5;
+    for (const x of tooWide) {
+      const name = x.name;
+      if (!over(name)) continue;
+      const full = name.dataset.full;
       name.style.fontSize = '8px';
       for (let n = Math.min(4, full.length - 1); n >= 1; n--) {
         name.textContent = full.slice(0, n);
-        if (!over()) break;
+        if (!over(name)) break;
       }
-      if (over()) name.style.fontSize = '6px';
+      if (over(name)) name.style.fontSize = '6px';
     }
   }
 
   window.addEventListener('resize', layout);
   // (the names are measured again once the fonts have loaded: measured before, a name could be
   // shortened that fits)
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout).catch(() => {});
-  window.addEventListener('load', layout);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { laidOut = ''; layout(); }).catch(() => {});
+  window.addEventListener('load', () => { laidOut = ''; layout(); });
   if (typeof ResizeObserver === 'function') new ResizeObserver(layout).observe(bar);
 
   // ---- Which place is lit: the home's pane, or the open panel (and the bar shows it) ----
