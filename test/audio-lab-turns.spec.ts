@@ -32,6 +32,15 @@ describe("inTurns", () => {
     expect(await inTurns(["a", "b", "c"], 1, async (x: string, w: number) => `${x}${w}`)).toEqual(["a0", "b0", "c0"]);
   });
 
+  it("skips the items not started by `until`, leaving them undefined, so a long check stops in time", async () => {
+    const until = Date.now() + 40;
+    const out = await inTurns([25, 25, 25, 25, 25, 25], 2, async (ms: number) => (await wait(ms), ms), { until });
+    expect(out.length).toBe(6);
+    expect(out.slice(0, 2)).toEqual([25, 25]);
+    expect(Array.from(out).filter((x) => x === undefined).length).toBeGreaterThan(0);
+    expect(await inTurns([1, 2], 2, async (x: number) => x, { until: Date.now() - 1 })).toEqual([undefined, undefined]);
+  });
+
   it("passes a failure on", async () => {
     await expect(inTurns([1, 2, 3], 2, async (x: number) => { if (x === 2) throw new Error("boom"); return x; })).rejects.toThrow("boom");
   });

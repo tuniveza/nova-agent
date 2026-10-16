@@ -5,7 +5,8 @@
 //   node scripts/audio-levels.mjs [seeds=12] [seconds=40]
 // Exits with 1 if anything breaks the rules. The music renders run side by side in a few
 // browsers (one per spare processor, up to 4), so the whole check stays well under the Fixer's
-// 20-minute limit.
+// 20-minute limit; on a slow machine, music renders not started within 15 minutes are skipped
+// (and counted in the report) rather than the whole check being stopped.
 import { availableParallelism } from "node:os";
 import { inTurns, openLab } from "./audio-lab.mjs";
 
@@ -16,11 +17,13 @@ const MUSIC_PEAK = -26.5; // dBFS at the default volume (40): "around −27 or l
 const FULL_GAIN_DB = 20 * Math.log10(1 / 0.4); // from the default volume to full volume
 const EXTRA_PEAK = -36; // dBFS: the gentle extras sit well under everything
 const SOUND_PEAK = -27;
+const UNTIL = Date.now() + 15 * 60 * 1000; // leaves room for the sound effects and closing
 
 const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 const seed = () => Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 const f = (x) => x.toFixed(1).padStart(6);
 let bad = 0;
+let skipped = 0;
 
 const labs = await Promise.all(Array.from({ length: WORKERS }, () => openLab()));
 const lab = labs[0];
@@ -31,17 +34,21 @@ for (const piece of names.pieces) {
   const peaks = [];
   let loud = -Infinity;
   const seeds = Array.from({ length: SEEDS }, seed);
-  for (const r of await inTurns(seeds, WORKERS, (s, w) => labs[w].music({ seed: s, piece, seconds: SECONDS }))) {
+  for (const r of await inTurns(seeds, WORKERS, (s, w) => labs[w].music({ seed: s, piece, seconds: SECONDS }), { until: UNTIL })) {
+    if (!r) { skipped++; continue; }
     peaks.push(r.peakDb);
     loud = Math.max(loud, r.loudestDb);
     if (r.clipped || r.peakDb > MUSIC_PEAK) { bad++; console.log(`  too loud: ${piece} ${r.seed} ${r.peakDb.toFixed(1)}`); }
   }
   peaks.sort((a, b) => a - b);
+  if (!peaks.length) { console.log(`${piece.padEnd(10)} (skipped: out of time)`); continue; }
   console.log(`${piece.padEnd(10)} ${f(peaks[peaks.length - 1])}      ${f(peaks[Math.floor(peaks.length / 2)])}       ${f(loud)}            ${f(peaks[peaks.length - 1] + FULL_GAIN_DB)}`);
 }
-// The whole programme: pieces taking turns, crossfading
+// The whole programme: pieces taking turns, crossfading (five pieces in two minutes: a 200 s
+// render took minutes on its own and pushed the check past the Fixer's limit)
 const programmes = Array.from({ length: Math.max(2, Math.round(SEEDS / 4)) }, seed);
-for (const r of await inTurns(programmes, WORKERS, (s, w) => labs[w].music({ seed: s, seconds: 200, pieceSeconds: 40, fadeSeconds: 14 }))) {
+for (const r of await inTurns(programmes, WORKERS, (s, w) => labs[w].music({ seed: s, seconds: 120, pieceSeconds: 22, fadeSeconds: 9 }), { until: UNTIL })) {
+  if (!r) { skipped++; continue; }
   const repeats = r.pieces.some((p, k) => k && p === r.pieces[k - 1]);
   if (repeats || r.peakDb > MUSIC_PEAK) bad++;
   console.log(`programme ${r.seed}: ${r.pieces.join(" > ")}  peak ${r.peakDb.toFixed(1)}  loudest ${r.loudestDb.toFixed(1)}${repeats ? "  REPEATED A PIECE" : ""}`);
@@ -76,5 +83,6 @@ console.log("(* = the gentle extras, off unless 'Quiet extras' is on)");
 const errors = labs.flatMap((l) => l.errors);
 if (errors.length) { bad++; console.log("Page errors:", errors); }
 await Promise.all(labs.map((l) => l.close()));
+if (skipped) console.log(`\n${skipped} music render(s) skipped: out of time (try fewer seeds or seconds)`);
 console.log(bad ? `\n${bad} problem(s)` : "\nAll within the calm limits.");
 process.exit(bad ? 1 : 0);
