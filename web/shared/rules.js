@@ -203,6 +203,8 @@
     if (!box) return;
     const before = widths(box);
     set(el, "white-space", "nowrap");
+    // (a part inside it that asks to wrap on its own, a title in a card: on one line too)
+    if (lines(el) > 1) for (const d of el.querySelectorAll("*")) if (hasText(d) && !/nowrap|pre/.test(getComputedStyle(d).whiteSpace)) set(d, "white-space", "nowrap");
     // On one line it may only get smaller, never make what holds it wider: it keeps the width it had
     if (grew(before)) set(box, "max-width", `${Math.floor(before[0][1])}px`);
     if (!shrink(el, box)) {

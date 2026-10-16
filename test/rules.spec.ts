@@ -71,6 +71,12 @@ describe("3. nothing onto the next line, fixed as it draws", () => {
     expect(await style("#row")).toMatch(/overflow-x: auto !important/);
     expect(await style("#row")).toMatch(/justify-content: flex-start !important/);
   });
+  it("a button with a part inside it that asks to wrap (a title in a card): on one line too", async () => {
+    const r = await fixed(`<button id="b" style="width:120px;display:grid"><b>11:00</b><span id="t" style="white-space:normal">sharna eleven to two</span></button>`);
+    expect(r.before.map((f) => f.rule)).toContain("oneline");
+    expect(r.after).toEqual([]);
+    expect(await style("#t")).toMatch(/white-space: nowrap !important/);
+  });
   it("reading text is left to wrap", async () => {
     const r = await fixed(`<p id="p" style="width:150px">A long paragraph of reading text that is meant to wrap onto several lines.</p>`);
     expect(r.changed).toBe(0);
