@@ -133,7 +133,8 @@ html.is-touch .quick .q { height: 40px; }
   .quick { grid-row: 1; grid-column: 2; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; align-items: center; padding: 4px 8px; border-bottom: 1px solid rgba(var(--hi-rgb, 255, 95, 168), 0.16); }
   .quick .q { flex: none; }
   .note, .screens, .keys { grid-column: 1 / -1; }
-  .note { grid-row: 2; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; white-space: nowrap; scrollbar-width: none; padding: 4px 12px; font-size: 13px; }
+  /* The note wraps (nothing hidden off the side) but stays short, scrolling down inside itself */
+  .note { grid-row: 2; gap: 4px 10px; max-height: 28vh; overflow-y: auto; padding: 4px 12px; font-size: 13px; }
   .note .here { min-height: 32px; }
   .screens { grid-row: 3; }
   .keys { grid-row: 4; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); }

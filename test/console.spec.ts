@@ -132,6 +132,17 @@ describe("the buttons above the Nova tab", () => {
   });
 });
 
+describe("the note on a short, wide screen", () => {
+  it("wraps rather than hiding its end off the side", async () => {
+    const { readFileSync } = await import("node:fs");
+    const css = readFileSync(new URL("../web/console/css/console.css", import.meta.url), "utf8");
+    const short = css.slice(css.indexOf("@media (max-height: 500px) and (min-width: 561px)"));
+    const note = short.slice(0, short.indexOf("\n}")).match(/\n\s*\.note \{[^}]*\}/)?.[0] || "";
+    expect(note).toContain("overflow-y: auto");
+    expect(note).not.toMatch(/nowrap|overflow-x/);
+  });
+});
+
 describe("the commands", () => {
   it("adds a quest with its length, and finds one by the start of its id", async () => {
     const quests = [{ id: "abcd1234-xyz", title: "Mix", status: "todo" }];
