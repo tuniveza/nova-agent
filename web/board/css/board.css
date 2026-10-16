@@ -68,7 +68,8 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .dot.q { background: #c7a4ff; } .dot.a { background: var(--hi); } .dot.s { background: #ffd27a; } .dot.t { background: var(--soft, #ffd1ea); }
 .dot.l { background: #7fd8ff; } .dot.f { background: #9be7c4; } .dot.c { background: var(--accent-2, #7a1f86); }
 
-.status { position: absolute; z-index: 15; top: 64px; left: 50%; translate: -50% 0; padding: 6px 14px; border-radius: 999px; font-size: 13px; background: rgba(var(--panel-rgb), 0.92); border: 1px solid rgba(var(--hi-rgb), 0.25); }
+/* (under the bar's measured height: a bar wrapped onto two rows no longer sits beneath the notice; long notices wrap, not run off) */
+.status { position: absolute; z-index: 15; top: calc(var(--bar-h, 58px) + 6px); left: 50%; translate: -50% 0; max-width: calc(100vw - 24px); text-align: center; padding: 6px 14px; border-radius: 999px; font-size: 13px; background: rgba(var(--panel-rgb), 0.92); border: 1px solid rgba(var(--hi-rgb), 0.25); }
 
 /* ----- The table: a soft felt with faint grid lines, which move and grow with the view ----- */
 .table {
