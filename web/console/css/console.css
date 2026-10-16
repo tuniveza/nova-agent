@@ -62,6 +62,9 @@ button { font: inherit; color: inherit; }
 }
 /* The terminal itself, inset from the edges (no padding: xterm sizes itself to this box exactly) */
 .screen .term { position: absolute; top: 14px; bottom: 10px; left: max(12px, calc(50% - 600px)); right: max(8px, calc(50% - 600px)); overflow: hidden; }
+/* (squeezed smaller than the terminal's smallest size, on a very thin or short window: it scrolls
+   inside its box rather than being cut off; the rest of the time it fits exactly and nothing moves) */
+.screen .term { overflow: auto; scrollbar-width: thin; overscroll-behavior: contain; }
 .screen .xterm { height: 100%; }
 .screen .xterm-viewport { scrollbar-width: thin; scrollbar-color: rgba(var(--hi-rgb), 0.4) transparent; }
 
