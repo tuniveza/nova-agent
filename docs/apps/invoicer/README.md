@@ -4,6 +4,11 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
 
 ## What's new
 
+- **Easy to pay** (18 October 2026), on the artist's invoice page:
+  - a big **Pay with Monzo** button straight under the amount, so a phone shows it without scrolling. It opens Monzo with the amount and the invoice number filled in. Under it: "No Monzo? Pay by bank transfer", which jumps to the bank details;
+  - a **Copy** button by the sort code, the account number and the reference;
+  - big buttons, easy to tap, with a clear ring round whichever one the keyboard is on. Screen readers hear what the button does and "copied".
+  - The Monzo link is set in **Bank details** (Invoicer) or Portal → Money. It's monzo.me/neimanbrown now.
 - **The email is the invoice.** Every invoice email (the invoice, reminders, receipts) is the Nova invoice itself, with a text version for email apps that can't show it. **See the email** shows it as the client gets it.
 - **Receipts.** When an invoice is paid in full, its receipt is written by itself and waits for an admin's Approve.
 - **Send me a test** (admins): the email at the stage shown, to your own address only. At **Paid receipt** it's **Send me a test receipt**.
