@@ -24,6 +24,11 @@
   // Notes, moving around Board's table, setting up an invoice) and Always hidden.
   // The default (16 Oct 2026, later): "work", shown, but away while you work anywhere in Nova Agent
   // (typing, or doing something hands-on like dragging), back when you stop.
+  // Calm (17 Oct 2026, the user: "not annoying, especially in the Invoicer"): on a computer only
+  // typing sends them away (clicking into a box doesn't); they come back once you've stopped for
+  // CALM_MS (never the moment you click a button between two boxes, so the page doesn't jump about);
+  // and a page that's a form you fill while watching it (the Invoicer: <html data-bars-stay>) keeps
+  // them where they are.
   const MODES = ["work", "shown", "auto", "hidden"];
   const NAMES = { work: "Shown, away while you work", shown: "Always shown", auto: "Auto", hidden: "Hidden" };
   // (new keys: the new default for everyone, also on a device that had picked another before)
@@ -35,7 +40,7 @@
   if (!main) return;
   const PHONE = matchMedia("(max-width: 980px), (max-height: 480px)");
   const STILL = matchMedia("(prefers-reduced-motion: reduce)");
-  const HIDE_AFTER = 1500, EDGE = 12, NEAR = 60;
+  const HIDE_AFTER = 1500, EDGE = 12, NEAR = 60, CALM_MS = 2500;
   const viewing = () => main.classList.contains("viewing");
   const topEl = document.querySelector(".shell > .topbar");
   const stripEl = document.getElementById("suite-home");
@@ -216,9 +221,10 @@
   // when the box is left (unless another takes over), 1.2 s after a drag or zoom, or at once at the
   // edge. (Scrolling a list isn't working: that's Auto's.)
   let working = false, resting = null;
-  function work(on, after = 0, hands = false) {
+  // (still: when the wait is up, is something still being worked on? then they stay away for now)
+  function work(on, after = 0, hands = false, still = null) {
     if (resting) { clearTimeout(resting); resting = null; }
-    if (!on && after) { resting = setTimeout(() => work(false), after); return; }
+    if (!on && after) { resting = setTimeout(() => { resting = null; if (!(still && still())) work(false); }, after); return; }
     if (on === working) return;
     working = on;
     // (Auto too: away while you work, back when you stop, as well as when the mouse has gone)
@@ -237,29 +243,35 @@
   }
   function watchWork(doc) {
     // (never tapped yet: a box a page focuses by itself as it loads is never "tapping into it")
-    let tapped = -Infinity, drag = null;
+    let tapped = -Infinity, drag = null, touched = false;
+    // (a page that asks for its bars to stay, data-bars-stay: nothing done on it sends them away)
+    const stays = () => doc.documentElement.hasAttribute("data-bars-stay");
+    const inBox = () => { const a = doc.activeElement; return editable(a) && !inBars(a); };
     doc.addEventListener("pointerdown", (e) => {
       tapped = performance.now();
+      touched = e.pointerType === "touch" || e.pointerType === "pen";
       drag = inBars(e.target) || e.target.closest?.(".dock-handle, .bar-edge") ? null : { x: e.clientX, y: e.clientY, on: false, ok: e.pointerType !== "touch" || dragSurface(e.target) };
     }, true);
     doc.addEventListener("keydown", () => { tapped = performance.now(); }, true);
     // Typing (or tapping into a box to type: never the cursor a page puts in a box by itself)
-    doc.addEventListener("input", (e) => { if (e.isTrusted && editable(e.target) && !inBars(e.target)) work(true); }, true);
-    doc.addEventListener("focusin", (e) => { if (editable(e.target) && !inBars(e.target) && performance.now() - tapped < 800) work(true); }, true);
+    // (tapping into a box only counts on a touch screen, where the keyboard comes up over the page)
+    doc.addEventListener("input", (e) => { if (e.isTrusted && editable(e.target) && !inBars(e.target) && !stays()) work(true); }, true);
+    doc.addEventListener("focusin", (e) => { if (editable(e.target) && !inBars(e.target) && touched && performance.now() - tapped < 800 && !stays()) work(true); }, true);
+    // Leaving a box: back once you've stopped for a moment (into another box first: they stay away)
     doc.addEventListener("focusout", (e) => {
-      if (!editable(e.target)) return;
-      setTimeout(() => { const a = doc.activeElement; if (!(editable(a) && !inBars(a)) && !(drag && drag.on)) work(false); }, 300);
+      if (!editable(e.target) || !working) return;
+      setTimeout(() => { if (!inBox() && !(drag && drag.on)) work(false, CALM_MS, false, inBox); }, 300);
     }, true);
     // Dragging
     doc.addEventListener("pointermove", (e) => {
       if (!drag || !drag.ok || !e.buttons) return;
-      if (!drag.on && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 12) { drag.on = true; work(true, 0, true); }
+      if (!drag.on && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 12 && !stays()) { drag.on = true; work(true, 0, true); }
     }, { capture: true, passive: true });
     const end = () => { if (drag && drag.on) { const a = doc.activeElement; if (!editable(a)) work(false, 1200); } drag = null; };
     doc.addEventListener("pointerup", end, true);
     doc.addEventListener("pointercancel", end, true);
     // Zooming a surface you drag around (Board's table) with the wheel
-    doc.addEventListener("wheel", (e) => { if (e.target.closest && e.target.closest("[data-pan]")) { work(true, 0, true); work(false, 1200); } }, { capture: true, passive: true });
+    doc.addEventListener("wheel", (e) => { if (e.target.closest && e.target.closest("[data-pan]") && !stays()) { work(true, 0, true); work(false, 1200); } }, { capture: true, passive: true });
   }
   watchWork(document);
   // Leaving a panel: nothing's being worked on there any more

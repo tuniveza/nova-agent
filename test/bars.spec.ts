@@ -144,9 +144,9 @@ describe("the panels bar along the bottom", () => {
     expect(barJs).toContain("watchWork(doc);");
     // (only a person's own typing: never a page filling in or focusing a box by itself as it loads,
     // which turning a phone round or a slow load could otherwise mistake for typing)
-    expect(barJs).toContain('doc.addEventListener("input", (e) => { if (e.isTrusted && editable(e.target) && !inBars(e.target)) work(true); }, true);');
+    expect(barJs).toContain('doc.addEventListener("input", (e) => { if (e.isTrusted && editable(e.target) && !inBars(e.target) && !stays()) work(true); }, true);');
     expect(barJs).toContain("performance.now() - tapped < 800");
-    expect(barJs).toContain("let tapped = -Infinity, drag = null;");
+    expect(barJs).toContain("let tapped = -Infinity, drag = null, touched = false;");
     expect(barJs).toContain("Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 12");
     expect(barJs).toContain('if (b.mode === "work") continue; // (away only while you work: below)');
     expect(barJs).toContain('if (b.timer || b.state !== "in" || b.mode !== "auto") return;');
@@ -156,9 +156,23 @@ describe("the panels bar along the bottom", () => {
     expect(barJs).toContain('if (keepRow) return;');
   });
 
+  it("calm (17 Oct 2026): on a computer only typing sends them away, they come back once you've stopped, and the Invoicer keeps them put", () => {
+    // (clicking into a box counts only on a touch screen, where the keyboard comes up)
+    expect(barJs).toContain("touched = e.pointerType === \"touch\" || e.pointerType === \"pen\";");
+    expect(barJs).toMatch(/focusin", \(e\) => \{ if \(editable\(e\.target\) && !inBars\(e\.target\) && touched &&/);
+    // (back CALM_MS after leaving a box, not the moment a button is clicked between two boxes; into
+    // another box in the meantime: they stay away)
+    expect(barJs).toContain("CALM_MS = 2500");
+    expect(barJs).toContain("work(false, CALM_MS, false, inBox)");
+    expect(barJs).toContain("if (!(still && still())) work(false);");
+    // (a page can keep them put: the Invoicer, a form you fill in while watching the invoice)
+    expect(barJs).toContain('doc.documentElement.hasAttribute("data-bars-stay")');
+    expect(read("../web/invoicer/index.html")).toContain('<html lang="en-GB" data-bars-stay>');
+  });
+
 
   it("comes back at once: the mouse at the edge, a tap or swipe at the edge, Tab into it, scrolling up", () => {
-    expect(barJs).toContain("const HIDE_AFTER = 1500, EDGE = 12, NEAR = 60;");
+    expect(barJs).toContain("const HIDE_AFTER = 1500, EDGE = 12, NEAR = 60, CALM_MS = 2500;");
     expect(barJs).toContain("if (fromEdge <= EDGE) { show(b); continue; }");
     expect(barJs).toContain('el.id = side === "bottom" ? "bar-peek" : "top-peek";');
     expect(barJs).toContain('document.addEventListener("focusin", (e) => {');
