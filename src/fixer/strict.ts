@@ -1,5 +1,5 @@
 // The Fixer, from the ground up (16 October 2026): three strict rules, never compromised, checked on
-// all of Nova Agent (its home and every app, plan, tool and helper) every 5 minutes, at phone, tablet
+// all of Nova Agent (its home and every app, plan, tool and helper) every 30 minutes, at phone, tablet
 // and computer sizes:
 //
 //   1. offscreen  Nothing is ever off the screen: nothing sticks out past the screen's edges, and
@@ -16,7 +16,7 @@
 //
 // It only looks: nothing that would change something leaves its browser (every request that isn't a
 // GET is turned away, live connections are closed). scripts/fixer-strict.ts runs it as its own
-// low-priority process; src/fixer/strict-service.ts runs that every 5 minutes and keeps the result.
+// low-priority process; src/fixer/strict-service.ts runs that every 30 minutes and keeps the result.
 
 import { mkdirSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";

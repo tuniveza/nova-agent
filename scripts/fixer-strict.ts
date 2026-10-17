@@ -1,5 +1,5 @@
 // The Fixer's check (src/fixer/strict.ts: the three strict rules), as its own process (the Fixer
-// runs it with low priority every 5 minutes).
+// runs it with low priority every 30 minutes).
 //
 //   npx tsx scripts/fixer-strict.ts <address> [--out results.json] [--shots folder]
 //     [--sizes 390x844,1920x1080] [--places Agent,Portal] [--parallel 2] [--rules-off]

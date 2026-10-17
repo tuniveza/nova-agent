@@ -1,5 +1,5 @@
 // The Fixer, from the ground up (16 October 2026): only the three strict rules (src/fixer/strict.ts),
-// checked on all of Nova Agent every 5 minutes on the server (and when an admin taps Check now).
+// checked on all of Nova Agent every 30 minutes on the server (and when an admin taps Check now).
 // Nothing else: no hourly checks, no quests, no prepared fixes, no approvals. What the Fixer had
 // before was put aside, not deleted: data/fixer.json became data/fixer-before-2026-10-16.json.
 //
@@ -20,7 +20,9 @@ import { actorFor } from "./routes";
 import { type Run, runCommand } from "./runner";
 import { STRICT_RULES, STRICT_SIZES, freshShotsDir, strictCounts, strictProblems, type StrictRule, type StrictRun } from "./strict";
 
-export const STRICT_EVERY_MIN = 5;
+// (every 30 minutes since 17 October 2026: every 5 kept Nova Bot on the VPS so busy it ran out of memory and
+// restarted about every 25 minutes, cutting Nova Agent's online link each time)
+export const STRICT_EVERY_MIN = 30;
 const HISTORY = (24 * 60) / STRICT_EVERY_MIN; // (a day of runs)
 const RUN_LIMIT_MS = 4.5 * 60_000;
 

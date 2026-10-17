@@ -1,5 +1,5 @@
 // The Fixer from the ground up (src/fixer/strict.ts, src/fixer/strict-service.ts): the three strict
-// rules measured on real pages in a real browser, and the service that runs them every 5 minutes.
+// rules measured on real pages in a real browser, and the service that runs them every 30 minutes.
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
