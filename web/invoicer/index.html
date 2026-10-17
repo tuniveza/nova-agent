@@ -122,7 +122,10 @@
 <dialog id="bank" aria-labelledby="bank-title">
   <form id="bank-form" method="dialog" class="new-form bank-form">
     <div class="col-head"><h2 class="nt-h" id="bank-title">Bank details</h2><button type="button" class="ghost" id="bank-close" aria-label="Close">✕</button></div>
-    <p class="muted small">Shown on every invoice, its page and its email, so clients can pay by bank transfer.</p>
+    <p class="muted small">Shown on every invoice, its page and its email, so clients can pay with Monzo or by bank transfer.</p>
+    <label class="nt-label" for="b-monzo">Monzo link (optional)</label>
+    <input id="b-monzo" class="field" autocomplete="off" maxlength="300" placeholder="monzo.me/yourname" spellcheck="false">
+    <p class="muted small">A "Pay with Monzo" button on each invoice, in its theme, with the amount and invoice number filled in.</p>
     <label class="nt-label" for="b-name">Account name</label>
     <input id="b-name" class="field" autocomplete="off" maxlength="120">
     <div class="grid2">

@@ -571,6 +571,7 @@
     fact("Emailing invoices", data.emailReady ? "Ready" : "Not set up (Nova Bot's email key and from address)");
     fact("Pay by card", data.cardReady ? "Ready (Stripe)" : "Not set up (Stripe)");
     fact("Bank details", st.bankReady ? "On every invoice" : "Not added yet");
+    fact("Pay with Monzo", st.monzoReady ? "On every invoice" : "Not added yet");
     card.appendChild(facts);
     if (!data.canDecide) {
       card.appendChild(k.el("p", "card-foot", "An admin changes these, signed in to Portal in a browser."));
@@ -595,12 +596,13 @@
     field("Sort code", "bank.sortCode", st.bank.sortCode, { maxlength: 20, inputmode: "numeric" });
     field("Account number", "bank.accountNumber", st.bank.accountNumber, { maxlength: 34, inputmode: "numeric" });
     field("A line under the bank details (optional)", "bank.note", st.bank.note, { maxlength: 200 });
+    field("Monzo link (monzo.me/yourname, optional)", "monzo.link", st.monzo?.link, { maxlength: 300, spellcheck: "false" });
     field("VAT % on new invoices", "vatRate", st.vatRate, { type: "number", min: 0, max: 100, step: "0.01" });
     field("Days to pay", "dueDays", st.dueDays, { type: "number", min: 0, max: 120, step: 1 });
     card.appendChild(box);
     const row = k.el("div", "actions");
     button(row, "Save settings", "", () => {
-      const body = { business: {}, bank: {} };
+      const body = { business: {}, bank: {}, monzo: {} };
       card.querySelectorAll("[data-setting]").forEach((i) => {
         const [a, b] = i.dataset.setting.split(".");
         if (b) body[a][b] = i.value.trim();

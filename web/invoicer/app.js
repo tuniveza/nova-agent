@@ -269,7 +269,7 @@ function drawSend(inv, detail, stage) {
     confirmThen(btn, "Yes, queue it", () => api(`money/invoices/${inv.id}/reminder`, { method: "POST", body: { body: forMoney($("body").value), kind } }), admin ? "Queued: approve it with the button above." : "Queued: an admin approves it before it goes.");
 }
 // Money's email adds the button to the invoice's page and a sign-off itself
-// (the invoice under the message has the link, the bank details and the studio's sign-off, so those
+// (the invoice under the message has the link, Monzo, the bank details and the studio's sign-off, so those
 // lines are left out of what's queued)
 function forMoney(text) {
   return text
@@ -277,7 +277,7 @@ function forMoney(text) {
     .map((p) =>
       p
         .split("\n")
-        .filter((l) => !/^(See and pay it online:|Or by bank transfer)/.test(l))
+        .filter((l) => !/^(See and pay it online:|Or pay with Monzo:|Or by bank transfer)/.test(l))
         .join("\n")
     )
     .filter((p) => p.trim() && !/^Best wishes,?\n/i.test(p))
@@ -831,11 +831,11 @@ $("share-link").addEventListener("click", () => copyText(chosen.staged.invoice.p
 function drawBank() {
   const st = data?.settings || {};
   const bank = st.bank || {};
-  const ways = [st.bankReady && "Bank transfer", data?.cardReady && "Card"].filter(Boolean);
+  const ways = [st.bankReady && "Bank transfer", st.monzoReady && "Monzo", data?.cardReady && "Card"].filter(Boolean);
   $("bank-state").textContent = ways.length ? `${ways.join(" and ")} ✓` : data?.canDecide ? "Add bank details" : "Not set up yet (an admin adds it)";
   $("bank-btn").classList.toggle("missing", !ways.length);
   $("bank-btn").disabled = !data?.canDecide;
-  $("bank-btn").title = data?.canDecide ? "The bank details on every invoice" : "An admin adds these";
+  $("bank-btn").title = data?.canDecide ? "The bank details and Monzo link on every invoice" : "An admin adds these";
 }
 $("bank-btn").addEventListener("click", () => {
   const b = data?.settings?.bank || {};
@@ -843,6 +843,7 @@ $("bank-btn").addEventListener("click", () => {
   $("b-sort").value = b.sortCode || "";
   $("b-acc").value = b.accountNumber || "";
   $("b-note").value = b.note || "";
+  $("b-monzo").value = data?.settings?.monzo?.link || "";
   $("b-error").hidden = true;
   $("bank").showModal();
   $("b-name").focus();
@@ -852,9 +853,9 @@ $("bank-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("bank-save").disabled = true;
   try {
-    await api("money/settings", { method: "POST", body: { bank: { accountName: $("b-name").value.trim(), sortCode: $("b-sort").value.trim(), accountNumber: $("b-acc").value.replace(/\s/g, ""), note: $("b-note").value.trim() } } });
+    await api("money/settings", { method: "POST", body: { bank: { accountName: $("b-name").value.trim(), sortCode: $("b-sort").value.trim(), accountNumber: $("b-acc").value.replace(/\s/g, ""), note: $("b-note").value.trim() }, monzo: { link: $("b-monzo").value.trim() } } });
     $("bank").close();
-    say("Bank details saved: they're on every invoice now.");
+    say("Saved: they're on every invoice now.");
     await load();
     if (chosen) refreshDoc();
   } catch (err) {
