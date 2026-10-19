@@ -59,7 +59,7 @@ const dayText = (day) => (day ? new Date(day + "T12:00:00Z").toLocaleDateString(
 function stageOf(inv, today = ukToday()) {
   if (inv.paidPence >= inv.totalPence || inv.status === "paid") return "paid";
   if (["sent", "part_paid"].includes(inv.status) && inv.dueDate < today) return "overdue";
-  if (inv.paidPence > 0) return "balance";
+  if (inv.paidPence > 0 || inv.billing === "full") return "balance";
   return "deposit";
 }
 function say(text, bad = false) {
@@ -572,6 +572,20 @@ function drawLines() {
 // ---- The live preview: what's typed so far, drawn by Nova Bot as the invoice will look (nothing saved) ----
 let previewTimer = 0;
 let previewAsk = 0;
+// Before the session (a deposit secures the date, the rest is due on the day) or after it (the full
+// amount, with a thank-you): its emails follow it
+let billing = "deposit";
+function setBilling(b) {
+  billing = b === "full" ? "full" : "deposit";
+  for (const btn of $("n-billing").querySelectorAll("button")) btn.setAttribute("aria-checked", String(btn.dataset.billing === billing));
+  $("n-due-label").textContent = billing === "full" ? "Payment due" : "Balance due (the session day)";
+  $("n-deposit-row").hidden = billing === "full";
+  livePreview();
+}
+$("n-billing").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-billing]");
+  if (b) setBilling(b.dataset.billing);
+});
 function draft() {
   return {
     billName: $("n-name").value.trim(),
@@ -580,7 +594,8 @@ function draft() {
     issueDate: $("n-issue").value,
     dueDate: $("n-due").value,
     notes: $("n-notes").value.trim(),
-    stage: "deposit",
+    billing,
+    stage: billing === "full" ? "balance" : "deposit",
     theme: theme || studioTheme,
     mode: mode || studioMode,
   };
@@ -594,7 +609,7 @@ function livePreview() {
       const r = await api("money/invoices/preview", { method: "POST", body: draft() });
       if (ask !== previewAsk || !r.html) return; // (a newer one is on its way)
       $("n-preview").srcdoc = r.html;
-      $("np-state").textContent = `Deposit due · ${themes.find((t) => t.id === (theme || studioTheme))?.name || ""} · ${(mode || studioMode) === "dark" ? "Dark" : "Bright"}`;
+      $("np-state").textContent = `${billing === "full" ? "Payment due" : "Deposit due"} · ${themes.find((t) => t.id === (theme || studioTheme))?.name || ""} · ${(mode || studioMode) === "dark" ? "Dark" : "Bright"}`;
     } catch (err) {
       $("np-state").textContent = err.message;
     }
@@ -658,6 +673,7 @@ $("edit-btn").addEventListener("click", () => {
   $("n-due").value = inv.dueDate;
   $("n-notes").value = inv.notes || "";
   $("new").showModal();
+  setBilling(inv.billing);
   drawLines();
   $("n-name").focus();
 });
@@ -674,6 +690,7 @@ $("new-btn").addEventListener("click", async () => {
   $("n-issue").value = ukToday();
   $("n-due").value = addDays(ukToday(), 14);
   $("new").showModal();
+  setBilling("deposit");
   drawLines();
   $("n-name").focus();
 });
@@ -700,6 +717,7 @@ $("new-form").addEventListener("submit", async (e) => {
     issueDate: $("n-issue").value,
     dueDate: $("n-due").value,
     notes: $("n-notes").value.trim(),
+    billing,
   };
   if (client) body.clientId = client.id;
   // (a new one keeps the look it was made in)

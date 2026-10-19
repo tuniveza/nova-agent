@@ -54,6 +54,7 @@ export interface Invoice {
   issueDate: string;
   dueDate: string;
   notes: string;
+  billing?: "deposit" | "full";
   status: (typeof INVOICE_STATUSES)[number];
   overdue: boolean;
   createdBy: string;
@@ -181,6 +182,10 @@ export function moneyTools(actions: { push(action: Action): number }) {
     .min(1)
     .max(30);
   const DAY = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+  // Before the session or after it: the client's emails follow it
+  const BILLING = z.enum(["deposit", "full"]);
+  const BILLING_WORDS =
+    '"deposit" (the default): before the session; a deposit secures their date and the rest is due on the session day (due_date is then the session day). "full": after the session; the full amount, and the email thanks them for the session.';
   return [
     betaZodTool({
       name: "money_summary",
@@ -225,6 +230,7 @@ export function moneyTools(actions: { push(action: Action): number }) {
         issue_date: DAY.optional().describe("YYYY-MM-DD (leave out for today)"),
         due_date: DAY.optional().describe("YYYY-MM-DD (leave out for the studio's usual terms)"),
         notes: z.string().max(2000).optional().describe("A line for the client on the invoice, e.g. what the sessions were"),
+        billing: BILLING.optional().describe(BILLING_WORDS),
       }),
       run: async (i) => {
         try {
@@ -238,6 +244,7 @@ export function moneyTools(actions: { push(action: Action): number }) {
             issueDate: i.issue_date,
             dueDate: i.due_date,
             notes: i.notes,
+            billing: i.billing,
           });
           did("added", `Wrote invoice ${invoice.number}, waiting for an admin's approval`);
           return `Invoice ${invoice.number} (#${invoice.id}) saved, NOT sent: ${invoiceLine(invoice)}.${invoice.billTo.email ? "" : " It has no email address yet, so it can't be sent until one is added."} ${notSent}`;
@@ -260,10 +267,11 @@ export function moneyTools(actions: { push(action: Action): number }) {
         issue_date: DAY.optional(),
         due_date: DAY.optional(),
         notes: z.string().max(2000).optional(),
+        billing: BILLING.optional().describe(BILLING_WORDS),
       }),
       run: async ({ id, ...i }) => {
         const changes: Record<string, unknown> = {};
-        const map: Record<string, string> = { client_id: "clientId", bill_name: "billName", bill_email: "billEmail", bill_address: "billAddress", lines: "lines", vat_rate: "vatRate", issue_date: "issueDate", due_date: "dueDate", notes: "notes" };
+        const map: Record<string, string> = { client_id: "clientId", bill_name: "billName", bill_email: "billEmail", bill_address: "billAddress", lines: "lines", vat_rate: "vatRate", issue_date: "issueDate", due_date: "dueDate", notes: "notes", billing: "billing" };
         for (const [k, v] of Object.entries(i)) if (v !== undefined) changes[map[k]] = v;
         if (!Object.keys(changes).length) return "Say what to change.";
         try {

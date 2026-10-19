@@ -178,6 +178,11 @@
         <div><label class="nt-label" for="n-email">Email</label><input id="n-email" class="field" type="email" autocomplete="off" placeholder="name@example.com"></div>
       </div>
       <datalist id="clients"></datalist>
+      <span class="nt-label" id="n-billing-label">Before or after the session</span>
+      <div class="stages billing" id="n-billing" role="radiogroup" aria-labelledby="n-billing-label">
+        <button type="button" role="radio" data-billing="deposit" aria-checked="true" title="A deposit secures their date; the rest is due on the session day"><i class="dot s-deposit" aria-hidden="true"></i>Before: deposit to secure the date</button>
+        <button type="button" role="radio" data-billing="full" aria-checked="false" title="The session's done: the full amount, with a thank-you"><i class="dot s-balance" aria-hidden="true"></i>After: full payment</button>
+      </div>
       <label class="nt-label" for="n-service">Add a service</label>
       <div class="add-row">
         <select id="n-service" class="field" aria-label="Service"></select>
@@ -187,12 +192,12 @@
       <table class="lines" aria-label="What's on the invoice">
         <thead><tr><th>What</th><th>Qty</th><th>Price (£)</th><th class="n">Amount</th><th><span class="sr">Remove</span></th></tr></thead>
         <tbody id="n-lines"></tbody>
-        <tfoot><tr><td colspan="3">Total</td><td class="n" id="n-total">£0.00</td><td></td></tr><tr><td colspan="3" class="muted" id="n-deposit-label">Deposit (50%)</td><td class="n muted" id="n-deposit">£0.00</td><td></td></tr></tfoot>
+        <tfoot><tr><td colspan="3">Total</td><td class="n" id="n-total">£0.00</td><td></td></tr><tr id="n-deposit-row"><td colspan="3" class="muted" id="n-deposit-label">Deposit (50%)</td><td class="n muted" id="n-deposit">£0.00</td><td></td></tr></tfoot>
       </table>
       <p class="muted small" id="n-hint"></p>
       <div class="grid2">
         <div><label class="nt-label" for="n-issue">Issued</label><input id="n-issue" class="field" type="date" required></div>
-        <div><label class="nt-label" for="n-due">Balance due (the session day)</label><input id="n-due" class="field" type="date" required></div>
+        <div><label class="nt-label" for="n-due" id="n-due-label">Balance due (the session day)</label><input id="n-due" class="field" type="date" required></div>
       </div>
       <label class="nt-label" for="n-notes">Note on the invoice (optional)</label>
       <textarea id="n-notes" class="field" rows="2" placeholder="Session on 21 October, 2pm"></textarea>

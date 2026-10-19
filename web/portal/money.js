@@ -688,6 +688,7 @@
     $("mn-inv-due").value = inv ? inv.dueDate : addDays(today, data.settings.dueDays);
     $("mn-inv-vat").value = inv ? inv.vatRate : data.settings.vatRate;
     $("mn-inv-notes").value = inv ? inv.notes : "";
+    $("mn-inv-billing").value = inv && inv.billing === "full" ? "full" : "deposit";
     $("mn-inv-lines").replaceChildren(...(inv ? inv.lines : [{}]).map(lineRow));
     k.setText("mn-inv-error", "");
     totals();
@@ -782,6 +783,7 @@
       issueDate: $("mn-inv-issue").value,
       dueDate: $("mn-inv-due").value,
       notes: $("mn-inv-notes").value.trim(),
+      billing: $("mn-inv-billing").value,
     };
     const save = e.submitter || $("mn-inv-save");
     save.disabled = true;

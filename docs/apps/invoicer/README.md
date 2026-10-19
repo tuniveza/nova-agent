@@ -4,6 +4,11 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
 
 ## What's new
 
+- **Before or after the session** (19 October 2026): each invoice says which, in **+ New invoice** (and Portal → Money, and the Agent), and its emails follow the studio's rules for client emails:
+  - **Before: deposit to secure the date.** Welcoming and excited about the session. It says the date is only held once the deposit is paid, gives the deposit and its due date clearly, then what happens next. The rest is due on the session day.
+  - **After: full payment.** Warm and thankful: thanks for the session and how well it went, then the full amount and its due date. No deposit is asked for.
+  - With a deposit, once the session day comes, the balance email is the same thank-you, with what's left after the deposit.
+  - Everything in them is filled in from the invoice (the artist's first name, the session from its lines, the amounts and dates), so there's nothing to fill in. A message with a gap still in square brackets, like "[Client Name]", is never sent.
 - **Easy to pay** (18 October 2026), on the artist's invoice page:
   - a big **Pay with Monzo** button straight under the amount, so a phone shows it without scrolling. It opens Monzo with the amount and the invoice number filled in. Under it: "No Monzo? Pay by bank transfer", which jumps to the bank details;
   - a **Copy** button by the sort code, the account number and the reference;
@@ -81,6 +86,7 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
   - The artist (names from the client list fill in their email) and the services from the studio's price list. The sessions come from the booking rules, so a price changed there changes here too.
   - Mixing, mastering and production are on the list too. Mastering is £30 a song for 3 to 10 songs and £50 otherwise; it switches by itself. Custom production is "from £250": type the price agreed.
   - Something else adds a line of your own.
+  - **Before or after the session:** before, a deposit secures the date; after, it's the full amount (the deposit line goes and the due date is when payment is due).
   - Also: the issue date, the day the balance is due (the session day), and a note for the invoice.
   - The total and the 50% deposit show as you go.
   - The new invoice waits for an admin's Approve before anything is emailed.
