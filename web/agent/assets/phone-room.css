@@ -1,0 +1,74 @@
+/* A phone (19 Oct 2026): room for the panel. Linked last on Nova Agent's page, so it has the final say
+   over phone.css, bar.css, status.css and touch.css (which grew one fix at a time).
+   - The Nova tiles keep every place on screen at once (the user's choice, 16 Oct), at about half the
+     height they had: no group names over the rows (each group is still told apart by the fine line
+     between them, and still read out by its name), slimmer tiles with the icon and the name inside.
+   - The status line folds into one slim line under the tiles.
+   - The frame round the panel is thinner, so the panel gets the screen's width. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .shell, .shell:has(> .main.viewing) { gap: 6px; padding-left: max(4px, env(safe-area-inset-left)); padding-right: max(4px, env(safe-area-inset-right)); }
+  .main.viewing > .viewer > .viewer-body { border-radius: 14px; }
+  html body .tabbar { margin-inline: calc(-1 * max(4px, env(safe-area-inset-left))) calc(-1 * max(4px, env(safe-area-inset-right)));
+    padding: 5px max(4px, env(safe-area-inset-right)) calc(3px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); row-gap: 4px !important; }
+  html body .tabbar .tgroup { gap: 0; row-gap: 0; }
+  html body .tabbar .tg-label { display: none; }
+  html body .tabbar .tg-items { gap: 4px !important; }
+  html body .tabbar button { min-height: 36px; height: 36px; padding: 0 1px 3px; border-radius: 9px; }
+  html body .tabbar .tgroup[data-group="solo"] button, html body .tabbar .tgroup[data-group="end"] button { height: auto; }
+  html body .tabbar button > .t-ico { padding-top: 3px; }
+  html body .tabbar button > .t-ico > svg, html body .tabbar button > .t-ico > img { width: 16px; height: 16px; }
+  html body .tabbar button > span:last-child { font-size: clamp(8.5px, 2.4vw, 10px); line-height: 1.05; }
+  html body .tabbar > .status-line { height: 18px; margin-top: 0; font-size: 9px; padding: 0 6px; }
+  html body .tabbar > .status-line .sl-ico { width: 10px; height: 10px; }
+  /* (its top-edge line, to hide and show the tiles, sits just above them) */
+  html body .tabbar > .dock-handle { top: -20px; height: 20px; }
+}
+/* The title panel on a phone held upright: 48px tall with 40px round buttons (still an easy target),
+   so the panel's name always has room for itself */
+@media (max-width: 600px) and (orientation: portrait) {
+  :root { --tp-h: 48px; --tp-btn: 40px; }
+  html body .tabbar button { min-height: 34px; height: 34px; }
+  html body .tabbar .tgroup[data-group="solo"] button, html body .tabbar .tgroup[data-group="end"] button { height: auto; }
+}
+
+/* ---- A short screen, phone or computer (19 Oct 2026): the Nova tiles always FIT ----
+   (a phone on its side, a window made short by hand). Before, the tiles were made one row that slid
+   sideways (rules.js keeps bars to one row), so the last places were off the right edge. Now every
+   tile shares out the row's width, so all of them are in sight: names inside when there's room,
+   the icon alone (the name still read out) when the tiles are narrow. The status line steps aside
+   (it's back when there's height). */
+@media (max-height: 480px) and (min-width: 560px), (max-height: 500px) and (min-width: 560px) and (max-width: 980px) {
+  html body .tabbar { display: flex !important; flex-wrap: nowrap !important; justify-content: center; align-items: stretch; overflow: visible !important; gap: 0 6px !important;
+    padding: 3px max(6px, env(safe-area-inset-right)) max(3px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+    --tile-w: clamp(28px, calc((100vw - 16px - 6 * 7px - var(--tab-n, 15) * 4px) / var(--tab-n, 15)), 76px); }
+  html body .tabbar > .tg-row { display: contents; }
+  html body .tabbar .tgroup { display: flex; flex: none; width: auto; margin: 0; padding: 0 0 0 6px; border-left: 1px solid var(--line); }
+  html body .tabbar .tgroup[data-group="solo"] { padding-left: 0; border-left: 0; }
+  html body .tabbar .tg-label { display: none !important; }
+  html body .tabbar .tg-items { display: flex !important; flex-wrap: nowrap; gap: 4px !important; }
+  html body .tabbar .tgroup[data-group] button { flex: none; width: var(--tile-w) !important; min-width: 0 !important; height: 40px; min-height: 40px; padding: 0 1px 3px; }
+  html body .tabbar > .status-line { display: none !important; }
+}
+/* (only where the tiles show: Nova Agent's phone layout, (max-width: 980px), (max-height: 480px))
+   (tiles too narrow for a name: the icon alone, in the middle; the name is still its label) */
+@media (max-height: 500px) and (max-width: 799px) {
+  html body .tabbar button > span:last-child { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip: rect(0 0 0 0); padding: 0 !important; }
+  html body .tabbar button > .t-ico { place-items: center !important; padding-top: 0 !important; }
+  html body .tabbar button > img.t-ico { object-position: center !important; }
+}
+/* A short and narrow screen (a flip phone's cover screen) or a very thin one: the tiles as icons in
+   rows that fit (eight across, or five on the thinnest), never a row sliding off the side */
+@media (max-height: 500px) and (max-width: 559px), (max-width: 299px) {
+  html body .tabbar { display: grid !important; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-areas: none !important; gap: 4px !important; overflow: visible !important;
+    padding: 4px max(4px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); }
+  html body .tabbar > .tg-row, html body .tabbar .tgroup, html body .tabbar .tg-items { display: contents !important; }
+  html body .tabbar .tg-label { display: none !important; }
+  html body .tabbar .tgroup[data-group] button { width: auto !important; min-width: 0 !important; height: 34px; min-height: 34px; padding: 0; }
+  html body .tabbar button > span:last-child { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip: rect(0 0 0 0); padding: 0 !important; }
+  html body .tabbar button > .t-ico { place-items: center !important; padding-top: 0 !important; }
+  html body .tabbar button > img.t-ico { object-position: center !important; }
+  html body .tabbar > .status-line { display: none !important; }
+}
+@media (max-width: 299px) { html body .tabbar { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+/* (and the title panel slim on any short screen) */
+@media (max-height: 480px), (max-height: 500px) and (max-width: 980px) { :root { --tp-h: 44px; --tp-btn: 40px; --tp-mark: 24px; --tp-word: 14px; } }

@@ -6,7 +6,9 @@
 //                 nothing is cut off by the box it's in (text ending in "…" included). What's inside
 //                 a box that scrolls is fine: it can be scrolled to (and so is what's on a surface
 //                 you drag around, marked data-pan: Board's table).
-//   2. onescreen  One screen: the page itself never scrolls (only boxes inside it do).
+//   2. onescreen  One screen: the page itself never scrolls (only boxes inside it do). On a phone
+//                 (upright or on its side) a panel's page may scroll up and down, like any app's
+//                 (19 Oct 2026); never sideways.
 //   3. oneline    Nothing overflows onto the next line: a button, link, name, label, heading, tab or
 //                 bar item keeps its words on one line, and Nova Agent's own bars (the Nova top panel,
 //                 the Nova tiles and dock, the status line, or a row an app marks data-one-row) stay one
@@ -26,7 +28,7 @@ import { SWEEP_HEADER } from "./sweep-guard";
 export type StrictRule = "offscreen" | "onescreen" | "oneline";
 export const STRICT_RULES: { id: StrictRule; title: string; text: string }[] = [
   { id: "offscreen", title: "Never anything off the screen", text: "Nothing sticks out past the screen's edges or is cut off by its box." },
-  { id: "onescreen", title: "One screen", text: "The page never scrolls; only boxes inside it do." },
+  { id: "onescreen", title: "One screen", text: "The page never scrolls sideways; on a computer it never scrolls at all (only boxes inside it do); on a phone a panel scrolls up and down like any app." },
   { id: "oneline", title: "Never onto the next line", text: "Buttons, names, labels and headings keep their words on one line; Nova Agent's bars stay one row." },
 ];
 
@@ -51,6 +53,13 @@ export const STRICT_SIZES: { w: number; h: number; kind: StrictKind }[] = [
   // Extremely thin and extremely short windows (made that small by hand): still nothing off the screen
   { w: 280, h: 600, kind: "phone" },
   { w: 900, h: 320, kind: "computer" },
+  // (19 Oct 2026: the smallest and biggest phones, a flip phone's cover screen, and a computer
+  // window made short and wide by hand, where the Nova tiles had slid off the right edge)
+  { w: 320, h: 568, kind: "phone" },
+  { w: 440, h: 956, kind: "phone" },
+  { w: 360, h: 298, kind: "phone" },
+  { w: 977, h: 308, kind: "computer" },
+  { w: 1366, h: 400, kind: "computer" },
 ];
 const PHONE_UA = "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36";
 const TABLET_UA = "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
@@ -94,9 +103,12 @@ export function measureStrict(): StrictFound[] {
   const bodyCs = getComputedStyle(document.body);
   const pageX = rootCs.overflowX !== "visible" ? rootCs.overflowX : bodyCs.overflowX;
   const pageY = rootCs.overflowY !== "visible" ? rootCs.overflowY : bodyCs.overflowY;
+  // (a phone, upright or on its side: a panel's page scrolls like any app's, under the thumb, rather
+  // than boxes scrolling inside boxes: the user's choice, 19 Oct 2026. Sideways it never scrolls.)
+  const phone = vw <= 820 || vh <= 500;
   const extraY = clips(pageY) ? 0 : se.scrollHeight - se.clientHeight;
   const extraX = clips(pageX) ? 0 : se.scrollWidth - se.clientWidth;
-  if (extraY > 1) out.push({ rule: "onescreen", what: "The page", why: `scrolls: it's ${extraY}px taller than the screen`, box: null });
+  if (extraY > 1 && !phone) out.push({ rule: "onescreen", what: "The page", why: `scrolls: it's ${extraY}px taller than the screen`, box: null });
   if (extraX > 1) out.push({ rule: "onescreen", what: "The page", why: `scrolls sideways: it's ${extraX}px wider than the screen`, box: null });
   // (nor does a big part of it: a box most of the screen's height that slides sideways is the page
   // being too wide in disguise; a row of things sliding sideways inside itself is fine)
@@ -141,6 +153,9 @@ export function measureStrict(): StrictFound[] {
       const sx = pan || scrolls(s.overflowX), sy = pan || scrolls(s.overflowY);
       if (!sx && clips(s.overflowX) && (left < ar.left - 1 || right > ar.right + 1)) why = `it's cut off by the box it's in (${name(a)})`;
       else if (!sy && clips(s.overflowY) && (top < ar.top - 1 || bottom > ar.bottom + 1)) why = `it's cut off by the box it's in (${name(a)})`;
+      // (Nova Agent's own bars are never slid along to find a place: a tile or button past the side of
+      // the Nova tiles, the dock, the top panel or the status line is off the screen, 19 Oct 2026)
+      else if (sx && !pan && a.matches(".tabbar, .dock, .topbar, .status-line") && (left < ar.left - 1 || right > ar.right + 1)) why = `it's off the side of ${name(a)}: you'd have to slide the bar to see it`;
       if (sx || clips(s.overflowX)) { left = Math.max(left, ar.left); right = Math.min(right, ar.right); }
       if (sy || clips(s.overflowY)) { top = Math.max(top, ar.top); bottom = Math.min(bottom, ar.bottom); }
       if (right <= left || bottom <= top) break; // (scrolled out of sight inside a box: it can be scrolled to)

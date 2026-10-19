@@ -43,6 +43,12 @@ describe("1. never anything off the screen", () => {
     const f = await found(`<div style="height:100px;overflow-y:auto">${Array.from({ length: 30 }, (_, i) => `<p style="margin:0">Line ${i}</p>`).join("")}</div>`);
     expect(f).toEqual([]);
   });
+  it("a Nova tile past the side of its bar (the bar would have to be slid along to find it, 19 Oct 2026)", async () => {
+    const f = await found(`<nav class="tabbar" style="display:flex;overflow-x:auto;width:300px">${Array.from({ length: 8 }, (_, i) => `<button style="flex:none;width:60px">Tile${i}</button>`).join("")}</nav>`);
+    expect(f.some((x) => x.rule === "offscreen" && /Tile6/.test(x.what) && /slide the bar/.test(x.why))).toBe(true);
+    // (a row of chips sliding sideways in a panel is still fine)
+    expect(await found(`<div style="display:flex;overflow-x:auto;width:300px">${Array.from({ length: 8 }, (_, i) => `<button style="flex:none;width:60px">Chip${i}</button>`).join("")}</div>`)).toEqual([]);
+  });
   it("fine: what's on a surface you drag around (data-pan, Board's table)", async () => {
     const f = await found(`<main data-pan style="position:relative;height:200px;overflow:hidden"><div style="position:absolute;left:600px;top:20px">A note</div></main>`);
     expect(f).toEqual([]);
@@ -61,9 +67,17 @@ describe("2. one screen", () => {
     expect(f).toEqual([expect.objectContaining({ rule: "onescreen", why: expect.stringContaining("scrolls sideways") })]);
     expect(await found(`<div style="display:flex;overflow-x:auto;height:40px"><span style="flex:none;width:900px">Chips</span></div>`)).toEqual([]);
   });
-  it("the page scrolling is a problem", async () => {
-    const f = await found(`<div style="height:1500px">Tall</div>`, true);
-    expect(f).toEqual([expect.objectContaining({ rule: "onescreen", why: expect.stringContaining("900px taller than the screen") })]);
+  it("on a computer the page scrolling is a problem; on a phone a panel scrolls up and down like any app (19 Oct 2026)", async () => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    try {
+      const f = await found(`<div style="height:1500px">Tall</div>`, true);
+      expect(f).toEqual([expect.objectContaining({ rule: "onescreen", why: expect.stringContaining("700px taller than the screen") })]);
+    } finally {
+      await page.setViewportSize({ width: 400, height: 600 });
+    }
+    expect(await found(`<div style="height:1500px">Tall</div>`, true)).toEqual([]);
+    // (but never sideways)
+    expect(rules(await found(`<div style="width:900px;height:20px">Wide</div>`, true))).toContain("onescreen");
   });
   it("fine: the page stays put and a box inside it scrolls", async () => {
     expect(await found(`<div style="height:100%;overflow:auto"><div style="height:1500px">Tall</div></div>`)).toEqual([]);

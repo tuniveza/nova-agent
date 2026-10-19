@@ -365,3 +365,5 @@ html body .tabbar { row-gap: max(5px, 0px) !important; column-gap: max(8px, 0px)
   html body .tabbar .tgroup[data-group="end"] { padding-left: 4px; }
   html body .tabbar .tgroup[data-group="tools"], html body .tabbar .tgroup[data-group="helpers"] { padding-left: 4px !important; }
   html body .tabbar .tgroup[data-group="solo"] button, html body .tabbar .tgroup[data-group="end"] button { width: 46px !important; min-width: 46px; }
+
+}

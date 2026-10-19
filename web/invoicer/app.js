@@ -502,9 +502,43 @@ $("copy-btn").addEventListener("click", async () => {
 
 // ---- A phone: one part at a time ----
 function showPart(part) {
+  const was = document.body.dataset.part;
   document.body.dataset.part = part;
   for (const b of $("parts").querySelectorAll("button")) b.setAttribute("aria-selected", String(b.dataset.part === part));
+  // (the page scrolls on a phone: a new part starts at its top, under the pinned parts)
+  if (was && was !== part && PHONE.matches) window.scrollTo(0, 0);
+  if (part === "doc") requestAnimationFrame(fitDoc);
 }
+// A phone (19 Oct 2026): the page scrolls, so the invoice is shown at its full height (its own height,
+// measured from its page; never a box scrolling inside the page). On a computer it fills its column.
+const PHONE = matchMedia("(max-width: 820px), (max-height: 500px)");
+function fitDoc() {
+  const frame = $("doc");
+  const box = frame.parentElement;
+  if (!PHONE.matches) return box.style.removeProperty("--doc-h");
+  try {
+    const body = frame.contentDocument?.body;
+    if (!body || !frame.clientWidth) return;
+    const s = frame.contentWindow.getComputedStyle(body);
+    const h = Math.ceil(body.getBoundingClientRect().height + parseFloat(s.marginTop) + parseFloat(s.marginBottom));
+    if (h > 100) box.style.setProperty("--doc-h", `${h}px`);
+  } catch {}
+}
+let docWatch = null;
+$("doc").addEventListener("load", () => {
+  fitDoc();
+  setTimeout(fitDoc, 500); // (once its fonts are in)
+  docWatch?.disconnect();
+  try {
+    docWatch = new ResizeObserver(fitDoc);
+    docWatch.observe($("doc").contentDocument.body);
+  } catch {}
+});
+PHONE.addEventListener("change", fitDoc);
+// (a narrow screen: the search box's hint in fewer words, so it's never cut off beside New invoice)
+const fitHint = () => ($("search").placeholder = innerWidth < 440 ? "Artist or number" : "Search artist or number");
+fitHint();
+addEventListener("resize", () => (fitDoc(), fitHint()));
 $("parts").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-part]");
   if (b) showPart(b.dataset.part);
