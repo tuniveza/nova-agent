@@ -157,3 +157,48 @@ html.pillars-all-hidden .app > .top { display: none !important; }
   .pillar:not(.open) .pillar-cap .pillar-name { writing-mode: horizontal-tb; transform: none; font-size: 12px; }
   .pillar:not(.open) .pillar-shaft { min-height: 110px; }
 }
+
+/* ---- Phones and tablets: simple (19 Oct 2026) ----
+   Short pillars in rows, each with its name across it and big to tap (four to a row on a phone, all
+   eight in one row on a tablet); the one tapped opens wide underneath, its buttons in two columns */
+.pillar-caps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 5px; }
+@media (min-width: 640px) { .pillar-caps { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+.mini-pillar { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 0; border: 0; background: none; cursor: pointer; color: var(--bright); }
+.mini-cap {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 40px; padding: 4px 3px;
+  border-radius: 12px 12px 5px 5px; border: 1px solid var(--line-strong, rgba(var(--hi-rgb), 0.4));
+  background: radial-gradient(ellipse 60% 70% at 50% 15%, rgba(255, 255, 255, 0.14), transparent 70%), linear-gradient(180deg, rgba(var(--panel-2-rgb, var(--panel-rgb)), 1), rgba(var(--panel-rgb), 1));
+}
+.mini-cap .pillar-glyph { font-size: 15px; }
+.mini-cap .pillar-name { font: 800 11px var(--f-display, var(--f-body), sans-serif); letter-spacing: 0.02em; white-space: nowrap; }
+.mini-cap .pillar-badge { position: absolute; top: -6px; right: -3px; margin: 0; }
+.mini-shaft { height: 10px; margin: 0 4px; border-left: 1px solid rgba(var(--void-rgb), 0.9); border-right: 1px solid rgba(var(--void-rgb), 0.9);
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 6px), linear-gradient(90deg, rgba(var(--void-rgb), 0.95), rgba(var(--panel-2-rgb, var(--panel-rgb)), 0.95) 25%, rgba(var(--hi-rgb), 0.16) 48%, rgba(var(--panel-rgb), 0.95) 72%, rgba(var(--void-rgb), 0.95)); }
+.mini-base { height: 6px; margin: 0 1px; border-radius: 2px 2px 6px 6px; border: 1px solid var(--line-strong, rgba(var(--hi-rgb), 0.4)); border-top: 0; background: linear-gradient(180deg, rgba(var(--panel-2-rgb, var(--panel-rgb)), 1), rgba(var(--deep-rgb), 1)); }
+.mini-pillar:hover .mini-cap { border-color: rgba(var(--hi-rgb), 0.8); }
+.mini-pillar:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; border-radius: 12px; }
+.mini-pillar.here .mini-cap .pillar-name { color: var(--soft, #FFD1EA); }
+.mini-pillar.open .mini-cap { color: var(--on-accent, #fff); border-color: var(--soft, #FFD1EA); background: radial-gradient(ellipse 60% 70% at 50% 15%, rgba(255, 255, 255, 0.2), transparent 70%), linear-gradient(180deg, var(--accent), var(--accent-2)); box-shadow: 0 0 10px -3px rgba(var(--hi-rgb), 0.7); }
+.mini-pillar.open .mini-cap .pillar-glyph, .mini-pillar.open .mini-cap .pillar-name { color: inherit; }
+.mini-pillar.open .mini-shaft { background: linear-gradient(90deg, rgba(var(--void-rgb), 0.95), rgba(var(--accent-2-rgb), 0.6) 25%, rgba(var(--hi-rgb), 0.3) 48%, rgba(var(--accent-rgb), 0.55) 72%, rgba(var(--void-rgb), 0.95)); }
+/* The open one, wide underneath */
+.pillars.compact .pillar.wide { flex: none; cursor: default; }
+.pillars.compact .pillar.wide .pillar-cap { cursor: default; height: 28px; }
+.pillars.compact .pillar.wide .pillar-shaft { min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 6px 6px; }
+@media (min-width: 640px) { .pillars.compact .pillar.wide .pillar-shaft { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.pillars.compact .pillar-btn { min-height: 36px; font-size: 13px; }
+@media (max-width: 360px) {
+  .mini-cap .pillar-name { font-size: 10px; letter-spacing: 0; }
+  .pillars.compact .pillar-btn { font-size: 12px; padding: 2px 6px; }
+}
+@media (max-height: 500px) {
+  .mini-cap { min-height: 30px; flex-direction: row; gap: 5px; }
+  .mini-shaft { height: 6px; }
+  .pillars.compact .pillar-btn { min-height: 30px; }
+}
+/* (a little lower on a phone: more of the page in sight) */
+@media (max-width: 639px) {
+  .mini-cap { min-height: 36px; padding: 3px 3px; }
+  .pillars.compact .pillar-btn { min-height: 33px; }
+  .pillars.compact .pillar.wide .pillar-shaft { gap: 4px; padding: 5px; }
+}

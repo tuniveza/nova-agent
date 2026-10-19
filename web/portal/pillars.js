@@ -4,7 +4,8 @@
 // bands round the column, each doing one real thing: a tab, a button pressed on its page, the
 // Invoicer, a sheet. Nothing does a job by itself that its page would ask about first: it opens the
 // place and presses the same button a person would. One pillar is open at a time (the one you're in,
-// to start with); the others stand slim with the group's name as their title.
+// to start with); the others stand slim with the group's name as their title. On phones and tablets,
+// simpler: short pillars in rows, names across them and big to tap, the open one wide underneath.
 // The tab panel stays in the page, hidden: the pillar buttons press its buttons and read its counts.
 // A clearly visible "Hide all" button (a crossed-out eye) folds them all away to one slim bar with
 // "Show Nova Pillars"; remembered on this device.
@@ -225,6 +226,68 @@
     if (t) t.focus({ preventScroll: true });
   }
 
+  // An open pillar's buttons: bands round the column, each doing its one thing
+  function fillShaft(shaft, g, items, where) {
+    shaft.setAttribute("role", "group");
+    shaft.setAttribute("aria-label", g.name);
+    for (const it of items) {
+      const btn = el("button", "pillar-btn" + (it.at && it.at === where ? " here" : ""));
+      btn.type = "button";
+      if (it.at && it.at === where) btn.setAttribute("aria-current", "page");
+      btn.append(el("span", "pillar-glyph", it.glyph), el("span", "pillar-label", it.name));
+      const nb = badge(count(it.badge));
+      if (nb) btn.append(nb);
+      btn.addEventListener("click", () => {
+        try {
+          it.run();
+        } catch (err) {
+          say("That didn't open: " + (err.message || err));
+        }
+        setTimeout(() => {
+          chosenByHand = false;
+          draw();
+        }, 350);
+      });
+      shaft.append(btn);
+    }
+  }
+  // Phones and tablets (simple, 19 Oct 2026: "super simple to use"): short pillars in rows, each with its
+  // name across it and big to tap; the one tapped opens wide underneath, its buttons in two columns
+  const COMPACT = matchMedia("(max-width: 1099px)");
+  function drawCompact(head, groups, where) {
+    const caps = el("div", "pillar-caps");
+    caps.setAttribute("role", "group");
+    caps.setAttribute("aria-label", "Groups");
+    for (const g of groups) {
+      const items = itemsOf(g);
+      const open = g.name === openName;
+      const lit = items.some((i) => i.at === where);
+      const total = (g.badges || []).reduce((n, id) => n + count(id), 0);
+      const mini = el("button", "mini-pillar" + (open ? " open" : "") + (lit ? " here" : ""));
+      mini.type = "button";
+      mini.setAttribute("aria-expanded", String(open));
+      mini.setAttribute("aria-label", `${g.name}${total ? `, ${total} new` : ""}`);
+      const cap = el("span", "mini-cap");
+      cap.append(el("span", "pillar-glyph", g.glyph), el("span", "pillar-name", g.name));
+      const b = badge(total);
+      if (b) cap.append(b);
+      mini.append(cap, el("span", "mini-shaft"), el("span", "mini-base"));
+      mini.addEventListener("click", () => openPillar(g.name, true));
+      caps.append(mini);
+    }
+    const g = groups.find((x) => x.name === openName);
+    const items = itemsOf(g);
+    const wide = el("section", "pillar open wide" + (items.length > 2 ? " many" : ""));
+    const top = el("div", "pillar-cap");
+    top.append(el("span", "pillar-glyph", g.glyph), el("span", "pillar-name", g.name));
+    const shaft = el("div", "pillar-shaft");
+    fillShaft(shaft, g, items, where);
+    wide.append(top, shaft, el("span", "pillar-base"));
+    row.replaceChildren(head, caps, wide);
+    row.classList.add("compact");
+    drawnSig = sig();
+  }
+
   function draw() {
     if (!row) return;
     row.classList.toggle("all-hidden", hidden);
@@ -240,6 +303,8 @@
     const where = here();
     const groups = groupsNow();
     if (!chosenByHand || !groups.some((g) => g.name === openName)) openName = (homeOf(where) || groups[0]).name;
+    if (COMPACT.matches) return drawCompact(head, groups, where);
+    row.classList.remove("compact");
     const set = el("div", "pillar-set");
     row.replaceChildren(head, set);
     set.append(
@@ -264,28 +329,7 @@
         cap.addEventListener("click", () => openPillar(g.name, true));
         const shaft = el("div", "pillar-shaft");
         if (open) {
-          shaft.setAttribute("role", "group");
-          shaft.setAttribute("aria-label", g.name);
-          for (const it of items) {
-            const btn = el("button", "pillar-btn" + (it.at && it.at === where ? " here" : ""));
-            btn.type = "button";
-            if (it.at && it.at === where) btn.setAttribute("aria-current", "page");
-            btn.append(el("span", "pillar-glyph", it.glyph), el("span", "pillar-label", it.name));
-            const nb = badge(count(it.badge));
-            if (nb) btn.append(nb);
-            btn.addEventListener("click", () => {
-              try {
-                it.run();
-              } catch (err) {
-                say("That didn't open: " + (err.message || err));
-              }
-              setTimeout(() => {
-                chosenByHand = false;
-                draw();
-              }, 350);
-            });
-            shaft.append(btn);
-          }
+          fillShaft(shaft, g, items, where);
         } else {
           // (a slim pillar: its title, the group's name, on its capital; the whole of it opens it)
           pillar.addEventListener("click", (e) => {
@@ -303,10 +347,11 @@
     openName = name;
     chosenByHand = Boolean(byHand);
     draw();
+    // (on a phone the finger stays where it was: no jump; with a keyboard, into the buttons)
     const first = row.querySelector(".pillar.open .pillar-btn");
-    if (first && byHand) first.focus({ preventScroll: true });
+    if (first && byHand && !COMPACT.matches) first.focus({ preventScroll: true });
   }
-  const sig = () => [hidden, here(), admin(), openName, ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
+  const sig = () => [hidden, COMPACT.matches, here(), admin(), openName, ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
 
   // ---- In place of the tab panel ----
   function place() {
@@ -340,6 +385,7 @@
       if (sig() !== drawnSig) draw();
     };
     setInterval(refresh, 1000);
+    COMPACT.addEventListener("change", () => draw());
     addEventListener("popstate", () => setTimeout(refresh, 200));
     document.addEventListener("click", (e) => {
       if (!row.contains(e.target)) setTimeout(refresh, 300);

@@ -17,7 +17,8 @@ Portal's old address, `/app/`, opens Portal (with the same tab: `/app/?view=aler
 
 Portal's sections are **Nova Pillars** now, in place of the tab panel under the top panel. There's one cylindrical pillar per group: Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only).
 - **Tap a pillar** and it rises wide to show its **pillar buttons**, bands round the column. Each one opens the place and presses the same button you would: a tab, Add a client, Write a post, the Invoicer, Options at the right section, and so on. Inbox starts with **Today**.
-- The other pillars stand slim. Each has its group's name as its title: down its top on a phone, across it on a wide screen.
+- **On a phone or tablet it's simpler:** short pillars in rows (four to a row on a phone, eight on a tablet). Each has its name across it and is big to tap. The one you tap opens wide underneath with its buttons in two columns (four on a tablet).
+- **On a wide computer screen** the other pillars stand slim beside the open one, with their names across their tops.
 - The pillar and button you're on are lit, as the open tab was. Counts show on them.
 - **Hide all** (a crossed-out eye, top right of the pillars) leaves only the page:
   - On a phone held upright, it hides Nova Agent's top panel, the Nova Pillars and the Nova tiles.
