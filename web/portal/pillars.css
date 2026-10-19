@@ -179,3 +179,69 @@ html[data-motion="calm"] .pillar { transition: none; }
   .pillars.compact .pillar.wide .pillar-shaft { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pillars.compact .pillar-btn { font-size: 12px; }
 }
+
+/* ---- 19 Oct 2026 (later): no "Nova Pillars" line; Hide all is a small round overlay button on the
+   open pillar's capital; and the pillars smaller still on a phone, so the page between them and the
+   Nova tiles or tablets has as much room as it can ---- */
+.pillar.open { position: relative; }
+.pillars-toggle.overlay {
+  position: absolute; top: 3px; right: 6px; z-index: 3; width: 30px; height: 30px; min-height: 0; padding: 0; justify-content: center; border-radius: 50%;
+  border: 1px solid color-mix(in srgb, #fff 45%, transparent); background: color-mix(in srgb, var(--deep) 55%, transparent); color: #fff;
+  box-shadow: 0 2px 8px -2px rgb(0 0 0 / .6);
+}
+.pillars-toggle.overlay svg { width: 16px; height: 16px; stroke: currentColor; }
+.pillars-toggle.overlay span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pillars-toggle.overlay:hover { background: color-mix(in srgb, var(--deep) 30%, transparent); border-color: #fff; }
+.pillars.compact .pillar.wide .pillars-toggle.overlay { top: 1px; right: 4px; width: 26px; height: 26px; }
+.pillars.compact .pillar.wide .pillars-toggle.overlay svg { width: 14px; height: 14px; }
+@media (max-width: 639px) {
+  .pillars { gap: 4px; margin-top: 3px; }
+  .pillar-caps { gap: 4px; }
+  /* a group pillar: its icon and name side by side, low */
+  .mini-cap { min-height: 30px; flex-direction: row; gap: 4px; padding: 2px 4px; border-radius: 11px 11px 4px 4px; }
+  .mini-cap .pillar-ico { width: 13px; height: 13px; }
+  .mini-cap .pillar-name { font-size: 10.5px; letter-spacing: 0; }
+  .mini-shaft { height: 3px; margin: 0 8px; }
+  .mini-base { height: 3px; }
+  /* the open one */
+  .pillars.compact .pillar.wide .pillar-cap { height: 28px; font-size: 12px; padding: 0 34px; }
+  .pillars.compact .pillar.wide .pillar-shaft { gap: 3px; padding: 4px 3px; }
+  .pillars.compact .pillar-btn { min-height: 27px; padding: 1px 6px; gap: 5px; font-size: 11.5px; border-radius: 9px; }
+  .pillars.compact .pillar-btn .pillar-ico { width: 13px; height: 13px; }
+  .pillars.compact .pillar-base { height: 4px; }
+}
+@media (max-width: 380px) {
+  .mini-cap { flex-direction: column; gap: 0; min-height: 34px; }
+  .mini-cap .pillar-name { font-size: 10px; }
+}
+
+/* ---- Phones, upright or on their side (19 Oct 2026, "the main area … as seeable as possible"): the
+   open pillar's buttons are one row that slides sideways (the one you're on is brought into view), its
+   capital slim; the group pillars low. About half the height it was ---- */
+@media (max-width: 639px), (max-height: 500px) and (pointer: coarse) {
+  .pillars.compact .pillar.wide .pillar-cap { height: 22px; font-size: 11.5px; padding: 0 30px; }
+  .pillars.compact .pillar.wide .pillar-cap .pillar-ico { width: 13px; height: 13px; }
+  .pillars.compact .pillar.wide .pillars-toggle.overlay { top: -1px; width: 24px; height: 24px; }
+  .pillars.compact .pillar.wide .pillars-toggle.overlay svg { width: 13px; height: 13px; }
+  .pillars.compact .pillar.wide .pillar-shaft {
+    display: flex !important; flex-direction: row !important; flex-wrap: nowrap; align-items: center; gap: 4px; padding: 4px; overflow-x: auto; overflow-y: hidden;
+    overscroll-behavior-x: contain; scrollbar-width: none; scroll-padding: 0 12px;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+  }
+  .pillars.compact .pillar.wide .pillar-shaft::-webkit-scrollbar { display: none; }
+  .pillars.compact .pillar.wide .pillar-btn { flex: none; min-height: 28px; padding: 1px 10px; }
+  .pillars.compact .pillar-base { height: 4px; }
+}
+@media (max-height: 500px) and (pointer: coarse) {
+  .pillar-caps { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+  .mini-cap { min-height: 26px; flex-direction: row; gap: 4px; padding: 1px 4px; }
+  .mini-cap .pillar-ico { width: 13px; height: 13px; }
+  .mini-cap .pillar-name { font-size: 10.5px; }
+  .mini-shaft { height: 2px; }
+  .mini-base { height: 2px; }
+}
+/* A computer (19 Oct 2026): the same simple pillars, the eight in one row and the open one's buttons
+   across it, as many to a row as fit */
+@media (min-width: 640px) and (min-height: 501px), (min-width: 640px) and (pointer: fine) {
+  .pillars.compact .pillar.wide .pillar-shaft { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); }
+}

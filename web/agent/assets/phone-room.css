@@ -153,3 +153,47 @@
   html body .tabbar .tgroup[data-group="solo"] { padding-right: 6px !important; }
   html body .tabbar .tgroup[data-group="end"] { padding-left: 6px !important; }
 }
+
+/* ===== 19 Oct 2026 (later), the user: "the top panel … a beautiful colourful slimmer status-like
+   panel when on mobile phone screen sizes", and "the status panel … on top of the Nova tiles, Nova
+   tablets and Nova dock" ===== */
+
+/* The status panel (status.js): on top of the Nova tiles (a phone upright) and the Nova tablets (on
+   its side), on phones only (the user: "only above on mobile phone screen sizes, not on desktop or
+   laptop sizes": there it stays under the Nova dock). The top row inside the tiles' frame, over its
+   top edge, which makes room for it; it goes away with them (Hide all, Auto) */
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
+  html body .tabbar:has(> .status-line) { padding-top: calc(var(--sl-top-h, 20px) + 4px) !important; }
+  html body .tabbar > .status-line {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 2; height: var(--sl-top-h, 20px); min-height: 0; margin: 0;
+    grid-column: auto; grid-row: auto; width: auto; min-width: 0;
+    border-top: 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+    border-top-left-radius: inherit; border-top-right-radius: inherit;
+    background: color-mix(in srgb, var(--void) 35%, transparent);
+  }
+  html body .tabbar { --sl-top-h: 20px; }
+}
+/* (a phone on its side: slimmer, and shown: it was hidden there) */
+@media (max-height: 500px) and (min-width: 560px) and (orientation: landscape) and (pointer: coarse) {
+  html body .tabbar { --sl-top-h: 16px; }
+  html body .tabbar > .status-line { display: flex !important; font-size: 9px; padding: 0 6px; }
+  html body .tabbar > .status-line .sl-ico { width: 10px; height: 10px; }
+}
+
+/* The title panel on a phone: slimmer and colourful, like a status bar: the theme's colours across
+   it with a glowing edge, smaller words and icons (still a good size to tap) */
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
+  :root { --tp-h: 38px; --tp-btn: 34px; --tp-mark: 20px; --tp-word: 13.5px; --tp-r: 12px; --tp-ico: 17px; }
+  html body .shell > header.topbar.nv-topbar {
+    border: 1px solid transparent !important;
+    background:
+      radial-gradient(70% 160% at 0% 0%, color-mix(in srgb, var(--hi) 34%, transparent), transparent 60%) padding-box,
+      radial-gradient(60% 160% at 100% 100%, color-mix(in srgb, var(--lilac, var(--accent-2)) 30%, transparent), transparent 62%) padding-box,
+      linear-gradient(100deg, color-mix(in srgb, var(--accent) 62%, var(--deep)), color-mix(in srgb, var(--accent-2) 58%, var(--deep)) 55%, color-mix(in srgb, var(--accent-3, var(--accent-2)) 70%, var(--deep))) padding-box,
+      linear-gradient(100deg, color-mix(in srgb, var(--hi) 80%, transparent), color-mix(in srgb, var(--lilac, var(--accent-2)) 60%, transparent), color-mix(in srgb, var(--hi) 50%, transparent)) border-box !important;
+    box-shadow: 0 4px 16px -8px var(--hi), inset 0 1px 0 rgb(255 255 255 / .18) !important;
+  }
+  html body .shell > header.topbar.nv-topbar :is(.viewer-name, .wordmark, .vn-text, .icon-btn, .btn, .status .label) { color: #fff; }
+  html body .shell > header.topbar.nv-topbar .kicker { display: none; }
+  html body .shell > header.topbar.nv-topbar :is(.viewer-name, .vn-text, .wordmark) { text-shadow: 0 1px 6px rgb(0 0 0 / .35); letter-spacing: .04em; }
+}

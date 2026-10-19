@@ -263,6 +263,8 @@
     t.setAttribute("aria-label", hidden ? "Show all: the top panel, the Nova Pillars and the Nova tiles" : "Hide all: the top panel, the Nova Pillars and the Nova tiles");
     t.title = hidden ? "Show all" : "Hide all: the top panel, the Nova Pillars and the Nova tiles";
     t.innerHTML = (hidden ? EYE : EYE_OFF) + `<span>${hidden ? "Show all" : "Hide all"}</span>`;
+    // (shown: a small round overlay button on the open pillar's capital, the crossed-out eye; 19 Oct 2026)
+    if (!hidden) t.classList.add("overlay");
     t.addEventListener("click", () => setHidden(!hidden));
     return t;
   }
@@ -334,8 +336,7 @@
   }
   // Phones and tablets (simple, 19 Oct 2026: "super simple to use"): short pillars in rows, each with its
   // name across it and big to tap; the one tapped opens wide underneath, its buttons in two columns
-  const COMPACT = matchMedia("(max-width: 1099px)");
-  function drawCompact(head, groups, where) {
+  function drawCompact(groups, where) {
     const caps = el("div", "pillar-caps");
     caps.setAttribute("role", "group");
     caps.setAttribute("aria-label", "Groups");
@@ -363,18 +364,20 @@
     top.append(icon(g.name), el("span", "pillar-name", g.name));
     const shaft = el("div", "pillar-shaft");
     fillShaft(shaft, g, items, where);
-    wide.append(top, shaft, el("span", "pillar-base"));
-    row.replaceChildren(head, caps, wide);
+    // (on a phone its buttons are one row that slides sideways: Nova's one-row bars, data-one-row)
+    shaft.dataset.oneRow = "";
+    wide.append(top, shaft, el("span", "pillar-base"), toggleButton());
+    row.replaceChildren(caps, wide);
     row.classList.add("compact");
+    const lit = shaft.querySelector(".pillar-btn.here");
+    if (lit && shaft.scrollWidth > shaft.clientWidth) shaft.scrollLeft = Math.max(0, lit.offsetLeft - 12);
     drawnSig = sig();
   }
 
   function draw() {
     if (!row) return;
     row.classList.toggle("all-hidden", hidden);
-    // (a slim line above: the pillars' name and the Hide all button, always in sight)
-    const head = el("div", "pillars-head");
-    head.append(el("span", "pillars-title", "Nova Pillars"), toggleButton());
+    // (no line above any more (19 Oct 2026): Hide all is a small overlay button on the open pillar)
     if (hidden) {
       // (only the round Show all button, top right)
       row.replaceChildren(toggleButton());
@@ -384,44 +387,9 @@
     const where = here();
     const groups = groupsNow();
     if (!chosenByHand || !groups.some((g) => g.name === openName)) openName = (homeOf(where) || groups[0]).name;
-    if (COMPACT.matches) return drawCompact(head, groups, where);
-    row.classList.remove("compact");
-    const set = el("div", "pillar-set");
-    row.replaceChildren(head, set);
-    set.append(
-      ...groups.map((g) => {
-        const open = g.name === openName;
-        const items = itemsOf(g);
-        const lit = items.some((i) => i.at === where);
-        const total = (g.badges || []).reduce((s, id) => s + count(id), 0);
-        const pillar = el("section", "pillar" + (open ? " open" : "") + (lit ? " here" : ""));
-        pillar.dataset.group = g.name;
-        pillar.style.setProperty("--n", items.length);
-        if (items.length > 4) pillar.classList.add("many");
-        // The capital: the pillar's name; a slim pillar is opened by it (or anywhere on it)
-        const cap = el("button", "pillar-cap");
-        cap.type = "button";
-        cap.setAttribute("aria-expanded", String(open));
-        cap.setAttribute("aria-label", `${g.name}${total ? `, ${total} new` : ""}${open ? "" : ": open this pillar"}`);
-        cap.title = g.name;
-        cap.append(icon(g.name), el("span", "pillar-name", g.name));
-        const b = badge(total);
-        if (b) cap.append(b);
-        cap.addEventListener("click", () => openPillar(g.name, true));
-        const shaft = el("div", "pillar-shaft");
-        if (open) {
-          fillShaft(shaft, g, items, where);
-        } else {
-          // (a slim pillar: its title, the group's name, on its capital; the whole of it opens it)
-          pillar.addEventListener("click", (e) => {
-            if (!e.target.closest(".pillar-cap")) openPillar(g.name, true);
-          });
-        }
-        pillar.append(cap, shaft, el("span", "pillar-base"));
-        return pillar;
-      })
-    );
-    drawnSig = sig();
+    // (every screen now (19 Oct 2026, "shrink the overall size"): the pillars in rows, the open one wide
+    // underneath; on a wide screen the tall colonnade left its open pillar too narrow for its buttons)
+    return drawCompact(groups, where);
   }
   function openPillar(name, byHand) {
     if (openName === name) return;
@@ -430,9 +398,9 @@
     draw();
     // (on a phone the finger stays where it was: no jump; with a keyboard, into the buttons)
     const first = row.querySelector(".pillar.open .pillar-btn");
-    if (first && byHand && !COMPACT.matches) first.focus({ preventScroll: true });
+    if (first && byHand && matchMedia("(pointer: fine)").matches) first.focus({ preventScroll: true });
   }
-  const sig = () => [hidden, COMPACT.matches, here(), admin(), openName, ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
+  const sig = () => [hidden, here(), admin(), openName, ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
 
   // ---- In place of the tab panel ----
   function place() {
@@ -466,7 +434,6 @@
       if (sig() !== drawnSig) draw();
     };
     setInterval(refresh, 1000);
-    COMPACT.addEventListener("change", () => draw());
     addEventListener("popstate", () => setTimeout(refresh, 200));
     document.addEventListener("click", (e) => {
       if (!row.contains(e.target)) setTimeout(refresh, 300);
