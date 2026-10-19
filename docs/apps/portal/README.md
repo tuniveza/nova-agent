@@ -13,15 +13,17 @@ Portal's old address, `/app/`, opens Portal (with the same tab: `/app/?view=aler
 <p align="center"><img src="media/planets.jpg" width="860" alt="48 generated planets: ringed gas giants, ocean worlds, molten worlds, ice worlds and rocky worlds, each one different"></p>
 
 
-## Fans (19 October 2026)
+## Nova Pillars (19 October 2026)
 
-Portal's sections are **half fans** now, in place of the tab panel under the top panel. Each section is a chamfered blade (its corners cut), in Nova Agent's colours.
-- **The fan hanging under the top panel has the groups:** Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only). The group you're in is lit.
-- **A group opens its own fan of up to eight blades, in the same place.** Each blade opens the place and presses the same button you would: a tab, Add a client, Write a post, the Invoicer, Options at the right section, and so on. The one you're on is lit, as the open tab was.
-- **The circle in the middle:** tap for **Today** (or **Back** inside a group); hold for **Voice**.
-- **Keyboard:** arrow keys move between blades; Enter opens one; Escape goes back.
-- **Counts:** a badge on a blade shows its count (new enquiries, waiting approvals, and so on).
-- **Size:** it fits the panel's width and is never more than about a third of the screen's height.
+Portal's sections are **Nova Pillars** now, in place of the tab panel under the top panel. There's one cylindrical pillar per group: Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only).
+- **Tap a pillar** and it rises wide to show its **pillar buttons**, bands round the column. Each one opens the place and presses the same button you would: a tab, Add a client, Write a post, the Invoicer, Options at the right section, and so on. Inbox starts with **Today**.
+- The other pillars stand slim, with their names up their side.
+- The pillar and button you're on are lit, as the open tab was. Counts show on them.
+- **Hide all** (a crossed-out eye, top right of the pillars) leaves only the page:
+  - On a phone held upright, it hides Nova Agent's top panel, the Nova Pillars and the Nova tiles.
+  - On a phone held sideways, it hides the top panel, the pillars and the Nova tablets.
+  - On a computer, it hides the top panel, the pillars and the dock.
+- **Show all**, a round eye button at the top right, puts them all back as they were. Leaving Portal puts Nova Agent's bars back too. Your choice is remembered on that device.
 
 Also fixed the same day:
 - The Website bot's chips no longer change the enquiry reply chips (tapping **Note** used to clear the bot's chat).
