@@ -82,7 +82,7 @@
       { name: "Money", glyph: "£", badge: "money-badge", at: "money", run: tab("money") },
       { name: "Write an invoice", glyph: "✎", run: invoicer({ new: true }) },
       { name: "Add an expense", glyph: "−", run: press("money", "#money-expense-new") },
-      { name: "Overdue invoices", glyph: "!", run: invoicer({ filter: "overdue" }) },
+      { name: "Invoicer", glyph: "£", run: invoicer({}) },
     ] },
     { name: "Outreach", glyph: "➶", badges: ["campaigns-badge", "social-badge"], items: [
       { name: "Campaigns", glyph: "✉", badge: "campaigns-badge", at: "campaigns", run: tab("campaigns") },
@@ -194,7 +194,7 @@
   const ICON_OF = {
     Inbox: "inbox", Today: "home", Enquiries: "mail", Conversations: "chat", Alerts: "bell", "Saved replies": "note", "Website bot": "spark", Notifications: "ring",
     Bookings: "calendar", Calendar: "calendar", "Booking tools": "tools", Approvals: "check", "Ask about this week": "spark", "Booking link": "link", "Test booking": "flag",
-    "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync with Acuity": "sync", "Import clients": "import", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert",
+    "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync with Acuity": "sync", "Import clients": "import", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt",
     Outreach: "megaphone", Campaigns: "megaphone", "Write a campaign": "pen", "One-to-one email": "send", "Don't email again": "block", Social: "camera", "Write a post": "pen", "Fan sign-up link": "link", "Ads Manager": "out",
     "Plans & Nova": "star", Quests: "star", "Everyone's quests": "team", "Nova Agent": "agent", "Ask Nova": "ask", Voice: "mic", "Hands-free": "ear", "My Index": "index", Manual: "book",
     You: "user", "Your profile": "user", "Re-roll planet": "planet", "Edit your name": "pen", "Change email": "at", "Change password": "key", "All addresses": "map", "How it works": "gear", "Sign out": "exit",

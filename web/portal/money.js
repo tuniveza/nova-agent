@@ -21,29 +21,9 @@
   let data = null; // the last /app/api/money answer
   let part = "invoices"; // invoices | expenses | year
   let editingExpense = null;
-  let paying = null; // the invoice whose "record a payment" box is open
-  let rejecting = null;
-  let voiding = null;
   let picked = null; // the ?invoice= one already pointed at
-  const opened = new Set(); // invoices whose details are showing
-  const details = new Map(); // id -> { updatedAt, payments, reminders, log }
-  const clientMatches = new Map(); // datalist label -> client
 
-  const STATUS = {
-    draft: ["pill-draft", "Draft"],
-    pending_approval: ["pill-draft", "Waiting for approval"],
-    approved: ["pill-replied", "Approved · sending"],
-    sent: ["pill-replied", "Sent · waiting for payment"],
-    part_paid: ["pill-replied", "Part paid"],
-    paid: ["pill-done", "Paid"],
-    failed: ["pill-failed", "Didn't send"],
-    rejected: ["pill-stop", "Rejected"],
-    void: ["pill-stop", "Voided"],
-  };
-  const EVENTS = { created: "Written", edited: "Changed", submitted: "Sent for approval", approved: "Approved", rejected: "Rejected", sent: "Emailed to the client", failed: "Didn't send", payment: "Payment", payment_removed: "Payment taken back", paid: "Paid in full", reminder: "Reminder", voided: "Voided" };
   const waiting = (i) => i.status === "pending_approval" || i.status === "draft";
-  const editable = (i) => waiting(i) || i.status === "rejected" || i.status === "failed";
-  const open = (i) => i.status === "sent" || i.status === "part_paid";
 
   // ===== Money and days =====
 
@@ -91,35 +71,14 @@
     );
     fillChoices();
     drawSummary();
-    // Pointed at one (?invoice=, from a notification or Agent): its details open
+    // Pointed at one (?invoice=, from an older notification or link): it opens in the Invoicer, where
+    // everything for invoices is (19 Oct 2026)
     const want = Number(new URLSearchParams(location.search).get("invoice")) || null;
     if (want && picked !== String(want)) {
-      opened.add(want);
-      part = "invoices";
-      markParts();
+      picked = String(want);
+      window.NovaInvoicer.open({ invoice: want });
     }
-    await Promise.allSettled([...opened].map(detailsFor));
-    if (k.view !== "money") return;
     draw();
-    if (want && picked !== String(want)) {
-      const node = $("money-list").querySelector('[data-key="mn-' + want + '"]');
-      if (node) {
-        picked = String(want);
-        node.classList.add("picked");
-        bringIntoView(node, true);
-      }
-    }
-  }
-
-  async function detailsFor(id) {
-    const inv = data && data.invoices.find((i) => i.id === id);
-    if (!inv) return null;
-    const have = details.get(id);
-    if (have && have.updatedAt === inv.updatedAt) return have;
-    const d = await K().api("money/invoices/" + id);
-    const got = { updatedAt: inv.updatedAt, payments: d.payments || [], reminders: d.reminders || [], log: d.log || [] };
-    details.set(id, got);
-    return got;
   }
 
   // The categories and payment methods, once
@@ -182,241 +141,40 @@
 
   // ===== Invoices =====
 
+  // Invoices are done in the Invoicer, directly (the user, 19 Oct 2026: "anything to do with invoicing …
+  // put it into the Nova Invoicer directly"): here, what's waiting and the ways into it
   function invoiceNodes() {
     const k = K();
     const all = data.invoices;
-    const by = (key, dir) => (a, b) => dir * String(a[key] || "").localeCompare(String(b[key] || ""));
-    const nodes = [];
-    const reminders = data.reminders.filter((r) => r.status === "pending_approval");
-    if (reminders.length) nodes.push(k.el("h3", "group-head", "Reminders to approve"), ...reminders.map(reminderCard));
-    const groups = [
-      ["Waiting for approval", all.filter((i) => waiting(i) || i.status === "approved" || i.status === "failed").sort(by("createdAt", 1))],
-      ["Overdue", all.filter((i) => open(i) && i.overdue).sort(by("dueDate", 1))],
-      ["Waiting for payment", all.filter((i) => open(i) && !i.overdue).sort(by("dueDate", 1))],
-      ["Paid", all.filter((i) => i.status === "paid").sort(by("paidAt", -1)).slice(0, 30)],
-      ["Rejected and voided", all.filter((i) => i.status === "rejected" || i.status === "void").sort(by("updatedAt", -1)).slice(0, 15)],
-    ];
-    for (const [head, items] of groups) if (items.length) nodes.push(k.el("h3", "group-head", head), ...items.map(invoiceCard));
-    if (!all.length && !reminders.length) nodes.push(k.el("p", "empty", "No invoices yet. Write one with Write an invoice, or ask Agent to."));
-    return nodes;
-  }
-
-  function reminderCard(r) {
-    const k = K();
-    const inv = data.invoices.find((i) => i.id === r.invoiceId);
-    const card = k.el("article", "card mn-card");
-    card.dataset.key = "mn-r-" + r.id;
-    card.dataset.sig = k.sig(r, data.canDecide, inv && inv.updatedAt);
-    const top = k.el("div", "card-top");
-    const title = k.el("h3", "card-title", (r.kind === "receipt" ? "Receipt · " : "Reminder · ") + (inv ? inv.number + " · " + inv.billTo.name : "invoice #" + r.invoiceId));
-    title.appendChild(k.el("span", "pill-draft", "Waiting for approval"));
-    top.append(title, k.el("span", "card-meta", k.ukWhen(r.createdAt)));
-    card.append(top);
-    if (inv) card.appendChild(k.el("p", "card-who", "To " + (inv.billTo.email || "no email") + " · " + money(inv.balancePence) + " left to pay"));
-    card.appendChild(k.el("p", "mn-reminder", r.body));
-    const row = k.el("div", "actions");
-    if (data.canDecide) {
-      // (one press, 19 Oct 2026: the card says who it goes to)
-      // (in the Invoicer: its history opens with this one, to approve or reject)
-      button(row, "Approve", "", () => window.NovaInvoicer.open({ reminder: r.id }));
-      button(row, "Reject", "ghost", () => window.NovaInvoicer.open({ reminder: r.id }));
-    } else card.appendChild(k.el("p", "card-foot", "An admin approves reminders, signed in to Portal in a browser. Nothing is emailed until then."));
-    if (row.children.length) card.appendChild(row);
-    return card;
-  }
-
-  function invoiceCard(inv) {
-    const k = K();
-    const canDecide = Boolean(data.canDecide);
-    const showing = opened.has(inv.id);
-    const d = showing ? details.get(inv.id) : null;
-    const card = k.el("article", "card mn-card" + (inv.overdue ? " overdue" : "") + (waiting(inv) ? "" : " done"));
-    card.dataset.key = "mn-" + inv.id;
-    const reminding = data.reminders.some((r) => r.invoiceId === inv.id && r.status === "pending_approval");
-    card.dataset.sig = k.sig(inv, canDecide, showing, d && [d.updatedAt, d.payments.length, d.reminders.length, d.log.length], paying === inv.id, rejecting === inv.id, voiding === inv.id, reminding);
-    const top = k.el("div", "card-top");
-    const title = k.el("h3", "card-title", inv.number + " · " + inv.billTo.name);
-    const pill = inv.overdue ? ["pill-failed", "Overdue"] : STATUS[inv.status] || ["pill-stop", inv.status];
-    title.appendChild(k.el("span", pill[0], pill[1]));
-    top.append(title, k.el("span", "card-meta mn-amount", money(inv.totalPence)));
-    card.appendChild(top);
-    card.appendChild(k.el("p", "card-who", (inv.createdBy === "agent" ? "Written by Agent" : "Written in Portal") + " · " + k.ukWhen(inv.createdAt)));
-
+    const s = data.summary;
+    const waitingN = all.filter((i) => waiting(i) || i.status === "failed").length;
+    const remindersN = data.reminders.filter((r) => r.status === "pending_approval").length;
+    const card = k.el("article", "card mn-card mn-invoicer");
+    card.dataset.key = "mn-invoicer";
+    card.dataset.sig = k.sig(s, waitingN, remindersN, all.length, data.canDecide);
+    card.appendChild(k.el("h3", "card-title", "Invoices are in the Invoicer"));
+    card.appendChild(k.el("p", "card-who", "Writing, approving, payments, reminders, receipts, PDFs, sharing and the invoice settings: all in the Invoicer."));
     const facts = k.el("dl", "cp-facts");
-    const fact = (label, value) => value && facts.append(k.el("dt", "", label), k.el("dd", "", value));
-    fact("Goes to", inv.billTo.email || "No email yet: add one to send it");
-    fact("Total", money(inv.totalPence) + (inv.vatRate ? " (incl. " + inv.vatRate + "% VAT)" : ""));
-    if (open(inv) || inv.status === "paid") fact(inv.status === "paid" ? "Paid" : "Left to pay", inv.status === "paid" ? money(inv.paidPence) + (inv.paidAt ? " · " + k.ukWhen(inv.paidAt) : "") : money(inv.balancePence));
-    fact("Issued", day(inv.issueDate));
-    fact(inv.overdue ? "Was due" : "Due", day(inv.dueDate));
-    if (inv.sentAt) fact("Sent", k.ukWhen(inv.sentAt));
-    if (inv.decidedByName && !waiting(inv)) fact(inv.status === "rejected" ? "Rejected by" : "Approved by", inv.decidedByName);
+    const fact = (label, value) => facts.append(k.el("dt", "", label), k.el("dd", "", value));
+    fact("Owed", money(s.owed.pence) + " · " + s.owed.count + (s.owed.count === 1 ? " invoice" : " invoices"));
+    fact("Overdue", money(s.overdue.pence) + " · " + s.overdue.count);
+    fact("To approve", waitingN + (waitingN === 1 ? " invoice" : " invoices") + (remindersN ? " and " + remindersN + (remindersN === 1 ? " reminder" : " reminders") : ""));
     card.appendChild(facts);
-
-    const lines = k.el("ul", "mn-lines-read");
-    for (const l of inv.lines) {
-      const li = k.el("li");
-      li.append(k.el("span", "", l.description + (l.qty !== 1 ? " × " + l.qty : "")), k.el("span", "", money(l.totalPence)));
-      lines.appendChild(li);
-    }
-    card.appendChild(lines);
-    if (inv.notes) card.appendChild(k.el("p", "card-foot", inv.notes));
-    if (inv.note) card.appendChild(k.el("p", "appr-why", "Note: " + inv.note));
-    if (inv.status === "failed") card.appendChild(k.el("p", "appr-result bad", "Didn't send: " + String(inv.error || "unknown reason").replace(/\.$/, "") + ". Edit it (or save it again) to send it for approval again."));
-    if (inv.status === "approved") card.appendChild(k.el("p", "appr-result", "Approved · being emailed…"));
-
-    if (paying === inv.id) card.appendChild(paymentBox(inv));
-    if (rejecting === inv.id) card.appendChild(whyBox("So whoever wrote it can fix it"));
-    if (voiding === inv.id) card.appendChild(whyBox("Why it's voided (kept for the record)"));
-    if (showing && d) card.appendChild(detailBox(inv, d));
-
     const row = k.el("div", "actions");
-    if (paying === inv.id) {
-      button(row, "Save the payment", "", () => recordPayment(card, inv));
-      button(row, "Cancel", "ghost", () => redrawWith(() => (paying = null)));
-    } else if (rejecting === inv.id) {
-      button(row, "Reject it", "", () => act(card, "money/invoices/" + inv.id + "/reject", { note: why(card) }, "Rejected"));
-      button(row, "Cancel", "ghost", () => redrawWith(() => (rejecting = null)));
-    } else if (voiding === inv.id) {
-      button(row, "Void it", "", () => act(card, "money/invoices/" + inv.id + "/void", { note: why(card) }, "Voided"));
-      button(row, "Cancel", "ghost", () => redrawWith(() => (voiding = null)));
-    } else {
-      // Everything for an invoice happens in the Invoicer (19 Oct 2026): each button here opens it there,
-      // set up for that job (web/shared/invoicer-link.js; the Invoicer's fromAddress)
-      const go = (what) => () => window.NovaInvoicer.open({ invoice: inv.id, ...what });
-      if (waiting(inv) && canDecide) button(row, "Approve", "", go({ do: "send" }));
-      if (editable(inv)) button(row, "Edit", "ghost", go({ do: "edit" }));
-      if (waiting(inv) && canDecide) {
-        button(row, "Reject", "ghost", go({ do: "reject" }));
-        button(row, "Send me a test", "ghost", go({ do: "test" }));
-      }
-      if (open(inv)) {
-        button(row, "Record a payment", "", go({ do: "pay" }));
-        if (!reminding) button(row, "Ask for a reminder", "ghost", go({ do: "remind" }));
-      }
-      button(row, "Open in Invoicer", "ghost", go({}));
-      button(row, "PDF", "ghost", go({ do: "pdf" })).title = "Download " + inv.number + " as a PDF";
-      if (inv.pageUrl) button(row, inv.monzoUrl ? "Share or copy Monzo link" : "Share", "ghost", go({ do: "share" }));
-      if (canDecide && inv.paidPence === 0 && !["void", "approved", "paid"].includes(inv.status)) button(row, "Void", "ghost", go({ do: "remove" }));
-      button(row, "Details", "ghost", go({ do: "history" }));
-    }
+    button(row, "Open the Invoicer", "", () => window.NovaInvoicer.open({}));
+    button(row, "Write an invoice", "ghost", () => window.NovaInvoicer.open({ new: true }));
+    if (waitingN || remindersN) button(row, "To approve", "ghost", () => window.NovaInvoicer.open({ filter: "waiting" }));
+    if (s.overdue.count) button(row, "Overdue", "ghost", () => window.NovaInvoicer.open({ filter: "overdue" }));
     card.appendChild(row);
-    if (waiting(inv) && !canDecide) card.appendChild(k.el("p", "card-foot", "An admin approves invoices, signed in to Portal in a browser. Nothing is emailed until then."));
-    return card;
+    return [card];
   }
 
-  function detailBox(inv, d) {
-    const k = K();
-    const box = k.el("div");
-    if (d.payments.length) {
-      box.appendChild(k.el("p", "mn-sub", "PAYMENTS"));
-      const ul = k.el("ul", "mn-log");
-      for (const p of d.payments) {
-        const li = k.el("li");
-        li.appendChild(k.el("span", "", day(p.paidOn) + " · " + money(p.amountPence) + " · " + p.methodName + (p.note ? " · " + p.note : "") + (p.removed ? " · taken back" : "")));
-        if (data.canDecide && !p.removed && p.method !== "stripe") {
-          const b = k.el("button", "btn small ghost", "Take back");
-          b.type = "button";
-          b.addEventListener("click", () => {
-            if (b.dataset.sure !== "1") {
-              b.dataset.sure = "1";
-              b.textContent = "Take back " + money(p.amountPence) + "?";
-              return;
-            }
-            act(b.closest(".card"), "money/payments/" + p.id + "/remove", {}, "Payment taken back");
-          });
-          li.appendChild(b);
-        }
-        ul.appendChild(li);
-      }
-      box.appendChild(ul);
-    }
-    if (d.reminders.length) {
-      box.appendChild(k.el("p", "mn-sub", "REMINDERS"));
-      const ul = k.el("ul", "mn-log");
-      for (const r of d.reminders) ul.appendChild(k.el("li", "", k.ukWhen(r.createdAt) + " · " + (r.status === "sent" ? "Sent " + k.ukWhen(r.sentAt) : r.status === "pending_approval" ? "Waiting for approval" : r.status)));
-      box.appendChild(ul);
-    }
-    if (d.log.length) {
-      box.appendChild(k.el("p", "mn-sub", "WHAT HAPPENED"));
-      const ul = k.el("ul", "mn-log");
-      for (const e of d.log.slice(-10)) ul.appendChild(k.el("li", "", k.ukWhen(e.at) + " · " + (EVENTS[e.event] || e.event) + (e.byName ? " · " + e.byName : "") + (e.detail ? " · " + e.detail : "")));
-      box.appendChild(ul);
-    }
-    if (!box.children.length) box.appendChild(k.el("p", "card-foot", "Nothing else yet."));
-    return box;
-  }
 
-  function paymentBox(inv) {
-    const k = K();
-    const box = k.el("div", "mn-inline cp-grid");
-    const field = (label, input) => {
-      const l = k.el("label", "cp-field");
-      l.append(k.el("span", "", label), input);
-      box.appendChild(l);
-    };
-    const amount = k.el("input");
-    amount.type = "text";
-    amount.inputMode = "decimal";
-    amount.value = poundsText(inv.balancePence);
-    amount.dataset.field = "amount";
-    field("Amount (£)", amount);
-    const on = k.el("input");
-    on.type = "date";
-    on.value = ukToday();
-    on.max = ukToday();
-    on.dataset.field = "paidOn";
-    field("Paid on", on);
-    const how = k.el("select");
-    for (const m of data.methods) {
-      const o = k.el("option", "", m.name);
-      o.value = m.id;
-      how.appendChild(o);
-    }
-    how.dataset.field = "method";
-    field("How", how);
-    const note = k.el("input");
-    note.type = "text";
-    note.maxLength = 300;
-    note.dataset.field = "note";
-    field("Note (optional)", note);
-    return box;
-  }
 
-  function whyBox(placeholder) {
-    const k = K();
-    const l = k.el("label", "cp-field cp-reject");
-    const input = k.el("input");
-    input.type = "text";
-    input.maxLength = 500;
-    input.dataset.field = "why";
-    input.placeholder = placeholder;
-    l.append(k.el("span", "", "Why (optional)"), input);
-    return l;
-  }
-  const why = (card) => (card.querySelector('[data-field="why"]') || {}).value || undefined;
 
-  async function recordPayment(card, inv) {
-    const v = (f) => card.querySelector('[data-field="' + f + '"]').value;
-    if (pence(v("amount")) === null || pence(v("amount")) <= 0) return problem(card, "Not saved: the amount in pounds, like 150.00.");
-    await act(card, "money/invoices/" + inv.id + "/payments", { amount: v("amount"), paidOn: v("paidOn"), method: v("method"), note: v("note").trim() || undefined }, "Payment recorded", () => (paying = null));
-  }
 
-  async function approve(card, inv) {
-    busy(card);
-    try {
-      // Still exactly what's on screen?
-      const now = (await K().api("money/invoices/" + inv.id)).invoice || {};
-      if (now.updatedAt !== inv.updatedAt || now.status !== inv.status) {
-        K().toast("It changed since it was shown: check it again");
-        return load();
-      }
-    } catch (err) {
-      if (err.message === "signed out") return;
-      return problem(card, "Not approved: " + err.message);
-    }
-    await act(card, "money/invoices/" + inv.id + "/approve", {}, null, null, (res) => (res.invoice && res.invoice.status === "sent" ? "Approved and emailed to " + inv.billTo.email : res.invoice && res.invoice.status === "failed" ? "Approved, but it didn't send: see the card" : "Approved"));
-  }
+
+
 
   // ===== Expenses =====
 
@@ -683,10 +441,6 @@
     p.textContent = text;
     card.querySelectorAll("button").forEach((b) => (b.disabled = false));
   }
-  function redrawWith(change) {
-    change();
-    draw();
-  }
   // Press a button: Nova Bot does it, the list comes back
   async function act(card, path, body, done, after, say) {
     busy(card);
@@ -698,10 +452,8 @@
       return problem(card, err.message);
     }
     if (after) after();
-    paying = rejecting = voiding = null;
     const msg = say ? say(res) : done || res.message;
     if (msg) K().toast(msg);
-    for (const id of [...details.keys()]) details.delete(id);
     await load();
     // (a card that didn't change is kept as it was: its buttons work again)
     card.querySelectorAll("button").forEach((b) => (b.disabled = false));

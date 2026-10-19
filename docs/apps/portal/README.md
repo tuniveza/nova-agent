@@ -248,7 +248,7 @@ still reach Acuity's API and alerts staff phones if not (`src/health.js`).
 
 ## Money
 
-**Everything for invoices is done in the Invoicer (19 October 2026).** Every invoice button here opens the Invoicer, set up for that job:
+**Everything for invoices is done in the Invoicer, directly (19 October 2026).** Money's Invoices part is one card, *Invoices are in the Invoicer* (owed, overdue, what's waiting), with Open the Invoicer, Write an invoice, To approve and Overdue. Everything else that touches an invoice opens the Invoicer, set up for that job:
 - **Write an invoice** opens it with a new invoice ready to fill in.
 - On each invoice: **Approve**, **Edit**, **Reject**, **Send me a test**, **Record a payment**, **Ask for a reminder**, **Open in Invoicer**, **PDF**, **Share**, **Void** and **Details** each open that invoice there, at the place for that job. Nothing happens by itself.
 - **Reminders to approve** open the reminder's invoice with its history, to approve or reject.

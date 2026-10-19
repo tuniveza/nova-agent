@@ -675,6 +675,14 @@ export const COMMANDS = {
 // approve/reject: shows exactly what it is, then asks for its number to be typed back
 async function decide(ctx, action, kind, id) {
   adminOnly(ctx);
+  // Invoices and their reminders are decided in the Invoicer, directly (19 Oct 2026): it opens on that
+  // one, at the place to approve or reject it
+  if (/^(invoice|reminder)$/i.test(kind || "")) {
+    if (!/^\d{1,12}$/.test(String(id || ""))) throw new Error(`${action} ${kind} <number>`);
+    const to = /^reminder$/i.test(kind) ? `/invoicer/?reminder=${id}` : `/invoicer/?invoice=${id}&do=${action === "approve" ? "send" : "reject"}`;
+    ctx.open(to);
+    return ctx.ok(`Opened ${kind} #${id} in the Invoicer: ${action} it there.`);
+  }
   const k = APPROVABLE[(kind || "").toLowerCase()];
   if (!k) throw new Error(`${action} <${Object.keys(APPROVABLE).join("|")}> <number>`);
   if (!/^\d{1,12}$/.test(String(id || ""))) throw new Error("Give its number (portal campaigns, portal social… show them).");

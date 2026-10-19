@@ -49,6 +49,8 @@
         <h2 class="nt-h">Invoices</h2>
         <button type="button" class="primary" id="new-btn" title="Make a new invoice: the artist, the services, the dates">New invoice</button>
       </div>
+      <!-- Money at a glance (19 Oct 2026: everything for invoices is here): owed, overdue, in this month; opens the accounts -->
+      <button type="button" class="sumbar" id="sum-bar" title="Money at a glance, and the accountant's spreadsheets"><span id="sum-owed">Owed …</span><span id="sum-over">Overdue …</span><span id="sum-in">In this month …</span></button>
       <input type="search" id="search" class="field" placeholder="Search artist or number" aria-label="Search invoices" autocomplete="off">
       <div class="filters" id="filters" role="group" aria-label="Show">
         <button type="button" data-filter="all" aria-pressed="true">All</button>
@@ -87,6 +89,16 @@
       <div class="doc-frame">
         <iframe id="doc" title="The invoice" hidden></iframe>
         <p class="empty" id="doc-empty">Choose an invoice on the left, or make a new one.</p>
+        <!-- Approve or void, popped up over the invoice being previewed (an admin; 19 Oct 2026). Pressing
+             either does it and the panel pops down again -->
+        <div class="decide-pop" id="decide-pop" role="region" aria-label="Approve or void this invoice" hidden>
+          <p class="dp-what" id="dp-what"></p>
+          <div class="dp-acts">
+            <button type="button" class="primary" id="dp-approve">Approve</button>
+            <button type="button" class="ghost" id="dp-void">Void</button>
+          </div>
+          <p class="dp-note" id="dp-note"></p>
+        </div>
       </div>
     </section>
 
@@ -212,6 +224,14 @@
   <div class="new-form share-form">
     <div class="col-head"><h2 class="nt-h" id="history-title">History</h2><button type="button" class="ghost" id="history-close" aria-label="Close">✕</button></div>
     <div class="hist" id="hist"></div>
+  </div>
+</dialog>
+
+<!-- Money at a glance and the accountant's spreadsheets (invoices and payments; expenses stay in Portal → Money) -->
+<dialog id="accounts" aria-labelledby="accounts-title">
+  <div class="new-form share-form">
+    <div class="col-head"><h2 class="nt-h" id="accounts-title">Money at a glance</h2><button type="button" class="ghost" id="accounts-close" aria-label="Close">✕</button></div>
+    <div class="hist" id="acc-body"></div>
   </div>
 </dialog>
 

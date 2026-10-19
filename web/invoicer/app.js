@@ -96,6 +96,7 @@ async function load(keep = true) {
   }
   drawList();
   drawBank();
+  drawSummary();
   restartBtn.hidden = !data?.canDecide || !(data.invoices || []).some((i) => /^NS-/.test(i.number));
   if (keep && chosen) await choose(chosen.id, chosen.stage, true);
 }
@@ -213,7 +214,91 @@ function drawStage(first = false) {
   $("body").value = staged.email.body;
   $("copy-btn").disabled = false;
   drawSend(inv, detail, staged.stage);
+  drawDecide(inv);
 }
+
+// ---- Approve or void, popped up over the invoice being previewed (19 Oct 2026) ----
+// An admin sees it when there's something to decide: Approve (it's emailed to the client at once, one
+// press) for one waiting for approval, Void (cancelled, kept on record; a second press to be sure) for
+// one nothing's been paid on. Pressing either does it, and the panel pops down; it doesn't pop up
+// again for that invoice while the Invoicer is open.
+const decided = new Set();
+function drawDecide(inv) {
+  const pop = $("decide-pop");
+  const admin = Boolean(data?.canDecide);
+  const canApprove = admin && ["draft", "pending_approval", "failed"].includes(inv.status);
+  const canVoid = admin && inv.paidPence === 0 && !["void", "approved", "paid"].includes(inv.status);
+  if (decided.has(inv.id) || (!canApprove && !canVoid)) return popDown(true);
+  $("dp-what").textContent = `${inv.number} · ${inv.billTo.name} · ${pounds(inv.totalPence)}`;
+  const approve = $("dp-approve");
+  const voidBtn = $("dp-void");
+  approve.hidden = !canApprove;
+  approve.disabled = canApprove && !inv.billTo.email;
+  approve.textContent = "Approve";
+  voidBtn.hidden = !canVoid;
+  delete voidBtn.dataset.armed;
+  voidBtn.textContent = "Void";
+  $("dp-note").textContent = canApprove
+    ? inv.billTo.email
+      ? `Approve emails it to ${inv.billTo.email} now.`
+      : "It has no email address: add one with Edit to approve it."
+    : "Void cancels it (it's kept on record).";
+  pop.dataset.id = inv.id;
+  if (pop.hidden || pop.classList.contains("down")) {
+    pop.hidden = false;
+    pop.classList.add("down");
+    requestAnimationFrame(() => requestAnimationFrame(() => pop.classList.remove("down")));
+  }
+}
+// (pops down: slides away, then it's gone)
+function popDown(now = false) {
+  const pop = $("decide-pop");
+  if (pop.hidden) return;
+  pop.classList.add("down");
+  if (now || matchMedia("(prefers-reduced-motion: reduce)").matches) pop.hidden = true;
+  else setTimeout(() => pop.classList.contains("down") && (pop.hidden = true), 220);
+}
+async function decide(btn, act, done) {
+  if (btn.disabled) return;
+  const id = Number($("decide-pop").dataset.id);
+  btn.disabled = true;
+  try {
+    await act(id);
+    decided.add(id);
+    popDown();
+    say(done);
+    if (chosen) chosen.detail = null;
+    await load();
+  } catch (err) {
+    say(err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+$("dp-approve").addEventListener("click", () => {
+  const inv = chosen?.staged?.invoice;
+  if (!inv) return;
+  decide($("dp-approve"), (id) => api(`money/invoices/${id}/approve`, { method: "POST", body: {} }), `Approved: ${inv.number} is on its way to ${inv.billTo.email}.`);
+});
+$("dp-void").addEventListener("click", () => {
+  const inv = chosen?.staged?.invoice;
+  const b = $("dp-void");
+  if (!inv) return;
+  // (a second press to be sure; it goes back after a few seconds)
+  if (!b.dataset.armed) {
+    b.dataset.armed = "1";
+    b.textContent = `Yes, void ${inv.number}`;
+    setTimeout(() => {
+      if (b.dataset.armed) {
+        delete b.dataset.armed;
+        b.textContent = "Void";
+      }
+    }, 5000);
+    return;
+  }
+  delete b.dataset.armed;
+  decide(b, (id) => api(`money/invoices/${id}/void`, { method: "POST", body: {} }), `${inv.number} voided (kept on record).`);
+});
 
 // What "Send" can do for this invoice, now
 function drawSend(inv, detail, stage) {
@@ -1140,6 +1225,70 @@ function drawHistory() {
 $("history-btn").addEventListener("click", openHistory);
 $("history-close").addEventListener("click", () => $("history").close());
 
+
+// ---- Money at a glance and the accountant's spreadsheets (19 Oct 2026: everything for invoices is here) ----
+function drawSummary() {
+  const s = data?.summary;
+  $("sum-bar").hidden = !s;
+  if (!s) return;
+  $("sum-owed").textContent = `Owed ${pounds(s.owed.pence)}`;
+  $("sum-over").textContent = `Overdue ${pounds(s.overdue.pence)}`;
+  $("sum-over").classList.toggle("warn", s.overdue.count > 0);
+  $("sum-in").textContent = `In this month ${pounds(s.month.inPence)}`;
+}
+function drawAccounts() {
+  const s = data?.summary;
+  if (!s) return;
+  const facts = el("dl");
+  const fact = (k, v) => facts.append(el("dt", { text: k }), el("dd", { text: v }));
+  fact("Owed", `${pounds(s.owed.pence)} on ${s.owed.count} invoice${s.owed.count === 1 ? "" : "s"}`);
+  fact("Overdue", `${pounds(s.overdue.pence)} on ${s.overdue.count}`);
+  fact("In this month", pounds(s.month.inPence));
+  if (s.taxYear) fact(`Tax year ${s.taxYear.name || ""}`.trim(), `${pounds(s.taxYear.inPence)} in`);
+  const parts = [facts];
+  const go = el("div", { class: "acts" });
+  const show = (label, f) => {
+    const b = el("button", { type: "button", class: "ghost", text: label });
+    b.addEventListener("click", () => {
+      $("accounts").close();
+      const btn = $("filters").querySelector(`[data-filter="${f}"]`);
+      if (btn) btn.click();
+      showPart("list");
+    });
+    go.append(b);
+  };
+  show("Show the overdue ones", "overdue");
+  show("Show the ones to approve", "waiting");
+  parts.push(go);
+  parts.push(el("h3", { text: "For the accountant" }));
+  if (data?.canDecide && s.taxYear) {
+    const row = el("div", { class: "acts" });
+    for (const [what, label] of [["invoices", "Invoices (CSV)"], ["payments", "Payments (CSV)"]]) {
+      row.append(el("a", { class: "btn ghost", href: `/app/api/money/export.csv?what=${what}&from=${s.taxYear.from}&to=${s.taxYear.to}`, download: "", text: label }));
+    }
+    parts.push(el("p", { class: "empty-note", text: "This tax year's spreadsheets. (Expenses are in Portal → Money.)" }), row);
+  } else parts.push(el("p", { class: "empty-note", text: "An admin downloads these." }));
+  // The same, live in Google Sheets (once Google is connected), and each sent invoice in Google Drive
+  const sheet = el("button", { type: "button", class: "ghost", text: "Open in Google Sheets ↗" });
+  sheet.addEventListener("click", async () => {
+    const w = window.open("about:blank", "_blank");
+    try {
+      const r = await api("google/sheet", { method: "POST", body: {} });
+      if (w) w.location.href = r.url;
+    } catch (err) {
+      if (w) w.close();
+      say(err.message, true);
+    }
+  });
+  parts.push(el("div", { class: "acts" }, sheet), el("p", { class: "empty-note", text: "With Google connected, each sent invoice is also kept in Google Drive (Nova Agent/Invoices), up to date when it's paid." }));
+  $("acc-body").replaceChildren(...parts);
+}
+$("sum-bar").addEventListener("click", () => {
+  drawAccounts();
+  $("accounts").showModal();
+});
+$("accounts-close").addEventListener("click", () => $("accounts").close());
+
 // ---- Set up from the address ----
 // Anywhere else in Nova with an invoice opens /invoicer/ with what it's for (shared/invoicer-link.js):
 //   ?new=1 (&name= &email= &billing=deposit|full)   a new invoice, ready to fill in
@@ -1149,12 +1298,17 @@ $("history-close").addEventListener("click", () => $("history").close());
 //   ?reminder=<id>                                  the reminder's invoice, with its history open
 //   ?filter=deposit|balance|overdue|paid|waiting|removed  ?q=<words>   the list, narrowed
 //   ?settings=1                                     the invoice settings (bank, Monzo, the studio's details)
+//   ?accounts=1                                     money at a glance and the accountant's spreadsheets
 async function fromAddress(ask) {
   const f = ask.get("filter");
   if (f && $("filters").querySelector(`[data-filter="${CSS.escape(f)}"]`)) $("filters").querySelector(`[data-filter="${CSS.escape(f)}"]`).click();
   if (ask.get("q")) {
     $("search").value = ask.get("q").slice(0, 80);
     drawList();
+  }
+  if (ask.get("accounts")) {
+    $("sum-bar").click();
+    return true;
   }
   if (ask.get("settings")) {
     if (data?.canDecide) $("bank-btn").click();

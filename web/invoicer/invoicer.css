@@ -84,8 +84,8 @@ textarea.field { resize: none; line-height: 1.5; }
 #bank::backdrop { background: rgb(0 0 0 / .55); }
 #share { width: min(520px, calc(100vw - 24px)); padding: 0; border-radius: 20px; border: 1px solid var(--line); background: var(--deep, #120a1a); color: var(--text); }
 #share::backdrop { background: rgb(0 0 0 / .55); }
-#pay, #history, #why { width: min(520px, calc(100vw - 24px)); padding: 0; border-radius: 20px; border: 1px solid var(--line); background: var(--deep, #120a1a); color: var(--text); }
-:is(#pay, #history, #why)::backdrop { background: rgb(0 0 0 / .55); }
+#pay, #history, #why, #accounts { width: min(520px, calc(100vw - 24px)); padding: 0; border-radius: 20px; border: 1px solid var(--line); background: var(--deep, #120a1a); color: var(--text); }
+:is(#pay, #history, #why, #accounts)::backdrop { background: rgb(0 0 0 / .55); }
 .share-form { gap: 8px; }
 #share-wait, #share-ready { display: flex; flex-direction: column; gap: 8px; }
 #share-wait[hidden], #share-ready[hidden] { display: none; }
@@ -442,17 +442,17 @@ html body .inv .who, html body .inv .who b, html body .inv .who small { text-ali
   .send-note { display: block; -webkit-line-clamp: unset; overflow: visible; }
 
   /* ---- The windows: full-screen sheets ---- */
-  #new, #bank, #share, #pay, #history, #why { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-radius: 0; inset: 0; }
-  #new > form, #bank > form, #share > .new-form, #pay > form, #history > .new-form, #why > form { height: 100%; max-height: none; overflow-y: auto; overscroll-behavior: contain; gap: 10px;
+  #new, #bank, #share, #pay, #history, #why, #accounts { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-radius: 0; inset: 0; }
+  #new > form, #bank > form, #share > .new-form, #pay > form, #history > .new-form, #why > form, #accounts > .new-form { height: 100%; max-height: none; overflow-y: auto; overscroll-behavior: contain; gap: 10px;
     padding: 0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left)); }
-  :is(#new, #bank, #share, #pay, #history, #why) .new-form > .col-head:first-child { position: sticky; top: 0; z-index: 3; margin: 0 -14px; padding: max(10px, env(safe-area-inset-top)) 14px 10px; background: var(--deep, #120a1a); border-bottom: 1px solid var(--line); }
-  html body.nb-tool :is(#new-close, #bank-close, #share-close, #pay-close, #history-close, #why-close) { min-width: 44px; min-height: 44px; }
+  :is(#new, #bank, #share, #pay, #history, #why, #accounts) .new-form > .col-head:first-child { position: sticky; top: 0; z-index: 3; margin: 0 -14px; padding: max(10px, env(safe-area-inset-top)) 14px 10px; background: var(--deep, #120a1a); border-bottom: 1px solid var(--line); }
+  html body.nb-tool :is(#new-close, #bank-close, #share-close, #pay-close, #history-close, #why-close, #accounts-close) { min-width: 44px; min-height: 44px; }
   :is(#new, #bank, #pay, #why) .new-form > .mail-tools { position: sticky; bottom: 0; z-index: 3; margin: 0 -14px; padding: 10px 14px max(12px, env(safe-area-inset-bottom)); background: var(--deep, #120a1a); border-top: 1px solid var(--line); }
   :is(#new, #bank, #pay, #why) .new-form > .mail-tools > button { flex: 1 1 0; min-height: 44px; }
   #share .new-form { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
   /* (the form's parts keep their own height: the sheet scrolls, nothing squashes or slides under the buttons) */
-  #new > form > *, #bank > form > *, #share > .new-form > *, #pay > form > *, #history > .new-form > *, #why > form > * { flex-shrink: 0; }
-  #new, #bank, #share, #pay, #history, #why { overflow: hidden; }
+  #new > form > *, #bank > form > *, #share > .new-form > *, #pay > form > *, #history > .new-form > *, #why > form > *, #accounts > .new-form > * { flex-shrink: 0; }
+  #new, #bank, #share, #pay, #history, #why, #accounts { overflow: hidden; }
   .new-grid { flex: none; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; height: auto; max-height: none; min-height: 0; overflow: visible; gap: 14px; }
   .new-scroll { overflow: visible; padding-right: 0; }
   .np-frame { flex: none; overflow: hidden; }
@@ -542,3 +542,34 @@ html body .inv .who, html body .inv .who b, html body .inv .who small { text-ali
 /* (a long window scrolls inside itself, never cut off at the bottom; the history reads from the left) */
 #bank > form, #pay > form, #why > form, #history > .new-form { overflow-y: auto; overscroll-behavior: contain; }
 html body .hist, html body .hist :is(dt, dd, li, li > span, p, h3) { text-align: left !important; }
+
+/* Money at a glance: owed, overdue, in this month (opens the accounts) */
+.nb-tool button.sumbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; width: 100%; min-height: 34px; padding: 6px 12px; border-radius: 12px;
+  border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); color: var(--muted); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.nb-tool button.sumbar:hover { border-color: color-mix(in srgb, var(--hi) 50%, var(--line)); color: var(--text); }
+.sumbar span { white-space: nowrap; }
+.sumbar .warn { color: #ff8094; }
+#accounts > .new-form { overflow-y: auto; overscroll-behavior: contain; }
+#acc-body .acts { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Approve or void, popped up over the invoice being previewed; pops down once pressed */
+.decide-pop {
+  position: absolute; left: 50%; bottom: 14px; z-index: 5; width: min(420px, calc(100% - 24px)); transform: translate(-50%, 0); opacity: 1;
+  display: grid; gap: 8px; justify-items: center; padding: 12px 14px; border-radius: 18px; text-align: center;
+  border: 1px solid color-mix(in srgb, var(--hi) 45%, var(--line)); color: var(--text);
+  background: color-mix(in srgb, var(--deep, #120a1a) 94%, transparent); backdrop-filter: blur(10px);
+  box-shadow: 0 18px 40px -18px rgb(0 0 0 / .8), 0 0 22px -10px var(--hi);
+  transition: transform .2s ease, opacity .2s ease;
+}
+.decide-pop[hidden] { display: none; }
+.decide-pop.down { transform: translate(-50%, calc(100% + 24px)); opacity: 0; }
+.dp-what { margin: 0; font-weight: 700; font-size: 14px; color: var(--bright, #fff); white-space: nowrap; }
+.dp-acts { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.nb-tool .dp-acts button { min-height: 40px; min-width: 120px; padding: 6px 18px; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.nb-tool #dp-void { color: #ff8094; border-color: color-mix(in srgb, #ff6b81 50%, transparent); }
+.nb-tool #dp-void[data-armed] { background: color-mix(in srgb, #ff6b81 22%, transparent); color: #fff; }
+.nb-tool #dp-approve { --ic: var(--ic-check); }
+.nb-tool #dp-void { --ic: var(--ic-close); }
+.nb-tool :is(#dp-approve, #dp-void)::before { content: ""; flex: none; width: 16px; height: 16px; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
+.dp-note { margin: 0; font-size: 12.5px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .decide-pop { transition: none; } }
