@@ -235,7 +235,7 @@
 
   let row = null; // the pillars, where the tab panel was
   let openName = null; // the pillar that's open (risen)
-  let chosenByHand = false; // a pillar someone opened stays open until they open another
+  let chosenByHand = false; // (a panel someone opened)
   let drawnSig = "";
 
   const el = (tag, cls, text) => {
@@ -264,7 +264,7 @@
     t.title = hidden ? "Show all" : "Hide all: the top panel, the Nova Pillars and the Nova tiles";
     t.innerHTML = (hidden ? EYE : EYE_OFF) + `<span>${hidden ? "Show all" : "Hide all"}</span>`;
     // (shown: a small round overlay button on the open pillar's capital, the crossed-out eye; 19 Oct 2026)
-    if (!hidden) t.classList.add("overlay");
+    if (!hidden) t.classList.add("in-row");
     t.addEventListener("click", () => setHidden(!hidden));
     return t;
   }
@@ -309,33 +309,10 @@
     if (t) t.focus({ preventScroll: true });
   }
 
-  // An open pillar's buttons: bands round the column, each doing its one thing
-  function fillShaft(shaft, g, items, where) {
-    shaft.setAttribute("role", "group");
-    shaft.setAttribute("aria-label", g.name);
-    for (const it of items) {
-      const btn = el("button", "pillar-btn" + (it.at && it.at === where ? " here" : ""));
-      btn.type = "button";
-      if (it.at && it.at === where) btn.setAttribute("aria-current", "page");
-      btn.append(icon(it.name), el("span", "pillar-label", it.name));
-      const nb = badge(count(it.badge));
-      if (nb) btn.append(nb);
-      btn.addEventListener("click", () => {
-        try {
-          it.run();
-        } catch (err) {
-          say("That didn't open: " + (err.message || err));
-        }
-        setTimeout(() => {
-          chosenByHand = false;
-          draw();
-        }, 350);
-      });
-      shaft.append(btn);
-    }
-  }
-  // Phones and tablets (simple, 19 Oct 2026: "super simple to use"): short pillars in rows, each with its
-  // name across it and big to tap; the one tapped opens wide underneath, its buttons in two columns
+  // The group pillars (20 Oct 2026): just the groups, in rows, each with its icon and name; the group
+  // you're in is lit. Tapping one slides its panel out of it (the user: "when you click a group … it will
+  // open a sliding panel that comes out of it with all the items on it"), over the page, so the page
+  // keeps all its room. Tapping it again, outside the panel, Escape, or choosing an item closes it.
   function drawCompact(groups, where) {
     const caps = el("div", "pillar-caps");
     caps.setAttribute("role", "group");
@@ -347,7 +324,9 @@
       const total = (g.badges || []).reduce((n, id) => n + count(id), 0);
       const mini = el("button", "mini-pillar" + (open ? " open" : "") + (lit ? " here" : ""));
       mini.type = "button";
+      mini.dataset.group = g.name;
       mini.setAttribute("aria-expanded", String(open));
+      mini.setAttribute("aria-haspopup", "true");
       mini.setAttribute("aria-label", `${g.name}${total ? `, ${total} new` : ""}`);
       const cap = el("span", "mini-cap");
       cap.append(icon(g.name), el("span", "pillar-name", g.name));
@@ -357,47 +336,105 @@
       mini.addEventListener("click", () => openPillar(g.name, true));
       caps.append(mini);
     }
-    const g = groups.find((x) => x.name === openName);
-    const items = itemsOf(g);
-    const wide = el("section", "pillar open wide" + (items.length > 2 ? " many" : ""));
-    const top = el("div", "pillar-cap");
-    top.append(icon(g.name), el("span", "pillar-name", g.name));
-    const shaft = el("div", "pillar-shaft");
-    fillShaft(shaft, g, items, where);
-    // (on a phone its buttons are one row that slides sideways: Nova's one-row bars, data-one-row)
-    shaft.dataset.oneRow = "";
-    wide.append(top, shaft, el("span", "pillar-base"), toggleButton());
-    row.replaceChildren(caps, wide);
+    // (Hide all: a slim button at the end of the pillars, always in sight)
+    caps.append(toggleButton());
+    row.replaceChildren(caps);
     row.classList.add("compact");
-    const lit = shaft.querySelector(".pillar-btn.here");
-    if (lit && shaft.scrollWidth > shaft.clientWidth) shaft.scrollLeft = Math.max(0, lit.offsetLeft - 12);
+    drawDrawer(groups, where);
     drawnSig = sig();
+  }
+
+  // ---- The panel that slides out of a group ----
+  let drawer = null;
+  function drawDrawer(groups, where) {
+    const g = openName && groups.find((x) => x.name === openName);
+    const cap = g && row.querySelector(`.mini-pillar[data-group="${CSS.escape(g.name)}"]`);
+    if (!g || !cap) return closeDrawer(false);
+    if (!drawer) {
+      drawer = el("div", "pillar-drawer");
+      drawer.setAttribute("role", "menu");
+      drawer.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeDrawer(true);
+      });
+      document.body.append(drawer);
+    }
+    drawer.setAttribute("aria-label", g.name);
+    const items = itemsOf(g);
+    drawer.replaceChildren(
+      ...items.map((it) => {
+        const btn = el("button", "pillar-btn" + (it.at && it.at === where ? " here" : ""));
+        btn.type = "button";
+        btn.setAttribute("role", "menuitem");
+        if (it.at && it.at === where) btn.setAttribute("aria-current", "page");
+        btn.append(icon(it.name), el("span", "pillar-label", it.name));
+        const nb = badge(count(it.badge));
+        if (nb) btn.append(nb);
+        btn.addEventListener("click", () => {
+          closeDrawer(false);
+          try {
+            it.run();
+          } catch (err) {
+            say("That didn't open: " + (err.message || err));
+          }
+          setTimeout(draw, 350);
+        });
+        return btn;
+      })
+    );
+    placeDrawer(cap);
+    if (drawer.hidden || !drawer.classList.contains("out")) {
+      drawer.hidden = false;
+      requestAnimationFrame(() => drawer && drawer.classList.add("out"));
+    }
+  }
+  // Under its pillar, with a little point at it, never past the screen's edges
+  function placeDrawer(cap) {
+    if (!drawer || !cap) return;
+    const r = cap.getBoundingClientRect();
+    const W = document.documentElement.clientWidth;
+    const width = Math.min(W - 12, W < 640 ? W : 620);
+    const left = Math.max(6, Math.min(W - width - 6, r.left + r.width / 2 - width / 2));
+    drawer.style.top = `${Math.round(r.bottom + 7)}px`;
+    drawer.style.left = `${Math.round(left)}px`;
+    drawer.style.width = `${Math.round(width)}px`;
+    drawer.style.setProperty("--point", `${Math.round(r.left + r.width / 2 - left)}px`);
+  }
+  function closeDrawer(focusBack) {
+    const was = openName;
+    openName = null;
+    if (drawer && !drawer.hidden) {
+      drawer.classList.remove("out");
+      const d = drawer;
+      setTimeout(() => {
+        if (!openName) d.hidden = true;
+      }, calm() ? 0 : 160);
+    }
+    for (const m of row.querySelectorAll(".mini-pillar.open")) {
+      m.classList.remove("open");
+      m.setAttribute("aria-expanded", "false");
+    }
+    if (focusBack && was) row.querySelector(`.mini-pillar[data-group="${CSS.escape(was)}"]`)?.focus({ preventScroll: true });
   }
 
   function draw() {
     if (!row) return;
     row.classList.toggle("all-hidden", hidden);
-    // (no line above any more (19 Oct 2026): Hide all is a small overlay button on the open pillar)
     if (hidden) {
       // (only the round Show all button, top right)
+      closeDrawer(false);
       row.replaceChildren(toggleButton());
       drawnSig = sig();
       return;
     }
-    const where = here();
-    const groups = groupsNow();
-    if (!chosenByHand || !groups.some((g) => g.name === openName)) openName = (homeOf(where) || groups[0]).name;
-    // (every screen now (19 Oct 2026, "shrink the overall size"): the pillars in rows, the open one wide
-    // underneath; on a wide screen the tall colonnade left its open pillar too narrow for its buttons)
-    return drawCompact(groups, where);
+    return drawCompact(groupsNow(), here());
   }
   function openPillar(name, byHand) {
-    if (openName === name) return;
+    // (the same group again closes its panel)
+    if (openName === name) return closeDrawer(true);
     openName = name;
     chosenByHand = Boolean(byHand);
     draw();
-    // (on a phone the finger stays where it was: no jump; with a keyboard, into the buttons)
-    const first = row.querySelector(".pillar.open .pillar-btn");
+    const first = drawer && drawer.querySelector(".pillar-btn");
     if (first && byHand && matchMedia("(pointer: fine)").matches) first.focus({ preventScroll: true });
   }
   const sig = () => [hidden, here(), admin(), openName, ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
@@ -438,6 +475,15 @@
     document.addEventListener("click", (e) => {
       if (!row.contains(e.target)) setTimeout(refresh, 300);
     });
+    document.addEventListener("pointerdown", (e) => {
+      if (openName && drawer && !drawer.contains(e.target) && !row.contains(e.target)) closeDrawer(false);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && openName) closeDrawer(true);
+    });
+    const follow = () => openName && placeDrawer(row.querySelector(".mini-pillar.open"));
+    addEventListener("resize", follow);
+    addEventListener("scroll", follow, true);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
