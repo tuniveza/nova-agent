@@ -15,7 +15,7 @@ Portal's old address, `/app/`, opens Portal (with the same tab: `/app/?view=aler
 
 ## Nova Pillars (19 October 2026)
 
-Portal's sections are **Nova Pillars** now, in place of the tab panel under the top panel. There's one cylindrical pillar per group: Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only).
+Portal's sections are **Nova Pillars** now, in place of the tab panel under the top panel. They're in Nova Agent's own look (its glass panels, pink glow, fonts and line icons) and kept simple: every word reads across, never sideways. There's one cylindrical pillar per group: Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only).
 - **Tap a pillar** and it rises wide to show its **pillar buttons**, bands round the column. Each one opens the place and presses the same button you would: a tab, Add a client, Write a post, the Invoicer, Options at the right section, and so on. Inbox starts with **Today**.
 - **On a phone or tablet it's simpler:** short pillars in rows (four to a row on a phone, eight on a tablet). Each has its name across it and is big to tap. The one you tap opens wide underneath with its buttons in two columns (four on a tablet).
 - **On a wide computer screen** the other pillars stand slim beside the open one, with their names across their tops.

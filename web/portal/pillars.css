@@ -1,7 +1,10 @@
 /* Nova Pillars (pillars.js, 19 Oct 2026): Portal's sections in place of the tab panel under the top
-   panel. A cylindrical pillar per group; the open one rises wide with its pillar buttons as bands round
-   the column, the others stand slim with their names up their side. A slim line above has their name
-   and a clearly visible "Hide all" button (a crossed-out eye). In Nova Agent's theme; calm. */
+   panel, in Nova Agent's own look (its glass panels, hairlines, pink glow and fonts, from
+   /shared/themes.css) and kept simple: a pillar per group with a clean line icon and its name across
+   it (never sideways); the open one shows its buttons; nothing else to learn.
+   Phones and tablets: short pillars in rows, big to tap, the open one wide underneath.
+   A wide screen (1100px and up): the open pillar stands tall between slim ones.
+   "Hide all" (a crossed-out eye) leaves only the page; "Show all" (an eye, top right) brings it back. */
 
 /* The tab panel steps aside (it stays in the page: the pillar buttons press its buttons and read its counts) */
 html.pillars-on nav.tabs { display: none !important; }
@@ -9,196 +12,144 @@ html.pillars-on { --tabs-h: 0px; --htabs-h: 0px; }
 
 .app > .pillars { order: -1; }
 .pillars {
-  flex: none; position: relative; z-index: 4; display: flex; flex-direction: column; gap: 6px;
+  --slim: 112px;
+  --pill-panel: color-mix(in srgb, var(--panel) 92%, transparent);
+  --pill-deep: color-mix(in srgb, var(--deep) 94%, transparent);
+  --pill-lit: linear-gradient(120deg, var(--accent), var(--accent-2));
+  flex: none; position: relative; z-index: 4; display: flex; flex-direction: column; gap: 8px;
   width: calc(100% - 16px); max-width: 1180px; margin: 6px auto 0; box-sizing: border-box;
-  --slim: 26px;
 }
-@media (min-width: 761px) { .pillars { --slim: 58px; } }
 
-/* The slim line: "Nova Pillars" and Hide all (or Show) */
-.pillars-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 0 2px; }
-.pillars-title { font: 700 10.5px var(--f-mono, ui-monospace, monospace); letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+/* The slim line above: the name, and Hide all */
+.pillars-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 0 4px; }
+.pillars-title { display: inline-flex; align-items: center; gap: 8px; font: 600 10.5px var(--f-mono, ui-monospace, monospace); letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.pillars-title::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--hi); box-shadow: 0 0 10px var(--hi); }
 .pillars-toggle {
-  flex: none; display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 4px 14px 4px 10px; cursor: pointer;
-  border-radius: 999px; border: 1px solid rgba(var(--hi-rgb), 0.55); color: var(--bright);
-  background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.55), rgba(var(--accent-2-rgb), 0.55));
-  box-shadow: 0 0 12px -4px rgba(var(--hi-rgb), 0.6);
-  font: 700 12.5px var(--f-body, system-ui, sans-serif); letter-spacing: 0.02em; white-space: nowrap;
+  flex: none; display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 4px 14px 4px 11px; cursor: pointer;
+  border-radius: 999px; border: 1px solid color-mix(in srgb, var(--hi) 45%, var(--line)); color: var(--bright);
+  background: var(--pill-panel); font: 600 13px var(--f-body, system-ui, sans-serif); white-space: nowrap;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
-.pillars-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.pillars-toggle:hover { border-color: var(--soft, #FFD1EA); box-shadow: 0 0 16px -4px rgba(var(--hi-rgb), 0.85); }
+.pillars-toggle svg { width: 18px; height: 18px; fill: none; stroke: var(--hi); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pillars-toggle:hover { border-color: var(--hi); box-shadow: 0 0 14px -4px var(--hi); }
 .pillars-toggle:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
-.pillars.all-hidden .pillars-head { justify-content: space-between; }
 
-/* The colonnade */
-.pillar-set { display: flex; align-items: stretch; gap: 4px; min-width: 0; }
-@media (min-width: 761px) { .pillar-set { gap: 8px; } }
+/* Icons: Nova Agent's line icons */
+.pillar-ico { flex: none; display: inline-grid; place-items: center; width: 18px; height: 18px; color: var(--hi); }
+.pillar-ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 
-/* A pillar: a capital, a fluted shaft, a base. Slim until it's opened */
-.pillar { flex: 0 0 var(--slim); min-width: 0; display: flex; flex-direction: column; align-items: stretch; cursor: pointer; transition: flex-basis 0.22s ease; }
+/* Counts */
+.pillar-badge { flex: none; margin-left: auto; min-width: 18px; padding: 1px 6px; border-radius: 999px; background: var(--hi); color: var(--on-hi, #1C0A1E);
+  font: 700 10.5px var(--f-mono, ui-monospace, monospace); text-align: center; box-shadow: 0 0 8px -2px var(--hi); }
+
+/* ---- A pillar: a capital (its name), a column, a base ---- */
+.pillar-set { display: flex; align-items: stretch; gap: 8px; min-width: 0; }
+.pillar { flex: 0 0 var(--slim); min-width: 0; display: flex; flex-direction: column; align-items: stretch; cursor: pointer; transition: flex-basis 0.2s ease; }
 .pillar.open { flex: 1 1 auto; cursor: default; }
 .pillar-cap {
-  position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0;
-  height: 30px; margin: 0 -3px; padding: 0 6px; cursor: pointer; border-radius: 12px 12px 5px 5px;
-  border: 1px solid var(--line-strong, rgba(var(--hi-rgb), 0.4)); color: var(--bright);
-  background: radial-gradient(ellipse 60% 70% at 50% 15%, rgba(255, 255, 255, 0.14), transparent 70%), linear-gradient(180deg, rgba(var(--panel-2-rgb, var(--panel-rgb)), 1), rgba(var(--panel-rgb), 1));
-  font: 800 12.5px var(--f-display, var(--f-body), sans-serif); letter-spacing: 0.04em; white-space: nowrap;
-}
-.pillar:not(.open) .pillar-cap { padding: 0; }
-.pillar:not(.open) .pillar-cap .pillar-name { display: none; }
-.pillar-cap:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
-.pillar-shaft {
-  position: relative; flex: 1 1 auto; min-height: 150px; padding: 7px 5px; display: flex; flex-direction: column; gap: 5px;
-  border-left: 1px solid rgba(var(--void-rgb), 0.9); border-right: 1px solid rgba(var(--void-rgb), 0.9);
-  /* the cylinder: dark at its edges, a soft light down its middle, and fine flutes */
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 7px),
-    linear-gradient(90deg, rgba(var(--void-rgb), 0.95) 0%, rgba(var(--panel-2-rgb, var(--panel-rgb)), 0.95) 22%, rgba(var(--hi-rgb), 0.16) 46%, rgba(var(--panel-rgb), 0.95) 70%, rgba(var(--void-rgb), 0.95) 100%);
-}
-.pillar.here .pillar-cap, .pillar.open .pillar-cap { border-color: rgba(var(--hi-rgb), 0.75); background: radial-gradient(ellipse 60% 70% at 50% 15%, rgba(255, 255, 255, 0.2), transparent 70%), linear-gradient(180deg, var(--accent), var(--accent-2)); color: var(--on-accent, #fff); }
-.pillar.open .pillar-shaft {
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 9px),
-    linear-gradient(90deg, rgba(var(--void-rgb), 0.95) 0%, rgba(var(--accent-2-rgb), 0.55) 18%, rgba(var(--hi-rgb), 0.28) 48%, rgba(var(--accent-rgb), 0.5) 76%, rgba(var(--void-rgb), 0.95) 100%);
-}
-.pillar.many.open .pillar-shaft { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
-@media (min-width: 761px), (max-height: 500px) {
-  .pillar.many.open .pillar-shaft { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-.pillar-base { height: 9px; margin: 0 -4px; border-radius: 3px 3px 9px 9px; border: 1px solid var(--line-strong, rgba(var(--hi-rgb), 0.4)); border-top: 0;
-  background: linear-gradient(180deg, rgba(var(--panel-2-rgb, var(--panel-rgb)), 1), rgba(var(--deep-rgb), 1)); }
-.pillar:not(.open):hover .pillar-shaft { filter: brightness(1.25); }
-.pillar:not(.open):hover .pillar-cap { border-color: rgba(var(--hi-rgb), 0.8); }
-
-/* A slim pillar's name, up its side */
-.pillar-side { margin: auto; writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; color: var(--text);
-  font: 700 11px var(--f-display, var(--f-body), sans-serif); letter-spacing: 0.06em; }
-.pillar.here .pillar-side { color: var(--soft, #FFD1EA); }
-@media (min-width: 761px) { .pillar-side { font-size: 13px; } }
-
-/* A pillar button: a band round the column */
-.pillar-btn {
-  position: relative; display: flex; align-items: center; gap: 7px; min-width: 0; min-height: 32px; padding: 4px 10px; cursor: pointer; text-align: left;
-  border-radius: 10px / 14px; border: 1px solid rgba(var(--hi-rgb), 0.28); color: var(--text);
-  background: linear-gradient(90deg, rgba(var(--void-rgb), 0.75), rgba(var(--panel-2-rgb, var(--panel-rgb)), 0.95) 28%, rgba(var(--hi-rgb), 0.18) 50%, rgba(var(--panel-2-rgb, var(--panel-rgb)), 0.95) 72%, rgba(var(--void-rgb), 0.75));
+  position: relative; display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; height: 36px; padding: 0 10px;
+  border-radius: 16px 16px 6px 6px; border: 1px solid var(--line); color: var(--bright); cursor: pointer;
+  background: linear-gradient(180deg, var(--pill-panel), var(--pill-deep));
   font: 600 13px var(--f-body, system-ui, sans-serif); white-space: nowrap;
-  transition: border-color 0.12s ease, filter 0.12s ease;
 }
-.pillar-btn:hover { border-color: var(--hi); filter: brightness(1.15); }
-.pillar-btn:focus-visible { outline: 2px solid var(--soft, #FFD1EA); outline-offset: 1px; }
-.pillar-btn.here { color: var(--on-accent, #fff); border-color: var(--soft, #FFD1EA); background: linear-gradient(90deg, var(--accent-2), var(--accent) 50%, var(--accent-2)); box-shadow: 0 0 10px -2px rgba(var(--hi-rgb), 0.6); }
+.pillar-cap:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+.pillar.here .pillar-cap { border-color: color-mix(in srgb, var(--hi) 55%, var(--line)); }
+.pillar.open .pillar-cap { background: var(--pill-lit); border-color: transparent; color: var(--on-accent, #fff); box-shadow: 0 6px 18px -10px var(--hi); }
+.pillar.open .pillar-cap .pillar-ico { color: inherit; }
+.pillar:not(.open) .pillar-cap .pillar-badge { position: absolute; top: -7px; right: -4px; margin: 0; }
+/* the column: a soft cylinder (darker at its sides), the theme's glass */
+.pillar-shaft {
+  position: relative; flex: 1 1 auto; min-height: 110px; margin: 0 4px; padding: 8px 6px; display: flex; flex-direction: column; gap: 6px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--void) 70%, transparent), var(--pill-panel) 30%, color-mix(in srgb, var(--panel) 80%, var(--hi) 6%) 50%, var(--pill-panel) 70%, color-mix(in srgb, var(--void) 70%, transparent));
+  border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+}
+.pillar.open .pillar-shaft { background: linear-gradient(90deg, color-mix(in srgb, var(--void) 60%, transparent), color-mix(in srgb, var(--panel) 88%, var(--accent) 12%) 30%, color-mix(in srgb, var(--panel) 80%, var(--hi) 14%) 50%, color-mix(in srgb, var(--panel) 88%, var(--accent-2) 12%) 70%, color-mix(in srgb, var(--void) 60%, transparent)); }
+.pillar.many.open .pillar-shaft { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
+.pillar-base { height: 8px; border-radius: 4px 4px 10px 10px; border: 1px solid var(--line); border-top: 0; background: var(--pill-deep); }
+.pillar:not(.open):hover .pillar-cap { border-color: color-mix(in srgb, var(--hi) 60%, var(--line)); }
+.pillar-name { min-width: 0; }
+
+/* ---- A pillar button ---- */
+.pillar-btn {
+  position: relative; display: flex; align-items: center; gap: 9px; min-width: 0; min-height: 36px; padding: 5px 12px; cursor: pointer; text-align: left;
+  border-radius: 12px; border: 1px solid var(--line); color: var(--text);
+  background: color-mix(in srgb, var(--deep) 70%, transparent);
+  font: 600 13.5px var(--f-body, system-ui, sans-serif); white-space: nowrap;
+  transition: border-color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+.pillar-btn:hover { border-color: color-mix(in srgb, var(--hi) 55%, var(--line)); background: color-mix(in srgb, var(--panel) 85%, var(--hi) 8%); }
+.pillar-btn:focus-visible { outline: 2px solid var(--hi); outline-offset: 1px; }
+.pillar-btn.here { color: var(--on-accent, #fff); border-color: transparent; background: var(--pill-lit); box-shadow: 0 0 14px -4px var(--hi); }
+.pillar-btn.here .pillar-ico { color: inherit; }
 .pillar-btn:active { transform: scale(0.98); }
 .pillar-label { min-width: 0; }
-.pillar-glyph { flex: none; color: var(--hi); font-size: 14px; line-height: 1; }
-.pillar-cap .pillar-glyph, .pillar-btn.here .pillar-glyph { color: inherit; }
-.pillar-badge { flex: none; margin-left: auto; min-width: 18px; padding: 1px 5px; border-radius: 999px; background: var(--hi); color: var(--on-hi, #1C0A1E);
-  font: 700 10px var(--f-mono, ui-monospace, monospace); text-align: center; }
-.pillar:not(.open) .pillar-cap .pillar-badge { position: absolute; top: -7px; right: -5px; margin: 0; }
 
-/* Narrow phones: a little smaller */
-@media (max-width: 360px) {
-  .pillar-btn { font-size: 12px; padding: 3px 7px; gap: 5px; }
-  .pillar-glyph { font-size: 12px; }
+/* ---- Phones and tablets (pillars.js draws them so below 1100px): short pillars in rows, the open one wide ---- */
+.pillar-caps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; }
+@media (min-width: 640px) { .pillar-caps { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+.mini-pillar { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 0; border: 0; background: none; cursor: pointer; color: var(--bright); }
+.mini-cap {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 48px; padding: 5px 3px;
+  border-radius: 16px 16px 6px 6px; border: 1px solid var(--line); background: linear-gradient(180deg, var(--pill-panel), var(--pill-deep));
 }
-/* Short screens (a phone on its side): lower pillars */
+.mini-cap .pillar-ico { width: 19px; height: 19px; }
+.mini-cap .pillar-name { font: 600 11.5px var(--f-body, system-ui, sans-serif); white-space: nowrap; }
+.mini-cap .pillar-badge { position: absolute; top: -7px; right: -3px; margin: 0; }
+.mini-shaft { height: 8px; margin: 0 6px; border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--void) 70%, transparent), var(--pill-panel) 35%, color-mix(in srgb, var(--panel) 80%, var(--hi) 6%) 50%, var(--pill-panel) 65%, color-mix(in srgb, var(--void) 70%, transparent)); }
+.mini-base { height: 5px; margin: 0 2px; border-radius: 3px 3px 7px 7px; border: 1px solid var(--line); border-top: 0; background: var(--pill-deep); }
+.mini-pillar:hover .mini-cap { border-color: color-mix(in srgb, var(--hi) 60%, var(--line)); }
+.mini-pillar:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; border-radius: 16px; }
+.mini-pillar.here .mini-cap { border-color: color-mix(in srgb, var(--hi) 55%, var(--line)); }
+.mini-pillar.open .mini-cap { color: var(--on-accent, #fff); border-color: transparent; background: var(--pill-lit); box-shadow: 0 6px 18px -10px var(--hi); }
+.mini-pillar.open .mini-cap .pillar-ico { color: inherit; }
+.mini-pillar.open .mini-shaft { background: linear-gradient(90deg, color-mix(in srgb, var(--void) 60%, transparent), color-mix(in srgb, var(--panel) 75%, var(--accent) 25%) 35%, color-mix(in srgb, var(--panel) 70%, var(--hi) 30%) 50%, color-mix(in srgb, var(--panel) 75%, var(--accent-2) 25%) 65%, color-mix(in srgb, var(--void) 60%, transparent)); }
+/* the open one, wide underneath: its buttons in two columns (four on a tablet) */
+.pillars.compact .pillar.wide { flex: none; cursor: default; }
+.pillars.compact .pillar.wide .pillar-cap { cursor: default; height: 32px; }
+.pillars.compact .pillar.wide .pillar-shaft { min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+@media (min-width: 640px) { .pillars.compact .pillar.wide .pillar-shaft { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* Small phones */
+@media (max-width: 639px) {
+  .pillars { gap: 6px; }
+  .mini-cap { min-height: 44px; padding: 4px 3px; }
+  .pillars.compact .pillar-btn { min-height: 34px; padding: 4px 10px; gap: 8px; }
+  .pillars.compact .pillar.wide .pillar-shaft { gap: 5px; padding: 6px; }
+}
+@media (max-width: 360px) {
+  .mini-cap .pillar-name { font-size: 10.5px; }
+  .pillars.compact .pillar-btn { font-size: 12.5px; padding: 3px 7px; gap: 6px; }
+  .pillar-ico { width: 16px; height: 16px; }
+}
+/* Short screens (a phone on its side): lower */
 @media (max-height: 500px) {
-  .pillar-shaft { min-height: 104px; padding: 5px 4px; gap: 4px; }
-  .pillar-btn { min-height: 28px; padding: 2px 8px; font-size: 12px; }
-  .pillar-side { font-size: 10px; }
-  .pillar-cap { height: 26px; }
-}
-@media (prefers-reduced-motion: reduce) { .pillar { transition: none; } }
-html[data-motion="calm"] .pillar { transition: none; }
-
-/* Phones: slimmer standing pillars, closer bands, so the open one has room and the colonnade stays low */
-@media (max-width: 760px) {
-  .pillars { --slim: 21px; gap: 4px; }
-  .pillar-set { gap: 3px; }
-  .pillar-cap { height: 26px; margin: 0 -2px; }
-  .pillar-shaft { min-height: 112px; padding: 4px 3px; gap: 3px; }
-  .pillar-btn { min-height: 28px; padding: 2px 8px; gap: 6px; font-size: 12.5px; border-radius: 9px / 12px; }
-  .pillar-side { font-size: 10.5px; letter-spacing: 0.03em; }
-  .pillar-base { height: 7px; margin: 0 -2px; }
-  .pillars-toggle { min-height: 30px; padding: 3px 12px 3px 9px; }
-}
-@media (max-width: 360px) {
-  .pillars { --slim: 19px; }
-  .pillar-btn { padding: 2px 5px; gap: 4px; font-size: 11.5px; }
+  .mini-cap { min-height: 34px; flex-direction: row; gap: 6px; }
+  .mini-shaft { height: 5px; }
+  .pillars.compact .pillar-btn { min-height: 30px; padding: 2px 10px; }
+  .pillar-shaft { min-height: 96px; }
 }
 
-/* Hide all: only the page is left (Nova Agent's top panel and tiles, tablets or dock are away too,
-   through its NovaBar); one round "Show all" button stays, top right, always in sight */
+/* ---- Hide all: only the page is left (Nova Agent's top panel and its tiles, tablets or dock are away
+   too, through its NovaBar); one round "Show all" button stays, top right ---- */
 html.pillars-all-hidden .app > .top { display: none !important; }
 .pillars.all-hidden { height: 0; margin: 0; gap: 0; }
 .pillars.all-hidden .pillars-toggle {
   position: fixed; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); z-index: 30;
   width: 44px; height: 44px; min-height: 0; padding: 0; justify-content: center; border-radius: 50%;
-  background: linear-gradient(140deg, var(--accent), var(--accent-2)); box-shadow: 0 4px 14px -4px rgba(var(--hi-rgb), 0.8), 0 0 0 3px rgba(var(--deep-rgb), 0.6);
+  background: var(--pill-lit); border-color: transparent; box-shadow: 0 4px 14px -4px var(--hi), 0 0 0 3px color-mix(in srgb, var(--deep) 60%, transparent);
 }
+.pillars.all-hidden .pillars-toggle svg { width: 22px; height: 22px; stroke: var(--on-accent, #fff); }
 .pillars.all-hidden .pillars-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.pillars.all-hidden .pillars-toggle svg { width: 22px; height: 22px; }
 
-/* Every pillar's title is its group's name (the user, 19 Oct 2026: "not just an icon"). A slim
-   pillar's title runs down its capital; on a wide screen there's room for it across */
-.pillar:not(.open) .pillar-cap { flex-direction: column; justify-content: flex-start; height: auto; min-height: 30px; padding: 7px 0 9px; gap: 6px; border-radius: 12px 12px 6px 6px; }
-.pillar:not(.open) .pillar-cap .pillar-name { display: block; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11.5px; letter-spacing: 0.05em; white-space: nowrap; }
-.pillar:not(.open) .pillar-shaft { min-height: 18px; }
-.pillar-side { display: none; }
-@media (max-width: 760px) {
-  .pillar:not(.open) .pillar-cap { padding: 6px 0 8px; gap: 5px; }
-  .pillar:not(.open) .pillar-cap .pillar-name { font-size: 10.5px; letter-spacing: 0.03em; }
-}
-@media (max-height: 500px) {
-  .pillar:not(.open) .pillar-cap .pillar-name { font-size: 10px; letter-spacing: 0.02em; }
-}
-@media (min-width: 1100px) {
-  .pillars { --slim: 112px; }
-  .pillar:not(.open) .pillar-cap { flex-direction: row; justify-content: center; height: 30px; padding: 0 6px; gap: 6px; }
-  .pillar:not(.open) .pillar-cap .pillar-name { writing-mode: horizontal-tb; transform: none; font-size: 12px; }
-  .pillar:not(.open) .pillar-shaft { min-height: 110px; }
-}
-
-/* ---- Phones and tablets: simple (19 Oct 2026) ----
-   Short pillars in rows, each with its name across it and big to tap (four to a row on a phone, all
-   eight in one row on a tablet); the one tapped opens wide underneath, its buttons in two columns */
-.pillar-caps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 5px; }
-@media (min-width: 640px) { .pillar-caps { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
-.mini-pillar { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 0; border: 0; background: none; cursor: pointer; color: var(--bright); }
-.mini-cap {
-  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 40px; padding: 4px 3px;
-  border-radius: 12px 12px 5px 5px; border: 1px solid var(--line-strong, rgba(var(--hi-rgb), 0.4));
-  background: radial-gradient(ellipse 60% 70% at 50% 15%, rgba(255, 255, 255, 0.14), transparent 70%), linear-gradient(180deg, rgba(var(--panel-2-rgb, var(--panel-rgb)), 1), rgba(var(--panel-rgb), 1));
-}
-.mini-cap .pillar-glyph { font-size: 15px; }
-.mini-cap .pillar-name { font: 800 11px var(--f-display, var(--f-body), sans-serif); letter-spacing: 0.02em; white-space: nowrap; }
-.mini-cap .pillar-badge { position: absolute; top: -6px; right: -3px; margin: 0; }
-.mini-shaft { height: 10px; margin: 0 4px; border-left: 1px solid rgba(var(--void-rgb), 0.9); border-right: 1px solid rgba(var(--void-rgb), 0.9);
-  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 6px), linear-gradient(90deg, rgba(var(--void-rgb), 0.95), rgba(var(--panel-2-rgb, var(--panel-rgb)), 0.95) 25%, rgba(var(--hi-rgb), 0.16) 48%, rgba(var(--panel-rgb), 0.95) 72%, rgba(var(--void-rgb), 0.95)); }
-.mini-base { height: 6px; margin: 0 1px; border-radius: 2px 2px 6px 6px; border: 1px solid var(--line-strong, rgba(var(--hi-rgb), 0.4)); border-top: 0; background: linear-gradient(180deg, rgba(var(--panel-2-rgb, var(--panel-rgb)), 1), rgba(var(--deep-rgb), 1)); }
-.mini-pillar:hover .mini-cap { border-color: rgba(var(--hi-rgb), 0.8); }
-.mini-pillar:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; border-radius: 12px; }
-.mini-pillar.here .mini-cap .pillar-name { color: var(--soft, #FFD1EA); }
-.mini-pillar.open .mini-cap { color: var(--on-accent, #fff); border-color: var(--soft, #FFD1EA); background: radial-gradient(ellipse 60% 70% at 50% 15%, rgba(255, 255, 255, 0.2), transparent 70%), linear-gradient(180deg, var(--accent), var(--accent-2)); box-shadow: 0 0 10px -3px rgba(var(--hi-rgb), 0.7); }
-.mini-pillar.open .mini-cap .pillar-glyph, .mini-pillar.open .mini-cap .pillar-name { color: inherit; }
-.mini-pillar.open .mini-shaft { background: linear-gradient(90deg, rgba(var(--void-rgb), 0.95), rgba(var(--accent-2-rgb), 0.6) 25%, rgba(var(--hi-rgb), 0.3) 48%, rgba(var(--accent-rgb), 0.55) 72%, rgba(var(--void-rgb), 0.95)); }
-/* The open one, wide underneath */
-.pillars.compact .pillar.wide { flex: none; cursor: default; }
-.pillars.compact .pillar.wide .pillar-cap { cursor: default; height: 28px; }
-.pillars.compact .pillar.wide .pillar-shaft { min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 6px 6px; }
-@media (min-width: 640px) { .pillars.compact .pillar.wide .pillar-shaft { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.pillars.compact .pillar-btn { min-height: 36px; font-size: 13px; }
-@media (max-width: 360px) {
-  .mini-cap .pillar-name { font-size: 10px; letter-spacing: 0; }
-  .pillars.compact .pillar-btn { font-size: 12px; padding: 2px 6px; }
-}
-@media (max-height: 500px) {
-  .mini-cap { min-height: 30px; flex-direction: row; gap: 5px; }
-  .mini-shaft { height: 6px; }
-  .pillars.compact .pillar-btn { min-height: 30px; }
-}
-/* (a little lower on a phone: more of the page in sight) */
+@media (prefers-reduced-motion: reduce) { .pillar { transition: none; } }
+html[data-motion="calm"] .pillar { transition: none; }
+/* (a slim pillar's name has room either side; a phone's pillars sit a little lower) */
+.pillar:not(.open) .pillar-cap { padding: 0 6px; gap: 6px; font-size: 12.5px; }
+.pillars { --slim: 120px; }
 @media (max-width: 639px) {
-  .mini-cap { min-height: 36px; padding: 3px 3px; }
-  .pillars.compact .pillar-btn { min-height: 33px; }
-  .pillars.compact .pillar.wide .pillar-shaft { gap: 4px; padding: 5px; }
+  .mini-cap { min-height: 42px; }
+  .mini-shaft { height: 6px; }
+  .pillars.compact .pillar-btn { min-height: 32px; }
+  .pillars.compact .pillar.wide .pillar-cap { height: 30px; }
 }
