@@ -1274,6 +1274,17 @@ html.embed .listening-bar { top: 0; }
 .cl-result:empty { display: none; }
 .cl-result p { margin: 0; }
 .cl-done { color: var(--ok); font-weight: 600; }
+/* Import from contacts: the ways in (each button's words on one line), and each contact found */
+.cl-contact-ways { display: flex; flex-wrap: wrap; gap: 8px; }
+.cl-contact-ways .btn { white-space: nowrap; }
+.cl-file-btn { position: relative; cursor: pointer; }
+.cl-file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.cl-file-btn:focus-within { outline: 2px solid var(--hi); outline-offset: 3px; }
+.cl-found { display: grid; gap: 8px; justify-items: start; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.35); min-width: 0; }
+.cl-found-name { margin: 0; color: var(--bright); font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
+.cl-found .cl-facts { margin: 0; width: 100%; }
+.cl-found .cl-facts dd { white-space: pre-line; overflow-wrap: anywhere; }
+.cl-found .btn { white-space: nowrap; }
 .cl-card { cursor: pointer; }
 .cl-card:focus-visible { outline: 2px solid var(--hi); outline-offset: 3px; }
 .cl-card .card-title, .cl-name { overflow-wrap: anywhere; }

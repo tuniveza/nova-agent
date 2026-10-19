@@ -680,6 +680,7 @@
         </div>
         <div class="settings-row cl-actions">
           <button id="clients-add" class="chip" type="button" aria-expanded="false">Add a client</button>
+          <button id="clients-contacts-open" class="chip" type="button" aria-expanded="false" aria-controls="clients-contacts">Import from contacts</button>
           <button id="clients-sync" class="chip admin-only" type="button" hidden>Sync with Acuity now</button>
           <button id="clients-import-open" class="chip admin-only" type="button" aria-expanded="false" aria-controls="clients-import" hidden>Import from Acuity</button>
         </div>
@@ -696,6 +697,23 @@
           <div class="actions">
             <button class="btn small" type="submit">Add</button>
             <button id="add-cancel" class="btn small ghost" type="button">Cancel</button>
+          </div>
+        </form>
+        <!-- Import from contacts (anyone signed in): a phone number finds who it is (the studio's Google
+             Contacts), or they're picked from this phone's contacts, or a contact card (.vcf) is opened;
+             what's found is shown, and only Add adds them -->
+        <form id="clients-contacts" class="card cl-form" autocomplete="off" hidden>
+          <h3 class="card-title">Import from contacts</h3>
+          <label class="cl-field"><span>Their phone number</span><input id="contacts-phone" type="tel" inputmode="tel" maxlength="40" placeholder="07700 900123" autocomplete="off"></label>
+          <div class="actions cl-contact-ways">
+            <button id="contacts-find" class="btn small" type="submit">Find this number</button>
+            <button id="contacts-pick" class="btn small ghost" type="button" hidden>Choose from this phone's contacts</button>
+            <label class="btn small ghost cl-file-btn"><input id="contacts-file" type="file" accept=".vcf,text/vcard,text/x-vcard" multiple>Open a contact card</label>
+          </div>
+          <p class="hint cl-small" id="contacts-how">Find this number looks in the studio's Google Contacts. On an iPhone: Contacts → the person → Share Contact → Save to Files, then Open a contact card here.</p>
+          <div id="contacts-result" class="cl-result" aria-live="polite"></div>
+          <div class="actions">
+            <button id="contacts-cancel" class="btn small ghost" type="button">Close</button>
           </div>
         </form>
         <!-- Import from Acuity (admins): Acuity's appointments or clients spreadsheet (CSV) -->

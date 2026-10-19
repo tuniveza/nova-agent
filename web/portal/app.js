@@ -2299,6 +2299,8 @@
     if (on) {
       $("clients-import").hidden = true;
       $("clients-import-open").setAttribute("aria-expanded", "false");
+      $("clients-contacts").hidden = true;
+      $("clients-contacts-open").setAttribute("aria-expanded", "false");
       $("add-name").focus();
     }
   };
@@ -2351,12 +2353,218 @@
     }
   });
 
+  // Import from contacts (19 Oct 2026, anyone signed in): a phone number given, then the contact with
+  // that number found and everything on their card shown, ready to add as a client. Three ways in:
+  // Find this number (the studio's Google Contacts, through Nova Bot), Choose from this phone's
+  // contacts (the phone's own contact book: Android's contact picker, opened from Nova Agent's page
+  // since a phone only offers it to the top page), and Open a contact card (a .vcf, how an iPhone
+  // shares a contact). Nothing is added until Add is pressed (Nova Bot refuses a duplicate and says who).
+  const lastNine = (v) => String(v || "").replace(/\D/g, "").slice(-9);
+  const contactsPicker = () => {
+    for (const w of [window.top, window]) {
+      try {
+        if (w && w.navigator && w.navigator.contacts && typeof w.navigator.contacts.select === "function") return w.navigator.contacts;
+      } catch (err) {}
+    }
+    return null;
+  };
+  $("contacts-pick").hidden = !contactsPicker();
+  if (contactsPicker()) $("contacts-how").textContent = "Find this number looks in the studio's Google Contacts. Choose from this phone's contacts opens your contact book.";
+  const showContactsForm = (on) => {
+    $("clients-contacts").hidden = !on;
+    $("clients-contacts-open").setAttribute("aria-expanded", on ? "true" : "false");
+    if (on) {
+      showAddForm(false);
+      $("clients-import").hidden = true;
+      $("clients-import-open").setAttribute("aria-expanded", "false");
+      $("clients-contacts").scrollIntoView({ block: "nearest", behavior: calm() ? "auto" : "smooth" });
+      $("contacts-phone").focus();
+    }
+  };
+  $("clients-contacts-open").addEventListener("click", () => showContactsForm($("clients-contacts").hidden));
+  $("contacts-cancel").addEventListener("click", () => showContactsForm(false));
+  const showContacts = (nodes) => $("contacts-result").replaceChildren(...nodes);
+
+  // A contact card (.vcf: one or more vCards, 2.1 to 4.0) -> [{ name, emails, phones, addresses, organisation, birthday, notes }]
+  function readVcards(text) {
+    const unfolded = String(text || "").replace(/\r\n/g, "\n").replace(/=\n/g, "").replace(/\n[ \t]/g, "");
+    const cards = [];
+    let card = null;
+    const unescape = (v) => v.replace(/\\n/gi, "\n").replace(/\\([,;\\])/g, "$1").trim();
+    const qp = (v) => {
+      try {
+        return decodeURIComponent(v.replace(/%/g, "%25").replace(/=([0-9A-F]{2})/gi, "%$1"));
+      } catch (err) {
+        return v;
+      }
+    };
+    for (const line of unfolded.split("\n")) {
+      const m = line.match(/^(?:[\w-]+\.)?([A-Za-z-]+)((?:;[^:]*)?):(.*)$/);
+      if (!m) continue;
+      const key = m[1].toUpperCase();
+      const value = /ENCODING=QUOTED-PRINTABLE/i.test(m[2]) ? qp(m[3]) : m[3];
+      if (key === "BEGIN" && /vcard/i.test(value)) card = { name: "", n: "", emails: [], phones: [], addresses: [], organisation: "", birthday: "", notes: "" };
+      else if (!card) continue;
+      else if (key === "END") {
+        card.name = card.name || card.n;
+        delete card.n;
+        if (card.name || card.phones.length || card.emails.length) cards.push(card);
+        card = null;
+      } else if (key === "FN") card.name = unescape(value);
+      else if (key === "N") card.n = value.split(";").slice(0, 2).reverse().map(unescape).filter(Boolean).join(" ");
+      else if (key === "TEL") card.phones.push(unescape(value.replace(/^tel:/i, "")));
+      else if (key === "EMAIL") card.emails.push(unescape(value).toLowerCase());
+      else if (key === "ADR") card.addresses.push(value.split(";").map(unescape).filter(Boolean).join(", "));
+      else if (key === "ORG") card.organisation = value.split(";").map(unescape).filter(Boolean).join(", ");
+      else if (key === "TITLE") card.organisation = [card.organisation, unescape(value)].filter(Boolean).join(", ");
+      else if (key === "BDAY") card.birthday = unescape(value).replace(/^--/, "");
+      else if (key === "NOTE") card.notes = unescape(value).slice(0, 1000);
+    }
+    return cards;
+  }
+
+  // What's found, as cards: each with what's on it and its own Add; with a number given, the ones
+  // with that number first (and said so)
+  function showFound(found, from) {
+    const want = lastNine($("contacts-phone").value);
+    const has = (c) => want.length === 9 && c.phones.some((p) => lastNine(p) === want);
+    const list = want.length === 9 && found.some(has) ? [...found.filter(has), ...found.filter((c) => !has(c))] : found;
+    if (!list.length) return showContacts([el("p", "", "No one found" + (want ? " with that number" : "") + " in " + from + ".")]);
+    const nodes = [el("p", "hint cl-small", list.length === 1 ? "Found in " + from + ":" : list.length + " found in " + from + ":")];
+    for (const c of list) {
+      const box = el("div", "cl-found");
+      box.appendChild(el("p", "cl-found-name", c.name || c.phones[0] || c.emails[0] || "No name"));
+      if (want.length === 9 && has(c)) box.appendChild(el("p", "cl-done cl-small", "Has that number"));
+      const facts = el("dl", "cl-facts");
+      const fact = (label, value) => {
+        if (!value) return;
+        facts.appendChild(el("dt", "", label));
+        facts.appendChild(el("dd", "", value));
+      };
+      fact("Phone", c.phones.join("\n"));
+      fact("Email", c.emails.join("\n"));
+      fact("Address", c.addresses.join("\n"));
+      fact("Work", c.organisation);
+      fact("Birthday", c.birthday);
+      fact("Notes", c.notes);
+      box.appendChild(facts);
+      const add = el("button", "btn small", "Add as a client");
+      add.type = "button";
+      // (once added, or already a client: it opens them)
+      add.addEventListener("click", () => (add.dataset.open ? goClient(Number(add.dataset.open)) : addFromContact(c, from, add)));
+      box.appendChild(add);
+      nodes.push(box);
+    }
+    showContacts(nodes);
+  }
+  async function addFromContact(c, from, button) {
+    const want = lastNine($("contacts-phone").value);
+    const phone = c.phones.find((p) => want.length === 9 && lastNine(p) === want) || c.phones[0] || "";
+    const extra = [
+      "From " + from + " (" + new Date().toLocaleDateString("en-GB") + ").",
+      c.phones.length > 1 ? "Other numbers: " + c.phones.filter((p) => p !== phone).join(", ") : "",
+      c.emails.length > 1 ? "Other emails: " + c.emails.slice(1).join(", ") : "",
+      c.addresses.length ? "Address: " + c.addresses.join(" / ").replace(/\n/g, ", ") : "",
+      c.organisation ? "Work: " + c.organisation : "",
+      c.birthday ? "Birthday: " + c.birthday : "",
+      c.notes,
+    ].filter(Boolean);
+    const body = { name: (c.name || phone || c.emails[0] || "").slice(0, 200), email: c.emails[0] || "", phone, notes: extra.join("\n").slice(0, 4000) };
+    if (!body.name) return toast("That contact has no name or number to add.");
+    button.disabled = true;
+    try {
+      const data = await api("clients", { body });
+      toast("Added " + body.name);
+      button.disabled = false;
+      const id = data.client && data.client.id;
+      if (id) {
+        button.textContent = "Added: open them";
+        button.dataset.open = String(id);
+      } else {
+        button.textContent = "Added";
+        button.disabled = true;
+      }
+      loadClients();
+    } catch (err) {
+      button.disabled = false;
+      if (err.message === "signed out") return;
+      const d = err.data || {};
+      const existing = d.id || d.existingId;
+      if (existing) {
+        toast("They're already on the list");
+        button.textContent = "Already a client: open them";
+        button.dataset.open = String(existing);
+      } else toast(err.message);
+    }
+  }
+  // Find this number: the studio's Google Contacts
+  $("clients-contacts").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const phone = $("contacts-phone").value.trim();
+    if (lastNine(phone).length < 9) {
+      showContacts([el("p", "error", "Type their whole phone number first.")]);
+      return $("contacts-phone").focus();
+    }
+    const b = $("contacts-find");
+    b.disabled = true;
+    showContacts([el("p", "hint cl-small", "Looking…")]);
+    try {
+      const r = await api("google/contacts/phone?phone=" + encodeURIComponent(phone));
+      if (r.off) return showContacts([el("p", "", "Google Contacts isn't connected yet (Portal → Admin → Google)." + (contactsPicker() ? " Choose from this phone's contacts instead." : " Open a contact card instead."))]);
+      showFound(r.contacts || [], "the studio's Google Contacts");
+      if (!(r.contacts || []).length && contactsPicker()) $("contacts-result").appendChild(el("p", "hint cl-small", "Not there? Choose from this phone's contacts."));
+    } catch (err) {
+      if (err.message !== "signed out") showContacts([el("p", "error", err.message)]);
+    } finally {
+      b.disabled = false;
+    }
+  });
+  // Choose from this phone's contacts (the phone asks the person; only what they choose comes back)
+  $("contacts-pick").addEventListener("click", async () => {
+    const book = contactsPicker();
+    if (!book) return;
+    try {
+      const can = typeof book.getProperties === "function" ? await book.getProperties() : ["name", "email", "tel"];
+      const props = ["name", "email", "tel", "address"].filter((p) => can.includes(p));
+      const picked = await book.select(props, { multiple: true });
+      if (!picked || !picked.length) return;
+      const tidy = (a) => [...new Set((a || []).map((v) => String(v || "").trim()).filter(Boolean))];
+      showFound(
+        picked.map((c) => ({
+          name: tidy(c.name)[0] || "",
+          emails: tidy(c.email).map((e) => e.toLowerCase()),
+          phones: tidy(c.tel),
+          addresses: (c.address || []).map((a) => [...(a.addressLine || []), a.city, a.region, a.postalCode, a.country].filter(Boolean).join(", ")).filter(Boolean),
+          organisation: "",
+          birthday: "",
+          notes: "",
+        })),
+        "this phone's contacts"
+      );
+    } catch (err) {
+      showContacts([el("p", "error", "The phone's contacts didn't open: " + (err.message || err) + ". Open a contact card instead.")]);
+    }
+  });
+  // Open a contact card (.vcf)
+  $("contacts-file").addEventListener("change", async () => {
+    const files = [...$("contacts-file").files];
+    $("contacts-file").value = "";
+    if (!files.length) return;
+    if (files.some((f) => f.size > 5 * 1024 * 1024)) return showContacts([el("p", "error", "That contact card is too big (over 5 MB).")]);
+    try {
+      const cards = (await Promise.all(files.map((f) => f.text()))).flatMap(readVcards);
+      showFound(cards, files.length === 1 ? files[0].name : "the contact cards");
+    } catch (err) {
+      showContacts([el("p", "error", "Couldn't read that contact card.")]);
+    }
+  });
+
   // Admins: import Acuity's appointments or clients spreadsheet (a chosen file, or pasted)
   $("clients-import-open").addEventListener("click", () => {
     const on = $("clients-import").hidden;
     $("clients-import").hidden = !on;
     $("clients-import-open").setAttribute("aria-expanded", on ? "true" : "false");
-    if (on) showAddForm(false), $("clients-import").scrollIntoView({ block: "nearest", behavior: calm() ? "auto" : "smooth" });
+    if (on) showAddForm(false), ($("clients-contacts").hidden = true), $("clients-contacts-open").setAttribute("aria-expanded", "false"), $("clients-import").scrollIntoView({ block: "nearest", behavior: calm() ? "auto" : "smooth" });
   });
   $("import-cancel").addEventListener("click", () => {
     $("clients-import").hidden = true;

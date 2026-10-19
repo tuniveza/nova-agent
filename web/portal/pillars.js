@@ -54,7 +54,7 @@
   };
   const invoicer = (what) => () => window.NovaInvoicer && window.NovaInvoicer.open(what);
 
-  // ---- The pillars and their buttons (8 or fewer each; admin: only for admins) ----
+  // ---- The pillars and their buttons (8 or so each; admin: only for admins) ----
   // glyph: a small mark for each; badge: the tab's count shown on it; at: the tab it lights up for
   const GROUPS = [
     { name: "Inbox", glyph: "✉", badges: ["new-badge", "alert-badge"], items: [
@@ -79,6 +79,11 @@
       { name: "Add a client", glyph: "+", run: press("clients", "#clients-add") },
       { name: "Sync with Acuity", glyph: "↻", admin: true, run: press("clients", "#clients-sync") },
       { name: "Import clients", glyph: "⇣", admin: true, run: press("clients", "#clients-import-open") },
+      // (a phone number given, its contact found: the phone's contacts, Google Contacts or a contact card)
+      { name: "Import from contacts", glyph: "☎", run: () => {
+        tab("clients")();
+        when("#clients-contacts-open", (b) => ($("clients-contacts").hidden ? b.click() : $("contacts-phone").focus()));
+      } },
       { name: "Money", glyph: "£", badge: "money-badge", at: "money", run: tab("money") },
       { name: "Write an invoice", glyph: "✎", run: invoicer({ new: true }) },
       { name: "Add an expense", glyph: "−", run: press("money", "#money-expense-new") },
@@ -155,6 +160,7 @@
     userplus: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>',
     sync: '<path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/>',
     import: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+    phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/>',
     pound: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5a2.8 2.8 0 0 0-5 1.7V16M8.5 13h4.5M8.5 16H15"/>',
     pen: '<path d="M16 3l5 5L8 21H3v-5Z"/>',
     receipt: '<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2Z"/><path d="M9 8h6M9 12h6"/>',
@@ -194,7 +200,7 @@
   const ICON_OF = {
     Inbox: "inbox", Today: "home", Enquiries: "mail", Conversations: "chat", Alerts: "bell", "Saved replies": "note", "Website bot": "spark", Notifications: "ring",
     Bookings: "calendar", Calendar: "calendar", "Booking tools": "tools", Approvals: "check", "Ask about this week": "spark", "Booking link": "link", "Test booking": "flag",
-    "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync with Acuity": "sync", "Import clients": "import", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt",
+    "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync with Acuity": "sync", "Import clients": "import", "Import from contacts": "phone", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt",
     Outreach: "megaphone", Campaigns: "megaphone", "Write a campaign": "pen", "One-to-one email": "send", "Don't email again": "block", Social: "camera", "Write a post": "pen", "Fan sign-up link": "link", "Ads Manager": "out",
     "Plans & Nova": "star", Quests: "star", "Everyone's quests": "team", "Nova Agent": "agent", "Ask Nova": "ask", Voice: "mic", "Hands-free": "ear", "My Index": "index", Manual: "book",
     You: "user", "Your profile": "user", "Re-roll planet": "planet", "Edit your name": "pen", "Change email": "at", "Change password": "key", "All addresses": "map", "How it works": "gear", "Sign out": "exit",
