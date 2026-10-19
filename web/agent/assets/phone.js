@@ -324,6 +324,9 @@
     // In one row (a tablet, a short or zoomed-in window, a phone on its side) every place is the same
     // width, whatever its group: phone.css shares the row out by how many places are showing
     bar.style.setProperty('--tab-n', n);
+    // On a phone on its side the tiles sit in two staggered rows, top, bottom, top… each one place
+    // along (phone-room.css)
+    bar.querySelectorAll(shown).forEach((b, i) => { b.style.setProperty('--t-col', i + 1); b.style.setProperty('--t-row', (i % 2) + 1); });
     fitNames();
     const h = `${bar.offsetHeight || 126}px`;
     if (document.documentElement.style.getPropertyValue('--bar-h') !== h) document.documentElement.style.setProperty('--bar-h', h);

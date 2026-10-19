@@ -72,3 +72,30 @@
 @media (max-width: 299px) { html body .tabbar { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 /* (and the title panel slim on any short screen) */
 @media (max-height: 480px), (max-height: 500px) and (max-width: 980px) { :root { --tp-h: 44px; --tp-btn: 40px; --tp-mark: 24px; --tp-word: 14px; } }
+
+/* ---- A phone on its side (19 Oct 2026, the user's own layout): the Nova tiles at HALF the height,
+   in two staggered rows, each tile on the second row sitting under the gap between two above it
+       [Invoicer] [ Agent  ] [ Notes  ] …
+             [ Portal ] [Calendar] [ Board  ] …
+   (in the bar's own order, top, bottom, top, bottom; phone.js gives each tile its --t-col and
+   --t-row). Twice as many tiles fit across, so each one is wide enough for its icon AND its name
+   side by side, and every place is in sight at once. Only on a touch phone held sideways (a short
+   computer window keeps its one row). */
+@media (max-height: 500px) and (min-width: 560px) and (orientation: landscape) and (pointer: coarse) {
+  html body .tabbar { display: grid !important; grid-template-columns: none !important; grid-template-areas: none !important;
+    grid-template-rows: repeat(2, 22px); grid-auto-columns: minmax(0, 1fr); grid-auto-flow: row; gap: 3px 4px !important; align-items: stretch; overflow: visible !important;
+    padding: 3px max(6px, env(safe-area-inset-right)) max(3px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }
+  html body .tabbar > .tg-row, html body .tabbar .tgroup, html body .tabbar .tg-items { display: contents !important; }
+  html body .tabbar .tg-label, html body .tabbar > .status-line { display: none !important; }
+  html body .tabbar .tgroup[data-group] [data-tab] { grid-row: var(--t-row, auto); grid-column: var(--t-col, auto) / span 2;
+    width: auto !important; min-width: 0 !important; height: 22px; min-height: 22px; margin: 0; padding: 0 4px 0 22px !important; border-radius: 7px;
+    display: flex; align-items: center; }
+  /* (the icon at the left end of its tile, the name beside it) */
+  html body .tabbar [data-tab] > .t-ico { place-items: center start !important; padding: 0 0 0 4px !important; }
+  html body .tabbar [data-tab] > .t-ico > svg, html body .tabbar [data-tab] > .t-ico > img { width: 15px !important; height: 15px !important; }
+  html body .tabbar [data-tab] > img.t-ico { object-position: 4px center !important; }
+  html body .tabbar [data-tab] > span:last-child { position: relative !important; width: 100% !important; height: auto !important; overflow: hidden !important; clip: auto !important;
+    padding: 0 !important; font-size: 10px; line-height: 1; text-align: left; }
+  html body .tabbar [data-tab][aria-current="page"]::after { bottom: 0; height: 2px; }
+  html body .tabbar > .dock-handle { top: -14px; height: 14px; }
+}
