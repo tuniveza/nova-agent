@@ -85,7 +85,7 @@ export interface MoneyContext {
   };
   vatRate: number;
   dueDays: number;
-  recentInvoices: { id: number; number: string; to: string; totalPence: number; balancePence: number; status: string; overdue: boolean; dueDate: string; monzoUrl?: string | null }[];
+  recentInvoices: { id: number; number: string; to: string; totalPence: number; balancePence: number; status: string; overdue: boolean; dueDate: string; monzoUrl?: string | null; pdfUrl?: string | null }[];
   monzo?: string | null;
   today: string;
 }
@@ -156,7 +156,8 @@ export function summaryText(c: MoneyContext): string {
     `Waiting for an admin in Portal → Money: ${s.invoicesWaiting} invoice${s.invoicesWaiting === 1 ? "" : "s"} and ${s.remindersWaiting} reminder${s.remindersWaiting === 1 ? "" : "s"}. Unconfirmed expenses: ${s.unconfirmedExpenses}.`,
     `Invoices default to ${c.vatRate}% VAT and payment within ${c.dueDays} days.`,
     c.monzo ? `Clients can pay every invoice with Monzo (${c.monzo}): each sent, unpaid invoice has its own Monzo link with the amount and invoice number filled in.` : "Monzo isn't set up for invoices yet (an admin adds the studio's Monzo link in Portal → Money → settings).",
-    c.recentInvoices.length ? "Latest invoices:\n" + c.recentInvoices.map((i) => `#${i.id} ${i.number} · ${i.to} · ${money(i.totalPence)} · ${i.overdue ? "OVERDUE" : STATUS_WORDS[i.status] || i.status}${i.monzoUrl ? ` · Monzo: ${i.monzoUrl}` : ""}`).join("\n") : "No invoices yet.",
+    c.recentInvoices.length ? "Latest invoices:\n" + c.recentInvoices.map((i) => `#${i.id} ${i.number} · ${i.to} · ${money(i.totalPence)} · ${i.overdue ? "OVERDUE" : STATUS_WORDS[i.status] || i.status}${i.monzoUrl ? ` · Monzo: ${i.monzoUrl}` : ""}${i.pdfUrl ? ` · PDF: ${i.pdfUrl}` : ""}`).join("\n") : "No invoices yet.",
+    "Every invoice can be downloaded as a PDF, before it's sent and after: give its PDF link when asked (once sent, the link works for the client too; before that, only for signed-in staff).",
   ].join("\n");
 }
 

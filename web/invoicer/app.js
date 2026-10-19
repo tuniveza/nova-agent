@@ -481,14 +481,38 @@ $("filters").addEventListener("click", (e) => {
   drawList();
 });
 $("search").addEventListener("input", drawList);
-$("print-btn").addEventListener("click", () => {
-  try {
-    $("doc").contentWindow.focus();
-    $("doc").contentWindow.print();
-  } catch {
-    window.open($("open-btn").href, "_blank", "noopener");
+// ---- PDF: any invoice as a PDF file (19 Oct 2026), before it's sent and after, as it's shown here ----
+// Nova Bot draws it and Nova Agent prints it (na src/pdf.ts); if that can't be done just now, the
+// invoice opens ready to print instead, with the browser's own Save as PDF
+async function downloadPdf(path, { method = "GET", body } = {}, name, button = null) {
+  const was = button?.textContent;
+  if (button) {
+    button.setAttribute("aria-busy", "true");
+    button.textContent = "Making…";
   }
-});
+  try {
+    const res = await fetch(path, { method, credentials: "same-origin", headers: body === undefined ? {} : { "Content-Type": "application/json", "X-Nova-App": "portal" }, body: body === undefined ? undefined : JSON.stringify(body) });
+    if (!res.ok) throw new Problem(res.status === 401 ? "Sign in again to download it." : "The PDF couldn't be made. Try again in a moment.");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    if (blob.type === "application/pdf") {
+      const a = el("a", { href: url, download: name });
+      document.body.append(a);
+      a.click();
+      a.remove();
+    } else window.open(url, "_blank", "noopener");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (err) {
+    say(err instanceof Problem ? err.message : "The PDF couldn't be made. Check the connection and try again.", true);
+  } finally {
+    if (button) {
+      button.removeAttribute("aria-busy");
+      button.textContent = was;
+    }
+  }
+}
+$("print-btn").addEventListener("click", () => downloadPdf(docSrc().replace("/document?", "/pdf?"), {}, `Novacane Studios ${chosen.staged.invoice.number}.pdf`, $("print-btn")));
+$("np-pdf").addEventListener("click", () => downloadPdf("/app/api/money/invoices/preview/pdf", { method: "POST", body: draft() }, `Novacane Studios draft${$("n-name")?.value ? ` for ${$("n-name").value.trim()}` : ""}.pdf`, $("np-pdf")));
 $("copy-btn").addEventListener("click", async () => {
   const text = `Subject: ${$("subject").value}\n\n${$("body").value}`;
   try {
@@ -813,7 +837,7 @@ function shareMessage(inv) {
   const due = sums.dueNowPence > 0 ? `${pounds(sums.dueNowPence)} due now` : "paid in full, thank you";
   // (with Monzo set up: its link too, the amount and the invoice number filled in)
   const monzo = sums.dueNowPence > 0 && inv.monzoUrl ? ` Or pay with Monzo: ${inv.monzoUrl}` : "";
-  return `Hi ${first}, here's your invoice ${inv.number} from Novacane Studios (${due}). See it and pay here: ${inv.pageUrl}${monzo}`;
+  return `Hi ${first}, here's your invoice ${inv.number} from Novacane Studios (${due}). See it and pay here: ${inv.pageUrl}${monzo} Download it as a PDF: ${inv.pageUrl}/pdf`;
 }
 function drawShare() {
   const inv = chosen.staged.invoice;

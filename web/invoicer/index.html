@@ -73,7 +73,7 @@
           <button type="button" role="radio" data-stage="paid" aria-checked="false"><i class="dot s-paid" aria-hidden="true"></i>Paid receipt</button>
         </div>
         <div class="doc-tools">
-          <button type="button" id="print-btn" disabled title="Print, or save as a PDF">PDF</button>
+          <button type="button" id="print-btn" disabled title="Download it as a PDF, as it's shown here">PDF</button>
           <a class="btn ghost" id="open-btn" role="button" href="#" target="_blank" rel="noopener" aria-disabled="true" title="Open the invoice on its own page">Open</a>
           <button type="button" id="share-btn" disabled title="Send its link by WhatsApp, a message, Instagram… (once it's approved)">Share</button>
           <button type="button" id="edit-btn" disabled title="Change it: its artist, lines, dates and notes">Edit</button>
@@ -205,7 +205,7 @@
     </div>
     <!-- The live preview: the invoice as it will look, redrawn as you type (nothing is saved) -->
     <section class="new-preview" aria-label="Live preview">
-      <div class="np-head"><span class="nt-label">Live preview</span><span class="np-state" id="np-state">Deposit due · as it will look</span></div>
+      <div class="np-head"><span class="nt-label">Live preview</span><span class="np-state" id="np-state">Deposit due · as it will look</span><button type="button" class="ghost np-pdf" id="np-pdf" title="Download it as a PDF, before it's made">PDF</button></div>
       <div class="np-frame" id="np-frame"><iframe id="n-preview" title="Live preview of the invoice" tabindex="-1"></iframe></div>
     </section>
     </div>

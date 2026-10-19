@@ -3,6 +3,12 @@
 Invoices to artists at each of their four stages, as the studio's own branded page to print or save as a PDF, with a short email to go with it. It has its own place at the left end of the navigation panel, on its own, in no group.
 
 ## What's new
+- **Every invoice as a PDF file, everywhere (19 Oct 2026).** A real PDF download, before it's sent and after, at any stage:
+  - **Invoicer:** **PDF** above the invoice downloads it as it's shown (its stage and look). The new invoice's live preview has **PDF** too, before it's even made.
+  - **Portal → Money:** **PDF** on every invoice.
+  - **The client:** **Download PDF** on their invoice page, and a "Download the invoice (PDF)" link in every email (the receipt too). Share's message has the PDF link.
+  - **Agent:** knows each invoice's PDF link and gives it when asked.
+  - If the PDF can't be made just then, the invoice opens ready to print instead (Save as PDF), so the button always gives a PDF.
 
 - **Monzo on every part of an invoice** (19 October 2026), once the studio's Monzo link is set (**Bank details** here, or Portal → Money):
   - the invoice, its page, its PDF, its email (a Pay with Monzo button) and its text version, as before;
@@ -82,14 +88,14 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
     - **Balance due:** charcoal, "Balance payment notice". The total, each payment with its date, and the balance left.
     - **Overdue:** crimson, "Urgent notice: this invoice is past due". An Overdue notice badge, and the due date in red with how many days late it is.
     - **Paid receipt:** green, "Thank you for recording with us!". It becomes a RECEIPT with a large PAID stamp, and "£0.00 (paid in full)".
-  - **Print / Save PDF** prints it, or saves it as an A4 PDF with the colours kept. **Open** shows it in its own tab.
+  - **PDF** downloads it as an A4 PDF file with the colours kept (to print it, **Open** it and use its Print button). **Open** shows it in its own tab.
 - **Email** (right):
   - The subject and message for the stage shown. You can change the words.
   - **Copy email** copies both, to paste into Gmail.
   - **Send…** does what's possible for that invoice. Every email waits for an admin's Approve:
     - **Not sent yet:** an admin can press **Approve and email it**: one press (the line under it says who it goes to). It emails the invoice with a link to its page, where the artist can pay.
     - **Sent, not fully paid:** **Send for approval** queues this message as a reminder, with a button to the invoice's page. An admin approves it here or in Portal → Money.
-    - **Paid:** receipts aren't emailed from here yet. Copy the email, save the receipt as a PDF and send them from Gmail.
+    - **Paid:** receipts aren't emailed from here yet. Copy the email, download the receipt with **PDF** and send them from Gmail.
 - **+ New invoice:**
   - The artist (names from the client list fill in their email) and the services from the studio's price list. The sessions come from the booking rules, so a price changed there changes here too.
   - Mixing, mastering and production are on the list too. Mastering is £30 a song for 3 to 10 songs and £50 otherwise; it switches by itself. Custom production is "from £250": type the price agreed.

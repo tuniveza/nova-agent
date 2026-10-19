@@ -56,6 +56,7 @@ import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, receipts } from "../receipts";
 import { registerBoardRoutes } from "../board-routes";
 import { registerConsoleRoutes } from "../console";
 import { currentStrictFixer, registerStrictRoutes, startStrictFixer } from "../fixer/strict-service";
+import { registerPdfRoutes } from "../pdf";
 import { registerComputerRoutes } from "../computer";
 import { registerTidyRoutes } from "../tidy-routes";
 import { MAX_VIDEO_BYTES, MEDIA_ID, MEDIA_TYPES, mediaCard, mediaStore, readRange } from "../social-media";
@@ -231,6 +232,8 @@ serveFolder("/app/memory", "index/", "Index is missing from web/index.");
 // The Fixer: the three strict rules, checked on all of Nova Agent every 5 minutes (src/fixer/strict-service.ts)
 serveFolder("/fixer", "fixer/", "The Fixer is missing from web/fixer.");
 registerStrictRoutes(app, currentStrictFixer);
+// Invoices as PDF files: Nova Bot draws the page, this prints it (src/pdf.ts)
+registerPdfRoutes(app);
 // Test stuff: quests, calendar notes, Fixer jobs and files that look like tests (admins: src/tidy.ts)
 registerTidyRoutes(app, currentFixer);
 // Computer: the VPS at a glance for admins: its Claude sessions (read-only), Claude Code, how busy it is, Nova (src/computer.ts)

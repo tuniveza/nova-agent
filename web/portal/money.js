@@ -298,6 +298,8 @@
         if (!reminding) button(row, "Ask for a reminder", "ghost", () => act(card, "money/invoices/" + inv.id + "/reminder", {}, canDecide ? "Reminder written: approve it above" : "Reminder written: an admin approves it"));
       }
       link(row, inv.pageUrl ? "Client's page" : "Preview", inv.pageUrl || "/app/api/money/invoices/" + inv.id + "/preview");
+      // The invoice as a PDF file, at any stage, sent or not (19 Oct 2026)
+      link(row, "PDF", "/app/api/money/invoices/" + inv.id + "/pdf").title = "Download " + inv.number + " as a PDF";
       // Pay with Monzo: its link with the amount due and the invoice number filled in, to send by hand
       if (inv.monzoUrl)
         button(row, "Copy Monzo link", "ghost", async () => {

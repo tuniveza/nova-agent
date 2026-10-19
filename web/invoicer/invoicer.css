@@ -505,3 +505,10 @@ html body .inv .who, html body .inv .who b, html body .inv .who small { text-ali
   .mail-col { gap: 6px; }
   #note { min-height: 0; }
 }
+
+/* PDF (19 Oct 2026): every invoice as a PDF file, before it's sent and after (the PDF button above
+   it), and the new invoice's live preview has one before it's even made */
+#print-btn[aria-busy="true"], .np-pdf[aria-busy="true"] { opacity: .7; pointer-events: none; }
+.np-head { align-items: center; }
+.np-head .np-state { flex: 1 1 auto; min-width: 0; }
+.np-pdf { flex: none; padding: 4px 12px; min-height: 30px; font-size: 12px; }
