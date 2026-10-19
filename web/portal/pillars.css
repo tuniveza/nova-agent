@@ -153,3 +153,29 @@ html[data-motion="calm"] .pillar { transition: none; }
   .pillars.compact .pillar-btn { min-height: 32px; }
   .pillars.compact .pillar.wide .pillar-cap { height: 30px; }
 }
+
+/* ---- Phones: smaller (the user, 19 Oct 2026: "make the nova pillars smaller on my phone") ----
+   a slimmer top line, lower pillars, and the open one's buttons three to a row (two on the smallest phones) */
+@media (max-width: 639px) {
+  .pillars { gap: 5px; margin-top: 4px; }
+  .pillars-head { padding: 0 2px; }
+  .pillars-title { font-size: 9.5px; letter-spacing: 0.16em; }
+  .pillars-toggle { min-height: 28px; padding: 2px 11px 2px 9px; gap: 6px; font-size: 12px; }
+  .pillars-toggle svg { width: 16px; height: 16px; }
+  .pillar-caps { gap: 5px 5px; }
+  .mini-cap { min-height: 36px; padding: 3px 2px; gap: 1px; border-radius: 13px 13px 5px 5px; }
+  .mini-cap .pillar-ico { width: 15px; height: 15px; }
+  .mini-cap .pillar-name { font-size: 11px; }
+  .mini-shaft { height: 4px; margin: 0 7px; }
+  .mini-base { height: 4px; }
+  .pillars.compact .pillar.wide .pillar-cap { height: 26px; font-size: 12.5px; border-radius: 13px 13px 5px 5px; }
+  .pillars.compact .pillar.wide .pillar-cap .pillar-ico { width: 15px; height: 15px; }
+  .pillars.compact .pillar.wide .pillar-shaft { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 5px 4px; margin: 0 3px; }
+  .pillars.compact .pillar-btn { min-height: 28px; padding: 2px 6px; gap: 5px; font-size: 12px; border-radius: 10px; }
+  .pillars.compact .pillar-btn .pillar-ico { width: 14px; height: 14px; }
+  .pillars.compact .pillar-base { height: 6px; }
+}
+@media (max-width: 380px) {
+  .pillars.compact .pillar.wide .pillar-shaft { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pillars.compact .pillar-btn { font-size: 12px; }
+}
