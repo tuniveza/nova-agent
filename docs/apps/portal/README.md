@@ -227,7 +227,17 @@ still reach Acuity's API and alerts staff phones if not (`src/health.js`).
 
 ## Money
 
-Portal → **Money** (in Studio, after Clients) keeps the studio's invoices, the payments against them, and its expenses. The badge counts invoices and reminders waiting for an admin, plus overdue invoices; Today has an **Invoices overdue** tile.
+**Everything for invoices is done in the Invoicer (19 October 2026).** Every invoice button here opens the Invoicer, set up for that job:
+- **Write an invoice** opens it with a new invoice ready to fill in.
+- On each invoice: **Approve**, **Edit**, **Reject**, **Send me a test**, **Record a payment**, **Ask for a reminder**, **Open in Invoicer**, **PDF**, **Share**, **Void** and **Details** each open that invoice there, at the place for that job. Nothing happens by itself.
+- **Reminders to approve** open the reminder's invoice with its history, to approve or reject.
+- The **Owed** and **Overdue** tiles, and Today's **Invoices overdue**, open the Invoicer's list.
+- **Invoice settings** opens the Invoicer's settings.
+- Each client has **New invoice** (their name and email filled in) and **Invoices** (theirs, listed).
+- Alerts and phone notifications about invoices open the Invoicer too.
+- Expenses and the tax year stay here.
+
+Portal → **Money** (in Studio, after Clients) shows the studio's invoices, the payments against them, and its expenses. The badge counts invoices and reminders waiting for an admin, plus overdue invoices; Today has an **Invoices overdue** tile.
 
 - **Four tiles:** money in this month (payments), money out (confirmed expenses), what clients owe, and what's overdue.
 - **Write an invoice:** pick a client from the list (their name and email fill in) or type them in. Add lines (what it's for, how many, the price of one), with VAT, the issue and due days, and a note. The totals add up as you type, in whole pence. It's saved **waiting for approval**; Agent can write one too.

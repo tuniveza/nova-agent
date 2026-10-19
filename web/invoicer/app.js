@@ -105,9 +105,11 @@ function drawList() {
   const list = $("list");
   const q = $("search").value.trim().toLowerCase();
   const today = ukToday();
-  const rows = (data?.invoices || []).filter((inv) => inv.status !== "void").filter((inv) => {
+  // (a reminder or receipt waiting for an admin counts as one to approve too; removed ones only under Removed)
+  const reminding = new Set((data?.reminders || []).filter((r) => r.status === "pending_approval").map((r) => r.invoiceId));
+  const rows = (data?.invoices || []).filter((inv) => (filter === "removed" ? inv.status === "void" : inv.status !== "void")).filter((inv) => {
     const waiting = WAITING.includes(inv.status);
-    if (filter === "waiting" && !waiting) return false;
+    if (filter === "waiting" && !waiting && !reminding.has(inv.id)) return false;
     if (["deposit", "balance", "overdue", "paid"].includes(filter) && (waiting || stageOf(inv, today) !== filter)) return false;
     return !q || inv.number.toLowerCase().includes(q) || inv.billTo.name.toLowerCase().includes(q);
   });
@@ -119,14 +121,14 @@ function drawList() {
   for (const inv of rows) {
     const waiting = WAITING.includes(inv.status);
     const stage = stageOf(inv, today);
-    const chip = waiting ? el("span", { class: "tag waiting", text: inv.status === "rejected" ? "Rejected" : inv.status === "failed" ? "Didn't send" : "To approve" }) : el("span", { class: `tag s-${stage}`, text: STAGE_NAMES[stage] });
+    const chip = inv.status === "void" ? el("span", { class: "tag waiting", text: "Removed" }) : waiting ? el("span", { class: "tag waiting", text: inv.status === "rejected" ? "Rejected" : inv.status === "failed" ? "Didn't send" : "To approve" }) : el("span", { class: `tag s-${stage}`, text: STAGE_NAMES[stage] });
     // (a round badge with the artist's initials, in the colour of where the invoice is)
     const initials = (inv.billTo.name || "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase() || "?";
     const btn = el(
       "button",
       { type: "button", class: "inv", "aria-current": chosen && chosen.id === inv.id ? "true" : "false", "data-id": inv.id, "data-st": waiting ? "waiting" : stage },
       el("span", { class: "av", "aria-hidden": "true", text: initials }),
-      el("span", { class: "who" }, el("b", { text: inv.billTo.name }), el("small", { text: `${inv.number} · ${dayText(inv.issueDate)}` })),
+      el("span", { class: "who" }, el("b", { text: inv.billTo.name }), el("small", { text: `${inv.number} · ${dayText(inv.issueDate)}` }, reminding.has(inv.id) ? el("i", { class: "rem-dot", title: "A reminder or receipt is waiting for an admin" }) : null)),
       el("span", { class: "amt" }, el("b", { text: pounds(inv.totalPence) }), chip)
     );
     btn.addEventListener("click", () => {
@@ -197,6 +199,10 @@ function drawStage(first = false) {
   $("edit-btn").disabled = inv.status === "paid" || inv.status === "void";
   $("edit-btn").title = inv.status === "paid" ? "Paid in full: it can't change" : inv.status === "void" ? "Removed" : "Change it: its artist, lines, dates and notes";
   $("remove-btn").hidden = !data?.canDecide || inv.status === "void" || inv.paidPence > 0;
+  // Payment: once it's out (sent or part paid); History: always
+  $("pay-btn").disabled = !["sent", "part_paid"].includes(inv.status);
+  $("pay-btn").title = $("pay-btn").disabled ? (inv.status === "paid" ? "Paid in full" : "Payments are recorded once it's been sent") : "Record a payment: by bank transfer, Monzo, cash…";
+  $("history-btn").disabled = false;
   // Share: once it's approved (its page opens), or an admin approves it to share
   $("share-btn").disabled = inv.status === "void" || !(inv.pageUrl || (data?.canDecide && WAITING.includes(inv.status) && inv.status !== "rejected"));
   $("share-btn").title = inv.pageUrl ? "Send its link by WhatsApp, a message, Instagram…" : data?.canDecide ? "Approve it to share, then send its link" : "It can be shared once an admin approves it";
@@ -228,6 +234,12 @@ function drawSend(inv, detail, stage) {
   btn.disabled = false;
   chip.hidden = true;
   btn.onclick = null;
+  // Reject (an admin): an invoice waiting for approval, or a reminder or receipt waiting; nothing is emailed
+  const rejectBtn = $("reject-btn");
+  const pendingInvoice = ["draft", "pending_approval"].includes(inv.status);
+  rejectBtn.hidden = !admin || !(pendingInvoice || waiting);
+  rejectBtn.textContent = pendingInvoice ? "Reject the invoice" : waiting ? `Reject the ${receipt ? "receipt" : "reminder"}` : "Reject";
+  rejectBtn.onclick = () => (pendingInvoice ? askWhy(`Reject ${inv.number}`, `It isn't emailed. It can be changed with Edit and sent for approval again.`, (note) => api(`money/invoices/${inv.id}/reject`, { method: "POST", body: { note } }), `${inv.number} rejected: nothing was emailed.`) : askWhy(`Reject the ${receipt ? "receipt" : "reminder"}`, `It isn't emailed. ${inv.number} stays as it is.`, () => api(`money/reminders/${waiting.id}/reject`, { method: "POST", body: {} }), `The ${receipt ? "receipt" : "reminder"} was rejected: nothing was emailed.`));
   if (WAITING.includes(inv.status)) {
     chip.hidden = false;
     chip.textContent = "Not sent yet";
@@ -238,7 +250,7 @@ function drawSend(inv, detail, stage) {
     } else {
       btn.textContent = "Waiting for an admin";
       btn.disabled = true;
-      note.textContent = "An admin approves it in Portal → Money (or here), then it's emailed. Until then you can copy the email and the PDF.";
+      note.textContent = "An admin approves it here, then it's emailed. Until then you can copy the email and the PDF.";
     }
     return;
   }
@@ -315,6 +327,7 @@ function doNow(btn, act, done) {
       say(done);
       chosen.detail = null;
       await load();
+      if ($("history").open) await openHistory();
     })
     .catch((err) => say(err.message, true))
     .finally(() => (btn.disabled = false));
@@ -724,7 +737,7 @@ function formFor(inv) {
   $("n-save").textContent = inv ? "Save changes" : "Make the invoice";
   $("n-foot").textContent = inv && editing.sent
     ? "It was sent: saved, it goes to an admin's Approve again, then the client gets the updated invoice. Its link says it's being updated meanwhile."
-    : "It waits for an admin's Approve in Portal → Money before anything is emailed.";
+    : "It waits for an admin's Approve (here, with Send) before anything is emailed.";
 }
 $("edit-btn").addEventListener("click", () => {
   if (!chosen) return;
@@ -922,7 +935,7 @@ function drawBank() {
   $("bank-state").textContent = ways.length ? `${ways.join(" and ")} ✓` : data?.canDecide ? "Add bank details" : "Not set up yet (an admin adds it)";
   $("bank-btn").classList.toggle("missing", !ways.length);
   $("bank-btn").disabled = !data?.canDecide;
-  $("bank-btn").title = data?.canDecide ? "The bank details and Monzo link on every invoice" : "An admin adds these";
+  $("bank-btn").title = data?.canDecide ? "The invoice settings: bank details, Monzo, the studio's details, VAT and days to pay" : "An admin adds these";
 }
 $("bank-btn").addEventListener("click", () => {
   const b = data?.settings?.bank || {};
@@ -931,6 +944,15 @@ $("bank-btn").addEventListener("click", () => {
   $("b-acc").value = b.accountNumber || "";
   $("b-note").value = b.note || "";
   $("b-monzo").value = data?.settings?.monzo?.link || "";
+  const st = data?.settings || {};
+  const biz = st.business || {};
+  $("s-name").value = biz.name || "";
+  $("s-address").value = biz.address || "";
+  $("s-email").value = biz.email || "";
+  $("s-vatno").value = biz.vatNumber || "";
+  $("s-vat").value = st.vatRate ?? "";
+  $("s-days").value = st.dueDays ?? "";
+  $("s-ready").textContent = `Emailing invoices: ${data?.emailReady ? "ready" : "not set up yet"}. Pay by card (Stripe): ${data?.cardReady ? "ready" : "not set up yet"}.`;
   $("b-error").hidden = true;
   $("bank").showModal();
   $("b-name").focus();
@@ -940,7 +962,7 @@ $("bank-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("bank-save").disabled = true;
   try {
-    await api("money/settings", { method: "POST", body: { bank: { accountName: $("b-name").value.trim(), sortCode: $("b-sort").value.trim(), accountNumber: $("b-acc").value.replace(/\s/g, ""), note: $("b-note").value.trim() }, monzo: { link: $("b-monzo").value.trim() } } });
+    await api("money/settings", { method: "POST", body: { bank: { accountName: $("b-name").value.trim(), sortCode: $("b-sort").value.trim(), accountNumber: $("b-acc").value.replace(/\s/g, ""), note: $("b-note").value.trim() }, monzo: { link: $("b-monzo").value.trim() }, business: { name: $("s-name").value.trim(), address: $("s-address").value.trim(), email: $("s-email").value.trim(), vatNumber: $("s-vatno").value.trim() }, ...($("s-vat").value !== "" ? { vatRate: Number($("s-vat").value) } : {}), ...($("s-days").value !== "" ? { dueDays: Number($("s-days").value) } : {}) } });
     $("bank").close();
     say("Saved: they're on every invoice now.");
     await load();
@@ -952,6 +974,236 @@ $("bank-form").addEventListener("submit", async (e) => {
     $("bank-save").disabled = false;
   }
 });
+
+
+// ---- Everything for invoices, here (19 Oct 2026) ----
+// What Portal → Money did for invoices is here too: a payment recorded by hand, the history (payments,
+// with Take back for an admin; reminders and receipts, approved or rejected; everything that happened),
+// rejecting, and the studio's details. Anywhere else in Nova with an invoice opens the Invoicer, set up
+// for that (its address: see "Set up from the address" below).
+const EVENTS = { created: "Written", edited: "Changed", submitted: "Sent for approval", approved: "Approved", rejected: "Rejected", sent: "Emailed to the client", failed: "Didn't send", payment: "Payment", payment_removed: "Payment taken back", paid: "Paid in full", reminder: "Reminder", voided: "Removed", renumbered: "Renumbered" };
+const when = (iso) => (iso ? new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }) : "");
+
+// Reject: why, optionally (an invoice or a reminder waiting for approval)
+let whyAct = null;
+function askWhy(title, note, act, done) {
+  $("why-title").textContent = title;
+  $("why-note").textContent = note;
+  $("why-text").value = "";
+  $("why-error").hidden = true;
+  whyAct = { act, done };
+  $("why").showModal();
+  $("why-text").focus();
+}
+for (const id of ["why-close", "why-cancel"]) $(id).addEventListener("click", () => $("why").close());
+$("why-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!whyAct) return;
+  $("why-save").disabled = true;
+  try {
+    await whyAct.act($("why-text").value.trim() || undefined);
+    $("why").close();
+    say(whyAct.done);
+    if (chosen) chosen.detail = null;
+    await load();
+    if ($("history").open) drawHistory();
+  } catch (err) {
+    $("why-error").textContent = err.message;
+    $("why-error").hidden = false;
+  } finally {
+    $("why-save").disabled = false;
+  }
+});
+
+// Record a payment (bank transfer, Monzo, cash…; card payments come in from Stripe by themselves)
+function openPay() {
+  if (!chosen) return chooseFirst();
+  const inv = chosen.staged.invoice;
+  if (!["sent", "part_paid"].includes(inv.status)) return say(inv.status === "paid" ? `${inv.number} is paid in full.` : `${inv.number} hasn't been sent yet: payments are recorded once it's out.`, true);
+  $("pay-title").textContent = `Record a payment · ${inv.number}`;
+  $("pay-note").textContent = `${inv.billTo.name}: ${pounds(inv.balancePence)} left to pay of ${pounds(inv.totalPence)}.`;
+  $("p-amount").value = (inv.balancePence / 100).toFixed(2);
+  $("p-on").value = ukToday();
+  $("p-on").max = ukToday();
+  $("p-how").replaceChildren(...(data?.methods || []).map((m) => el("option", { value: m.id, text: m.name })));
+  $("p-text").value = "";
+  $("p-error").hidden = true;
+  $("pay").showModal();
+  $("p-amount").focus();
+}
+$("pay-btn").addEventListener("click", openPay);
+for (const id of ["pay-close", "pay-cancel"]) $(id).addEventListener("click", () => $("pay").close());
+$("pay-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const inv = chosen.staged.invoice;
+  const amount = $("p-amount").value.trim();
+  if (!(toPence(amount) > 0)) {
+    $("p-error").textContent = "The amount in pounds, like 150.00.";
+    $("p-error").hidden = false;
+    return;
+  }
+  $("pay-save").disabled = true;
+  try {
+    await api(`money/invoices/${inv.id}/payments`, { method: "POST", body: { amount, paidOn: $("p-on").value, method: $("p-how").value, note: $("p-text").value.trim() || undefined } });
+    $("pay").close();
+    say(`Payment of ${pounds(toPence(amount))} recorded on ${inv.number}.`);
+    chosen.detail = null;
+    await load();
+  } catch (err) {
+    $("p-error").textContent = err.message;
+    $("p-error").hidden = false;
+  } finally {
+    $("pay-save").disabled = false;
+  }
+});
+
+// The history: its details, payments, reminders and receipts, and what happened
+async function openHistory() {
+  if (!chosen) return chooseFirst();
+  if (!chosen.detail) {
+    try {
+      chosen.detail = await api(`money/invoices/${chosen.id}`);
+    } catch (err) {
+      return say(err.message, true);
+    }
+  }
+  drawHistory();
+  if (!$("history").open) $("history").showModal();
+}
+function drawHistory() {
+  const d = chosen?.detail;
+  if (!d) return;
+  const inv = d.invoice;
+  const admin = Boolean(data?.canDecide);
+  $("history-title").textContent = `History · ${inv.number}`;
+  const box = $("hist");
+  const facts = el("dl");
+  const fact = (k, v) => v && facts.append(el("dt", { text: k }), el("dd", { text: v }));
+  fact("Billed to", inv.billTo.name);
+  fact("Goes to", inv.billTo.email || "No email yet: add one with Edit to send it");
+  fact("Total", pounds(inv.totalPence) + (inv.vatRate ? ` (incl. ${inv.vatRate}% VAT)` : ""));
+  if (inv.paidPence) fact("Paid", pounds(inv.paidPence));
+  if (["sent", "part_paid"].includes(inv.status)) fact("Left to pay", pounds(inv.balancePence));
+  fact("Issued", dayText(inv.issueDate));
+  fact(inv.overdue ? "Was due" : "Due", dayText(inv.dueDate));
+  if (inv.sentAt) fact("Sent", when(inv.sentAt));
+  if (inv.decidedByName) fact(inv.status === "rejected" ? "Rejected by" : "Approved by", inv.decidedByName);
+  fact("Written", `${inv.createdBy === "agent" ? "by Agent" : "in Nova"} · ${when(inv.createdAt)}`);
+  const parts = [facts];
+  // Payments (an admin can take back one recorded by hand: two presses)
+  parts.push(el("h3", { text: "Payments" }));
+  if (!d.payments.length) parts.push(el("p", { class: "empty-note", text: "None yet." }));
+  else
+    parts.push(
+      el(
+        "ul",
+        {},
+        ...d.payments.map((p) => {
+          const li = el("li", {}, el("span", { text: `${dayText(p.paidOn)} · ${pounds(p.amountPence)} · ${p.methodName}${p.note ? ` · ${p.note}` : ""}${p.removed ? " · taken back" : ""}` }));
+          if (admin && !p.removed && p.method !== "stripe") {
+            const b = el("button", { type: "button", class: "ghost", text: "Take back" });
+            b.addEventListener("click", () => confirmThen(b, `Take back ${pounds(p.amountPence)}?`, () => api(`money/payments/${p.id}/remove`, { method: "POST", body: {} }), "Payment taken back."));
+            li.append(el("div", { class: "acts" }, b));
+          }
+          return li;
+        })
+      )
+    );
+  // Reminders and receipts (an admin approves or rejects one that's waiting)
+  parts.push(el("h3", { text: "Reminders and receipts" }));
+  if (!d.reminders.length) parts.push(el("p", { class: "empty-note", text: "None yet." }));
+  else
+    parts.push(
+      el(
+        "ul",
+        {},
+        ...d.reminders.map((r) => {
+          const what = r.kind === "receipt" ? "Receipt" : "Reminder";
+          const li = el("li", {}, el("span", { text: `${what} · ${when(r.createdAt)} · ${r.status === "sent" ? `sent ${when(r.sentAt)}` : r.status === "pending_approval" ? "waiting for approval" : r.status}` }));
+          if (r.body) li.append(el("p", { class: "body", text: r.body }));
+          if (admin && r.status === "pending_approval") {
+            const ok = el("button", { type: "button", class: "primary", text: "Approve and email it" });
+            ok.addEventListener("click", () => doNow(ok, () => api(`money/reminders/${r.id}/approve`, { method: "POST", body: {} }), `${what} sent.`));
+            const no = el("button", { type: "button", class: "ghost", text: "Reject" });
+            no.addEventListener("click", () => askWhy(`Reject the ${what.toLowerCase()}`, `It isn't emailed. ${inv.number} stays as it is.`, () => api(`money/reminders/${r.id}/reject`, { method: "POST", body: {} }), `The ${what.toLowerCase()} was rejected: nothing was emailed.`));
+            li.append(el("div", { class: "acts" }, ok, no));
+          }
+          return li;
+        })
+      )
+    );
+  // What happened
+  parts.push(el("h3", { text: "What happened" }));
+  parts.push(d.log.length ? el("ul", {}, ...d.log.slice(-20).reverse().map((e) => el("li", {}, el("span", { text: `${when(e.at)} · ${EVENTS[e.event] || e.event}${e.byName ? ` · ${e.byName}` : ""}${e.detail ? ` · ${e.detail}` : ""}` })))) : el("p", { class: "empty-note", text: "Nothing yet." }));
+  box.replaceChildren(...parts);
+}
+$("history-btn").addEventListener("click", openHistory);
+$("history-close").addEventListener("click", () => $("history").close());
+
+// ---- Set up from the address ----
+// Anywhere else in Nova with an invoice opens /invoicer/ with what it's for (shared/invoicer-link.js):
+//   ?new=1 (&name= &email= &billing=deposit|full)   a new invoice, ready to fill in
+//   ?invoice=<id> or ?number=NS-0022 (&stage=)      that invoice, at that stage
+//     &do=pay | history | share | edit | pdf | email | send | test | reject | remove   and what to do with it
+//                                                    (never done by itself: it opens the place to do it)
+//   ?reminder=<id>                                  the reminder's invoice, with its history open
+//   ?filter=deposit|balance|overdue|paid|waiting|removed  ?q=<words>   the list, narrowed
+//   ?settings=1                                     the invoice settings (bank, Monzo, the studio's details)
+async function fromAddress(ask) {
+  const f = ask.get("filter");
+  if (f && $("filters").querySelector(`[data-filter="${CSS.escape(f)}"]`)) $("filters").querySelector(`[data-filter="${CSS.escape(f)}"]`).click();
+  if (ask.get("q")) {
+    $("search").value = ask.get("q").slice(0, 80);
+    drawList();
+  }
+  if (ask.get("settings")) {
+    if (data?.canDecide) $("bank-btn").click();
+    else say("An admin changes the invoice settings.", true);
+    return true;
+  }
+  if (ask.get("new")) {
+    $("new-btn").click();
+    if (ask.get("name")) {
+      $("n-name").value = ask.get("name").slice(0, 120);
+      $("n-name").dispatchEvent(new Event("change"));
+    }
+    if (ask.get("email")) $("n-email").value = ask.get("email").slice(0, 200);
+    if (ask.get("billing") === "full") setBilling("full");
+    livePreview();
+    return true;
+  }
+  let id = Number(ask.get("invoice")) || 0;
+  if (!id && ask.get("number")) id = data?.invoices?.find((i) => i.number.toLowerCase() === ask.get("number").toLowerCase())?.id || 0;
+  const reminder = Number(ask.get("reminder")) || 0;
+  if (!id && reminder) id = data?.reminders?.find((r) => r.id === reminder)?.invoiceId || 0;
+  if (!id) return false;
+  const stage = STAGE_NAMES[ask.get("stage")] ? ask.get("stage") : null;
+  await choose(id, stage);
+  if (!chosen || chosen.id !== id) return true;
+  const act = reminder ? "history" : ask.get("do");
+  if (act === "pay") openPay();
+  else if (act === "history") openHistory();
+  else if (act === "share" && !$("share-btn").disabled) $("share-btn").click();
+  else if (act === "edit" && !$("edit-btn").disabled) $("edit-btn").click();
+  else if (act === "pdf") $("print-btn").click();
+  else if (act === "email") $("email-btn").click();
+  else if (act === "send" || act === "approve" || act === "remind") {
+    showPart("mail");
+    $("send-btn").focus();
+    $("send-btn").scrollIntoView({ block: "center" });
+  } else if (act === "reject" && !$("reject-btn").hidden) {
+    showPart("mail");
+    $("reject-btn").click();
+  } else if (act === "test" && !$("test-btn").hidden) {
+    showPart("mail");
+    $("test-btn").focus();
+    $("test-btn").scrollIntoView({ block: "center" });
+  } else if (act === "remove" && !$("remove-btn").hidden) {
+    showPart("doc");
+    $("remove-btn").focus();
+  } else showPart("doc");
+  return true;
+}
 
 // ---- Start ----
 (async () => {
@@ -974,8 +1226,8 @@ $("bank-form").addEventListener("submit", async (e) => {
     clients = (c.clients || []).filter((x) => x.name);
     $("clients").replaceChildren(...clients.slice(0, 300).map((x) => el("option", { value: x.name })));
   } catch {}
-  // ?invoice=12 opens that one
-  const want = Number(new URLSearchParams(location.search).get("invoice"));
-  const first = want || data?.invoices?.find((i) => i.status !== "void")?.id;
+  // Opened for something (a new invoice, one invoice, a payment…: see fromAddress), else the newest
+  if (await fromAddress(new URLSearchParams(location.search))) return;
+  const first = data?.invoices?.find((i) => i.status !== "void")?.id;
   if (first) await choose(first);
 })();

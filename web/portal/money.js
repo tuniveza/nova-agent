@@ -145,14 +145,15 @@
       const b = k.el("button", "mn-tile" + (warn ? " warn" : ""));
       b.type = "button";
       b.append(k.el("b", "", value), k.el("span", "", label));
-      b.addEventListener("click", () => setPart(go));
+      b.addEventListener("click", () => (typeof go === "function" ? go() : setPart(go)));
       return b;
     };
     const nodes = [
       tile(money(s.month.inPence), "In this month", "year"),
       tile(money(s.month.outPence), "Out this month", "expenses"),
-      tile(money(s.owed.pence), "Owed · " + s.owed.count + (s.owed.count === 1 ? " invoice" : " invoices"), "invoices"),
-      tile(money(s.overdue.pence), "Overdue · " + s.overdue.count, "invoices", s.overdue.count > 0),
+      // (the invoice tiles open the Invoicer: everything for invoices is there, 19 Oct 2026)
+      tile(money(s.owed.pence), "Owed · " + s.owed.count + (s.owed.count === 1 ? " invoice" : " invoices"), () => window.NovaInvoicer.open({})),
+      tile(money(s.overdue.pence), "Overdue · " + s.overdue.count, () => window.NovaInvoicer.open({ filter: "overdue" }), s.overdue.count > 0),
     ];
     k.redraw($("money-summary"), JSON.stringify(s), nodes);
   }
@@ -218,8 +219,9 @@
     const row = k.el("div", "actions");
     if (data.canDecide) {
       // (one press, 19 Oct 2026: the card says who it goes to)
-      button(row, "Approve", "", () => act(card, "money/reminders/" + r.id + "/approve", {}, r.kind === "receipt" ? "Receipt sent" : "Reminder sent"));
-      button(row, "Reject", "ghost", () => act(card, "money/reminders/" + r.id + "/reject", {}, "Reminder rejected"));
+      // (in the Invoicer: its history opens with this one, to approve or reject)
+      button(row, "Approve", "", () => window.NovaInvoicer.open({ reminder: r.id }));
+      button(row, "Reject", "ghost", () => window.NovaInvoicer.open({ reminder: r.id }));
     } else card.appendChild(k.el("p", "card-foot", "An admin approves reminders, signed in to Portal in a browser. Nothing is emailed until then."));
     if (row.children.length) card.appendChild(row);
     return card;
@@ -281,48 +283,24 @@
       button(row, "Void it", "", () => act(card, "money/invoices/" + inv.id + "/void", { note: why(card) }, "Voided"));
       button(row, "Cancel", "ghost", () => redrawWith(() => (voiding = null)));
     } else {
+      // Everything for an invoice happens in the Invoicer (19 Oct 2026): each button here opens it there,
+      // set up for that job (web/shared/invoicer-link.js; the Invoicer's fromAddress)
+      const go = (what) => () => window.NovaInvoicer.open({ invoice: inv.id, ...what });
+      if (waiting(inv) && canDecide) button(row, "Approve", "", go({ do: "send" }));
+      if (editable(inv)) button(row, "Edit", "ghost", go({ do: "edit" }));
       if (waiting(inv) && canDecide) {
-        // (one press, 19 Oct 2026: "Goes to" above says who it emails)
-        button(row, "Approve", "", () => {
-          if (!inv.billTo.email) return problem(card, "It has no email address. Edit it and add one first.");
-          approve(card, inv);
-        });
-      }
-      if (editable(inv)) button(row, "Edit", "ghost", () => openInvoiceForm(inv));
-      if (waiting(inv) && canDecide) {
-        button(row, "Reject", "ghost", () => redrawWith(() => (rejecting = inv.id)));
-        button(row, "Send me a test", "ghost", () => act(card, "money/invoices/test-send", { id: inv.id }, null));
+        button(row, "Reject", "ghost", go({ do: "reject" }));
+        button(row, "Send me a test", "ghost", go({ do: "test" }));
       }
       if (open(inv)) {
-        button(row, "Record a payment", "", () => redrawWith(() => (paying = inv.id)));
-        if (!reminding) button(row, "Ask for a reminder", "ghost", () => act(card, "money/invoices/" + inv.id + "/reminder", {}, canDecide ? "Reminder written: approve it above" : "Reminder written: an admin approves it"));
+        button(row, "Record a payment", "", go({ do: "pay" }));
+        if (!reminding) button(row, "Ask for a reminder", "ghost", go({ do: "remind" }));
       }
-      link(row, inv.pageUrl ? "Client's page" : "Preview", inv.pageUrl || "/app/api/money/invoices/" + inv.id + "/preview");
-      // The invoice as a PDF file, at any stage, sent or not (19 Oct 2026)
-      link(row, "PDF", "/app/api/money/invoices/" + inv.id + "/pdf").title = "Download " + inv.number + " as a PDF";
-      // Pay with Monzo: its link with the amount due and the invoice number filled in, to send by hand
-      if (inv.monzoUrl)
-        button(row, "Copy Monzo link", "ghost", async () => {
-          try {
-            await navigator.clipboard.writeText(inv.monzoUrl);
-            K().toast("Monzo link copied: it opens Monzo with the amount and " + inv.number + " filled in");
-          } catch {
-            problem(card, "Couldn't copy here. The Monzo link is " + inv.monzoUrl);
-          }
-        });
-      if (canDecide && inv.paidPence === 0 && !["void", "approved", "paid"].includes(inv.status)) button(row, "Void", "ghost", () => redrawWith(() => (voiding = inv.id)));
-      button(row, showing ? "Hide details" : "Details", "ghost", async () => {
-        if (showing) opened.delete(inv.id);
-        else {
-          opened.add(inv.id);
-          try {
-            await detailsFor(inv.id);
-          } catch (err) {
-            return problem(card, err.message);
-          }
-        }
-        draw();
-      });
+      button(row, "Open in Invoicer", "ghost", go({}));
+      button(row, "PDF", "ghost", go({ do: "pdf" })).title = "Download " + inv.number + " as a PDF";
+      if (inv.pageUrl) button(row, inv.monzoUrl ? "Share or copy Monzo link" : "Share", "ghost", go({ do: "share" }));
+      if (canDecide && inv.paidPence === 0 && !["void", "approved", "paid"].includes(inv.status)) button(row, "Void", "ghost", go({ do: "remove" }));
+      button(row, "Details", "ghost", go({ do: "history" }));
     }
     card.appendChild(row);
     if (waiting(inv) && !canDecide) card.appendChild(k.el("p", "card-foot", "An admin approves invoices, signed in to Portal in a browser. Nothing is emailed until then."));
@@ -579,40 +557,10 @@
       card.appendChild(k.el("p", "card-foot", "An admin changes these, signed in to Portal in a browser."));
       return card;
     }
-    const box = k.el("div", "cp-grid mn-inline");
-    const field = (label, key, value, attrs = {}) => {
-      const l = k.el("label", "cp-field");
-      const input = k.el("input");
-      input.type = attrs.type || "text";
-      input.value = value === undefined || value === null ? "" : String(value);
-      input.dataset.setting = key;
-      for (const [a, v] of Object.entries(attrs)) if (a !== "type") input.setAttribute(a, v);
-      l.append(k.el("span", "", label), input);
-      box.appendChild(l);
-    };
-    field("Studio name", "business.name", st.business.name, { maxlength: 120 });
-    field("Studio address", "business.address", st.business.address, { maxlength: 400 });
-    field("Email for replies", "business.email", st.business.email, { type: "email", maxlength: 200 });
-    field("VAT number (if registered)", "business.vatNumber", st.business.vatNumber, { maxlength: 30 });
-    field("Bank account name", "bank.accountName", st.bank.accountName, { maxlength: 120 });
-    field("Sort code", "bank.sortCode", st.bank.sortCode, { maxlength: 20, inputmode: "numeric" });
-    field("Account number", "bank.accountNumber", st.bank.accountNumber, { maxlength: 34, inputmode: "numeric" });
-    field("A line under the bank details (optional)", "bank.note", st.bank.note, { maxlength: 200 });
-    field("Monzo link (monzo.me/yourname, optional)", "monzo.link", st.monzo?.link, { maxlength: 300, spellcheck: "false" });
-    field("VAT % on new invoices", "vatRate", st.vatRate, { type: "number", min: 0, max: 100, step: "0.01" });
-    field("Days to pay", "dueDays", st.dueDays, { type: "number", min: 0, max: 120, step: 1 });
-    card.appendChild(box);
-    const row = k.el("div", "actions");
-    button(row, "Save settings", "", () => {
-      const body = { business: {}, bank: {}, monzo: {} };
-      card.querySelectorAll("[data-setting]").forEach((i) => {
-        const [a, b] = i.dataset.setting.split(".");
-        if (b) body[a][b] = i.value.trim();
-        else body[a] = Number(i.value);
-      });
-      act(card, "money/settings", body, "Settings saved");
-    });
-    card.appendChild(row);
+    // (changed in the Invoicer, with everything else for invoices: 19 Oct 2026)
+    const go = k.el("div", "actions");
+    button(go, "Change them in the Invoicer", "", () => window.NovaInvoicer.open({ settings: true }));
+    card.appendChild(go);
     return card;
   }
 
@@ -718,7 +666,8 @@
     $(toggle).setAttribute("aria-expanded", String(on));
   }
 
-  $("money-new").addEventListener("click", () => ($("money-invoice-form").hidden ? openInvoiceForm(null) : showForm("money-invoice-form", "money-new", false)));
+  // Writing an invoice happens in the Invoicer (19 Oct 2026): it opens with a new one ready to fill in
+  $("money-new").addEventListener("click", () => window.NovaInvoicer.open({ new: true }));
   $("mn-inv-cancel").addEventListener("click", () => showForm("money-invoice-form", "money-new", false));
   $("mn-inv-add-line").addEventListener("click", () => {
     const row = lineRow({});

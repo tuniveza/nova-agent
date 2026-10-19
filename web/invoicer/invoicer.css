@@ -84,6 +84,8 @@ textarea.field { resize: none; line-height: 1.5; }
 #bank::backdrop { background: rgb(0 0 0 / .55); }
 #share { width: min(520px, calc(100vw - 24px)); padding: 0; border-radius: 20px; border: 1px solid var(--line); background: var(--deep, #120a1a); color: var(--text); }
 #share::backdrop { background: rgb(0 0 0 / .55); }
+#pay, #history, #why { width: min(520px, calc(100vw - 24px)); padding: 0; border-radius: 20px; border: 1px solid var(--line); background: var(--deep, #120a1a); color: var(--text); }
+:is(#pay, #history, #why)::backdrop { background: rgb(0 0 0 / .55); }
 .share-form { gap: 8px; }
 #share-wait, #share-ready { display: flex; flex-direction: column; gap: 8px; }
 #share-wait[hidden], #share-ready[hidden] { display: none; }
@@ -266,6 +268,9 @@ html body .lines .n { text-align: right !important; }
 #share-btn { --ic: var(--ic-share); }
 #edit-btn, #n-custom { --ic: var(--ic-edit); }
 #remove-btn { --ic: var(--ic-trash); }
+#pay-btn, #pay-save { --ic: var(--ic-card); }
+#history-btn { --ic: var(--ic-list); }
+#reject-btn, #why-save { --ic: var(--ic-close); }
 #theme-save { --ic: var(--ic-star); }
 #note-save, #share-approve, #n-save, #bank-save { --ic: var(--ic-check); }
 #email-btn { --ic: var(--ic-eye); }
@@ -278,9 +283,9 @@ html body .lines .n { text-align: right !important; }
 #share-sms { --ic: var(--ic-sms); }
 #share-mail { --ic: var(--ic-mail); }
 #share-link { --ic: var(--ic-link); }
-.nb-tool :is(#new-btn, #n-add, #print-btn, #open-btn, #share-btn, #edit-btn, #n-custom, #remove-btn, #theme-save, #note-save, #share-approve, #n-save, #bank-save, #email-btn, #test-btn, #copy-btn, #share-copy, #send-btn, #share-tg, #restart-btn, #share-device, #share-wa, #share-sms, #share-mail, #share-link) {
+.nb-tool :is(#new-btn, #n-add, #print-btn, #open-btn, #share-btn, #edit-btn, #n-custom, #remove-btn, #theme-save, #note-save, #share-approve, #n-save, #bank-save, #email-btn, #test-btn, #copy-btn, #share-copy, #send-btn, #share-tg, #restart-btn, #share-device, #share-wa, #share-sms, #share-mail, #share-link, #pay-btn, #pay-save, #history-btn, #reject-btn, #why-save) {
   display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
-.nb-tool :is(#new-btn, #n-add, #print-btn, #open-btn, #share-btn, #edit-btn, #n-custom, #remove-btn, #theme-save, #note-save, #share-approve, #n-save, #bank-save, #email-btn, #test-btn, #copy-btn, #share-copy, #send-btn, #share-tg, #restart-btn, #share-device, #share-wa, #share-sms, #share-mail, #share-link)::before,
+.nb-tool :is(#new-btn, #n-add, #print-btn, #open-btn, #share-btn, #edit-btn, #n-custom, #remove-btn, #theme-save, #note-save, #share-approve, #n-save, #bank-save, #email-btn, #test-btn, #copy-btn, #share-copy, #send-btn, #share-tg, #restart-btn, #share-device, #share-wa, #share-sms, #share-mail, #share-link, #pay-btn, #pay-save, #history-btn, #reject-btn, #why-save)::before,
 .nb-tool .modes button::before, .nb-tool .filters button::before, #bank-btn .pb-k::before, .paper-pick > span::before,
 .nb-tool .nt-h::before {
   content: ""; flex: none; width: 16px; height: 16px; background: currentColor;
@@ -294,6 +299,7 @@ html body .lines .n { text-align: right !important; }
 .nb-tool .filters button { display: inline-flex; align-items: center; gap: 6px; }
 .filters [data-filter="all"] { --ic: var(--ic-grid); }
 .filters [data-filter="waiting"] { --ic: var(--ic-hourglass); }
+.filters [data-filter="removed"] { --ic: var(--ic-trash); }
 .nb-tool .filters :is([data-filter="deposit"], [data-filter="balance"], [data-filter="overdue"], [data-filter="paid"])::before { width: 8px; height: 8px; border-radius: 50%; -webkit-mask: none; mask: none; background: var(--st); box-shadow: 0 0 6px var(--st); }
 .filters [data-filter="deposit"], .inv[data-st="deposit"] { --st: #b98cff; }
 .filters [data-filter="balance"], .inv[data-st="balance"] { --st: #8fb4ff; }
@@ -436,17 +442,17 @@ html body .inv .who, html body .inv .who b, html body .inv .who small { text-ali
   .send-note { display: block; -webkit-line-clamp: unset; overflow: visible; }
 
   /* ---- The windows: full-screen sheets ---- */
-  #new, #bank, #share { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-radius: 0; inset: 0; }
-  #new > form, #bank > form, #share > .new-form { height: 100%; max-height: none; overflow-y: auto; overscroll-behavior: contain; gap: 10px;
+  #new, #bank, #share, #pay, #history, #why { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-radius: 0; inset: 0; }
+  #new > form, #bank > form, #share > .new-form, #pay > form, #history > .new-form, #why > form { height: 100%; max-height: none; overflow-y: auto; overscroll-behavior: contain; gap: 10px;
     padding: 0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left)); }
-  :is(#new, #bank, #share) .new-form > .col-head:first-child { position: sticky; top: 0; z-index: 3; margin: 0 -14px; padding: max(10px, env(safe-area-inset-top)) 14px 10px; background: var(--deep, #120a1a); border-bottom: 1px solid var(--line); }
-  html body.nb-tool :is(#new-close, #bank-close, #share-close) { min-width: 44px; min-height: 44px; }
-  :is(#new, #bank) .new-form > .mail-tools { position: sticky; bottom: 0; z-index: 3; margin: 0 -14px; padding: 10px 14px max(12px, env(safe-area-inset-bottom)); background: var(--deep, #120a1a); border-top: 1px solid var(--line); }
-  :is(#new, #bank) .new-form > .mail-tools > button { flex: 1 1 0; min-height: 44px; }
+  :is(#new, #bank, #share, #pay, #history, #why) .new-form > .col-head:first-child { position: sticky; top: 0; z-index: 3; margin: 0 -14px; padding: max(10px, env(safe-area-inset-top)) 14px 10px; background: var(--deep, #120a1a); border-bottom: 1px solid var(--line); }
+  html body.nb-tool :is(#new-close, #bank-close, #share-close, #pay-close, #history-close, #why-close) { min-width: 44px; min-height: 44px; }
+  :is(#new, #bank, #pay, #why) .new-form > .mail-tools { position: sticky; bottom: 0; z-index: 3; margin: 0 -14px; padding: 10px 14px max(12px, env(safe-area-inset-bottom)); background: var(--deep, #120a1a); border-top: 1px solid var(--line); }
+  :is(#new, #bank, #pay, #why) .new-form > .mail-tools > button { flex: 1 1 0; min-height: 44px; }
   #share .new-form { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
   /* (the form's parts keep their own height: the sheet scrolls, nothing squashes or slides under the buttons) */
-  #new > form > *, #bank > form > *, #share > .new-form > * { flex-shrink: 0; }
-  #new, #bank, #share { overflow: hidden; }
+  #new > form > *, #bank > form > *, #share > .new-form > *, #pay > form > *, #history > .new-form > *, #why > form > * { flex-shrink: 0; }
+  #new, #bank, #share, #pay, #history, #why { overflow: hidden; }
   .new-grid { flex: none; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; height: auto; max-height: none; min-height: 0; overflow: visible; gap: 14px; }
   .new-scroll { overflow: visible; padding-right: 0; }
   .np-frame { flex: none; overflow: hidden; }
@@ -512,3 +518,27 @@ html body .inv .who, html body .inv .who b, html body .inv .who small { text-ali
 .np-head { align-items: center; }
 .np-head .np-state { flex: 1 1 auto; min-width: 0; }
 .np-pdf { flex: none; padding: 4px 12px; min-height: 30px; font-size: 12px; }
+
+/* Everything for invoices in one place (19 Oct 2026): a payment, the history (payments, reminders, what
+   happened), rejecting, the studio's details; and anywhere else in Nova that has an invoice opens here */
+.nb-tool #reject-btn { align-self: center; color: #ff8094; border-color: color-mix(in srgb, #ff6b81 45%, transparent); }
+.set-head { margin: 8px 0 0; padding-top: 10px; border-top: 1px solid var(--line); }
+.hist { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: min(70dvh, 640px); padding-right: 2px; }
+.hist h3 { margin: 4px 0 0; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.hist dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 14px; }
+.hist dt { color: var(--muted); }
+.hist dd { margin: 0; overflow-wrap: anywhere; }
+.hist ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.hist li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); font-size: 13.5px; line-height: 1.4; }
+.hist li > span { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.hist li .acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.hist li .acts button { min-height: 32px; padding: 3px 12px; font-size: 13px; }
+.hist .body { flex-basis: 100%; white-space: pre-wrap; color: var(--muted); font-size: 13px; }
+.hist .empty-note { color: var(--muted); font-size: 13.5px; margin: 0; }
+.inv .rem-dot { display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: #f2c14e; box-shadow: 0 0 6px #f2c14e; vertical-align: 1px; }
+@media (max-width: 820px), (max-height: 500px) {
+  .hist { max-height: none; overflow: visible; }
+}
+/* (a long window scrolls inside itself, never cut off at the bottom; the history reads from the left) */
+#bank > form, #pay > form, #why > form, #history > .new-form { overflow-y: auto; overscroll-behavior: contain; }
+html body .hist, html body .hist :is(dt, dd, li, li > span, p, h3) { text-align: left !important; }

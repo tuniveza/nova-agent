@@ -57,6 +57,7 @@
         <button type="button" data-filter="overdue" aria-pressed="false">Overdue</button>
         <button type="button" data-filter="paid" aria-pressed="false">Paid</button>
         <button type="button" data-filter="waiting" aria-pressed="false">To approve</button>
+        <button type="button" data-filter="removed" aria-pressed="false">Removed</button>
       </div>
       <ul class="scroll inv-list" id="list" aria-label="Invoices"></ul>
       <!-- Testing (admins): every invoice so far becomes TEST-0001…, the next is NS-0001 -->
@@ -77,6 +78,8 @@
           <a class="btn ghost" id="open-btn" role="button" href="#" target="_blank" rel="noopener" aria-disabled="true" title="Open the invoice on its own page">Open</a>
           <button type="button" id="share-btn" disabled title="Send its link by WhatsApp, a message, Instagram… (once it's approved)">Share</button>
           <button type="button" id="edit-btn" disabled title="Change it: its artist, lines, dates and notes">Edit</button>
+          <button type="button" id="pay-btn" disabled title="Record a payment: by bank transfer, Monzo, cash…">Payment</button>
+          <button type="button" id="history-btn" disabled title="Its payments, reminders and everything that happened to it">History</button>
           <button type="button" id="remove-btn" hidden title="Remove it (kept on record, marked removed)">Remove</button>
         </div>
       </div>
@@ -116,6 +119,7 @@
       </div>
       <button type="button" class="primary send-wide" id="send-btn" disabled>Send…</button>
       <p class="send-note" id="send-note"></p>
+      <button type="button" class="ghost small-btn" id="reject-btn" hidden>Reject</button>
     </section>
   </div>
 </main>
@@ -123,7 +127,7 @@
 <!-- The bank details on every invoice (Money's settings; admins) -->
 <dialog id="bank" aria-labelledby="bank-title">
   <form id="bank-form" method="dialog" class="new-form bank-form">
-    <div class="col-head"><h2 class="nt-h" id="bank-title">Bank details</h2><button type="button" class="ghost" id="bank-close" aria-label="Close">✕</button></div>
+    <div class="col-head"><h2 class="nt-h" id="bank-title">Invoice settings</h2><button type="button" class="ghost" id="bank-close" aria-label="Close">✕</button></div>
     <p class="muted small">Shown on every invoice, its page and its email, so clients can pay with Monzo or by bank transfer.</p>
     <label class="nt-label" for="b-monzo">Monzo link (optional)</label>
     <input id="b-monzo" class="field" autocomplete="off" maxlength="300" placeholder="monzo.me/yourname" spellcheck="false">
@@ -136,6 +140,22 @@
     </div>
     <label class="nt-label" for="b-note">Note (optional)</label>
     <input id="b-note" class="field" autocomplete="off" maxlength="200" placeholder="Bank: Monzo">
+    <!-- (19 Oct 2026: everything for invoices is here, Portal → Money's invoice settings included) -->
+    <h3 class="nt-label set-head">The studio on every invoice</h3>
+    <label class="nt-label" for="s-name">Studio name</label>
+    <input id="s-name" class="field" autocomplete="off" maxlength="120">
+    <label class="nt-label" for="s-address">Studio address</label>
+    <textarea id="s-address" class="field" rows="2" maxlength="400"></textarea>
+    <div class="grid2">
+      <div><label class="nt-label" for="s-email">Email for replies</label><input id="s-email" class="field" type="email" autocomplete="off" maxlength="200"></div>
+      <div><label class="nt-label" for="s-vatno">VAT number (if registered)</label><input id="s-vatno" class="field" autocomplete="off" maxlength="30"></div>
+    </div>
+    <h3 class="nt-label set-head">New invoices</h3>
+    <div class="grid2">
+      <div><label class="nt-label" for="s-vat">VAT %</label><input id="s-vat" class="field" type="number" min="0" max="100" step="0.01"></div>
+      <div><label class="nt-label" for="s-days">Days to pay</label><input id="s-days" class="field" type="number" min="0" max="120" step="1"></div>
+    </div>
+    <p class="muted small" id="s-ready"></p>
     <p class="message bad" id="b-error" hidden></p>
     <div class="mail-tools"><button type="button" class="ghost" id="bank-cancel">Cancel</button><button type="submit" class="primary" id="bank-save">Save</button></div>
   </form>
@@ -166,6 +186,45 @@
       <p class="muted small">Share… opens your phone's or computer's own list (Instagram, Messenger, Signal, Snapchat…). Anyone with the link can see the invoice and pay it, so send it only to them.</p>
     </div>
   </div>
+</dialog>
+
+<!-- A payment, recorded by hand (bank transfer, Monzo, cash…): what's left to pay and the stage follow it -->
+<dialog id="pay" aria-labelledby="pay-title">
+  <form id="pay-form" method="dialog" class="new-form bank-form">
+    <div class="col-head"><h2 class="nt-h" id="pay-title">Record a payment</h2><button type="button" class="ghost" id="pay-close" aria-label="Close">✕</button></div>
+    <p class="muted small" id="pay-note"></p>
+    <div class="grid2">
+      <div><label class="nt-label" for="p-amount">Amount (£)</label><input id="p-amount" class="field" inputmode="decimal" autocomplete="off" required></div>
+      <div><label class="nt-label" for="p-on">Paid on</label><input id="p-on" class="field" type="date" required></div>
+    </div>
+    <label class="nt-label" for="p-how">How</label>
+    <select id="p-how" class="field"></select>
+    <label class="nt-label" for="p-text">Note (optional)</label>
+    <input id="p-text" class="field" autocomplete="off" maxlength="300">
+    <p class="message bad" id="p-error" hidden></p>
+    <div class="mail-tools"><button type="button" class="ghost" id="pay-cancel">Cancel</button><button type="submit" class="primary" id="pay-save">Save the payment</button></div>
+  </form>
+</dialog>
+
+<!-- An invoice's history: its details, payments (an admin can take one back), reminders and receipts
+     (an admin approves or rejects a waiting one) and everything that happened to it -->
+<dialog id="history" aria-labelledby="history-title">
+  <div class="new-form share-form">
+    <div class="col-head"><h2 class="nt-h" id="history-title">History</h2><button type="button" class="ghost" id="history-close" aria-label="Close">✕</button></div>
+    <div class="hist" id="hist"></div>
+  </div>
+</dialog>
+
+<!-- Rejecting (an invoice or a reminder waiting for approval): why, optionally; nothing is emailed -->
+<dialog id="why" aria-labelledby="why-title">
+  <form id="why-form" method="dialog" class="new-form bank-form">
+    <div class="col-head"><h2 class="nt-h" id="why-title">Reject it</h2><button type="button" class="ghost" id="why-close" aria-label="Close">✕</button></div>
+    <p class="muted small" id="why-note"></p>
+    <label class="nt-label" for="why-text">Why (optional)</label>
+    <input id="why-text" class="field" autocomplete="off" maxlength="500">
+    <p class="message bad" id="why-error" hidden></p>
+    <div class="mail-tools"><button type="button" class="ghost" id="why-cancel">Cancel</button><button type="submit" class="primary" id="why-save">Reject it</button></div>
+  </form>
 </dialog>
 
 <!-- A new invoice: the artist, the services from the price list, the dates -->
@@ -214,7 +273,7 @@
       <button type="button" class="ghost" id="n-cancel">Cancel</button>
       <button type="submit" class="primary" id="n-save">Make the invoice</button>
     </div>
-    <p class="muted small" id="n-foot">It waits for an admin's Approve in Portal → Money before anything is emailed.</p>
+    <p class="muted small" id="n-foot">It waits for an admin's Approve (here, with Send) before anything is emailed.</p>
   </form>
 </dialog>
 

@@ -198,6 +198,8 @@ function portalAppUrl(url) {
   const u = panelUrl(url);
   if (u.startsWith("/portal/")) return u + (u.includes("?") ? "&" : "?") + "app=1";
   if (!u.startsWith("/") || u.startsWith("//")) return u;
+  // (an invoice opens in the Invoicer, inside Nova Agent: everything for invoices is there, 19 Oct 2026)
+  if (u.startsWith("/invoicer/")) return novaAgentUrl(u);
   return "/portal/?app=1&view=alerts";
 }
 // Which app this phone opens for notifications: "portal" when it's the Portal phone app

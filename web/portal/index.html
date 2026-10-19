@@ -40,6 +40,7 @@
 <link rel="stylesheet" href="/shared/quest-modes.css">
 <script src="/shared/quest-modes.js"></script>
 <script src="/shared/look.js"></script>
+<script src="/shared/invoicer-link.js"></script>
 <link rel="stylesheet" href="/shared/install.css">
 <!-- Every button's look, last so it decides it (buttons.css) -->
 <link rel="stylesheet" href="/shared/buttons.css">
@@ -555,11 +556,11 @@
       <div class="view-head">
         <h2>Money</h2>
         <div class="mn-head-actions">
-          <button id="money-new" class="chip" type="button" aria-expanded="false" aria-controls="money-invoice-form">Write an invoice</button>
+          <button id="money-new" class="chip" type="button" title="Opens the Invoicer with a new invoice">Write an invoice</button>
           <button id="money-expense-new" class="chip" type="button" aria-expanded="false" aria-controls="money-expense-form">Add an expense</button>
         </div>
       </div>
-      <p class="hint" id="money-hint">Invoices, payments and expenses. Nothing is emailed to a client until an admin approves it.</p>
+      <p class="hint" id="money-hint">Invoices, payments and expenses. Every invoice button opens the Invoicer, where everything for invoices is done. Nothing is emailed to a client until an admin approves it.</p>
       <!-- In and out this month, owed, overdue (each tile opens its part) -->
       <div id="money-summary" class="mn-summary" aria-live="polite"></div>
 

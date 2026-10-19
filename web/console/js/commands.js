@@ -121,7 +121,7 @@ export const PORTAL = {
   alerts: "notifications",
 };
 
-export const APPS = { portal: "/portal/", calendar: "/calendar/", notes: "/notes/", board: "/board/", index: "/app/memory/", lossless: "/lossless/", visualizer: "/visualizer", observatory: "/observatory/", fixer: "/fixer/", console: "/console/", agent: "pane:chat", quests: "pane:quests", missions: "pane:missions", manual: "manual" };
+export const APPS = { invoicer: "/invoicer/", portal: "/portal/", calendar: "/calendar/", notes: "/notes/", board: "/board/", index: "/app/memory/", lossless: "/lossless/", visualizer: "/visualizer", observatory: "/observatory/", fixer: "/fixer/", console: "/console/", agent: "pane:chat", quests: "pane:quests", missions: "pane:missions", manual: "manual" };
 
 const P = (path) => "/app/api/" + path;
 
@@ -662,7 +662,8 @@ export const COMMANDS = {
   enquiries: { help: "Portal's enquiries (same as portal enquiries)", usage: "enquiries", async run(ctx) { return COMMANDS.portal.run(ctx, ["enquiries"], {}); } },
   chats: { help: "Portal's chats (same as portal chats)", usage: "chats", async run(ctx) { return COMMANDS.portal.run(ctx, ["chats"], {}); } },
   clients: { help: "Portal's clients (same as portal clients)", usage: "clients", async run(ctx) { return COMMANDS.portal.run(ctx, ["clients"], {}); } },
-  money: { help: "Portal's money (same as portal money)", usage: "money", async run(ctx) { return COMMANDS.portal.run(ctx, ["money"], {}); } },
+  money: { help: "Portal's money (same as portal money); everything for invoices is done in the Invoicer: open invoicer", usage: "money", async run(ctx) { return COMMANDS.portal.run(ctx, ["money"], {}); } },
+  invoicer: { help: "Open the Invoicer, where everything for invoices is done (same as open invoicer)", usage: "invoicer", async run(ctx) { return COMMANDS.open.run(ctx, ["invoicer"], {}); } },
   campaigns: { help: "Portal's campaigns (same as portal campaigns)", usage: "campaigns", async run(ctx) { return COMMANDS.portal.run(ctx, ["campaigns"], {}); } },
   outreach: { help: "Portal's outreach (same as portal outreach)", usage: "outreach", async run(ctx) { return COMMANDS.portal.run(ctx, ["outreach"], {}); } },
   social: { help: "Portal's social (same as portal social)", usage: "social", async run(ctx) { return COMMANDS.portal.run(ctx, ["social"], {}); } },
@@ -700,7 +701,7 @@ export const GROUPS = [
   ["Start here", ["help", "today", "now", "status", "search", "whoami", "version"]],
   ["Plans", ["quests", "missions", "plans"]],
   ["Apps", ["calendar", "notes", "board", "agent", "ask", "index", "open"]],
-  ["Studio", ["enquiries", "chats", "clients", "money", "campaigns", "outreach", "social", "approvals", "alerts", "tests", "portal", "approve", "reject"]],
+  ["Studio", ["invoicer", "enquiries", "chats", "clients", "money", "campaigns", "outreach", "social", "approvals", "alerts", "tests", "portal", "approve", "reject"]],
   ["Tools", ["google", "fixer", "lossless", "music", "theme", "logs"]],
   ["Server", ["computer", "deploy", "backup", "vps", "shell"]],
   ["Admin", ["admin"]],

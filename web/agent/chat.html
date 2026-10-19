@@ -1825,7 +1825,14 @@
       const row = document.createElement('div');
       row.className = 'actions';
       for (const a of actions) {
-        const chip = document.createElement('span');
+        // (one with a place in Nova Agent, like an invoice in the Invoicer: a button that opens it there)
+        const opens = typeof a.url === 'string' && a.url.startsWith('/') && a.kind !== 'social';
+        const chip = document.createElement(opens ? 'button' : 'span');
+        if (opens) {
+          chip.type = 'button';
+          chip.title = 'Open it';
+          chip.addEventListener('click', () => openAddress(a.url));
+        }
         chip.className = `action ${a.kind}`;
         chip.textContent = `${a.kind === 'removed' ? '✕' : a.kind === 'looked' ? '◎' : a.kind === 'file' ? '▤' : a.kind === 'draft' ? '✉' : a.kind === 'booking' ? '◷' : a.kind === 'campaign' ? '✉' : a.kind === 'outreach' ? '✉' : a.kind === 'social' ? '◈' : '✦'} ${a.text}`;
         row.appendChild(chip);

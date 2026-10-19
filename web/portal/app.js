@@ -392,7 +392,8 @@
   }
 
   // ===== Today: what matters at a glance (each tile opens its section) =====
-  document.querySelectorAll("#view-today [data-go]").forEach((b) => b.addEventListener("click", () => goView(b.dataset.go)));
+  // (Today's "Invoices overdue" opens the Invoicer on the overdue ones: everything for invoices is there, 19 Oct 2026)
+  document.querySelectorAll("#view-today [data-go]").forEach((b) => b.addEventListener("click", () => (b.dataset.go === "money" && window.NovaInvoicer ? window.NovaInvoicer.open({ filter: "overdue" }) : goView(b.dataset.go))));
   const todayName = () => new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" });
   setText("today-date", todayName());
   async function loadToday() {
@@ -2055,6 +2056,16 @@
       const a = el("a", "btn small ghost", "Call");
       a.href = "tel:" + String(c.phone).replace(/[^\d+]/g, "");
       row.appendChild(a);
+    }
+    // Their invoices, in the Invoicer (19 Oct 2026): a new one with their name and email filled in, or theirs listed
+    if (window.NovaInvoicer) {
+      const write = el("button", "btn small", "New invoice");
+      write.type = "button";
+      write.addEventListener("click", () => window.NovaInvoicer.open({ new: true, name: c.name, email: c.email || "" }));
+      const theirs = el("button", "btn small ghost", "Invoices");
+      theirs.type = "button";
+      theirs.addEventListener("click", () => window.NovaInvoicer.open({ q: c.name }));
+      row.append(write, theirs);
     }
     card.appendChild(row);
     return card;
@@ -4151,11 +4162,15 @@
       // No buttons: the card is the whole message
       return card;
     }
-    // Enquiry alerts open the Enquiries tab; booking alerts open Acuity
-    const inHere = /^\/(app|portal)\//.test(n.url);
-    const open = el(inHere ? "button" : "a", "btn small", inHere ? "Open enquiry" : /acuityscheduling/.test(n.url) ? "Open in Acuity" : "Open in Google Calendar");
+    // Enquiry alerts open the Enquiries tab; booking alerts open Acuity; invoice alerts (an invoice,
+    // reminder or receipt to approve) open the Invoicer on that invoice (19 Oct 2026: older ones still
+    // say /portal/?view=money&invoice=N)
+    const invoiceAt = /^\/invoicer\//.test(n.url) ? n.url : /[?&]view=money\b/.test(n.url) ? "/invoicer/" + (/[?&]invoice=(\d+)/.test(n.url) ? "?invoice=" + n.url.match(/[?&]invoice=(\d+)/)[1] : "") : "";
+    const inHere = /^\/(app|portal)\//.test(n.url) && !invoiceAt;
+    const open = el(inHere || invoiceAt ? "button" : "a", "btn small", invoiceAt ? "Open in Invoicer" : inHere ? "Open enquiry" : /acuityscheduling/.test(n.url) ? "Open in Acuity" : "Open in Google Calendar");
+    if (invoiceAt) open.addEventListener("click", () => (window.NovaAgent && window.NovaAgent.open ? window.NovaAgent.open(invoiceAt) : window.parent !== window && window.parent.NovaAgent ? window.parent.NovaAgent.open(invoiceAt) : (location.href = "/agent/?open=" + encodeURIComponent(invoiceAt))));
     // An enquiry: switch tabs when tapped
-    if (inHere) open.addEventListener("click", () => window.PortalPage.go("/portal/?view=enquiries", { replace: true }));
+    else if (inHere) open.addEventListener("click", () => window.PortalPage.go("/portal/?view=enquiries", { replace: true }));
     // A booking: a link to Acuity, opened outside the app
     else Object.assign(open, { href: n.url, target: "_blank", rel: "noopener" });
     // Add it to the row

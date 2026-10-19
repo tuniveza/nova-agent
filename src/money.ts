@@ -153,7 +153,7 @@ export function summaryText(c: MoneyContext): string {
     `This month (${day(s.month.from)} to ${day(s.month.to)}): ${money(s.month.inPence)} in from paid invoices, ${money(s.month.outPence)} out in confirmed expenses.`,
     `Tax year ${s.taxYear.name} (${day(s.taxYear.from)} to ${day(s.taxYear.to)}): ${money(s.taxYear.inPence)} in, ${money(s.taxYear.outPence)} out${cats ? ` (biggest: ${cats})` : ""}.`,
     `Owed to the studio: ${money(s.owed.pence)} on ${s.owed.count} invoice${s.owed.count === 1 ? "" : "s"}; overdue: ${money(s.overdue.pence)} on ${s.overdue.count}.`,
-    `Waiting for an admin in Portal → Money: ${s.invoicesWaiting} invoice${s.invoicesWaiting === 1 ? "" : "s"} and ${s.remindersWaiting} reminder${s.remindersWaiting === 1 ? "" : "s"}. Unconfirmed expenses: ${s.unconfirmedExpenses}.`,
+    `Waiting for an admin (in the Invoicer): ${s.invoicesWaiting} invoice${s.invoicesWaiting === 1 ? "" : "s"} and ${s.remindersWaiting} reminder${s.remindersWaiting === 1 ? "" : "s"}. Unconfirmed expenses: ${s.unconfirmedExpenses}.`,
     `Invoices default to ${c.vatRate}% VAT and payment within ${c.dueDays} days.`,
     c.monzo ? `Clients can pay every invoice with Monzo (${c.monzo}): each sent, unpaid invoice has its own Monzo link with the amount and invoice number filled in.` : "Monzo isn't set up for invoices yet (an admin adds the studio's Monzo link in Portal → Money → settings).",
     c.recentInvoices.length ? "Latest invoices:\n" + c.recentInvoices.map((i) => `#${i.id} ${i.number} · ${i.to} · ${money(i.totalPence)} · ${i.overdue ? "OVERDUE" : STATUS_WORDS[i.status] || i.status}${i.monzoUrl ? ` · Monzo: ${i.monzoUrl}` : ""}${i.pdfUrl ? ` · PDF: ${i.pdfUrl}` : ""}`).join("\n") : "No invoices yet.",
@@ -164,17 +164,18 @@ export function summaryText(c: MoneyContext): string {
 // ===== Agent's tools =====
 
 // (the same kinds as chat.ts's ChatAction: a line under Agent's reply)
-type Action = { kind: "added" | "changed" | "looked"; text: string };
+// (url: where it opens in Nova Agent; an invoice opens in the Invoicer, where everything for invoices is)
+type Action = { kind: "added" | "changed" | "looked"; text: string; url?: string };
 
 // Read the money, write and edit invoices (they wait for an admin), log expenses as unconfirmed.
 // There's no tool that approves, emails, reminds, voids, records a payment or changes settings.
 export function moneyTools(actions: { push(action: Action): number }) {
-  const did = (kind: Action["kind"], text: string) => {
-    actions.push({ kind, text });
+  const did = (kind: Action["kind"], text: string, url?: string) => {
+    actions.push(url ? { kind, text, url } : { kind, text });
     trace("input", "ok", `Chat: ${text}`);
   };
   const failed = (error: unknown) => `Couldn't reach the studio's money just now: ${(error as Error).message}`;
-  const notSent = "Nothing has been emailed: it goes to the client only when an admin approves it in Portal → Money. Tell them that plainly.";
+  const notSent = "Nothing has been emailed: it goes to the client only when an admin approves it in the Invoicer (where everything for invoices is done: Nova's navigation panel, far left). Tell them that plainly.";
   const LINES = z
     .array(
       z.object({
@@ -213,7 +214,7 @@ export function moneyTools(actions: { push(action: Action): number }) {
       run: async ({ status }) => {
         try {
           const list = await listInvoices(status);
-          did("looked", `Looked at ${list.length} invoice${list.length === 1 ? "" : "s"}`);
+          did("looked", `Looked at ${list.length} invoice${list.length === 1 ? "" : "s"}`, "/invoicer/");
           return list.length ? list.map(invoiceLine).join("\n") : "No invoices like that.";
         } catch (error) {
           return failed(error);
@@ -223,7 +224,7 @@ export function moneyTools(actions: { push(action: Action): number }) {
     betaZodTool({
       name: "draft_invoice",
       description:
-        "Write an invoice to a client. It is NOT sent: it's saved waiting for an admin, who checks it and presses Approve in Portal → Money; only then is it emailed to the client with a link to see, print and pay it. Use client_find first to get the client's id (their name and email are then filled in), or give billName and billEmail. Prices are in pounds.",
+        "Write an invoice to a client. It is NOT sent: it's saved waiting for an admin, who checks it and presses Approve in the Invoicer; only then is it emailed to the client with a link to see, print and pay it. Use client_find first to get the client's id (their name and email are then filled in), or give billName and billEmail. Prices are in pounds.",
       inputSchema: z.object({
         client_id: z.number().int().positive().optional().describe("The client's id from client_find (fills in their name and email)"),
         bill_name: z.string().max(120).optional().describe("Who it's to (needed without client_id)"),
@@ -250,7 +251,7 @@ export function moneyTools(actions: { push(action: Action): number }) {
             notes: i.notes,
             billing: i.billing,
           });
-          did("added", `Wrote invoice ${invoice.number}, waiting for an admin's approval`);
+          did("added", `Wrote invoice ${invoice.number}, waiting for an admin's approval`, `/invoicer/?invoice=${invoice.id}`);
           return `Invoice ${invoice.number} (#${invoice.id}) saved, NOT sent: ${invoiceLine(invoice)}.${invoice.billTo.email ? "" : " It has no email address yet, so it can't be sent until one is added."} ${notSent}`;
         } catch (error) {
           return `Couldn't save the invoice: ${(error as Error).message} Nothing was saved or sent.`;
@@ -280,7 +281,7 @@ export function moneyTools(actions: { push(action: Action): number }) {
         if (!Object.keys(changes).length) return "Say what to change.";
         try {
           const invoice = await editInvoice(id, changes);
-          did("changed", `Changed invoice ${invoice.number}, waiting for an admin's approval`);
+          did("changed", `Changed invoice ${invoice.number}, waiting for an admin's approval`, `/invoicer/?invoice=${invoice.id}`);
           return `Invoice ${invoice.number} changed and waiting for approval again: ${invoiceLine(invoice)}. ${notSent}`;
         } catch (error) {
           return `Couldn't change invoice #${id}: ${(error as Error).message} Nothing was changed or sent.`;
@@ -311,4 +312,4 @@ export function moneyTools(actions: { push(action: Action): number }) {
   ];
 }
 
-export const MONEY_PROMPT = `- Money (invoices, payments and expenses, in Portal → Money): money_summary (in and out this month and this UK tax year, what's owed and overdue, what's waiting), list_invoices, draft_invoice, edit_invoice_draft, log_expense. You can only write and change invoices that haven't gone, and note expenses: you can't send, approve or remind about an invoice, record or remove a payment, void anything or change the bank details, and nobody can through you. An invoice is emailed to the client only when an admin presses Approve in Portal → Money: say that plainly every time ("It's saved: nothing goes to the client until an admin approves it in Portal → Money"), and never say an invoice was sent or paid unless list_invoices shows it. Expenses you note are unconfirmed until someone in the team confirms them. Find the client first with client_find (their id fills in the name and email). Prices are in pounds; say amounts as £120.00 and dates as UK dates.`;
+export const MONEY_PROMPT = `- Money (invoices are done in the Invoicer, the place at the far left of Nova's navigation panel: writing, approving, payments, reminders, PDFs and the invoice settings; expenses are in Portal → Money): money_summary (in and out this month and this UK tax year, what's owed and overdue, what's waiting), list_invoices, draft_invoice, edit_invoice_draft, log_expense. You can only write and change invoices that haven't gone, and note expenses: you can't send, approve or remind about an invoice, record or remove a payment, void anything or change the bank details, and nobody can through you. An invoice is emailed to the client only when an admin presses Approve in the Invoicer: say that plainly every time ("It's saved: nothing goes to the client until an admin approves it in the Invoicer"), and point people to the Invoicer for anything to do with an invoice (the note under your reply opens it there), and never say an invoice was sent or paid unless list_invoices shows it. Expenses you note are unconfirmed until someone in the team confirms them. Find the client first with client_find (their id fills in the name and email). Prices are in pounds; say amounts as £120.00 and dates as UK dates.`;

@@ -247,6 +247,13 @@
           e.preventDefault();
           window.PortalPage && window.PortalPage.go(item.open);
         });
+      } else if (item.open.startsWith("/invoicer/") && window.NovaInvoicer) {
+        // (an invoice opens in the Invoicer, in Nova Agent's place for panels)
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const q = new URLSearchParams(item.open.split("?")[1] || "");
+          window.NovaInvoicer.open(Object.fromEntries(q));
+        });
       } else a.target = "_top";
       actions.append(a);
     }

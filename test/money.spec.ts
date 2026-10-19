@@ -104,8 +104,9 @@ describe("Agent's money tools", () => {
     expect(seen[0].path).toBe("/nova-agent/money/invoices/draft");
     expect(seen[0].body).toEqual({ clientId: 7, lines: [{ description: "Mixing", qty: 2, unit: "150" }], notes: "Thanks" });
     expect(said).toContain("NOT sent");
-    expect(said).toMatch(/only when an admin approves it in Portal → Money/);
-    expect(actions).toEqual([{ kind: "added", text: expect.stringContaining("waiting for an admin") }]);
+    expect(said).toMatch(/only when an admin approves it in the Invoicer/);
+    // (the note under the reply opens the invoice in the Invoicer)
+    expect(actions).toEqual([{ kind: "added", text: expect.stringContaining("waiting for an admin"), url: expect.stringMatching(/^\/invoicer\/\?invoice=\d+$/) }]);
   });
 
   it("edit_invoice_draft posts only the changes; list_invoices says what's overdue", async () => {

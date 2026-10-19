@@ -3,6 +3,15 @@
 Invoices to artists at each of their four stages, as the studio's own branded page to print or save as a PDF, with a short email to go with it. It has its own place at the left end of the navigation panel, on its own, in no group.
 
 ## What's new
+- **Everything for invoices is here (19 Oct 2026).** Anywhere else in Nova with an invoice opens the Invoicer, set up for that job: Portal → Money, Today's tiles, a client's card, alerts and phone notifications, Agent's notes under its replies, Test stuff, and Console (`open invoicer`).
+  - New here:
+    - **Payment** (record one by hand).
+    - **History** (the invoice's details, its payments with **Take back** for admins, its reminders and receipts with **Approve** and **Reject**, and everything that happened).
+    - **Reject** under Send (an invoice or reminder waiting for approval).
+    - **Removed** in the filters.
+    - A yellow dot on an invoice with a reminder waiting.
+    - The **Invoice settings**: bank, Monzo, the studio's name, address, reply email, VAT number, VAT % and days to pay.
+  - Its address sets it up: `?new=1&name=&email=`, `?invoice=<id>&do=pay|history|share|edit|pdf|email|send|test|reject|remove`, `?number=NS-0022`, `?reminder=<id>`, `?filter=overdue`, `?q=<words>`, `?settings=1`. Other panels use `NovaInvoicer.open({…})` (`web/shared/invoicer-link.js`).
 - **Every invoice as a PDF file, everywhere (19 Oct 2026).** A real PDF download, before it's sent and after, at any stage:
   - **Invoicer:** **PDF** above the invoice downloads it as it's shown (its stage and look). The new invoice's live preview has **PDF** too, before it's even made.
   - **Portal → Money:** **PDF** on every invoice.
@@ -94,7 +103,7 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
   - **Copy email** copies both, to paste into Gmail.
   - **Send…** does what's possible for that invoice. Every email waits for an admin's Approve:
     - **Not sent yet:** an admin can press **Approve and email it**: one press (the line under it says who it goes to). It emails the invoice with a link to its page, where the artist can pay.
-    - **Sent, not fully paid:** **Send for approval** queues this message as a reminder, with a button to the invoice's page. An admin approves it here or in Portal → Money.
+    - **Sent, not fully paid:** **Send for approval** queues this message as a reminder, with a button to the invoice's page. An admin approves it here (Send, or History).
     - **Paid:** receipts aren't emailed from here yet. Copy the email, download the receipt with **PDF** and send them from Gmail.
 - **+ New invoice:**
   - The artist (names from the client list fill in their email) and the services from the studio's price list. The sessions come from the booking rules, so a price changed there changes here too.
@@ -109,11 +118,11 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
 
 - Every sum is worked out by Nova Bot in whole pence (src/invoicer.js there), never by an AI.
 - The deposit is always 50%, the booking rules' DEPOSIT_PERCENT.
-- The studio's details on the page come from Portal → Money's settings. Where they're empty, it uses:
+- The studio's details on the page come from the Invoice settings (How clients pay). Where they're empty, it uses:
   - 10 Clyde Terrace, London, England, SE23 3BA;
   - +44 20 8291 3028;
   - info@novacane.co.uk;
   - www.novacane.co.uk.
 - Bank details show only when they're filled in, in Money's settings.
 - There's no VAT line unless VAT is set in Money's settings.
-- The invoices are Money's own: the same ones as Portal → Money, with the same numbers, payments and approvals.
+- The invoices are Money's own: the same ones Portal → Money shows, with the same numbers, payments and approvals. Every invoice button there opens them here.
