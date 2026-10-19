@@ -384,14 +384,15 @@
       requestAnimationFrame(() => drawer && drawer.classList.add("out"));
     }
   }
-  // Under its pillar, with a little point at it, never past the screen's edges
+  // Under the tabs, with a little point at its tab, never past the screen's edges
   function placeDrawer(cap) {
     if (!drawer || !cap) return;
     const r = cap.getBoundingClientRect();
     const W = document.documentElement.clientWidth;
     const width = Math.min(W - 12, W < 640 ? W : 620);
     const left = Math.max(6, Math.min(W - width - 6, r.left + r.width / 2 - width / 2));
-    drawer.style.top = `${Math.round(r.bottom + 7)}px`;
+    // (below all the tabs, never over the other groups (20 Oct 2026); its point at the tab it came from)
+    drawer.style.top = `${Math.round(Math.max(r.bottom, row.getBoundingClientRect().bottom) + 7)}px`;
     drawer.style.left = `${Math.round(left)}px`;
     drawer.style.width = `${Math.round(width)}px`;
     drawer.style.setProperty("--point", `${Math.round(r.left + r.width / 2 - left)}px`);
