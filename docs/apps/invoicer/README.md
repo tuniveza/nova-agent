@@ -4,6 +4,14 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
 
 ## What's new
 
+- **Monzo on every part of an invoice** (19 October 2026), once the studio's Monzo link is set (**Bank details** here, or Portal → Money):
+  - the invoice, its page, its PDF, its email (a Pay with Monzo button) and its text version, as before;
+  - the copy saved in Google Drive (Pay with Monzo, with the amount filled in);
+  - **Share**: the WhatsApp / text message gets the Monzo link too, and **Copy Monzo link** copies it on its own;
+  - Portal → Money: **Copy Monzo link** on each sent, unpaid invoice;
+  - **Record a payment → Monzo**, so a receipt says it was paid with Monzo;
+  - the Agent knows each unpaid invoice's Monzo link, and Nova Bot's chat tells artists they can pay an invoice with Monzo.
+  - Each link opens Monzo with the amount due now (the deposit, or what's left) and the invoice number as the reference.
 - **Before or after the session** (19 October 2026): each invoice says which, in **+ New invoice** (and Portal → Money, and the Agent), and its emails follow the studio's rules for client emails:
   - **Before: deposit to secure the date.** Welcoming and excited about the session. It says the date is only held once the deposit is paid, gives the deposit and its due date clearly, then what happens next. The rest is due on the session day.
   - **After: full payment.** Warm and thankful: thanks for the session and how well it went, then the full amount and its due date. No deposit is asked for.

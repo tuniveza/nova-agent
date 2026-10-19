@@ -55,6 +55,7 @@ export interface Invoice {
   dueDate: string;
   notes: string;
   billing?: "deposit" | "full";
+  monzoUrl?: string | null;
   status: (typeof INVOICE_STATUSES)[number];
   overdue: boolean;
   createdBy: string;
@@ -84,7 +85,8 @@ export interface MoneyContext {
   };
   vatRate: number;
   dueDays: number;
-  recentInvoices: { id: number; number: string; to: string; totalPence: number; balancePence: number; status: string; overdue: boolean; dueDate: string }[];
+  recentInvoices: { id: number; number: string; to: string; totalPence: number; balancePence: number; status: string; overdue: boolean; dueDate: string; monzoUrl?: string | null }[];
+  monzo?: string | null;
   today: string;
 }
 
@@ -140,7 +142,7 @@ const STATUS_WORDS: Record<string, string> = {
 export function invoiceLine(i: Invoice): string {
   const state = i.overdue ? `OVERDUE (was due ${day(i.dueDate)})` : STATUS_WORDS[i.status] || i.status;
   const left = ["sent", "part_paid"].includes(i.status) ? `, ${money(i.balancePence)} left to pay` : "";
-  return `#${i.id} ${i.number} · ${i.billTo.name} · ${money(i.totalPence)}${left} · ${state} · due ${day(i.dueDate)}`;
+  return `#${i.id} ${i.number} · ${i.billTo.name} · ${money(i.totalPence)}${left} · ${state} · due ${day(i.dueDate)}${i.monzoUrl ? ` · pay with Monzo: ${i.monzoUrl}` : ""}`;
 }
 
 export function summaryText(c: MoneyContext): string {
@@ -153,7 +155,8 @@ export function summaryText(c: MoneyContext): string {
     `Owed to the studio: ${money(s.owed.pence)} on ${s.owed.count} invoice${s.owed.count === 1 ? "" : "s"}; overdue: ${money(s.overdue.pence)} on ${s.overdue.count}.`,
     `Waiting for an admin in Portal → Money: ${s.invoicesWaiting} invoice${s.invoicesWaiting === 1 ? "" : "s"} and ${s.remindersWaiting} reminder${s.remindersWaiting === 1 ? "" : "s"}. Unconfirmed expenses: ${s.unconfirmedExpenses}.`,
     `Invoices default to ${c.vatRate}% VAT and payment within ${c.dueDays} days.`,
-    c.recentInvoices.length ? "Latest invoices:\n" + c.recentInvoices.map((i) => `#${i.id} ${i.number} · ${i.to} · ${money(i.totalPence)} · ${i.overdue ? "OVERDUE" : STATUS_WORDS[i.status] || i.status}`).join("\n") : "No invoices yet.",
+    c.monzo ? `Clients can pay every invoice with Monzo (${c.monzo}): each sent, unpaid invoice has its own Monzo link with the amount and invoice number filled in.` : "Monzo isn't set up for invoices yet (an admin adds the studio's Monzo link in Portal → Money → settings).",
+    c.recentInvoices.length ? "Latest invoices:\n" + c.recentInvoices.map((i) => `#${i.id} ${i.number} · ${i.to} · ${money(i.totalPence)} · ${i.overdue ? "OVERDUE" : STATUS_WORDS[i.status] || i.status}${i.monzoUrl ? ` · Monzo: ${i.monzoUrl}` : ""}`).join("\n") : "No invoices yet.",
   ].join("\n");
 }
 

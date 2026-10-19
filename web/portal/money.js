@@ -308,6 +308,16 @@
         if (!reminding) button(row, "Ask for a reminder", "ghost", () => act(card, "money/invoices/" + inv.id + "/reminder", {}, canDecide ? "Reminder written: approve it above" : "Reminder written: an admin approves it"));
       }
       link(row, inv.pageUrl ? "Client's page" : "Preview", inv.pageUrl || "/app/api/money/invoices/" + inv.id + "/preview");
+      // Pay with Monzo: its link with the amount due and the invoice number filled in, to send by hand
+      if (inv.monzoUrl)
+        button(row, "Copy Monzo link", "ghost", async () => {
+          try {
+            await navigator.clipboard.writeText(inv.monzoUrl);
+            K().toast("Monzo link copied: it opens Monzo with the amount and " + inv.number + " filled in");
+          } catch {
+            problem(card, "Couldn't copy here. The Monzo link is " + inv.monzoUrl);
+          }
+        });
       if (canDecide && inv.paidPence === 0 && !["void", "approved", "paid"].includes(inv.status)) button(row, "Void", "ghost", () => redrawWith(() => (voiding = inv.id)));
       button(row, showing ? "Hide details" : "Details", "ghost", async () => {
         if (showing) opened.delete(inv.id);

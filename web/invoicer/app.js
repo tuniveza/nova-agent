@@ -770,7 +770,9 @@ function shareMessage(inv) {
   const sums = chosen.staged.sums;
   const first = (inv.billTo.name || "").trim().split(/\s+/)[0] || "there";
   const due = sums.dueNowPence > 0 ? `${pounds(sums.dueNowPence)} due now` : "paid in full, thank you";
-  return `Hi ${first}, here's your invoice ${inv.number} from Novacane Studios (${due}). See it and pay here: ${inv.pageUrl}`;
+  // (with Monzo set up: its link too, the amount and the invoice number filled in)
+  const monzo = sums.dueNowPence > 0 && inv.monzoUrl ? ` Or pay with Monzo: ${inv.monzoUrl}` : "";
+  return `Hi ${first}, here's your invoice ${inv.number} from Novacane Studios (${due}). See it and pay here: ${inv.pageUrl}${monzo}`;
 }
 function drawShare() {
   const inv = chosen.staged.invoice;
@@ -784,6 +786,7 @@ function drawShare() {
   $("share-text").value = text;
   drawShareLinks();
   $("share-device").hidden = !navigator.share;
+  $("share-monzo").hidden = !inv.monzoUrl;
 }
 function drawShareLinks() {
   const inv = chosen.staged.invoice;
@@ -844,6 +847,7 @@ async function copyText(text, what) {
 }
 $("share-copy").addEventListener("click", () => copyText($("share-text").value.trim(), "The message"));
 $("share-link").addEventListener("click", () => copyText(chosen.staged.invoice.pageUrl, "The link"));
+$("share-monzo").addEventListener("click", () => copyText(chosen.staged.invoice.monzoUrl, "The Monzo link"));
 
 // ---- How clients pay: the bank details (Money's settings), added here by an admin ----
 function drawBank() {
