@@ -1,0 +1,68 @@
+/* Fans (fans.js, 19 Oct 2026): Portal's groups and their parts as half fans of chamfered blades, in
+   Nova Agent's theme (its colours and fonts from /shared/themes.css). Calm: the fan opens like a hand
+   fan, quickly, and not at all with reduced motion. */
+
+/* The ✦ button: bottom right, above Portal's tabs */
+.fan-launcher {
+  position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: 84px; z-index: 60;
+  width: 52px; height: 52px; padding: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  color: var(--on-accent, #fff); border: 1px solid rgba(var(--hi-rgb), 0.55);
+  background: radial-gradient(circle at 35% 30%, rgba(var(--hi-rgb), 0.55), transparent 60%), linear-gradient(140deg, var(--accent), var(--accent-2));
+  box-shadow: 0 6px 18px -6px rgba(var(--glow-rgb, var(--hi-rgb)), 0.7), 0 0 0 4px rgba(var(--deep-rgb), 0.55);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.fan-launcher[hidden] { display: none; }
+.fan-launcher.away { opacity: 0; pointer-events: none; transform: scale(0.8); }
+.fan-launcher svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+.fan-launcher:hover { box-shadow: 0 8px 22px -6px rgba(var(--hi-rgb), 0.9), 0 0 0 4px rgba(var(--deep-rgb), 0.55); }
+.fan-launcher:active { transform: scale(0.95); }
+.fan-launcher:focus-visible { outline: 2px solid var(--hi); outline-offset: 3px; }
+html.fans-open .fan-launcher { opacity: 0; pointer-events: none; }
+
+/* The layer: the whole screen, nothing under it moves */
+.fans { position: fixed; inset: 0; z-index: 70; overflow: hidden; }
+.fan-scrim { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(var(--deep-rgb), 0.55), rgba(var(--void-rgb), 0.82)); opacity: 0; transition: opacity 0.18s ease; }
+.fans.open .fan-scrim { opacity: 1; }
+.fan-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+/* A blade: the theme's panel, a pleat a shade lighter every other one, a fine rib and a glowing rim */
+.fan-stop-a { stop-color: rgba(var(--panel-rgb), 0.97); }
+.fan-stop-b { stop-color: rgba(var(--panel-2-rgb, var(--panel-rgb)), 0.97); }
+.fan-lit-a { stop-color: var(--accent); }
+.fan-lit-b { stop-color: var(--accent-2); }
+.fan-blade { cursor: pointer; outline: none; transform: rotate(0deg); transition: transform 0.26s cubic-bezier(.2, .8, .25, 1), opacity 0.2s ease; transition-delay: calc(var(--i, 0) * 14ms); }
+.fans:not(.open) .fan-blade { transform: rotate(var(--fold, 0deg)); opacity: 0; }
+.fan-shape { fill: url(#fan-fill); stroke: var(--line-strong, rgba(var(--hi-rgb), 0.4)); stroke-width: 1; stroke-linejoin: round; transition: fill 0.12s ease, filter 0.12s ease; }
+.fan-blade.pleat .fan-shape { filter: brightness(1.12); }
+.fan-rib { stroke: rgba(var(--text-rgb), 0.1); stroke-width: 1; stroke-dasharray: 2 5; pointer-events: none; }
+.fan-rim { fill: rgba(var(--hi-rgb), 0.38); pointer-events: none; transition: fill 0.12s ease; }
+.fan-glyph { fill: var(--hi); font: 600 17px var(--f-body, system-ui, sans-serif); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fan-label { fill: var(--text); font-family: var(--f-body, system-ui, sans-serif); font-weight: 600; letter-spacing: 0.01em; text-anchor: middle; dominant-baseline: central; pointer-events: none; white-space: pre; }
+.fan-label.group { fill: var(--bright); font-family: var(--f-display, var(--f-body), sans-serif); font-weight: 800; letter-spacing: 0.04em; font-stretch: 110%; }
+.fan-badge { fill: var(--hi); stroke: rgba(var(--deep-rgb), 0.9); stroke-width: 2; pointer-events: none; }
+.fan-badge-n { fill: var(--on-hi, #1C0A1E); font: 700 10px var(--f-mono, ui-monospace, monospace); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+/* Under the finger, or chosen by the keyboard: lit in the theme's colours */
+.fan-blade:hover .fan-shape, .fan-blade:focus .fan-shape { fill: url(#fan-lit); filter: drop-shadow(0 0 8px rgba(var(--hi-rgb), 0.55)); }
+.fan-blade:hover .fan-rim, .fan-blade:focus .fan-rim { fill: var(--soft, #FFD1EA); }
+.fan-blade:hover .fan-label, .fan-blade:focus .fan-label, .fan-blade:hover .fan-glyph, .fan-blade:focus .fan-glyph { fill: var(--on-accent, #fff); }
+.fan-blade:focus-visible .fan-shape { stroke: var(--soft, #FFD1EA); stroke-width: 2; }
+.fan-blade:active { transform: scale(0.985); }
+
+/* The hub: Today (or Back); hold for Voice */
+.fan-hub { cursor: pointer; outline: none; }
+.fan-hub circle { fill: rgba(var(--deep-rgb), 0.96); stroke: rgba(var(--hi-rgb), 0.6); stroke-width: 1.5; filter: drop-shadow(0 0 10px rgba(var(--hi-rgb), 0.35)); transition: fill 0.12s ease; }
+.fan-hub:hover circle, .fan-hub:focus-visible circle { fill: rgba(var(--accent-rgb), 0.5); }
+.fan-hub-mark { fill: var(--bright); font: 700 20px var(--f-body, system-ui, sans-serif); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fan-hub-word { fill: var(--muted); font: 600 10px var(--f-mono, ui-monospace, monospace); letter-spacing: 0.12em; text-transform: uppercase; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+
+/* The caption above the fan: what's under the finger */
+.fan-caption { position: absolute; transform: translateX(-50%); margin: 0; display: grid; justify-items: center; gap: 2px; text-align: center; pointer-events: none; white-space: nowrap; max-width: calc(100vw - 24px); opacity: 0; transition: opacity 0.18s ease; }
+.fan-caption[hidden] { display: none; }
+.fans.open .fan-caption { opacity: 1; }
+.fan-caption b { color: var(--bright); font: 800 15px var(--f-display, var(--f-body), sans-serif); letter-spacing: 0.08em; text-transform: uppercase; text-shadow: 0 0 12px rgba(var(--hi-rgb), 0.5); }
+.fan-caption small { color: var(--muted); font: 500 12px var(--f-body, system-ui, sans-serif); }
+
+@media (prefers-reduced-motion: reduce) {
+  .fan-blade, .fan-scrim, .fan-caption, .fan-launcher { transition: none !important; }
+}
+html[data-motion="calm"] .fan-blade, html[data-motion="calm"] .fan-scrim { transition: none !important; }

@@ -3373,7 +3373,7 @@
   // Ask Nova (or NovaBot with the booking tools) something, ready to send
   function askAbout(mode, text) {
     show("bot");
-    const chip = document.querySelector(`[data-mode="${mode}"]`);
+    const chip = document.querySelector(`#view-bot [data-mode="${mode}"]`);
     if (chip && !chip.classList.contains("active")) chip.click();
     setTimeout(() => {
       $("bot-input").value = text;
@@ -4333,12 +4333,13 @@
   let botMode = "nova";
 
   // Switching between them starts a new chat
-  document.querySelectorAll("[data-mode]").forEach((chip) =>
+  // (only the Website bot's own chips: the enquiry reply box has Reply, WhatsApp, Text and Note chips too, 19 Oct 2026)
+  document.querySelectorAll("#view-bot [data-mode]").forEach((chip) =>
     chip.addEventListener("click", () => {
       // Remember the choice
       botMode = chip.dataset.mode;
       // Light up the chosen chip
-      document.querySelectorAll("[data-mode]").forEach((c) => c.classList.toggle("active", c === chip));
+      document.querySelectorAll("#view-bot [data-mode]").forEach((c) => c.classList.toggle("active", c === chip));
       // Explain what this one does
       $("bot-hint").textContent =
         botMode === "nova"
@@ -5268,7 +5269,7 @@
       // The question without "ask NovaBot"
       const question = said.replace(/^\s*ask\s+nova ?bot[,:]?\s*/i, "").trim();
       // Switch the tab to the customer NovaBot and open it
-      document.querySelector('[data-mode="customer"]').click();
+      document.querySelector('#view-bot [data-mode="customer"]').click();
       show("bot");
       // Ask it
       if (question) {

@@ -12,6 +12,25 @@ Portal's old address, `/app/`, opens Portal (with the same tab: `/app/?view=aler
 
 <p align="center"><img src="media/planets.jpg" width="860" alt="48 generated planets: ringed gas giants, ocean worlds, molten worlds, ice worlds and rocky worlds, each one different"></p>
 
+
+## Fans (19 October 2026)
+
+The **✦ button** (bottom right, above the tabs) opens everything in Portal as **half fans**. Each part is a chamfered blade (its corners cut), in Nova Agent's colours.
+- **The first fan has the groups:** Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only).
+- **Each group opens its own fan of up to eight blades.** Each blade opens the place and presses the same button you would: a tab, Add a client, Write a post, the Invoicer, Options at the right section, and so on.
+- **The circle in the middle:** tap for **Today** (or **Back** inside a group); hold for **Voice**.
+- **Closing it:** Escape, or a tap outside.
+- **Keyboard:** arrow keys move between blades, and Enter opens one.
+- **Counts:** a badge on a blade shows its count (new enquiries, waiting approvals, and so on).
+- **The ✦ button gets out of the way.** It never sits on top of another button (it moves left or up), and it goes away while you type.
+
+Also fixed the same day:
+- The Website bot's chips no longer change the enquiry reply chips (tapping **Note** used to clear the bot's chat).
+- Portal's own month is called **Booking tools** everywhere; **Calendar** is always the Calendar panel.
+- The starting tab can now be Clients, Money, Approvals, Campaigns or Social too.
+- Test stuff, Google and Computer are for admins by address too, not only by their hidden tabs.
+- Money's old invoice form is gone (invoices are written in the Invoicer).
+
 ## The tabs
 
 Every section shows at once, so nothing hides behind a click. On a computer or tablet they sit at the top in **lanes**:

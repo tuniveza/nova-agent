@@ -34,6 +34,7 @@
 <link rel="stylesheet" href="/portal/tabbar.css" id="tabbar-css">
 <link rel="stylesheet" href="/portal/social.css">
 <link rel="stylesheet" href="/portal/frame.css">
+<link rel="stylesheet" href="/portal/fans.css">
 <!-- The saved theme goes on before anything is drawn (no flash of the wrong colours) -->
 <script src="/shared/spectrum.js"></script>
 <script src="/shared/themes.js"></script>
@@ -410,9 +411,10 @@
     </section>
 
     <!-- Calendar: every booking in Acuity's diary -->
+    <!-- Booking tools (19 Oct 2026: "Calendar" is only ever the Calendar panel; this is Portal's own month) -->
     <section id="view-calendar" class="view" hidden>
       <div class="view-head">
-        <h2>Calendar</h2>
+        <h2>Booking tools</h2>
         <!-- One calendar: the Calendar panel has everything (the studio's bookings too) -->
         <button id="cal-open-panel" class="chip" type="button">Open the Calendar panel</button>
       </div>
@@ -564,33 +566,7 @@
       <!-- In and out this month, owed, overdue (each tile opens its part) -->
       <div id="money-summary" class="mn-summary" aria-live="polite"></div>
 
-      <!-- Write (or change) an invoice: it waits for an admin's approval -->
-      <form id="money-invoice-form" class="card mn-form cp" autocomplete="off" hidden>
-        <h3 class="card-title" id="mn-inv-title">Write an invoice</h3>
-        <div class="cp-grid">
-          <label class="cp-field"><span>Client on the list (optional)</span><input id="mn-inv-client" type="search" list="mn-client-list" placeholder="Type a name to find them" maxlength="120"></label>
-          <label class="cp-field"><span>Billed to</span><input id="mn-inv-name" type="text" maxlength="120" required></label>
-          <label class="cp-field"><span>Their email (where it's sent)</span><input id="mn-inv-email" type="email" maxlength="200"></label>
-          <label class="cp-field"><span>Their address (optional)</span><input id="mn-inv-address" type="text" maxlength="400"></label>
-        </div>
-        <datalist id="mn-client-list"></datalist>
-        <div class="mn-lines-head" aria-hidden="true"><span>What it's for</span><span>How many</span><span>Price (£)</span><span>Amount</span><span></span></div>
-        <div id="mn-inv-lines" class="mn-lines"></div>
-        <button id="mn-inv-add-line" class="btn small ghost mn-add-line" type="button">+ Add a line</button>
-        <div class="cp-grid">
-          <label class="cp-field"><span>VAT %</span><input id="mn-inv-vat" type="number" min="0" max="100" step="0.01" inputmode="decimal"></label>
-          <label class="cp-field"><span>Issued</span><input id="mn-inv-issue" type="date"></label>
-          <label class="cp-field"><span>Due</span><input id="mn-inv-due" type="date"></label>
-        </div>
-        <label class="cp-field"><span>Before or after the session</span><select id="mn-inv-billing"><option value="deposit">Before: a deposit secures the date (the rest due on the session day)</option><option value="full">After: the full amount, with a thank-you</option></select></label>
-        <label class="cp-field"><span>A note on the invoice (optional)</span><textarea id="mn-inv-notes" rows="2" maxlength="2000" placeholder="e.g. Recording and mixing for the EP, 3–5 October"></textarea></label>
-        <dl id="mn-inv-totals" class="mn-totals"></dl>
-        <p id="mn-inv-error" class="cp-error appr-result bad" role="alert"></p>
-        <div class="actions">
-          <button class="btn small" type="submit" id="mn-inv-save">Save for approval</button>
-          <button id="mn-inv-cancel" class="btn small ghost" type="button">Cancel</button>
-        </div>
-      </form>
+      <!-- (writing and changing an invoice happen in the Invoicer: "Write an invoice" opens it, 19 Oct 2026) -->
 
       <!-- Add an expense (with its receipt, kept on the studio PC) -->
       <form id="money-expense-form" class="card mn-form cp" autocomplete="off" hidden>
@@ -1463,7 +1439,7 @@
 
     <section class="option-group">
       <p class="kicker">Starting tab</p>
-      <div class="chips wrap" data-option="startTab"><button class="chip" type="button" data-value="today">Today</button><button class="chip" type="button" data-value="enquiries">Enquiries</button><button class="chip" type="button" data-value="chats">Conversations</button><button class="chip" type="button" data-value="calendar">Calendar</button><button class="chip" type="button" data-value="quests">Quests</button><button class="chip" type="button" data-value="alerts">Alerts</button><button class="chip" type="button" data-value="bot">Website bot</button><button class="chip" type="button" data-value="you">You</button></div>
+      <div class="chips wrap" data-option="startTab"><button class="chip" type="button" data-value="today">Today</button><button class="chip" type="button" data-value="enquiries">Enquiries</button><button class="chip" type="button" data-value="chats">Conversations</button><button class="chip" type="button" data-value="calendar">Booking tools</button><button class="chip" type="button" data-value="clients">Clients</button><button class="chip" type="button" data-value="money">Money</button><button class="chip" type="button" data-value="approvals">Approvals</button><button class="chip" type="button" data-value="campaigns">Campaigns</button><button class="chip" type="button" data-value="social">Social</button><button class="chip" type="button" data-value="quests">Quests</button><button class="chip" type="button" data-value="alerts">Alerts</button><button class="chip" type="button" data-value="bot">Website bot</button><button class="chip" type="button" data-value="you">You</button></div>
     </section>
 
     <section class="option-group option-actions">
@@ -1491,6 +1467,7 @@
 <script src="/portal/addresses.js"></script>
 <script src="/portal/portal.js"></script>
 <script src="/portal/tabbar.js"></script>
+<script src="/portal/fans.js" defer></script>
 <script src="/shared/badge.js" defer></script>
 </body>
 </html>

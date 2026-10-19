@@ -20,7 +20,6 @@
 
   let data = null; // the last /app/api/money answer
   let part = "invoices"; // invoices | expenses | year
-  let editingInvoice = null; // the invoice whose fields are in the form, or null for a new one
   let editingExpense = null;
   let paying = null; // the invoice whose "record a payment" box is open
   let rejecting = null;
@@ -28,7 +27,6 @@
   let picked = null; // the ?invoice= one already pointed at
   const opened = new Set(); // invoices whose details are showing
   const details = new Map(); // id -> { updatedAt, payments, reminders, log }
-  let clientPicked = null; // { id, name, email } from the client search
   const clientMatches = new Map(); // datalist label -> client
 
   const STATUS = {
@@ -564,90 +562,6 @@
     return card;
   }
 
-  // ===== Writing an invoice =====
-
-  function lineRow(line) {
-    const k = K();
-    const row = k.el("div", "mn-line");
-    const input = (cls, type, value, attrs) => {
-      const i = k.el("input", cls);
-      i.type = type;
-      i.value = value;
-      for (const [a, v] of Object.entries(attrs)) i.setAttribute(a, v);
-      i.addEventListener("input", totals);
-      row.appendChild(i);
-      return i;
-    };
-    input("mn-line-desc", "text", line.description || "", { maxlength: 300, placeholder: "e.g. Mixing, per song", "aria-label": "What it's for" });
-    input("mn-line-qty", "number", line.qty === undefined ? "1" : String(line.qty), { min: "0.01", step: "0.01", inputmode: "decimal", "aria-label": "How many" });
-    input("mn-line-price", "text", line.unitPence === undefined ? "" : poundsText(line.unitPence), { inputmode: "decimal", maxlength: 12, placeholder: "150.00", "aria-label": "Price of one, in pounds" });
-    row.appendChild(k.el("span", "mn-line-total", ""));
-    const x = k.el("button", "mn-line-remove", "×");
-    x.type = "button";
-    x.setAttribute("aria-label", "Remove this line");
-    x.addEventListener("click", () => {
-      row.remove();
-      if (!$("mn-inv-lines").children.length) $("mn-inv-lines").appendChild(lineRow({}));
-      totals();
-    });
-    row.appendChild(x);
-    return row;
-  }
-
-  function readLines() {
-    return [...$("mn-inv-lines").children].map((r) => ({
-      description: r.querySelector(".mn-line-desc").value.trim(),
-      qty: Number(r.querySelector(".mn-line-qty").value),
-      unit: r.querySelector(".mn-line-price").value.trim(),
-    }));
-  }
-
-  // The totals as they're typed (the same sums as Nova Bot: whole pence, VAT once on the subtotal)
-  function totals() {
-    const k = K();
-    let sub = 0;
-    for (const r of $("mn-inv-lines").children) {
-      const q = Number(r.querySelector(".mn-line-qty").value);
-      const p = pence(r.querySelector(".mn-line-price").value);
-      const t = q > 0 && p !== null ? Math.round(q * p) : null;
-      r.querySelector(".mn-line-total").textContent = t === null ? "–" : money(t);
-      if (t) sub += t;
-    }
-    const rate = Number($("mn-inv-vat").value) || 0;
-    const vat = Math.round((sub * rate) / 100);
-    const dl = $("mn-inv-totals");
-    const nodes = [k.el("dt", "", "Subtotal"), k.el("dd", "", money(sub))];
-    if (rate) nodes.push(k.el("dt", "", "VAT (" + rate + "%)"), k.el("dd", "", money(vat)));
-    nodes.push(k.el("dt", "big", "Total"), k.el("dd", "big", money(sub + vat)));
-    dl.replaceChildren(...nodes);
-  }
-
-  function openInvoiceForm(inv) {
-    const k = K();
-    if (!data) return;
-    editingInvoice = inv ? inv.id : null;
-    clientPicked = inv && inv.clientId ? { id: inv.clientId } : null;
-    $("mn-inv-title").textContent = inv ? "Change " + inv.number : "Write an invoice";
-    $("mn-inv-save").textContent = inv ? "Save changes for approval" : "Save for approval";
-    $("mn-inv-client").value = "";
-    $("mn-inv-name").value = inv ? inv.billTo.name : "";
-    $("mn-inv-email").value = inv ? inv.billTo.email || "" : "";
-    $("mn-inv-address").value = inv ? inv.billTo.address || "" : "";
-    const today = ukToday();
-    $("mn-inv-issue").value = inv ? inv.issueDate : today;
-    $("mn-inv-due").value = inv ? inv.dueDate : addDays(today, data.settings.dueDays);
-    $("mn-inv-vat").value = inv ? inv.vatRate : data.settings.vatRate;
-    $("mn-inv-notes").value = inv ? inv.notes : "";
-    $("mn-inv-billing").value = inv && inv.billing === "full" ? "full" : "deposit";
-    $("mn-inv-lines").replaceChildren(...(inv ? inv.lines : [{}]).map(lineRow));
-    k.setText("mn-inv-error", "");
-    totals();
-    showForm("money-expense-form", "money-expense-new", false);
-    showForm("money-invoice-form", "money-new", true);
-    $("mn-inv-name").focus({ preventScroll: true });
-    bringIntoView($("money-invoice-form"));
-  }
-
   // Scroll Portal itself (never the page around it, inside Nova Agent) so a box shows, only if it doesn't.
   // Inside Nova Agent the page doesn't scroll (frame.css): the open section's own box does.
   function bringIntoView(node, center) {
@@ -668,90 +582,6 @@
 
   // Writing an invoice happens in the Invoicer (19 Oct 2026): it opens with a new one ready to fill in
   $("money-new").addEventListener("click", () => window.NovaInvoicer.open({ new: true }));
-  $("mn-inv-cancel").addEventListener("click", () => showForm("money-invoice-form", "money-new", false));
-  $("mn-inv-add-line").addEventListener("click", () => {
-    const row = lineRow({});
-    $("mn-inv-lines").appendChild(row);
-    row.querySelector("input").focus();
-    totals();
-  });
-  $("mn-inv-vat").addEventListener("input", totals);
-  $("mn-inv-issue").addEventListener("change", () => {
-    const issue = $("mn-inv-issue").value;
-    if (issue && data && !editingInvoice) $("mn-inv-due").value = addDays(issue, data.settings.dueDays);
-  });
-
-  // The client search: their name and email fill in (the invoice stays tied to them)
-  let searchTimer = 0;
-  $("mn-inv-client").addEventListener("input", () => {
-    const text = $("mn-inv-client").value;
-    const hit = clientMatches.get(text);
-    if (hit) {
-      clientPicked = hit;
-      $("mn-inv-name").value = hit.name;
-      if (hit.email) $("mn-inv-email").value = hit.email;
-      return;
-    }
-    clearTimeout(searchTimer);
-    if (text.trim().length < 2) return;
-    searchTimer = setTimeout(async () => {
-      let found;
-      try {
-        found = await K().api("clients?" + new URLSearchParams({ filter: "all", search: text.trim() }));
-      } catch (err) {
-        return;
-      }
-      clientMatches.clear();
-      const opts = (found.clients || []).slice(0, 8).map((c) => {
-        const label = c.name + (c.email ? " · " + c.email : "");
-        clientMatches.set(label, { id: c.id, name: c.name, email: c.email });
-        const o = document.createElement("option");
-        o.value = label;
-        return o;
-      });
-      $("mn-client-list").replaceChildren(...opts);
-    }, 250);
-  });
-
-  $("money-invoice-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const k = K();
-    const lines = readLines().filter((l) => l.description || l.unit);
-    if (!$("mn-inv-name").value.trim()) return k.setText("mn-inv-error", "Not saved: who is it to?");
-    if (!lines.length) return k.setText("mn-inv-error", "Not saved: add a line (what it's for and the price).");
-    for (const [i, l] of lines.entries()) {
-      if (!l.description) return k.setText("mn-inv-error", "Not saved: line " + (i + 1) + " needs what it's for.");
-      if (pence(l.unit) === null) return k.setText("mn-inv-error", "Not saved: line " + (i + 1) + "'s price, in pounds (like 150.00).");
-      if (!(l.qty > 0)) return k.setText("mn-inv-error", "Not saved: line " + (i + 1) + " needs how many.");
-    }
-    const body = {
-      clientId: clientPicked && $("mn-inv-name").value.trim() ? clientPicked.id : null,
-      billName: $("mn-inv-name").value.trim(),
-      billEmail: $("mn-inv-email").value.trim(),
-      billAddress: $("mn-inv-address").value.trim(),
-      lines,
-      vatRate: Number($("mn-inv-vat").value) || 0,
-      issueDate: $("mn-inv-issue").value,
-      dueDate: $("mn-inv-due").value,
-      notes: $("mn-inv-notes").value.trim(),
-      billing: $("mn-inv-billing").value,
-    };
-    const save = e.submitter || $("mn-inv-save");
-    save.disabled = true;
-    try {
-      await k.api(editingInvoice ? "money/invoices/" + editingInvoice + "/edit" : "money/invoices", { body });
-    } catch (err) {
-      if (err.message !== "signed out") k.setText("mn-inv-error", "Not saved: " + err.message);
-      return;
-    } finally {
-      save.disabled = false;
-    }
-    if (editingInvoice) details.delete(editingInvoice);
-    showForm("money-invoice-form", "money-new", false);
-    k.toast("Saved: waiting for an admin's approval");
-    setPart("invoices");
-    load();
-  });
 
   // ===== Adding an expense =====
 
@@ -767,7 +597,6 @@
     $("mn-exp-receipt").value = "";
     k.setText("mn-exp-error", "");
     $("money-expense-form").querySelector(".card-title").textContent = e ? "Change an expense" : "Add an expense";
-    showForm("money-invoice-form", "money-new", false);
     showForm("money-expense-form", "money-expense-new", true);
     $("mn-exp-amount").focus({ preventScroll: true });
     bringIntoView($("money-expense-form"));

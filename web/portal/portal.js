@@ -541,6 +541,13 @@
     const route = currentRoute();
     closeNameForm();
     if (route.view === "work") {
+      // Test stuff, Google and Computer are for admins: by address too, not only by their hidden tabs (19 Oct 2026)
+      const ADMIN_TABS = { tests: "Test stuff", google: "Google", desk: "Computer" };
+      if (ADMIN_TABS[route.tab] && !isAdmin()) {
+        history.replaceState(null, "", "/portal/");
+        toast(`${ADMIN_TABS[route.tab]} is for admins.`, true);
+        return renderRoute();
+      }
       document.title = "Portal";
       return work() && work().show(route.tab);
     }
