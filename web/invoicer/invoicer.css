@@ -381,7 +381,7 @@ html body .inv .who, html body .inv .who b, html body .inv .who small { text-ali
   /* The parts, pinned at the top */
   .iv-parts { display: flex; position: sticky; top: 0; z-index: 6; gap: 6px; margin: 0 calc(-1 * max(10px, env(safe-area-inset-left))) 0 calc(-1 * max(10px, env(safe-area-inset-right)));
     padding: 8px max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left)); border: 0; border-bottom: 1px solid var(--line); border-radius: 0;
-    background: color-mix(in srgb, var(--void) 90%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+    background: var(--void); } /* (solid: a see-through, blurred bar let the invoice show through it while scrolling on a phone) */
   html body.nb-tool .iv-parts button { min-height: 38px; padding: 0 6px; border-radius: 10px; font-size: 14px; font-weight: 600; gap: 6px; }
   .nb-tool .iv-parts button::before { width: 15px; height: 15px; }
   .message { position: sticky; top: 56px; z-index: 5; font-size: 14px; padding: 8px 12px; }

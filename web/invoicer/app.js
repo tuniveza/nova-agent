@@ -637,6 +637,10 @@ const PHONE = matchMedia("(max-width: 820px), (max-height: 500px)");
 function fitDoc() {
   const frame = $("doc");
   const box = frame.parentElement;
+  // (at its full height, the invoice's moving sky is left out: on a phone it went grey while scrolling)
+  try {
+    frame.contentDocument?.documentElement.classList.toggle("still", PHONE.matches);
+  } catch {}
   if (!PHONE.matches) return box.style.removeProperty("--doc-h");
   try {
     const body = frame.contentDocument?.body;
