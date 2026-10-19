@@ -87,7 +87,7 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
   - The subject and message for the stage shown. You can change the words.
   - **Copy email** copies both, to paste into Gmail.
   - **Send…** does what's possible for that invoice. Every email waits for an admin's Approve:
-    - **Not sent yet:** an admin can press **Approve and email it** (press twice: the second press says who it goes to). It emails the invoice with a link to its page, where the artist can pay.
+    - **Not sent yet:** an admin can press **Approve and email it**: one press (the line under it says who it goes to). It emails the invoice with a link to its page, where the artist can pay.
     - **Sent, not fully paid:** **Send for approval** queues this message as a reminder, with a button to the invoice's page. An admin approves it here or in Portal → Money.
     - **Paid:** receipts aren't emailed from here yet. Copy the email, save the receipt as a PDF and send them from Gmail.
 - **+ New invoice:**

@@ -6,7 +6,7 @@
 // Approve (which emails the client a link to their invoice's page), Reject, send themselves a
 // test, void an invoice, take a payment back, approve a reminder, change the invoice settings
 // (studio and bank details, VAT, payment terms) and export for the accountant: an admin signed in
-// to Portal in a browser. Approve is pressed twice, saying exactly who it emails.
+// to Portal in a browser. Approve is one press (the card says who it emails).
 //
 // A receipt's photo goes to the studio PC (POST /actions/receipts: Nova Agent's src/receipts.ts,
 // through Nova Bot's relay when online) and the expense keeps its name.
@@ -217,14 +217,8 @@
     card.appendChild(k.el("p", "mn-reminder", r.body));
     const row = k.el("div", "actions");
     if (data.canDecide) {
-      button(row, "Approve", "", (b) => {
-        if (b.dataset.sure !== "1") {
-          b.dataset.sure = "1";
-          b.textContent = "Email it to " + (inv ? inv.billTo.email : "them") + " now?";
-          return;
-        }
-        act(card, "money/reminders/" + r.id + "/approve", {}, r.kind === "receipt" ? "Receipt sent" : "Reminder sent");
-      });
+      // (one press, 19 Oct 2026: the card says who it goes to)
+      button(row, "Approve", "", () => act(card, "money/reminders/" + r.id + "/approve", {}, r.kind === "receipt" ? "Receipt sent" : "Reminder sent"));
       button(row, "Reject", "ghost", () => act(card, "money/reminders/" + r.id + "/reject", {}, "Reminder rejected"));
     } else card.appendChild(k.el("p", "card-foot", "An admin approves reminders, signed in to Portal in a browser. Nothing is emailed until then."));
     if (row.children.length) card.appendChild(row);
@@ -288,13 +282,9 @@
       button(row, "Cancel", "ghost", () => redrawWith(() => (voiding = null)));
     } else {
       if (waiting(inv) && canDecide) {
-        button(row, "Approve", "", (b) => {
+        // (one press, 19 Oct 2026: "Goes to" above says who it emails)
+        button(row, "Approve", "", () => {
           if (!inv.billTo.email) return problem(card, "It has no email address. Edit it and add one first.");
-          if (b.dataset.sure !== "1") {
-            b.dataset.sure = "1";
-            b.textContent = "Email it to " + inv.billTo.email + " now?";
-            return;
-          }
           approve(card, inv);
         });
       }

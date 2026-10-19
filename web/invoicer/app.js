@@ -234,7 +234,7 @@ function drawSend(inv, detail, stage) {
     if (admin) {
       btn.textContent = "Approve and email it";
       note.textContent = `Emails ${inv.billTo.email || "(no email address)"} the invoice itself (the Nova invoice, with a text version for email apps that can't show it) and a button to its page, where they can pay. Your Approve is the check: nothing goes without it.`;
-      btn.onclick = () => confirmThen(btn, `Yes, email ${inv.number} to ${inv.billTo.email || "them"}`, () => api(`money/invoices/${inv.id}/approve`, { method: "POST", body: {} }), "Approved: it's on its way.");
+      btn.onclick = () => doNow(btn, () => api(`money/invoices/${inv.id}/approve`, { method: "POST", body: {} }), "Approved: it's on its way.");
     } else {
       btn.textContent = "Waiting for an admin";
       btn.disabled = true;
@@ -255,7 +255,7 @@ function drawSend(inv, detail, stage) {
     if (admin) {
       btn.textContent = receipt ? "Approve and email the receipt" : "Approve the waiting reminder";
       note.textContent = receipt ? "It was written by itself when the invoice was paid in full: the receipt (the invoice, marked paid) with a thank-you. Approving emails exactly that." : "Someone queued a reminder for this invoice. Approving emails exactly what they wrote, with the invoice under it.";
-      btn.onclick = () => confirmThen(btn, `Yes, email it to ${inv.billTo.email}`, () => api(`money/reminders/${waiting.id}/approve`, { method: "POST", body: {} }), receipt ? "Receipt sent." : "Reminder sent.");
+      btn.onclick = () => doNow(btn, () => api(`money/reminders/${waiting.id}/approve`, { method: "POST", body: {} }), receipt ? "Receipt sent." : "Reminder sent.");
     } else {
       btn.textContent = "Waiting for an admin";
       btn.disabled = true;
@@ -266,7 +266,7 @@ function drawSend(inv, detail, stage) {
   btn.textContent = receipt ? "Send the receipt for approval" : "Send for approval";
   note.textContent = `Queues this message for ${inv.billTo.email || "(no email address)"}, with the ${receipt ? "receipt" : "invoice"} under it. An admin approves it before it goes.`;
   btn.onclick = () =>
-    confirmThen(btn, "Yes, queue it", () => api(`money/invoices/${inv.id}/reminder`, { method: "POST", body: { body: forMoney($("body").value), kind } }), admin ? "Queued: approve it with the button above." : "Queued: an admin approves it before it goes.");
+    doNow(btn, () => api(`money/invoices/${inv.id}/reminder`, { method: "POST", body: { body: forMoney($("body").value), kind } }), admin ? "Queued: approve it with the button above." : "Queued: an admin approves it before it goes.");
 }
 // Money's email adds the button to the invoice's page and a sign-off itself
 // (the invoice under the message has the link, Monzo, the bank details and the studio's sign-off, so those
@@ -305,19 +305,26 @@ $("email-btn").addEventListener("click", () => {
   const q = new URLSearchParams({ stage: chosen.staged.stage, body: forMoney($("body").value) });
   window.open(`/app/api/money/invoices/${chosen.id}/email?${q}`, "_blank", "noopener");
 });
-// One press asks, the second does it (it goes back after a few seconds)
+// Send (19 Oct 2026): one press does it (the line under the button says who it goes to); the button
+// is held while it goes, so a second press can't send it twice
+function doNow(btn, act, done) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  act()
+    .then(async () => {
+      say(done);
+      chosen.detail = null;
+      await load();
+    })
+    .catch((err) => say(err.message, true))
+    .finally(() => (btn.disabled = false));
+}
+// One press asks, the second does it (it goes back after a few seconds): removing, and saving notes
+// on one that's gone
 function confirmThen(btn, ask, act, done) {
   if (btn.dataset.armed) {
     delete btn.dataset.armed;
-    btn.disabled = true;
-    act()
-      .then(async () => {
-        say(done);
-        chosen.detail = null;
-        await load();
-      })
-      .catch((err) => say(err.message, true))
-      .finally(() => (btn.disabled = false));
+    doNow(btn, act, done);
     return;
   }
   const was = btn.textContent;
