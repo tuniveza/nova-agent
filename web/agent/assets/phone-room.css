@@ -75,8 +75,8 @@
 
 /* ---- A phone on its side (19 Oct 2026, the user's own layout): the Nova tiles slimmer,
    in two staggered rows, each tile on the second row sitting under the gap between two above it
-       [Invoicer] [ Agent  ] [ Notes  ] …
-             [ Portal ] [Calendar] [ Board  ] …
+       [Invoicer] | [ Portal ] [Calendar] [ Board  ] … | [Nova]
+                  |       [ Agent  ] [ Notes  ] …      |
    (in the bar's own order, top, bottom, top, bottom; phone.js gives each tile its --t-col and
    --t-row). Twice as many tiles fit across, so each one is wide enough for its icon AND its name
    side by side, and every place is in sight at once. Only on a touch phone held sideways (a short
@@ -109,3 +109,39 @@
   html body .tabbar [data-tab] > span:last-child { text-align: center; }
 }
 
+
+/* A phone on its side (19 Oct 2026, the user's asks): each tile's icon ABOVE its name; Invoicer at the
+   far left and Nova at the far right, both rows tall, each set apart by a gap and a fine line; and a
+   tablet's chalky texture over every tile (a fine light and dark speckle, a soft sheen along the top) */
+@media (max-height: 500px) and (min-width: 560px) and (orientation: landscape) and (pointer: coarse) {
+  html body .tabbar { grid-template-columns: auto repeat(var(--t-tracks, 14), minmax(0, 1fr)) auto !important; }
+  html body .tabbar .tgroup[data-group="solo"], html body .tabbar .tgroup[data-group="end"] { display: flex !important; align-items: stretch !important; grid-row: 1 / 3; margin: 0; }
+  html body .tabbar .tgroup[data-group="solo"] { grid-column: 1; padding: 0 8px 0 0 !important; border: 0; border-right: 1px solid var(--line); }
+  html body .tabbar .tgroup[data-group="end"] { grid-column: -2 / -1; padding: 0 0 0 8px !important; border: 0; border-left: 1px solid var(--line); }
+  html body .tabbar .tgroup[data-group="solo"] .tg-items, html body .tabbar .tgroup[data-group="end"] .tg-items { display: flex !important; align-items: stretch !important; height: auto !important; }
+  html body .tabbar .tgroup[data-group="solo"] [data-tab], html body .tabbar .tgroup[data-group="end"] [data-tab] { grid-row: auto; grid-column: auto;
+    width: 64px !important; height: auto; min-height: 0; }
+  /* (the icon at the top of its tile, the name under it) */
+  html body .tabbar .tgroup[data-group] [data-tab] { display: grid; align-content: end; justify-items: center; padding: 0 3px 4px !important; }
+  html body .tabbar [data-tab] > .t-ico { place-items: start center !important; padding: 3px 0 0 !important; }
+  html body .tabbar [data-tab] > .t-ico > svg, html body .tabbar [data-tab] > .t-ico > img { width: 20px !important; height: 20px !important; }
+  html body .tabbar [data-tab] > img.t-ico { object-position: center 3px !important; }
+  html body .tabbar [data-tab] > span:last-child { font-size: 10px; text-align: center !important; }
+  html body .tabbar .tgroup[data-group="solo"] [data-tab] > .t-ico, html body .tabbar .tgroup[data-group="end"] [data-tab] > .t-ico { padding-top: 16px !important; }
+  html body .tabbar .tgroup[data-group="solo"] [data-tab] > .t-ico > svg, html body .tabbar .tgroup[data-group="solo"] [data-tab] > .t-ico > img,
+  html body .tabbar .tgroup[data-group="end"] [data-tab] > .t-ico > svg, html body .tabbar .tgroup[data-group="end"] [data-tab] > .t-ico > img { width: 30px !important; height: 30px !important; }
+  html body .tabbar .tgroup[data-group="solo"] [data-tab] > img.t-ico, html body .tabbar .tgroup[data-group="end"] [data-tab] > img.t-ico { object-position: center 16px !important; }
+  html body .tabbar .tgroup[data-group="solo"] [data-tab], html body .tabbar .tgroup[data-group="end"] [data-tab] { padding-bottom: 12px !important; }
+  /* (the tablet texture, on the layer that already gives each tile its raised edge) */
+  html body .tabbar .tgroup[data-group] [data-tab]::after { display: block !important; inset: 0 !important; width: auto !important; height: auto !important; margin: 0 !important; border-radius: inherit !important;
+    background:
+      radial-gradient(70% 55% at 40% 10%, rgba(255, 255, 255, .16), transparent 72%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 60px 60px repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Cfilter id='d'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.6' numOctaves='1' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 1.25'/%3E%3C/filter%3E%3Crect width='50' height='50' filter='url(%23d)' opacity='.35'/%3E%3C/svg%3E") 0 0 / 50px 50px repeat !important; }
+}
+/* (a small phone: the end tiles a little narrower) */
+@media (max-height: 500px) and (min-width: 560px) and (max-width: 699px) and (orientation: landscape) and (pointer: coarse) {
+  html body .tabbar .tgroup[data-group="solo"] [data-tab], html body .tabbar .tgroup[data-group="end"] [data-tab] { width: 54px !important; }
+  html body .tabbar .tgroup[data-group="solo"] { padding-right: 6px !important; }
+  html body .tabbar .tgroup[data-group="end"] { padding-left: 6px !important; }
+}
