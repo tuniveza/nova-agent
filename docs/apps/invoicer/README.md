@@ -8,7 +8,7 @@ Invoices to artists at each of their four stages, as the studio's own branded pa
   - **Void** cancels it, kept on record (a second press to be sure).
   - Pressing either does it and the panel pops down again. It doesn't pop up again for that invoice while the Invoicer is open.
 - **Money at a glance (19 Oct 2026):** owed, overdue and in this month, above the list. Tap it for the accountant's spreadsheets (invoices and payments, this tax year), **Open in Google Sheets**, and where Google Drive keeps the sent invoices.
-- **Everything for invoices is directly here.** Portal → Money's Invoices part is now one card ("Invoices are in the Invoicer") with **Open the Invoicer**, **Write an invoice**, **To approve** and **Overdue**. Console's `approve invoice N` and `reject invoice N` open the invoice here. The Clients & Money pillar has **Invoicer**.
+- **Everything for invoices is directly here.** Portal → Money's Invoices part is now one card ("Invoices are in the Invoicer") with **Open the Invoicer**, **Write an invoice**, **To approve** and **Overdue**. Console's `approve invoice N` and `reject invoice N` open the invoice here. The Clients & Money tab has **Invoicer**.
 - **Everything for invoices is here (19 Oct 2026).** Anywhere else in Nova with an invoice opens the Invoicer, set up for that job: Portal → Money, Today's tiles, a client's card, alerts and phone notifications, Agent's notes under its replies, Test stuff, and Console (`open invoicer`).
   - New here:
     - **Payment** (record one by hand).

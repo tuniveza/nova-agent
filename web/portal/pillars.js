@@ -1,16 +1,13 @@
-// Nova Pillars (19 Oct 2026): Portal's sections in place of the tab panel under the top panel. One
-// cylindrical pillar per group: Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look &
-// sound, and Admin (admins only). A pillar is clickable: it rises (opens) to show its pillar buttons,
-// bands round the column, each doing one real thing: a tab, a button pressed on its page, the
-// Invoicer, a sheet. Nothing does a job by itself that its page would ask about first: it opens the
-// place and presses the same button a person would. One pillar is open at a time (the one you're in,
-// to start with); the others stand slim with the group's name as their title. On phones and tablets,
-// simpler: short pillars in rows, names across them and big to tap, the open one wide underneath.
-// The tab panel stays in the page, hidden: the pillar buttons press its buttons and read its counts.
-// A clearly visible "Hide all" button (a crossed-out eye) folds them all away to one slim bar with
-// "Show Nova Pillars"; remembered on this device.
-// In Nova Agent's theme (its colours and fonts from /shared/themes.css); calm: a pillar opens with a
-// short slide, and not at all with reduced motion.
+// Nova Tabs (named so 20 Oct 2026; they began as the Nova Pillars, 19 Oct): Portal's sections in place of
+// the tab panel under the top panel. One tab per group: Inbox, Bookings, Clients & Money, Outreach,
+// Plans & Nova, You, Look & sound, and Admin (admins only), each its icon and name; the group you're in
+// is lit. Tapping one slides a panel out of it with all its items, over the page (it closes on the tab
+// again, a tap outside, Escape, or an item). Each item does one real thing: a tab, a button pressed on
+// its page, the Invoicer, a sheet; nothing does a job by itself that its page would ask about first.
+// The old tab panel stays in the page, hidden: the items press its buttons and read its counts.
+// "Hide all" (a crossed-out eye, at the end of the tabs) leaves only the page: Nova Agent's top panel and
+// its tiles, tablets or dock go too; "Show all" (an eye, top right) brings them back; remembered here.
+// In Nova Agent's theme; calm. (Code names: pillars.js/.css, .pillars, .mini-pillar.)
 (function () {
   "use strict";
   if (window.NovaPillars) return;
@@ -260,8 +257,8 @@
     const t = el("button", "pillars-toggle" + (hidden ? " show" : ""));
     t.type = "button";
     t.setAttribute("aria-pressed", String(hidden));
-    t.setAttribute("aria-label", hidden ? "Show all: the top panel, the Nova Pillars and the Nova tiles" : "Hide all: the top panel, the Nova Pillars and the Nova tiles");
-    t.title = hidden ? "Show all" : "Hide all: the top panel, the Nova Pillars and the Nova tiles";
+    t.setAttribute("aria-label", hidden ? "Show all: the top panel, the Nova Tabs and the Nova tiles" : "Hide all: the top panel, the Nova Tabs and the Nova tiles");
+    t.title = hidden ? "Show all" : "Hide all: the top panel, the Nova Tabs and the Nova tiles";
     t.innerHTML = (hidden ? EYE : EYE_OFF) + `<span>${hidden ? "Show all" : "Hide all"}</span>`;
     // (shown: a small round overlay button on the open pillar's capital, the crossed-out eye; 19 Oct 2026)
     if (!hidden) t.classList.add("in-row");
@@ -269,7 +266,7 @@
     return t;
   }
   // Hide all (the user, 19 Oct 2026): everything but the page goes. On a phone upright: Nova Agent's
-  // top panel, the Nova Pillars and the Nova tiles; on its side: the top panel, the pillars and the
+  // top panel, the Nova Tabs and the Nova tiles; on its side: the top panel, the pillars and the
   // Nova tablets (the same bar, its sideways look); on a computer the same: the top panel, the pillars
   // and the Nova dock. Nova Agent's own bars are hidden through its NovaBar (bar.js) and put back as
   // they were on Show, and whenever Portal is left (they're only away while Portal is open). Portal on
@@ -332,7 +329,7 @@
       cap.append(icon(g.name), el("span", "pillar-name", g.name));
       const b = badge(total);
       if (b) cap.append(b);
-      mini.append(cap, el("span", "mini-shaft"), el("span", "mini-base"));
+      mini.append(cap);
       mini.addEventListener("click", () => openPillar(g.name, true));
       caps.append(mini);
     }
@@ -452,7 +449,7 @@
   function start() {
     if (!$("main")) return;
     row = el("nav", "pillars");
-    row.setAttribute("aria-label", "Nova Pillars: Portal's sections");
+    row.setAttribute("aria-label", "Nova Tabs: Portal's sections");
     place();
     document.documentElement.classList.add("pillars-on");
     if (hidden) barsAway(true);

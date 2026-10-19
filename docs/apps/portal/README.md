@@ -13,19 +13,19 @@ Portal's old address, `/app/`, opens Portal (with the same tab: `/app/?view=aler
 <p align="center"><img src="media/planets.jpg" width="860" alt="48 generated planets: ringed gas giants, ocean worlds, molten worlds, ice worlds and rocky worlds, each one different"></p>
 
 
-## Nova Pillars (19 October 2026)
+## Nova Tabs (named 20 October 2026; first the Nova Tabs, 19 October)
 
-Portal's sections are **Nova Pillars** now, in place of the tab panel under the top panel. They're in Nova Agent's own look (its glass panels, pink glow, fonts and line icons) and kept simple: every word reads across, never sideways. There's one cylindrical pillar per group: Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only).
+Portal's sections are **Nova Tabs** now, in place of the tab panel under the top panel. They're in Nova Agent's own look (its glass panels, pink glow, fonts and line icons) and kept simple: every word reads across, never sideways. There's one cylindrical pillar per group: Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only).
 - **Tap a pillar** and it rises wide to show its **pillar buttons**, bands round the column. Each one opens the place and presses the same button you would: a tab, Add a client, Write a post, the Invoicer, Options at the right section, and so on. Inbox starts with **Today**.
 - **Just the groups, so the page has room (20 October 2026):**
-  - The pillars are only the group buttons (one row, or two on a phone) with a slim **Hide all** (a crossed-out eye) at their end.
+  - The pillars are only the group buttons (one row, or two on a phone) with a slim **Hide all** (a crossed-out eye) at their end. They're clean rounded tabs, with no stand under them.
   - **Tap a group** and a panel slides out of it with all its items, over the page. Tap the group again, tap outside, press Escape, or choose an item to close it.
   - On a phone, Nova Agent's title panel is slim (32px) and colourful, with little padding and buttons still easy to tap. The status panel stays under the Nova tiles and tablets.
 - **On a phone or tablet it's simpler:** short pillars in rows (four to a row on a phone, eight on a tablet). Each has its name across it and is big to tap. The one you tap opens wide underneath with its buttons in two columns (four on a tablet).
 - **On a wide computer screen** the other pillars stand slim beside the open one, with their names across their tops.
 - The pillar and button you're on are lit, as the open tab was. Counts show on them.
 - **Hide all** (a crossed-out eye, top right of the pillars) leaves only the page:
-  - On a phone held upright, it hides Nova Agent's top panel, the Nova Pillars and the Nova tiles.
+  - On a phone held upright, it hides Nova Agent's top panel, the Nova Tabs and the Nova tiles.
   - On a phone held sideways, it hides the top panel, the pillars and the Nova tablets.
   - On a computer, it hides the top panel, the pillars and the dock.
 - **Show all**, a round eye button at the top right, puts them all back as they were. Leaving Portal puts Nova Agent's bars back too. Your choice is remembered on that device.
