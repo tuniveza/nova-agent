@@ -18,7 +18,11 @@ Portal's old address, `/app/`, opens Portal (with the same tab: `/app/?view=aler
 Portal's sections are **Nova Tabs** now, in place of the tab panel under the top panel. They're in Nova Agent's own look (its glass panels, pink glow, fonts and line icons) and kept simple: every word reads across, never sideways. There's one cylindrical pillar per group: Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only).
 - **Tap a pillar** and it rises wide to show its **pillar buttons**, bands round the column. Each one opens the place and presses the same button you would: a tab, Add a client, Write a post, the Invoicer, Options at the right section, and so on. Inbox starts with **Today**.
 - **Just the groups, so the page has room (20 October 2026):**
-  - The pillars are only the group buttons (one row, or two on a phone) with a slim **Hide all** (a crossed-out eye) at their end. They're clean rounded tabs, with no stand under them.
+  - The pillars are only the group buttons (one row, or two on a phone) with a slim **Hide all** (a crossed-out eye) at their end. They're clean rounded tabs, with no stand under them. Each group has its own colour, like each Nova tile:
+    - Inbox pink, Bookings blue, Clients & Money gold, Outreach coral;
+    - Plans & Nova purple, You teal, Look & sound rose, Admin amber.
+  - The tabs are glass with a glowing edge and a faint field of stars. The open one and the one you're on glow in their colour.
+  - The items are lit glass cards, each icon in a small glowing orb.
   - **Tap a group** and a panel slides out of it with all its items, over the page. Tap the group again, tap outside, press Escape, or choose an item to close it.
   - On a phone, Nova Agent's title panel is slim (32px) and colourful, with little padding and buttons still easy to tap. The status panel stays under the Nova tiles and tablets.
 - **On a phone or tablet it's simpler:** short pillars in rows (four to a row on a phone, eight on a tablet). Each has its name across it and is big to tap. The one you tap opens wide underneath with its buttons in two columns (four on a tablet).

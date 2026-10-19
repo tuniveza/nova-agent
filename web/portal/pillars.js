@@ -310,6 +310,8 @@
   // you're in is lit. Tapping one slides its panel out of it (the user: "when you click a group … it will
   // open a sliding panel that comes out of it with all the items on it"), over the page, so the page
   // keeps all its room. Tapping it again, outside the panel, Escape, or choosing an item closes it.
+  // Each group's own colour (20 Oct 2026: "more aesthetic"), like each Nova tile has its own
+  const HUE = { Inbox: "#FF5FA8", Bookings: "#8FB4FF", "Clients & Money": "#F2C14E", Outreach: "#FF8C6B", "Plans & Nova": "#B98CFF", You: "#5CE1C0", "Look & sound": "#FF8CC6", Admin: "#FFB86B" };
   function drawCompact(groups, where) {
     const caps = el("div", "pillar-caps");
     caps.setAttribute("role", "group");
@@ -322,6 +324,7 @@
       const mini = el("button", "mini-pillar" + (open ? " open" : "") + (lit ? " here" : ""));
       mini.type = "button";
       mini.dataset.group = g.name;
+      mini.style.setProperty("--g", HUE[g.name] || "var(--hi)");
       mini.setAttribute("aria-expanded", String(open));
       mini.setAttribute("aria-haspopup", "true");
       mini.setAttribute("aria-label", `${g.name}${total ? `, ${total} new` : ""}`);
@@ -356,6 +359,7 @@
       document.body.append(drawer);
     }
     drawer.setAttribute("aria-label", g.name);
+    drawer.style.setProperty("--g", HUE[g.name] || "var(--hi)");
     const items = itemsOf(g);
     drawer.replaceChildren(
       ...items.map((it) => {

@@ -304,3 +304,89 @@ html[data-motion="calm"] .pillar { transition: none; }
 @media (max-width: 400px) { .mini-cap .pillar-name { font-size: 10px; letter-spacing: -0.02em; } .mini-cap { padding: 3px 1px; } }
 @media (max-width: 360px) { .mini-cap .pillar-name { font-size: 9.5px; } }
 @media (max-width: 340px) { .mini-cap .pillar-name { font-size: 9px; } }
+
+/* ===== The look (20 Oct 2026: "more aesthetic instead of this horribly simple look"): each group its
+   own colour (--g, like each Nova tile), glass with a glowing edge in it, a faint field of stars, its
+   icon in a lit orb; the open group and where you are glow. The same sizes as before ===== */
+.mini-pillar { --g: var(--hi); }
+.mini-cap {
+  position: relative; isolation: isolate; overflow: hidden;
+  border: 1px solid transparent;
+  background:
+    radial-gradient(90% 120% at 50% -10%, color-mix(in srgb, var(--g) 26%, transparent), transparent 62%) padding-box,
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, transparent), color-mix(in srgb, var(--deep) 96%, transparent)) padding-box,
+    linear-gradient(140deg, color-mix(in srgb, var(--g) 70%, transparent), color-mix(in srgb, var(--accent-2) 30%, transparent) 55%, color-mix(in srgb, var(--line) 100%, transparent)) border-box;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .08), 0 6px 16px -12px var(--g);
+  transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+/* (a faint field of stars, as on Nova's bars) */
+.mini-cap::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+  background:
+    radial-gradient(circle at 14% 30%, #fff 0 .6px, transparent 1.2px), radial-gradient(circle at 78% 22%, #fff 0 .5px, transparent 1.1px),
+    radial-gradient(circle at 62% 78%, var(--g) 0 .6px, transparent 1.3px), radial-gradient(circle at 32% 84%, #fff 0 .4px, transparent 1px); }
+/* (a soft shine along the top) */
+.mini-cap::after { content: ""; position: absolute; left: 12%; right: 12%; top: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--g) 90%, #fff), transparent); opacity: .7; }
+.mini-cap .pillar-ico { color: var(--g); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--g) 70%, transparent)); }
+.mini-cap .pillar-name { color: var(--bright); text-shadow: 0 1px 6px rgb(0 0 0 / .5); }
+.mini-pillar:hover .mini-cap { transform: translateY(-1px); filter: brightness(1.12); box-shadow: inset 0 1px 0 rgb(255 255 255 / .1), 0 8px 18px -10px var(--g); }
+/* where you are: the group's colour along its foot */
+.mini-pillar.here .mini-cap { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--g) 85%, transparent), inset 0 1px 0 rgb(255 255 255 / .1), 0 6px 16px -10px var(--g); }
+/* the open one: lit in its colour */
+.mini-pillar.open .mini-cap {
+  border-color: transparent; color: #fff;
+  background:
+    radial-gradient(90% 130% at 50% -20%, color-mix(in srgb, #fff 28%, transparent), transparent 55%) padding-box,
+    linear-gradient(160deg, color-mix(in srgb, var(--g) 78%, var(--accent)), color-mix(in srgb, var(--g) 30%, var(--accent-2))) padding-box,
+    linear-gradient(140deg, #fff, var(--g)) border-box;
+  box-shadow: 0 0 18px -4px var(--g), inset 0 1px 0 rgb(255 255 255 / .3);
+}
+.mini-pillar.open .mini-cap .pillar-ico { color: #fff; filter: drop-shadow(0 0 6px #fff); }
+.mini-pillar.open .mini-cap .pillar-name { color: #fff; }
+
+/* Hide all: the same glass */
+.pillars-toggle.in-row { border: 1px solid transparent;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, transparent), color-mix(in srgb, var(--deep) 96%, transparent)) padding-box,
+    linear-gradient(140deg, color-mix(in srgb, var(--hi) 60%, transparent), var(--line)) border-box; }
+
+/* The panel that slides out: the night sky in its group's colour, and its items as lit glass cards */
+.pillar-drawer {
+  --g: var(--hi);
+  border: 1px solid transparent;
+  background:
+    radial-gradient(70% 90% at 0% 0%, color-mix(in srgb, var(--g) 20%, transparent), transparent 60%) padding-box,
+    radial-gradient(60% 90% at 100% 100%, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 62%) padding-box,
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 97%, transparent), color-mix(in srgb, var(--void) 97%, transparent)) padding-box,
+    linear-gradient(140deg, color-mix(in srgb, var(--g) 80%, transparent), color-mix(in srgb, var(--accent-2) 40%, transparent) 50%, color-mix(in srgb, var(--g) 50%, transparent)) border-box;
+  box-shadow: 0 22px 48px -18px rgb(0 0 0 / .85), 0 0 30px -12px var(--g);
+}
+.pillar-drawer::before { background: color-mix(in srgb, var(--panel) 96%, var(--g) 4%); border-color: color-mix(in srgb, var(--g) 70%, transparent); }
+.pillar-drawer .pillar-btn {
+  position: relative; overflow: hidden; border: 1px solid transparent; color: var(--bright);
+  background:
+    radial-gradient(80% 140% at 0% 50%, color-mix(in srgb, var(--g) 16%, transparent), transparent 60%) padding-box,
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 90%, transparent), color-mix(in srgb, var(--deep) 92%, transparent)) padding-box,
+    linear-gradient(120deg, color-mix(in srgb, var(--g) 55%, transparent), color-mix(in srgb, var(--line) 100%, transparent) 60%) border-box;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .06);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+/* (each item's icon in a small lit orb) */
+.pillar-drawer .pillar-btn .pillar-ico {
+  width: 26px; height: 26px; padding: 5px; box-sizing: border-box; border-radius: 50%; color: var(--g);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--g) 34%, transparent), color-mix(in srgb, var(--g) 10%, transparent) 70%);
+  box-shadow: 0 0 10px -3px var(--g), inset 0 0 0 1px color-mix(in srgb, var(--g) 40%, transparent);
+}
+.pillar-drawer .pillar-btn:hover { transform: translateY(-1px); filter: brightness(1.12); box-shadow: 0 8px 18px -10px var(--g), inset 0 1px 0 rgb(255 255 255 / .1); }
+.pillar-drawer .pillar-btn.here {
+  color: #fff;
+  background:
+    radial-gradient(90% 140% at 0% 0%, color-mix(in srgb, #fff 22%, transparent), transparent 55%) padding-box,
+    linear-gradient(120deg, color-mix(in srgb, var(--g) 75%, var(--accent)), color-mix(in srgb, var(--g) 25%, var(--accent-2))) padding-box,
+    linear-gradient(120deg, #fff, var(--g)) border-box;
+  box-shadow: 0 0 16px -4px var(--g);
+}
+.pillar-drawer .pillar-btn.here .pillar-ico { color: #fff; background: rgb(255 255 255 / .18); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .45); }
+@media (max-width: 639px) {
+  .pillar-drawer .pillar-btn .pillar-ico { width: 24px; height: 24px; padding: 5px; }
+}
+@media (prefers-reduced-motion: reduce) { .mini-cap, .pillar-drawer .pillar-btn { transition: none; } .mini-pillar:hover .mini-cap, .pillar-drawer .pillar-btn:hover { transform: none; } }
