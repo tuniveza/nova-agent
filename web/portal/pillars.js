@@ -4,7 +4,7 @@
 // bands round the column, each doing one real thing: a tab, a button pressed on its page, the
 // Invoicer, a sheet. Nothing does a job by itself that its page would ask about first: it opens the
 // place and presses the same button a person would. One pillar is open at a time (the one you're in,
-// to start with); the others stand slim with their names up their side.
+// to start with); the others stand slim with the group's name as their title.
 // The tab panel stays in the page, hidden: the pillar buttons press its buttons and read its counts.
 // A clearly visible "Hide all" button (a crossed-out eye) folds them all away to one slim bar with
 // "Show Nova Pillars"; remembered on this device.
@@ -287,8 +287,7 @@
             shaft.append(btn);
           }
         } else {
-          // (a slim pillar: its name up its side, the whole of it opens it)
-          shaft.append(el("span", "pillar-side", g.name));
+          // (a slim pillar: its title, the group's name, on its capital; the whole of it opens it)
           pillar.addEventListener("click", (e) => {
             if (!e.target.closest(".pillar-cap")) openPillar(g.name, true);
           });

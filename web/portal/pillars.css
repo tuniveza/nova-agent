@@ -137,3 +137,23 @@ html.pillars-all-hidden .app > .top { display: none !important; }
 }
 .pillars.all-hidden .pillars-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .pillars.all-hidden .pillars-toggle svg { width: 22px; height: 22px; }
+
+/* Every pillar's title is its group's name (the user, 19 Oct 2026: "not just an icon"). A slim
+   pillar's title runs down its capital; on a wide screen there's room for it across */
+.pillar:not(.open) .pillar-cap { flex-direction: column; justify-content: flex-start; height: auto; min-height: 30px; padding: 7px 0 9px; gap: 6px; border-radius: 12px 12px 6px 6px; }
+.pillar:not(.open) .pillar-cap .pillar-name { display: block; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11.5px; letter-spacing: 0.05em; white-space: nowrap; }
+.pillar:not(.open) .pillar-shaft { min-height: 18px; }
+.pillar-side { display: none; }
+@media (max-width: 760px) {
+  .pillar:not(.open) .pillar-cap { padding: 6px 0 8px; gap: 5px; }
+  .pillar:not(.open) .pillar-cap .pillar-name { font-size: 10.5px; letter-spacing: 0.03em; }
+}
+@media (max-height: 500px) {
+  .pillar:not(.open) .pillar-cap .pillar-name { font-size: 10px; letter-spacing: 0.02em; }
+}
+@media (min-width: 1100px) {
+  .pillars { --slim: 112px; }
+  .pillar:not(.open) .pillar-cap { flex-direction: row; justify-content: center; height: 30px; padding: 0 6px; gap: 6px; }
+  .pillar:not(.open) .pillar-cap .pillar-name { writing-mode: horizontal-tb; transform: none; font-size: 12px; }
+  .pillar:not(.open) .pillar-shaft { min-height: 110px; }
+}
