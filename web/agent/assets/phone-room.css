@@ -88,18 +88,19 @@
   html body .tabbar > .tg-row, html body .tabbar .tgroup, html body .tabbar .tg-items { display: contents !important; }
   html body .tabbar .tg-label, html body .tabbar > .status-line { display: none !important; }
   html body .tabbar .tgroup[data-group] [data-tab] { grid-row: var(--t-row, auto); grid-column: var(--t-col, auto) / span 2;
-    width: auto !important; min-width: 0 !important; height: 38px; min-height: 38px; margin: 0; padding: 0 10px 0 32px !important; border-radius: 999px !important;
+    width: auto !important; min-width: 0 !important; height: 38px; min-height: 38px; margin: 0; padding: 0 6px 0 30px !important; border-radius: 10px;
     display: flex; align-items: center; }
   /* (the icon at the left end of its tile, the name beside it) */
-  html body .tabbar [data-tab] > .t-ico { place-items: center start !important; padding: 0 0 0 10px !important; }
+  html body .tabbar [data-tab] > .t-ico { place-items: center start !important; padding: 0 0 0 7px !important; }
   html body .tabbar [data-tab] > .t-ico > svg, html body .tabbar [data-tab] > .t-ico > img { width: 18px !important; height: 18px !important; }
-  html body .tabbar [data-tab] > img.t-ico { object-position: 10px center !important; }
+  html body .tabbar [data-tab] > img.t-ico { object-position: 7px center !important; }
   html body .tabbar [data-tab] > span:last-child { position: relative !important; width: 100% !important; height: auto !important; overflow: hidden !important; clip: auto !important;
     padding: 0 !important; font-size: 11px; line-height: 1; text-align: left; }
   html body .tabbar > .dock-handle { top: -14px; height: 14px; }
 }
-/* (thick pill tablets, 38px tall with round ends: 22px was too small to tap, the user said 19 Oct 2026) */
-/* (a small phone's narrower pills: the icon and the name closer to the round ends, so names fit whole) */
+/* (38px tall: 22px was too small to tap, the user said 19 Oct 2026; pills and then medicine tablets
+   were tried, and the user went back to these tiles at this height) */
+/* (a small phone's narrower tiles: the icon and the name closer to the ends, so names fit whole) */
 @media (max-height: 500px) and (min-width: 560px) and (max-width: 699px) and (orientation: landscape) and (pointer: coarse) {
   html body .tabbar .tgroup[data-group] [data-tab] { padding: 0 5px 0 22px !important; }
   html body .tabbar [data-tab] > .t-ico { padding: 0 0 0 6px !important; }
@@ -108,35 +109,3 @@
   html body .tabbar [data-tab] > span:last-child { text-align: center; }
 }
 
-/* ---- The pills as medicine tablets (19 Oct 2026, the user's idea), each in its own tile's colours:
-   a chalky coating (a fine grain) with a soft sheen along the top, a pressed rim round the edge, the
-   name stamped into it, a score notch top and bottom, a few fine scratches, and chips bitten out of
-   the edges (pale where the chalk shows). Three ways of being chipped and scratched, so no two
-   neighbours look the same. The open place: a ring just inside its rim. */
-@media (max-height: 500px) and (min-width: 560px) and (orientation: landscape) and (pointer: coarse) {
-  html body .tabbar .tg-items > [data-tab] { --k1: 22% 0%; --k2: 26% 0%; --k3: 68% 100%; --k4: 99.5% 30%; --scr: 0 0; }
-  html body .tabbar .tg-items > [data-tab]:nth-child(3n+2) { --k1: 61% 0%; --k2: 31% 100%; --k3: 34.5% 100%; --k4: 0.5% 64%; --scr: -38px -9px; }
-  html body .tabbar .tg-items > [data-tab]:nth-child(3n) { --k1: 84% 0%; --k2: 52% 100%; --k3: 3% 20%; --k4: 41% 0%; --scr: -71px -21px; }
-  html body .tabbar .tgroup[data-group] [data-tab] {
-    -webkit-mask-image: radial-gradient(4px 2.6px at var(--k1), transparent 90%, #000), radial-gradient(2.2px 3.2px at var(--k2), transparent 90%, #000), radial-gradient(3.2px 2.4px at var(--k3), transparent 90%, #000), radial-gradient(2.4px 3px at var(--k4), transparent 90%, #000);
-    mask-image: radial-gradient(4px 2.6px at var(--k1), transparent 90%, #000), radial-gradient(2.2px 3.2px at var(--k2), transparent 90%, #000), radial-gradient(3.2px 2.4px at var(--k3), transparent 90%, #000), radial-gradient(2.4px 3px at var(--k4), transparent 90%, #000);
-    -webkit-mask-composite: source-in; mask-composite: intersect;
-    box-shadow: none !important; }
-  html body .tabbar .tgroup[data-group] [data-tab]::after { display: block !important; inset: 0 !important; width: auto !important; height: auto !important; margin: 0 !important; border-radius: inherit !important;
-    background:
-      radial-gradient(6px 4.5px at var(--k1), rgba(255, 255, 255, .34), transparent 75%),
-      radial-gradient(4px 5px at var(--k2), rgba(255, 255, 255, .26), transparent 75%),
-      radial-gradient(5.5px 4px at var(--k3), rgba(255, 255, 255, .3), transparent 75%),
-      radial-gradient(4px 5px at var(--k4), rgba(255, 255, 255, .28), transparent 75%),
-      linear-gradient(90deg, transparent calc(50% - 1px), rgba(0, 0, 0, .5) calc(50% - 1px) 50%, rgba(255, 255, 255, .28) 50% calc(50% + 1px), transparent calc(50% + 1px)) center top / 100% 5px no-repeat,
-      linear-gradient(90deg, transparent calc(50% - 1px), rgba(0, 0, 0, .5) calc(50% - 1px) 50%, rgba(255, 255, 255, .28) 50% calc(50% + 1px), transparent calc(50% + 1px)) center bottom / 100% 5px no-repeat,
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='40'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M14 9l19-4' stroke='%23fff' stroke-opacity='.5' stroke-width='.5'/%3E%3Cpath d='M52 31l26 3' stroke='%23fff' stroke-opacity='.38' stroke-width='.4'/%3E%3Cpath d='M84 11c6 1 11 4 15 8' stroke='%23000' stroke-opacity='.4' stroke-width='.5'/%3E%3Cpath d='M31 25l7-9' stroke='%23fff' stroke-opacity='.32' stroke-width='.35'/%3E%3Cpath d='M97 29l14-5' stroke='%23fff' stroke-opacity='.42' stroke-width='.4'/%3E%3Cpath d='M64 7l9 2' stroke='%23000' stroke-opacity='.35' stroke-width='.4'/%3E%3C/g%3E%3C/svg%3E") var(--scr) / 120px 40px repeat,
-      radial-gradient(60% 50% at 40% 12%, rgba(255, 255, 255, .3), transparent 72%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 60px 60px repeat !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), inset 0 2px 2px rgba(255, 255, 255, .34), inset 0 -3px 4px rgba(0, 0, 0, .5), inset 0 0 7px 1px rgba(0, 0, 0, .3); }
-  /* (the name stamped into the tablet) */
-  html body .tabbar [data-tab] > span:last-child { text-shadow: 0 -1px 0 rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .24), 0 0 6px rgba(0, 0, 0, .45); }
-  html body .tabbar .tgroup[data-group] [data-tab][aria-current="page"]::after {
-    box-shadow: inset 0 0 0 2px var(--hi), inset 0 0 10px -2px var(--hi), inset 0 2px 2px rgba(255, 255, 255, .34), inset 0 -3px 4px rgba(0, 0, 0, .5); }
-  html body .tabbar .tgroup[data-group] [data-tab]:active::after { box-shadow: inset 0 2px 5px rgba(0, 0, 0, .6), inset 0 -1px 0 rgba(255, 255, 255, .14); }
-}
