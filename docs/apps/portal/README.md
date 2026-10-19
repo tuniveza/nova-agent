@@ -15,14 +15,13 @@ Portal's old address, `/app/`, opens Portal (with the same tab: `/app/?view=aler
 
 ## Fans (19 October 2026)
 
-The **✦ button** (bottom right, above the tabs) opens everything in Portal as **half fans**. Each part is a chamfered blade (its corners cut), in Nova Agent's colours.
-- **The first fan has the groups:** Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only).
-- **Each group opens its own fan of up to eight blades.** Each blade opens the place and presses the same button you would: a tab, Add a client, Write a post, the Invoicer, Options at the right section, and so on.
+Portal's sections are **half fans** now, in place of the tab panel under the top panel. Each section is a chamfered blade (its corners cut), in Nova Agent's colours.
+- **The fan hanging under the top panel has the groups:** Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, and Admin (admins only). The group you're in is lit.
+- **A group opens its own fan of up to eight blades, in the same place.** Each blade opens the place and presses the same button you would: a tab, Add a client, Write a post, the Invoicer, Options at the right section, and so on. The one you're on is lit, as the open tab was.
 - **The circle in the middle:** tap for **Today** (or **Back** inside a group); hold for **Voice**.
-- **Closing it:** Escape, or a tap outside.
-- **Keyboard:** arrow keys move between blades, and Enter opens one.
+- **Keyboard:** arrow keys move between blades; Enter opens one; Escape goes back.
 - **Counts:** a badge on a blade shows its count (new enquiries, waiting approvals, and so on).
-- **The ✦ button gets out of the way.** It never sits on top of another button (it moves left or up), and it goes away while you type.
+- **Size:** it fits the panel's width and is never more than about a third of the screen's height.
 
 Also fixed the same day:
 - The Website bot's chips no longer change the enquiry reply chips (tapping **Note** used to clear the bot's chat).

@@ -1,13 +1,15 @@
-// Fans (19 Oct 2026): everything in Portal from one button, as half fans. The ✦ button (bottom right,
-// above the tabs) opens a half fan of Portal's groups: Inbox, Bookings, Clients & Money, Outreach,
-// Plans & Nova, You, Look & sound, and Admin (admins only). Each section is a chamfered blade (its
-// corners cut). A group opens its own half fan of up to eight blades, each doing one real thing:
-// a tab, a button pressed on its page, the Invoicer, a sheet. Nothing here does a job by itself that
-// its page would ask about first: it opens the place and presses the same button a person would.
-//   The hub (the circle at the fan's centre): tap for Today (or back, inside a group); hold for Voice.
-//   Escape or a tap outside closes it. Arrow keys move between blades; Enter opens one.
-// In Nova Agent's theme (its colours from /shared/themes.css), calm: the fan opens like a hand fan
-// (each blade turns out from the first), and not at all with reduced motion.
+// Fans (19 Oct 2026): Portal's sections as half fans, in place of the tab panel under the top panel
+// (the user: "the fans were supposed to replace the button panel"). A half fan hangs from under the top
+// panel with Portal's groups: Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look &
+// sound, and Admin (admins only). Each section is a chamfered blade (its corners cut). A group opens
+// its own half fan, in the same place, of up to eight blades, each doing one real thing: a tab, a
+// button pressed on its page, the Invoicer, a sheet. Nothing does a job by itself that its page would
+// ask about first: it opens the place and presses the same button a person would.
+//   The hub (the circle at the fan's centre): tap for Today (or Back, inside a group); hold for Voice.
+//   The group and the blade you're on are lit, as the tabs were. Arrow keys move; Enter opens; Escape is Back.
+// The tab panel stays in the page, hidden (its buttons are what the blades press, and its counts are
+// read for the blades' badges). In Nova Agent's theme; calm: a fan opens like a hand fan, quickly,
+// and not at all with reduced motion.
 (function () {
   "use strict";
   if (window.PortalFans) return;
@@ -156,104 +158,109 @@
     return `M ${pts(o0)} A ${r1} ${r1} 0 ${big} 1 ${pts(o1)} L ${pts(e1a)} L ${pts(e1b)} L ${pts(i1)} A ${r0} ${r0} 0 0 0 ${pts(i0)} L ${pts(e0a)} L ${pts(e0b)} Z`;
   }
 
-  let root = null; // the open fan's layer
+  // Where you are: the tab open (or the profile, Admin, the crew), for lighting its group and blade
+  const AT = { Enquiries: "enquiries", Conversations: "chats", Alerts: "alerts", "Website bot": "bot", "Booking tools": "calendar", Approvals: "approvals", Clients: "clients", Money: "money", Campaigns: "campaigns", Social: "social", Quests: "quests", "Your profile": "me", "Admin pages": "admin", "The crew": "crew", Google: "google", "Test stuff": "tests", Computer: "desk" };
+  function here() {
+    const v = new URLSearchParams(location.search).get("view") || "";
+    if (v === "manage" || v === "admin") return "admin";
+    if (v === "crew") return "crew";
+    if (v === "me" || v === "you" || new URLSearchParams(location.search).get("id")) return "me";
+    return (window.PortalApp && window.PortalApp.view) || v || "today";
+  }
+  const isHere = (it) => (it.items ? it.items.some((x) => AT[x.name] === here()) : AT[it.name] === here());
+
+  let dock = null; // the fans, where the tab panel was
   let level = null; // null: the groups; else the group open
   let focusAt = 0;
-  let launcher = null;
-
-  function geometry() {
-    const W = innerWidth;
-    const H = innerHeight;
-    const bar = barTop();
-    const cx = W / 2;
-    // (the hub sits whole above the tabs: the fan's straight edge is its middle)
-    let r1 = Math.max(120, Math.min(W / 2 - 10, bar - 110, 330));
-    let r0 = Math.max(44, Math.round(r1 * 0.3));
-    const cy = bar - (r0 - 9) - 8;
-    r1 = Math.max(110, Math.min(r1, cy - 58));
-    r0 = Math.max(44, Math.round(r1 * 0.3));
-    return { W, H, cx, cy, r1, r0 };
-  }
-  // The top of Portal's tabs when they sit along the bottom (a phone), else the bottom of the screen
-  function barTop() {
-    const nav = document.querySelector("nav.tabs");
-    if (nav && shown(nav)) {
-      const r = nav.getBoundingClientRect();
-      if (r.bottom >= innerHeight - 4 && r.top > innerHeight / 2) return r.top;
-    }
-    return innerHeight - Math.max(8, parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sab")) || 0);
-  }
+  let drawnSig = "";
 
   function itemsNow() {
     if (!level) return GROUPS.filter((g) => !g.admin || admin()).filter((g) => g.items.some((i) => !i.admin || admin()));
     return level.items.filter((i) => !i.admin || admin());
   }
+  // The fan's size: the panel's width, and never more than a third of the screen's height
+  function geometry() {
+    const W = Math.max(240, dock.clientWidth || innerWidth);
+    const r1 = Math.round(Math.max(104, Math.min(W / 2 - 12, innerHeight * 0.34, 200)));
+    const r0 = Math.max(40, Math.round(r1 * 0.29));
+    const hub = r0 - 8;
+    const cy = hub + 4;
+    return { W, H: cy + r1 + 6, cx: W / 2, cy, r1, r0, hub };
+  }
+  // Words along a blade, turned to read upright
+  const upright = (deg) => {
+    let r = -deg % 360;
+    if (r > 180) r -= 360;
+    if (r <= -180) r += 360;
+    if (r > 90) r -= 180;
+    if (r <= -90) r += 180;
+    return r;
+  };
 
   function draw(opening) {
+    if (!dock) return;
     const g = geometry();
     const list = itemsNow();
     const n = list.length;
     const gap = n > 6 ? 1.4 : 2;
     const step = 180 / n;
-    const c = Math.max(5, Math.min(11, g.r1 * 0.04));
-    const svg = root.querySelector("svg");
+    const c = Math.max(5, Math.min(10, g.r1 * 0.045));
+    const svg = dock.querySelector("svg");
     svg.setAttribute("viewBox", `0 0 ${g.W} ${g.H}`);
     svg.setAttribute("width", g.W);
     svg.setAttribute("height", g.H);
+    svg.setAttribute("aria-label", level ? level.name : "Portal's sections");
+    dock.style.height = `${g.H}px`;
     const fan = svg.querySelector(".fan-blades");
     fan.replaceChildren();
-    fan.style.transformOrigin = `${g.cx}px ${g.cy}px`;
     list.forEach((it, i) => {
-      const a0 = 180 - i * step - gap / 2;
-      const a1 = 180 - (i + 1) * step + gap / 2;
+      // (the fan hangs down: from the left (180°) under the hub to the right (360°))
+      const a0 = 180 + (i + 1) * step - gap / 2;
+      const a1 = 180 + i * step + gap / 2;
       const mid = (a0 + a1) / 2;
+      const rad = (mid * Math.PI) / 180;
+      const lit = isHere(it);
       const b = document.createElementNS(SVG, "g");
-      b.setAttribute("class", "fan-blade" + (i % 2 ? " pleat" : ""));
-      b.setAttribute("role", "menuitem");
-      b.setAttribute("tabindex", "-1");
-      b.setAttribute("aria-label", it.name + (count(it.badge || "") ? `, ${count(it.badge)} new` : "") + (level ? "" : ", opens its fan"));
+      b.setAttribute("class", "fan-blade" + (i % 2 ? " pleat" : "") + (lit ? " here" : ""));
+      b.setAttribute("role", level ? "menuitem" : "button");
+      b.setAttribute("tabindex", i === focusAt ? "0" : "-1");
+      const nb = level ? count(it.badge || "") : (it.badges || []).reduce((s, id) => s + count(id), 0);
+      b.setAttribute("aria-label", it.name + (nb ? `, ${nb} new` : "") + (level ? "" : ", opens its fan") + (lit ? " (you're here)" : ""));
+      if (lit) b.setAttribute("aria-current", "page");
       b.dataset.i = i;
-      // (the hand fan opening: each blade turns out from the first one's place)
-      b.style.setProperty("--fold", `${(180 - mid) - step / 2}deg`);
+      b.style.setProperty("--fold", `${mid - 180 - step / 2}deg`);
       b.style.setProperty("--i", i);
       b.style.transformOrigin = `${g.cx}px ${g.cy}px`;
       const path = document.createElementNS(SVG, "path");
       path.setAttribute("class", "fan-shape");
       path.setAttribute("d", blade(g.cx, g.cy, g.r0, g.r1, a0, a1, c));
-      // the rib: a fine line down the blade's middle, like a hand fan's
       const rib = document.createElementNS(SVG, "path");
       rib.setAttribute("class", "fan-rib");
-      const rad = (mid * Math.PI) / 180;
       rib.setAttribute("d", `M ${g.cx + (g.r0 + c * 1.5) * Math.cos(rad)} ${g.cy - (g.r0 + c * 1.5) * Math.sin(rad)} L ${g.cx + (g.r1 - c * 1.5) * Math.cos(rad)} ${g.cy - (g.r1 - c * 1.5) * Math.sin(rad)}`);
-      // the rim: a line along the outer edge, in the theme's glow
       const rim = document.createElementNS(SVG, "path");
       rim.setAttribute("class", "fan-rim");
       rim.setAttribute("d", blade(g.cx, g.cy, g.r1 - 3.5, g.r1 - 1.5, a0, a1, Math.min(c, 2)));
       b.append(path, rib, rim);
-      // The words, along the blade (read from the outside in on the left, the inside out on the right)
-      const glyphR = g.r1 - c - 15;
-      const gx = g.cx + glyphR * Math.cos(rad);
-      const gy = g.cy - glyphR * Math.sin(rad);
+      const glyphR = g.r1 - c - 13;
       const glyph = document.createElementNS(SVG, "text");
       glyph.setAttribute("class", "fan-glyph");
-      glyph.setAttribute("x", gx);
-      glyph.setAttribute("y", gy);
+      glyph.setAttribute("x", g.cx + glyphR * Math.cos(rad));
+      glyph.setAttribute("y", g.cy - glyphR * Math.sin(rad));
       glyph.textContent = it.glyph || "✦";
-      const textR = (g.r0 + glyphR - 14) / 2 + 4;
+      const textR = (g.r0 + glyphR - 12) / 2 + 3;
       const tx = g.cx + textR * Math.cos(rad);
       const ty = g.cy - textR * Math.sin(rad);
-      const turn = mid > 90 ? 180 - mid : -mid;
       const label = document.createElementNS(SVG, "text");
       label.setAttribute("class", "fan-label" + (level ? "" : " group"));
       label.setAttribute("x", tx);
       label.setAttribute("y", ty);
-      label.setAttribute("transform", `rotate(${turn.toFixed(2)} ${tx.toFixed(2)} ${ty.toFixed(2)})`);
+      label.setAttribute("transform", `rotate(${upright(mid).toFixed(2)} ${tx.toFixed(2)} ${ty.toFixed(2)})`);
       label.textContent = it.name;
       b.append(glyph, label);
-      const n2 = level ? count(it.badge || "") : (it.badges || []).reduce((s, id) => s + count(id), 0);
-      if (n2) {
-        const bx = g.cx + (g.r1 - c - 4) * Math.cos(((a1 + 4) * Math.PI) / 180);
-        const by = g.cy - (g.r1 - c - 4) * Math.sin(((a1 + 4) * Math.PI) / 180);
+      if (nb) {
+        const ba = ((a1 + Math.min(5, step / 3)) * Math.PI) / 180;
+        const bx = g.cx + (g.r1 - c - 5) * Math.cos(ba);
+        const by = g.cy - (g.r1 - c - 5) * Math.sin(ba);
         const dot = document.createElementNS(SVG, "circle");
         dot.setAttribute("class", "fan-badge");
         dot.setAttribute("cx", bx);
@@ -263,48 +270,40 @@
         num.setAttribute("class", "fan-badge-n");
         num.setAttribute("x", bx);
         num.setAttribute("y", by);
-        num.textContent = n2 > 99 ? "99" : String(n2);
+        num.textContent = nb > 99 ? "99" : String(nb);
         b.append(dot, num);
       }
       b.addEventListener("click", () => choose(i));
-      b.addEventListener("pointerenter", () => caption(it));
-      b.addEventListener("focus", () => caption(it));
+      b.addEventListener("focus", () => (focusAt = i));
       fan.append(b);
-      fit(label, (g.r1 - g.r0) - c * 2 - 34, g.r0 + (g.r1 - g.r0) / 2, step);
+      fit(label, g.r1 - g.r0 - c * 2 - 30, (g.r0 + g.r1) / 2, step);
     });
-    // The hub
+    // The hub: Today (or Back to the groups); hold for Voice
     const hub = svg.querySelector(".fan-hub");
-    hub.querySelector("circle").setAttribute("cx", g.cx);
-    hub.querySelector("circle").setAttribute("cy", g.cy);
-    hub.querySelector("circle").setAttribute("r", g.r0 - 9);
-    const ht = hub.querySelector("text");
-    ht.setAttribute("x", g.cx);
-    ht.setAttribute("y", g.cy - (g.r0 - 9) * 0.28);
-    ht.textContent = level ? "←" : "⌂";
-    const hs = hub.querySelectorAll("text")[1];
-    hs.setAttribute("x", g.cx);
-    hs.setAttribute("y", g.cy - (g.r0 - 9) * 0.28 + 15);
-    hs.textContent = level ? "Back" : "Today";
-    hub.setAttribute("aria-label", level ? "Back to the groups (hold for Voice)" : "Today (hold for Voice)");
-    // The caption: what the blade under the finger is, above the fan
-    const cap = root.querySelector(".fan-caption");
-    cap.style.left = `${g.cx}px`;
-    cap.style.top = `${Math.max(6, g.cy - g.r1 - 46)}px`;
-    cap.hidden = g.cy - g.r1 - 46 < 4;
-    caption(level ? { name: level.name, hint: "Choose one" } : { name: "Portal", hint: "Choose a group" });
+    const circle = hub.querySelector("circle");
+    circle.setAttribute("cx", g.cx);
+    circle.setAttribute("cy", g.cy);
+    circle.setAttribute("r", g.hub);
+    const [mark, word] = hub.querySelectorAll("text");
+    mark.setAttribute("x", g.cx);
+    mark.setAttribute("y", g.cy - g.hub * 0.22);
+    mark.textContent = level ? "←" : "⌂";
+    word.setAttribute("x", g.cx);
+    word.setAttribute("y", g.cy + g.hub * 0.32);
+    word.textContent = level ? "Back" : "Today";
+    hub.classList.toggle("here", !level && here() === "today");
+    hub.setAttribute("aria-label", level ? `Back to Portal's groups (hold for Voice)` : "Today (hold for Voice)");
     if (opening && !calm()) {
-      root.classList.remove("open");
-      void root.offsetWidth;
+      dock.classList.remove("open");
+      void dock.getBoundingClientRect();
     }
-    root.classList.add("open");
-    focusAt = Math.min(focusAt, n - 1);
+    dock.classList.add("open");
+    drawnSig = sig();
   }
   // Words that don't fit along their blade get smaller (never under 9px): never cut, never on two lines
   function fit(label, room, midR, step) {
-    let size = level ? 13 : 14;
-    // (a narrow blade's own width limits the words' height too)
     const across = 2 * midR * Math.sin(((step / 2) * Math.PI) / 180) - 8;
-    size = Math.min(size, Math.max(9, across * 0.62));
+    let size = Math.min(level ? 13 : 14, Math.max(9, across * 0.62));
     label.style.fontSize = `${size}px`;
     try {
       let len = label.getComputedTextLength();
@@ -317,105 +316,59 @@
       /* (not drawn yet) */
     }
   }
-  function caption(it) {
-    const cap = root && root.querySelector(".fan-caption");
-    if (!cap) return;
-    cap.querySelector("b").textContent = it.name;
-    cap.querySelector("small").textContent = it.hint || (it.items ? `${it.items.filter((x) => !x.admin || admin()).length} things` : it.admin ? "Admins only" : "");
-  }
+  // What's drawn depends on: where you are, the counts, who you are, the width
+  const sig = () => [here(), admin(), level && level.name, Math.round((dock && dock.clientWidth) || 0), Math.round(innerHeight / 20), ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
 
   function choose(i) {
     const it = itemsNow()[i];
     if (!it) return;
     if (!level) {
       level = it;
-      focusAt = 0;
+      focusAt = Math.max(0, itemsNow().findIndex(isHere));
       draw(true);
-      focusBlade(0);
+      focusBlade(focusAt);
       return;
     }
-    close();
+    focusAt = i;
     try {
       it.run();
     } catch (err) {
       say("That didn't open: " + (err.message || err));
     }
+    setTimeout(() => draw(false), 350);
+  }
+  function back() {
+    const was = level;
+    level = null;
+    focusAt = Math.max(0, itemsNow().indexOf(was));
+    draw(true);
+    focusBlade(focusAt);
   }
   function focusBlade(i) {
-    const blades = root.querySelectorAll(".fan-blade");
+    const blades = dock.querySelectorAll(".fan-blade");
     if (!blades.length) return;
     focusAt = (i + blades.length) % blades.length;
+    blades.forEach((b, j) => b.setAttribute("tabindex", j === focusAt ? "0" : "-1"));
     blades[focusAt].focus({ preventScroll: true });
   }
-
-  // ---- Open and close ----
-  function open() {
-    if (root) return close();
-    level = null;
-    focusAt = 0;
-    root = document.createElement("div");
-    root.className = "fans";
-    root.setAttribute("role", "dialog");
-    root.setAttribute("aria-label", "Portal's fans: everything in Portal");
-    root.innerHTML = `<div class="fan-scrim"></div><p class="fan-caption" aria-live="polite"><b></b><small></small></p>
-      <svg class="fan-svg" xmlns="${SVG}" role="menu" aria-label="Portal">
-        <defs>
-          <linearGradient id="fan-fill" x1="0" y1="1" x2="0" y2="0"><stop offset="0" class="fan-stop-a"/><stop offset="1" class="fan-stop-b"/></linearGradient>
-          <linearGradient id="fan-lit" x1="0" y1="1" x2="1" y2="0"><stop offset="0" class="fan-lit-a"/><stop offset="1" class="fan-lit-b"/></linearGradient>
-        </defs>
-        <g class="fan-blades"></g>
-        <g class="fan-hub" role="button" tabindex="0"><circle/><text class="fan-hub-mark"></text><text class="fan-hub-word"></text></g>
-      </svg>`;
-    document.body.append(root);
-    document.documentElement.classList.add("fans-open");
-    launcher.setAttribute("aria-expanded", "true");
-    root.querySelector(".fan-scrim").addEventListener("click", close);
-    root.addEventListener("click", (e) => {
-      if (e.target === root || e.target.classList.contains("fan-svg")) close();
-    });
-    hubPress(root.querySelector(".fan-hub"));
-    root.addEventListener("keydown", keys);
-    draw(true);
-    requestAnimationFrame(() => focusBlade(0));
-  }
-  function close() {
-    if (!root) return;
-    const r = root;
-    root = null;
-    level = null;
-    document.documentElement.classList.remove("fans-open");
-    launcher.setAttribute("aria-expanded", "false");
-    r.classList.remove("open");
-    setTimeout(() => r.remove(), calm() ? 0 : 160);
-    launcher.focus({ preventScroll: true });
-  }
-  // The hub: a tap is Today (or back), a hold (half a second) is Voice
+  // The hub: a tap is Today (or Back), a hold (half a second) is Voice
   function hubPress(hub) {
     let timer = 0;
     let held = false;
-    const start = () => {
+    hub.addEventListener("pointerdown", () => {
       held = false;
       timer = setTimeout(() => {
         held = true;
-        close();
         $("voice") && !$("voice").hidden ? $("voice").click() : say("Voice isn't available here.");
       }, 500);
-    };
-    const end = () => clearTimeout(timer);
-    hub.addEventListener("pointerdown", start);
-    hub.addEventListener("pointerup", end);
-    hub.addEventListener("pointerleave", end);
+    });
+    for (const ev of ["pointerup", "pointerleave", "pointercancel"]) hub.addEventListener(ev, () => clearTimeout(timer));
     hub.addEventListener("contextmenu", (e) => e.preventDefault());
     hub.addEventListener("click", () => {
       if (held) return;
-      if (level) {
-        level = null;
-        draw(true);
-        focusBlade(0);
-        return;
-      }
-      close();
+      if (level) return back();
       tab("today")();
+      setTimeout(() => draw(false), 300);
     });
     hub.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -425,13 +378,9 @@
     });
   }
   function keys(e) {
-    if (e.key === "Escape") {
+    if (e.key === "Escape" && level) {
       e.preventDefault();
-      if (level) {
-        level = null;
-        draw(true);
-        focusBlade(0);
-      } else close();
+      back();
     } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
       focusBlade(focusAt + 1);
@@ -443,74 +392,49 @@
       choose(Number(e.target.dataset.i));
     } else if (e.key === "Backspace" && level) {
       e.preventDefault();
-      level = null;
-      draw(true);
-      focusBlade(0);
+      back();
     }
   }
 
-  // ---- The ✦ button that opens them ----
-  // (never over something to press: right, else left, else a little higher; and out of the way while typing)
-  const PRESSABLE = 'button, a[href], input, select, textarea, [role="button"], [contenteditable="true"], summary, label';
-  function covers(side, lift) {
-    const size = 52;
-    const bottom = Math.max(12, innerHeight - barTop() + 12) + lift;
-    const x0 = side === "right" ? innerWidth - Math.max(14, 0) - size : 14;
-    const y0 = innerHeight - bottom - size;
-    for (const [x, y] of [[x0 + size / 2, y0 + size / 2], [x0 + 6, y0 + 6], [x0 + size - 6, y0 + 6], [x0 + 6, y0 + size - 6], [x0 + size - 6, y0 + size - 6]]) {
-      for (const el of document.elementsFromPoint(x, y)) {
-        if (el === launcher || launcher.contains(el)) continue;
-        if (el.closest(PRESSABLE) && !el.closest(".fan-launcher")) return true;
-        break;
-      }
-    }
-    return false;
-  }
-  function placeLauncher() {
-    if (!launcher) return;
-    const typing = document.activeElement && document.activeElement.matches && document.activeElement.matches("input, textarea, select, [contenteditable='true']");
-    const sheetOpen = [...document.querySelectorAll(".sheet, #options-sheet, #voice-sheet, #suite-sheet, #notify-sheet, #more-sheet")].some((x) => !x.hidden);
-    launcher.classList.toggle("away", Boolean(typing || sheetOpen));
-    const base = Math.max(12, innerHeight - barTop() + 12);
-    for (const [side, lift] of [["right", 0], ["left", 0], ["right", 64], ["left", 64], ["right", 128]]) {
-      if (!covers(side, lift)) {
-        launcher.style.bottom = `${base + lift}px`;
-        launcher.style.right = side === "right" ? "" : "auto";
-        launcher.style.left = side === "left" ? "max(14px, env(safe-area-inset-left))" : "";
-        return;
-      }
-    }
-    launcher.style.bottom = `${base}px`;
-  }
+  // ---- In place of the tab panel ----
   function start() {
-    launcher = document.createElement("button");
-    launcher.type = "button";
-    launcher.className = "fan-launcher";
-    launcher.setAttribute("aria-haspopup", "menu");
-    launcher.setAttribute("aria-expanded", "false");
-    launcher.setAttribute("aria-label", "Everything in Portal (fans)");
-    launcher.title = "Everything in Portal";
-    launcher.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20 3.5 11.5a12 12 0 0 1 17 0Z"/><path d="M12 20V9M12 20 7 10.4M12 20l5-9.6"/></svg>';
-    launcher.addEventListener("click", open);
-    document.body.append(launcher);
-    placeLauncher();
-    addEventListener("resize", () => {
-      placeLauncher();
-      if (root) draw(false);
-    });
-    // (only once someone's signed in: Portal's sign-in screen has nothing to open)
-    const signedIn = () => document.body.classList.contains("signed-in") || !!(window.PortalPage && window.PortalPage.me && window.PortalPage.me());
-    const watch = () => {
-      launcher.hidden = !signedIn();
-      if (!launcher.hidden && !root) placeLauncher();
+    const main = $("main");
+    if (!main) return;
+    dock = document.createElement("nav");
+    dock.className = "fan-dock";
+    dock.setAttribute("aria-label", "Portal's sections");
+    dock.innerHTML = `<svg class="fan-svg" xmlns="${SVG}" role="group">
+        <defs>
+          <linearGradient id="fan-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="fan-stop-a"/><stop offset="1" class="fan-stop-b"/></linearGradient>
+          <linearGradient id="fan-lit" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="fan-lit-a"/><stop offset="1" class="fan-lit-b"/></linearGradient>
+        </defs>
+        <g class="fan-blades"></g>
+        <g class="fan-hub" role="button" tabindex="0"><circle/><text class="fan-hub-mark"></text><text class="fan-hub-word"></text></g>
+      </svg>`;
+    // (exactly where the tab panel is: inside Nova Agent it's in the header's box with the top panel)
+    const nav = document.querySelector("nav.tabs");
+    if (nav && nav.parentElement && !nav.parentElement.classList.contains("app")) nav.after(dock);
+    else main.before(dock);
+    document.documentElement.classList.add("fans-dock");
+    hubPress(dock.querySelector(".fan-hub"));
+    dock.addEventListener("keydown", keys);
+    draw(true);
+    // Kept up to date: where you are, the counts, the width (cheap: drawn again only when one changes)
+    const refresh = () => {
+      // (the tab panel is moved into the header's box inside Nova Agent once Portal has drawn: follow it)
+      const nav = document.querySelector("nav.tabs");
+      if (nav && nav.parentElement && !nav.parentElement.classList.contains("app") && nav.nextElementSibling !== dock) nav.after(dock);
+      if (sig() !== drawnSig) draw(false);
     };
-    watch();
-    setInterval(watch, 1200);
-    document.addEventListener("focusin", watch);
-    document.addEventListener("focusout", () => setTimeout(watch, 50));
-    addEventListener("popstate", () => setTimeout(watch, 300));
+    setInterval(refresh, 1000);
+    addEventListener("resize", refresh);
+    addEventListener("popstate", () => setTimeout(refresh, 200));
+    document.addEventListener("click", (e) => {
+      if (!dock.contains(e.target)) setTimeout(refresh, 300);
+    });
+    new ResizeObserver(refresh).observe(dock);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
-  window.PortalFans = { open, close, groups: GROUPS };
+  window.PortalFans = { groups: GROUPS, back, redraw: () => draw(false) };
 })();
