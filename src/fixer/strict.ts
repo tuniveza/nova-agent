@@ -1,4 +1,4 @@
-// The Fixer, from the ground up (16 October 2026): three strict rules, never compromised, checked on
+// The Fixer, from the ground up (16 October 2026): four strict rules, never compromised, checked on
 // all of Nova Agent (its home and every app, plan, tool and helper) every 30 minutes, at phone, tablet
 // and computer sizes:
 //
@@ -15,6 +15,11 @@
 //                 row. Groups of choices (colours, filters, chips, toolbars) may wrap onto more rows: that
 //                 keeps every choice in sight instead of off to the side (the user, 16 Oct 2026). Reading
 //                 text (a paragraph, a message, a note) is left out: it's meant to wrap.
+//   4. works      Every button and link works (the user, 19 Oct 2026: "everything, test or otherwise, should be
+//                 functional and working when it's not impossible"): no link, or button that opens a page,
+//                 leads to a page that isn't there (Not found) or is broken, and a link to a place on its
+//                 own page finds that place. Each address is tried once a run, only ever with GET; a form
+//                 that sends something is never tried, nor a link that signs out or removes.
 //
 // It only looks: nothing that would change something leaves its browser (every request that isn't a
 // GET is turned away, live connections are closed). scripts/fixer-strict.ts runs it as its own
@@ -25,11 +30,12 @@ import { join } from "node:path";
 import { NAME_SHIM } from "./looks";
 import { SWEEP_HEADER } from "./sweep-guard";
 
-export type StrictRule = "offscreen" | "onescreen" | "oneline";
+export type StrictRule = "offscreen" | "onescreen" | "oneline" | "works";
 export const STRICT_RULES: { id: StrictRule; title: string; text: string }[] = [
   { id: "offscreen", title: "Never anything off the screen", text: "Nothing sticks out past the screen's edges or is cut off by its box." },
   { id: "onescreen", title: "One screen", text: "The page never scrolls sideways; on a computer it never scrolls at all (only boxes inside it do); on a phone a panel scrolls up and down like any app." },
   { id: "oneline", title: "Never onto the next line", text: "Buttons, names, labels and headings keep their words on one line; Nova Agent's bars stay one row." },
+  { id: "works", title: "Every button and link works", text: "No button or link leads to a page that isn't there (Not found) or is broken." },
 ];
 
 export type StrictBox = { x: number; y: number; w: number; h: number };
@@ -238,6 +244,50 @@ export function measureStrict(): StrictFound[] {
 }
 
 // ---- Running it: every size, Nova Agent's home and every place in it ----
+// ---- 4. Works: where each link (and each button that opens a page) on a screen leads ----
+// Self-contained, like measureStrict. A link to a place on the same page is looked for here (missing:
+// true when it isn't there); every other address is tried outside the page, once a run (runStrict).
+export type StrictLink = { what: string; url: string; missing?: boolean };
+export function linksOnScreen(): StrictLink[] {
+  const out: StrictLink[] = [];
+  const seen = new Set<string>();
+  const short = (t: string, n = 40) => (t.replace(/\s+/g, " ").trim().length > n ? t.replace(/\s+/g, " ").trim().slice(0, n - 1) + "…" : t.replace(/\s+/g, " ").trim());
+  const name = (el: Element) => {
+    const label = el.getAttribute("aria-label") || el.getAttribute("title") || (el as HTMLElement).innerText || el.textContent || "";
+    const where = el.id ? `#${el.id}` : el.classList.length ? `.${[...el.classList].slice(0, 2).join(".")}` : el.tagName.toLowerCase();
+    return `${el.tagName === "A" || el.tagName === "AREA" ? "Link" : "Button"}${short(label) ? ` “${short(label)}”` : ""} (${where})`;
+  };
+  for (const el of document.querySelectorAll("a[href], area[href], form[action]")) {
+    if (el.closest('[aria-hidden="true"], [inert], template, noscript')) continue;
+    const form = el.tagName === "FORM";
+    // (a form that sends something is never tried: it would change something)
+    if (form && ((el as HTMLFormElement).getAttribute("method") || "get").toLowerCase() !== "get") continue;
+    const raw = (el.getAttribute(form ? "action" : "href") || "").trim();
+    if (!raw || /^(javascript|mailto|tel|sms|data|blob):/i.test(raw)) continue;
+    const what = name(form ? el.querySelector('button, [type="submit"]') || el : el);
+    if (raw.startsWith("#")) {
+      const id = decodeURIComponent(raw.slice(1));
+      if (id && id !== "top" && !document.getElementById(id) && !document.getElementsByName(id).length) out.push({ what, url: raw, missing: true });
+      continue;
+    }
+    let url: URL;
+    try {
+      url = new URL(raw, location.href);
+    } catch {
+      out.push({ what, url: raw, missing: true });
+      continue;
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") continue;
+    url.hash = "";
+    if (seen.has(url.href)) continue;
+    seen.add(url.href);
+    out.push({ what, url: url.href });
+  }
+  return out;
+}
+// (never tried, even with GET: what signs someone out or takes something away)
+const NOT_TRIED = /log-?out|sign-?out|unsubscribe|delete|remove|revoke/i;
+
 export type StrictOptions = {
   base: string;
   cookie?: { name: string; value: string } | null;
@@ -263,6 +313,8 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
   if (opts.shotsDir) mkdirSync(opts.shotsDir, { recursive: true });
   let shots = 0;
   const screens: StrictScreen[] = [];
+  // Rule 4: each address once a run (every size and screen shares the answer), with why it doesn't work
+  const tried = new Map<string, Promise<string>>();
   const browser = await chromium.launch({ args: ["--disable-gpu", "--mute-audio"] });
   const one = async (size: { w: number; h: number; kind: StrictKind }) => {
     const touch = size.kind !== "computer";
@@ -299,9 +351,30 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
             (window as any).NovaRules?.check?.();
           })
           .catch(() => {});
+      // Rule 4: where this screen's links lead. Another website only counts when it says the page isn't
+      // there: many turn robots away, send them round to sign in, or stall (Google's console), and still
+      // open for a person
+      const reach = (url: string) => {
+        if (NOT_TRIED.test(url)) return Promise.resolve("");
+        const ours = url.startsWith(origin);
+        if (!tried.has(url))
+          tried.set(
+            url,
+            ctx.request
+              .get(url, { timeout: 20_000, maxRedirects: 8, failOnStatusCode: false, headers: ours ? { [SWEEP_HEADER]: "1" } : {} })
+              .then((r) => (r.status() === 404 || r.status() === 410 ? `leads to a page that isn't there (${r.status()} Not found): ${url}` : ours && r.status() >= 500 ? `leads to a broken page (${r.status()}): ${url}` : ""))
+              .catch(() => (ours ? `leads nowhere (the address can't be reached): ${url}` : "")),
+          );
+        return tried.get(url)!;
+      };
+      const works = async (where: { evaluate: (fn: () => StrictLink[]) => Promise<StrictLink[]> }) => {
+        const links = await where.evaluate(linksOnScreen).catch(() => [] as StrictLink[]);
+        const whys = await Promise.all(links.map((l) => (l.missing ? Promise.resolve(`leads to “${l.url}”, which isn't on its page`) : reach(l.url))));
+        return links.flatMap((l, i): StrictFound[] => (whys[i] ? [{ rule: "works", what: l.what, why: whys[i], box: null }] : []));
+      };
       const host = async () => {
         await fixNow(page);
-        return (await page.evaluate(measureStrict).catch(() => [] as StrictFound[])).filter((f) => !barsSaid.has(f.rule + f.what + f.why) && barsSaid.add(f.rule + f.what + f.why));
+        return [...(await page.evaluate(measureStrict).catch(() => [] as StrictFound[])), ...(await works(page))].filter((f) => !barsSaid.has(f.rule + f.what + f.why) && barsSaid.add(f.rule + f.what + f.why));
       };
       // How many parts a page fixed on its own as it drew (web/shared/rules.js)
       const fixedIn = (where: { evaluate: (fn: () => number) => Promise<number> }) => where.evaluate(() => Number((window as any).NovaRules?.fixed?.() || 0)).catch(() => 0);
@@ -352,7 +425,7 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
           await page.waitForTimeout(settle);
           const at = await handle.boundingBox();
           await fixNow(frame);
-          const inside = (await frame.evaluate(measureStrict).catch(() => [] as StrictFound[])).map((f) => ({ ...f, box: f.box && at ? { ...f.box, x: f.box.x + Math.round(at.x), y: f.box.y + Math.round(at.y) } : f.box }));
+          const inside = [...(await frame.evaluate(measureStrict).catch(() => [] as StrictFound[])), ...(await works(frame))].map((f) => ({ ...f, box: f.box && at ? { ...f.box, x: f.box.x + Math.round(at.x), y: f.box.y + Math.round(at.y) } : f.box }));
           await record(p.name, Date.now() - t, [...(await host()), ...inside], undefined, await fixedIn(frame));
         } catch (err) {
           await record(p.name, Date.now() - t, [], `couldn't be looked at (${String((err as Error).message).split("\n")[0].slice(0, 120)})`);
@@ -426,7 +499,7 @@ export function strictProblems(run: StrictRun | null): StrictProblem[] {
   return [...map.values()];
 }
 export function strictCounts(run: StrictRun | null): Record<StrictRule, number> {
-  const counts: Record<StrictRule, number> = { offscreen: 0, onescreen: 0, oneline: 0 };
+  const counts: Record<StrictRule, number> = { offscreen: 0, onescreen: 0, oneline: 0, works: 0 };
   for (const p of strictProblems(run)) counts[p.rule]++;
   return counts;
 }

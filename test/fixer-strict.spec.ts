@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { Hono } from "hono";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser, Page } from "playwright";
-import { measureStrict, strictCounts, strictProblems, type StrictRun } from "../src/fixer/strict";
+import { linksOnScreen, measureStrict, strictCounts, strictProblems, type StrictRun } from "../src/fixer/strict";
 import { StrictFixer, registerStrictRoutes, retireOldFixer } from "../src/fixer/strict-service";
 
 let browser: Browser;
@@ -114,6 +114,23 @@ describe("3. never onto the next line", () => {
   });
 });
 
+describe("4. every button and link works", () => {
+  const links = async (html: string) => {
+    await page.setContent(`<!doctype html>${html}`);
+    return page.evaluate(linksOnScreen);
+  };
+  it("a link to a place on its page that isn't there", async () => {
+    expect(await links(`<a href="#bank">Pay by bank transfer</a><a href="#card">Card</a><div id="card"></div>`)).toEqual([{ what: "Link “Pay by bank transfer” (a)", url: "#bank", missing: true }]);
+  });
+  it("addresses to try: each once, a form that only opens a page by its button, never a form that sends, mail or scripts", async () => {
+    const l = await links(`<a href="https://x.test/privacy">Privacy</a><a href="https://x.test/privacy#top">Privacy</a><form method="get" action="https://x.test/find"><button>Find</button></form><form method="post" action="https://x.test/pay"><button>Pay</button></form><a href="mailto:a@x.test">Mail</a><a href="javascript:void 0">Go</a>`);
+    expect(l).toEqual([
+      { what: "Link “Privacy” (a)", url: "https://x.test/privacy" },
+      { what: "Button “Find” (button)", url: "https://x.test/find" },
+    ]);
+  });
+});
+
 const run = (screens: StrictRun["screens"]): StrictRun => ({ startedAt: "2026-10-16T10:00:00.000Z", finishedAt: "2026-10-16T10:02:00.000Z", base: "https://x.test", signedIn: true, screens });
 describe("counting", () => {
   it("one thing seen at several sizes is one problem, with every size it was at", () => {
@@ -128,7 +145,7 @@ describe("counting", () => {
       ["Calendar", "oneline", ["360×640", "390×844"]],
       ["Notes", "offscreen", ["360×640", "390×844"]],
     ]);
-    expect(strictCounts(r)).toEqual({ offscreen: 1, onescreen: 0, oneline: 1 });
+    expect(strictCounts(r)).toEqual({ offscreen: 1, onescreen: 0, oneline: 1, works: 0 });
   });
 });
 
@@ -160,7 +177,7 @@ describe("the service", () => {
     expect(calls[0].args.join(" ")).not.toContain("secret-token");
     expect(calls[0].env).toEqual({ LOOKS_COOKIE: "secret-token", LOOKS_COOKIE_NAME: "nova_session" });
     const s = f.state();
-    expect(s.rules.map((x) => [x.id, x.problems])).toEqual([["offscreen", 0], ["onescreen", 1], ["oneline", 0]]);
+    expect(s.rules.map((x) => [x.id, x.problems])).toEqual([["offscreen", 0], ["onescreen", 1], ["oneline", 0], ["works", 0]]);
     expect(s.problems).toHaveLength(1);
     expect(s.history).toHaveLength(1);
     expect(s.last?.id).toBe("20261016-100000");

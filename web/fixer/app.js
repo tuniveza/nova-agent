@@ -1,4 +1,4 @@
-// The Fixer's page (16 Oct 2026, from the ground up): the three strict rules, whether each is kept,
+// The Fixer's page (16 Oct 2026, from the ground up): the four strict rules, whether each is kept,
 // and every problem the last check found, with the places and sizes it was seen at and a picture.
 // It talks to Nova Agent's server (/fixer-api/state, /actions/fixer/check); online, Nova Bot passes
 // those on (admins only).
@@ -64,7 +64,7 @@
       .map((p) => ({ ...p, at: p.at.filter((a) => kind === "all" || a.kind === kind) }))
       .filter((p) => p.at.length);
     if (!state.last) return void ($("list").innerHTML = `<p class="nt-empty">The first check hasn't finished yet. It runs every ${state.every} minutes.</p>`);
-    if (!problems.length) return void ($("list").innerHTML = `<p class="nt-empty"><b>Nothing to fix here.</b> ${rule === "all" ? "All three rules are kept" : "This rule is kept"}${kind === "all" ? "" : ` on ${kind}s`}.</p>`);
+    if (!problems.length) return void ($("list").innerHTML = `<p class="nt-empty"><b>Nothing to fix here.</b> ${rule === "all" ? "All four rules are kept" : "This rule is kept"}${kind === "all" ? "" : ` on ${kind}s`}.</p>`);
     const RULE = Object.fromEntries(state.rules.map((r) => [r.id, r.title]));
     const byPlace = new Map();
     for (const p of problems) byPlace.set(p.place, [...(byPlace.get(p.place) || []), p]);

@@ -13,7 +13,7 @@ main { box-sizing: border-box; height: 100%; max-width: 1040px; margin: 0 auto; 
 .nb-tool button { font: inherit; cursor: pointer; white-space: nowrap; }
 
 /* ---- The three rules ---- */
-.rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.rules { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .rule { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 0; padding: 10px 12px; border-radius: 16px; text-align: left;
   border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 55%, transparent); color: var(--text); }
 .rule[aria-pressed="true"] { border-color: var(--hi); box-shadow: 0 0 0 1px var(--hi); }
@@ -51,6 +51,7 @@ main { box-sizing: border-box; height: 100%; max-width: 1040px; margin: 0 auto; 
 .tag { display: inline-block; margin-right: 4px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; vertical-align: 1px;
   background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
 .tag.oneline { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.tag.works { background: color-mix(in srgb, var(--hi) 10%, transparent); color: var(--text); }
 .tag.onescreen { background: color-mix(in srgb, var(--hi) 18%, transparent); color: var(--hi); }
 .sizes { display: flex; gap: 4px; margin-top: 6px; overflow-x: auto; scrollbar-width: thin; }
 .size { flex: none; padding: 2px 8px; min-height: 24px; border-radius: 8px; font-family: var(--f-mono); font-size: 11px; border: 1px solid var(--line); background: none; color: var(--muted); }
@@ -77,9 +78,9 @@ dialog.shot::backdrop { background: rgba(0, 0, 0, .6); }
   .rule-words b { font-size: 13px; }
   .when { font-size: 12px; }
 }
-/* A short screen (a phone on its side): the three rules in a row, no subtitle */
+/* A short screen (a phone on its side): the four rules in a row, no subtitle */
 @media (max-height: 500px) {
   .top .nt-sub { display: none; }
-  .rules { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rules { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .rule-words { display: grid; }
 }

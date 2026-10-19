@@ -39,5 +39,5 @@ const run = await runStrict({
 });
 if (opt("out")) writeFileSync(opt("out"), JSON.stringify(run, null, 1));
 const c = strictCounts(run);
-console.log(`${run.screens.length} screens: ${c.offscreen} off the screen, ${c.onescreen} not one screen, ${c.oneline} onto the next line`);
-process.exit(c.offscreen + c.onescreen + c.oneline ? 1 : 0);
+console.log(`${run.screens.length} screens: ${c.offscreen} off the screen, ${c.onescreen} not one screen, ${c.oneline} onto the next line, ${c.works} not working`);
+process.exit(c.offscreen + c.onescreen + c.oneline + c.works ? 1 : 0);

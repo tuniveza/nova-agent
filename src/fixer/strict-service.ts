@@ -1,4 +1,4 @@
-// The Fixer, from the ground up (16 October 2026): only the three strict rules (src/fixer/strict.ts),
+// The Fixer, from the ground up (16 October 2026): only the four strict rules (src/fixer/strict.ts),
 // checked on all of Nova Agent every 30 minutes on the server (and when an admin taps Check now).
 // Nothing else: no hourly checks, no quests, no prepared fixes, no approvals. What the Fixer had
 // before was put aside, not deleted: data/fixer.json became data/fixer-before-2026-10-16.json.
@@ -79,12 +79,12 @@ export class StrictFixer {
       const summary: StrictSummary = { at: run.finishedAt, counts: strictCounts(run), screens: run.screens.length, ms: Date.parse(run.finishedAt) - Date.parse(run.startedAt) };
       this.write({ last: { ...run, id }, history: [...s.history, summary].slice(-HISTORY) });
       const c = summary.counts;
-      this.deps.log(`Fixer: ${run.screens.length} screens checked: ${c.offscreen} off the screen, ${c.onescreen} not one screen, ${c.oneline} onto the next line`);
+      this.deps.log(`Fixer: ${run.screens.length} screens checked: ${c.offscreen} off the screen, ${c.onescreen} not one screen, ${c.oneline} onto the next line, ${c.works} not working`);
       return true;
     } catch (err) {
       const message = (err as Error).message;
       const s = this.read();
-      this.write({ ...s, history: [...s.history, { at: this.deps.now().toISOString(), counts: { offscreen: 0, onescreen: 0, oneline: 0 }, screens: 0, ms: 0, error: message }].slice(-HISTORY), error: message });
+      this.write({ ...s, history: [...s.history, { at: this.deps.now().toISOString(), counts: { offscreen: 0, onescreen: 0, oneline: 0, works: 0 }, screens: 0, ms: 0, error: message }].slice(-HISTORY), error: message });
       this.deps.log(`Fixer: the check couldn't run: ${message}`);
       return false;
     } finally {
@@ -169,7 +169,7 @@ export function startStrictFixer(): StrictFixer {
   });
   const f = strict;
   if (config.onServer) cron.schedule(`*/${STRICT_EVERY_MIN} * * * *`, () => void f.check().catch((err) => trace("task", "error", `Fixer crashed: ${(err as Error).message}`)), { timezone: config.timezone });
-  console.log(`Fixer: the three strict rules${config.onServer ? `, checked every ${STRICT_EVERY_MIN} minutes` : " (Check now on its page)"}`);
+  console.log(`Fixer: the four strict rules${config.onServer ? `, checked every ${STRICT_EVERY_MIN} minutes` : " (Check now on its page)"}`);
   return f;
 }
 
