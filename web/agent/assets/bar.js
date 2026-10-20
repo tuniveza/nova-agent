@@ -40,6 +40,8 @@
   if (!main) return;
   const PHONE = matchMedia("(max-width: 980px), (max-height: 480px)");
   const STILL = matchMedia("(prefers-reduced-motion: reduce)");
+  // (where the top panel sits on the Nova tiles as one dock: medallion.css)
+  const DOCKED = matchMedia("(max-width: 760px), (max-height: 480px) and (pointer: coarse)");
   const HIDE_AFTER = 1500, EDGE = 12, NEAR = 60, CALM_MS = 2500;
   const viewing = () => main.classList.contains("viewing");
   const topEl = document.querySelector(".shell > .topbar");
@@ -402,6 +404,24 @@
     // it down; let go past a third of the way (or with a flick) and they close, else they spring back.
     // A tap or a mouse click closes them too; Enter or Space from the keyboard as well.
     const close = () => setFor(bars.nav, "hidden", dockName());
+    // (a phone, 20 Oct 2026, the user: the handle "above them including … that system panel"): the top
+    // panel sits on the tiles there as one dock, so the handle is on the dock's top edge, above the top
+    // panel, and the whole dock goes with it (medallion.css takes the top panel away with the tiles)
+    const docked = () => box === tabEl && !!topEl && DOCKED.matches && !root.classList.contains("top-going") && !root.classList.contains("top-away") && topEl.offsetHeight > 0;
+    let lifting = 0;
+    const lift = () => {
+      lifting = 0;
+      const up = docked() ? Math.max(0, box.offsetTop - topEl.offsetTop) : 0;
+      box.style.setProperty("--dock-lift", `${up}px`);
+      h.classList.toggle("on-dock", up > 0);
+    };
+    const relift = () => { if (!lifting) lifting = requestAnimationFrame(lift); };
+    if (box === tabEl && topEl) {
+      new ResizeObserver(relift).observe(topEl);
+      new ResizeObserver(relift).observe(box);
+      DOCKED.addEventListener("change", relift);
+      new MutationObserver(relift).observe(root, { attributes: true, attributeFilter: ["class"] });
+    }
     let grab = null;
     h.addEventListener("pointerdown", (e) => {
       if (e.button > 0) return;
@@ -417,7 +437,14 @@
       if (!grab || e.pointerId !== grab.id) return;
       const dy = e.clientY - grab.y;
       if (!grab.moved && Math.abs(dy) < 5) return;
-      if (!grab.moved) { grab.moved = true; grab.h = box.offsetHeight; root.classList.add("dock-grabbed"); box.style.transition = "none"; box.style.willChange = "transform, opacity"; h.classList.add("moving"); }
+      if (!grab.moved) {
+        grab.moved = true;
+        grab.boxes = docked() ? [box, topEl] : [box];
+        grab.h = grab.boxes.reduce((t, el) => t + el.offsetHeight, 0);
+        root.classList.add("dock-grabbed");
+        for (const el of grab.boxes) { el.style.transition = "none"; el.style.willChange = "transform, opacity"; }
+        h.classList.add("moving");
+      }
       const now = performance.now();
       grab.v = (e.clientY - grab.lastY) / Math.max(1, now - grab.lastAt);
       grab.lastY = e.clientY;
@@ -430,8 +457,10 @@
         if (!grab) return;
         grab.frame = 0;
         const d = grab.dy, pull = d > 0 ? d : d / 5;
-        box.style.transform = `translate3d(0, ${pull}px, 0)`;
-        box.style.opacity = String(Math.max(0.4, 1 - Math.max(0, d) / (grab.h * 1.6)));
+        for (const el of grab.boxes) {
+          el.style.transform = `translate3d(0, ${pull}px, 0)`;
+          el.style.opacity = String(Math.max(0.4, 1 - Math.max(0, d) / (grab.h * 1.6)));
+        }
       });
     });
     const letGo = (e) => {
@@ -445,9 +474,9 @@
       h._let = setTimeout(() => h.classList.remove("let-go"), 420);
       const dy = e.clientY - g.y;
       // (back to its own slide: from wherever it was let go, either away or back into place)
-      box.style.transition = box.style.transform = box.style.opacity = box.style.willChange = "";
+      for (const el of g.boxes || [box]) el.style.transition = el.style.transform = el.style.opacity = el.style.willChange = "";
       if (!g.moved) { if (e.type === "pointerup") close(); return; }
-      if (e.type === "pointerup" && (dy > box.offsetHeight / 3 || (dy > 12 && g.v > 0.5))) close();
+      if (e.type === "pointerup" && (dy > g.h / 3 || (dy > 12 && g.v > 0.5))) close();
     };
     h.addEventListener("pointerup", letGo);
     h.addEventListener("pointercancel", letGo);
@@ -456,6 +485,7 @@
     box.append(h);
     // (the phone's bar redraws itself now and then: the line stays on it)
     new MutationObserver(() => { if (!box.contains(h)) box.append(h); }).observe(box, { childList: true });
+    relift();
   }
   handleFor(tabEl);
   handleFor(stripEl);

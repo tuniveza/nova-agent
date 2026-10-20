@@ -131,7 +131,9 @@ describe("the panels bar along the bottom", () => {
     expect(read("../web/agent/assets/bar.css")).toContain("html body .dock-handle, html body .dock-handle *, html body .bar-edge.bottom, html body .bar-edge.bottom * { touch-action: none !important; }");
     // (a drawer's handle, 16 Oct 2026: dragged down past a third of the way, or flicked, it closes; a tap
     // or click closes it; the edge it leaves at the bottom is pulled up (or tapped) to bring it back)
-    expect(barJs).toContain('if (e.type === "pointerup" && (dy > box.offsetHeight / 3 || (dy > 12 && g.v > 0.5))) close();');
+    // (past a third of the way: the whole dock's height, the top panel too on a phone, 20 Oct 2026)
+    expect(barJs).toContain('if (e.type === "pointerup" && (dy > g.h / 3 || (dy > 12 && g.v > 0.5))) close();');
+    expect(barJs).toContain("grab.boxes = docked() ? [box, topEl] : [box];");
     // (closed, it's pulled up and the tiles come up with the finger: past a third, or a flick, they open)
     expect(barJs).toContain("if (e.type === \"pointerup\" && d && (up > (d.offsetHeight + 16) / 3 || (up > 12 && p.v > 0.5))) open();");
     expect(barJs).toContain('setFor(bars.nav, "hidden", dockName())');

@@ -3,10 +3,8 @@
    colours, taking the old title's place. And the top panel's buttons as smooth square bubbles: a fake
    reflection, light from above, depth below and a grainy, posterised finish. */
 
-/* The old title steps aside (still in the page: it carries the panel's name, and still switches panel
-   when the place's name under the planet is tapped) */
-html.nv-medal-on .shell > .topbar > .brand,
-html.nv-medal-on .shell > .topbar > .viewer-name { display: none !important; }
+/* (the old title stepped aside for the medallion; it's back on the top panel since 20 Oct 2026, the
+   user: "the title for the app, helper and or otherwise can be on the top panel") */
 html.nv-medal-on .shell > .topbar { position: relative; overflow: visible; }
 
 .nv-medal {
@@ -238,3 +236,163 @@ html body .dock-handle.held > .grip { width: 74px !important; transform: scaleY(
 html body .dock-handle.moving > .grip { width: 86px !important; }
 html body .dock-handle.let-go > .grip { box-shadow: 0 0 0 1px #fff, 0 0 0 2.5px color-mix(in srgb, var(--deep) 85%, transparent), 0 2px 3px rgb(0 0 0 / .55), 0 0 24px 3px var(--hd) !important; }
 html body .shell > .tabbar > .dock-handle, html body #suite-home > .dock-handle { top: -11px !important; height: 22px !important; }
+
+/* ===== 20 Oct 2026 (night) ===== */
+
+/* A computer's top panel: the same smooth square bubbles (a fake reflection, light from above, depth
+   below), without the grain: that stays a phone's (the user: "the bubble buttons on the top panel can
+   be there just not with the grain look but with that lovely fake reflection and lighting look") */
+@media (min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine) {
+  html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)) {
+    position: relative; border-radius: 12px !important; border: 1px solid rgb(255 255 255 / .14) !important;
+    background:
+      radial-gradient(120% 70% at 30% -10%, rgb(255 255 255 / .4), rgb(255 255 255 / .09) 45%, transparent 58%),
+      linear-gradient(165deg, color-mix(in srgb, var(--accent) 46%, var(--panel)), color-mix(in srgb, var(--accent-2) 42%, var(--deep))) !important;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / .36),
+      inset 0 -3px 6px -2px rgb(0 0 0 / .45),
+      0 2px 4px rgb(0 0 0 / .35),
+      0 8px 18px -10px var(--hi) !important;
+    color: #fff !important;
+    transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+  }
+  html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)):hover { filter: brightness(1.12) saturate(1.1); }
+  html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)):active {
+    transform: translateY(1px); box-shadow: inset 0 2px 5px rgb(0 0 0 / .5), inset 0 -1px 0 rgb(255 255 255 / .14), 0 1px 1px rgb(0 0 0 / .35) !important; }
+  html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)) :is(svg, .ico) { filter: drop-shadow(0 1px 1px rgb(0 0 0 / .4)); }
+  html body .shell > header.topbar.nv-topbar .icon-btn { display: inline-grid !important; grid-auto-flow: column; gap: 6px; place-items: center !important; place-content: center; }
+  html body .shell > header.topbar.nv-topbar .top-side { gap: 8px !important; }
+}
+@media (prefers-reduced-motion: reduce) { html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn):active { transform: none; } }
+
+/* Your name on the top panel, on a computer (medallion.js): a small glowing pill beside the right-hand
+   buttons; on a phone it's in the status bar instead, beside your planet */
+html body .shell > header.topbar .nv-top-me { display: none; }
+@media (min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine) {
+  html body .shell > header.topbar .nv-top-me:not([hidden]) {
+    display: inline-flex; align-items: center; gap: 6px; flex: none; height: 34px; padding: 0 14px 0 11px; border-radius: 99px; cursor: pointer;
+    font: inherit; font-weight: 700; font-size: 13.5px; letter-spacing: .02em; white-space: nowrap; color: #fff;
+    border: 1px solid color-mix(in srgb, var(--hi) 40%, transparent);
+    background:
+      radial-gradient(120% 80% at 30% -20%, rgb(255 255 255 / .26), transparent 60%),
+      linear-gradient(165deg, color-mix(in srgb, var(--accent) 30%, var(--panel)), color-mix(in srgb, var(--accent-2) 26%, var(--deep)));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .22), 0 0 14px -6px var(--hi);
+    transition: filter .12s ease, transform .12s ease;
+  }
+  html body .shell > header.topbar .nv-top-me:hover { filter: brightness(1.15); }
+  html body .shell > header.topbar .nv-top-me:active { transform: translateY(1px); }
+  html body .shell > header.topbar .nv-top-me:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+  html body .shell > header.topbar .nv-top-me-star { color: var(--hi); font-size: 12px; text-shadow: 0 0 6px var(--hi); }
+  html body .status-line .sl-me-name { display: none !important; }
+  html body .status-line > .sl-me { padding: 0 8px !important; }
+}
+
+/* Your planet in the status bar: the planet alone (no rings round it: the picture is drawn without its
+   glow, ?halo=0), turning slowly (?spin=1), with a soft glow of its own that drifts in colour and
+   strength (the user: "remove the outer and inner ring on the planet … make it look like it's rotating
+   with a varied subtle glow … regardless of screen size") */
+html body .status-line .sl-planet { background: none !important; box-shadow: none !important; overflow: visible !important; border: 0 !important; }
+html body .status-line .sl-me .sl-planet { box-shadow: none !important; }
+html body .status-line .sl-planet::after { display: none; }
+html body .status-line .sl-planet img {
+  width: 34px !important; height: 34px !important; max-width: none; flex: none; margin: -4px; border-radius: 0 !important;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--planet-glow) 55%, transparent));
+  animation: nv-planet-glow 13s ease-in-out infinite;
+}
+@keyframes nv-planet-glow {
+  0%, 100% { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--planet-glow) 50%, transparent)); }
+  22% { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--hi) 55%, transparent)); }
+  47% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--lilac, #C7A4FF) 60%, transparent)); }
+  71% { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--planet-glow) 62%, transparent)); }
+  86% { filter: drop-shadow(0 0 3.5px color-mix(in srgb, var(--accent-2) 55%, transparent)); }
+}
+/* (signed out: a soft round light in its place, no rings) */
+html body .status-line .sl-me.signed-out .sl-planet { background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--hi) 70%, #fff), color-mix(in srgb, var(--accent) 60%, transparent) 55%, transparent 72%) !important; animation: nv-planet-glow 13s ease-in-out infinite; }
+html body .status-line .sl-planet:hover { transform: scale(1.1); }
+@media (prefers-reduced-motion: reduce) { html body .status-line .sl-planet img, html body .status-line .sl-me.signed-out .sl-planet { animation: none; } }
+
+/* The status bar's words, each dead centre in the bar (one line height, nothing sitting low), and no
+   fixed-width gap after what you've been doing */
+html body .status-line :is(.sl-item, .sl-me) { align-self: center !important; align-items: center !important; line-height: 1.2 !important; }
+html body .status-line .sl-item > :is(span, svg, .ico) { align-self: center; line-height: 1.2; }
+html body .status-line .sl-me-name { line-height: 1.2 !important; padding-block: 0 !important; display: inline-flex; align-items: center; }
+html body .status-line .sl-act-text { width: auto !important; max-width: 24ch !important; text-overflow: ellipsis; }
+html body .tabbar > .status-line .sl-act-text { max-width: 14ch !important; }
+
+/* A phone's status bar: a panel of its own, set into the tiles: the night sky's colours, a fine grain,
+   a few faint stars, a soft glow behind your planet, a bevelled edge; soft dividers between its parts */
+html body .tabbar > .status-line {
+  position: relative; margin: 3px 4px 1px !important; border-radius: 14px !important; padding-inline: 6px !important;
+  background:
+    radial-gradient(22% 140% at 50% 50%, color-mix(in srgb, var(--hi) 24%, transparent), transparent 75%),
+    radial-gradient(circle at 12% 30%, rgb(255 255 255 / .55) 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 31% 74%, rgb(255 255 255 / .35) 0 .5px, transparent 1.1px),
+    radial-gradient(circle at 68% 22%, rgb(255 255 255 / .45) 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 88% 70%, rgb(255 255 255 / .35) 0 .5px, transparent 1.1px),
+    radial-gradient(55% 170% at 0% 100%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%),
+    radial-gradient(55% 170% at 100% 0%, color-mix(in srgb, var(--accent-2) 30%, transparent), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 62%, var(--void)), color-mix(in srgb, var(--deep) 80%, var(--void))) !important;
+  border: 1px solid color-mix(in srgb, var(--hi) 22%, transparent) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .13),
+    inset 0 -2px 4px rgb(0 0 0 / .45),
+    0 0 12px -6px var(--hi),
+    0 3px 8px -4px rgb(0 0 0 / .7) !important;
+}
+html body .tabbar > .status-line .sl-item,
+html body .tabbar > .status-line > .sl-me { border-left: 0 !important; border-right: 0 !important; background-repeat: no-repeat; }
+html body .tabbar > .status-line > .sl-side > .sl-item + .sl-item,
+html body .tabbar > .status-line > .sl-side-r > .sl-item:first-child,
+html body .tabbar > .status-line > .sl-me {
+  background-image: linear-gradient(180deg, transparent, color-mix(in srgb, var(--hi) 40%, transparent), transparent);
+  background-size: 1px 70%; background-position: 0 50%;
+}
+html body .tabbar > .status-line > .sl-me { background-color: transparent !important; }
+html body .tabbar > .status-line .sl-item :is(svg, .ico) { color: var(--hi); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--hi) 60%, transparent)); }
+html body .tabbar > .status-line :is(.sl-time, .sl-date, .sl-me-name) { text-shadow: 0 0 8px color-mix(in srgb, var(--hi) 35%, transparent); }
+
+/* The drawer handle, part of the dock (the user: "needs to look more attached and also be above them
+   including … that system panel"): a little tab rising out of the dock's top edge, in the dock's own
+   colour, with curved shoulders into the edge and the glowing edge running over it; the glass capsule
+   sits in it. On a phone it's on the top panel's top edge (bar.js lifts it there: --dock-lift) */
+html body .shell > .tabbar > .dock-handle, html body #suite-home > .dock-handle {
+  top: calc(-15px - var(--dock-lift, 0px)) !important; width: 104px !important; height: 27px !important; margin-left: -52px !important;
+  place-items: start center !important; padding-top: 3px !important; box-sizing: border-box;
+  --tab-bg: color-mix(in srgb, var(--void) 88%, var(--panel));
+}
+html body #suite-home > .dock-handle { --tab-bg: #341B3D; }
+html body .shell > .tabbar > .dock-handle::before, html body #suite-home > .dock-handle::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 16px; z-index: -1; pointer-events: none;
+  border-radius: 14px 14px 0 0; background: var(--tab-bg);
+  box-shadow: 0 -1px 0 color-mix(in srgb, var(--hi) 60%, transparent), 0 -8px 16px -10px var(--hi);
+}
+html body .shell > .tabbar > .dock-handle::after, html body #suite-home > .dock-handle::after {
+  content: ""; position: absolute; left: -10px; right: -10px; top: 6px; height: 10px; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(circle at 0 0, transparent 9.5px, var(--tab-bg) 10px) 0 0 / 10px 10px no-repeat,
+    radial-gradient(circle at 100% 0, transparent 9.5px, var(--tab-bg) 10px) 100% 0 / 10px 10px no-repeat;
+}
+/* (a phone: the dock is the top panel and the tiles together, so the top panel goes away with the
+   tiles and comes back with them) */
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
+  html.nav-going .shell > header.topbar.nv-topbar { transform: translateY(calc(100% + 16px)) !important; opacity: 0 !important; pointer-events: none; }
+  html.nav-away .shell > header.topbar.nv-topbar { position: fixed !important; left: 0; right: 0; bottom: 0; visibility: hidden; }
+}
+/* (the dock lets its handle stand above its top edge: it clips only sideways now, so the handle's tab
+   is whole, and nothing is cut off for the Fixer's auto-fix to turn into a scroller) */
+html body #suite-home { overflow-x: clip !important; overflow-y: visible !important; }
+/* (the status bar lets the planet stand a little beyond its round button, top and bottom) */
+html body .tabbar > .status-line, html body #suite-home > .status-line { overflow-x: clip !important; overflow-y: visible !important; }
+html body .status-line > .sl-me, html body .status-line .sl-planet { overflow: visible !important; }
+/* The title on a phone's top panel too (the user: "the title for the app, helper and or otherwise can be
+   on the top panel"): Nova Agent's name, small, beside its mark (a panel's own name when one is open) */
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
+  html body .shell > header.topbar.nv-topbar .brand { gap: 6px; min-width: 0; }
+  html body .shell > header.topbar.nv-topbar .brand .wordmark { display: block !important; font-size: 11.5px !important; letter-spacing: .05em; line-height: 1; white-space: nowrap; }
+  html body .shell > header.topbar.nv-topbar .brand .kicker { display: none !important; }
+}
+/* (a narrow phone: no room beside its buttons for the words, so the mark alone) */
+@media (max-width: 379px) {
+  html body .shell > header.topbar.nv-topbar .brand .wordmark { display: none !important; }
+}
