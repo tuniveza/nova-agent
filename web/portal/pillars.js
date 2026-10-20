@@ -384,6 +384,7 @@
     if (host.documentElement.style.getPropertyValue("--tabs-w") !== `${need}px`) host.documentElement.style.setProperty("--tabs-w", `${need}px`);
     const cs = window.parent.getComputedStyle(top);
     root.style.setProperty("--tp-solid", cs.backgroundColor);
+    root.style.setProperty("--tp-img", cs.backgroundImage);
     root.style.setProperty("--tp-edge", cs.borderLeftColor);
     caps.style.width = `${Math.round(top.getBoundingClientRect().width)}px`;
   }

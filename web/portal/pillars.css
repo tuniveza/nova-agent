@@ -706,8 +706,13 @@ html.tabs-joined .pillars.compact { margin-top: 0 !important; max-width: none; }
 html.tabs-joined .pillars.compact::before, html.tabs-joined .pillars.compact::after { display: none !important; }
 html.tabs-joined .pillars.compact .pillar-caps {
   max-width: 100%; box-sizing: border-box; padding: 2px 12px 8px !important; justify-content: center;
-  background: var(--tp-solid, var(--panel)) padding-box !important;
+  background: var(--tp-solid, var(--panel)) !important; background-image: var(--tp-img, none) !important; background-clip: padding-box !important;
   border: 1px solid var(--tp-edge, var(--line)) !important; border-top: 0 !important; border-radius: 0 0 20px 20px !important;
   box-shadow: 0 16px 28px -20px rgb(0 0 0 / .85) !important;
 }
 html.tabs-joined .pillars.compact .pillar-caps::before { display: none !important; }
+
+/* Portal's main section fills the page (the user: "the portal website backdrop is also not filling the
+   entire page"): the whole width and height of the panel, inside a small margin */
+html.embed .app > main { max-width: none !important; width: auto !important; align-self: stretch; margin: 10px 10px 10px !important; }
+@media (max-width: 760px) { html.embed .app > main { margin: 8px 6px 6px !important; } }

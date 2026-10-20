@@ -415,13 +415,27 @@
       box.style.setProperty("--dock-lift", `${up}px`);
       h.classList.toggle("on-dock", up > 0);
     };
-    const relift = () => { if (!lifting) lifting = requestAnimationFrame(lift); };
+    // (its tab is the panel it sits on, carried on upward: that panel's own background, lined up with it,
+    // so the two are one colour in every theme, 20 Oct 2026: "why is the nova dock handle not very
+    // similar colors")
+    const paint = () => {
+      const under = h.classList.contains("on-dock") ? topEl : box;
+      if (!under || !under.offsetWidth) return;
+      const cs = getComputedStyle(under), r = under.getBoundingClientRect(), hr = h.getBoundingClientRect();
+      h.style.setProperty("--dock-bgc", cs.backgroundColor);
+      h.style.setProperty("--dock-img", cs.backgroundImage);
+      h.style.setProperty("--dock-size", `${Math.round(r.width)}px ${Math.round(r.height)}px`);
+      h.style.setProperty("--dock-x", `${Math.round(r.left - hr.left)}px`);
+      h.style.setProperty("--dock-bdf", cs.backdropFilter || "none");
+    };
+    const relift = () => { if (!lifting) lifting = requestAnimationFrame(() => { lift(); paint(); }); };
     if (box === tabEl && topEl) {
       new ResizeObserver(relift).observe(topEl);
-      new ResizeObserver(relift).observe(box);
       DOCKED.addEventListener("change", relift);
-      new MutationObserver(relift).observe(root, { attributes: true, attributeFilter: ["class"] });
     }
+    new ResizeObserver(relift).observe(box);
+    new MutationObserver(relift).observe(root, { attributes: true, attributeFilter: ["class", "data-theme", "style"] });
+    addEventListener("resize", relift);
     let grab = null;
     h.addEventListener("pointerdown", (e) => {
       if (e.button > 0) return;

@@ -519,7 +519,10 @@ html body :is(.shell > .tabbar, #suite-home) > .dock-handle.let-go { --hd: var(-
     --tp-edge: color-mix(in srgb, var(--hi) 38%, var(--line));
     width: fit-content !important; min-width: var(--tabs-w, 0px) !important; max-width: 100% !important; justify-self: center !important;
     grid-template-columns: 1fr auto 1fr !important; column-gap: 22px !important; padding: 6px 12px !important; box-sizing: border-box;
-    background: var(--tp-solid) padding-box !important; border: 1px solid var(--tp-edge) !important; border-bottom: 0 !important;
+    /* (solid: its colour over the same dark base, never the sky showing through, so the tabs below,
+       drawn the same way, are exactly the same colour) */
+    background: linear-gradient(var(--tp-solid), var(--tp-solid)) padding-box, var(--void, #06040D) padding-box !important;
+    border: 1px solid var(--tp-edge) !important; border-bottom: 0 !important;
     border-radius: 18px 18px 0 0 !important; box-shadow: inset 0 1px 0 rgb(255 255 255 / .07) !important;
     backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
   }
@@ -533,3 +536,27 @@ html body :is(.shell > .tabbar, #suite-home) > .dock-handle.let-go { --hd: var(-
    on a phone the top panel's (and the tiles') solid night colour; on a computer the dock's top colour ===== */
 html body .shell > .tabbar > .dock-handle { --tab-bg: color-mix(in srgb, var(--void) 92%, var(--panel)); }
 html body #suite-home > .dock-handle { --tab-bg: color-mix(in srgb, color-mix(in srgb, var(--panel) 85%, var(--accent-2)) 90%, var(--accent)); }
+
+/* ===== The handle's tab: the panel it sits on, carried on upward (bar.js paint(): that panel's own
+   background, its size and place, so the tab is the same colour as the panel in every theme) ===== */
+html body :is(.shell > .tabbar, #suite-home) > .dock-handle::before,
+html body :is(.shell > .tabbar, #suite-home) > .dock-handle::after {
+  background-color: var(--dock-bgc, var(--tab-bg)) !important;
+  background-image: var(--dock-img, none) !important;
+  background-size: var(--dock-size, auto) !important;
+  background-repeat: no-repeat !important;
+  -webkit-backdrop-filter: var(--dock-bdf, none); backdrop-filter: var(--dock-bdf, none);
+}
+html body :is(.shell > .tabbar, #suite-home) > .dock-handle::before { background-position: var(--dock-x, 0px) 0 !important; }
+html body :is(.shell > .tabbar, #suite-home) > .dock-handle::after {
+  background-position: calc(var(--dock-x, 0px) + 10px) -6px !important;
+  /* (its curved shoulders: the same background, cut to the curves) */
+  -webkit-mask: radial-gradient(circle at 0 0, transparent 9.5px, #000 10px) 0 0 / 10px 10px no-repeat, radial-gradient(circle at 100% 0, transparent 9.5px, #000 10px) 100% 0 / 10px 10px no-repeat;
+          mask: radial-gradient(circle at 0 0, transparent 9.5px, #000 10px) 0 0 / 10px 10px no-repeat, radial-gradient(circle at 100% 0, transparent 9.5px, #000 10px) 100% 0 / 10px 10px no-repeat;
+}
+/* (the dock blurs the night sky's glow behind it into its colour; its handle's tab, being part of the
+   dock, can't see past it, so the tab gets that glow as its base instead, in the theme's own colour) */
+html body #suite-home > .dock-handle::before, html body #suite-home > .dock-handle::after {
+  background-color: color-mix(in srgb, var(--accent-2) 85%, var(--accent)) !important;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
