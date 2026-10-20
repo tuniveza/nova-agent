@@ -699,20 +699,29 @@ html.embed .app > main {
 @media (max-width: 760px) { html.embed .app > main { width: calc(100% - 12px); margin: 8px auto 6px; border-radius: 18px; } }
 @media (min-width: 761px) { html.embed .app > main { padding-left: 14px !important; padding-right: 14px !important; padding-top: 12px !important; } }
 
-/* ===== One panel with Nova Agent's top panel (html.tabs-joined, pillars.js joinTop(); 20 Oct 2026, the
-   user: "make it all one panel keeping it intact as possible"): the tabs carry on straight under the top
-   panel at its width, in its solid colour and its edge, with no line between and no shoulders ===== */
-html.tabs-joined .pillars.compact { margin-top: 0 !important; max-width: none; }
-html.tabs-joined .pillars.compact::before, html.tabs-joined .pillars.compact::after { display: none !important; }
-html.tabs-joined .pillars.compact .pillar-caps {
-  max-width: 100%; box-sizing: border-box; padding: 2px 12px 8px !important; justify-content: center;
+/* ===== Their own panel, matching Nova Agent's top panel (html.tabs-matched, pillars.js joinTop(); 20 Oct
+   2026, the user: "seperate the nova tabs and smooth the edges from the top panel"): a separate panel
+   under it, rounded all round, in the top panel's solid colour with the same one-pixel edge ===== */
+html.tabs-matched .pillars.compact { margin-top: 8px !important; max-width: none; }
+html.tabs-matched .pillars.compact::before, html.tabs-matched .pillars.compact::after { display: none !important; }
+html.tabs-matched .pillars.compact .pillar-caps {
+  max-width: 100%; box-sizing: border-box; padding: 6px 14px 8px !important; justify-content: center;
   background: var(--tp-solid, var(--panel)) !important; background-image: var(--tp-img, none) !important; background-clip: padding-box !important;
-  border: 1px solid var(--tp-edge, var(--line)) !important; border-top: 0 !important; border-radius: 0 0 20px 20px !important;
-  box-shadow: 0 16px 28px -20px rgb(0 0 0 / .85) !important;
+  border: 1px solid var(--tp-edge, var(--line)) !important; border-radius: 18px !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .07), 0 14px 26px -18px rgb(0 0 0 / .85) !important;
 }
-html.tabs-joined .pillars.compact .pillar-caps::before { display: none !important; }
+html.tabs-matched .pillars.compact .pillar-caps::before { display: none !important; }
 
 /* Portal's main section fills the page (the user: "the portal website backdrop is also not filling the
    entire page"): the whole width and height of the panel, inside a small margin */
 html.embed .app > main { max-width: none !important; width: auto !important; align-self: stretch; margin: 10px 10px 10px !important; }
 @media (max-width: 760px) { html.embed .app > main { margin: 8px 6px 6px !important; } }
+
+/* Portal's backdrop hugs what's in it (20 Oct 2026, the user: "the backdrop of the portal webpage needs
+   reworking because there is huge background gap"): the whole width, but only as tall as the open section
+   (up to the page's height, then the section scrolls inside it as before), so no empty slab under it.
+   The month, the website bot and conversations still have the whole height: they're made to fill it */
+@media (min-height: 481px) {
+  html.embed .app > main { flex: 0 1 auto; }
+  html.embed .app > main:has(> #view-calendar:not([hidden]), > #view-bot:not([hidden]), > #view-chats:not([hidden])) { flex: 1 1 auto; }
+}
