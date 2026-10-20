@@ -625,3 +625,44 @@ html.pillars-on body::before {
 @media (max-height: 500px) and (pointer: coarse) {
   .pillars.compact .mini-pillar.open .mini-cap, .pillars.compact .mini-pillar.here .mini-cap { flex-direction: row !important; gap: 4px !important; padding: 3px 2px !important; }
 }
+
+/* ===== A computer (20 Oct 2026, latest, the user: "nova tab panel … attach it to the top panel and put
+   the planet in the center of that tab panel … remove the hide all button from the desktop / monitor
+   screen sizes"): the tabs hang from Nova Agent's top panel (no gap, their top in the top panel's
+   colour, curved shoulders into it), four groups either side of your planet, and no Hide all there.
+   A phone keeps them as they were ===== */
+.tabs-planet { display: none; }
+@media (min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine) {
+  .pillars.compact .hide-tab { display: none !important; }
+  .pillars.compact .pillar-caps { grid-template-columns: none !important; grid-auto-flow: column; grid-auto-columns: minmax(64px, 92px); }
+  .pillars.compact .tabs-planet {
+    display: grid; place-items: center; position: relative; min-width: 0; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%;
+    transition: transform .14s ease;
+  }
+  .pillars.compact .tabs-planet img { width: 56px; height: 56px; max-width: none; display: block; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--hi) 45%, transparent)); }
+  .pillars.compact .tabs-planet:hover { transform: scale(1.06); }
+  .pillars.compact .tabs-planet:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+  .pillars.compact .tabs-planet-ghost { display: none; }
+  .pillars.compact .tabs-planet img[hidden] + .tabs-planet-ghost { display: block; width: 26px; height: 26px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--hi) 70%, #fff), color-mix(in srgb, var(--accent) 60%, transparent) 55%, transparent 72%); }
+  .pillars.compact .tabs-planet nova-portal-badge { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 30px; height: 30px; overflow: hidden; opacity: 0; pointer-events: none; }
+  /* (inside Nova Agent: hanging from its top panel) */
+  html.embed .pillars.compact { margin-top: 0 !important; position: relative; }
+  html.embed .pillars.compact .pillar-caps {
+    border-top-width: 0; border-radius: 0 0 22px 22px; padding-top: 4px;
+    background:
+      linear-gradient(180deg, #24122E, color-mix(in srgb, #24122E 0%, transparent) 26px) padding-box,
+      radial-gradient(55% 150% at 0% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 62%) padding-box,
+      radial-gradient(45% 170% at 100% 100%, color-mix(in srgb, var(--accent-2) 30%, transparent), transparent 64%) padding-box,
+      radial-gradient(35% 120% at 50% 130%, color-mix(in srgb, var(--hi) 18%, transparent), transparent 70%) padding-box,
+      linear-gradient(180deg, #24122E, color-mix(in srgb, var(--void, #06040D) 92%, var(--panel))) padding-box,
+      var(--edge-glow) border-box;
+  }
+  /* (its curved shoulders into the top panel's edge) */
+  html.embed .pillars.compact::before, html.embed .pillars.compact::after {
+    content: ""; position: absolute; top: 0; width: 16px; height: 16px; pointer-events: none; z-index: 1;
+  }
+  html.embed .pillars.compact::before { left: -16px; background: radial-gradient(circle at 0 100%, transparent 15.5px, #24122E 16px); }
+  html.embed .pillars.compact::after { right: -16px; background: radial-gradient(circle at 100% 100%, transparent 15.5px, #24122E 16px); }
+}
+@media (prefers-reduced-motion: reduce) { .pillars.compact .tabs-planet { transition: none; } .pillars.compact .tabs-planet:hover { transform: none; } }

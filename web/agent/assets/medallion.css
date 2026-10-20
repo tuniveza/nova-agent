@@ -451,3 +451,20 @@ html.nv-tab-on:not(.top-away) body .shell > .main { margin-top: 24px; }
 /* The status bar without the planet: its two sides meet in the middle */
 html.nv-tab-on body .status-line:not(:has(> .sl-me)) { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; align-items: center; }
 html.nv-tab-on body .status-line > .sl-side-r { border-left: 1px solid color-mix(in srgb, var(--line) 80%, transparent); }
+
+/* ===== 20 Oct 2026 (latest), a computer (the user: "nova tab panel … attach it to the top panel and put
+   the planet in the center of that tab panel put the username in the status bar at the bottom below the
+   nova dock and get rid of the handle on the top panel"): the top panel's tab is gone; the status bar
+   has your name (it opens your Portal card) and no planet; your planet is in the middle of Portal's Nova
+   Tabs, which hang from the top panel while Portal is open (portal/pillars.css) ===== */
+html.nv-name-only body .status-line .sl-planet { display: none !important; }
+html.nv-name-only body .status-line .sl-me-name { display: inline-flex !important; align-items: center; color: #fff; font-weight: 700; letter-spacing: .02em; text-shadow: 0 0 8px color-mix(in srgb, var(--hi) 40%, transparent); cursor: pointer; }
+html.nv-name-only body .status-line .sl-me-name::before { content: "✦"; color: var(--hi); margin-right: 6px; text-shadow: 0 0 6px var(--hi); }
+html.nv-name-only body .status-line > .sl-me { padding: 0 12px !important; }
+html.nv-name-only body .status-line .sl-me nova-portal-badge { left: 12px; width: 20px; height: 20px; }
+/* (Portal open: no gap between the top panel and the panel, and no edge along the panel's top, so
+   the Nova Tabs at the top of Portal hang straight from the top panel) */
+@media (min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine) {
+  html.nv-portal-open:not(.top-away) body .shell { row-gap: 0 !important; }
+  html.nv-portal-open body .main.viewing > .viewer > .viewer-body { border-top-color: transparent !important; border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
+}

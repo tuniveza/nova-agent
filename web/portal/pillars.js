@@ -326,6 +326,47 @@
     node.style.setProperty("--ringw", `${Math.round(55 + rnd() * 35)}%`);
     node.style.setProperty("--ringh", `${Math.round(28 + rnd() * 22)}%`);
   }
+  // Your planet, the badge's own (the planet alone: no glow ring round it)
+  let planetSrc = "";
+  const COMPUTER = "(min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine)";
+  let theBadge = null;
+  const badgeEl = () => theBadge || (theBadge = document.getElementById("portal-badge") || document.querySelector("nova-portal-badge"));
+  function findPlanet() {
+    const b = badgeEl();
+    const pic = b && b.shadowRoot && b.shadowRoot.querySelector(".orb img");
+    const src = pic && pic.getAttribute("src") ? pic.getAttribute("src").replace(/size=\d+/, "size=96").replace(/&(animate|halo|spin)=\d/g, "") + "&halo=0" : "";
+    if (src !== planetSrc) {
+      planetSrc = src;
+      for (const img of document.querySelectorAll(".tabs-planet img")) { img.src = src; img.hidden = !src; }
+    }
+    const s = b && b.data && b.data.staff;
+    for (const btn of document.querySelectorAll(".tabs-planet")) {
+      const t = s ? `${String(s.display_name || "You").trim().split(/\s+/)[0]}: your Portal card` : "Your Portal card";
+      if (btn.title !== t) { btn.title = t; btn.setAttribute("aria-label", t); }
+    }
+  }
+  function planetTab() {
+    const btn = el("button", "tabs-planet");
+    btn.type = "button";
+    btn.innerHTML = '<img alt="" width="44" height="44" hidden><span class="tabs-planet-ghost" aria-hidden="true"></span>';
+    const img = btn.querySelector("img");
+    if (planetSrc) { img.src = planetSrc; img.hidden = false; }
+    // (the badge itself, unseen, under the planet: inside Nova Agent its own place, Portal's header, is
+    // hidden, so its card opens from here)
+    const b0 = badgeEl();
+    if (b0 && matchMedia(COMPUTER).matches) btn.append(b0);
+    btn.addEventListener("click", (e) => {
+      const b = badgeEl();
+      if (b && (e.target === b || b.contains(e.target))) return; // (the badge's own click, passed on below)
+      const chip = b && b.shadowRoot && b.shadowRoot.querySelector(".chip");
+      if (chip) chip.click();
+      else openPillar("You", true);
+    });
+    return btn;
+  }
+  setInterval(findPlanet, 1500);
+  setTimeout(findPlanet, 300);
+
   function drawCompact(groups, where) {
     const caps = el("div", "pillar-caps");
     caps.setAttribute("role", "group");
@@ -350,6 +391,9 @@
       mini.append(cap);
       mini.addEventListener("click", () => openPillar(g.name, true));
       caps.append(mini);
+      // (a computer, 20 Oct 2026, the user: "put the planet in the center of that tab panel"): your
+      // planet in the middle of the tabs, four groups either side; it opens your Portal card
+      if (caps.children.length === Math.ceil(groups.length / 2)) caps.append(planetTab());
     }
     // (Hide all: a tab of its own at the end, with its title, in the same look as the groups)
     const hideTab = el("button", "mini-pillar hide-tab");

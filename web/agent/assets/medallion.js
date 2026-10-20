@@ -38,14 +38,21 @@
   // drawing frames nobody could see)
   if (badge) badge.setAttribute("calm", "");
   document.documentElement.classList.add("nv-medal-on");
-  // On a computer (20 Oct 2026, the user: "put the planet on a handle panel on the top panel with the
-  // username on it and get rid of the planet on the status bar"): your planet and name sit on a tab
-  // hanging from the middle of the top panel's bottom edge; on a phone they stay in the middle of the
-  // status bar
+  // On a computer (20 Oct 2026, latest, the user: "put the planet in the center of that tab panel put the
+  // username in the status bar … get rid of the handle on the top panel"): your name stays here in the
+  // status bar with no planet (medallion.css); your planet is in the middle of Portal's Nova Tabs
+  // (portal/pillars.js), which hang from the top panel while Portal is open
   const COMPUTER = matchMedia("(min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine)");
-  const tab = document.createElement("div");
-  tab.className = "nv-top-tab";
-  bar.append(tab);
+  const frame = document.getElementById("viewer-frame");
+  const portalOpen = () => {
+    let on = false;
+    try { on = !!frame && !document.getElementById("viewer").hidden && /^\/(agent\/apps\/)?portal(\/|$)/.test(new URL(frame.src, location.href).pathname); } catch (err) {}
+    document.documentElement.classList.toggle("nv-portal-open", on);
+  };
+  if (frame) new MutationObserver(portalOpen).observe(frame, { attributes: true, attributeFilter: ["src"] });
+  const viewerEl = document.getElementById("viewer");
+  if (viewerEl) new MutationObserver(portalOpen).observe(viewerEl, { attributes: true, attributeFilter: ["hidden"] });
+  portalOpen();
 
   const img = me.querySelector("img");
   const planetBtn = me.querySelector(".sl-planet");
@@ -104,14 +111,7 @@
       }
     }
   }
-  // (where your planet and name are: the top panel's tab on a computer, the status bar on a phone)
-  function place() {
-    const computer = COMPUTER.matches;
-    if (computer && me.parentElement !== tab) tab.append(me);
-    else if (!computer && me.parentElement !== line) line.insertBefore(me, right);
-    document.documentElement.classList.toggle("nv-tab-on", computer);
-    tuck();
-  }
+  const place = () => { document.documentElement.classList.toggle("nv-name-only", COMPUTER.matches); tuck(); };
   COMPUTER.addEventListener("change", place);
   place();
   if (typeof ResizeObserver === "function") new ResizeObserver(tuck).observe(line);
