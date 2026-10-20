@@ -1,0 +1,85 @@
+/* The title panel's medallion (medallion.js, 20 Oct 2026): your planet in the middle of the top panel,
+   your name curved round its top half and the open place's name round its bottom half, in Nova's
+   colours, taking the old title's place. And the top panel's buttons as smooth square bubbles: a fake
+   reflection, light from above, depth below and a grainy, posterised finish. */
+
+/* The old title steps aside (still in the page: it carries the panel's name, and still switches panel
+   when the place's name under the planet is tapped) */
+html.nv-medal-on .shell > .topbar > .brand,
+html.nv-medal-on .shell > .topbar > .viewer-name { display: none !important; }
+html.nv-medal-on .shell > .topbar { position: relative; overflow: visible; }
+
+.nv-medal {
+  grid-column: 2; grid-row: 1; justify-self: center; align-self: center; position: relative; z-index: 6;
+  --medal: 58px; width: var(--medal); height: var(--medal); margin-block: calc((var(--tp-h, 52px) - var(--medal)) / 2);
+  --planet-glow: var(--hi);
+}
+.nv-medal svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.nvm-halo { fill: url(#nvm-halo); }
+.nvm-halo-a { stop-color: color-mix(in srgb, var(--planet-glow) 34%, transparent); }
+.nvm-halo-b { stop-color: transparent; }
+.nvm-orbit { fill: none; stroke: color-mix(in srgb, var(--planet-glow) 55%, var(--hi)); stroke-width: .8; stroke-dasharray: 1.5 3.5; opacity: .7; }
+.nvm-back { fill: color-mix(in srgb, var(--deep) 90%, var(--planet-glow)); }
+.nvm-rim { fill: none; stroke: color-mix(in srgb, #fff 55%, var(--planet-glow)); stroke-width: 1.4; filter: drop-shadow(0 0 3px var(--planet-glow)); }
+.nvm-ink-a { stop-color: var(--soft, #FFD1EA); }
+.nvm-ink-b { stop-color: #fff; }
+.nvm-ink-c { stop-color: var(--lilac, #C7A4FF); }
+.nvm-name, .nvm-title { font-family: var(--f-display, var(--f-body), sans-serif); font-weight: 800; letter-spacing: .22em; dominant-baseline: middle; }
+.nvm-name { fill: url(#nvm-name-ink); font-size: 15px; paint-order: stroke; stroke: rgb(0 0 0 / .45); stroke-width: 2.5px; }
+.nvm-title { fill: #fff; font-size: 14px; paint-order: stroke; stroke: color-mix(in srgb, var(--accent) 70%, #000); stroke-width: 3px; }
+.nv-medal.signed-out .nvm-planet { display: none; }
+.nv-medal.signed-out .nvm-back { fill: radial-gradient(circle, var(--accent), var(--accent-2)); fill: color-mix(in srgb, var(--accent) 60%, var(--deep)); }
+
+/* The two taps: the planet (your card), the place's name under it (switch panel) */
+.nvm-hit { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%; }
+.nvm-hit-planet { left: 22%; top: 8%; width: 56%; height: 64%; }
+.nvm-hit-title { left: 6%; top: 70%; width: 88%; height: 34%; border-radius: 0 0 50% 50% / 0 0 100% 100%; }
+.nvm-hit:focus-visible { outline: 2px solid var(--hi); outline-offset: 1px; }
+.nv-medal:has(.nvm-hit-planet:hover) .nvm-rim { stroke: #fff; }
+.nv-medal:has(.nvm-hit-title:hover) .nvm-title { fill: var(--soft, #FFD1EA); }
+
+/* The planet badge itself, unseen, right under the medallion: its card opens from there */
+html.nv-medal-on .shell > .topbar nova-portal-badge { position: absolute; left: 50%; top: 50%; translate: -50% -50%; opacity: 0; pointer-events: none; z-index: 0; }
+
+/* Phones: the slim top panel; the medallion a touch smaller and hanging just over its edges */
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
+  .nv-medal { --medal: 50px; }
+}
+
+/* ===== The top panel's buttons: smooth square bubbles ===== */
+html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)) {
+  position: relative; border-radius: 10px !important; border: 1px solid rgb(255 255 255 / .14) !important;
+  background:
+    /* the reflection: a soft window of light across the top */
+    radial-gradient(120% 70% at 30% -10%, rgb(255 255 255 / .42), rgb(255 255 255 / .1) 45%, transparent 58%),
+    /* the grain, posterised: hard little steps of light and dark */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='discrete' tableValues='0 .5 1'/%3E%3CfeFuncG type='discrete' tableValues='0 .5 1'/%3E%3CfeFuncB type='discrete' tableValues='0 .5 1'/%3E%3CfeFuncA type='discrete' tableValues='0 0 .14'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='90' height='90' filter='url(%23p)'/%3E%3C/svg%3E"),
+    /* the body: the theme's colours, lit from above */
+    linear-gradient(165deg, color-mix(in srgb, var(--accent) 52%, var(--panel)), color-mix(in srgb, var(--accent-2) 48%, var(--deep))) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .38),
+    inset 0 -3px 5px -1px rgb(0 0 0 / .5),
+    0 2px 3px rgb(0 0 0 / .45),
+    0 6px 14px -8px var(--hi) !important;
+  color: #fff !important;
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)):hover { filter: brightness(1.12) saturate(1.1); }
+html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)):active {
+  transform: translateY(1px); box-shadow: inset 0 2px 5px rgb(0 0 0 / .55), inset 0 -1px 0 rgb(255 255 255 / .15), 0 1px 1px rgb(0 0 0 / .4) !important; }
+html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn) :is(svg, .ico) { filter: drop-shadow(0 1px 1px rgb(0 0 0 / .45)); }
+@media (prefers-reduced-motion: reduce) { html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn):active { transform: none; } }
+
+/* (a phone: every top-panel bubble the panel's own button size, 30px, inside the slim panel; still
+   well above the smallest size to tap) */
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
+  html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)) {
+    width: var(--tp-btn, 30px) !important; min-width: var(--tp-btn, 30px) !important; height: var(--tp-btn, 30px) !important; min-height: var(--tp-btn, 30px) !important; padding: 0 !important; }
+  html body .shell > header.topbar.nv-topbar .btn:not(.suite-btn) > span:not(.ico) { display: none; }
+}
+/* The medallion bigger and its words easier to read */
+.nv-medal { --medal: 66px; }
+.nvm-name, .nvm-title { letter-spacing: .14em; }
+.nvm-name { font-size: 17px; }
+.nvm-title { font-size: 15.5px; }
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) { .nv-medal { --medal: 58px; } }

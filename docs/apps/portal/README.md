@@ -23,6 +23,8 @@ Portal's sections are **Nova Tabs** now, in place of the tab panel under the top
     - Plans & Nova purple, You teal, Look & sound rose, Admin amber.
   - The tabs are glass with a glowing edge and a faint field of stars. The open one and the one you're on glow in their colour.
   - The items are lit glass cards, each icon in a small glowing orb.
+  - **No two tabs look alike (20 Oct 2026):** each has its own stars, nebula and orbit ring, set by its name, under a glossy, grainy button finish.
+  - No scrollbars on the tabs or their panel.
   - **Tap a group** and a panel slides out of it with all its items, over the page. Tap the group again, tap outside, press Escape, or choose an item to close it.
   - On a phone, Nova Agent's title panel is slim (32px) and colourful, with little padding and buttons still easy to tap. The status panel stays under the Nova tiles and tablets.
 - **On a phone or tablet it's simpler:** short pillars in rows (four to a row on a phone, eight on a tablet). Each has its name across it and is big to tap. The one you tap opens wide underneath with its buttons in two columns (four on a tablet).

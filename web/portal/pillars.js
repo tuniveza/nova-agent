@@ -312,6 +312,20 @@
   // keeps all its room. Tapping it again, outside the panel, Escape, or choosing an item closes it.
   // Each group's own colour (20 Oct 2026: "more aesthetic"), like each Nova tile has its own
   const HUE = { Inbox: "#FF5FA8", Bookings: "#8FB4FF", "Clients & Money": "#F2C14E", Outreach: "#FF8C6B", "Plans & Nova": "#B98CFF", You: "#5CE1C0", "Look & sound": "#FF8CC6", Admin: "#FFB86B" };
+  // Each group its own sky (20 Oct 2026: "make each group different from the next… vary the dots"): its
+  // stars, nebula and orbit ring placed by its own name, so no two tabs look alike, and the same every time
+  function sky(node, name) {
+    let x = [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 2166136261);
+    const rnd = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const at = (lo = 4, hi = 96) => `${Math.round(lo + rnd() * (hi - lo))}% ${Math.round(6 + rnd() * 88)}%`;
+    for (let i = 1; i <= 8; i++) node.style.setProperty(`--s${i}`, at());
+    for (let i = 1; i <= 8; i++) node.style.setProperty(`--z${i}`, `${(0.35 + rnd() * 0.75).toFixed(2)}px`);
+    node.style.setProperty("--n1", at(0, 40));
+    node.style.setProperty("--n2", at(60, 100));
+    node.style.setProperty("--ring", `${Math.round(rnd() * 100)}% ${rnd() < 0.5 ? -8 - Math.round(rnd() * 8) : 104 + Math.round(rnd() * 8)}%`);
+    node.style.setProperty("--ringw", `${Math.round(55 + rnd() * 35)}%`);
+    node.style.setProperty("--ringh", `${Math.round(28 + rnd() * 22)}%`);
+  }
   function drawCompact(groups, where) {
     const caps = el("div", "pillar-caps");
     caps.setAttribute("role", "group");
@@ -325,6 +339,7 @@
       mini.type = "button";
       mini.dataset.group = g.name;
       mini.style.setProperty("--g", HUE[g.name] || "var(--hi)");
+      sky(mini, g.name);
       mini.setAttribute("aria-expanded", String(open));
       mini.setAttribute("aria-haspopup", "true");
       mini.setAttribute("aria-label", `${g.name}${total ? `, ${total} new` : ""}`);
