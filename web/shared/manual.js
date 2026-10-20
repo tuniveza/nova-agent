@@ -179,6 +179,9 @@ button { cursor: pointer; }
 :host([compact]) .open .orb { width: 32px; height: 32px; }
 :host([compact]) .open .dot { left: 27px; }
 :host([compact]) .open .label { display: none; }
+/* flat (an attribute): no glow behind it, on a panel that keeps one even colour (Nova Agent's top panel) */
+:host([flat]) .open, :host([flat]) .open:hover { box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset, 0 2px 4px rgb(0 0 0 / .35); }
+:host([flat]) .open .orb { box-shadow: none; }
 /* calm (an attribute): the chip stays still (no orbiting spark, turning ring or breathing dot). Portal's header uses it. */
 :host([calm]) .open .orb::after, :host([calm]) .open .dot { animation: none; }
 :host([calm]) .open .spark { display: none; }

@@ -38,6 +38,9 @@
   // drawing frames nobody could see)
   if (badge) badge.setAttribute("calm", "");
   document.documentElement.classList.add("nv-medal-on");
+  // (the Manual's button on the top panel without its glow, like the panel's other buttons: the panel
+  // keeps one even colour, 20 Oct 2026)
+  for (const m of bar.querySelectorAll("nova-manual")) m.setAttribute("flat", "");
   // On a computer (20 Oct 2026, latest, the user: "put the planet in the center of that tab panel put the
   // username in the status bar … get rid of the handle on the top panel"): your name stays here in the
   // status bar with no planet (medallion.css); your planet is in the middle of Portal's Nova Tabs
