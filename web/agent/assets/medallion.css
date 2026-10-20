@@ -128,8 +128,108 @@ html body .shell > header.topbar.nv-topbar .top-side { gap: 6px !important; }
   html body .shell, html body .shell:has(> .main.viewing) { padding-top: max(6px, env(safe-area-inset-top)) !important; }
 }
 @media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
-  /* the drawer handle (shows and hides the tiles) on the dock's top edge now, a third of the way
-     along, clear of the planet */
-  html body .shell > .tabbar > .dock-handle { top: calc(-25px - var(--dock-top-h, 44px)) !important; left: 26% !important; }
-  html body .shell { --dock-top-h: 44px; }
 }
+
+/* ===== 20 Oct 2026 (latest): your planet a round button in the middle of the status bar, your name
+   beside it (medallion.js); the curved words and the medallion in the top panel are gone; the old title
+   stays away; no scrollbars on the status bar ===== */
+.status-line .sl-me { position: relative; gap: 6px; padding: 0 10px !important; }
+.status-line .sl-planet {
+  position: relative; display: grid; place-items: center; width: 26px; height: 26px; flex: none; padding: 0; border-radius: 50%; cursor: pointer; overflow: hidden;
+  --planet-glow: var(--hi);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--accent) 70%, #fff 10%), var(--accent-2));
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, #fff 55%, var(--planet-glow)), 0 0 10px -1px var(--planet-glow), 0 2px 4px rgb(0 0 0 / .5);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.status-line .sl-me { --planet-glow: var(--hi); }
+.status-line .sl-me .sl-planet { box-shadow: 0 0 0 1.5px color-mix(in srgb, #fff 55%, var(--planet-glow)), 0 0 10px -1px var(--planet-glow), 0 2px 4px rgb(0 0 0 / .5); }
+.status-line .sl-planet img { width: 100%; height: 100%; border-radius: 50%; display: block; }
+/* (a gloss across the top of the planet, like light on a round button) */
+.status-line .sl-planet::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(70% 45% at 40% 18%, rgb(255 255 255 / .45), transparent 70%); }
+.status-line .sl-planet-ghost { display: none; }
+.status-line .sl-me.signed-out .sl-planet-ghost { display: block; width: 10px; height: 10px; border-radius: 50%; background: #fff; opacity: .8; box-shadow: 0 0 8px #fff; }
+.status-line .sl-planet:hover { transform: scale(1.08); }
+.status-line .sl-planet:active { transform: scale(.95); }
+.status-line .sl-planet:focus-visible, .status-line .sl-me-name:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+.status-line .sl-me-name { color: #fff; font-weight: 700; letter-spacing: .02em; cursor: pointer; }
+.status-line .sl-me nova-portal-badge { position: absolute; left: 10px; top: 50%; translate: 0 -50%; width: 26px; height: 26px; overflow: hidden; opacity: 0; pointer-events: none; }
+/* (room for the round planet in the line) */
+#suite-home > .status-line { min-height: 32px; }
+.tabbar > .status-line { min-height: 30px !important; }
+/* No scrollbars anywhere on the status bar */
+.status-line, .status-line * { scrollbar-width: none !important; -ms-overflow-style: none; }
+.status-line::-webkit-scrollbar, .status-line *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+@media (prefers-reduced-motion: reduce) { .status-line .sl-planet { transition: none; } .status-line .sl-planet:hover, .status-line .sl-planet:active { transform: none; } }
+/* (the planet dead centre: two equal sides either side of it) */
+html body .status-line:has(> .sl-me) { display: grid !important; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important; align-items: center; justify-content: stretch !important; }
+.status-line > .sl-side { display: flex; align-items: center; min-width: 0; gap: 0; }
+.status-line > .sl-side-l { justify-content: flex-end; }
+.status-line > .sl-side-r { justify-content: flex-start; }
+.status-line > .sl-me { border-left: 1px solid color-mix(in srgb, var(--line) 80%, transparent); border-right: 1px solid color-mix(in srgb, var(--line) 80%, transparent); border-radius: 0; }
+.status-line > .sl-side > .sl-item:first-child { border-left: 0; }
+.status-line .sl-tucked { display: none !important; }
+/* (the status bar tall enough for the round planet everywhere: an older rule kept it 18px on phones) */
+html body .tabbar > .status-line { height: auto !important; min-height: 32px !important; overflow: hidden; }
+html body #suite-home > .status-line { height: auto !important; min-height: 34px !important; }
+/* (always a circle: the phone's touch sizes stretch buttons taller) */
+html body .status-line .sl-planet { width: 26px !important; height: 26px !important; min-width: 26px !important; min-height: 0 !important; align-self: center; }
+html body .status-line .sl-me-name { min-height: 0 !important; }
+
+/* ===== The drawer handle (bar.js; 20 Oct 2026, the user: "much more obvious and user friendly, super
+   simple, aesthetic and fast and fluid … change the colour of it when being held, let go, whilst moving
+   … part of the Nova tile and/or Nova tablet so it takes up less space"): one glowing pill sitting
+   right on the top edge of the Nova tiles, tablets or dock (half on it, so it takes no room of its own),
+   in Nova's colours: resting a soft pink, held bright pink, moving violet, let go a flash of gold ===== */
+html body .shell > .tabbar > .dock-handle, html body #suite-home > .dock-handle {
+  top: -9px !important; left: 50% !important; width: 96px !important; height: 18px !important; margin: 0 0 0 -48px !important;
+  display: grid !important; place-items: center; z-index: 8; touch-action: none; cursor: grab;
+  --hd: color-mix(in srgb, var(--hi) 75%, #fff 10%);
+}
+html body .dock-handle > .grip {
+  width: 56px !important; height: 8px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 99px !important;
+  display: block !important; opacity: 1 !important;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hd) 70%, transparent), var(--hd), color-mix(in srgb, var(--hd) 70%, transparent)) !important;
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--deep) 85%, transparent), 0 0 12px -2px var(--hd), inset 0 1px 0 rgb(255 255 255 / .55) !important;
+  transition: background .12s ease, box-shadow .12s ease, width .16s cubic-bezier(.2, .8, .25, 1), transform .16s cubic-bezier(.2, .8, .25, 1) !important;
+}
+html body .dock-handle > .grip > i { display: none !important; }
+/* pointing at it (a mouse) or focused: a little wider */
+html body .dock-handle:is(:hover, :focus-visible) > .grip { width: 64px !important; transform: none !important; }
+/* held: bright pink, a touch bigger */
+html body .dock-handle.held { --hd: var(--hi); cursor: grabbing; }
+html body .dock-handle.held > .grip { width: 68px !important; transform: scaleY(1.25) !important; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--deep) 85%, transparent), 0 0 18px 1px var(--hd), inset 0 1px 0 rgb(255 255 255 / .6) !important; }
+/* moving: violet, stretched with the pull */
+html body .dock-handle.moving { --hd: var(--lilac, #C7A4FF); }
+html body .dock-handle.moving > .grip { width: 80px !important; }
+/* let go: a flash of gold, then back to rest */
+html body .dock-handle.let-go { --hd: var(--gold, #F2D9A0); }
+html body .dock-handle.let-go > .grip { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--deep) 85%, transparent), 0 0 20px 2px var(--hd) !important; }
+@media (prefers-reduced-motion: reduce) { html body .dock-handle > .grip { transition: none !important; } }
+/* The handle as a real thing (20 Oct 2026: "more realistic … in that cosmological, spacey, nova-suite
+   style"): a small glass capsule, lit from above (a gloss, a bevel, a shadow under it), with a fine grain,
+   a sliver of nebula and two tiny stars inside, glowing in the colour of what's happening */
+html body .dock-handle > .grip {
+  position: relative; overflow: hidden;
+  width: 62px !important; height: 12px !important;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / .55), rgb(255 255 255 / .08) 45%, transparent 55%, rgb(0 0 0 / .35)),
+    radial-gradient(circle at 24% 58%, #fff 0 .7px, transparent 1.4px),
+    radial-gradient(circle at 71% 38%, #fff 0 .55px, transparent 1.2px),
+    radial-gradient(60% 140% at 30% 100%, color-mix(in srgb, var(--hd) 70%, transparent), transparent 70%),
+    radial-gradient(50% 120% at 85% 0%, color-mix(in srgb, var(--accent-2) 70%, transparent), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, color-mix(in srgb, var(--hd) 55%, var(--panel)), color-mix(in srgb, var(--hd) 30%, var(--deep))) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #fff 30%, var(--hd)),
+    0 0 0 2.5px color-mix(in srgb, var(--deep) 85%, transparent),
+    0 2px 3px rgb(0 0 0 / .55),
+    0 0 14px -2px var(--hd),
+    inset 0 -2px 3px rgb(0 0 0 / .35) !important;
+}
+html body .dock-handle:is(:hover, :focus-visible) > .grip { width: 70px !important; }
+html body .dock-handle.held > .grip { width: 74px !important; transform: scaleY(1.15) !important;
+  box-shadow: 0 0 0 1px #fff, 0 0 0 2.5px color-mix(in srgb, var(--deep) 85%, transparent), 0 2px 3px rgb(0 0 0 / .55), 0 0 20px 1px var(--hd), inset 0 -2px 3px rgb(0 0 0 / .3) !important; }
+html body .dock-handle.moving > .grip { width: 86px !important; }
+html body .dock-handle.let-go > .grip { box-shadow: 0 0 0 1px #fff, 0 0 0 2.5px color-mix(in srgb, var(--deep) 85%, transparent), 0 2px 3px rgb(0 0 0 / .55), 0 0 24px 3px var(--hd) !important; }
+html body .shell > .tabbar > .dock-handle, html body #suite-home > .dock-handle { top: -11px !important; height: 22px !important; }
