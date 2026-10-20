@@ -468,3 +468,41 @@ html.nv-name-only body .status-line .sl-me nova-portal-badge { left: 12px; width
   html.nv-portal-open:not(.top-away) body .shell { row-gap: 0 !important; }
   html.nv-portal-open body .main.viewing > .viewer > .viewer-body { border-top-color: transparent !important; border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
 }
+
+/* ===== The handle's grip (20 Oct 2026, night, the user: "the bubble pill doesn't really work it needs to
+   keep the attached backdrop but the bubble pill needs to be something else handle related"): the tab
+   stays; in it, a drawer's grip: three ridges, each shorter than the one above, so it reads "pull
+   down", embossed (lit on top, a shadow under) and glowing in the colour of what's happening ===== */
+html body .dock-handle > .grip,
+html body .dock-handle:is(:hover, :focus-visible) > .grip,
+html body .dock-handle.held > .grip,
+html body .dock-handle.moving > .grip,
+html body .dock-handle.let-go > .grip {
+  display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 2.5px;
+  width: 34px !important; height: 13px !important; padding: 0 !important; margin: 0 !important;
+  border: 0 !important; border-radius: 0 !important; overflow: visible !important;
+  background: none !important; box-shadow: none !important; transform: none !important; opacity: 1 !important;
+}
+html body .dock-handle > .grip > i, html body .dock-handle > .grip::after {
+  content: ""; display: block !important; flex: none; height: 2px; border-radius: 2px; opacity: 1 !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hd) 55%, #fff), var(--hd)) !important;
+  box-shadow: 0 1px 0 rgb(0 0 0 / .6), 0 0 6px color-mix(in srgb, var(--hd) 65%, transparent);
+  transition: width .16s cubic-bezier(.2, .8, .25, 1), background .12s ease, box-shadow .12s ease;
+}
+html body .dock-handle > .grip > i:first-child { width: 28px !important; }
+html body .dock-handle > .grip > i + i { width: 20px !important; }
+html body .dock-handle > .grip::after { width: 12px; }
+/* pointing at it: the ridges a little longer; held: longer and brighter; moving: stretched with the pull */
+html body .dock-handle:is(:hover, :focus-visible) > .grip > i:first-child { width: 32px !important; }
+html body .dock-handle:is(:hover, :focus-visible) > .grip > i + i { width: 24px !important; }
+html body .dock-handle.held > .grip > i:first-child, html body .dock-handle.moving > .grip > i:first-child { width: 34px !important; }
+html body .dock-handle.held > .grip > i + i, html body .dock-handle.moving > .grip > i + i { width: 26px !important; }
+html body .dock-handle:is(.held, .moving) > .grip::after { width: 16px; }
+html body .dock-handle:is(.held, .moving, .let-go) > .grip > i, html body .dock-handle:is(.held, .moving, .let-go) > .grip::after {
+  box-shadow: 0 1px 0 rgb(0 0 0 / .6), 0 0 10px var(--hd); }
+@media (prefers-reduced-motion: reduce) { html body .dock-handle > .grip > i, html body .dock-handle > .grip::after { transition: none; } }
+/* (its colour says what's happening: these win over the handle's resting colour, set on the tiles'
+   and the dock's own handle above) */
+html body :is(.shell > .tabbar, #suite-home) > .dock-handle.held { --hd: var(--hi); }
+html body :is(.shell > .tabbar, #suite-home) > .dock-handle.moving { --hd: var(--lilac, #C7A4FF); }
+html body :is(.shell > .tabbar, #suite-home) > .dock-handle.let-go { --hd: var(--gold, #F2D9A0); }

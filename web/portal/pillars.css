@@ -666,3 +666,35 @@ html.pillars-on body::before {
   html.embed .pillars.compact::after { right: -16px; background: radial-gradient(circle at 100% 100%, transparent 15.5px, #24122E 16px); }
 }
 @media (prefers-reduced-motion: reduce) { .pillars.compact .tabs-planet { transition: none; } .pillars.compact .tabs-planet:hover { transform: none; } }
+
+/* ===== 20 Oct 2026 (night): the Nova Tabs with your planet, in the top panel's own colours (the user:
+   "match the color of the nova tab with the planet on it … with the top panel coloring"): the same
+   glass, the same soft light in its corners and the same glowing edge, so it reads as part of the top
+   panel it hangs from; and Portal's main section on a backdrop of its own, margined and bordered, so
+   it stands apart from the tabs ===== */
+@media (min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine) {
+  html.embed .pillars.compact { --tp-base: color-mix(in srgb, var(--panel) 92%, var(--accent-2)); }
+  html.embed .pillars.compact .pillar-caps {
+    background:
+      radial-gradient(60% 70% at 0% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%) padding-box,
+      radial-gradient(50% 70% at 100% 100%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 64%) padding-box,
+      linear-gradient(var(--tp-base), var(--tp-base)) padding-box,
+      var(--edge-glow) border-box !important;
+    box-shadow: inset 0 -1px 0 rgb(255 255 255 / .04), 0 14px 26px -18px rgb(0 0 0 / .8) !important;
+  }
+  html.embed .pillars.compact .pillar-caps::before { display: none; }
+  html.embed .pillars.compact::before { background: radial-gradient(circle at 0 100%, transparent 15.5px, var(--tp-base) 16px); }
+  html.embed .pillars.compact::after { background: radial-gradient(circle at 100% 100%, transparent 15.5px, var(--tp-base) 16px); }
+}
+html.embed .app > main {
+  --edge-glow: linear-gradient(120deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 45%, transparent) 30%, color-mix(in srgb, var(--line) 100%, transparent) 55%, color-mix(in srgb, var(--accent) 55%, transparent) 80%, color-mix(in srgb, var(--hi) 55%, transparent));
+  box-sizing: border-box; width: calc(100% - 20px); margin: 12px auto 10px; border: 1px solid transparent; border-radius: 22px;
+  background:
+    radial-gradient(60% 50% at 0% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 62%) padding-box,
+    radial-gradient(50% 50% at 100% 100%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 64%) padding-box,
+    linear-gradient(color-mix(in srgb, var(--panel) 55%, transparent), color-mix(in srgb, var(--panel) 55%, transparent)) padding-box,
+    var(--edge-glow) border-box;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .05), 0 18px 40px -24px rgb(0 0 0 / .8);
+}
+@media (max-width: 760px) { html.embed .app > main { width: calc(100% - 12px); margin: 8px auto 6px; border-radius: 18px; } }
+@media (min-width: 761px) { html.embed .app > main { padding-left: 14px !important; padding-right: 14px !important; padding-top: 12px !important; } }
