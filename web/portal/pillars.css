@@ -545,3 +545,83 @@ html.pillars-on body::before {
   .mini-cap .pillar-ico { width: 12px; height: 12px; }
   .mini-cap .pillar-name { font-size: 9.5px; letter-spacing: -0.02em; }
 }
+
+/* ===== The Nova Tabs as a Nova dock (20 Oct 2026, the user: "the grainy buttons … can you make them look
+   like the nova dock in style … and center them on the screen"): one strip of the dock's night sky in the
+   middle of the screen, its glowing edge and faint stars; on it each group sits like a dock app, no box
+   of its own: its icon a small glossy tile in its own colour (like the dock's icons), its name under it
+   in its colour. Pointing at one lights a soft glow behind it; the open one glows, with a line of light
+   under it, like the dock's open app. The same tabs, sizes and taps as before. ===== */
+.pillars.compact .pillar-caps {
+  position: relative; isolation: isolate; width: fit-content !important; max-width: 100%; margin-inline: auto; box-sizing: border-box;
+  grid-template-columns: repeat(9, minmax(64px, 92px)) !important; justify-content: center;
+  padding: 6px 10px; border-radius: 20px; border: 1px solid transparent;
+  --edge-glow: linear-gradient(120deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 45%, transparent) 30%, color-mix(in srgb, var(--line) 100%, transparent) 55%, color-mix(in srgb, var(--accent) 55%, transparent) 80%, color-mix(in srgb, var(--hi) 55%, transparent));
+  background:
+    radial-gradient(55% 150% at 0% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%) padding-box,
+    radial-gradient(45% 170% at 100% 100%, color-mix(in srgb, var(--accent-2) 30%, transparent), transparent 64%) padding-box,
+    radial-gradient(35% 120% at 58% 130%, color-mix(in srgb, var(--hi) 16%, transparent), transparent 70%) padding-box,
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--void, #06040D) 90%, transparent)) padding-box,
+    var(--edge-glow) border-box;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .07), 0 10px 26px -18px var(--hi);
+}
+.pillars.compact .pillar-caps::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit; opacity: .55;
+  background:
+    radial-gradient(circle at 12% 30%, #fff 0 .7px, transparent 1.3px), radial-gradient(circle at 37% 78%, #fff 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 63% 22%, #fff 0 .8px, transparent 1.4px), radial-gradient(circle at 81% 64%, #fff 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 92% 18%, #fff 0 .5px, transparent 1.1px), radial-gradient(circle at 25% 60%, var(--soft, #FFD1EA) 0 .5px, transparent 1.1px);
+  background-size: 260px 100%; }
+/* (each group: no box, on the dock's sky) */
+.pillars.compact .mini-cap, .pillars.compact .mini-pillar.open .mini-cap, .pillars.compact .mini-pillar.here .mini-cap {
+  flex-direction: column !important; justify-content: center; gap: 3px !important; min-height: 0 !important; padding: 4px 4px 5px !important;
+  border: 0 !important; border-radius: 12px !important; background: none !important; box-shadow: none !important; filter: none;
+}
+.pillars.compact .mini-cap::before { display: none !important; }
+.pillars.compact .mini-cap::after { display: none; }
+.pillars.compact .mini-pillar:hover .mini-cap, .pillars.compact .mini-pillar:focus-visible .mini-cap {
+  transform: none; filter: none; background: radial-gradient(55% 70% at 50% 34%, color-mix(in srgb, var(--g) 22%, transparent), transparent 72%) !important; }
+.pillars.compact .mini-pillar.open .mini-cap { background: radial-gradient(55% 75% at 50% 30%, color-mix(in srgb, var(--g) 30%, transparent), transparent 74%) !important; }
+.pillars.compact .mini-pillar.open .mini-cap::after, .pillars.compact .mini-pillar.here .mini-cap::after {
+  display: block; content: ""; position: absolute; left: 32%; right: 32%; top: auto; bottom: 1px; height: 2px; border-radius: 2px; opacity: 1;
+  background: var(--g); box-shadow: 0 0 8px var(--g); }
+.pillars.compact .mini-pillar.here:not(.open) .mini-cap::after { opacity: .55; }
+/* (its icon: a small glossy tile in its own colour, like the dock's icons) */
+.pillars.compact .mini-cap .pillar-ico {
+  display: grid; place-items: center; width: 30px !important; height: 30px !important; padding: 6px; box-sizing: border-box; border-radius: 9px; color: #fff !important; filter: none !important;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / .2), rgb(255 255 255 / .03) 46%, transparent 54%),
+    radial-gradient(circle at 24% 18%, color-mix(in srgb, var(--g) 80%, #fff 10%) 0%, transparent 60%),
+    radial-gradient(circle at 88% 92%, color-mix(in srgb, var(--accent-2) 65%, var(--g)) 0%, transparent 62%),
+    linear-gradient(160deg, color-mix(in srgb, var(--g) 38%, #0a0614), color-mix(in srgb, var(--g) 18%, #000));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 50%, rgb(255 255 255 / .14)), inset 0 1px 0 rgb(255 255 255 / .25), 0 6px 16px -8px var(--g);
+}
+.pillars.compact .mini-cap .pillar-ico svg { width: 100%; height: 100%; filter: drop-shadow(0 0 2px color-mix(in srgb, var(--g) 80%, transparent)); }
+.pillars.compact .mini-pillar.open .mini-cap .pillar-ico { box-shadow: inset 0 0 0 1px #fff, inset 0 1px 0 rgb(255 255 255 / .35), 0 0 16px -2px var(--g); }
+/* (its name under it, in its colour) */
+.pillars.compact .mini-cap .pillar-name { color: color-mix(in srgb, var(--g) 50%, #fff) !important; font-weight: 700; letter-spacing: .02em; text-shadow: 0 1px 8px rgb(0 0 0 / .55); }
+.pillars.compact .mini-pillar.open .mini-cap .pillar-name { color: #fff !important; }
+.pillars.compact .hide-tab .mini-cap .pillar-name { color: var(--muted) !important; }
+.pillars.compact .hide-tab:hover .mini-cap .pillar-name { color: var(--bright) !important; }
+/* (the count on the icon tile's corner) */
+.pillars.compact .mini-cap .pillar-badge { top: 0; right: calc(50% - 22px); }
+/* Phones: the dock the screen's width, five to a row (three on the smallest), the tiles a little smaller */
+@media (max-width: 639px) {
+  .pillars.compact .pillar-caps { width: 100% !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; padding: 5px 4px; border-radius: 16px; gap: 2px 2px !important; }
+  .pillars.compact .mini-cap .pillar-ico { width: 24px !important; height: 24px !important; padding: 5px; border-radius: 7px; }
+  .pillars.compact .mini-cap { padding: 3px 1px 4px !important; gap: 2px !important; }
+  .pillars.compact .mini-cap .pillar-badge { right: calc(50% - 19px); }
+}
+@media (max-width: 370px) { .pillars.compact .pillar-caps { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+/* (a phone on its side: all nine in a row, icon beside its name to keep the row low) */
+@media (max-height: 500px) and (pointer: coarse) {
+  .pillars.compact .pillar-caps { grid-template-columns: repeat(9, minmax(0, 1fr)) !important; width: 100% !important; padding: 3px 6px; }
+  .pillars.compact .mini-cap { flex-direction: row !important; gap: 4px !important; padding: 3px 2px !important; }
+  .pillars.compact .mini-cap .pillar-ico { width: 20px !important; height: 20px !important; padding: 4px; border-radius: 6px; }
+  .pillars.compact .mini-cap .pillar-badge { top: -4px; right: 0; }
+}
+/* (the dock in the middle of the screen: Portal's column is, so the tabs' box sits in its middle too) */
+.pillars.compact { align-self: center !important; justify-self: center !important; margin-inline: auto !important; max-width: calc(100% - 12px); }
+@media (max-width: 639px) { .pillars.compact { width: calc(100% - 12px) !important; } }
+@media (max-height: 500px) and (pointer: coarse) {
+  .pillars.compact .mini-pillar.open .mini-cap, .pillars.compact .mini-pillar.here .mini-cap { flex-direction: row !important; gap: 4px !important; padding: 3px 2px !important; }
+}

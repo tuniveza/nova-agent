@@ -38,15 +38,14 @@
   // drawing frames nobody could see)
   if (badge) badge.setAttribute("calm", "");
   document.documentElement.classList.add("nv-medal-on");
-  // Your name on the top panel too (20 Oct 2026, the user: "the username … on the top panel only on
-  // desktop and laptop screen sizes"): on a computer it's there, beside the panel's title, and not in the
-  // status bar; on a phone it stays in the status bar, beside the planet (medallion.css shows one)
-  const topMe = document.createElement("button");
-  topMe.type = "button";
-  topMe.className = "nv-top-me";
-  topMe.innerHTML = '<span class="nv-top-me-star" aria-hidden="true">✦</span><span class="nv-top-me-name"></span>';
-  const rightSide = bar.querySelector(".top-side.right");
-  if (rightSide) rightSide.prepend(topMe);
+  // On a computer (20 Oct 2026, the user: "put the planet on a handle panel on the top panel with the
+  // username on it and get rid of the planet on the status bar"): your planet and name sit on a tab
+  // hanging from the middle of the top panel's bottom edge; on a phone they stay in the middle of the
+  // status bar
+  const COMPUTER = matchMedia("(min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine)");
+  const tab = document.createElement("div");
+  tab.className = "nv-top-tab";
+  bar.append(tab);
 
   const img = me.querySelector("img");
   const planetBtn = me.querySelector(".sl-planet");
@@ -72,9 +71,6 @@
     if (sig === last) return;
     last = sig;
     nameBtn.textContent = w.name;
-    topMe.querySelector(".nv-top-me-name").textContent = w.name;
-    topMe.classList.toggle("signed-out", !w.signedIn);
-    topMe.hidden = !w.name;
     if (w.src) {
       img.src = w.src;
       img.hidden = false;
@@ -85,8 +81,6 @@
     planetBtn.setAttribute("aria-label", label);
     planetBtn.title = w.signedIn ? `${w.name} · Portal` : "Sign in with Portal";
     nameBtn.setAttribute("aria-label", label);
-    topMe.setAttribute("aria-label", label);
-    topMe.title = planetBtn.title;
   }
   const open = () => {
     const chip = badge && badge.shadowRoot && badge.shadowRoot.querySelector(".chip");
@@ -94,7 +88,6 @@
   };
   planetBtn.addEventListener("click", open);
   nameBtn.addEventListener("click", open);
-  topMe.addEventListener("click", open);
 
   // Each side fits its half: the least needed parts step aside first (on the left the version, when you
   // came on, when you left, then what's new; on the right the date), never cut off at an edge
@@ -111,6 +104,16 @@
       }
     }
   }
+  // (where your planet and name are: the top panel's tab on a computer, the status bar on a phone)
+  function place() {
+    const computer = COMPUTER.matches;
+    if (computer && me.parentElement !== tab) tab.append(me);
+    else if (!computer && me.parentElement !== line) line.insertBefore(me, right);
+    document.documentElement.classList.toggle("nv-tab-on", computer);
+    tuck();
+  }
+  COMPUTER.addEventListener("change", place);
+  place();
   if (typeof ResizeObserver === "function") new ResizeObserver(tuck).observe(line);
   setInterval(tuck, 2000);
   tuck();
