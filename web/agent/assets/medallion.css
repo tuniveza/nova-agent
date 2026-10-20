@@ -83,3 +83,53 @@ html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn) :is(svg, .ico) {
 .nvm-name { font-size: 17px; }
 .nvm-title { font-size: 15.5px; }
 @media (max-width: 760px), (max-height: 480px) and (pointer: coarse) { .nv-medal { --medal: 58px; } }
+
+
+/* ===== 20 Oct 2026 (later): the curved words smaller, on a ring of their own; the bubbles with room
+   round them and their symbols dead centre; and on a phone the top panel sits just above the Nova
+   tiles (or tablets), in their night-sky look, as one dock with them ===== */
+.nvm-ring { fill: none; stroke: color-mix(in srgb, var(--deep) 78%, var(--planet-glow)); stroke-width: 14; opacity: .92; }
+.nvm-ring-edge { fill: none; stroke: color-mix(in srgb, var(--planet-glow) 55%, var(--hi)); stroke-width: .9; opacity: .75; }
+.nvm-name, .nvm-title { letter-spacing: .2em; stroke-width: 0; }
+.nvm-name { font-size: 12.5px; }
+.nvm-title { font-size: 12px; fill: var(--soft, #FFD1EA); }
+
+/* The bubbles: their symbols dead centre, and room round them */
+html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)) { display: inline-grid !important; place-items: center !important; place-content: center !important; line-height: 1 !important; }
+html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn) > :is(svg, .ico, span) { margin: 0 !important; }
+html body .shell > header.topbar.nv-topbar .top-side { gap: 6px !important; }
+
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
+  /* the order: the page, then the top panel, then the tiles (or tablets) */
+  html body .shell, html body .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto auto !important; }
+  html body .shell > .main { grid-row: 1; }
+  html body .shell > header.topbar.nv-topbar { grid-row: 2; }
+  html body .shell > .tabbar { grid-row: 3; }
+  /* (going away, it slides down behind the tiles rather than up over the page) */
+  html.top-going .shell > .topbar { transform: translateY(calc(100% + 16px)) !important; }
+  /* one dock with the tiles: their night sky, full width, its glowing edge on top, joined to them */
+  html body .shell > header.topbar.nv-topbar {
+    height: auto !important; min-height: calc(var(--tp-h) + 12px) !important; padding: 6px max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left)) !important;
+    margin: 0 calc(-1 * max(8px, env(safe-area-inset-right))) -8px calc(-1 * max(8px, env(safe-area-inset-left))) !important;
+    border: 0 !important; border-radius: 20px 20px 0 0 !important;
+    background:
+      radial-gradient(60% 140% at 0% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%),
+      radial-gradient(50% 160% at 100% 100%, color-mix(in srgb, var(--accent-2) 28%, transparent), transparent 64%),
+      color-mix(in srgb, var(--void) 92%, var(--panel)) !important;
+    box-shadow: 0 -10px 24px -16px var(--hi) !important;
+  }
+  html body .shell > header.topbar.nv-topbar::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; border-radius: inherit;
+    background: var(--edge-glow, var(--hi)); box-shadow: 0 0 10px color-mix(in srgb, var(--hi) 45%, transparent); pointer-events: none; }
+  /* (the tiles' own top edge would be a seam now: the dock has one edge, on top) */
+  html body .shell > .tabbar::after { display: none; }
+  html body .shell > .tabbar { border-top: 0 !important; }
+  .nv-medal { --medal: 54px; }
+  /* the page starts at the top of the screen now */
+  html body .shell, html body .shell:has(> .main.viewing) { padding-top: max(6px, env(safe-area-inset-top)) !important; }
+}
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
+  /* the drawer handle (shows and hides the tiles) on the dock's top edge now, a third of the way
+     along, clear of the planet */
+  html body .shell > .tabbar > .dock-handle { top: calc(-25px - var(--dock-top-h, 44px)) !important; left: 26% !important; }
+  html body .shell { --dock-top-h: 44px; }
+}

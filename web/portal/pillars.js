@@ -351,8 +351,21 @@
       mini.addEventListener("click", () => openPillar(g.name, true));
       caps.append(mini);
     }
-    // (Hide all: a slim button at the end of the pillars, always in sight)
-    caps.append(toggleButton());
+    // (Hide all: a tab of its own at the end, with its title, in the same look as the groups)
+    const hideTab = el("button", "mini-pillar hide-tab");
+    hideTab.type = "button";
+    hideTab.setAttribute("aria-label", "Hide all: the top panel, the Nova Tabs and the Nova tiles");
+    hideTab.title = "Hide all: the top panel, the Nova Tabs and the Nova tiles";
+    hideTab.style.setProperty("--g", "#9AA6FF");
+    sky(hideTab, "Hide all");
+    const hideCap = el("span", "mini-cap");
+    const eye = el("span", "pillar-ico");
+    eye.setAttribute("aria-hidden", "true");
+    eye.innerHTML = EYE_OFF;
+    hideCap.append(eye, el("span", "pillar-name", "Hide all"));
+    hideTab.append(hideCap);
+    hideTab.addEventListener("click", () => setHidden(true));
+    caps.append(hideTab);
     row.replaceChildren(caps);
     row.classList.add("compact");
     drawDrawer(groups, where);

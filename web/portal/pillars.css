@@ -494,3 +494,54 @@ html[data-motion="calm"] .pillar { transition: none; }
 }
 .pillars, .pillar-caps, .pillar-drawer { scrollbar-width: none; -ms-overflow-style: none; }
 .pillars::-webkit-scrollbar, .pillar-caps::-webkit-scrollbar, .pillar-drawer::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* ===== 20 Oct 2026 (later still) =====
+   - The stars are off the tabs (they're in Portal's backdrop now, below); each tab keeps its gloss,
+     grain, nebula and orbit ring
+   - Hide all is a tab of its own at the end, with its title, in the groups' look
+   - The tabs fit their box exactly (they were 14px too wide, which made the row scroll: the grey bar)
+   - Phones: five tabs to a row (three on the smallest phones); a wider screen: all nine in one row */
+.mini-cap::before {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / .16), rgb(255 255 255 / .04) 42%, transparent 52%, rgb(0 0 0 / .2)),
+    radial-gradient(ellipse var(--ringw, 70%) var(--ringh, 38%) at var(--ring, 78% 105%), transparent 0 74%, color-mix(in srgb, var(--g) 42%, transparent) 76%, transparent 79%),
+    radial-gradient(60% 80% at var(--n1, 18% 100%), color-mix(in srgb, var(--g) 32%, transparent), transparent 70%),
+    radial-gradient(50% 70% at var(--n2, 92% 10%), color-mix(in srgb, var(--accent-2) 34%, transparent), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.pillar-drawer::after { background:
+    radial-gradient(ellipse 60% 30% at 85% 110%, transparent 0 74%, color-mix(in srgb, var(--g) 30%, transparent) 76%, transparent 79%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.pillar-drawer .pillar-btn::after { background: linear-gradient(180deg, rgb(255 255 255 / .1), transparent 48%); }
+
+.pillars { width: auto !important; margin-inline: 6px; box-sizing: border-box; }
+.pillars.compact .pillar-caps { grid-template-columns: repeat(9, minmax(0, 1fr)) !important; overflow: visible !important; }
+.mini-pillar, .mini-cap { min-width: 0; }
+.hide-tab .mini-cap .pillar-name { color: var(--muted); }
+.hide-tab:hover .mini-cap .pillar-name { color: var(--bright); }
+@media (max-width: 639px) {
+  .pillars.compact .pillar-caps { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 5px 4px; }
+  .mini-cap .pillar-name { font-size: 9.5px; letter-spacing: -0.02em; }
+}
+@media (max-width: 370px) {
+  .pillars.compact .pillar-caps { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .mini-cap .pillar-name { font-size: 10px; }
+}
+
+/* The stars, in Portal's backdrop: a still field behind everything (never over a word) */
+html.pillars-on body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .75;
+  background:
+    radial-gradient(circle at 7% 12%, #fff 0 .8px, transparent 1.6px), radial-gradient(circle at 23% 64%, #fff 0 .6px, transparent 1.3px),
+    radial-gradient(circle at 41% 28%, var(--hi) 0 .9px, transparent 1.8px), radial-gradient(circle at 58% 82%, #fff 0 .5px, transparent 1.1px),
+    radial-gradient(circle at 76% 40%, var(--lilac, #C7A4FF) 0 .7px, transparent 1.5px), radial-gradient(circle at 89% 9%, #fff 0 .6px, transparent 1.3px),
+    radial-gradient(circle at 15% 90%, rgb(255 255 255 / .7) 0 .5px, transparent 1.1px), radial-gradient(circle at 67% 55%, rgb(255 255 255 / .6) 0 .4px, transparent 1px),
+    radial-gradient(circle at 33% 6%, var(--soft, #FFD1EA) 0 .6px, transparent 1.3px), radial-gradient(circle at 95% 72%, #fff 0 .7px, transparent 1.4px);
+  background-size: 340px 300px;
+}
+/* (a phone on its side: all nine in a row, each name a touch smaller so it stays whole) */
+@media (max-height: 500px) and (pointer: coarse) {
+  .mini-cap { gap: 3px; padding: 1px 3px; }
+  .mini-cap .pillar-ico { width: 12px; height: 12px; }
+  .mini-cap .pillar-name { font-size: 9.5px; letter-spacing: -0.02em; }
+}

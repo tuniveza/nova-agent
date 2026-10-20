@@ -19,13 +19,16 @@
   medal.innerHTML = `
     <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
       <defs>
-        <path id="nvm-top" d="M 19 60 A 41 41 0 0 1 101 60"/>
-        <path id="nvm-bottom" d="M 13 60 A 47 47 0 0 0 107 60"/>
+        <path id="nvm-top" d="M 15 60 A 45 45 0 0 1 105 60"/>
+        <path id="nvm-bottom" d="M 15 60 A 45 45 0 0 0 105 60"/>
         <clipPath id="nvm-clip"><circle cx="60" cy="60" r="29"/></clipPath>
         <linearGradient id="nvm-name-ink" x1="0" y1="0" x2="1" y2="0"><stop offset="0" class="nvm-ink-a"/><stop offset=".5" class="nvm-ink-b"/><stop offset="1" class="nvm-ink-c"/></linearGradient>
         <radialGradient id="nvm-halo" cx=".5" cy=".5" r=".5"><stop offset=".55" class="nvm-halo-a"/><stop offset="1" class="nvm-halo-b"/></radialGradient>
       </defs>
       <circle class="nvm-halo" cx="60" cy="60" r="44"/>
+      <circle class="nvm-ring" cx="60" cy="60" r="45"/>
+      <circle class="nvm-ring-edge" cx="60" cy="60" r="38"/>
+      <circle class="nvm-ring-edge" cx="60" cy="60" r="52"/>
       <circle class="nvm-orbit" cx="60" cy="60" r="34"/>
       <circle class="nvm-back" cx="60" cy="60" r="29"/>
       <image class="nvm-planet" x="31" y="31" width="58" height="58" clip-path="url(#nvm-clip)" preserveAspectRatio="xMidYMid slice"/>
@@ -67,7 +70,7 @@
   const fit = (node, text, base) => {
     node.textContent = text;
     const el = node.parentNode;
-    el.style.fontSize = `${Math.max(9, Math.min(base, (base * 13) / Math.max(13, text.length)))}px`;
+    el.style.fontSize = `${Math.max(8, Math.min(base, (base * 15) / Math.max(15, text.length)))}px`;
   };
   let last = "";
   function draw() {
@@ -76,8 +79,8 @@
     const sig = [w.name, w.src, w.glow, here].join("|");
     if (sig === last) return;
     last = sig;
-    fit(nameText, w.name.toUpperCase(), 17);
-    fit(titleText, here.toUpperCase(), 15.5);
+    fit(nameText, w.name.toUpperCase(), 12.5);
+    fit(titleText, here.toUpperCase(), 12);
     if (w.src) planet.setAttribute("href", w.src);
     else planet.removeAttribute("href");
     medal.classList.toggle("signed-out", !w.signedIn);
