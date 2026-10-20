@@ -698,3 +698,16 @@ html.embed .app > main {
 }
 @media (max-width: 760px) { html.embed .app > main { width: calc(100% - 12px); margin: 8px auto 6px; border-radius: 18px; } }
 @media (min-width: 761px) { html.embed .app > main { padding-left: 14px !important; padding-right: 14px !important; padding-top: 12px !important; } }
+
+/* ===== One panel with Nova Agent's top panel (html.tabs-joined, pillars.js joinTop(); 20 Oct 2026, the
+   user: "make it all one panel keeping it intact as possible"): the tabs carry on straight under the top
+   panel at its width, in its solid colour and its edge, with no line between and no shoulders ===== */
+html.tabs-joined .pillars.compact { margin-top: 0 !important; max-width: none; }
+html.tabs-joined .pillars.compact::before, html.tabs-joined .pillars.compact::after { display: none !important; }
+html.tabs-joined .pillars.compact .pillar-caps {
+  max-width: 100%; box-sizing: border-box; padding: 2px 12px 8px !important; justify-content: center;
+  background: var(--tp-solid, var(--panel)) padding-box !important;
+  border: 1px solid var(--tp-edge, var(--line)) !important; border-top: 0 !important; border-radius: 0 0 20px 20px !important;
+  box-shadow: 0 16px 28px -20px rgb(0 0 0 / .85) !important;
+}
+html.tabs-joined .pillars.compact .pillar-caps::before { display: none !important; }

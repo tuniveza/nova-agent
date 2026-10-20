@@ -367,6 +367,31 @@
   setInterval(findPlanet, 1500);
   setTimeout(findPlanet, 300);
 
+  // One panel with Nova Agent's top panel (20 Oct 2026, the user: "make it all one panel"): on a
+  // computer, inside Nova Agent with Portal open, the tabs take the top panel's own solid colour, edge
+  // and width (medallion.css there), and tell it how wide they need to be, so the two are one panel
+  function joinTop() {
+    const root = document.documentElement;
+    let top = null, host = null;
+    try { host = window.parent !== window ? window.parent.document : null; top = host && host.querySelector(".shell > .topbar"); } catch (err) {}
+    const caps = row && row.querySelector(".pillar-caps");
+    const on = !!(top && caps && matchMedia(COMPUTER).matches && host.documentElement.classList.contains("nv-portal-open") && !host.documentElement.classList.contains("top-away"));
+    root.classList.toggle("tabs-joined", on);
+    if (!on) { if (caps) caps.style.width = ""; return; }
+    // (how wide the tabs need to be on their own, then the panel's width, the wider of the two)
+    caps.style.width = "";
+    const need = Math.ceil(caps.getBoundingClientRect().width);
+    if (host.documentElement.style.getPropertyValue("--tabs-w") !== `${need}px`) host.documentElement.style.setProperty("--tabs-w", `${need}px`);
+    const cs = window.parent.getComputedStyle(top);
+    root.style.setProperty("--tp-solid", cs.backgroundColor);
+    root.style.setProperty("--tp-edge", cs.borderLeftColor);
+    caps.style.width = `${Math.round(top.getBoundingClientRect().width)}px`;
+  }
+  let joining = 0;
+  const join = () => { if (!joining) joining = requestAnimationFrame(() => { joining = 0; joinTop(); }); };
+  setInterval(join, 1500);
+  addEventListener("resize", join);
+
   function drawCompact(groups, where) {
     const caps = el("div", "pillar-caps");
     caps.setAttribute("role", "group");
@@ -414,6 +439,7 @@
     row.classList.add("compact");
     drawDrawer(groups, where);
     drawnSig = sig();
+    join();
   }
 
   // ---- The panel that slides out of a group ----

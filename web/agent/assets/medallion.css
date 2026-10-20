@@ -506,3 +506,30 @@ html body .dock-handle:is(.held, .moving, .let-go) > .grip > i, html body .dock-
 html body :is(.shell > .tabbar, #suite-home) > .dock-handle.held { --hd: var(--hi); }
 html body :is(.shell > .tabbar, #suite-home) > .dock-handle.moving { --hd: var(--lilac, #C7A4FF); }
 html body :is(.shell > .tabbar, #suite-home) > .dock-handle.let-go { --hd: var(--gold, #F2D9A0); }
+
+/* ===== One panel (20 Oct 2026, the user: "the top panel and the nova tab can be part of the same panel
+   instead of separated … make it all one panel keeping it intact as possible"): on a computer, while
+   Portal is open, the top panel fits its contents (proper padding, its buttons and title as they are)
+   and Portal's Nova Tabs carry on straight under it at the same width, in the same solid colour and the
+   same edge, with no line between: one panel. portal/pillars.js reads this panel's colour, edge and
+   width from here (and tells it how wide the tabs need to be: --tabs-w) ===== */
+@media (min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine) {
+  html.nv-portal-open:not(.top-away) body .shell > header.topbar.nv-topbar {
+    --tp-solid: color-mix(in srgb, var(--panel) 90%, var(--accent-2));
+    --tp-edge: color-mix(in srgb, var(--hi) 38%, var(--line));
+    width: fit-content !important; min-width: var(--tabs-w, 0px) !important; max-width: 100% !important; justify-self: center !important;
+    grid-template-columns: 1fr auto 1fr !important; column-gap: 22px !important; padding: 6px 12px !important; box-sizing: border-box;
+    background: var(--tp-solid) padding-box !important; border: 1px solid var(--tp-edge) !important; border-bottom: 0 !important;
+    border-radius: 18px 18px 0 0 !important; box-shadow: inset 0 1px 0 rgb(255 255 255 / .07) !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  html.nv-portal-open:not(.top-away) body .shell > header.topbar.nv-topbar > .top-side.left { justify-self: start; }
+  html.nv-portal-open:not(.top-away) body .shell > header.topbar.nv-topbar > .top-side.right { justify-self: end; }
+  html.nv-portal-open:not(.top-away) body .shell > header.topbar.nv-topbar::before { display: none !important; }
+  html.nv-portal-open body .main.viewing > .viewer > .viewer-body { border-top-width: 0 !important; }
+}
+
+/* ===== The handle's tab in the panel's own colour, in every theme (it was a fixed pink on the dock):
+   on a phone the top panel's (and the tiles') solid night colour; on a computer the dock's top colour ===== */
+html body .shell > .tabbar > .dock-handle { --tab-bg: color-mix(in srgb, var(--void) 92%, var(--panel)); }
+html body #suite-home > .dock-handle { --tab-bg: color-mix(in srgb, color-mix(in srgb, var(--panel) 85%, var(--accent-2)) 90%, var(--accent)); }
