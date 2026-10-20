@@ -408,12 +408,16 @@
       e.stopPropagation();
       grab = { id: e.pointerId, y: e.clientY, at: performance.now(), lastY: e.clientY, lastAt: performance.now(), v: 0, moved: false };
       try { h.setPointerCapture(e.pointerId); } catch (err) {}
+      // (its colour says what's happening, 20 Oct 2026: held, moving, let go)
+      clearTimeout(h._let);
+      h.classList.remove("let-go", "moving");
+      h.classList.add("held");
     });
     h.addEventListener("pointermove", (e) => {
       if (!grab || e.pointerId !== grab.id) return;
       const dy = e.clientY - grab.y;
       if (!grab.moved && Math.abs(dy) < 5) return;
-      if (!grab.moved) { grab.moved = true; grab.h = box.offsetHeight; root.classList.add("dock-grabbed"); box.style.transition = "none"; box.style.willChange = "transform, opacity"; }
+      if (!grab.moved) { grab.moved = true; grab.h = box.offsetHeight; root.classList.add("dock-grabbed"); box.style.transition = "none"; box.style.willChange = "transform, opacity"; h.classList.add("moving"); }
       const now = performance.now();
       grab.v = (e.clientY - grab.lastY) / Math.max(1, now - grab.lastAt);
       grab.lastY = e.clientY;
@@ -436,6 +440,9 @@
       grab = null;
       if (g.frame) cancelAnimationFrame(g.frame);
       root.classList.remove("dock-grabbed");
+      h.classList.remove("held", "moving");
+      h.classList.add("let-go");
+      h._let = setTimeout(() => h.classList.remove("let-go"), 420);
       const dy = e.clientY - g.y;
       // (back to its own slide: from wherever it was let go, either away or back into place)
       box.style.transition = box.style.transform = box.style.opacity = box.style.willChange = "";

@@ -46,7 +46,9 @@ html.nv-medal-on .shell > .topbar nova-portal-badge { position: absolute; left: 
   .nv-medal { --medal: 50px; }
 }
 
-/* ===== The top panel's buttons: smooth square bubbles ===== */
+/* ===== The top panel's buttons: smooth square bubbles, on phones only (20 Oct 2026: on a computer the
+   top panel's buttons keep the rest of the Nova suite's look, without the grain) ===== */
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
 html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)) {
   position: relative; border-radius: 10px !important; border: 1px solid rgb(255 255 255 / .14) !important;
   background:
@@ -69,6 +71,7 @@ html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)):
   transform: translateY(1px); box-shadow: inset 0 2px 5px rgb(0 0 0 / .55), inset 0 -1px 0 rgb(255 255 255 / .15), 0 1px 1px rgb(0 0 0 / .4) !important; }
 html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn) :is(svg, .ico) { filter: drop-shadow(0 1px 1px rgb(0 0 0 / .45)); }
 @media (prefers-reduced-motion: reduce) { html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn):active { transform: none; } }
+}
 
 /* (a phone: every top-panel bubble the panel's own button size, 30px, inside the slim panel; still
    well above the smallest size to tap) */
@@ -94,10 +97,12 @@ html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn) :is(svg, .ico) {
 .nvm-name { font-size: 12.5px; }
 .nvm-title { font-size: 12px; fill: var(--soft, #FFD1EA); }
 
-/* The bubbles: their symbols dead centre, and room round them */
-html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)) { display: inline-grid !important; place-items: center !important; place-content: center !important; line-height: 1 !important; }
-html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn) > :is(svg, .ico, span) { margin: 0 !important; }
-html body .shell > header.topbar.nv-topbar .top-side { gap: 6px !important; }
+/* The bubbles: their symbols dead centre, and room round them (phones) */
+@media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
+  html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn:not(.suite-btn)) { display: inline-grid !important; place-items: center !important; place-content: center !important; line-height: 1 !important; }
+  html body .shell > header.topbar.nv-topbar :is(.icon-btn, .btn) > :is(svg, .ico, span) { margin: 0 !important; }
+  html body .shell > header.topbar.nv-topbar .top-side { gap: 6px !important; }
+}
 
 @media (max-width: 760px), (max-height: 480px) and (pointer: coarse) {
   /* the order: the page, then the top panel, then the tiles (or tablets) */
