@@ -3,7 +3,7 @@
 // the bottom status bar"): a round planet button in the middle of the status bar (status.js), on every
 // screen of the Nova suite, with your name beside it. It replaced the top panel's medallion (your
 // planet with your name and the place's name curved round it), which replaced the old title.
-//   The planet alone, no rings round it, its surface turning slowly with a drifting glow (20 Oct 2026).
+//   The planet alone, no rings round it, with a soft glow (20 Oct 2026; held still: turning, it slowed phones).
 //   Tapping the planet (or your name) opens your Portal card: the planet badge's own card, the badge
 //   itself moved here unseen, right under the planet, so its card opens from it. Signed out, the planet
 //   is a door to Portal, as the badge's is.
@@ -34,6 +34,9 @@
   line.append(left, me, right);
   // The badge, unseen, right under the planet: its card opens from here
   if (badge) me.append(badge);
+  // (unseen, so it holds still: its turning ring, orbiting spark and breathing glow kept the phone
+  // drawing frames nobody could see)
+  if (badge) badge.setAttribute("calm", "");
   document.documentElement.classList.add("nv-medal-on");
   // Your name on the top panel too (20 Oct 2026, the user: "the username … on the top panel only on
   // desktop and laptop screen sizes"): on a computer it's there, beside the panel's title, and not in the
@@ -48,7 +51,6 @@
   const img = me.querySelector("img");
   const planetBtn = me.querySelector(".sl-planet");
   const nameBtn = me.querySelector(".sl-me-name");
-  const STILL = matchMedia("(prefers-reduced-motion: reduce)");
 
   function who() {
     const d = badge && badge.data;
@@ -56,8 +58,9 @@
     const pic = badge && badge.shadowRoot && badge.shadowRoot.querySelector(".orb img");
     return {
       name: s ? String(s.display_name || "").trim().split(/\s+/)[0] || "You" : d && d.loading ? "" : "Sign in",
-      // (the planet alone, no glow ring round it, its surface turning slowly unless less motion is asked for)
-      src: pic ? pic.getAttribute("src").replace(/size=\d+/, "size=96").replace(/&(animate|halo|spin)=\d/g, "") + "&halo=0" + (STILL.matches ? "" : "&spin=1") : "",
+      // (the planet alone, no glow ring round it)
+      // (still: its turning surface redrew the status bar every frame and slowed phones down, 20 Oct 2026)
+      src: pic ? pic.getAttribute("src").replace(/size=\d+/, "size=96").replace(/&(animate|halo|spin)=\d/g, "") + "&halo=0" : "",
       glow: s && s.planet && s.planet.glow,
       signedIn: Boolean(s),
     };

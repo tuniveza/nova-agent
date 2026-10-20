@@ -297,8 +297,10 @@ html body .status-line .sl-planet::after { display: none; }
 html body .status-line .sl-planet img {
   width: 34px !important; height: 34px !important; max-width: none; flex: none; margin: -4px; border-radius: 0 !important;
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--planet-glow) 55%, transparent));
-  animation: nv-planet-glow 13s ease-in-out infinite;
 }
+/* (20 Oct 2026, later: the planet holds still and its glow stays put, the user: "fix the performance
+   issues … on mobile … feel free to make the planet not rotate": its turning surface and drifting glow
+   redrew the status bar every frame. The keyframes stay for a computer to use one day.) */
 @keyframes nv-planet-glow {
   0%, 100% { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--planet-glow) 50%, transparent)); }
   22% { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--hi) 55%, transparent)); }
@@ -307,7 +309,7 @@ html body .status-line .sl-planet img {
   86% { filter: drop-shadow(0 0 3.5px color-mix(in srgb, var(--accent-2) 55%, transparent)); }
 }
 /* (signed out: a soft round light in its place, no rings) */
-html body .status-line .sl-me.signed-out .sl-planet { background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--hi) 70%, #fff), color-mix(in srgb, var(--accent) 60%, transparent) 55%, transparent 72%) !important; animation: nv-planet-glow 13s ease-in-out infinite; }
+html body .status-line .sl-me.signed-out .sl-planet { background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--hi) 70%, #fff), color-mix(in srgb, var(--accent) 60%, transparent) 55%, transparent 72%) !important; }
 html body .status-line .sl-planet:hover { transform: scale(1.1); }
 @media (prefers-reduced-motion: reduce) { html body .status-line .sl-planet img, html body .status-line .sl-me.signed-out .sl-planet { animation: none; } }
 
@@ -391,8 +393,12 @@ html body .status-line > .sl-me, html body .status-line .sl-planet { overflow: v
   html body .shell > header.topbar.nv-topbar .brand { gap: 6px; min-width: 0; }
   html body .shell > header.topbar.nv-topbar .brand .wordmark { display: block !important; font-size: 11.5px !important; letter-spacing: .05em; line-height: 1; white-space: nowrap; }
   html body .shell > header.topbar.nv-topbar .brand .kicker { display: none !important; }
+  /* (its shimmer holds still on a phone, as the panels' names do: it redrew the top panel every frame) */
+  html body .shell > header.topbar.nv-topbar .brand .wordmark { animation: none !important; }
 }
 /* (a narrow phone: no room beside its buttons for the words, so the mark alone) */
 @media (max-width: 379px) {
   html body .shell > header.topbar.nv-topbar .brand .wordmark { display: none !important; }
 }
+/* (any touch screen, a tablet too: the title's shimmer holds still) */
+@media (pointer: coarse) { html body .shell > header.topbar.nv-topbar .brand .wordmark { animation: none !important; } }
