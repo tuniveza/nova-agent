@@ -10,9 +10,9 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot", "tests", "google", "desk"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk"];
   // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
-  const MORE = ["clients", "money", "approvals", "campaigns", "social", "quests", "alerts", "bot", "tests", "google", "desk"];
+  const MORE = ["clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk"];
   let currentView = "today";
   let running = false;
   let sessions = null; // session types for booking links
@@ -211,6 +211,8 @@
     loadCampaigns();
     // The Social badge (posts waiting for an admin, or to be posted by hand): social.js
     if (window.PortalSocial) window.PortalSocial.load();
+    // The Funnel badge (first emails written and waiting for an admin): funnel.js
+    if (window.PortalFunnel) window.PortalFunnel.load();
     // The Money badge (invoices waiting for an admin, and overdue ones): money.js
     if (window.PortalMoney) window.PortalMoney.load();
     // This phone's notifications still use the server's current key
@@ -280,6 +282,7 @@
     if (view === "approvals") loadApprovals();
     if (view === "campaigns") loadCampaigns();
     if (view === "social" && window.PortalSocial) window.PortalSocial.load();
+    if (view === "funnel" && window.PortalFunnel) window.PortalFunnel.load();
     if (view === "clients") loadClients();
     // (Today's "Invoices overdue" too)
     if ((view === "money" || view === "today") && window.PortalMoney) window.PortalMoney.load();
@@ -386,7 +389,7 @@
   const known = new Set();
   function syncCounts() {
     const n = (id) => ($(id).hidden ? 0 : Number($(id).textContent) || 0);
-    setBadge("more-badge", n("quest-badge") + n("alert-badge") + n("approvals-badge") + n("campaigns-badge") + n("social-badge") + n("money-badge"));
+    setBadge("more-badge", n("quest-badge") + n("alert-badge") + n("approvals-badge") + n("campaigns-badge") + n("social-badge") + n("funnel-badge") + n("money-badge"));
     if (known.has("alerts")) setText("t-alerts", n("alert-badge"));
     if (known.has("quests")) setText("t-quests", n("quest-badge"));
   }
@@ -5565,7 +5568,7 @@
   // ===== Start: portal.js starts the tabs once someone's signed in =====
   // (openOptions: Nova Agent's gear opens Portal's Options when Portal is the panel showing;
   //  showOnly: portal.js shows its own views the same way)
-  // kit: the helpers Social (social.js), Money (money.js) and Test stuff (teststuff.js) draw with
+  // kit: the helpers Social (social.js), Funnel (funnel.js), Money (money.js) and Test stuff (teststuff.js) draw with
   const kit = { api, el, reconcile, redraw, setText, setBadge, syncCounts, emptyState, sig, when, ukWhen, ukLocal, ukToIso, calm, toast, goView, get running() { return running; }, get view() { return currentView; } };
   window.PortalApp = { VIEWS, start, stop, show, showOnly, openOptions, kit, get view() { return currentView; } };
 })();

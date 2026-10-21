@@ -169,6 +169,37 @@ When the VPS takes over the files: give Nova Agent another store in `src/social-
 four functions) and set `SOCIAL_MEDIA_BASE` (where the VPS serves `<id>.<ext>`) and
 `SOCIAL_MEDIA_KEY` on Nova Bot: it fetches files from there instead of the VPS.
 
+## Funnel
+
+First emails to people in music, from a list of prospects, in Portal → Outreach → Funnel (Nova Tabs:
+Outreach → **Funnel**, or **Add prospects**). Nova Bot does the work (`src/funnel.js`, migration 0038).
+
+- **At a glance:** Pending, Warming (approved, in the warm-up queue), Sent, Bounced / rejected and
+  Replied, with the reply rate (of everyone the first email went to). A tile shows that part of the list.
+- **Add prospects:** a CSV (or pasted rows) with Name, Company/Project, Bio/Notes and Email. Role,
+  Status, Last_Sent and Message_Id are read too, so an old sheet's Sent and Replied people are never
+  emailed again. Each address goes on once. **Export CSV** gives the whole list back in the same columns.
+- **Write drafts** (5 at a time): Claude reads each person and decides which of six they are (Independent
+  Artist / Singer-Songwriter, Music Producer, Audio Engineer, Band Manager, Record Label A&R, Podcaster /
+  Content Creator), then writes a short plain email using only what the studio offers that kind of person
+  (the settings). Risky words (free, discount, guaranteed, buy now…) are rewritten. The coach scores it 1–10
+  on deliverability, open appeal and reply incentive; under 7 goes back to Claude once with the coach's
+  tips. Subjects never repeat. Without Claude, roles come from keywords and emails from spintax templates.
+- **Approve** (an admin, signed in to Portal in a browser; **Approve all**, pressed twice): a hash of exactly
+  what was approved is kept, and any edit takes it out of the queue.
+- **Sending:** paused until an admin presses **Start sending**; anyone can pause. Only from the studio's
+  Gmail (Portal → Admin → Google, "Send approved emails from Gmail"), plain text, with the one-to-one emails'
+  footer and "don't email me again" link. The warm-up: 5 a day for the first 5 sending days, then 10, 15,
+  up to the daily cap (20; 40 at most), a random 3–7 minutes apart, 09:00–18:00 UK on weekdays (all
+  changeable). After two weeks without sending it starts again from day 1.
+- **Replies and bounces:** every 10 minutes the threads of sent ones are read: a reply makes them Replied
+  (and lands in Enquiries), a bounce Bounced. Anyone on the list who writes to the studio first is Replied
+  before anything goes. Three bounces among the last 20 pause the funnel by itself.
+- **Who can be emailed:** the one-to-one emails' rules: work addresses at an organisation only (personal
+  Gmail, iCloud… addresses count as people under PECR, so they show under "Can't email"), never anyone who
+  said no. **Said no**, **Reject**, **Replied**, **Hold** and **Remove** (only someone never emailed) are on
+  each card.
+
 ## The smart calendar
 
 - **The week at a glance**: sessions, hours booked and how full, session value, the

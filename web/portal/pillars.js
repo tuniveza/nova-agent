@@ -86,7 +86,7 @@
       { name: "Add an expense", glyph: "−", run: press("money", "#money-expense-new") },
       { name: "Invoicer", glyph: "£", run: invoicer({}) },
     ] },
-    { name: "Outreach", glyph: "➶", badges: ["campaigns-badge", "social-badge"], items: [
+    { name: "Outreach", glyph: "➶", badges: ["campaigns-badge", "social-badge", "funnel-badge"], items: [
       { name: "Campaigns", glyph: "✉", badge: "campaigns-badge", at: "campaigns", run: tab("campaigns") },
       { name: "Write a campaign", glyph: "✎", run: press("campaigns", "#campaigns-new") },
       { name: "One-to-one email", glyph: "➝", run: press("campaigns", "#outreach-new") },
@@ -95,6 +95,9 @@
       { name: "Write a post", glyph: "✎", run: press("social", "#social-new") },
       { name: "Fan sign-up link", glyph: "⛓", run: show("campaigns", "#campaigns-signup") },
       { name: "Ads Manager", glyph: "↗", run: () => window.open("https://adsmanager.facebook.com/", "_blank", "noopener") },
+      // The outreach funnel (funnel.js): its dashboard, and adding a list of prospects
+      { name: "Funnel", glyph: "⏷", badge: "funnel-badge", at: "funnel", run: tab("funnel") },
+      { name: "Add prospects", glyph: "⇣", run: () => { tab("funnel")(); when("#funnel-import-open", (b) => ($("funnel-import").hidden ? b.click() : $("funnel-file").focus())); } },
     ] },
     { name: "Plans & Nova", glyph: "✧", badges: ["quest-badge"], items: [
       { name: "Quests", glyph: "✧", badge: "quest-badge", at: "quests", run: tab("quests") },
@@ -193,12 +196,13 @@
     google: '<path d="M21 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5.1a4.4 4.4 0 0 1-1.9 2.9v2.4h3A9 9 0 0 0 21 12.2Z"/><path d="M12 21a8.8 8.8 0 0 0 6.2-2.3l-3-2.4a5.5 5.5 0 0 1-8.2-2.9H3.9v2.4A9 9 0 0 0 12 21Z"/><path d="M7 13.4a5.4 5.4 0 0 1 0-3.4V7.6H3.9a9 9 0 0 0 0 8.2Z"/><path d="M12 6.6a4.9 4.9 0 0 1 3.5 1.4l2.6-2.6A8.8 8.8 0 0 0 12 3a9 9 0 0 0-8.1 4.6L7 10a5.4 5.4 0 0 1 5-3.4Z"/>',
     flask: '<path d="M9 3h6M10 3v6L4.5 18.5A2 2 0 0 0 6.2 21.5h11.6a2 2 0 0 0 1.7-3L14 9V3"/><path d="M7 15h10"/>',
     monitor: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+    funnel: '<path d="M3 4h18l-7 8.5V19l-4 2v-8.5Z"/>',
   };
   const ICON_OF = {
     Inbox: "inbox", Today: "home", Enquiries: "mail", Conversations: "chat", Alerts: "bell", "Saved replies": "note", "Website bot": "spark", Notifications: "ring",
     Bookings: "calendar", Calendar: "calendar", "Booking tools": "tools", Approvals: "check", "Ask about this week": "spark", "Booking link": "link", "Test booking": "flag",
     "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync with Acuity": "sync", "Import clients": "import", "Import from contacts": "phone", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt",
-    Outreach: "megaphone", Campaigns: "megaphone", "Write a campaign": "pen", "One-to-one email": "send", "Don't email again": "block", Social: "camera", "Write a post": "pen", "Fan sign-up link": "link", "Ads Manager": "out",
+    Outreach: "megaphone", Campaigns: "megaphone", "Write a campaign": "pen", "One-to-one email": "send", "Don't email again": "block", Social: "camera", "Write a post": "pen", "Fan sign-up link": "link", "Ads Manager": "out", Funnel: "funnel", "Add prospects": "import",
     "Plans & Nova": "star", Quests: "star", "Everyone's quests": "team", "Nova Agent": "agent", "Ask Nova": "ask", Voice: "mic", "Hands-free": "ear", "My Index": "index", Manual: "book",
     You: "user", "Your profile": "user", "Re-roll planet": "planet", "Edit your name": "pen", "Change email": "at", "Change password": "key", "All addresses": "map", "How it works": "gear", "Sign out": "exit",
     "Look & sound": "palette", Options: "gear", Theme: "palette", "Text & menu": "text", "Starting tab": "start", "Music on or off": "music", "Refresh everything": "refresh", "Install the app": "install", "Apps and links": "apps",

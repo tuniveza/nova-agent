@@ -1,0 +1,74 @@
+/* Portal → Outreach → Funnel (funnel.js): built on Campaigns' look (.cp, app.css): the same cards,
+   fields and facts, plus the at-a-glance tiles, the warm-up bars and each email's three scores.
+   Groups of buttons and chips wrap onto more rows; nothing slides sideways. */
+
+.fn-head { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-width: 0; }
+.fn-head a.chip { text-decoration: none; }
+
+/* Sending or paused, Gmail, Claude */
+.fn-status { display: grid; gap: 2px; margin: -4px 0 14px; min-width: 0; }
+.fn-status:empty { display: none; }
+.fn-line { margin: 0; font-size: 13.5px; overflow-wrap: anywhere; }
+.fn-line.on { color: var(--ok); }
+.fn-line.off { color: var(--gold, var(--text)); }
+.fn-line.bad { color: var(--bad); }
+.fn-line.muted { color: var(--muted); }
+
+/* At a glance: one tile per state, and the reply rate (a tile shows that part of the list) */
+.fn-glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr)); gap: 10px; margin: 0 0 14px; min-width: 0; }
+.fn-tile { display: grid; gap: 3px; align-content: start; text-align: left; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); min-width: 0; color: inherit; font: inherit; cursor: pointer; }
+.fn-tile:hover, .fn-tile:focus-visible { border-color: var(--line-strong); }
+.fn-tile.on { border-color: var(--line-strong); background: rgba(var(--glow-rgb), 0.12); }
+.fn-tile span { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
+.fn-tile b { color: var(--bright); font-size: 22px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.fn-tile small { color: var(--muted); font-size: 12.5px; }
+@media (max-width: 600px) {
+  .fn-glance { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .fn-tile { padding: 8px 9px; border-radius: 12px; }
+  .fn-tile b { font-size: 18px; }
+  .fn-tile small { display: none; }
+}
+
+/* Facts: a label over each value, as many side by side as fit */
+.fn-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 8px 14px; margin: 12px 0 0; min-width: 0; }
+.fn-facts > div { min-width: 0; }
+.fn-facts dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted); }
+.fn-facts dd { margin: 2px 0 0; color: var(--bright); font-size: 14.5px; overflow-wrap: anywhere; }
+
+/* The warm-up: the facts, then a bar per sending day with its limit as a line across */
+.fn-warmup { margin: 0 0 14px; }
+.fn-warm-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+.fn-bars { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: end; gap: 2px; height: 72px; margin: 14px 0 0; padding: 0 0 2px; border-bottom: 1px solid var(--line); min-width: 0; }
+.fn-bar { position: relative; height: 100%; min-width: 0; }
+.fn-bar .fn-fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 4px 4px 0 0; background: rgba(var(--glow-rgb), 0.75); }
+.fn-bar.today .fn-fill { background: rgb(var(--glow-rgb)); }
+.fn-bar .fn-cap { position: absolute; left: 0; right: 0; height: 2px; border-radius: 2px; background: var(--muted); }
+.fn-bar.future .fn-cap { background: none; border-top: 2px dashed var(--line-strong); height: 0; }
+.fn-key { margin: 6px 0 0; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.04em; color: var(--muted); }
+
+/* The list's filter and Approve all */
+.fn-filter { display: flex; flex-wrap: wrap; justify-content: center; margin: 4px auto 10px; }
+.fn-bulk { justify-content: center; margin: 0 0 12px; }
+.fn-more { justify-self: center; }
+
+/* Each person */
+.fn-subject { margin: 12px 0 0; color: var(--bright); font-size: 14.5px; font-weight: 600; overflow-wrap: anywhere; }
+.fn-scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 8px; margin: 12px 0 0; min-width: 0; }
+.fn-score { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 2px 8px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); min-width: 0; }
+.fn-score small { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.05em; color: var(--muted); min-width: 0; }
+.fn-score b { color: var(--bright); font-size: 14px; font-variant-numeric: tabular-nums; }
+.fn-score.low b { color: var(--bad); }
+.fn-meter { grid-column: 1 / -1; display: block; height: 4px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.fn-meter i { display: block; height: 100%; border-radius: 4px; background: var(--ok); }
+.fn-score.low .fn-meter i { background: var(--bad); }
+.fn-tips li { color: var(--text); }
+.fn-edit .fn-wide { grid-column: 1 / -1; }
+.fn-edit textarea, .fn-settings textarea { width: 100%; }
+.fn-edit select { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(var(--void-rgb), 0.6); font-size: 16px; }
+
+/* Settings */
+.fn-settings input[type="number"] { width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(var(--void-rgb), 0.6); color: var(--bright); font-size: 16px; }
+.fn-sub { margin: 6px 0 0; }
+.fn-pitch { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; min-width: 0; }
+.fn-pitch textarea { min-height: 64px; }
+.fn-risky summary { cursor: pointer; color: var(--text); font-size: 13.5px; }
