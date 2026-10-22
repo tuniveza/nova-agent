@@ -611,10 +611,13 @@
   // (a pane too small for its words, a phone's Inbox or anything on a phone on its side, turns into plain
   // text, terminal style: the user, 22 Oct 2026, "can the ui become more tui if it get so small that
   // area's are collapsing and can't see text"; dash.css [data-tui])
+  // (switched off, 22 Oct 2026, the user: "okay turn off the tui it doesn't work"; TUI_ON brings it back,
+  // its look is still in dash.css [data-tui])
+  const TUI_ON = false;
   const TUI_H = 230, TUI_W = 280;
   // (all or none: the panes on screen together are all terminal style or all not, never one of each; the
   // user, 22 Oct 2026: "won't allow one side to be tui and one to be gui at the same time")
-  const tuiWatch = "ResizeObserver" in window ? new ResizeObserver(() => {
+  const tuiWatch = TUI_ON && "ResizeObserver" in window ? new ResizeObserver(() => {
     const shown = [...document.querySelectorAll("#main > .view:not([hidden])")].filter((v) => v.clientWidth && v.clientHeight);
     const on = document.documentElement.classList.contains("embed") && shown.some((v) => v.clientHeight < TUI_H || v.clientWidth < TUI_W);
     let changed = false;

@@ -103,7 +103,7 @@ Every section in Portal sits in its own **Nova pane**: a rounded frame edged in 
 with the section's icon beside its title, so each one can be told apart at a glance (`pillars.js`
 paneUp, `dash.css`). Each pane is named in `data-pane`, e.g. "Inbox · Enquiries", so it can be pointed at.
 
-When a Nova pane gets too small for its words (under 230px tall or 280px wide: a phone's Inbox, anything on
+**Switched off (22 October 2026, the user: "turn off the tui it doesn't work"; `TUI_ON` in `pillars.js`).** When it was on: when a Nova pane got too small for its words (under 230px tall or 280px wide: a phone's Inbox, anything on
 a phone on its side, Conversations and Alerts on a tablet), it turns **terminal style** (`[data-tui]`, set
 by `pillars.js`). It switches to monospace text and one line per thing, with states in brackets
 (`[NEW]`, `[CHAT]`) and thin line edges. Pills, glows and icons go, and Booking tools' month is drawn like
