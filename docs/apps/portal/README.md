@@ -47,8 +47,19 @@ Also fixed the same day:
 
 ## One screen (22 October 2026)
 
+**Every panel, every size (22 October 2026).** The page bar is in every panel of the suite, not just Portal.
+Outside Portal it finds the boxes that would scroll (a list, a guide, a card's body, a chat) and pages them,
+holding their height. A box that is mostly an editor or a big writing box is left alone, and `data-os-skip`
+opts a box out. After each layout, a **guard** looks for anything cut off by its box or off the screen, the
+way the Fixer does. It draws the smallest box around it smaller (zoom, down to half) until all of it shows.
+It does the same for a big box or page that would slide sideways. A part that fits itself (a Calendar day's
+cards) says `data-guard="off"`. The suite is checked at the Fixer's 16 sizes, desktop to the smallest phone
+either way up: nothing cut, off the screen or scrolling (the user: "I don't want it cut at any size of the
+screen at any point").
+
 Every section the Nova Tabs open fits on one screen, on any phone, tablet, laptop or desktop, with no
-scrolling (`web/portal/onescreen.js`, `onescreen.css`). Whatever has more than fits is shown in pages:
+scrolling (`web/shared/onescreen.js`, `onescreen.css`; moved from `web/portal/` on 22 October 2026, when
+`/shared/fit.js` started loading it into every panel). Whatever has more than fits is shown in pages:
 - **Turning pages:** the bar at the bottom (‹ 2 / 5 ›), a swipe (sideways or up and down), the mouse
   wheel, or Page Up / Page Down and the arrow keys.
 - **The title row** (the section's name and buttons) stays on every page. On a small screen where it

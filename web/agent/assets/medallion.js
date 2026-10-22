@@ -101,14 +101,27 @@
 
   // Each side fits its half: the least needed parts step aside first (on the left the version, when you
   // came on, when you left, then what's new; on the right the date), never cut off at an edge
-  const ORDER = [[left, [".sl-ver", ".sl-sess", ".sl-left", ".sl-news", ".sl-act"]], [right, [".sl-date", ".sl-time"]]];
+  // (22 Oct 2026, the user: "I don't want it cut at any size of the screen at any point": a part counts as
+  // not fitting when it reaches past its half's edge, either edge (the left half is packed to the right, so
+  // what doesn't fit there runs off its left), or when its own words are cut inside it: What's new, what
+  // you've been doing; adding up widths missed both. The mode light steps aside after the date.)
+  const ORDER = [[left, [".sl-ver", ".sl-sess", ".sl-left", ".sl-news", ".sl-act"]], [right, [".sl-date", ".sl-mode", ".sl-time"]]];
   const shown = (el) => getComputedStyle(el).display !== "none";
-  const need = (side) => [...side.children].filter(shown).reduce((w, el) => w + el.getBoundingClientRect().width, 0);
+  const WORDS = ".sl-track, .sl-words, .sl-act-text, .sl-area, time, .label";
+  const cut = (side) => {
+    const r = side.getBoundingClientRect();
+    return [...side.children].some((el) => {
+      if (!shown(el)) return false;
+      const b = el.getBoundingClientRect();
+      if (b.left < r.left - 0.5 || b.right > r.right + 0.5) return true;
+      return [el, ...el.querySelectorAll(WORDS)].some((k) => k.offsetParent && k.scrollWidth > k.clientWidth + 1);
+    });
+  };
   function tuck() {
     for (const [side, order] of ORDER) {
       for (const el of side.querySelectorAll(".sl-tucked")) el.classList.remove("sl-tucked");
       for (const sel of order) {
-        if (need(side) <= side.clientWidth + 1) break;
+        if (!cut(side)) break;
         const el = side.querySelector(sel);
         if (el && shown(el)) el.classList.add("sl-tucked");
       }

@@ -835,3 +835,12 @@ html.embed .bar { padding-top: 4px !important; }
 /* (the day's cards beside Day view: slimmer rows) */
 .dv-side .rows { gap: 5px; }
 .dv-side .empty { display: none; }
+
+/* Nothing cut off in a day's little cards (22 Oct 2026, the user: "WHY IN THE ENTIRE NOVA-SUITE ANATOMY THERE
+   IS STILL OFFSCREEN ELEMENTS"): a title's letters (and emoji) stood 1.5-3px taller than its tight line and
+   were clipped at the card's edge. Each title and time is its own small block on lines tall enough for its
+   letters, so the card holds all of it; cal.js fitInfo then fits the cards to the day as before */
+.grid.textual .di .di-t, .grid.textual .di b { display: inline-block; max-width: 100%; vertical-align: top; line-height: 1.3; }
+.grid.textual .di, .grid.textual .di-in { line-height: 1.3 !important; }
+/* (the "Also …" line under them too: its letters on a line tall enough for them) */
+.grid.textual .di-also { line-height: 1.3 !important; }

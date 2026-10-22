@@ -7,6 +7,9 @@
    - The frame round the panel is thinner, so the panel gets the screen's width. */
 @media (max-width: 600px) and (orientation: portrait) {
   .shell, .shell:has(> .main.viewing) { gap: 6px; padding-left: max(4px, env(safe-area-inset-left)); padding-right: max(4px, env(safe-area-inset-right)); }
+  /* (the top panel reaches the shell's edges and no further: it reached 8px out, past a 4px edge, so it stuck
+     out 4px each side, 22 Oct 2026, the user: "I don't want it cut at any size of the screen at any point") */
+  html body div.shell > header.topbar.nv-topbar { margin-left: calc(-1 * max(4px, env(safe-area-inset-left))) !important; margin-right: calc(-1 * max(4px, env(safe-area-inset-right))) !important; }
   .main.viewing > .viewer > .viewer-body { border-radius: 14px; }
   html body .tabbar { margin-inline: calc(-1 * max(4px, env(safe-area-inset-left))) calc(-1 * max(4px, env(safe-area-inset-right)));
     padding: 5px max(4px, env(safe-area-inset-right)) calc(3px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); row-gap: 4px !important; }

@@ -234,10 +234,19 @@
   else start();
 
   // The three rules, kept as each screen draws (the Fixer's "Fixes on its own"): /shared/rules.js;
-  // and notices that keep out of the way of typing and dragging: /shared/notices.js. Next to this
-  // file, so every page that has this has those
+  // and notices that keep out of the way of typing and dragging: /shared/notices.js; and the page bar,
+  // so nothing scrolls in any panel (what's too long is shown in pages): /shared/onescreen.js. Next to
+  // this file, so every page that has this has those
   const here = (document.currentScript && document.currentScript.src) || "";
-  for (const [file, has] of [["rules.js", "NovaRules"], ["notices.js", "NovaNotices"]]) {
+  try {
+    if (!document.querySelector('link[href*="/shared/onescreen.css"]')) {
+      const l = document.createElement("link");
+      l.rel = "stylesheet";
+      l.href = new URL("onescreen.css", here || location.origin + "/shared/fit.js").href;
+      (document.head || document.documentElement).append(l);
+    }
+  } catch (e) { /* (a page with no address of its own) */ }
+  for (const [file, has] of [["rules.js", "NovaRules"], ["notices.js", "NovaNotices"], ["onescreen.js", "NovaOneScreen"]]) {
     try {
       if (!window[has] && !document.querySelector(`script[src*="/shared/${file}"]`)) {
         const s = document.createElement("script");

@@ -19,6 +19,12 @@
 // Parts on other pages are display:none (data-os-off), so nothing is cut off or scrolls; the Fixer
 // (src/fixer/strict.ts) and the auto-fix (/shared/rules.js) see only what's showing.
 // A part opts out of being split with data-os-keep; a box opts out altogether with data-os-skip.
+//
+// Every panel (22 Oct 2026, the user: "complete page navigation across the entire nova-suite", the page bar
+// everywhere): /shared/fit.js brings this into every panel. Outside Portal there are no sections, so the
+// boxes are found: anything that would scroll (a list, a guide, a card's body, a chat) is paged instead,
+// its height held while it's in pages. What you write in is never paged (a box that is mostly an editor or
+// a big writing box is left as it is), and a box opts out with data-os-skip.
 (function () {
   "use strict";
   if (window.NovaOneScreen) return;
@@ -82,7 +88,38 @@
     for (const b of adopted) if (b.isConnected && shown(b)) list.push(b);
     if (embed()) for (const v of document.querySelectorAll("#main > .view:not([hidden])")) list.push(v);
     for (const b of document.querySelectorAll(EXTRA)) if (shown(b)) list.push(b);
+    for (const b of found) if (b.isConnected && shown(b) && !list.some((x) => x.contains(b))) list.push(b);
     return list.filter((b) => !b.hasAttribute("data-os-skip"));
+  }
+  // ---- Outside Portal: the boxes that would scroll, found (the outermost of each; boxes inside them are
+  // innerBoxes'), looked for at most once a second ----
+  const portalPage = () => !!document.querySelector("#main > .view");
+  const found = new Set();
+  const TYPING = 'textarea, [contenteditable=""], [contenteditable="true"], [role="textbox"], .cm-editor, .ProseMirror';
+  const NOT_BOX = 'textarea, select, input, iframe, svg, canvas, [data-os-skip], [data-os-own], .os-pager';
+  let lastLook = 0;
+  let lookAgain = 0;
+  function discover() {
+    for (const b of [...found]) if (!b.isConnected) found.delete(b);
+    if (portalPage()) return;
+    // (looked less than a second ago: look again once the second is up, so nothing drawn meanwhile is missed)
+    const since = performance.now() - lastLook;
+    if (since < 900) {
+      clearTimeout(lookAgain);
+      lookAgain = setTimeout(() => soon(0), 920 - since);
+      return;
+    }
+    lastLook = performance.now();
+    for (const el of document.body.querySelectorAll("*")) {
+      if (found.has(el) || el.hasAttribute(OFF) || el.hasAttribute("data-os-last") || el.closest(NOT_BOX)) continue;
+      const cs = getComputedStyle(el);
+      if (!/(auto|scroll|overlay)/.test(cs.overflowY) || el.clientHeight < 48 || el.clientWidth < 120) continue;
+      if (el.scrollHeight <= el.clientHeight + 2 || !shown(el)) continue;
+      if ([...found].some((f) => f.contains(el) || el.contains(f))) continue;
+      // (an editor or a big writing box isn't paged; a small box to type in, among other things, is fine)
+      if (el.matches(TYPING) || [...el.querySelectorAll(TYPING)].some((t) => t.getBoundingClientRect().height > el.clientHeight * 0.45)) continue;
+      found.add(el);
+    }
   }
   // A box inside one with its own height that scrolls (found after its outer box is laid out)
   function innerBoxes(box) {
@@ -250,6 +287,11 @@
       state.set(box, { page: 0, pages: [[0, 0]], leaves: [], parents: [], end: memo.end });
       return;
     }
+    // (a found box keeps the height it has with everything in it, so taking parts out doesn't shrink it)
+    if (found.has(box)) {
+      setStyle(box, "height", `${box.getBoundingClientRect().height}px`);
+      setStyle(box, "box-sizing", "border-box");
+    }
     box.setAttribute("data-os-paged", "");
     const st = { page: 0, pages: [], leaves: [], parents: [], end: memo.end || box.matches('[role="log"], .messages, .thread, .chat-log') };
     state.set(box, st);
@@ -280,7 +322,9 @@
     st.room = room;
     st.pos = st.leaves.map(outer);
     // (sections and Admin pages are filled; a drawer or a sheet's form keeps its size)
-    st.fill = !box.matches(EXTRA);
+    // (a box found in a panel isn't: its parts may fit themselves to their size, a Calendar day's cards,
+    // and drawing them smaller undid that)
+    st.fill = !box.matches(EXTRA) && !found.has(box);
     st.pages = pack(st.leaves, room, st.pos, st.fill);
     showPage(box, st, wantedPage(box, st, memo));
     follow(box, st);
@@ -450,6 +494,128 @@
   let lastRun = 0;
   let runs = 0;
   let skipped = false;
+  // ---- The last line of defence: nothing cut, nothing off the screen (22 Oct 2026, the user: "I don't want it
+  // cut at any size of the screen at any point"; desktops, laptops and phones of every size, either way up) ----
+  // After each layout: anything that means something (a button, a link, words, a picture) cut off by the box
+  // it's in, or past the edge of the screen, is found the way the Fixer finds it (src/fixer/strict.ts), and
+  // the part of the smallest box around it that does fit is drawn smaller (zoom, down to half) until it all
+  // shows. Put back and looked at again on every layout, so things grow back when there's room.
+  const MEANS = /^(BUTTON|A|INPUT|SELECT|TEXTAREA|IMG|SVG|VIDEO|CANVAS|IFRAME|LABEL|H[1-6]|P|LI|TD|TH|SUMMARY)$/;
+  // (a part that fits itself, a Calendar day's card, says data-guard="off": two fitters on one part fight)
+  const IGNORE = '[aria-hidden="true"], [inert], template, noscript, script, style, [data-os-own], [data-guard="off"]';
+  const BAR_SLIDE = ".tabbar, .dock, .topbar, .status-line";
+  const guarded = new Map(); // element -> its own zoom before
+  const hasWords = (el) => [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+  // Where el is cut: { by: the box cutting it (null: the screen's edge), x, y: how far it sticks out }
+  function cutOf(el) {
+    const r = el.getBoundingClientRect();
+    let left = r.left, right = r.right, top = r.top, bottom = r.bottom;
+    for (let a = el.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
+      const cs = getComputedStyle(a);
+      if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
+      const ar = a.getBoundingClientRect();
+      if (ar.width <= 2 && ar.height <= 2) return null; // (words for screen readers only)
+      const sx = /(auto|scroll|overlay)/.test(cs.overflowX) && !a.matches(BAR_SLIDE);
+      const sy = /(auto|scroll|overlay)/.test(cs.overflowY);
+      if (!sx && (left < ar.left - 1 || right > ar.right + 1)) return { by: a, r };
+      if (!sy && (top < ar.top - 1 || bottom > ar.bottom + 1)) return { by: a, r };
+      left = Math.max(left, ar.left); right = Math.min(right, ar.right);
+      top = Math.max(top, ar.top); bottom = Math.min(bottom, ar.bottom);
+      if (right <= left || bottom <= top) return null; // (scrolled out of sight inside a box: it can be scrolled to)
+    }
+    const se = document.scrollingElement || document.documentElement;
+    const pageX = se.scrollWidth > se.clientWidth + 1, pageY = se.scrollHeight > se.clientHeight + 1;
+    if (left < -1 || top < -1 || (!pageX && right > innerWidth + 1) || (!pageY && bottom > innerHeight + 1)) return { by: null, r };
+    return null;
+  }
+  function guard() {
+    for (const [el, [v, pr]] of guarded) if (el.isConnected) (v ? el.style.setProperty("zoom", v, pr) : el.style.removeProperty("zoom"));
+    guarded.clear();
+    // (first, nothing slides sideways: a big box, or the page, whose insides are wider than it has them
+    // drawn smaller to its width; a row of things meant to slide, data-pan, is left as it is)
+    const tooWide = () => [document.body, ...document.body.querySelectorAll("*")].filter((el) => {
+      if (el.closest(IGNORE) || el.closest("[data-pan]") || el.scrollWidth <= el.clientWidth + 1) return false;
+      if (el !== document.body && (el.clientHeight < innerHeight * 0.4 || !/(auto|scroll|overlay|hidden|clip)/.test(getComputedStyle(el).overflowX))) return false;
+      return shown(el);
+    });
+    for (let pass = 0; pass < 4; pass++) {
+     const wide = tooWide();
+     if (!wide.length) break;
+     for (const el of wide) {
+      const k = el.clientWidth / el.scrollWidth;
+      const edge = el.getBoundingClientRect().left + el.clientWidth + 1;
+      for (const c of el.children) {
+        // (the parts that reach past it, or that are wider inside than they look)
+        if (!shown(c) || ours(c) || (c.getBoundingClientRect().right <= edge && c.scrollWidth <= c.clientWidth + 1)) continue;
+        const was = parseFloat(getComputedStyle(c).zoom) || 1;
+        const z = Math.max(0.5, Math.floor(k * was * 1000) / 1000);
+        if (z >= was - 0.001) continue;
+        if (!guarded.has(c)) guarded.set(c, [c.style.getPropertyValue("zoom"), c.style.getPropertyPriority("zoom")]);
+        c.style.setProperty("zoom", String(z));
+      }
+     }
+    }
+    for (let pass = 0; pass < 3; pass++) {
+      let fixed = 0;
+      const done = new Set();
+      for (const el of document.body.querySelectorAll("*")) {
+        const tag = el.tagName.toUpperCase();
+        if (el.closest("svg") && tag !== "SVG") continue;
+        if (!(MEANS.test(tag) || el.getAttribute("role") || hasWords(el)) || el.closest(IGNORE) || !shown(el)) continue;
+        if ([...done].some((d) => d.contains(el))) continue;
+        const cut = cutOf(el);
+        if (!cut) continue;
+        // What to draw smaller: inside a box that cuts it, everything in that box together (what's before
+        // it takes the room too), by how much more there is than the box shows; past the screen's edge, the
+        // smallest part around it that starts on the screen, until its far edge comes inside.
+        const zoomOf = (el) => parseFloat(getComputedStyle(el).zoom) || 1;
+        const shrink = (part, k) => {
+          const was = zoomOf(part);
+          const z = Math.max(0.5, Math.floor(k * was * 1000) / 1000);
+          if (z >= was - 0.001) return false;
+          if (!guarded.has(part)) guarded.set(part, [part.style.getPropertyValue("zoom"), part.style.getPropertyPriority("zoom")]);
+          part.style.setProperty("zoom", String(z));
+          done.add(part);
+          return true;
+        };
+        let changed = false;
+        if (cut.by) {
+          const B = cut.by;
+          const k = Math.min(B.clientWidth / Math.max(1, B.scrollWidth), B.clientHeight / Math.max(1, B.scrollHeight), 1);
+          const kids = [...B.children].filter((c) => shown(c) && !ours(c));
+          if (k < 0.999) for (const c of kids) changed = shrink(c, k) || changed;
+          // (it overflows only a little, or by being too wide in itself: the part with it in, by its own reach)
+          if (!changed) {
+            let part = el;
+            while (part.parentElement && part.parentElement !== B) part = part.parentElement;
+            const b = B.getBoundingClientRect(), p = part.getBoundingClientRect();
+            const kx = cut.r.right > b.right + 1 ? (b.right - p.left) / Math.max(1, Math.max(p.right, cut.r.right) - p.left) : 1;
+            const ky = cut.r.bottom > b.bottom + 1 ? (b.bottom - p.top) / Math.max(1, Math.max(p.bottom, cut.r.bottom) - p.top) : 1;
+            if (p.left < b.right && p.top < b.bottom) changed = shrink(part, Math.min(kx, ky, 0.97));
+          }
+        } else {
+          let A = el.parentElement;
+          while (A && A !== document.body) {
+            const a = A.getBoundingClientRect();
+            if (a.top >= -1 && a.left >= -1 && a.top < innerHeight - 8 && a.left < innerWidth - 8) break;
+            A = A.parentElement;
+          }
+          if (A === document.body || !A) A = [...document.body.children].find((c) => c.contains(el));
+          if (A) {
+            const a = A.getBoundingClientRect();
+            const far = { right: Math.max(a.right, cut.r.right), bottom: Math.max(a.bottom, cut.r.bottom, A.scrollHeight + a.top) };
+            const kx = far.right > innerWidth + 1 ? (innerWidth - a.left) / Math.max(1, far.right - a.left) : 1;
+            const ky = far.bottom > innerHeight + 1 ? (innerHeight - a.top) / Math.max(1, far.bottom - a.top) : 1;
+            changed = shrink(A, Math.min(kx, ky, 0.97));
+          }
+        }
+        if (!changed) continue;
+        fixed++;
+      }
+      if (!fixed) break;
+    }
+  }
+
   function run(opts = {}) {
     timer = 0;
     // (out of sight, Portal in the background behind another panel: cut again once it's back)
@@ -457,11 +623,13 @@
     runs++;
     busy = true;
     try {
+      discover();
       for (const box of boxes()) {
         layout(box, opts.fresh && opts.fresh.has(box) ? { fresh: true } : {});
         for (const inner of innerBoxes(box)) layout(inner);
         watch(box);
       }
+      guard();
     } catch (err) {
       console.warn("One screen:", err);
     } finally {
@@ -620,7 +788,10 @@
         if (ours(r.target)) continue;
         const t = r.target.nodeType === 1 ? r.target : r.target.parentElement;
         const toggled = r.type === "attributes" && r.attributeName === "hidden" && t && t.matches && t.matches("#main > .view, .sheet, .pillar-drawer");
-        if (!toggled && !live.some((b) => b.contains(t))) continue;
+        // (outside Portal, parts added anywhere may be a new box that would scroll; words changing, a
+        // clock ticking, don't count)
+        const added = !portalPage() && r.type === "childList" && [...r.addedNodes].some((n) => n.nodeType === 1 && !ours(n));
+        if (!toggled && !added && !live.some((b) => b.contains(t))) continue;
         if (r.type === "attributes" && r.attributeName === "hidden" && r.target.matches && r.target.matches("#main > .view, .sheet") && !r.target.hidden) {
           fresh.add(r.target.matches(".sheet") ? r.target.querySelector(".sheet-card") : r.target);
         }

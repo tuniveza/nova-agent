@@ -348,7 +348,7 @@ function drawMonth() {
       const what = [...days.slice(1), ...rest];
       const style = [days.length ? themeStyle(dayTheme(days[0].item)) : "", what.length ? `--mix: ${kindTint(what)}` : ""].filter(Boolean).join("; ");
       cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${style ? ` style="${style}"` : ""} aria-label="${dayLabel(d)}${list.length ? `: ${esc(list.map(titleOf).join(", "))}` : ""}">
-      <span class="num"${phone() ? "" : ` data-goto="${d}" title="Open ${dayLabel(d)} in Day view"`}>${dayWords(d)}</span>${days.slice(0, 1).map(pillHtml).join("")}${sky1.map(skyChip).join("")}${moonWords(d)}${what.length ? `<p class="dayinfo">${what.map(infoLine).join("")}</p>` : ""}</button>`;
+      <span class="num"${phone() ? "" : ` data-goto="${d}" title="Open ${dayLabel(d)} in Day view"`}>${dayWords(d)}</span>${days.slice(0, 1).map(pillHtml).join("")}${sky1.map(skyChip).join("")}${moonWords(d)}${what.length ? `<p class="dayinfo" data-guard="off">${what.map(infoLine).join("")}</p>` : ""}</button>`;
       continue;
     }
     cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${days.length ? ` style="${themeStyle(dayTheme(days[0].item))}"` : ""} aria-label="${dayLabel(d)}${list.length ? `, ${list.length} item${list.length > 1 ? "s" : ""}` : ""}">
@@ -371,9 +371,31 @@ function drawMonth() {
       if (g && sizeOf(g) !== g.dataset.size) { g.dataset.size = sizeOf(g); fitMonth(); }
     })).disconnect();
     monthSize.observe(grid);
+    // (a day's card losing room to what comes in after the month is drawn, its moon or a special day:
+    // that day fits again; at most a few times each, so two changes can't chase each other, 22 Oct 2026,
+    // the user: "I don't want it cut at any size of the screen at any point")
+    (cardSize ||= new ResizeObserver((list) => {
+      for (const { target: card } of list) {
+        const now = `${card.clientWidth}x${card.clientHeight}`;
+        if (card.dataset.size === now) continue;
+        const first = !card.dataset.size;
+        card.dataset.size = now;
+        const n = Number(card.dataset.refits || 0);
+        if (!first && n < 4 && card.parentElement) { card.dataset.refits = String(n + 1); fitInfo(card.parentElement); }
+      }
+    })).disconnect();
+    for (const card of grid.querySelectorAll(":scope > .cell > .dayinfo")) cardSize.observe(card);
   }
 }
 let monthSize = null;
+let cardSize = null;
+// (fonts arriving after the month is drawn change the words' sizes, not the days': fit again then, or cards
+// fitted to the stand-in font stick out of their day, 22 Oct 2026)
+if (document.fonts && document.fonts.addEventListener) {
+  let refit = 0;
+  document.fonts.addEventListener("loadingdone", () => { cancelAnimationFrame(refit); refit = requestAnimationFrame(() => view.querySelector(".month .grid") && fitMonth()); });
+  document.fonts.ready.then(() => view.querySelector(".month .grid") && fitMonth());
+}
 // A day's own tint: its cards' kind colours (cosmos.css --kind-*) blended by how many of each, so a day
 // of three meetings and a lunch is three parts blue to one part coral (22 Oct 2026, the user: "the overall
 // color tint is determined by the quantity precentage of note card type")
@@ -397,6 +419,8 @@ function infoLine(e) {
   // (on a phone just the title: its time is in the chosen day's list under the month)
   return `<span class="di${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(SYMBOL_WORDS[symbolOf(e)] || "")}: ${esc(titleOf(e))}"><span class="di-in">${e.allDay || phone() ? "" : `<b>${fmtTime(e.start)}</b> `}<span class="di-t">${esc(title)}</span></span></span>`;
 }
+// (data-guard="off": this fits itself; /shared/onescreen.js's last-resort shrinking leaves it alone, as the
+// two fought over it, 22 Oct 2026)
 // A day's card fits its day: what doesn't fit steps out of the card from the end, named on its last
 // line ("Also Lunch with Sam, Call mum"); when even that's too long it says the rest is in the day's
 // list (a tap on it shows that list). Nothing is cut short and there are no numbers.

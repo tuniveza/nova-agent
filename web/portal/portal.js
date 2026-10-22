@@ -618,8 +618,8 @@
           style.textContent = "html.os-frame, html.os-frame body { height: 100%; overflow: hidden; } html.os-frame body { margin: 0; box-sizing: border-box; } html.os-frame body > main { padding-bottom: 12px; }";
           const head = d.querySelector("body > header");
           if (head) head.setAttribute("data-os-pin", "");
-          const css = Object.assign(d.createElement("link"), { rel: "stylesheet", href: "/portal/onescreen.css" });
-          const js = Object.assign(d.createElement("script"), { src: "/portal/onescreen.js" });
+          const css = Object.assign(d.createElement("link"), { rel: "stylesheet", href: "/shared/onescreen.css" });
+          const js = Object.assign(d.createElement("script"), { src: "/shared/onescreen.js" });
           js.addEventListener("load", () => frame.contentWindow.NovaOneScreen && frame.contentWindow.NovaOneScreen.adopt(d.body));
           d.head.append(style, css);
           d.body.append(js);

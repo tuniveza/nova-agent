@@ -725,3 +725,12 @@ html.embed .app > main { max-width: none !important; width: auto !important; ali
   html.embed .app > main { flex: 0 1 auto; }
   html.embed .app > main:has(> #view-calendar:not([hidden]), > #view-bot:not([hidden]), > #view-chats:not([hidden])) { flex: 1 1 auto; }
 }
+
+/* (a phone: the Nova Tabs' rounded joins to the top panel sit 16px past their sides, and the tabs reach
+   nearly the full width there, so the joins ran past the screen's edge and the page slid sideways; on a
+   phone the tabs go without them. 22 Oct 2026, the user: "I don't want it cut at any size of the screen
+   at any point") */
+@media (max-width: 760px) { html.embed .pillars.compact::before, html.embed .pillars.compact::after { display: none !important; } }
+/* (and their glows stop at the strip's edge on a phone: a tab's soft glow reaching past the last tab made
+   the page 14px wider than the screen; nothing you read or tap is in it) */
+@media (max-width: 760px) { html.embed .app > .embed-head { overflow-x: clip; } }

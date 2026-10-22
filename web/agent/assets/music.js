@@ -231,6 +231,10 @@
         w.style.width = z > 1 ? `${(100 / z).toFixed(2)}%` : "";
         const kids = [...w.children].filter((k) => k.getClientRects().length && k.getBoundingClientRect().height > 0);
         if (!kids.length) return 0;
+        // (and never wider than the chat's space: on a narrow phone a bigger size spilt the chips off the
+        // side; a size that's too wide counts as too big, 22 Oct 2026, the user: "I don't want it cut at
+        // any size of the screen at any point")
+        if (w.scrollWidth > w.clientWidth + 1 || w.getBoundingClientRect().right > log.getBoundingClientRect().right + 0.5) return 1e6;
         const top = Math.min(...kids.map((k) => k.getBoundingClientRect().top));
         const bottom = Math.max(...kids.map((k) => k.getBoundingClientRect().bottom));
         return bottom - top + 12;
