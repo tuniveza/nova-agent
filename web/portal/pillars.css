@@ -123,11 +123,13 @@ html.pillars-on { --tabs-h: 0px; --htabs-h: 0px; }
   .pillar-ico { width: 16px; height: 16px; }
 }
 /* Short screens (a phone on its side): lower */
+/* (a short screen: a phone on its side, or a short window; never an upright phone or tablet, whose Portal
+   can be under 500px tall inside Nova Agent: it got this row, names beside icons, one crammed row, 22 Oct 2026) */
 @media (max-height: 500px) {
-  .mini-cap { min-height: 34px; flex-direction: row; gap: 6px; }
-  .mini-shaft { height: 5px; }
-  .pillars.compact .pillar-btn { min-height: 30px; padding: 2px 10px; }
-  .pillar-shaft { min-height: 96px; }
+  html:not([data-form$="-up"]) .mini-cap { min-height: 34px; flex-direction: row; gap: 6px; }
+  html:not([data-form$="-up"]) .mini-shaft { height: 5px; }
+  html:not([data-form$="-up"]) .pillars.compact .pillar-btn { min-height: 30px; padding: 2px 10px; }
+  html:not([data-form$="-up"]) .pillar-shaft { min-height: 96px; }
 }
 
 /* ---- Hide all: only the page is left (Nova Agent's top panel and its tiles, tablets or dock are away
@@ -233,12 +235,12 @@ html[data-motion="calm"] .pillar { transition: none; }
   .pillars.compact .pillar-base { height: 4px; }
 }
 @media (max-height: 500px) and (pointer: coarse) {
-  .pillar-caps { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
-  .mini-cap { min-height: 26px; flex-direction: row; gap: 4px; padding: 1px 4px; }
-  .mini-cap .pillar-ico { width: 13px; height: 13px; }
-  .mini-cap .pillar-name { font-size: 10.5px; }
-  .mini-shaft { height: 2px; }
-  .mini-base { height: 2px; }
+  html:not([data-form$="-up"]) .pillar-caps { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+  html:not([data-form$="-up"]) .mini-cap { min-height: 26px; flex-direction: row; gap: 4px; padding: 1px 4px; }
+  html:not([data-form$="-up"]) .mini-cap .pillar-ico { width: 13px; height: 13px; }
+  html:not([data-form$="-up"]) .mini-cap .pillar-name { font-size: 10.5px; }
+  html:not([data-form$="-up"]) .mini-shaft { height: 2px; }
+  html:not([data-form$="-up"]) .mini-base { height: 2px; }
 }
 /* A computer (19 Oct 2026): the same simple pillars, the eight in one row and the open one's buttons
    across it, as many to a row as fit */
@@ -541,9 +543,9 @@ html.pillars-on body::before {
 }
 /* (a phone on its side: all nine in a row, each name a touch smaller so it stays whole) */
 @media (max-height: 500px) and (pointer: coarse) {
-  .mini-cap { gap: 3px; padding: 1px 3px; }
-  .mini-cap .pillar-ico { width: 12px; height: 12px; }
-  .mini-cap .pillar-name { font-size: 9.5px; letter-spacing: -0.02em; }
+  html:not([data-form$="-up"]) .mini-cap { gap: 3px; padding: 1px 3px; }
+  html:not([data-form$="-up"]) .mini-cap .pillar-ico { width: 12px; height: 12px; }
+  html:not([data-form$="-up"]) .mini-cap .pillar-name { font-size: 9.5px; letter-spacing: -0.02em; }
 }
 
 /* ===== The Nova Tabs as a Nova dock (20 Oct 2026, the user: "the grainy buttons … can you make them look
@@ -614,16 +616,16 @@ html.pillars-on body::before {
 @media (max-width: 370px) { .pillars.compact .pillar-caps { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
 /* (a phone on its side: all nine in a row, icon beside its name to keep the row low) */
 @media (max-height: 500px) and (pointer: coarse) {
-  .pillars.compact .pillar-caps { grid-template-columns: repeat(9, minmax(0, 1fr)) !important; width: 100% !important; padding: 3px 6px; }
-  .pillars.compact .mini-cap { flex-direction: row !important; gap: 4px !important; padding: 3px 2px !important; }
-  .pillars.compact .mini-cap .pillar-ico { width: 20px !important; height: 20px !important; padding: 4px; border-radius: 6px; }
-  .pillars.compact .mini-cap .pillar-badge { top: -4px; right: 0; }
+  html:not([data-form$="-up"]) .pillars.compact .pillar-caps { grid-template-columns: repeat(9, minmax(0, 1fr)) !important; width: 100% !important; padding: 3px 6px; }
+  html:not([data-form$="-up"]) .pillars.compact .mini-cap { flex-direction: row !important; gap: 4px !important; padding: 3px 2px !important; }
+  html:not([data-form$="-up"]) .pillars.compact .mini-cap .pillar-ico { width: 20px !important; height: 20px !important; padding: 4px; border-radius: 6px; }
+  html:not([data-form$="-up"]) .pillars.compact .mini-cap .pillar-badge { top: -4px; right: 0; }
 }
 /* (the dock in the middle of the screen: Portal's column is, so the tabs' box sits in its middle too) */
 .pillars.compact { align-self: center !important; justify-self: center !important; margin-inline: auto !important; max-width: calc(100% - 12px); }
 @media (max-width: 639px) { .pillars.compact { width: calc(100% - 12px) !important; } }
 @media (max-height: 500px) and (pointer: coarse) {
-  .pillars.compact .mini-pillar.open .mini-cap, .pillars.compact .mini-pillar.here .mini-cap { flex-direction: row !important; gap: 4px !important; padding: 3px 2px !important; }
+  html:not([data-form$="-up"]) .pillars.compact .mini-pillar.open .mini-cap, html:not([data-form$="-up"]) .pillars.compact .mini-pillar.here .mini-cap { flex-direction: row !important; gap: 4px !important; padding: 3px 2px !important; }
 }
 
 /* ===== A computer (20 Oct 2026, latest, the user: "nova tab panel … attach it to the top panel and put
