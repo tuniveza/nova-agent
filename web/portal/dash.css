@@ -148,7 +148,7 @@ html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inb
 #enquiry-list > .card.open, html[data-align] #enquiry-list.list > .card.open { padding: 8px 12px 10px; }
 #enquiry-list > .card.open > .ib-line { margin-bottom: 4px; }
 .ib-line { align-items: center; gap: 8px; min-height: 28px; text-align: left; cursor: pointer; }
-html .ib-line .al-title { flex: 1; min-width: 0; text-align: left !important; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+html .ib-line .al-title { flex: 1; min-width: 0; text-align: left !important; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .ib-state {
   flex: none; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap;
   font-family: var(--f-mono); font-size: 8.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft);
@@ -302,9 +302,11 @@ html #main > .view[data-tui] :is(#enquiry-list, #chat-list, #alert-list, .list, 
 html #main > .view[data-tui] :is(#enquiry-list, #chat-list, #alert-list) > .card, html[data-align] #main > .view[data-tui] :is(#enquiry-list, #chat-list, #alert-list).list > .card {
   padding: 1px 2px !important; border-radius: 0 !important; border: 0 !important; border-bottom: 1px dotted rgb(255 255 255 / .12) !important; background: none !important; box-shadow: none !important;
 }
-html #main > .view[data-tui] :is(.al-line, .ib-line) { display: flex !important; align-items: center; gap: 6px; min-height: 17px !important; }
+html #main > .view[data-tui] :is(.al-line, .ib-line) { align-items: center; gap: 0 6px; min-height: 17px !important; }
 html #main > .view[data-tui] :is(.al-line, .ib-line):hover { background: color-mix(in oklab, var(--g, var(--hi)) 18%, transparent); }
-html #main > .view[data-tui] :is(.al-line, .ib-line) .al-title { order: 1; font-size: 11px !important; font-weight: 500 !important; line-height: 16px; -webkit-line-clamp: 1; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; color: var(--bright, #fff); }
+/* (words wrap rather than being cut short: the user, 22 Oct 2026, "try to avoid collapsing text unless you
+   have to"; only past three lines is a title cut) */
+html #main > .view[data-tui] :is(.al-line, .ib-line) .al-title { order: 1; font-size: 11px !important; font-weight: 500 !important; line-height: 15px; -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; color: var(--bright, #fff); }
 html #main > .view[data-tui] :is(.al-line .alert-kind, .ib-line .ib-state) { order: 0; padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; font-size: 9.5px !important; letter-spacing: 0 !important; color: var(--g, var(--hi)) !important; }
 html #main > .view[data-tui] .al-line .alert-kind::before { width: auto; height: auto; flex: none; border-radius: 0; background: none; box-shadow: none; }
 html #main > .view[data-tui] :is(.al-line .alert-kind, .ib-line .ib-state)::before { content: "["; }

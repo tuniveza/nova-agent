@@ -612,12 +612,13 @@
   // text, terminal style: the user, 22 Oct 2026, "can the ui become more tui if it get so small that
   // area's are collapsing and can't see text"; dash.css [data-tui])
   const TUI_H = 230, TUI_W = 280;
-  const tuiWatch = "ResizeObserver" in window ? new ResizeObserver((list) => {
+  // (all or none: the panes on screen together are all terminal style or all not, never one of each; the
+  // user, 22 Oct 2026: "won't allow one side to be tui and one to be gui at the same time")
+  const tuiWatch = "ResizeObserver" in window ? new ResizeObserver(() => {
+    const shown = [...document.querySelectorAll("#main > .view:not([hidden])")].filter((v) => v.clientWidth && v.clientHeight);
+    const on = document.documentElement.classList.contains("embed") && shown.some((v) => v.clientHeight < TUI_H || v.clientWidth < TUI_W);
     let changed = false;
-    for (const { target: v } of list) {
-      const w = v.clientWidth, h = v.clientHeight;
-      if (!w || !h) continue;
-      const on = document.documentElement.classList.contains("embed") && (h < TUI_H || w < TUI_W);
+    for (const v of shown) {
       if (v.hasAttribute("data-tui") === on) continue;
       v.toggleAttribute("data-tui", on);
       changed = true;

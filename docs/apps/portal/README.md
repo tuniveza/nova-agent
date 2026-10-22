@@ -109,6 +109,7 @@ by `pillars.js`). It switches to monospace text and one line per thing, with sta
 (`[NEW]`, `[CHAT]`) and thin line edges. Pills, glows and icons go, and Booking tools' month is drawn like
 the `cal` command. On a short screen, a group's extra buttons go behind **More** too. In a small box,
 `onescreen.js` also cuts a list between its rows, so a page isn't left half empty.
+It's all or none: if one pane on screen needs the terminal look, every pane on screen takes it, so there is never one of each side by side. Titles wrap rather than being cut short; only past three lines is one cut with "…".
 
 ## The tabs
 
