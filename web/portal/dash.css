@@ -244,6 +244,25 @@ html #main.inbox-all #view-alerts .settings-row { justify-content: flex-start; }
   #main.inbox-all :is(.al-line, .ib-line) .al-title { grid-area: title; }
 }
 
+/* ===== Inbox panes stacked on a short screen (app.js foldInbox, 22 Oct 2026, the user: "stop nova panes
+   from resizing on the height when the width is lower"): never all three squashed; the pane in use keeps
+   the room, the others fold to their title line with ▾, and a tap on a title opens that one ===== */
+#main.inbox-all > .view[data-ib-shut] > :not(.view-head),
+#main.inbox-all > .view[data-ib-shut] > .view-head > :not(h2, .pane-ico) { display: none !important; }
+#main.inbox-all > .view[data-ib-shut] > .view-head { margin: 0; cursor: pointer; flex-wrap: nowrap; }
+#main.inbox-all > .view[data-ib-shut] > .view-head::after { content: "▾"; flex: 0 0 auto; margin-left: auto; padding: 0 4px; color: var(--soft); font-size: 13px; line-height: 1; }
+#main.inbox-all > .view[data-ib-shut] > .view-head:focus-visible { outline: 2px solid rgba(var(--hi-rgb), 0.7); outline-offset: 2px; border-radius: 8px; }
+#main.inbox-all > .view[data-ib-shut]:hover { filter: brightness(1.12); }
+@media (max-width: 640px) {
+  #main.inbox-all[data-ib-fold="enquiries"] { grid-template-rows: auto minmax(0, 1fr) auto auto !important; }
+  #main.inbox-all[data-ib-fold="chats"] { grid-template-rows: auto auto minmax(0, 1fr) auto !important; }
+  #main.inbox-all[data-ib-fold="alerts"] { grid-template-rows: auto auto auto minmax(0, 1fr) !important; }
+}
+@media (min-width: 641px) and (max-width: 1099px) and (min-height: 501px) {
+  #main.inbox-all[data-ib-fold="chats"] { grid-template-rows: auto minmax(0, 1fr) auto !important; }
+  #main.inbox-all[data-ib-fold="alerts"] { grid-template-rows: auto auto minmax(0, 1fr) !important; }
+}
+
 /* ===== Nova panes (pillars.js paneUp, 22 Oct 2026, the user: "for all panes in the nova portal can we
    contain them in a nova pane for easier identification"): every section in its own framed pane, edged in
    its Nova Tab's colour (--g), its icon beside its title ===== */

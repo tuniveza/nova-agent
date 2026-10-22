@@ -272,6 +272,74 @@
       b.addEventListener("click", () => b.setAttribute("aria-expanded", String($("view-" + v).classList.toggle("ib-tools-open"))));
       head.append(b);
     }
+    foldOpen = asked;
+    requestAnimationFrame(foldInbox);
+  }
+  // The Inbox panes stacked on a short screen (22 Oct 2026, the user: "stop nova panes from resizing on the
+  // height when the width is lower"): a stacked pane is never squashed under FOLD_MIN. The one in use keeps
+  // the room and the others fold to their title line (dash.css [data-ib-shut]); a tap on a title opens it.
+  const FOLD_MIN = 170;
+  let foldOpen = "";
+  function foldInbox() {
+    const main = $("main");
+    const panes = INBOX.map((v) => $("view-" + v)).filter((p) => p && !p.hidden);
+    const shut = new Set();
+    let open = "";
+    if (main.classList.contains("inbox-all") && panes.length > 1) {
+      // (the panes one above the other: the ones sharing a column)
+      const cols = new Map();
+      for (const p of panes) {
+        const x = Math.round(p.getBoundingClientRect().left);
+        cols.set(x, [...(cols.get(x) || []), p]);
+      }
+      const cs = getComputedStyle(main);
+      const strip = main.querySelector(":scope > .group-strip");
+      const gap = parseFloat(cs.rowGap) || 0;
+      const inner = main.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - (strip ? strip.offsetHeight : 0);
+      for (const col of cols.values()) {
+        if (col.length < 2 || (inner - col.length * gap) / col.length >= FOLD_MIN) continue;
+        const name = (p) => p.id.slice(5);
+        const keep = col.find((p) => name(p) === foldOpen) || col.find((p) => name(p) === main.dataset.inboxAsked) || col[0];
+        open = name(keep);
+        for (const p of col) if (p !== keep) shut.add(p);
+      }
+    }
+    for (const v of INBOX) {
+      const p = $("view-" + v);
+      const head = p && p.querySelector(".view-head");
+      if (!head || p.hasAttribute("data-ib-shut") === shut.has(p)) continue;
+      p.toggleAttribute("data-ib-shut", shut.has(p));
+      if (shut.has(p)) {
+        head.tabIndex = 0;
+        head.setAttribute("role", "button");
+        head.setAttribute("aria-expanded", "false");
+        head.title = "Open " + (head.querySelector("h2") || head).textContent.trim();
+      } else {
+        for (const a of ["tabindex", "role", "aria-expanded", "title"]) head.removeAttribute(a);
+      }
+    }
+    if (open) main.dataset.ibFold = open;
+    else delete main.dataset.ibFold;
+    if (window.NovaOneScreen && window.NovaOneScreen.now) window.NovaOneScreen.now();
+  }
+  {
+    const main = $("main");
+    const openFolded = (e) => {
+      const head = e.target.closest && e.target.closest("#main.inbox-all > .view[data-ib-shut] > .view-head");
+      if (!head || (e.type === "keydown" && e.key !== "Enter" && e.key !== " ")) return;
+      e.preventDefault();
+      foldOpen = head.parentElement.id.slice(5);
+      foldInbox();
+      head.parentElement.querySelector(".view-head").focus({ preventScroll: true });
+    };
+    main.addEventListener("click", openFolded);
+    main.addEventListener("keydown", openFolded);
+    let fq = 0;
+    new ResizeObserver(() => {
+      if (!main.classList.contains("inbox-all") && !main.dataset.ibFold) return;
+      cancelAnimationFrame(fq);
+      fq = requestAnimationFrame(foldInbox);
+    }).observe(main);
   }
   function enter(node) {
     node.classList.remove("view-enter");
