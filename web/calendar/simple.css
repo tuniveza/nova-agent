@@ -1,0 +1,107 @@
+/* ===== Calendar, Simple design (23 Oct 2026, the user's choice for the whole suite: one plain, sturdy layout,
+   no per-size tricks; Rich is the look before). All of it for html:not([data-ui="rich"]).
+
+   The month on a phone, the way phone calendars do it: each day small, so each day shows its number and a
+   small coloured bar for each of its cards (in the card's own colour, up to four), and no words to squeeze
+   in; the chosen day's whole list is under the month (its plan). A day with room, on a wider screen, keeps
+   its cards in words as before. Which is which goes by the day's own width (a container query), not the
+   screen's. ===== */
+
+/* ---- The bar along the top: plain chips that wrap onto another line rather than squeeze ---- */
+html:not([data-ui="rich"]) .bar { display: flex !important; flex-wrap: wrap !important; align-items: center !important; justify-content: center !important; gap: 6px !important; }
+html:not([data-ui="rich"]) .bar > :is(.nav, .tools) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; justify-content: center !important; gap: 6px !important; min-width: 0 !important; }
+html:not([data-ui="rich"]) .bar :is(.icon-btn, .add-btn) { width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important; }
+html:not([data-ui="rich"]) .bar :is(.chip, .title, .views > button) { min-height: 40px !important; }
+
+/* ---- On a phone (Nova Agent's phone room): this month's special days (the strip) make way, each is a gold bar in
+   its own day and in that day's plan; the weeks are lower (48px), their days holding bars not words, so more of
+   the month is on the page ---- */
+html:not([data-ui="rich"])[data-room="phone"] .month > .strip { display: none !important; }
+html:not([data-ui="rich"])[data-room="phone"] .month > .grid.textual { grid-auto-rows: 48px !important; }
+/* (elsewhere the strip wraps instead of sliding sideways: it ran 82px past its box) */
+html:not([data-ui="rich"]) .month > .strip { display: flex !important; flex-wrap: wrap !important; justify-content: center !important; gap: 4px !important; overflow: visible !important; mask-image: none !important; -webkit-mask-image: none !important; }
+
+/* ---- Each day: its width decides words or bars ---- */
+html:not([data-ui="rich"]) .month .grid > .cell { container: day / inline-size !important; }
+@container day (max-width: 110px) {
+  /* its cards as bars: every one, up to four, each in its own colour; no "Also …" line, no words */
+  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo, html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo.fit-hide {
+    display: flex !important; flex-direction: column !important; gap: 2px !important; padding: 0 2px !important; margin: 2px 0 0 !important;
+    overflow: visible !important; background: none !important; border: 0 !important; box-shadow: none !important;
+  }
+  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di, html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di.fit-hide {
+    display: block !important; flex: none !important; height: 4px !important; min-height: 4px !important; padding: 0 !important; margin: 0 !important;
+    border-radius: 2px !important; border: 0 !important; box-shadow: none !important; font-size: 0 !important; line-height: 0 !important;
+    background: rgb(var(--k1, var(--c, var(--hi-rgb, 255, 95, 168)))) !important;
+  }
+  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di.ro { opacity: .7 !important; }
+  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di > *, html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di-also { display: none !important; }
+  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di:nth-of-type(n+5) { display: none !important; }
+  /* a special day, the moon's name: a small gold bar too, its name in the day's plan and on hover */
+  html:not([data-ui="rich"]) .month .grid.textual > .cell > :is(.skychip, .daycard, .pill) {
+    display: block !important; height: 4px !important; min-height: 4px !important; width: auto !important; padding: 0 !important; margin: 2px 2px 0 !important;
+    border-radius: 2px !important; border: 0 !important; font-size: 0 !important; line-height: 0 !important; overflow: hidden !important;
+    background: var(--gold, #F2C14E) !important; box-shadow: none !important;
+  }
+  html:not([data-ui="rich"]) .month .grid.textual > .cell > :is(.skychip, .daycard, .pill) > * { display: none !important; }
+}
+
+/* ---- A day with room (a computer): its cards in words, never smaller than 10px; when they don't all fit at
+   that size the Calendar's fitter steps the rest out ("More in Day view") rather than shrinking them to 8px ---- */
+html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo { font-size: max(10px, var(--di-fs, 11px)) !important; }
+html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo :is(.di-also, .di-t, b) { font-size: inherit !important; }
+html:not([data-ui="rich"]) .month .grid.textual > .cell > :is(.skychip, .daycard) { font-size: max(10px, var(--chip-fs, 10px)) !important; }
+
+/* ---- Week and Day: each card's lines (its title, its time, what it's for) whole on one line each, or not
+   there; a card too small for even its title is just its colour, its words on hover and read aloud
+   (cal.js fitCard: .ev-off on a line that doesn't fit, .bare on the card) ---- */
+html:not([data-ui="rich"]) .col .ev > :is(strong, small, .ev-what) {
+  display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: clip !important;
+  -webkit-line-clamp: none !important; line-clamp: none !important; overflow-wrap: normal !important; hyphens: none !important;
+}
+html:not([data-ui="rich"]) .col .ev > .ev-off,
+html:not([data-ui="rich"]) .col .ev.bare > :is(strong, small, .ev-what) { display: none !important; }
+
+/* ---- A very short Calendar (a small phone on its side, a slim window): the bar in two slim rows, the +
+   button in it rather than floating over the page, so the page keeps the height ---- */
+@media (max-height: 360px) {
+  html:not([data-ui="rich"]) .bar { gap: 4px !important; padding-top: 2px !important; padding-bottom: 2px !important; margin-bottom: 0 !important; }
+  html:not([data-ui="rich"]) .bar > :is(.nav, .tools) { gap: 4px !important; }
+  html:not([data-ui="rich"]) .bar :is(.icon-btn, .add-btn) { width: 34px !important; height: 34px !important; min-width: 34px !important; min-height: 34px !important; }
+  html:not([data-ui="rich"]) .bar :is(.chip, .title, .views > button) { min-height: 34px !important; height: 34px !important; }
+  html:not([data-ui="rich"]) .bar .title { font-size: 17px !important; }
+  html:not([data-ui="rich"]) .bar .add-btn {
+    position: static !important; padding: 0 !important; justify-content: center !important; border-radius: 10px !important; box-shadow: none !important;
+  }
+  html:not([data-ui="rich"]) .bar .add-btn > span { display: none !important; }
+  html:not([data-ui="rich"]) .bar .add-btn svg { width: 20px !important; height: 20px !important; }
+  /* (and no room kept for the floating + under the list) */
+  html:not([data-ui="rich"]) .view > .list.paged { padding: 4px 8px !important; }
+  html:not([data-ui="rich"]) .list-pager { padding-top: 4px !important; }
+  /* (the list's rows as slim as they can be read and tapped) */
+  html:not([data-ui="rich"]) .list.agenda .row-item { padding: 3px 8px !important; min-height: 34px !important; }
+  html:not([data-ui="rich"]) .list.agenda .row-item small { display: none !important; }
+  /* (the page bar a little slimmer, the pages the room) */
+  html:not([data-ui="rich"]) :is(.view, .list.agenda) > .os-pager button { height: 32px !important; min-height: 32px !important; }
+}
+
+/* ---- The cards as a list: Month, Week and Day on a very short Calendar, Week on an upright phone ---- */
+/* (Month, Week and Day as a list of their cards, each row its day, start and title, cal.js drawAgenda: no hours
+   to fit; its padding not !important: onescreen keeps the page bar's room in it) */
+html:not([data-ui="rich"]) .view > .list.agenda { padding: 2px 8px; width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin: 0 !important; }
+html:not([data-ui="rich"]) .list.agenda .rows { gap: 4px !important; }
+html:not([data-ui="rich"]) .list.agenda .row-item { grid-template-columns: 56px minmax(0, 1fr) !important; padding: 6px 10px !important; min-height: 44px !important; gap: 8px !important; }
+html:not([data-ui="rich"]) .list.agenda .row-item :is(.art, .row-sym) { display: none !important; }
+html:not([data-ui="rich"]) .list.agenda .ag-when { font-size: 11px !important; line-height: 1.15 !important; white-space: nowrap !important; }
+html:not([data-ui="rich"]) .list.agenda .ag-when b { display: block; color: var(--bright, #fff); }
+
+/* ---- List rows (the List, a phone's day plan, search): by the room the list has, not the screen. Narrow: the
+   picture steps aside, a card with a kind word (a quest, a booking, Nova Agent's plan) keeps it in a slim first
+   column; before, those rows kept a 76px column the narrow layout didn't have, and the title fell into 76px ---- */
+html:not([data-ui="rich"]) .rows { container: rows / inline-size; }
+@container rows (max-width: 440px) {
+  html:not([data-ui="rich"]) .row-item.note.has-art { grid-template-columns: 54px minmax(0, 1fr) !important; padding: 8px 12px !important; min-height: 0 !important; }
+  html:not([data-ui="rich"]) .row-item.note.has-art > .art { display: none !important; }
+  html:not([data-ui="rich"]) .row-item.note.has-art:has(> .row-sym) { grid-template-columns: auto 54px minmax(0, 1fr) !important; padding-left: 8px !important; }
+  html:not([data-ui="rich"]) .row-item.note.has-art > .row-sym { width: auto !important; min-height: 0 !important; }
+}

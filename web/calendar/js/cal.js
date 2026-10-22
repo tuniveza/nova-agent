@@ -246,6 +246,9 @@ function entries(from, to) {
 const titleOf = (e) => (e.type === "booking" ? [e.item.session, e.item.name].filter(Boolean).join(" · ") || "Booking" : e.item.title || (e.type === "day" ? presets().get(e.item.preset).label : "(No title)"));
 const onDay = (list, d) => list.filter((e) => e.start.slice(0, 10) <= d && e.end.slice(0, 10) >= d && !(e.end.slice(0, 10) === d && e.end.slice(11) === "00:00" && e.start.slice(0, 10) < d));
 
+// (Simple look, a very short Calendar: its views as lists of cards, drawAgenda)
+const short = () => document.documentElement.dataset.ui !== "rich" && matchMedia("(max-height: 360px)").matches;
+
 // ---- Drawing ----
 function render() {
   document.querySelectorAll(".views button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === prefs.view)));
@@ -317,6 +320,13 @@ function dayWords(d) {
   return `<span class="n-long">${ORD[day]} Day ${MONTHS[mon - 1]}</span><span class="n-word">${ORD[day]}</span><span class="n-mid">${day} ${MONTHS[mon - 1].slice(0, 3)}</span><span class="n-short">${day}/${mon}</span><span class="n-min">${day}</span>`;
 }
 function drawMonth() {
+  // (Simple look on a very short Calendar: no room for six weeks of days, so the month's cards as a list, as
+  // the week's and the day's)
+  if (short()) {
+    const from = `${cursor.slice(0, 7)}-01`;
+    const days = Array.from({ length: 31 }, (_, i) => addDays(from, i)).filter((d) => d.slice(0, 7) === from.slice(0, 7));
+    return drawAgenda(days, `in ${MONTHS[Number(from.slice(5, 7)) - 1]}`);
+  }
   const first = `${cursor.slice(0, 7)}-01`;
   const start = mondayOf(first);
   const nextMonth = Number(cursor.slice(5, 7)) === 12 ? `${Number(cursor.slice(0, 4)) + 1}-01-01` : `${cursor.slice(0, 4)}-${pad(Number(cursor.slice(5, 7)) + 1)}-01`;
@@ -988,6 +998,13 @@ function layoutColumn(evs) {
   return placed;
 }
 function drawTimeGrid(n) {
+  // (Simple look on a very short Calendar, as simple.css: no room for hours, so the cards as a list, each with
+  // its day; a card opens as anywhere. The same for the week on an upright phone, where seven columns of hours
+  // left each day 20px, too thin to read or tap: its hours are in Day view, and on its side)
+  if (short() || (n === 7 && document.documentElement.dataset.ui !== "rich" && document.documentElement.dataset.form === "phone-up")) {
+    const from = n === 7 ? mondayOf(cursor) : cursor;
+    return drawAgenda(Array.from({ length: n }, (_, i) => addDays(from, i)), n === 7 ? "this week" : `on ${dayLabel(from)}`);
+  }
   const first = n === 7 ? mondayOf(cursor) : cursor;
   const days = Array.from({ length: n }, (_, i) => addDays(first, i));
   const all = entries(addDays(first, -1), addDays(first, n));
@@ -1069,6 +1086,40 @@ function drawTimeGrid(n) {
     // (a short card: its title and time on one line)
     el.classList.toggle("short", el.clientHeight < 34);
   }
+  // (Simple look: each of a card's lines whole on one line, or not there; a card too small for even its
+  // title is just its colour, its words on hover and read aloud: never cut short or broken up)
+  if (document.documentElement.dataset.ui !== "rich") for (const el of view.querySelectorAll(".col .ev")) fitCard(el);
+}
+function drawAgenda(days, when) {
+  const all = entries(days[0], days[days.length - 1]);
+  const many = days.length > 1;
+  // (each row whole by itself, its day and start in its first column, so a page of a row or two is never a
+  // day's name alone)
+  const rows = days
+    .flatMap((d) => onDay(all, d).map((e) => rowHtml(e).replace(/<time[^>]*>[\s\S]*?<\/time>/, `<time class="ag-when">${many ? `<b>${WD[weekday(d)]} ${Number(d.slice(8))}</b>` : ""}${e.allDay || e.type === "day" ? "All day" : fmtTime(e.start > `${d}T00:00` ? e.start : `${d}T00:00`)}</time>`)))
+    .join("");
+  view.innerHTML = `<div class="list agenda" data-os-nofill>${rows ? `<ul class="rows">${rows}</ul>` : `<p class="empty">Nothing ${when}. Tap + to add a note card.</p>`}</div>`;
+}
+function fitCard(el) {
+  // (on a touch screen a short card is at least 32px to tap, where the room under it is free)
+  if (el.offsetHeight < 32 && matchMedia("(pointer: coarse)").matches) {
+    const top = el.offsetTop, l = el.offsetLeft, r = l + el.offsetWidth;
+    let room = el.parentElement.clientHeight - top;
+    for (const o of el.parentElement.querySelectorAll(":scope > .ev")) if (o !== el && o.offsetTop > top && o.offsetLeft < r && o.offsetLeft + o.offsetWidth > l) room = Math.min(room, o.offsetTop - top - 2);
+    // (nor under the round + button, where it floats over the hours)
+    const add = $("add").getBoundingClientRect(), me = el.getBoundingClientRect();
+    if (add.width && add.left < me.right && add.right > me.left && add.bottom > me.top) room = Math.min(room, add.top - me.top - 2);
+    if (room > el.offsetHeight) el.style.setProperty("height", `${Math.min(32, room)}px`);
+  }
+  const lines = [...el.querySelectorAll(":scope > :is(strong, small, .ev-what)")];
+  el.classList.remove("bare");
+  for (const l of lines) l.classList.remove("ev-off");
+  const bottom = el.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(el).paddingBottom) || 0) + 1;
+  for (const l of lines) if (l.scrollWidth > l.clientWidth + 1 || l.getBoundingClientRect().bottom > bottom) l.classList.add("ev-off");
+  const bare = !lines[0] || lines[0].classList.contains("ev-off");
+  el.classList.toggle("bare", bare);
+  if (bare) el.title = el.getAttribute("aria-label") || "";
+  else el.removeAttribute("title");
 }
 function dayAside(d) {
   if (matchMedia("(min-width: 900px)").matches) return `<div class="dv-side">${dayPlanHtml(d)}</div>`;

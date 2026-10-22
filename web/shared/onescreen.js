@@ -342,7 +342,8 @@
     // (sections and Admin pages are filled; a drawer or a sheet's form keeps its size)
     // (nor a box with parts that fit themselves to their size, a Calendar day's cards: drawing them smaller
     // undid that)
-    st.fill = !box.matches(EXTRA) && !box.querySelector('[data-guard="off"], [data-os-skip]');
+    // (data-os-nofill: rows that are already as small as they can be read, never drawn smaller)
+    st.fill = !box.matches(EXTRA) && !box.matches("[data-os-nofill]") && !box.querySelector('[data-guard="off"], [data-os-skip], [data-os-nofill]');
     st.pages = pack(st.leaves, room, st.pos, st.fill);
     showPage(box, st, wantedPage(box, st, memo));
     follow(box, st);
