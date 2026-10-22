@@ -1,0 +1,66 @@
+/* The navigation panel (navpanel.js, 22 Oct 2026): Back, Forward, Home, Reload, History, and where you are,
+   in one row just above the Nova dock's handle, on a phone and a computer. It has a row of its own, so it
+   never sits over a panel. In the theme's colours, like the dock below it. */
+#nav-panel {
+  display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 0;
+  margin: 0 auto; padding: 3px 6px; width: fit-content; max-width: 100%; box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--hi, #FF5FA8) 28%, transparent); border-radius: 999px;
+  background: color-mix(in srgb, var(--void, #06040D) 82%, var(--panel, #1a1030));
+  box-shadow: 0 6px 18px -12px rgb(0 0 0 / .8), inset 0 1px 0 rgb(255 255 255 / .06);
+}
+#nav-panel .nav-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex: none;
+  height: 28px; min-width: 32px; padding: 0 10px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  border: 1px solid transparent; background: transparent; color: var(--text, #EDE6F7);
+  font: 600 12px/1 var(--f-body, inherit); letter-spacing: .02em;
+}
+#nav-panel .nav-btn svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#nav-panel .nav-btn:is(:hover, :focus-visible):not(:disabled) { background: color-mix(in srgb, var(--hi, #FF5FA8) 16%, transparent); border-color: color-mix(in srgb, var(--hi, #FF5FA8) 40%, transparent); outline: none; }
+#nav-panel .nav-btn:active:not(:disabled) { transform: scale(.96); }
+#nav-panel .nav-btn:disabled { opacity: .35; cursor: default; }
+#nav-panel .nav-btn[aria-expanded="true"] { background: color-mix(in srgb, var(--hi, #FF5FA8) 22%, transparent); }
+/* where you are: one line, the place's name and its section */
+#nav-panel .nav-where { flex: 0 1 auto; min-width: 0; max-width: 26ch; padding: 0 8px 0 10px; border-left: 1px solid color-mix(in srgb, var(--line, #fff3) 80%, transparent);
+  font: 600 12px/1 var(--f-body, inherit); color: var(--soft, #FFD1EA); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nav-panel .nav-where:empty { display: none; }
+
+/* The history list, over the page above the button */
+.nav-menu { position: fixed; z-index: 80; width: 300px; max-width: calc(100vw - 16px); max-height: 60vh; overflow: auto; padding: 8px; box-sizing: border-box;
+  border-radius: 16px; border: 1px solid color-mix(in srgb, var(--hi, #FF5FA8) 30%, transparent);
+  background: color-mix(in srgb, var(--void, #06040D) 92%, var(--panel, #1a1030)); box-shadow: 0 18px 40px -14px rgb(0 0 0 / .85); }
+.nav-menu[hidden] { display: none; }
+.nav-menu h5 { margin: 2px 6px 6px; font: 700 10.5px/1 var(--f-body, inherit); letter-spacing: .12em; text-transform: uppercase; color: var(--muted, #b9a9c9); }
+.nav-menu p { margin: 6px; font-size: 13px; color: var(--muted, #b9a9c9); }
+.nav-item { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: 10px; background: none; color: var(--text, #EDE6F7); font: 500 13px/1.3 var(--f-body, inherit); text-align: left; cursor: pointer; }
+.nav-item span { min-width: 0; overflow-wrap: anywhere; }
+.nav-item time { flex: none; font-size: 11px; color: var(--muted, #b9a9c9); }
+.nav-item:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--hi, #FF5FA8) 14%, transparent); outline: none; }
+.nav-item.here { color: #fff; font-weight: 700; }
+.nav-item.here time { color: var(--hi, #FF5FA8); }
+
+/* A phone: the same buttons, icons only (their names are their labels), bigger to tap */
+@media (max-width: 760px), (pointer: coarse) {
+  #nav-panel .nav-btn { height: 36px; min-width: 40px; padding: 0 9px; }
+  #nav-panel .nav-btn svg { width: 18px; height: 18px; }
+}
+@media (max-width: 560px) {
+  #nav-panel { gap: 2px; padding: 2px 4px; }
+  #nav-panel .nav-words { display: none; }
+  #nav-panel .nav-where { max-width: 40vw; font-size: 11.5px; }
+}
+@media (prefers-reduced-motion: reduce) { #nav-panel .nav-btn:active:not(:disabled) { transform: none; } }
+
+/* ---- Where it sits (navpanel.js place(): html[data-nav] row | panel | title) ---- */
+/* A computer: a row of its own between the page and the dock (the handle on the dock's top edge is under it) */
+html[data-nav="row"] .main { grid-template-rows: minmax(0, 1fr) auto auto !important; grid-template-areas: "missions chat quests" "nav nav nav" "suite suite suite" !important; }
+html[data-nav="row"] .main > #nav-panel { grid-area: nav; margin-bottom: 4px; }
+/* A phone or tablet upright: under the open panel, inside its frame's own space, clear of the handle above the
+   title panel (the handle stands about 15px up from it) */
+html[data-nav="panel"] #viewer:not([hidden]) { grid-template-rows: minmax(0, 1fr) auto !important; }
+html[data-nav="panel"] #viewer > #nav-panel { grid-row: 2; margin: 6px auto 18px; }
+/* A short screen: in the title panel, small, just the arrows and History */
+#nav-panel[data-where="title"] { margin: 0; padding: 0 2px; gap: 0; border: 0; background: none; box-shadow: none; }
+#nav-panel[data-where="title"] :is([data-nav="home"], [data-nav="reload"], .nav-where, .nav-words) { display: none !important; }
+#nav-panel[data-where="title"] .nav-btn { height: 32px; min-width: 32px; padding: 0 6px; }
+/* (nothing to go back to from the Agent's own page in a panel's frame: hidden with the frame) */
+#viewer[hidden] > #nav-panel { display: none; }
