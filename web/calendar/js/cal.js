@@ -200,6 +200,15 @@ function moonMark(d, size = 13) {
   if (!m.principal) return "";
   return `<span class="moonmark${m.fullName ? " full" : ""}" title="${esc(m.fullName ? `${m.principal} · ${m.fullName}` : m.principal)}">${s.moonSVG(m.fraction, size)}</span>`;
 }
+// The moon's phase in words, for a computer's month ("Full moon", "New moon"): a text pill, like the
+// special days, in place of the little moon in the corner
+function moonWords(d) {
+  const s = SKY();
+  if (!s || !prefs.layers.sky || !skyDrawn) return "";
+  const m = s.moon(d);
+  if (!m.principal) return "";
+  return `<div class="skychip moonchip" title="${esc(m.fullName ? `${m.principal} · ${m.fullName}` : m.principal)}"><span>${esc(m.fullName || m.principal)}</span></div>`;
+}
 // Seasonal and cosmic days (Easter, Bonfire Night, solstices, meteor showers…), unless a day card already is that day
 function skyDays(d) {
   const s = SKY();
@@ -264,17 +273,16 @@ function titleText() {
 
 function pillHtml(e) {
   if (e.type === "day") {
-    const p = presets().get(e.item.preset);
-    return `<div class="daycard themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day">${iconOf(p.icon)}<span>${esc(titleOf(e))}</span></div>`;
+    return `<div class="daycard themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><span>${esc(titleOf(e))}</span></div>`;
   }
   // The title on one line (a day too small for it shows the symbol; the title is its tooltip) and, under it, what it's for
   const what = whatOf(e);
-  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}"><i class="pill-sym" aria-hidden="true">${symbolIcon(e)}</i>${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
+  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}">${phone() ? `<i class="pill-sym" aria-hidden="true">${symbolIcon(e)}</i>` : ""}${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
 }
 // A symbol for what a card is about (shown when its day is too small for words)
 const SYMBOLS = [
   [/birthday|bday/i, "cake"], [/\bdate\b|love|anniversary|valentine/i, "heart"],
-  [/record|recording|vocal|sing|mic|podcast|voice|studio/i, "mic"], [/mix|master|beat|song|track|music|ep\b|album|release|gig|concert|rehears/i, "note"],
+  [/record|recording|vocal|\bsing(s|ing|er)?\b|\bmic\b|podcast|voice|studio/i, "mic"], [/mix|master|beat|song|track|music|ep\b|album|release|gig|concert|rehears/i, "note"],
   [/lesson|class|course|study|learn|tutor|school|exam/i, "cap"], [/listen|playlist|headphone|audio/i, "headphones"],
   [/meet|meeting|call with|team|crew|band|session with|catch.?up/i, "people"], [/gym|workout|run|walk|yoga|train|exercise|steps/i, "dumbbell"],
   [/lunch|dinner|breakfast|eat|food|cook|meal/i, "plate"], [/flight|fly|travel|trip|holiday|airport/i, "plane"],
@@ -297,16 +305,16 @@ function whatOf(e) {
   return (text || (e.type === "booking" ? "" : it.location || "")).slice(0, 90);
 }
 function skyChip(x) {
-  return `<div class="skychip" title="${esc(x.title)}">${iconOf(presets().get(x.preset).icon)}<span>${esc(x.title)}</span></div>`;
+  return `<div class="skychip" title="${esc(x.title)}"><span>${esc(x.title)}</span></div>`;
 }
 
 // The day in words, with smaller forms for smaller days (the CSS shows the one that fits), always
 // written the British way whatever the browser's language: "Nineteenth Day October", "19 Oct",
-// "19/10", "19"
+// "19/10", "19"; and, between the longest and "19 Oct", the day in a word: "Nineteenth"
 const ORD = ["", "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth", "Eleventh", "Twelfth", "Thirteenth", "Fourteenth", "Fifteenth", "Sixteenth", "Seventeenth", "Eighteenth", "Nineteenth", "Twentieth", "Twenty-first", "Twenty-second", "Twenty-third", "Twenty-fourth", "Twenty-fifth", "Twenty-sixth", "Twenty-seventh", "Twenty-eighth", "Twenty-ninth", "Thirtieth", "Thirty-first"];
 function dayWords(d) {
   const day = Number(d.slice(8)), mon = Number(d.slice(5, 7));
-  return `<span class="n-long">${ORD[day]} Day ${MONTHS[mon - 1]}</span><span class="n-mid">${day} ${MONTHS[mon - 1].slice(0, 3)}</span><span class="n-short">${day}/${mon}</span><span class="n-min">${day}</span>`;
+  return `<span class="n-long">${ORD[day]} Day ${MONTHS[mon - 1]}</span><span class="n-word">${ORD[day]}</span><span class="n-mid">${day} ${MONTHS[mon - 1].slice(0, 3)}</span><span class="n-short">${day}/${mon}</span><span class="n-min">${day}</span>`;
 }
 function drawMonth() {
   const first = `${cursor.slice(0, 7)}-01`;
@@ -318,6 +326,13 @@ function drawMonth() {
   const all = entries(start, gridEnd);
   const t = today();
   const max = phone() ? 4 : 3;
+  // On a computer each day says what's on in words: one card listing its note cards, bookings and
+  // quests (time and title), no symbols and no "+2" (20 Oct 2026, the user: "remove the stupid number
+  // counters and replace them with information textual card relevant to its perticular day like whats on
+  // the calender for that day" / "get rid of those awful small boxed icons"). A phone's days too, in
+  // words with no symbols (20 Oct 2026, the user: "get rid of … all these horribly tiny icons and replace
+  // them with text"); there the chosen day's list stays under the month
+  const textual = true;
   let cells = "";
   for (let i = 0; i < weeks * 7; i++) {
     const d = addDays(start, i);
@@ -328,12 +343,160 @@ function drawMonth() {
     const sky = days.length ? [] : skyDays(d).slice(0, 1);
     const room = Math.max(1, max - sky.length);
     const fits = rest.slice(0, room);
+    if (textual) {
+      const sky1 = days.length ? [] : skyDays(d).slice(0, 1);
+      const what = [...days.slice(1), ...rest];
+      const style = [days.length ? themeStyle(dayTheme(days[0].item)) : "", what.length ? `--mix: ${kindTint(what)}` : ""].filter(Boolean).join("; ");
+      cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${style ? ` style="${style}"` : ""} aria-label="${dayLabel(d)}${list.length ? `: ${esc(list.map(titleOf).join(", "))}` : ""}">
+      <span class="num"${phone() ? "" : ` data-goto="${d}" title="Open ${dayLabel(d)} in Day view"`}>${dayWords(d)}</span>${days.slice(0, 1).map(pillHtml).join("")}${sky1.map(skyChip).join("")}${moonWords(d)}${what.length ? `<p class="dayinfo">${what.map(infoLine).join("")}</p>` : ""}</button>`;
+      continue;
+    }
     cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${days.length ? ` style="${themeStyle(dayTheme(days[0].item))}"` : ""} aria-label="${dayLabel(d)}${list.length ? `, ${list.length} item${list.length > 1 ? "s" : ""}` : ""}">
       <span class="num">${dayWords(d)}</span>${moonMark(d)}${days.slice(0, 1).map(pillHtml).join("")}${sky.map(skyChip).join("")}${fits.map(pillHtml).join("")}${rest.length - fits.length + Math.max(0, days.length - 1) > 0 ? `<span class="more" data-n="${rest.length - fits.length + Math.max(0, days.length - 1)}">+${rest.length - fits.length + Math.max(0, days.length - 1)} more</span>` : ""}</button>`;
   }
   const heads = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => `<span>${phone() ? w[0] : w}</span>`).join("");
-  view.innerHTML = `<div class="month">${stripHtml()}<div class="wk-head">${heads}</div><div class="grid">${cells}</div>${dayPlanHtml(cursor)}</div>`;
+  // (on a computer the strip of this month's special days goes: each is written in its own day now,
+  // and the strip ran off the side)
+  // (the month fits its own words, fitMonth: Nova's shared fitting, rules.js, is told to leave its days
+  // alone, or it holds a phone's titles on one line, where they're meant to go onto two, and cuts them off)
+  view.innerHTML = `<div class="month">${phone() ? stripHtml() : ""}<div class="wk-head">${heads}</div><div class="grid${textual ? " textual" : ""}" data-rules="off">${cells}</div>${phone() ? dayPlanHtml(cursor) : ""}</div>`;
   fitMonth();
+  // (the days' size changing without the window's, a scroll bar coming or going: they fit again)
+  if (typeof ResizeObserver === "function") {
+    const grid = view.querySelector(".month .grid");
+    const sizeOf = (g) => `${g.clientWidth}x${g.clientHeight}`;
+    grid.dataset.size = sizeOf(grid);
+    (monthSize ||= new ResizeObserver(() => {
+      const g = view.querySelector(".month .grid");
+      if (g && sizeOf(g) !== g.dataset.size) { g.dataset.size = sizeOf(g); fitMonth(); }
+    })).disconnect();
+    monthSize.observe(grid);
+  }
+}
+let monthSize = null;
+// A day's own tint: its cards' kind colours (cosmos.css --kind-*) blended by how many of each, so a day
+// of three meetings and a lunch is three parts blue to one part coral (22 Oct 2026, the user: "the overall
+// color tint is determined by the quantity precentage of note card type")
+function kindTint(list) {
+  const counts = {};
+  for (const e of list) counts[symbolOf(e)] = (counts[symbolOf(e)] || 0) + 1;
+  let mix = "", total = 0;
+  for (const [kind, n] of Object.entries(counts).sort((a, b) => b[1] - a[1])) {
+    total += n;
+    mix = mix ? `color-mix(in oklab, rgb(var(--kind-${kind})) ${Math.round((n / total) * 1000) / 10}%, ${mix})` : `rgb(var(--kind-${kind}))`;
+  }
+  return mix;
+}
+// Each item in a day, as a little note card: its time (not for all-day ones) and its title (a tap opens it).
+// (20 Oct 2026, the user: "on every item in a calender day can we fit every single note card minification
+// … onto the entire calender day square"; and with "the gigantic today panel" gone, the month has the
+// whole width: a tap on a day's empty space starts a note card on it, a tap on its name opens Day view)
+function infoLine(e) {
+  // (a quest's striped card already says it's a quest: no "QUEST:" in front of its title here)
+  const title = titleOf(e).replace(/^quest:\s*/i, "");
+  // (on a phone just the title: its time is in the chosen day's list under the month)
+  return `<span class="di${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(SYMBOL_WORDS[symbolOf(e)] || "")}: ${esc(titleOf(e))}"><span class="di-in">${e.allDay || phone() ? "" : `<b>${fmtTime(e.start)}</b> `}<span class="di-t">${esc(title)}</span></span></span>`;
+}
+// A day's card fits its day: what doesn't fit steps out of the card from the end, named on its last
+// line ("Also Lunch with Sam, Call mum"); when even that's too long it says the rest is in the day's
+// list (a tap on it shows that list). Nothing is cut short and there are no numbers.
+function fitInfo(c) {
+  const card = c.querySelector(":scope > .dayinfo");
+  if (!card) return;
+  for (const x of card.querySelectorAll(".di-also")) x.remove();
+  card.classList.remove("fit-hide");
+  c.removeAttribute("title");
+  const lines = [...card.querySelectorAll(".di")];
+  for (const l of lines) l.classList.remove("fit-hide");
+  // (the card can't grow past its day: what doesn't fit shows as the card itself running over)
+  // (measured by where its little cards end, to the pixel: rounding let a card's bottom edge go under the day's)
+  const over = () => {
+    if (c.scrollHeight > c.clientHeight + 1 || card.scrollWidth > card.clientWidth + 1) return true;
+    // (a card whose words run past its side: they're on one line, so it needs smaller words or room)
+    if ([...card.querySelectorAll(":scope > *, .di-in")].some((k) => k.offsetParent && k.scrollWidth > k.clientWidth + 1)) return true;
+    const r = card.getBoundingClientRect();
+    return [...card.children].some((k) => { const b = k.getBoundingClientRect(); return b.height > 0 && (b.bottom > r.bottom + 0.5 || b.right > r.right + 0.5); });
+  };
+  // (every card in sight first: the words a step smaller at a time, down to a size still easy to read)
+  // (a busy day's cards sit two side by side before the words get small)
+  c.style.removeProperty("--di-fs");
+  card.classList.remove("two", "slim");
+  // (then, on the busiest days, slimmer cards: tighter lines, less padding)
+  // (a phone's days are too narrow for two side by side: smaller words, then slimmer cards)
+  // (on a computer each card is one line, so they stay one under the other while the words get smaller;
+  // two side by side only when even the smallest one-under-the-other doesn't fit)
+  const steps = phone() ? [[false, false, [10, 9.5, 9, 8.5]], [false, true, [8.5, 8, 7.5]]] : [[false, false, [12, 11.5, 11, 10.5, 10, 9.5, 9]], [false, true, [9, 8.5, 8]], [true, true, [9, 8.5, 8]]];
+  for (const [two, slim, sizes] of steps) {
+    card.classList.toggle("two", two && lines.length > 1);
+    card.classList.toggle("slim", slim);
+    for (const fs of sizes) {
+      c.style.setProperty("--di-fs", `${fs}px`);
+      if (!over()) return;
+    }
+  }
+  // (then as many cards as fit, one under the other, and the rest named: on a computer one-line cards
+  // don't fit two side by side)
+  if (!phone()) {
+    card.classList.remove("two");
+    card.classList.add("slim");
+    c.style.setProperty("--di-fs", "9px");
+  }
+  const also = document.createElement("span");
+  also.className = "di-also";
+  also.dataset.goto = c.dataset.date;
+  card.append(also);
+  const out = [];
+  const WORDS = ["More in Day view", "More"];
+  const say = (short) => {
+    const names = out.map((l) => l.querySelector(".di-t").textContent);
+    also.textContent = short ? WORDS[short - 1] : `${out.length === lines.length ? "" : "Also "}${names.join(", ")}`;
+    also.title = names.join(", ");
+  };
+  // (first the cards too long for their one line step out, wherever they are; the others keep their place)
+  const wide = (l) => [l, l.querySelector(".di-in")].some((k) => k && k.scrollWidth > k.clientWidth + 1);
+  for (const l of lines) if (wide(l)) l.classList.add("fit-hide");
+  out.push(...lines.filter((l) => l.classList.contains("fit-hide")));
+  for (const short of [0, 1, 2]) {
+    if (!out.length) break;
+    say(short);
+    if (!over()) return;
+  }
+  // (then from the end, until the rest fit)
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].classList.contains("fit-hide")) continue;
+    lines[i].classList.add("fit-hide");
+    out.splice(0, out.length, ...lines.filter((l) => l.classList.contains("fit-hide")));
+    for (const short of [0, 1, 2]) {
+      say(short);
+      if (!over()) return;
+    }
+  }
+  // (a day too small for even a word: no card; its titles are its tooltip, and all of it is in its list)
+  card.classList.add("fit-hide");
+  c.title = out.map((l) => l.querySelector(".di-t").textContent).join(", ");
+}
+// A phone's day and sky names, each on its one line in its tiny day: a little smaller at a time and,
+// when even the smallest is too long, its last words step out (the whole name is its tooltip)
+function fitChips(c) {
+  for (const chip of c.querySelectorAll(":scope > .skychip, :scope > .daycard")) {
+    const span = chip.querySelector(":scope > span");
+    if (!span) continue;
+    const full = (span.dataset.full ||= span.textContent);
+    span.textContent = full;
+    if (!chip.title) chip.title = full;
+    const over = () => chip.scrollWidth > chip.clientWidth;
+    let fits = false;
+    for (const fs of [8, 7.5, 7, 6.5]) {
+      chip.style.setProperty("--chip-fs", `${fs}px`);
+      if ((fits = !over())) break;
+    }
+    const words = full.split(/\s+/);
+    while (!fits && words.length > 1) {
+      words.pop();
+      span.textContent = words.join(" ");
+      fits = !over();
+    }
+  }
 }
 // Nothing cut off. Each day steps down only as far as it needs: the small line goes, then titles
 // take one line, then the times go (symbol and title), then its cards become just their symbols.
@@ -355,7 +518,7 @@ function fitMonth() {
   const numCut = () => nums.some((n) => n.offsetParent && n.scrollWidth > n.clientWidth + 1);
   if (nums.length && numCut()) {
     const shown = [...nums[0].children].findIndex((s) => getComputedStyle(s).display !== "none");
-    for (let k = Math.max(1, shown + 1); k <= 3 && numCut(); k++) grid.dataset.num = String(k);
+    for (let k = Math.max(1, shown + 1); k <= 4 && numCut(); k++) grid.dataset.num = String(k);
   }
   grid.style.height = grid.style.flex = "";
   for (const c of cells) {
@@ -369,6 +532,11 @@ function fitMonth() {
     const top = grid.getBoundingClientRect().top - view.getBoundingClientRect().top + view.scrollTop;
     grid.style.height = `${Math.max((cells.length / 7) * 56, view.clientHeight - top)}px`;
     grid.style.flex = "none";
+  }
+  if (grid.classList.contains("textual")) {
+    if (phone()) for (const c of cells) fitChips(c);
+    for (const c of cells) fitInfo(c);
+    return;
   }
   for (const c of cells) for (const step of STEPS) if (over(c)) c.classList.add(step);
   if (cells.some(over)) {
@@ -404,18 +572,20 @@ function fitMonth() {
     c.classList.toggle("tight", !!more && over(c));
   }
 }
-// This month at a glance: day cards, full moons and special days, each a tap away
+// This month at a glance: day cards, full moons and special days, each a tap away (each with its day
+// in words, "Wed 21", and no icons, 20 Oct 2026)
+const stripDay = (d) => `${WD[weekday(d)]} ${Number(d.slice(8))}`;
 function stripHtml() {
   if (!skyDrawn) return prefs.layers.sky || prefs.layers.days ? `<div class="strip" aria-hidden="true"></div>` : "";
   const first = `${cursor.slice(0, 7)}-01`;
   const last = addDays(Number(cursor.slice(5, 7)) === 12 ? `${Number(cursor.slice(0, 4)) + 1}-01-01` : `${cursor.slice(0, 4)}-${pad(Number(cursor.slice(5, 7)) + 1)}-01`, -1);
   const items = [];
-  for (const e of entries(first, last)) if (e.type === "day") items.push({ d: e.date, html: `<button type="button" class="strip-item themed" style="${themeStyle(dayTheme(e.item))}" data-pick="${e.date}"><b>${Number(e.date.slice(8))}</b>${iconOf(presets().get(e.item.preset).icon)}<span>${esc(titleOf(e))}</span></button>` });
+  for (const e of entries(first, last)) if (e.type === "day") items.push({ d: e.date, html: `<button type="button" class="strip-item themed" style="${themeStyle(dayTheme(e.item))}" data-pick="${e.date}"><b>${stripDay(e.date)}</b><span>${esc(titleOf(e))}</span></button>` });
   if (SKY() && prefs.layers.sky) {
     for (let d = first; d <= last; d = addDays(d, 1)) {
       const m = SKY().moon(d);
-      if (m.fullName) items.push({ d, html: `<button type="button" class="strip-item moon" data-pick="${d}"><b>${Number(d.slice(8))}</b>${SKY().moonSVG(0.5, 14)}<span>${esc(m.fullName)}</span></button>` });
-      for (const x of skyDays(d)) items.push({ d, html: `<button type="button" class="strip-item sky" data-pick="${d}"><b>${Number(d.slice(8))}</b>${iconOf(presets().get(x.preset).icon)}<span>${esc(x.title)}</span></button>` });
+      if (m.fullName) items.push({ d, html: `<button type="button" class="strip-item moon" data-pick="${d}"><b>${stripDay(d)}</b><span>${esc(m.fullName)}</span></button>` });
+      for (const x of skyDays(d)) items.push({ d, html: `<button type="button" class="strip-item sky" data-pick="${d}"><b>${stripDay(d)}</b><span>${esc(x.title)}</span></button>` });
     }
   }
   if (!items.length) return "";
@@ -435,15 +605,61 @@ function rowHtml(e) {
   ].filter(Boolean).join(" · ");
   if (e.type === "day") {
     const p = presets().get(e.item.preset);
-    return `<li><button type="button" class="row-item day themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><time class="ico-time">${iconOf(p.icon)}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
+    return `<li><button type="button" class="row-item day themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><time class="ico-time"><span class="kind-pill">${esc(p.label)}</span></time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
   }
   const when = e.allDay ? "All day" : `${fmtTime(e.start)}<br>${fmtTime(e.end)}`;
   const art = e.type === "event" && !e.ro;
   // Quests and bookings have no picture: their symbol sits in its place, so every row's times line up
-  const lead = art ? `<span class="art" data-art-note="${esc(e.item.id)}" data-date="${e.date}"></span>` : `<span class="row-sym" aria-hidden="true">${symbolIcon(e)}</span>`;
-  return `<li><button type="button" class="row-item note has-art${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${lead}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
+  // (and what it is, in a word in a pill, where a boxed symbol was: "Quest", "Booking", "Recording")
+  const lead = art ? `<span class="art" data-art-note="${esc(e.item.id)}" data-date="${e.date}"></span>` : `<span class="row-sym"><span class="kind-pill">${esc(kindWord(e))}</span></span>`;
+  return `<li><button type="button" class="row-item note has-art${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${lead}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
 }
-function dayPlanHtml(d) {
+// What a card is, in a word ("Quest", "Studio booking", "Recording", "Note card")
+const kindWord = (e) => (e.type === "booking" ? "Booking" : SYMBOL_WORDS[symbolOf(e)] || "Note card");
+
+// The chosen day in a few plain sentences: how it starts and ends, when it's free, and (today) what's
+// next and how soon. Shown at the top of the day's list.
+function daySummary(d, list) {
+  const now = localStamp();
+  const timed = list.filter((e) => !e.allDay).sort((a, b) => a.start.localeCompare(b.start));
+  const allDay = list.filter((e) => e.allDay);
+  const past = d < today();
+  if (!list.length) return `<div class="dp-info"><p>${past ? "Nothing was on." : d === today() ? "Nothing on today: the day is yours." : "Nothing on yet: a free day."}</p></div>`;
+  const out = [];
+  const clip = (e, edge) => (edge === "start" ? (e.start.slice(0, 10) < d ? `${d}T00:00` : e.start) : e.end.slice(0, 10) > d ? `${d}T24:00` : e.end);
+  const hm = (stamp) => (stamp.endsWith("T24:00") ? "midnight" : fmtTime(stamp));
+  const and = (xs) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+  if (timed.length) {
+    const first = timed[0];
+    const last = timed.reduce((a, b) => (clip(b, "end") > clip(a, "end") ? b : a));
+    out.push(timed.length === 1
+      ? `<b>${esc(titleOf(first))}</b>, ${hm(clip(first, "start"))} to ${hm(clip(first, "end"))}.`
+      : `${past ? "Started" : "Starts"} with <b>${esc(titleOf(first))}</b> at ${hm(clip(first, "start"))}; ${past ? "finished" : "finishes"} with <b>${esc(titleOf(last))}</b> at ${hm(clip(last, "end"))}.`);
+    // The gaps of half an hour or more between the first start and the last finish
+    const gaps = [];
+    let end = clip(first, "end");
+    for (const e of timed.slice(1)) {
+      const s0 = clip(e, "start");
+      if (s0 > end && minutesBetween(end, s0) >= 30) gaps.push(`${hm(end)}–${hm(s0)}`);
+      if (clip(e, "end") > end) end = clip(e, "end");
+    }
+    if (timed.length > 1) out.push(gaps.length ? `Free ${and(gaps)}.` : "Back to back, no gaps.");
+  }
+  if (allDay.length) out.push(`All day: ${esc(and(allDay.map(titleOf)))}.`);
+  if (d === today() && timed.length) {
+    const on = timed.find((e) => e.start <= now && clip(e, "end") > now);
+    const next = timed.find((e) => e.start > now);
+    if (on) out.push(`On now: <b>${esc(titleOf(on))}</b>, until ${hm(clip(on, "end"))}.`);
+    if (next) {
+      const m = minutesBetween(now, next.start);
+      const soon = m < 60 ? `in ${m} minute${m === 1 ? "" : "s"}` : m < 120 ? `in an hour${m % 60 >= 10 ? ` and ${m % 60} minutes` : ""}` : `in about ${Math.round(m / 60)} hours`;
+      out.push(`Next: <b>${esc(titleOf(next))}</b> ${soon}.`);
+    } else if (!on) out.push("That's everything for today.");
+  }
+  return `<div class="dp-info">${out.map((x) => `<p>${x}</p>`).join("")}</div>`;
+}
+// (withRows false: without its list of cards, for beside Day view, whose grid shows them)
+function dayPlanHtml(d, withRows = true) {
   // On a phone the chosen day sits below the month: it's drawn with the sky, a moment after the month
   if (!skyDrawn && phone()) return `<section class="dayplan" aria-label="${dayLabel(d)}"></section>`;
   const list = onDay(entries(d, d), d);
@@ -459,22 +675,27 @@ function dayPlanHtml(d) {
   const banners = days
     .map((e) => {
       const p = presets().get(e.item.preset);
-      return `<button type="button" class="dc-banner themed aes-${esc(e.item.aesthetic || "nebula")}" style="${themeStyle(dayTheme(e.item))}" data-art-day="${esc(e.item.id)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><span class="dc-kicker">${iconOf(p.icon)}${esc(p.label)}${e.item.repeat === "yearly" ? " · every year" : ""}</span><b class="dc-title">${esc(titleOf(e))}</b>${e.item.info ? `<small>${esc(e.item.info.split("\n")[0])}</small>` : ""}</button>`;
+      return `<button type="button" class="dc-banner themed aes-${esc(e.item.aesthetic || "nebula")}" style="${themeStyle(dayTheme(e.item))}" data-art-day="${esc(e.item.id)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><span class="dc-kicker">${esc(p.label)}${e.item.repeat === "yearly" ? " · every year" : ""}</span><b class="dc-title">${esc(titleOf(e))}</b>${e.item.info ? `<small>${esc(e.item.info.split("\n")[0])}</small>` : ""}</button>`;
     })
     .join("");
   const specials = sky
-    .map((x) => `<div class="sky-row">${iconOf(presets().get(x.preset).icon)}<span>${esc(x.title)}</span><button type="button" data-make-day="${esc(JSON.stringify({ date: d, ...x }))}">Make it a day card</button></div>`)
+    .map((x) => `<div class="sky-row"><span>${esc(x.title)}</span><button type="button" data-make-day="${esc(JSON.stringify({ date: d, ...x }))}">Make it a day card</button></div>`)
     .join("");
   return `<section class="dayplan" aria-label="${dayLabel(d)}">
     <div class="dp-head"><div><span class="dp-kicker">${d === today() ? "Today" : WD_LONG[weekday(d)]}</span><h3>${dayLabel(d)}</h3>${moon}</div>
       <div class="dp-add"><button type="button" data-add="${d}">+ Note card</button><button type="button" data-add-day="${d}">+ Day card</button></div></div>
-    ${banners}${specials}${
-      rest.length ? `<ul class="rows">${rest.map(rowHtml).join("")}</ul>` : `<p class="empty">No note cards. Tap + Note card, or a time in Day view.</p>`
+    ${daySummary(d, list)}${banners}${specials}${
+      !withRows ? "" : rest.length ? `<ul class="rows">${rest.map(rowHtml).join("")}</ul>` : `<p class="empty">No note cards. Tap + Note card, or a time in Day view.</p>`
     }</section>`;
 }
 
-function drawList() {
-  let html = "";
+// The list: a page at a time, in as many columns as the screen has room for, so it never scrolls
+// (22 Oct 2026, the user: "make the week view on the calender fit on one screen regardless of screen
+// size … same for day view, list view as well"). Earlier and Later under it (and the bar's arrows, and
+// a swipe) turn the pages; past the last page the list goes on from the day after, and before the
+// first it shows what came before. The title says which days are on the page.
+let listAt = { cursor: "", query: "", until: "", page: 0, last: false, pages: 1, end: "" };
+function listEntries() {
   if (query) {
     const q = query.toLowerCase();
     const hits = entries(addDays(today(), -365), addDays(today(), 365)).filter((e) => [titleOf(e), e.item.location, e.item.body, e.item.info, e.item.name].some((v) => v && String(v).toLowerCase().includes(q)));
@@ -485,27 +706,105 @@ function drawList() {
       const had = seen.get(k);
       if (!had || (had.date < today() && e.date >= today()) || (e.date >= today() && e.date < had.date)) seen.set(k, e);
     }
-    const list = [...seen.values()].sort((a, b) => a.start.localeCompare(b.start));
-    html = list.length ? groupRows(list) : `<p class="empty">Nothing matches “${esc(query)}”.</p>`;
-  } else {
-    const list = entries(cursor, addDays(cursor, 59));
-    html = list.length ? groupRows(list.filter((e) => e.date >= cursor || e.end.slice(0, 10) >= cursor)) : `<p class="empty">Nothing in the next 60 days. Tap + to add a note card.</p>`;
+    return [...seen.values()].sort((a, b) => a.start.localeCompare(b.start));
   }
-  view.innerHTML = `<div class="list">${html}</div>`;
+  return entries(cursor, listAt.end).filter((e) => e.date >= cursor || e.end.slice(0, 10) >= cursor);
 }
-function groupRows(list) {
+const shortDay = (d) => `${Number(d.slice(8))} ${MONTHS[Number(d.slice(5, 7)) - 1].slice(0, 3)}${d.slice(0, 4) !== today().slice(0, 4) ? ` ${d.slice(0, 4)}` : ""}`;
+function drawList() {
+  if (listAt.cursor !== cursor || listAt.query !== query) listAt = { cursor, query, until: "", page: 0, last: false, pages: 1, end: "" };
+  listAt.end = query ? "" : listAt.until || addDays(cursor, 59);
+  // Each card under its day, in date order (all-day cards come first in the list, but their days
+  // don't jump ahead of the first day shown)
   const by = new Map();
-  for (const e of list) {
+  for (const e of listEntries()) {
     const d = e.date < cursor && !query ? cursor : e.date;
     if (!by.has(d)) by.set(d, []);
     by.get(d).push(e);
   }
-  return [...by.entries()].map(([d, es]) => `<h4>${d === today() ? "Today · " : ""}${dayLabel(d)}${d.slice(0, 4) !== today().slice(0, 4) ? ` ${d.slice(0, 4)}` : ""}</h4><ul class="rows">${es.map(rowHtml).join("")}</ul>`).join("");
+  const rows = [...by.entries()].sort((a, b) => a[0].localeCompare(b[0])).flatMap(([d, es]) => es.map((e) => [d, e]));
+  // (the pager drawn first, so the pages are measured with it in place)
+  view.innerHTML = `<div class="list paged"><div class="lp"></div><nav class="list-pager" aria-label="Pages"><button type="button" data-list-step="-1">‹ Earlier</button><span>Page 1 of 1</span><button type="button" data-list-step="1">Later ›</button></nav></div>`;
+  const box = view.querySelector(".lp");
+  const pager = view.querySelector(".list-pager");
+  if (!rows.length) {
+    box.innerHTML = `<p class="empty">${query ? `Nothing matches “${esc(query)}”.` : `Nothing from ${dayLabel(cursor)} to ${dayLabel(listAt.end)}. Tap + to add a note card.`}</p>`;
+    listAt.pages = 1;
+    listAt.page = 0;
+    pager.innerHTML = query ? "" : `<button type="button" data-list-step="-1">‹ Earlier</button><span></span><button type="button" data-list-step="1">Later ›</button>`;
+    if (!query) $("title-text").textContent = `${shortDay(cursor)} – ${shortDay(listAt.end)}`;
+    return;
+  }
+  // A page: as many cards as fit, each day's name over its first card on the page
+  const over = () => box.scrollWidth > box.clientWidth + 1 || box.scrollHeight > box.clientHeight + 1;
+  const fill = (from) => {
+    box.innerHTML = "";
+    let day = "";
+    let ul = null;
+    for (let i = from; i < rows.length; i++) {
+      const [d, e] = rows[i];
+      let group = null;
+      if (d !== day) {
+        group = document.createElement("section");
+        group.className = "lg";
+        const more = i === from && i > 0 && rows[i - 1][0] === d;
+        group.innerHTML = `<h4>${d === today() ? "Today · " : ""}${dayLabel(d)}${d.slice(0, 4) !== today().slice(0, 4) ? ` ${d.slice(0, 4)}` : ""}${more ? " · continued" : ""}</h4><ul class="rows"></ul>`;
+        box.append(group);
+        ul = group.lastElementChild;
+        day = d;
+      }
+      const tpl = document.createElement("template");
+      tpl.innerHTML = rowHtml(e);
+      ul.append(tpl.content.firstElementChild);
+      if (i > from && over()) {
+        if (group) group.remove();
+        else ul.lastElementChild.remove();
+        return i;
+      }
+    }
+    return rows.length;
+  };
+  const starts = [0];
+  for (let next = fill(0); next < rows.length; next = fill(next)) starts.push(next);
+  listAt.pages = starts.length;
+  if (listAt.last) listAt.page = starts.length - 1;
+  listAt.last = false;
+  listAt.page = Math.min(listAt.page, starts.length - 1);
+  const from = starts[listAt.page];
+  const to = fill(from);
+  const [a, b] = [rows[from][0], rows[to - 1][0]];
+  $("title-text").textContent = query ? "Search" : a === b ? shortDay(a) : `${shortDay(a)} – ${shortDay(b)}`;
+  const first = listAt.page === 0;
+  const last = listAt.page === starts.length - 1;
+  const words = query ? `${rows.length} found${starts.length > 1 ? ` · page ${listAt.page + 1} of ${starts.length}` : ""}` : starts.length > 1 ? `Page ${listAt.page + 1} of ${starts.length}` : "";
+  // (a search's pages end where it does: no Earlier on its first, no Later on its last)
+  pager.innerHTML = `${query && first ? "<i></i>" : '<button type="button" data-list-step="-1">‹ Earlier</button>'}<span>${words}</span>${query && last ? "<i></i>" : '<button type="button" data-list-step="1">Later ›</button>'}`;
+}
+// Earlier and Later in the list: a page, else the days before or after
+function listStep(dir) {
+  if (dir > 0 && listAt.page < listAt.pages - 1) listAt.page++;
+  else if (dir < 0 && listAt.page > 0) listAt.page--;
+  else if (query) return;
+  else if (dir > 0) {
+    cursor = addDays(listAt.end, 1);
+    listAt = { cursor, query, until: "", page: 0, last: false, pages: 1, end: "" };
+  } else {
+    const until = addDays(cursor, -1);
+    cursor = addDays(cursor, -60);
+    listAt = { cursor, query, until, page: 0, last: true, pages: 1, end: "" };
+  }
+  render();
 }
 
-// Week and day: a column per day, events placed by time
+// Week and day: a column per day, events placed by time. Only the hours that matter are shown, and
+// they share out the screen's height, so the whole day is in sight with nothing to scroll (22 Oct
+// 2026, the user: "make the week view on the calender fit on one screen regardless of screen size"):
+// the working day, 08:00 to 20:00, stretched to take in every card on the days shown and, today, the
+// time now. drawTimeGrid sets the first hour and each hour's height once it has measured the room.
+let gridH0 = 0;
+let gridHh = 0;
 function hourHeight() {
-  return phone() ? 44 : 52;
+  return gridHh || (phone() ? 44 : 52);
 }
 function layoutColumn(evs) {
   // Events that overlap share the width; each group of overlapping ones is laid out together
@@ -537,37 +836,74 @@ function drawTimeGrid(n) {
   const first = n === 7 ? mondayOf(cursor) : cursor;
   const days = Array.from({ length: n }, (_, i) => addDays(first, i));
   const all = entries(addDays(first, -1), addDays(first, n));
-  const hh = hourHeight();
   const t = today();
   const now = localStamp();
+  // The part of each timed event on each day
+  const parts = days.map((d) =>
+    all
+      .filter((e) => !e.allDay && e.start.slice(0, 10) <= d && e.end.slice(0, 10) >= d && e.end > `${d}T00:00`)
+      .map((e) => ({ ...e, s: e.start < `${d}T00:00` ? `${d}T00:00` : e.start, en: e.end > `${d}T23:59` ? `${d}T24:00` : e.end })),
+  );
+  // The hours shown: 08:00 to 20:00, and more when a card (or, today, the time now) is outside them
+  let h0 = 8;
+  let h1 = 20;
+  days.forEach((d, i) => {
+    for (const e of parts[i]) {
+      h0 = Math.min(h0, Math.floor(minutesBetween(`${d}T00:00`, e.s) / 60));
+      h1 = Math.max(h1, Math.ceil(minutesBetween(`${d}T00:00`, e.en) / 60));
+    }
+  });
+  if (days.includes(t)) {
+    h0 = Math.min(h0, Number(now.slice(11, 13)));
+    h1 = Math.max(h1, Number(now.slice(11, 13)) + 1);
+  }
+  h0 = Math.max(0, h0);
+  h1 = Math.min(24, h1);
+  const H = h1 - h0;
+  gridH0 = h0;
+  // (in hours from the top of the grid; each hour is var(--hh) tall)
+  const at = (d, stamp) => (minutesBetween(`${d}T00:00`, stamp) / 60 - h0).toFixed(3);
   const head = days
-    .map((d) => `<button type="button" class="tg-day${d === t ? " today" : ""}" data-goto="${d}"><small>${WD[weekday(d)]}</small><b>${Number(d.slice(8))}</b>${moonMark(d, 12)}</button>`)
+    // (the day in a word on a computer, "Nineteenth", as in the month)
+    .map((d) => `<button type="button" class="tg-day${d === t ? " today" : ""}" data-goto="${d}"><small>${WD[weekday(d)]}</small><b${phone() ? "" : ' class="tg-word"'}>${phone() ? Number(d.slice(8)) : ORD[Number(d.slice(8))]}</b>${moonMark(d, 12)}</button>`)
     .join("");
   const alldayCols = days.map((d) => `<div>${onDay(all, d).filter((e) => e.allDay).map(pillHtml).join("")}</div>`).join("");
-  const hours = Array.from({ length: 24 }, (_, h) => `<div class="hour">${h ? `${pad(h)}:00` : ""}</div>`).join("");
+  const hours = Array.from({ length: H }, (_, i) => `<div class="hour"><span>${pad(h0 + i)}:00</span></div>`).join("");
   const cols = days
-    .map((d) => {
-      // The part of each timed event on this day
-      const evs = all
-        .filter((e) => !e.allDay && e.start.slice(0, 10) <= d && e.end.slice(0, 10) >= d && e.end > `${d}T00:00`)
-        .map((e) => ({ ...e, s: e.start < `${d}T00:00` ? `${d}T00:00` : e.start, en: e.end > `${d}T23:59` ? `${d}T24:00` : e.end }));
+    .map((d, i) => {
+      const evs = parts[i];
       const placed = layoutColumn(evs.map((e) => ({ ...e, start: e.s, end: e.en, orig: e })));
       const blocks = placed
         .map((p) => {
-          const top = (minutesBetween(`${d}T00:00`, p.start) / 60) * hh;
-          const height = Math.max(18, (Math.max(15, minutesBetween(p.start, p.end)) / 60) * hh - 2);
+          const top = `calc(var(--hh) * ${at(d, p.start)})`;
+          const height = `max(18px, calc(var(--hh) * ${(Math.max(15, minutesBetween(p.start, p.end)) / 60).toFixed(3)} - 2px))`;
           const w = 100 / p.cols;
           const e = p.orig;
-          return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="top:${top}px;height:${height}px;left:calc(${p.col * w}% + 2px);width:calc(${w}% - 4px)" tabindex="0" role="button" aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${esc(titleOf(e))}</strong><small>${fmtTime(e.start)}–${fmtTime(e.end)}${e.item.location ? ` · ${esc(e.item.location)}` : ""}</small>${whatOf(e) && whatOf(e) !== e.item.location ? `<em class="ev-what">${esc(whatOf(e))}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
+          return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="top:${top};height:${height};left:calc(${p.col * w}% + 2px);width:calc(${w}% - 4px)" tabindex="0" role="button" aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${esc(titleOf(e))}</strong><small>${fmtTime(e.start)}–${fmtTime(e.end)}${e.item.location ? ` · ${esc(e.item.location)}` : ""}</small>${whatOf(e) && whatOf(e) !== e.item.location ? `<em class="ev-what">${esc(whatOf(e))}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
         })
         .join("");
-      const line = d === t ? `<div class="now-line" style="top:${(minutesBetween(`${d}T00:00`, now) / 60) * hh}px"></div>` : "";
-      return `<div class="col${d === t ? " today" : ""}" data-date="${d}" style="height:${24 * hh}px">${blocks}${line}</div>`;
+      const line = d === t ? `<div class="now-line" style="top:calc(var(--hh) * ${at(d, now)})"></div>` : "";
+      // (each day tinted by its cards' kinds, by how many of each, as in the month)
+      // (and, like the month, left to fit its own cards: a narrow card's title is meant to go onto more lines)
+      return `<div class="col${d === t ? " today" : ""}${weekday(d) % 6 === 0 ? " weekend" : ""}" data-date="${d}" data-from="${h0}" data-hours="${H}" data-rules="off" style="height:calc(var(--hh) * ${H})${evs.length ? `;--mix: ${kindTint(evs)}` : ""}">${blocks}${line}</div>`;
     })
     .join("");
-  view.innerHTML = `<div class="tg" style="--cols:${n};--hh:${hh}px">
+  const grid = `<div class="tg" style="--cols:${n};--hh:${hourHeight()}px">
     <div class="tg-head" style="grid-column:1/-1;display:grid;grid-template-columns:inherit"><span></span>${head}<div class="allday">${alldayCols}</div></div>
     <div class="hours">${hours}</div>${cols}</div>`;
+  // Day view: the day in a few sentences beside it on a wider screen (its day cards, its special days,
+  // the moon, adding a card), above it in a line or two on a narrower one
+  view.innerHTML = n === 1 ? `<div class="dayview">${dayAside(first)}${grid}</div>` : grid;
+  // (beside the day, its cards in a list with what each is for, when they fit; else just the words about it)
+  const side = view.querySelector(".dv-side");
+  if (side && side.scrollHeight > side.clientHeight + 1) side.innerHTML = dayPlanHtml(first, false);
+  // The hours share out the room left under the days' names
+  const tg = view.querySelector(".tg");
+  // (less the room kept clear under the phone's round + button)
+  gridHh = Math.max(10, (tg.clientHeight - (parseFloat(getComputedStyle(tg).paddingBottom) || 0) - tg.querySelector(".tg-head").offsetHeight - 10) / H);
+  tg.style.setProperty("--hh", `${gridHh}px`);
+  // (short hours: every other hour named, so the names never crowd each other)
+  tg.classList.toggle("sparse", gridHh < 24);
   // Cards squeezed narrow (several at once, or a phone's week) show just their title, wrapped,
   // so it can still be read; too thin even for that, just their colour (tap one to read it)
   for (const el of view.querySelectorAll(".col .ev")) {
@@ -575,14 +911,13 @@ function drawTimeGrid(n) {
     el.classList.toggle("thin", el.offsetWidth < 30);
     // As many lines of its title as fit its height (a short card can't show six)
     if (el.classList.contains("slim")) el.style.setProperty("--lines", String(Math.max(1, Math.floor((el.clientHeight - 4) / 12.6))));
+    // (a short card: its title and time on one line)
+    el.classList.toggle("short", el.clientHeight < 34);
   }
-  // Open at the working day (or just before now, today)
-  const key = `${prefs.view}:${first}`;
-  if (scrolledFor !== key) {
-    scrolledFor = key;
-    const at = days.includes(t) ? Math.max(0, Number(now.slice(11, 13)) - 1) : 7;
-    view.scrollTop = at * hh;
-  }
+}
+function dayAside(d) {
+  if (matchMedia("(min-width: 900px)").matches) return `<div class="dv-side">${dayPlanHtml(d)}</div>`;
+  return `<div class="dv-sum">${daySummary(d, onDay(entries(d, d), d))}</div>`;
 }
 
 function drawStatus() {
@@ -605,6 +940,7 @@ function animate(how) {
 }
 function step(dir) {
   animate(dir > 0 ? "next" : "prev");
+  if (prefs.view === "list") return listStep(dir);
   if (prefs.view === "month") {
     let y = Number(cursor.slice(0, 4));
     let m = Number(cursor.slice(5, 7)) + dir;
@@ -627,6 +963,7 @@ $("today").addEventListener("click", () => {
   if (cursor.slice(0, 7) !== today().slice(0, 7)) animate(cursor < today() ? "next" : "prev");
   cursor = today();
   scrolledFor = "";
+  listAt.cursor = ""; // (the list from its first page)
   render();
   // (today, wherever it is on screen, glows softly for a moment: so Today always shows where it is)
   for (const el of document.querySelectorAll(".cell.today, .col.today, .tg-day.today")) {
@@ -657,10 +994,10 @@ $("jump").addEventListener("change", () => {
     render();
   }
 });
-// Swipe left and right to move (month and list)
+// Swipe left and right to move (every view; in the week, not when starting on a card, which drags)
 let swipe = null;
 view.addEventListener("touchstart", (e) => {
-  if (e.touches.length === 1 && (prefs.view === "month" || prefs.view === "day")) swipe = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+  if (e.touches.length === 1 && !(prefs.view === "week" && e.target.closest(".ev"))) swipe = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
 }, { passive: true });
 view.addEventListener("touchend", (e) => {
   if (!swipe || drag) return (swipe = null);
@@ -707,6 +1044,8 @@ document.addEventListener("click", (e) => {
 // ---- Taps on the calendar ----
 view.addEventListener("click", (e) => {
   if (justDragged) return;
+  const turn = e.target.closest("[data-list-step]");
+  if (turn) return step(Number(turn.dataset.listStep));
   const add = e.target.closest("[data-add]");
   if (add) return openNew({ date: add.dataset.add });
   const addDay = e.target.closest("[data-add-day]");
@@ -739,6 +1078,10 @@ view.addEventListener("click", (e) => {
   }
   const cell = e.target.closest(".cell");
   if (cell) {
+    if (cell.closest(".grid.textual")) {
+      cursor = cell.dataset.date;
+      return openNew({ date: cursor });
+    }
     if (cell.dataset.date === cursor && !phone()) return openNew({ date: cursor });
     cursor = cell.dataset.date;
     return render();
@@ -746,7 +1089,7 @@ view.addEventListener("click", (e) => {
   const col = e.target.closest(".col");
   if (col) {
     const rect = col.getBoundingClientRect();
-    const mins = Math.floor((((e.clientY - rect.top) / hourHeight()) * 60) / 30) * 30;
+    const mins = Math.min(23 * 60 + 30, gridH0 * 60 + Math.floor((((e.clientY - rect.top) / hourHeight()) * 60) / 30) * 30);
     openNew({ date: col.dataset.date, time: `${pad(Math.floor(mins / 60))}:${pad(mins % 60)}` });
   }
 });
@@ -1372,23 +1715,28 @@ form.addEventListener("submit", async (e) => {
 });
 // (Nothing but the reminders changed: onlyRemindersChanged, in edits.js)
 
-$("delete").addEventListener("click", async () => {
+$("delete").addEventListener("click", () => {
   if (!editing || !editing.item) return;
   const it = editing.item;
   const date = editing.date;
   closeSheet();
+  void removeCard(it, date);
+});
+// Delete a note card or day card (a repeating one asks which), with Undo (also the right-click menu's)
+async function removeCard(it, date) {
   const before = { ...it };
   if (it.kind === "event" && it.repeat) {
     const which = await askWhich("Delete which?");
-    if (!which) return;
+    if (!which) return false;
     if (which === "one") data.save({ ...it, exdates: [...new Set([...(it.exdates || []), date])] });
     else if (which === "following" && date !== it.start.slice(0, 10)) data.save(endSeriesBefore(it, date));
     else data.remove(it.id);
   } else data.remove(it.id);
   sfx("off");
-  toast("Deleted", () => data.save(before));
+  toast(it.kind === "day" ? "Day card deleted" : "Note card deleted", () => data.save(before));
   render();
-});
+  return true;
+}
 $("duplicate").addEventListener("click", () => {
   if (!editing || !editing.item) return;
   const it = editing.item;
@@ -1509,6 +1857,29 @@ async function loadBookings() {
   bookings = await data.bookings();
   render();
 }
+// For the right-click menu (js/menu.js): what's on a day, and the ways to add, open and delete cards
+window.NovaCalendar = {
+  items: () => data.items(),
+  get: (id) => data.get(id),
+  onChange: (fn) => data.onChange(fn),
+  dayCardOn,
+  isAgent,
+  titleOf,
+  dayLabel,
+  today,
+  addDays,
+  describeRepeat,
+  presetLabel: (id) => presets().get(id).label,
+  entriesOn: (d) => onDay(entries(d, d), d),
+  // (when a repeating note card next comes round, within a year and a bit, or null)
+  nextDate: (it) => (occurrences(it, today(), addDays(today(), 400))[0] || {}).date || null,
+  openNew,
+  openExisting,
+  removeCard,
+  openDay(d) { cursor = d; setView("day"); },
+  goToday() { cursor = today(); render(); },
+  get view() { return prefs.view; },
+};
 data.start();
 render();
 void loadBookings();
@@ -1531,3 +1902,8 @@ addEventListener("novathemechange", () => {
 });
 // The fonts change how much fits
 document.fonts?.ready.then(() => fitMonth());
+// (and the ones that come later, the moon's and sky's italic)
+document.fonts?.addEventListener?.("loadingdone", () => prefs.view === "month" && fitMonth());
+// (the list's pages and the week's hours are measured too: once the fonts are in, again)
+document.fonts?.ready.then(() => prefs.view !== "month" && !drag && render());
+document.fonts?.addEventListener?.("loadingdone", () => prefs.view !== "month" && !drag && $("sheet").hidden && render());

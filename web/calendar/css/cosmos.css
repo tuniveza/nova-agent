@@ -161,8 +161,8 @@ html[data-centred] .dp-moon, html[data-centred] .dp-add { justify-content: cente
   font-size: 11.5px !important; line-height: 1.4; letter-spacing: .01em; flex: none !important; align-self: center !important; }
 .num > span { display: none; }
 .num > .n-long { display: inline; }
-@container month (max-width: 1000px) { .num > .n-long { display: none; } .num > .n-mid { display: inline; } }
-@container month (max-width: 700px) { .num > .n-mid { display: none; } .num > .n-short { display: inline; } }
+@container month (max-width: 1000px) { .num > .n-long { display: none; } .num > .n-word { display: inline; } }
+@container month (max-width: 700px) { .num > .n-word { display: none; } .num > .n-short { display: inline; } }
 @container month (max-width: 450px) { .num > .n-short { display: none; } .num > .n-min { display: inline; } .num { padding: 2px 6px !important; } }
 
 /* ================= Small days: symbols instead of squashed words ================= */
@@ -179,11 +179,11 @@ html[data-centred] .dp-moon, html[data-centred] .dp-add { justify-content: cente
 }
 /* The day's name keeps clear of the moon in the corner, on one line (Nova Agent's rule: never onto a
    second line, never cut short): cal.js steps the whole month down to the longest form that fits
-   (data-num: 1 "16 Oct", 2 "16/10", 3 "16") */
+   (data-num: 1 "Sixteenth", 2 "16 Oct", 3 "16/10", 4 "16") */
 .num > .n-long { white-space: nowrap; }
 .num { white-space: nowrap !important; text-overflow: clip !important; max-width: calc(100% - 34px) !important; margin-inline: auto; line-height: 1.25; text-align: center; }
 .grid[data-num] .num > span { display: none !important; }
-.grid[data-num="1"] .num > .n-mid, .grid[data-num="2"] .num > .n-short, .grid[data-num="3"] .num > .n-min { display: inline !important; }
+.grid[data-num="1"] .num > .n-word, .grid[data-num="2"] .num > .n-mid, .grid[data-num="3"] .num > .n-short, .grid[data-num="4"] .num > .n-min { display: inline !important; }
 /* A card's title on one line too (never two or three, never cut short): a day whose titles don't fit
    steps down like any other (cal.js), to its cards' symbols, each title its tooltip */
 .pill span { display: block !important; white-space: nowrap !important; -webkit-line-clamp: none !important; line-clamp: none !important; text-overflow: clip !important; }
@@ -404,3 +404,434 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
   .row-item > span { min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
   .row-item strong, .row-item small { white-space: nowrap; overflow: visible; }
 }
+
+/* ================= Words, not counters and symbols (20 Oct 2026) =================
+   The user: "put back the worded version of the dates also remove the stupid number counters and
+   replace them with information textual card relevant to it's perticular day like whats on the calender
+   for that day" and "get rid of those awful small boxed icons as well and replace them with textual
+   pills". On a computer (cal.js: .grid.textual):
+   - each day's name in words ("Twentieth Day October", or "Twentieth" when that's too long)
+   - under it one card in words of what's on: each note card, booking and quest on its own line, its time
+     then its title (titles wrap rather than get cut short); what doesn't fit is named on the card's last
+     line ("Also Lunch with Sam, Call mum") or, failing that, "More in the day's list". No "+2", no symbols
+   - the day's list: a word in a pill ("Quest", "Booking", "Birthday") where the boxed symbol was, and a
+     few plain sentences at the top about the day (how it starts and ends, when it's free, what's next) */
+@container month (max-width: 700px) { .grid.textual .num > .n-short { display: none; } .grid.textual .num > .n-word { display: inline; } }
+.num > .n-word { white-space: nowrap; }
+.grid.textual .cell { display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; gap: 4px !important; overflow: hidden; }
+.grid.textual .cell > .num { align-self: center !important; }
+.grid.textual .dayinfo { display: block; margin: 0; min-width: 0; padding: 4px 7px 5px; border-radius: 8px; text-align: left;
+  background: color-mix(in srgb, var(--panel, #1C1129) 72%, transparent); box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), .16);
+  font-size: 11px; font-weight: 500; line-height: 1.3; color: var(--text); overflow: hidden; }
+html[data-centred] .grid.textual .dayinfo { text-align: center; }
+.grid.textual .di { display: block; overflow-wrap: anywhere; cursor: pointer; }
+.grid.textual .di + .di, .grid.textual .di-also { margin-top: 2px; }
+.grid.textual .di b { font-weight: 700; color: rgb(var(--c, var(--hi-rgb))); }
+.grid.textual .di:hover .di-t { text-decoration: underline; text-underline-offset: 2px; }
+.grid.textual .di.ro .di-t { opacity: .85; }
+.grid.textual .di.fit-hide { display: none !important; }
+.grid.textual .di-also { display: block; color: var(--soft, #FFD1EA); font-style: italic; cursor: pointer; }
+.grid.textual .cell .daycard, .grid.textual .cell .skychip { justify-content: center; }
+
+/* The words in a pill where a boxed symbol was */
+.kind-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font: 700 10.5px/1.35 var(--f-body); letter-spacing: .02em; white-space: nowrap;
+  color: var(--bright, #fff); background: rgba(var(--c, var(--hi-rgb)), .22); box-shadow: inset 0 0 0 1px rgba(var(--c, var(--hi-rgb)), .45); }
+.row-item .row-sym { color: inherit; }
+.row-item.day .kind-pill { background: rgb(255 255 255 / .16); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .35); }
+
+/* The chosen day in a few sentences */
+.dp-info { padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, var(--panel, #1C1129) 70%, transparent); box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), .18); }
+.dp-info p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--text); }
+.dp-info p + p { margin-top: 3px; }
+.dp-info b { color: var(--bright, #fff); font-weight: 700; }
+/* (the day in a word in the plain width of the face, so even "Twenty-seventh" fits its day) */
+.num > .n-word { font-stretch: 100%; letter-spacing: 0; }
+/* The day's list on a computer: slimmer rows, so a full day fits without scrolling */
+@media (min-width: 720px) {
+  .dayplan .row-item.note.has-art { grid-template-columns: 58px 48px 1fr; min-height: 44px; }
+  .dayplan .row-item .art, .dayplan .row-item .row-sym { width: 58px; min-height: 44px; }
+  .dayplan .row-item time { font-size: 11.5px; }
+  .dayplan .row-item small { font-size: 11.5px; }
+  .dayplan .rows { gap: 5px; }
+  .dayplan > * + * { margin-top: 8px; }
+}
+.grid.textual .dayinfo.fit-hide { display: none !important; }
+/* (short days, a laptop's screen: the card tighter, so more of it fits) */
+@container month (max-height: 460px) {
+  .grid.textual .cell { gap: 2px !important; padding-top: 3px !important; padding-bottom: 3px !important; }
+  .grid.textual .dayinfo { padding: 2px 6px 3px; font-size: 10.5px; line-height: 1.25; border-radius: 7px; }
+  .grid.textual .di + .di, .grid.textual .di-also { margin-top: 1px; }
+}
+/* The day's summary a little smaller on a short screen, so more of the list shows */
+@media (max-height: 820px) { .dp-info { padding: 7px 10px; } .dp-info p { font-size: 12px; line-height: 1.35; } }
+/* (no moon in the corner on a computer: its phase is a word in the day, so the day's name has the
+   whole width for its words) */
+.grid.textual .num { max-width: calc(100% - 6px) !important; padding-inline: 6px !important; }
+.grid.textual .moonchip { color: var(--soft, #FFD1EA); border-color: rgba(var(--hi-rgb), .3); }
+@container month (max-width: 960px) { .grid.textual .num > .n-word { font-size: 10.5px; letter-spacing: -.01em; } .grid.textual .num { padding-inline: 4px !important; } }
+/* A laptop-sized window (900 to 1099 wide, held landscape, with room in height): the chosen day beside
+   the month, as on a wider screen (stacked under it, the days were too short for their cards and the
+   day's list was off the bottom), its column a little narrower */
+@media (min-width: 900px) and (max-width: 1099px) and (min-height: 501px) and (orientation: landscape) {
+  .month { display: grid !important; grid-template-columns: minmax(0, 1fr) 290px; grid-template-rows: auto auto 1fr; height: 100% !important; min-height: 0 !important; }
+  .month > .strip, .month > .wk-head, .month > .grid { grid-column: 1; }
+  .month > .grid { grid-row: 3; min-height: 0; }
+  .month:not(:has(.strip)) > .grid { grid-row: 2 / span 2; }
+  .month > .dayplan { grid-column: 2; grid-row: 1 / span 3; max-height: none !important; border-top: 0; border-left: 1px solid rgba(var(--hi-rgb), .12); overflow-y: auto; contain: size; content-visibility: visible; }
+  .dp-head { flex-direction: column; } .dp-add { justify-content: flex-start; }
+}
+/* (a computer's narrower month keeps its special days and moon phases as words, not little squares) */
+@container month (max-width: 700px) {
+  .grid.textual .cell > .skychip { width: auto !important; height: auto !important; padding: 1px 5px !important; border-radius: 6px; justify-content: center; }
+  .grid.textual .cell > .skychip > span { display: inline !important; }
+}
+/* (words never cut short: a long special day's name and a long title in the day's list wrap instead) */
+.grid.textual .cell > .skychip > span, .grid.textual .cell > .daycard > span { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; text-align: center; overflow-wrap: anywhere; }
+.grid.textual .cell > .daycard { overflow: visible; }
+@media (min-width: 720px) { .dayplan .row-item strong { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere; } }
+/* The week's and day's heads: the day in a word ("Nineteenth"), a little smaller than the number was */
+.tg-day b.tg-word { font-size: 14px !important; font-stretch: 100% !important; letter-spacing: 0; white-space: nowrap; padding-inline: 8px !important; width: auto !important; min-width: 0 !important; border-radius: 999px; }
+
+/* ================= Every item a little note card, filling its day (20 Oct 2026, later) =================
+   The month has the whole width (no Today panel on a computer). In each day every item is its own small
+   card in its colour (time, then title, wrapping rather than cut short), sharing out the day's whole
+   height; on a busy day the words step down in size until all of them fit (cal.js fitInfo) */
+.month:not(:has(> .dayplan)) { grid-template-columns: minmax(0, 1fr) !important; }
+.grid.textual .cell > .num { cursor: pointer; }
+.grid.textual .cell > .num:hover { box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), .55); }
+.grid.textual .dayinfo { flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 0; min-height: 0;
+  background: none; box-shadow: none; border-radius: 0; font-size: var(--di-fs, 11px); line-height: 1.2; overflow: hidden; }
+.grid.textual .di { flex: 1 0 auto; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; align-items: baseline; column-gap: 4px;
+  padding: 3px 6px; border-radius: 7px; text-align: center; color: #fff;
+  background: linear-gradient(160deg, rgba(var(--c, var(--hi-rgb)), .26), rgba(var(--c, var(--hi-rgb)), .1));
+  box-shadow: inset 0 0 0 1px rgba(var(--c, var(--hi-rgb)), .5); }
+.grid.textual .di + .di, .grid.textual .di-also { margin-top: 0; }
+.grid.textual .di b { font-weight: 700; color: rgb(var(--c, var(--hi-rgb))); filter: brightness(1.25); }
+.grid.textual .di .di-t { min-width: 0; overflow-wrap: anywhere; }
+.grid.textual .di:hover { box-shadow: inset 0 0 0 1px rgba(var(--c, var(--hi-rgb)), .9); }
+.grid.textual .di.ro { background: repeating-linear-gradient(135deg, rgba(var(--c, var(--hi-rgb)), .24) 0 6px, rgba(var(--c, var(--hi-rgb)), .12) 6px 12px); }
+.grid.textual .di-also { flex: none; text-align: center; padding: 1px 4px; }
+@container month (max-height: 460px) { .grid.textual .di { padding: 2px 5px; border-radius: 6px; } .grid.textual .dayinfo { gap: 2px; } }
+.grid.textual .dayinfo.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(min-content, 1fr); }
+.grid.textual .dayinfo.two > .di-also { grid-column: 1 / -1; }
+/* (its time and title flow as one bit of text, so a narrow card takes as few lines as it can) */
+.grid.textual .di { align-items: center; }
+.grid.textual .di-in { display: block; min-width: 0; overflow-wrap: anywhere; }
+.grid.textual .dayinfo.two { gap: 2px; }
+.grid.textual .dayinfo.two .di { padding: 2px 4px; border-radius: 6px; }
+.grid.textual .dayinfo.slim { gap: 1px; line-height: 1.1; }
+.grid.textual .dayinfo.slim .di { padding: 1px 3px; border-radius: 4px; }
+.grid.textual .cell:has(> .dayinfo.slim) { padding-top: 3px !important; padding-bottom: 3px !important; gap: 2px !important; }
+
+/* Less padding (20 Oct 2026, the user: "reduce the amount of padding by a significant amount to reduce
+   space"): the bar, the weekday names, the gaps between days and the room inside each day, about half */
+.bar { padding: 4px 10px !important; }
+html.embed .bar { padding-top: 4px !important; }
+.wk-head span { padding: 2px 0 !important; }
+.month > .grid { padding: 2px !important; gap: 2px !important; }
+.grid.textual .cell, .grid.textual .cell:has(> .dayinfo.slim) { padding: 3px !important; gap: 2px !important; border-radius: 8px; }
+.grid.textual .cell > .num { margin-block: 0 !important; padding-block: 0 !important; }
+.grid.textual .dayinfo { gap: 2px; }
+.grid.textual .di { padding: 2px 4px; border-radius: 5px; }
+.grid.textual .dayinfo.two .di { padding: 1px 3px; border-radius: 4px; }
+.grid.textual .dayinfo.slim .di { padding: 0 2px; border-radius: 3px; }
+.grid.textual .dayinfo.slim { gap: 1px; }
+/* A phone: its days in words too, each a fixed square (what doesn't fit steps out, named in the day) */
+@media (max-width: 719px) {
+  .month .grid.textual .cell { padding: 2px !important; gap: 1px !important; border-radius: 6px; }
+  .grid.textual .cell > .num { cursor: default; height: auto !important; min-height: 0 !important; line-height: 1.15 !important; font-size: 11px !important; padding: 0 4px !important; }
+  /* (hidden: a tiny line's letters stand a hair taller than its line, which counted as not fitting) */
+  .grid.textual .di { display: block; overflow: hidden; padding: 1px 2px; border-radius: 3px; line-height: 1.1; }
+  .grid.textual .num > span { display: none !important; }
+  .grid.textual .num > .n-min { display: inline !important; }
+  .grid.textual .di .di-t, .grid.textual .di-in { overflow-wrap: break-word; hyphens: auto; }
+  .grid.textual .di-also { overflow: hidden; padding: 0 1px; line-height: 1.1; }
+  .grid.textual .cell > .skychip, .grid.textual .cell > .daycard { display: block !important; width: auto !important; height: auto !important; min-width: 0; max-width: 100%;
+    padding: 0 1px !important; border-radius: 3px; font-size: var(--chip-fs, 8px) !important; line-height: 1.2 !important; letter-spacing: 0 !important; text-align: center; white-space: nowrap !important; overflow: hidden; }
+  /* (a name on one line: cal.js fitChips makes it smaller until it fits) */
+  .grid.textual .cell > .skychip > span, .grid.textual .cell > .daycard > span { display: inline !important; font-size: inherit !important; white-space: nowrap !important; }
+}
+@media (max-width: 700px) and (max-height: 700px), (max-height: 500px) and (max-width: 1099px) {
+  .month > .grid.textual { grid-auto-rows: 58px !important; }
+}
+@media (max-height: 500px) and (min-width: 701px) and (max-width: 1099px) {
+  .month > .grid.textual { grid-auto-rows: 74px !important; }
+}
+/* Each little card hugs its words (21 Oct 2026, the user, of a one-item day's card stretched over the whole
+   day: "why is the padding 50 thousand miles wide in all directions … shrink the … padding"): no stretching
+   to fill the day, just a hair of room round its time and title, the cards one under the other from the top */
+.grid.textual .dayinfo { justify-content: flex-start !important; }
+.grid.textual .di { flex: 0 0 auto !important; padding: 1px 5px !important; }
+.grid.textual .dayinfo.two { grid-auto-rows: min-content !important; align-content: start; }
+.grid.textual .dayinfo.two .di, .grid.textual .dayinfo.slim .di { padding: 1px 3px !important; }
+@media (max-width: 719px) { .grid.textual .di, .grid.textual .dayinfo.two .di, .grid.textual .dayinfo.slim .di { padding: 0 2px !important; } }
+
+/* Cards coloured by what they're about (21 Oct 2026, the user: "gradient color categorize various note
+   cards based on there contents"): cal.js symbolOf reads each card's words (data-kind) and every kind has
+   its own two colours, all from Nova's own range (pinks, magentas, violets, indigos, blues,
+   cyans, aurora teal, corals and golds; no greens or limes, which went muddy beside the theme). Each card looks like a plastic card ("make the note cards look like a plastic
+   card … more readable including color choices"): rich solid colours white words read clearly on (at
+   least 4.9 to 1 against white), a light shine across its top, a lit top edge and a shadow under it. No
+   stripes and no dots on quests and bookings: they're plastic cards in their own colours too. */
+/* (each kind's first colour also on the page, for a day's tint in the month: cal.js kindTint) */
+:root {
+  --kind-card: 190, 24, 113;
+  --kind-mic: 200, 30, 90;
+  --kind-note: 109, 40, 217;
+  --kind-cap: 170, 110, 20;
+  --kind-headphones: 8, 120, 160;
+  --kind-people: 29, 78, 216;
+  --kind-dumbbell: 13, 128, 128;
+  --kind-plate: 205, 70, 60;
+  --kind-plane: 8, 120, 160;
+  --kind-phone: 13, 128, 128;
+  --kind-pen: 134, 25, 143;
+  --kind-film: 190, 18, 60;
+  --kind-book: 170, 110, 20;
+  --kind-mail: 71, 85, 140;
+  --kind-cake: 190, 24, 93;
+  --kind-heart: 200, 30, 90;
+  --kind-booking: 170, 110, 20;
+  --kind-quest: 91, 33, 182;
+}
+[data-kind="card"] { --k1: var(--kind-card); --k2: 109, 40, 217; }
+[data-kind="mic"] { --k1: var(--kind-mic); --k2: 205, 70, 60; }
+[data-kind="note"] { --k1: var(--kind-note); --k2: 67, 56, 202; }
+[data-kind="cap"] { --k1: var(--kind-cap); --k2: 190, 24, 93; }
+[data-kind="headphones"] { --k1: var(--kind-headphones); --k2: 67, 56, 202; }
+[data-kind="people"] { --k1: var(--kind-people); --k2: 8, 120, 160; }
+[data-kind="dumbbell"] { --k1: var(--kind-dumbbell); --k2: 29, 78, 216; }
+[data-kind="plate"] { --k1: var(--kind-plate); --k2: 190, 24, 113; }
+[data-kind="plane"] { --k1: var(--kind-plane); --k2: 134, 25, 143; }
+[data-kind="phone"] { --k1: var(--kind-phone); --k2: 109, 40, 217; }
+[data-kind="pen"] { --k1: var(--kind-pen); --k2: 190, 24, 93; }
+[data-kind="film"] { --k1: var(--kind-film); --k2: 170, 110, 20; }
+[data-kind="book"] { --k1: var(--kind-book); --k2: 205, 70, 60; }
+[data-kind="mail"] { --k1: var(--kind-mail); --k2: 29, 78, 216; }
+[data-kind="cake"] { --k1: var(--kind-cake); --k2: 170, 110, 20; }
+[data-kind="heart"] { --k1: var(--kind-heart); --k2: 157, 23, 77; }
+[data-kind="booking"] { --k1: var(--kind-booking); --k2: 134, 25, 143; }
+[data-kind="quest"] { --k1: var(--kind-quest); --k2: 8, 120, 160; }
+/* (only the cards: the new card window's own Note card / Day card switch has a data-kind too) */
+:is(.di, .pill, .ev, .row-item)[data-kind] { --c: var(--k1); --cc: rgb(var(--k1));
+  /* Each kind's colours blended with Nova Agent's own (its theme's accent and second accent), so every
+     card sits in the theme and still tells its kind apart; they follow the theme you pick there (21 Oct
+     2026, the user: "colorize the picked colors so they fit the nova agent coloring vibe") */
+  /* (deep, jewel-like: dark enough for coloured words to read on them, 21 Oct 2026) */
+  --kc1: color-mix(in srgb, color-mix(in srgb, rgb(var(--k1)) 85%, var(--accent, #B01D68)) 60%, #000);
+  --kc2: color-mix(in srgb, color-mix(in srgb, rgb(var(--k2)) 85%, var(--accent-2, #7A1F86)) 60%, #000);
+  /* The words in colour (21 Oct 2026, the user: "colorize the text based on category, type and so on"):
+     the title a pale tint of its kind's colour; the time by what it is (a note card in the theme's pink,
+     a quest in cyan, a booking in gold). All at least 4.7 to 1 against their card. */
+  --kt: color-mix(in srgb, rgb(var(--k1)) 30%, #fff);
+  --ktime: color-mix(in srgb, var(--hi, #FF5FA8) 40%, #fff);
+  /* Its border: its own colour, lighter and leaning to the theme's highlight, so it matches the card and
+     still stands out from it ("the borders are not matching there plastic card color enough but being
+     different") */
+  --kb: color-mix(in oklab, color-mix(in oklab, rgb(var(--k1)) 55%, var(--hi, #FF5FA8)) 75%, #fff); }
+:is(.di, .pill, .ev, .row-item).ro[data-type="event"] { --ktime: #AAF0FA; }
+:is(.di, .pill, .ev, .row-item)[data-type="booking"] { --ktime: #FFE296; }
+.grid.textual .di[data-kind], .grid.textual .di.ro[data-kind], .pill[data-kind], .pill.ro[data-kind],
+.ev[data-kind], .ev.ro[data-kind], .row-item.note[data-kind], .row-item.note.ro[data-kind] {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .03) 42%, transparent 46%),
+    linear-gradient(115deg, var(--kc1), var(--kc2)) !important;
+  border: 0 !important;
+  /* (a thin edge: no outline round it, just its top catching the light; 21 Oct 2026, the user: "reduce the border of the note cards") */
+  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .3), 0 1px 3px rgba(0, 0, 0, .45) !important;
+  /* (and a tiny border in Nova Agent's theme colour, which follows the theme you pick there; 21 Oct
+     2026, the user: "add a tiny border also … theme color it to the nova agent theming") */
+  outline: 1px solid var(--kb) !important; outline-offset: -1px;
+  color: #fff !important; text-shadow: 0 1px 1px rgba(0, 0, 0, .4); }
+.grid.textual .di[data-kind]:hover, .ev[data-kind]:hover, .row-item.note[data-kind]:hover {
+  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .45), 0 2px 6px rgba(0, 0, 0, .55) !important; filter: brightness(1.08); outline-color: color-mix(in oklab, var(--kb) 60%, #fff) !important; }
+/* (the words: white and a little heavier; the time white too, the boldest) */
+.grid.textual .di[data-kind] { font-weight: 600; }
+.grid.textual .di.ro[data-kind] .di-t { opacity: 1; }
+.grid.textual .di[data-kind], .grid.textual .di[data-kind] .di-t, .pill[data-kind] span, .ev[data-kind] strong, .ev[data-kind] small, .ev[data-kind] .ev-what,
+.row-item.note[data-kind] strong, .row-item.note[data-kind] small {
+  color: var(--kt) !important; filter: none !important; opacity: 1 !important; }
+.grid.textual .di[data-kind] b, .pill[data-kind] b, .ev[data-kind] .ev-time, .row-item.note[data-kind] time, .row-item.note[data-kind] time * {
+  color: var(--ktime) !important; filter: none !important; opacity: 1 !important; }
+.grid.textual .di[data-kind] b { font-weight: 800; }
+
+/* Pointing at a card changes the card, not its words (21 Oct 2026, the user: "make the mouse hover change
+   the button look instead of doing underline text"): it rises a little, glows brighter, its edge lights up */
+.grid.textual .di:hover .di-t { text-decoration: none !important; }
+.grid.textual .di[data-kind], .ev[data-kind], .row-item.note[data-kind], .pill[data-kind] { transition: transform .14s ease, filter .14s ease, box-shadow .14s ease, outline-color .14s ease; }
+.grid.textual .di[data-kind]:hover, .ev[data-kind]:hover, .row-item.note[data-kind]:hover, .pill[data-kind]:hover {
+  transform: translateY(-1px); filter: brightness(1.22) saturate(1.1) !important;
+  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .5), 0 3px 10px -2px rgba(var(--k1), .75), 0 2px 4px rgba(0, 0, 0, .5) !important;
+  outline-color: color-mix(in oklab, var(--kb) 50%, #fff) !important; }
+.grid.textual .di[data-kind]:active, .ev[data-kind]:active, .row-item.note[data-kind]:active { transform: translateY(0); filter: brightness(1.05) !important; }
+@media (prefers-reduced-motion: reduce) { .grid.textual .di[data-kind]:hover, .ev[data-kind]:hover, .row-item.note[data-kind]:hover { transform: none; } }
+
+/* A card's words never break part-way through (21 Oct 2026, the user: "make sure text doesn't line break
+   on an unfinished sentence"): on a computer each card's time and title stay on one line (cal.js fitInfo
+   makes the words smaller, then shows what doesn't fit by name or as "More in Day view"); on a phone's tiny
+   days a title can go onto a second line only between whole words, never inside one */
+.grid.textual .di, .grid.textual .di-in, .grid.textual .di-t, .grid.textual .di-also { white-space: nowrap !important; overflow-wrap: normal !important; word-break: normal !important; hyphens: manual !important; }
+@media (max-width: 719px) {
+  .grid.textual .di, .grid.textual .di-in, .grid.textual .di-t, .grid.textual .di-also { white-space: normal !important; }
+}
+/* Taller plastic cards (21 Oct 2026, the user: "make the plastic cards have higher height"): on a computer
+   the cards share out the day's height, each up to 30px tall with its words in the middle (never one card
+   stretched over the whole day); a busy day's cards give up that room before their words get smaller */
+@media (min-width: 720px) {
+  .grid.textual .di[data-kind] { flex: 1 1 auto !important; max-height: 30px; min-height: min-content; padding: 2px 7px !important; border-radius: 6px; align-content: center; }
+  .grid.textual .dayinfo.two { grid-auto-rows: minmax(min-content, 30px) !important; }
+  .grid.textual .dayinfo.two .di[data-kind] { max-height: none; padding: 2px 5px !important; border-radius: 5px; }
+  .grid.textual .dayinfo.slim .di[data-kind] { padding: 1px 4px !important; border-radius: 4px; }
+  .grid.textual .dayinfo { gap: 3px !important; }
+  .grid.textual .dayinfo.slim { gap: 2px !important; }
+}
+
+/* ================= The month in the theme's colour (22 Oct 2026) =================
+   The user: "theme it so the overall theme color is strongly prevalent in the coloring of all elements
+   and have a noticably slight difference for it's variations" and "make it so the borders of each day
+   block is more noticable and the overall color tint is determined by the quantity precentage of note
+   card type". Every part of the month starts from the theme's highlight (--hi, so it follows the theme
+   picked in Nova Agent; a day card's day wears its own theme's): weekends lean a little to the theme's
+   second accent, days of other months are fainter, today is the brightest. A day with cards leans
+   two parts in five to its cards' kinds (round the colour wheel, so a mix never goes muddy), blended by how many of each (cal.js kindTint sets --mix), and its edge is
+   a clear line in that same tint.
+   The edge (22 Oct 2026, later, the user: "make the borders of the day block more beautiful looking rather
+   then these thick blur borders"): a fine 1px line with no blur, drawn as a gradient in the day's tint:
+   brightest at the top left where the light catches it, softer along the bottom. --c1/--c2 are the day's
+   own colours, --e1/--e2/--e3 its edge's. */
+.month .grid.textual .cell {
+  --th: var(--hi, #FF5FA8);
+  --tint: color-mix(in oklch, var(--mix, var(--th)) 40%, var(--th));
+  --c1: color-mix(in oklab, var(--tint) 30%, var(--deep, #100816));
+  --c2: color-mix(in oklab, var(--tint) 13%, var(--void, #06040D));
+  --e1: color-mix(in oklab, var(--tint) 78%, #fff);
+  --e2: color-mix(in oklab, var(--tint) 42%, transparent);
+  --e3: color-mix(in oklab, var(--tint) 62%, transparent);
+  background:
+    linear-gradient(170deg, var(--c1), var(--c2) 85%) padding-box,
+    linear-gradient(150deg, var(--e1), var(--e2) 45%, var(--e3)) border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--tint) 22%, transparent);
+  transition: box-shadow .18s; }
+.month .grid.textual .cell:is(:nth-child(7n), :nth-child(7n-1)) { --th: color-mix(in oklab, var(--hi, #FF5FA8) 62%, var(--accent-2, #7A1F86)); }
+.month .grid.textual .cell.out {
+  --c1: color-mix(in oklab, var(--tint) 14%, var(--deep, #100816)); --c2: color-mix(in oklab, var(--tint) 6%, var(--void, #06040D));
+  --e1: color-mix(in oklab, var(--tint) 40%, transparent); --e2: color-mix(in oklab, var(--tint) 18%, transparent); --e3: color-mix(in oklab, var(--tint) 28%, transparent); }
+.month .grid.textual .cell:hover { --e1: color-mix(in oklab, var(--tint) 55%, #fff); --e2: color-mix(in oklab, var(--tint) 70%, transparent); --e3: color-mix(in oklab, var(--tint) 85%, #fff);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--tint) 40%, transparent); }
+.month .grid.textual .cell.sel { --e1: #fff; --e2: color-mix(in oklab, var(--tint) 75%, #fff); --e3: color-mix(in oklab, var(--tint) 85%, #fff);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tint) 40%, transparent) !important; }
+.month .grid.textual .cell.today {
+  --c1: color-mix(in oklab, var(--tint) 42%, var(--deep, #100816)); --c2: color-mix(in oklab, var(--tint) 20%, var(--void, #06040D));
+  --e1: color-mix(in oklab, var(--th) 60%, #fff); --e2: var(--th); --e3: color-mix(in oklab, var(--th) 80%, #fff);
+  border-width: 1.5px !important; box-shadow: 0 0 0 2px color-mix(in oklab, var(--th) 22%, transparent), inset 0 1px 0 color-mix(in oklab, var(--th) 45%, transparent) !important; }
+/* (the day's name, its moon and special day in the same colour) */
+.month .grid.textual .cell:not(.today) > .num { background: color-mix(in oklab, var(--tint) 24%, transparent); color: color-mix(in oklab, var(--tint) 22%, #fff); }
+/* (the day's name: a bar across the top of its day, the day's full width, with square-ish corners, not a
+   round pill; 22 Oct 2026, the user: "make the title backdrops not round and actual more rectangular and
+   fit the width the day block") */
+.month .grid.textual .cell > .num {
+  align-self: stretch !important; justify-self: stretch; width: auto !important; max-width: none !important; margin-inline: 0 !important;
+  border-radius: 5px !important; text-align: center; justify-content: center; box-sizing: border-box; }
+.month .grid.textual .cell.today > .num { background: linear-gradient(135deg, var(--soft, #FFB3D6), var(--hi, #FF5FA8) 55%, var(--accent, #B01D68)) !important; box-shadow: none !important; }
+.month .grid.textual .cell.out > .num { color: color-mix(in oklab, var(--tint) 40%, var(--muted, #B997B5)); }
+.month .grid.textual .cell > .skychip, .month .grid.textual .moonchip {
+  color: color-mix(in oklab, var(--tint) 30%, #fff) !important; background: color-mix(in oklab, var(--tint) 16%, transparent) !important;
+  border-color: color-mix(in oklab, var(--tint) 50%, transparent) !important; }
+/* (the week's head: the theme's colour, the weekend's names its second accent, as in the days) */
+.month .wk-head { background: linear-gradient(180deg, color-mix(in oklab, var(--hi, #FF5FA8) 18%, var(--deep, #100816)), color-mix(in oklab, var(--hi, #FF5FA8) 8%, var(--deep, #100816))) !important;
+  border-bottom: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 45%, transparent) !important; }
+.month .wk-head span { background: linear-gradient(90deg, var(--soft), var(--hi)); -webkit-background-clip: text; background-clip: text; }
+.month .wk-head span:nth-child(n+6) { background: linear-gradient(90deg, var(--soft), color-mix(in oklab, var(--hi, #FF5FA8) 62%, var(--accent-2, #7A1F86))); -webkit-background-clip: text; background-clip: text; }
+/* (the cards: mostly the theme's colours, each kind still a little different) */
+.month .grid.textual .di[data-kind] {
+  --kc1: color-mix(in srgb, color-mix(in oklch, rgb(var(--k1)) 40%, var(--hi, #FF5FA8)) 55%, #000);
+  --kc2: color-mix(in srgb, color-mix(in oklch, rgb(var(--k2)) 40%, var(--accent, #B01D68)) 55%, #000);
+  --kb: color-mix(in oklab, color-mix(in oklch, rgb(var(--k1)) 35%, var(--hi, #FF5FA8)) 70%, #fff);
+  --kt: color-mix(in srgb, color-mix(in oklch, rgb(var(--k1)) 35%, var(--hi, #FF5FA8)) 22%, #fff); }
+
+/* ================= Week, Day and List on one screen (22 Oct 2026) =================
+   The user: "make the week view on the calender fit on one screen regardless of screen size please and
+   make it improved then what it is at the moment same for day view, list view as well". Nothing in
+   them scrolls: the week's and day's hours share out the height (cal.js drawTimeGrid shows the hours
+   that matter and sets --hh), and the list is a page at a time in as many columns as fit (cal.js
+   drawList). They wear the theme's colour as the month does: each day tinted by its cards' kinds. */
+
+/* -- Week and Day: the hours that matter, filling the height -- */
+.view > .tg, .dayview > .tg { overflow: hidden !important; }
+.tg .hour { position: relative; transform: none; padding: 0; }
+.tg .hour > span { position: absolute; top: 0; right: 6px; transform: translateY(-50%); line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tg .hour:first-child > span { transform: translateY(2px); }
+.tg.sparse .hour:nth-child(even) > span { visibility: hidden; }
+.tg .col {
+  --th: var(--hi, #FF5FA8);
+  --tint: color-mix(in oklch, var(--mix, var(--th)) 40%, var(--th));
+  background-color: color-mix(in oklab, var(--tint) 8%, transparent) !important;
+  background-image: linear-gradient(color-mix(in oklab, var(--tint) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in oklab, var(--tint) 8%, transparent) 1px, transparent 1px) !important;
+  background-size: 100% var(--hh), 100% calc(var(--hh) / 2) !important;
+  border-left: 1px solid color-mix(in oklab, var(--tint) 32%, transparent) !important; }
+.tg.sparse .col { background-image: linear-gradient(color-mix(in oklab, var(--tint) 22%, transparent) 1px, transparent 1px) !important; background-size: 100% var(--hh) !important; }
+.tg .col.weekend { --th: color-mix(in oklab, var(--hi, #FF5FA8) 62%, var(--accent-2, #7A1F86)); }
+.tg .col.today { background-color: color-mix(in oklab, var(--tint) 15%, transparent) !important; box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--th) 50%, transparent); }
+.tg-head { background: linear-gradient(180deg, color-mix(in oklab, var(--hi, #FF5FA8) 16%, var(--deep, #100816)), color-mix(in oklab, var(--hi, #FF5FA8) 7%, var(--deep, #100816))) !important;
+  border-bottom: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 40%, transparent) !important; }
+.tg-head .tg-day { background: transparent !important; }
+/* (the cards: mostly the theme's colours, each kind a little different, as in the month) */
+.tg .ev[data-kind] {
+  --kc1: color-mix(in srgb, color-mix(in oklch, rgb(var(--k1)) 40%, var(--hi, #FF5FA8)) 55%, #000);
+  --kc2: color-mix(in srgb, color-mix(in oklch, rgb(var(--k2)) 40%, var(--accent, #B01D68)) 55%, #000);
+  --kb: color-mix(in oklab, color-mix(in oklch, rgb(var(--k1)) 35%, var(--hi, #FF5FA8)) 70%, #fff);
+  --kt: color-mix(in srgb, color-mix(in oklch, rgb(var(--k1)) 35%, var(--hi, #FF5FA8)) 22%, #fff); }
+/* (a short card: its title and time side by side on one line) */
+.tg .ev.short:not(.slim) { display: flex; align-items: center; gap: 6px; padding-block: 0 !important; }
+.tg .ev.short:not(.slim) strong { flex: 0 1 auto; min-width: 0; -webkit-line-clamp: 1; line-clamp: 1; }
+.tg .ev.short:not(.slim) small { flex: none; }
+.tg .ev.short .ev-what { display: none; }
+
+/* -- Day: the day in words beside it (a wider screen) or above it (a narrower one) -- */
+.view > .dayview { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); overflow: hidden !important; }
+.dayview > .tg { min-height: 0; }
+.dv-sum { padding: 6px 8px 4px; }
+.dv-sum .dp-info { padding: 6px 10px; }
+.dv-sum .dp-info p { font-size: 12.5px; line-height: 1.35; }
+@media (min-width: 900px) {
+  .view > .dayview { grid-template-columns: minmax(0, 1fr) 320px; grid-template-rows: minmax(0, 1fr); }
+  .dayview > .tg { grid-column: 1; grid-row: 1; }
+  .dayview > .dv-side { grid-column: 2; grid-row: 1; min-height: 0; overflow: hidden; border-left: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 35%, transparent); }
+  .dv-side > .dayplan { height: 100%; padding: 14px 16px !important; border-top: 0; content-visibility: visible;
+    background: linear-gradient(180deg, color-mix(in oklab, var(--hi, #FF5FA8) 10%, var(--deep, #100816)), var(--void, #06040D)) !important; }
+  .dv-side .dp-head { flex-direction: column; align-items: stretch; gap: 8px; }
+  .dv-side .dp-add { justify-content: flex-start; }
+}
+
+/* -- List: a page at a time, in columns, Earlier and Later under it -- */
+.view > .list.paged { max-width: none; margin: 0; padding: 10px 12px 8px; display: flex; flex-direction: column; overflow: hidden !important; }
+.list.paged > .lp { flex: 1 1 auto; min-height: 0; overflow: hidden; column-width: 300px; column-gap: 16px; column-fill: auto; }
+.list.paged .lg { margin: 0 0 12px; }
+.list.paged .lg h4 { position: static; margin: 0 0 6px; break-after: avoid; color: color-mix(in oklab, var(--hi, #FF5FA8) 60%, #fff);
+  background: color-mix(in oklab, var(--hi, #FF5FA8) 12%, var(--deep, #100816)) !important; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--hi, #FF5FA8) 35%, transparent); }
+.list.paged .rows { display: block; }
+.list.paged .rows > li { break-inside: avoid; margin-bottom: 6px; }
+.list.paged .row-item.note[data-kind] {
+  --kc1: color-mix(in srgb, color-mix(in oklch, rgb(var(--k1)) 40%, var(--hi, #FF5FA8)) 55%, #000);
+  --kc2: color-mix(in srgb, color-mix(in oklch, rgb(var(--k2)) 40%, var(--accent, #B01D68)) 55%, #000);
+  --kb: color-mix(in oklab, color-mix(in oklch, rgb(var(--k1)) 35%, var(--hi, #FF5FA8)) 70%, #fff); }
+.list.paged .empty { margin: 24px auto; text-align: center; }
+/* (Earlier and Later together in the middle: Nova Agent's Manual button sits in the bottom-left corner
+   and a phone's round + button in the bottom-right, so neither ever covers them) */
+.list-pager { flex: none; display: flex; justify-content: center; align-items: center; gap: 14px; padding-top: 8px;
+  border-top: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 25%, transparent); }
+.list-pager > span { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.list-pager > span:empty, .list-pager > i { display: none; }
+.list-pager button { height: 32px; padding: 0 14px; border-radius: 999px; white-space: nowrap; font-weight: 700; font-size: 13px;
+  color: color-mix(in oklab, var(--hi, #FF5FA8) 35%, #fff); background: color-mix(in oklab, var(--hi, #FF5FA8) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 45%, transparent); }
+.list-pager button:hover { background: color-mix(in oklab, var(--hi, #FF5FA8) 26%, transparent); }
+/* (a phone: room under the pager for the round + button) */
+@media (max-width: 719px) { .view > .list.paged { padding-bottom: 84px; } }
+/* (a phone: the bottom of the week and day kept clear for the round + button, so it never covers a card) */
+@media (max-width: 719px) { .view > .tg, .dayview > .tg { padding-bottom: 76px; } }
+/* (the day's cards beside Day view: slimmer rows) */
+.dv-side .rows { gap: 5px; }
+.dv-side .empty { display: none; }
