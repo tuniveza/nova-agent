@@ -308,7 +308,7 @@
       for (const v of INBOX) {
         const b = el("button", "chip", PANE_NAME[v]);
         b.type = "button";
-        b.dataset.pane = v;
+        b.dataset.ibPane = v;
         b.addEventListener("click", () => {
           paneWanted = v;
           layoutInbox();
@@ -338,7 +338,7 @@
     const showing = [want, ...INBOX.filter((v) => v !== want)].slice(0, n);
     const shown = INBOX.filter((v) => showing.includes(v)).map((v) => $("view-" + v));
     for (const p of panes) p.toggleAttribute("data-ib-off", !shown.includes(p));
-    for (const b of sw.children) b.setAttribute("aria-pressed", String(showing.includes(b.dataset.pane)));
+    for (const b of sw.children) b.setAttribute("aria-pressed", String(showing.includes(b.dataset.ibPane)));
     const used = n === 3 ? cols : n === 2 ? Math.min(cols, 2) : 1;
     main.dataset.ibCols = String(used);
     let rows;

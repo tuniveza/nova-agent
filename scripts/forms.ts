@@ -120,8 +120,16 @@ const offTheme = () => {
 
 const key = (readFileSync(".env", "utf8").match(/^AGENT_NOVA_KEY=(.*)$/m) || [])[1]?.trim().replace(/^["']|["']$/g, "");
 const looks = (action: string) => fetch(`${base}/nova-agent/looks-session`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` }, body: JSON.stringify({ action }) });
-const s = (await (await looks("start")).json()) as { token?: string; cookie?: string };
+let s = (await (await looks("start")).json()) as { token?: string; cookie?: string };
 if (!s.token) throw new Error("no looks session");
+// (the Fixer's own looks check on the VPS, every 30 minutes, starts its own session and so ends this one:
+// before each device the session is checked and started again if it's gone)
+async function fresh() {
+  const me = await fetch(`${base}/app/api/me`, { headers: { Cookie: `${s.cookie || "nova_session"}=${s.token}` } }).catch(() => null);
+  if (me && me.ok) return;
+  s = (await (await looks("start")).json()) as { token?: string; cookie?: string };
+  console.log("looks session started again");
+}
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch();
 const results: string[] = [];
@@ -163,6 +171,7 @@ try {
   await Promise.all([0, 1, 2, 3].map(async () => {
     while (i < FORMS.length) {
       const f = FORMS[i++];
+      await fresh();
       const ctx = await browser.newContext({ ...f.opts, serviceWorkers: "block" } as any);
       await ctx.addCookies([{ name: s.cookie || "nova_session", value: s.token!, url: base }]);
       await ctx.addInitScript({ content: "window.__name = (f) => f;" });

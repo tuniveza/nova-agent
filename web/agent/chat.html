@@ -871,6 +871,11 @@
 <script src="/shared/look.js"></script>
 </head>
 <body>
+<!-- Shown once its scripts have built it (22 Oct 2026, the user: "fix visual animation delay, glitching and or
+     lag"): the tile bar and the status line are made by phone.js and status.js at the end of the page, and on
+     a phone the page was drawn a second before them and then jumped as they came in. Hidden until the page
+     is all read (its scripts, deferred ones too, have run), shown on the next frame; at most 3 s either way. -->
+<script>(() => { const b = document.body; b.style.visibility = 'hidden'; let shown = false; const show = () => { if (shown) return; shown = true; requestAnimationFrame(() => b.style.removeProperty('visibility')); }; document.addEventListener('DOMContentLoaded', show, { once: true }); setTimeout(show, 3000); })();</script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <!-- The Nova Agent mark: a cosmic A with an orbit for its crossbar, in the theme's colours -->
@@ -961,6 +966,10 @@
         <iframe id="viewer-frame" title="App" allow="clipboard-read; clipboard-write; fullscreen; microphone"></iframe>
       </div>
     </section>
+    <!-- Opened at a panel's address (?open=/portal/…): drawn as an open panel from the very first frame, so
+         nothing jumps when the script further down opens it a moment later (22 Oct 2026, the user: "fix visual
+         animation delay, glitching and or lag"; the title panel and tiles used to shift into place) -->
+    <script>if (/[?&]open=(%2F|\/)/i.test(location.search)) { document.getElementById('main').classList.add('viewing'); document.getElementById('viewer').hidden = false; }</script>
     <section class="board side glass" id="missions-panel" aria-labelledby="missions-title" data-sfx-theme="missions">
       <div class="side-head">
         <h2 class="sec-title gold" id="missions-title"><span class="pico sec-ico" data-p="missions" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-missions"/></svg></span> Missions</h2>

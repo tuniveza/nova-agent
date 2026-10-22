@@ -394,7 +394,7 @@ function drawMonth() {
       if (resized.size) refitSoon = setTimeout(() => {
         const now = Date.now();
         if (now - refitWindow > 60000) { refitWindow = now; refitCount = 0; }
-        if (refitCount++ < 30) for (const card of resized) if (card.isConnected && card.parentElement) fitInfo(card.parentElement);
+        if (refitCount++ < 30) fitInfoAll([...resized].filter((card) => card.isConnected && card.parentElement).map((card) => card.parentElement));
         resized.clear();
       }, 100);
     })).disconnect();
@@ -446,7 +446,26 @@ function infoLine(e) {
 // A day's card fits its day: what doesn't fit steps out of the card from the end, named on its last
 // line ("Also Lunch with Sam, Call mum"); when even that's too long it says the rest is in the day's
 // list (a tap on it shows that list). Nothing is cut short and there are no numbers.
-function fitInfo(c) {
+// (22 Oct 2026, the user: "fix visual animation delay, glitching and or lag": every day in the month goes
+// through the steps together, each step one layout for all of them, instead of a layout per try per day,
+// thousands of them on a tablet. The steps and what they end with are the same. Each step hands back what
+// it needs measured (its test, over, or another read); fitInfoAll runs them all, and the answers come back in.)
+function fitInfo(c) { fitInfoAll([c]); }
+function fitInfoAll(cells) {
+  let live = [];
+  // (the steps' changes, all days at once; then all the measuring, one layout; then the next step)
+  for (const c of cells) { const g = fitInfoSteps(c); const r = g.next(); if (!r.done) live.push({ g, over: r.value }); }
+  while (live.length) {
+    const said = live.map((x) => x.over());
+    const next = [];
+    live.forEach((x, i) => { const r = x.g.next(said[i]); if (!r.done) next.push({ g: x.g, over: r.value }); });
+    live = next;
+  }
+  // (each card's size as fitted, so its own fitting never reads as a change that fits it again: that ran on
+  // and on, 30 rounds a minute, keeping a tablet busy while nothing happened)
+  for (const c of cells) { const card = c.querySelector(":scope > .dayinfo"); if (card) card.dataset.size = `${card.clientWidth}x${card.clientHeight}`; }
+}
+function* fitInfoSteps(c) {
   const card = c.querySelector(":scope > .dayinfo");
   if (!card) return;
   for (const x of card.querySelectorAll(".di-also")) x.remove();
@@ -477,7 +496,7 @@ function fitInfo(c) {
     card.classList.toggle("slim", slim);
     for (const fs of sizes) {
       c.style.setProperty("--di-fs", `${fs}px`);
-      if (!over()) return;
+      if (!(yield over)) return;
     }
   }
   // (then as many cards as fit, one under the other, and the rest named: on a computer one-line cards
@@ -500,12 +519,14 @@ function fitInfo(c) {
   };
   // (first the cards too long for their one line step out, wherever they are; the others keep their place)
   const wide = (l) => [l, l.querySelector(".di-in")].some((k) => k && k.scrollWidth > k.clientWidth + 1);
-  for (const l of lines) if (wide(l)) l.classList.add("fit-hide");
+  // (measured with every other day's: a read handed back like the tests)
+  const wides = yield () => lines.filter(wide);
+  for (const l of wides) l.classList.add("fit-hide");
   out.push(...lines.filter((l) => l.classList.contains("fit-hide")));
   for (const short of [0, 1, 2]) {
     if (!out.length) break;
     say(short);
-    if (!over()) return;
+    if (!(yield over)) return;
   }
   // (then from the end, until the rest fit)
   for (let i = lines.length - 1; i >= 0; i--) {
@@ -514,7 +535,7 @@ function fitInfo(c) {
     out.splice(0, out.length, ...lines.filter((l) => l.classList.contains("fit-hide")));
     for (const short of [0, 1, 2]) {
       say(short);
-      if (!over()) return;
+      if (!(yield over)) return;
     }
   }
   // (a day too small for even a word: no card; its titles are its tooltip, and all of it is in its list)
@@ -603,9 +624,21 @@ function pageWeeks(grid, cells) {
   bar.querySelector(".os-prev").disabled = page <= 0;
   bar.querySelector(".os-next").disabled = page >= pages - 1;
 }
+// (what the month was last fitted to: the same drawing at the same size with the same fonts and week page
+// needs nothing done, and the late fits, the fonts' and the sizes' calls come often; each fit is a dozen or
+// so layouts of the whole month, 22 Oct 2026)
+let fitted = null, fontGen = 0;
+document.fonts?.addEventListener?.("loadingdone", () => fontGen++);
 function fitMonth() {
   const grid = view.querySelector(".month .grid");
   if (!grid) return;
+  const key = `${grid.clientWidth}x${grid.clientHeight}|${fontGen}|${weekAt}`;
+  if (fitted && fitted.grid === grid && fitted.key === key) return;
+  fitMonthNow(grid);
+  // (the size as it ended up: a fit can change it, the week bar coming or going)
+  fitted = { grid, key: `${grid.clientWidth}x${grid.clientHeight}|${fontGen}|${weekAt}` };
+}
+function fitMonthNow(grid) {
   const cells = [...grid.children].filter((c) => !c.classList.contains("wk-pager"));
   pageWeeks(grid, cells);
   // (a title that doesn't fit its one line counts as not fitting too)
@@ -632,10 +665,11 @@ function fitMonth() {
   // to the plan, pushed the last weeks off the bottom of a short screen; 22 Oct 2026)
   if (grid.classList.contains("textual")) {
     if (phone()) for (const c of cells) fitChips(c);
-    for (const c of cells) fitInfo(c);
+    fitInfoAll(cells);
     return;
   }
-  for (const c of cells) for (const step of STEPS) if (over(c)) c.classList.add(step);
+  // (each step for every day at once: all the measuring, then all the changes, one layout a step)
+  for (const step of STEPS) { const overs = cells.filter(over); for (const c of overs) c.classList.add(step); }
   if (cells.some(over)) {
     // Short numbers make room: a day that then fits its words again gets them back
     grid.classList.add("fit-4");

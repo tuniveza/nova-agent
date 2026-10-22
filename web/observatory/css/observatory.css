@@ -665,3 +665,45 @@ html.embed .hero .brand { display: none; }
   background: var(--own); box-shadow: 0 0 6px var(--own);
 }
 
+
+/* ---- The header gives way first (22 Oct 2026, the one device model, ns/CLAUDE.md 2c: brand and status
+   areas give up room before the content). On a short panel, and on any phone: the summary line and the
+   theme dots step aside (the theme is chosen for all of Nova Agent in its Look), the six numbers are one
+   slim row (two rows of three on a narrow phone), the language bar thin, the gaps tight, so the projects
+   start on the first page instead of after a page of header. ---- */
+@media (max-height: 760px) {
+  .app { padding-top: 8px; }
+  .hero { padding: 10px 14px; border-radius: 18px; }
+  .hero-top { gap: 6px 12px; }
+  .hero .themes, .hero-lede, .lang-key { display: none !important; }
+  .stats { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+  .stat { padding: 5px 8px; border-radius: 12px; }
+  .stat b { font-size: clamp(13px, 11cqi, 18px) !important; white-space: nowrap; overflow-wrap: normal; }
+  .stat span { margin-top: 1px; font-size: 8.5px; letter-spacing: .12em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .spectrum { margin-top: 8px; }
+  .controls { margin: 8px 0 10px; }
+}
+html[data-form^="phone"] .hero .themes, html[data-form^="phone"] .hero-lede, html[data-form^="phone"] .lang-key { display: none !important; }
+@media (max-width: 520px) {
+  html[data-form^="phone"] .stats, .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* (a very short panel, a computer's short window or a tablet on its side: the six numbers step aside too,
+   the language bar staying as the summary, and each project is the phone's one-line card, its small
+   picture at the left; the header and search stay on every page, index.html data-os-pin) */
+@media (max-height: 560px) {
+  .stats { display: none !important; }
+  .decks { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 8px; }
+  .deck { flex-direction: row; align-items: stretch; border-radius: 16px; box-shadow: none; }
+  .deck:hover, .deck:focus-visible { transform: none; }
+  .deck-media { flex: none; width: 92px; aspect-ratio: auto !important; min-height: 84px; }
+  .deck-media::after, .cover-title, .play-hint, .deck-media video, .pills .pill:not(:first-child) { display: none; }
+  .pills { top: 6px; left: 6px; right: 6px; }
+  .pill { padding: 2px 6px; font-size: 10px; letter-spacing: .06em; }
+  .deck-body { padding: 8px 12px; min-width: 0; gap: 2px; }
+  .deck-goal, .deck .chips, .deck .path, .deck .figures, .deck .lang-bar { display: none; }
+  .deck-name { font-size: 15px; margin: 0; }
+  .deck-tag { margin: 2px 0 4px; font-size: 12.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .deck-foot { font-size: 11px; padding-top: 2px; border-top: 0; }
+  .deck-foot > span:last-child { display: none; }
+}
+

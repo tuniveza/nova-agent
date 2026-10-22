@@ -257,3 +257,14 @@
 @media (pointer: coarse) {
   .mw-k, .mw-title { font-size: 11px; letter-spacing: .08em; }
 }
+
+/* The welcome shows once it's built and fitted (music.js fit, mw-ready), fading in, instead of being drawn
+   plain and then rearranged and resized in front of you (22 Oct 2026, the user: "fix visual animation delay,
+   glitching and or lag"). If that never comes, it shows anyway after 2.5 s. */
+#welcome:not(.mw-ready) { visibility: hidden; animation: mw-show 0s 2.5s forwards; }
+@keyframes mw-show { to { visibility: visible; } }
+@media (prefers-reduced-motion: no-preference) {
+  #welcome.mw-ready { animation: mw-fade-in .22s ease-out both; }
+  @keyframes mw-fade-in { from { opacity: 0; } to { opacity: 1; } }
+}
+

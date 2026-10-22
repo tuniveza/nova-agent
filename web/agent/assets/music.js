@@ -179,6 +179,9 @@
   function place() {
     const w = document.getElementById("welcome");
     if (!w) return;
+    // (it fits itself (fit, below): onescreen.js's last-resort shrinking leaves it alone, as the two took
+    // turns undoing each other, about twice a second, 130 ms each on a tablet, 22 Oct 2026)
+    w.dataset.guard = "off";
     const h = w.querySelector(":scope > h3"), p = w.querySelector(":scope > p");
     if (h && !h.closest(".cpanel")) {
       const intro = document.createElement("div");
@@ -241,7 +244,8 @@
       };
       // Fills the room: smaller when there's too little (never below 65%), bigger when there's
       // plenty (up to 140%), always all of it in view
-      const done = (z, h) => { lastZ = z; lastH = h; log.classList.toggle("mw-scroll", h > room + 2); };
+      // (the first time it's fitted, the welcome shows: built and sized already, so it doesn't jump, music.css)
+      const done = (z, h) => { lastZ = z; lastH = h; log.classList.toggle("mw-scroll", h > room + 2); w.classList.add("mw-ready"); };
       const r3 = (z) => Math.floor(z * 1000) / 1000; // (down: a size that fits, never a hair over it)
       // Most of the time nothing has changed: the last size still fits and a touch bigger doesn't.
       // Two layouts instead of a dozen (this runs on every resize, font and picture load)

@@ -329,3 +329,22 @@ html #main > .view[data-tui] .cal-dots { height: auto; gap: 1px; }
 html #main > .view[data-tui] .cal-dots i { width: 3px; height: 3px; box-shadow: none; }
 html #main > .view[data-tui] .cal-dots b { display: none; }
 html #main > .view[data-tui] .cal-day-title { margin: 2px 0; font-size: 10.5px; letter-spacing: 0; }
+
+/* ===== A short Portal, any device (22 Oct 2026, the one device model, ns/CLAUDE.md 2c: navigation gives
+   up room before the content): the Nova Tabs in one low row, each icon beside its name and your planet
+   small, as a phone on its side already had them, so a short computer window's Inbox panes keep their
+   rows instead of just their titles ===== */
+@media (max-height: 500px) {
+  html body .pillars.compact .pillar-caps { grid-template-columns: none !important; grid-auto-flow: column !important; grid-auto-columns: auto !important; justify-content: space-between !important; column-gap: 4px !important; width: 100% !important; padding: 3px 6px !important; }
+  html body .pillars.compact .mini-cap, html body .pillars.compact .mini-pillar.open .mini-cap, html body .pillars.compact .mini-pillar.here .mini-cap { flex-direction: row !important; gap: 4px !important; padding: 3px 2px !important; min-height: 0 !important; }
+  html body .pillars.compact .mini-cap .pillar-ico { width: 20px !important; height: 20px !important; padding: 4px; border-radius: 6px; }
+  html body .pillars.compact .mini-cap .pillar-badge { top: -4px; right: 0; }
+  html body .pillars.compact .tabs-planet img { width: 26px !important; height: 26px !important; }
+  html body .pillars.compact .mini-cap .pillar-name { font-size: 10.5px !important; letter-spacing: -0.01em; }
+  /* (the Inbox panes: their lines of explanation step aside and the filters go behind each pane's small
+     button, as on a phone, so the rows get the height) */
+  #main.inbox-all > .view > .hint { display: none !important; }
+  #main.inbox-all .ib-filters { display: inline-flex; order: 0; min-height: 24px; height: 24px; padding: 0 9px; font-size: 9px; letter-spacing: 0.08em; }
+  #main.inbox-all .ib-filters[aria-expanded="true"] { border-color: rgba(var(--hi-rgb), 0.6); color: #fff; }
+  #main.inbox-all > .view:not(.ib-tools-open) :is(#enq-chips, #enq-tools, #saved-panel, .ib-chat-chips, .settings-row, #alerts-clear) { display: none; }
+}

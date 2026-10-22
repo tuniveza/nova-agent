@@ -458,7 +458,11 @@
         }
         const who = isShared && n.by && (!me || n.by !== me.name) ? ` · ${n.by}` : '';
         const waiting = isShared && queue.has(n.id) ? ' · syncing' : '';
-        badge.textContent = (isShared ? 'Shared' : 'Local') + who + waiting;
+        // (only when it says something new: writing the same words again is still a change to the page, and
+        // the page bar, which watches for changes, paged the list again, which drew this again, on and on,
+        // about twice a second, 22 Oct 2026)
+        const says = (isShared ? 'Shared' : 'Local') + who + waiting;
+        if (badge.textContent !== says) badge.textContent = says;
       }
       // Shared: a word when there's nothing to show
       const k = scope();
@@ -475,6 +479,9 @@
           note.className = 'lib-scope-note';
           list.prepend(note);
         }
+        if (note.firstChild && note.firstChild.nodeType === 3 && note.firstChild.textContent === text && Boolean(note.querySelector('button')) === (k === 'shared' && signedIn === false)) {
+          // (already says it)
+        } else {
         note.innerHTML = '';
         note.append(document.createTextNode(text));
         if (k === 'shared' && signedIn === false) {
@@ -484,10 +491,12 @@
           b.addEventListener('click', openSignIn);
           note.append(b);
         }
+        }
       } else if (note) note.remove();
-      for (const empty of list.querySelectorAll('.lib-empty')) empty.hidden = Boolean(text);
+      for (const empty of list.querySelectorAll('.lib-empty')) if (empty.hidden !== Boolean(text)) empty.hidden = Boolean(text);
       const foot = $('lib-foot');
-      if (foot) foot.textContent = `${sharedCount} shared · ${localCount} local` + (shared.pending() ? ' · syncing…' : '');
+      const footSays = `${sharedCount} shared · ${localCount} local` + (shared.pending() ? ' · syncing…' : '');
+      if (foot && foot.textContent !== footSays) foot.textContent = footSays;
       paintKind();
     } finally {
       decorating = false;
