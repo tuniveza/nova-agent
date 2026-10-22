@@ -352,7 +352,7 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
           `<button type="button" class="quiet" data-act="out">${ICON.out}<span>${mode === "connect" ? "Disconnect" : mode === "agent" ? "Sign out" : "Sign out everywhere"}</span></button>`,
         ].join("");
         body = `
-          <div class="big"><img alt="${esc(s.display_name)}'s planet" src="${planetSrc(s, 224, !still())}" width="112" height="112"></div>
+          <div class="big"><img alt="${esc(s.display_name)}'s planet" src="${planetSrc(s, 224, false)}" width="112" height="112"></div>
           <div class="kicker">Signed in with Portal</div>
           <h3>${esc(s.display_name)}</h3>
           <div class="pills"><span class="pill role-${s.role}">${role}</span>${s.created_at ? `<span class="pill">Since ${esc(since(s.created_at))}</span>` : ""}</div>

@@ -864,41 +864,18 @@
     return el("span", "pill active", "Active");
   }
 
-  // The planet on the stage moves for its first 10 s, then holds still (22 Oct 2026, battery: the user
-  // chose "move 10 s, then still"); pointing at it or tapping it wakes it for another 10 s. With less
-  // motion asked for, or the battery saver on, it's still from the start.
-  const saving = () => still() || root.classList.contains("nova-saver");
-  let planetRest = 0;
-  function restPlanetSoon(img, person, wait = 10000) {
-    clearTimeout(planetRest);
-    planetRest = setTimeout(async () => {
-      const moving = planetUrl(person, 512, true);
-      const quiet = planetUrl(person, 512, false);
-      if (img.dataset.src !== moving) return;
-      await preload(quiet);
-      if (img.dataset.src === moving && img.getAttribute("src") === moving) img.src = quiet;
-    }, wait);
-  }
-  function wakePlanet() {
-    const img = $("planet");
-    const person = img && img._person;
-    if (!person || saving() || img.dataset.src !== planetUrl(person, 512, true)) return;
-    if (img.getAttribute("src") !== img.dataset.src) img.src = img.dataset.src;
-    restPlanetSoon(img, person);
-  }
-  if ($("planet")) ["pointerenter", "click"].forEach((type) => $("planet").addEventListener(type, wakePlanet));
-
+  // The planet on the stage is always the still picture (22 Oct 2026: the user asked for it fully
+  // still, never moving, for phones' sake; it was "move 10 s, then still" before)
   // Put a planet on the stage (and find out what it's like for the caption)
   async function setPlanet(person, bloom) {
     const img = $("planet");
-    const url = planetUrl(person, 512, true);
+    const url = planetUrl(person, 512, false);
     img.alt = `${possessive(person.display_name)} planet`;
-    img._person = person;
     if (img.dataset.src === url && !bloom) return;
     img.dataset.src = url;
     loadCaption(person);
-    if (saving()) {
-      img.src = planetUrl(person, 512, false);
+    if (still()) {
+      img.src = url;
       return;
     }
     img.classList.remove("going", "coming");
@@ -908,7 +885,6 @@
     img.src = url;
     img.classList.remove("loading");
     replay(img, "coming");
-    restPlanetSoon(img, person);
   }
 
   // The caption: what the planet generator says this world is like (it's the picture's <title>)
@@ -918,7 +894,7 @@
     let text = "";
     try {
       // The same picture the stage shows (so it's already cached)
-      const res = await fetch(planetUrl(person, 512, true), { credentials: "same-origin" });
+      const res = await fetch(planetUrl(person, 512, false), { credentials: "same-origin" });
       const svg = await res.text();
       const m = svg.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       if (m) {
@@ -960,12 +936,10 @@
       const data = await must(`/staff/${encodeURIComponent(state.me.id)}`, { method: "PATCH", body: { planet_seed: kind } });
       state.me = { ...state.me, ...data.staff };
       state.person = state.me;
-      const url = planetUrl(state.me, 512, true);
+      const url = planetUrl(state.me, 512, false);
       await Promise.all([collapsed, preload(url)]);
       img.dataset.src = url;
       img.src = url;
-      img._person = state.me;
-      restPlanetSoon(img, state.me);
       img.classList.remove("going");
       if (!still()) replay(img, "coming");
       sfx("done");
