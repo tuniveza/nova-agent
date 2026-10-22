@@ -401,6 +401,8 @@
   setText("today-date", todayName());
   async function loadToday() {
     setText("today-date", todayName());
+    // Everything in one section: a tile for every section (dash.js)
+    if (window.NovaDash) window.NovaDash.today();
     const today = dayKey(new Date());
     const set = setText;
     const [enq, chats, cal] = await Promise.allSettled([api("enquiries"), api("conversations"), api("calendar")]);

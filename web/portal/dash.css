@@ -1,0 +1,42 @@
+/* Today, everything in one section (dash.js, 22 Oct 2026): a tile per section, in its Nova Tab's colour (--g) */
+.today-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.dash-tile-head svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.dash-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); align-items: start; margin-top: 12px; text-align: left; }
+.dash-tile {
+  display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 12px 14px 12px;
+  border: 1px solid transparent; border-radius: 16px;
+  background:
+    linear-gradient(170deg, color-mix(in oklab, var(--g, var(--hi)) 12%, var(--panel, #1b1220)), color-mix(in oklab, var(--g, var(--hi)) 4%, var(--panel, #1b1220))) padding-box,
+    linear-gradient(150deg, color-mix(in oklab, var(--g, var(--hi)) 55%, #fff), color-mix(in oklab, var(--g, var(--hi)) 22%, transparent) 50%, color-mix(in oklab, var(--g, var(--hi)) 40%, transparent)) border-box;
+}
+.dash-tile-head { display: flex; align-items: center; gap: 8px; }
+.dash-tile-head .pillar-ico { flex: none; width: 20px; height: 20px; color: var(--g, var(--hi)); }
+.dash-name { flex: 1; min-width: 0; margin: 0; white-space: nowrap; font-family: var(--f-display); font-stretch: 108%; font-weight: 800; font-size: 15px; color: #fff; }
+.dash-tile-head .badge { flex: none; }
+.dash-open {
+  flex: none; height: 28px; padding: 0 12px; border-radius: 999px; white-space: nowrap; cursor: pointer;
+  border: 1px solid color-mix(in oklab, var(--g, var(--hi)) 45%, transparent); background: color-mix(in oklab, var(--g, var(--hi)) 14%, transparent);
+  color: var(--bright, #fff); font: 700 11.5px/1 var(--f-body, inherit); letter-spacing: 0.04em;
+}
+.dash-open:is(:hover, :focus-visible) { background: color-mix(in oklab, var(--g, var(--hi)) 28%, transparent); outline: none; }
+.dash-rows li { cursor: pointer; border-radius: 6px; }
+.dash-rows li:is(:hover, :focus-visible) { background: color-mix(in oklab, var(--g, var(--hi)) 12%, transparent); outline: none; }
+.dash-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 0; }
+.dash-big { font-family: var(--f-display); font-weight: 800; font-size: 20px; color: #fff; white-space: nowrap; }
+.dash-small { font-size: 12px; color: var(--muted); }
+.dash-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.dash-rows li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 4px 0; border-top: 1px solid color-mix(in oklab, var(--g, var(--hi)) 14%, transparent); font-size: 13px; line-height: 1.3; }
+.dash-grid .dash-main, .dash-grid .dash-top, .dash-grid .dash-empty, .dash-grid .dash-small { text-align: left; }
+.dash-main { min-width: 0; color: var(--bright, #fff); overflow-wrap: anywhere; }
+.dash-side { flex: none; font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.dash-empty, .dash-loading { margin: 0; font-size: 12.5px; color: var(--muted); }
+@media (pointer: coarse) { .dash-open { height: 34px; } }
+@media (max-width: 480px) { .dash-big { font-size: 18px; } .dash-tile { padding: 10px 12px; } }
+/* (a count beside a tile's name or a button: in line with it, never floating off as a tab's does) */
+html .dash-tile-head .badge { position: static !important; inset: auto !important; transform: none !important; margin: 0 !important; }
+/* (Today is one section now: its parts one after another, not the old two columns of counters and lists) */
+html.embed #view-today:not([hidden]):has(> #today-dash) { display: block; }
+#view-today > .today-actions { margin: 4px 0 0; }
+#view-today > #today-calendar-wrap { margin-top: 14px; }
+@media (max-width: 560px) { .dash-rows li:nth-child(n+4) { display: none; } }

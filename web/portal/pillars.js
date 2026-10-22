@@ -589,5 +589,7 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
-  window.NovaPillars = { groups: GROUPS, open: (name) => openPillar(name, true), redraw: draw, hide: () => setHidden(true), show: () => setHidden(false) };
+  window.NovaPillars = { groups: GROUPS, open: (name) => openPillar(name, true), redraw: draw, hide: () => setHidden(true), show: () => setHidden(false),
+    // (for Today's dashboard, dash.js: every section, its icon, its count and its group's colour)
+    now: () => groupsNow().map((g) => ({ ...g, items: itemsOf(g) })), icon, count, hue: (name) => HUE[name] || "var(--hi)" };
 })();

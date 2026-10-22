@@ -67,6 +67,15 @@ scrolling (`web/portal/onescreen.js`, `onescreen.css`). Whatever has more than f
   section with their own height (Today's lists on a computer), and the Admin pages inside their frame.
 - A part opts out of being split with `data-os-keep`, and a box opts out with `data-os-skip`.
 
+## Today: everything in one section (22 October 2026)
+
+Today is one section with a live tile for every section Nova Tabs has: Bookings, Enquiries,
+Conversations, Alerts, Money, Approvals, Clients, Campaigns, Social, Funnel, Quests, the Website bot,
+and (admins) Google, Computer and Test stuff. Each tile shows its count and its latest few things
+(`web/portal/dash.js`, `dash.css`), read from the same places the sections read. A tap on a line opens
+that very thing (an enquiry, a chat), and **Open ›** opens the whole section. Booking tools and Test
+stuff sit along the top. On a phone each tile shows three lines; Today is paged like every section.
+
 ## The tabs
 
 Every section shows at once, so nothing hides behind a click. On a computer or tablet they sit at the top in **lanes**:

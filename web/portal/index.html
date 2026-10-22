@@ -35,6 +35,7 @@
 <link rel="stylesheet" href="/portal/social.css">
 <link rel="stylesheet" href="/portal/funnel.css">
 <link rel="stylesheet" href="/portal/onescreen.css">
+<link rel="stylesheet" href="/portal/dash.css">
 <link rel="stylesheet" href="/portal/frame.css">
 <link rel="stylesheet" href="/portal/pillars.css">
 <!-- The saved theme goes on before anything is drawn (no flash of the wrong colours) -->
@@ -296,8 +297,17 @@
         <h2>Today</h2>
         <p class="today-date" id="today-date"></p>
       </div>
-      <!-- At a glance, in two groups: the studio's clients, and the plan (each tile opens its section) -->
-      <div id="today-summary" class="today-groups">
+      <!-- Everything in one section (22 Oct 2026, the user: "rather then it being tabs you click to open an
+           area it's all in one section"): a live tile for every section, its count and its latest things,
+           each line opening that very thing (dash.js); Booking tools and Test stuff along the top -->
+      <div class="today-actions">
+        <button id="today-booking-tools" class="chip today-tools" type="button">Booking tools · week at a glance and free slots</button>
+        <!-- Admins: what looks like test stuff (teststuff.js; hidden when there's nothing) -->
+        <button id="today-tests" class="chip today-tools" type="button" hidden><span id="today-tests-n">Things look like tests</span> · look</button>
+      </div>
+      <div id="today-dash" class="dash-grid" aria-label="Everything at a glance"></div>
+      <!-- (the counters that were here, kept for the code that fills them: their numbers are in the tiles) -->
+      <div id="today-summary" class="today-groups" hidden>
         <section class="group" aria-labelledby="today-studio-head">
           <h3 class="group-head" id="today-studio-head">Studio</h3>
           <div class="today-grid">
@@ -307,9 +317,6 @@
             <button class="t-tile" type="button" data-go="bot"><span class="t-num t-icon" aria-hidden="true">✦</span><span class="t-label">Website bot</span></button>
             <button class="t-tile" type="button" data-go="money"><span class="t-num" id="t-money">–</span><span class="t-label">Invoices overdue</span></button>
           </div>
-          <button id="today-booking-tools" class="chip today-tools" type="button">Booking tools · week at a glance and free slots</button>
-          <!-- Admins: what looks like test stuff (teststuff.js; hidden when there's nothing) -->
-          <button id="today-tests" class="chip today-tools" type="button" hidden><span id="today-tests-n">Things look like tests</span> · look</button>
         </section>
         <section class="group" aria-labelledby="today-plans-head">
           <h3 class="group-head" id="today-plans-head">Plans</h3>
@@ -324,7 +331,7 @@
         <div class="today-sub"><h3 class="group-head" id="today-cal-head">Today's calendar</h3><button class="chip" type="button" data-go="calendar">Calendar</button></div>
         <div id="today-calendar" class="list"></div>
       </section>
-      <section class="group" aria-labelledby="today-new-head">
+      <section class="group" aria-labelledby="today-new-head" hidden>
         <div class="today-sub"><h3 class="group-head" id="today-new-head">New enquiries</h3><button class="chip" type="button" data-go="enquiries">See all</button></div>
         <div id="today-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
       </section>
@@ -1531,6 +1538,7 @@
 <script src="/portal/social.js"></script>
 <script src="/portal/funnel.js"></script>
 <script src="/portal/onescreen.js"></script>
+<script src="/portal/dash.js"></script>
 <script src="/portal/money.js"></script>
 <script src="/portal/teststuff.js"></script>
 <script src="/portal/google.js"></script>
