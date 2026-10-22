@@ -1,0 +1,70 @@
+/* One screen (onescreen.js): a box with more than fits shows it in pages; nothing in it scrolls.
+   Parts on other pages are out of the way altogether (display: none), so nothing is ever cut off. */
+[data-os-off] { display: none !important; }
+[data-os-paged] { overflow: hidden !important; scrollbar-width: none; }
+
+/* The page bar: at the bottom of its box, in the middle, over nothing (room is kept for it) */
+.os-pager {
+  position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); z-index: 6;
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px;
+  border-radius: 999px; border: 1px solid var(--line, rgb(255 255 255 / .14));
+  background: color-mix(in srgb, var(--panel, #1b1220) 82%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: 0 6px 18px -10px rgb(0 0 0 / .8);
+}
+.os-pager[hidden] { display: none; }
+.os-pager button {
+  display: grid; place-items: center; width: 40px; height: 30px; padding: 0; border-radius: 999px;
+  border: 1px solid var(--line, rgb(255 255 255 / .14)); background: color-mix(in srgb, var(--hi, #ff5fa8) 14%, transparent);
+  color: var(--bright, #fff); font: 600 19px/1 system-ui, sans-serif; cursor: pointer;
+}
+.os-pager button:hover:not(:disabled), .os-pager button:focus-visible { border-color: color-mix(in srgb, var(--hi, #ff5fa8) 60%, var(--line)); }
+.os-pager button:disabled { opacity: .3; cursor: default; }
+.os-count { min-width: 50px; text-align: center; white-space: nowrap; font-family: var(--f-mono, ui-monospace, monospace); font-size: 11px; letter-spacing: .08em; color: var(--muted, #bbb); }
+@media (pointer: coarse) { .os-pager button { width: 46px; height: 38px; } }
+/* (a box's own small bar inside a section, a drawer or a sheet: a little smaller) */
+[data-os-paged]:not(#main > .view) > .os-pager button { width: 34px; height: 26px; font-size: 16px; }
+@media (pointer: coarse) { [data-os-paged]:not(#main > .view) > .os-pager button { width: 42px; height: 34px; } }
+
+/* Turning a page: what's new fades in (calm) */
+[data-os-turn] > :not(.os-pager):not(.view-head):not([data-os-pin]) { animation: os-in .2s ease both; }
+@keyframes os-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { [data-os-turn] > * { animation: none !important; } }
+
+/* The Nova Tabs' drawers on a short screen (a phone on its side, a laptop with big text): smaller
+   buttons, more side by side, so a group's items all fit at once */
+@media (max-height: 520px) {
+  .pillar-drawer { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px; padding: 6px; }
+  .pillar-drawer .pillar-btn { min-height: 32px; padding: 2px 8px; font-size: 12px; }
+}
+/* Long rows of buttons wrap onto more rows, never slide sideways: the Admin pages' switch */
+html .pv .admin-switch { flex-wrap: wrap; justify-content: center; overflow: visible; }
+html .pv .admin-switch > * { margin-inline: 0 !important; }
+/* The Admin pages fill what's left of the section exactly (their own page is fitted inside: onescreen.js) */
+html.embed #view-admin:not([hidden]) { display: flex; flex-direction: column; flex: 1 1 auto; }
+html.embed .app > main:has(> #view-admin:not([hidden])) { flex: 1 1 auto; }
+html.embed .pv .admin-frame { flex: 1 1 auto; min-height: 0; }
+/* Alerts' auto-delete switch on a phone: its words a touch smaller so they fit on one line, with no
+   sideways sliding */
+@media (max-width: 440px) {
+  .auto-delete { padding: 8px 10px; gap: 8px; }
+  .auto-delete .switch { font-size: 12.5px; gap: 8px; }
+}
+/* Your profile on a narrow phone: the name a little smaller and the planet's buttons one per row, so
+   their words fit on one line with nothing sliding sideways */
+@media (max-width: 440px) {
+  .pv .person-name { font-size: clamp(22px, 7.6vw, 34px); }
+  .pv .action-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* Google's switches on a phone: each name on one line (a little smaller), never wrapping */
+@media (max-width: 480px) {
+  .gg-switch { gap: 8px; max-width: 100%; }
+  .gg-label { font-size: 12.5px; white-space: nowrap; overflow-wrap: normal; }
+}
+/* Google's buttons on a phone: their words on one line (a little smaller) */
+@media (max-width: 480px) {
+  .gg-body .btn, .gg-row .btn { font-size: 10.5px; letter-spacing: 0.04em; padding-left: 12px; padding-right: 12px; white-space: nowrap; }
+}
+/* A section in pages keeps the whole height (Portal's backdrop otherwise hugs what's in it, 20 Oct 2026:
+   with fewer parts showing it would shrink, and the pages with it). One that fits still hugs. */
+html.embed .app > main:has(> .view[data-os-paged]) { flex: 1 1 auto; }

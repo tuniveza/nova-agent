@@ -604,6 +604,30 @@
     }
     if (page === "crew") return;
     const frame = $("admin-frame");
+    if (!frame.dataset.oneScreen) {
+      // One screen inside the frame too (onescreen.js): the Admin page's main part is cut into pages
+      frame.dataset.oneScreen = "1";
+      frame.addEventListener("load", () => {
+        try {
+          const d = frame.contentDocument;
+          if (!d || !d.body || d.documentElement.classList.contains("os-frame")) return;
+          d.documentElement.classList.add("os-frame");
+          const style = d.createElement("style");
+          // (the whole page is the box: its header, with the Admin pages' own tabs, stays on every page
+          // when there's room, and is on the first page only on a short screen)
+          style.textContent = "html.os-frame, html.os-frame body { height: 100%; overflow: hidden; } html.os-frame body { margin: 0; box-sizing: border-box; } html.os-frame body > main { padding-bottom: 12px; }";
+          const head = d.querySelector("body > header");
+          if (head) head.setAttribute("data-os-pin", "");
+          const css = Object.assign(d.createElement("link"), { rel: "stylesheet", href: "/portal/onescreen.css" });
+          const js = Object.assign(d.createElement("script"), { src: "/portal/onescreen.js" });
+          js.addEventListener("load", () => frame.contentWindow.NovaOneScreen && frame.contentWindow.NovaOneScreen.adopt(d.body));
+          d.head.append(style, css);
+          d.body.append(js);
+        } catch (err) {
+          // (another site's page: left as it is)
+        }
+      });
+    }
     if (frame.dataset.page !== page) {
       frame.dataset.page = page;
       frame.src = page;

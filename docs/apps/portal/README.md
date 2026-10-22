@@ -45,6 +45,23 @@ Also fixed the same day:
 - Test stuff, Google and Computer are for admins by address too, not only by their hidden tabs.
 - Money's old invoice form is gone (invoices are written in the Invoicer).
 
+## One screen (22 October 2026)
+
+Every section the Nova Tabs open fits on one screen, on any phone, tablet, laptop or desktop, with no
+scrolling (`web/portal/onescreen.js`, `onescreen.css`). Whatever has more than fits is shown in pages:
+- **Turning pages:** the bar at the bottom (‹ 2 / 5 ›), a swipe (sideways or up and down), the mouse
+  wheel, or Page Up / Page Down and the arrow keys.
+- **The title row** (the section's name and buttons) stays on every page. On a small screen where it
+  would take more than a fifth of the height, it's on the first page only.
+- **Pages are cut between whole parts** (cards, rows, fields), and inside a part only when that one part is
+  taller than a page. A part that can't be split (the month, one long email) is made smaller to fit, down
+  to 55%; only past that does that one part scroll.
+- **What you're working on stays on screen:** when a section redraws, the page with what you last pressed
+  stays. Anything that jumps to a part of a section (a Nova Tabs item, a form opening) turns to its page.
+- **The same goes for:** the sheets (Options, Apps and links), the Nova Tabs' drawers, boxes inside a
+  section with their own height (Today's lists on a computer), and the Admin pages inside their frame.
+- A part opts out of being split with `data-os-keep`, and a box opts out with `data-os-skip`.
+
 ## The tabs
 
 Every section shows at once, so nothing hides behind a click. On a computer or tablet they sit at the top in **lanes**:

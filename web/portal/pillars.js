@@ -22,6 +22,8 @@
     const t0 = Date.now();
     (function look() {
       const el = typeof sel === "function" ? sel() : document.querySelector(sel);
+      // (on another page of its section: turned to first, onescreen.js)
+      if (el && window.NovaOneScreen) window.NovaOneScreen.reveal(el);
       if (el && (shown(el) || Date.now() - t0 > 900)) return fn(el);
       if (Date.now() - t0 > ms) return say("That isn't here just now.");
       setTimeout(look, 80);

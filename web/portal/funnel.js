@@ -153,7 +153,7 @@
       tile("Pending", n(c.pending), c.written ? `${n(c.written)} written` : "on the list", c.written ? "approve" : "write"),
       tile("Warming", n(c.warming), "in the queue", "warming"),
       tile("Sent", n(c.sent), "no reply yet", "sent"),
-      tile("Bounced / rejected", n(c.bounced), c.optedOut ? `${n(c.optedOut)} said no` : "", "bounced"),
+      tile("Bounced", n(c.bounced), c.optedOut ? `or rejected · ${n(c.optedOut)} said no` : "or rejected", "bounced"),
       tile("Replied", n(c.replied), "sequence stopped", "replied"),
       tile("Reply rate", c.replyRate === null ? "–" : `${c.replyRate}%`, "of everyone emailed", "replied"),
     ]);
@@ -302,7 +302,7 @@
 
   function card(p) {
     const editingThis = editing === p.id;
-    const isOpen = open.has(p.id) || p.step === "approve" || p.status === "warming";
+    const isOpen = open.has(p.id);
     const detail = details.get(p.id);
     const c = el("article", "card cp-card fn-card" + (p.status === "pending" || p.status === "warming" ? "" : " done"));
     c.dataset.key = "p-" + p.id;
@@ -335,6 +335,7 @@
     if (p.swaps && p.swaps.length) c.append(el("p", "appr-result", "Risky words rewritten: " + p.swaps.map((s) => `${s.from} → ${s.to}`).join(", ")));
 
     if (editingThis) c.append(fields(p));
+    else if (!isOpen && p.subject) c.append(el("p", "fn-subject", "Subject: " + p.subject));
     else if (isOpen && p.subject) {
       c.append(el("p", "fn-subject", "Subject: " + p.subject));
       c.append(el("div", "cp-plain", detail && detail.email ? detail.email : p.body));
@@ -393,11 +394,7 @@
         a.rel = "noopener";
         row.append(a);
       }
-      if (p.status !== "pending" && p.status !== "warming" && p.subject) {
-        button(open.has(p.id) ? "Hide email" : "Show email", "ghost", () => toggle(p));
-      } else if (p.subject && !open.has(p.id)) {
-        button("History", "ghost", () => toggle(p));
-      }
+      if (p.subject) button(open.has(p.id) ? "Hide email" : "Show email", "ghost", () => toggle(p));
       if (p.status === "pending" || p.status === "warming" || p.status === "sent") {
         twice("Said no", "Never email them?", "ghost", () => act(`funnel/${p.id}/stop`, { why: "opted_out" }, "Recorded: they won't be emailed this way again."));
       }
@@ -645,6 +642,12 @@
     });
     form.addEventListener("submit", addList);
     $("funnel-draft").addEventListener("click", () => write(null));
+    $("funnel-settings-open").addEventListener("click", () => {
+      const wrap = $("funnel-settings-wrap");
+      wrap.hidden = !wrap.hidden;
+      $("funnel-settings-open").setAttribute("aria-expanded", String(!wrap.hidden));
+      if (!wrap.hidden) wrap.scrollIntoView({ block: "start" });
+    });
     $("funnel-run").addEventListener("click", () => {
       if (!data) return;
       const start = data.settings.paused;

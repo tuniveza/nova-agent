@@ -15,7 +15,7 @@
 .fn-line.muted { color: var(--muted); }
 
 /* At a glance: one tile per state, and the reply rate (a tile shows that part of the list) */
-.fn-glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr)); gap: 10px; margin: 0 0 14px; min-width: 0; }
+.fn-glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr)); gap: 10px; margin: 0 0 14px; min-width: 0; }
 .fn-tile { display: grid; gap: 3px; align-content: start; text-align: left; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); min-width: 0; color: inherit; font: inherit; cursor: pointer; }
 .fn-tile:hover, .fn-tile:focus-visible { border-color: var(--line-strong); }
 .fn-tile.on { border-color: var(--line-strong); background: rgba(var(--glow-rgb), 0.12); }
@@ -23,6 +23,9 @@
 .fn-tile b { color: var(--bright); font-size: 22px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .fn-tile small { color: var(--muted); font-size: 12.5px; }
 @media (max-width: 600px) {
+  /* (a phone: the buttons smaller, so the title row takes less of the screen) */
+  .fn .fn-head { gap: 5px; }
+  .fn .fn-head .chip { min-height: 32px; padding: 0 10px; font-size: 10px; letter-spacing: 0.08em; }
   .fn-glance { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .fn-tile { padding: 8px 9px; border-radius: 12px; }
   .fn-tile b { font-size: 18px; }
@@ -70,5 +73,10 @@
 .fn-settings input[type="number"] { width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(var(--void-rgb), 0.6); color: var(--bright); font-size: 16px; }
 .fn-sub { margin: 6px 0 0; }
 .fn-pitch { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; min-width: 0; }
-.fn-pitch textarea { min-height: 64px; }
+.fn-pitch textarea { min-height: 64px; field-sizing: content; }
+/* (one screen: shorter bars and tighter rows, so more of the list shows on each page) */
+.fn .fn-bars { height: 48px; margin-top: 10px; }
+.fn .fn-warmup { padding-top: 12px; padding-bottom: 10px; }
+.fn .fn-card .actions { margin-top: 10px; }
+.fn .fn-card .fn-scores { margin-top: 8px; }
 .fn-risky summary { cursor: pointer; color: var(--text); font-size: 13.5px; }

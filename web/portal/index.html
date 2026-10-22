@@ -34,6 +34,7 @@
 <link rel="stylesheet" href="/portal/tabbar.css" id="tabbar-css">
 <link rel="stylesheet" href="/portal/social.css">
 <link rel="stylesheet" href="/portal/funnel.css">
+<link rel="stylesheet" href="/portal/onescreen.css">
 <link rel="stylesheet" href="/portal/frame.css">
 <link rel="stylesheet" href="/portal/pillars.css">
 <!-- The saved theme goes on before anything is drawn (no flash of the wrong colours) -->
@@ -563,6 +564,7 @@
           <button id="funnel-draft" class="chip" type="button">Write drafts</button>
           <button id="funnel-run" class="chip" type="button" aria-pressed="false">Start sending</button>
           <a id="funnel-export" class="chip" href="/app/api/funnel/export.csv" download>Export CSV</a>
+          <button id="funnel-settings-open" class="chip" type="button" aria-expanded="false" aria-controls="funnel-settings-wrap">Settings</button>
         </div>
       </div>
       <p class="hint">First emails to artists, producers, engineers, managers, labels and podcasters, sent slowly from the studio's Gmail. Nothing goes until an admin approves it, and anyone can pause it.</p>
@@ -585,8 +587,11 @@
       <div id="funnel-filter" class="chips fn-filter" role="group" aria-label="Show"></div>
       <div id="funnel-bulk" class="actions fn-bulk"></div>
       <div id="funnel-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
-      <h3 class="group-head">Funnel settings</h3>
-      <div id="funnel-settings" class="card cp-form fn-settings"></div>
+      <!-- The settings, behind their button (one screen: onescreen.js) -->
+      <div id="funnel-settings-wrap" hidden>
+        <h3 class="group-head">Funnel settings</h3>
+        <div id="funnel-settings" class="card cp-form fn-settings"></div>
+      </div>
     </section>
 
     <!-- Money: invoices to clients, payments and the studio's expenses (Nova Bot's src/money.js; drawn by
@@ -1523,6 +1528,7 @@
 <script src="/portal/app.js"></script>
 <script src="/portal/social.js"></script>
 <script src="/portal/funnel.js"></script>
+<script src="/portal/onescreen.js"></script>
 <script src="/portal/money.js"></script>
 <script src="/portal/teststuff.js"></script>
 <script src="/portal/google.js"></script>
