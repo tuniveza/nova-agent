@@ -34,7 +34,7 @@
 
   const state = new WeakMap(); // box -> { page, pages, leaves, parents, pager, key }
   const touched = { key: "", el: null, at: 0 }; // what was last pressed in a box
-  const asked = { el: null, at: 0 }; // what was last asked to come into view (it wins over everything)
+  const asked = { el: null, at: 0 }; // what was last asked to come into view (it wins over everything for 8 s: a section may finish loading after the jump)
   const changed = new Set(); // elements whose style we changed (zoom, max-height…), to put back
   let busy = false; // (while laying out: our own changes aren't a reason to lay out again)
 
@@ -178,7 +178,7 @@
       if (i < 0) i = st.leaves.findIndex((l) => el.contains(l));
       return i < 0 ? -1 : st.pages.findIndex(([s, e]) => i >= s && i < e);
     };
-    if (asked.el && Date.now() - asked.at < 3000) {
+    if (asked.el && Date.now() - asked.at < 8000) {
       const p = find(asked.el);
       if (p >= 0) return p;
     }
@@ -235,6 +235,7 @@
     st.pos = st.leaves.map(outer);
     st.pages = pack(st.leaves, room, st.pos);
     showPage(box, st, wantedPage(box, st, memo));
+    follow(box, st);
   }
 
   // Check the page showing really fits (paddings and gaps of the boxes around the parts, a grid's rows):
@@ -327,6 +328,22 @@
     return true;
   }
 
+  // The page el is on (the part it's in, or the first part inside it), or -1
+  function pageOf(st, el) {
+    let i = st.leaves.findIndex((l) => l === el || l.contains(el));
+    if (i < 0) i = st.leaves.findIndex((l) => el.contains(l));
+    return i < 0 ? -1 : st.pages.findIndex(([s, e]) => i >= s && i < e);
+  }
+  // Fitting a page can move its last part on to the next: if that was what was asked for, follow it
+  function follow(box, st) {
+    const el = asked.el && Date.now() - asked.at < 8000 && box.contains(asked.el) ? asked.el : null;
+    for (let i = 0; el && i < 3 && (el.hasAttribute(OFF) || el.closest(`[${OFF}]`)); i++) {
+      const p = pageOf(st, el);
+      if (p < 0 || p === st.page) break;
+      showPage(box, st, p);
+    }
+  }
+
   // ---- Laying out everything on screen (after changes settle) ----
   let timer = 0;
   let lastRun = 0;
@@ -397,6 +414,7 @@
       if (p >= 0 && p !== st.page) {
         busy = true;
         showPage(box, st, p);
+        follow(box, st);
         watch(box);
         if (mo) mo.takeRecords();
         busy = false;
@@ -523,6 +541,8 @@
     turn,
     // Lay out this box too (a page that isn't a Portal section: an Admin page inside its frame)
     adopt(el) { if (el) { adopted.add(el); soon(30); } return this; },
+    // What it was last asked to show and last saw pressed (for checking)
+    get last() { return { asked: asked.el, askedAt: asked.at, touched: touched.el, touchedAt: touched.at }; },
     // How many times it has laid out (to check it's quiet when nothing changes)
     get runs() { return runs; },
     // Where a box is: { page, pages } (pages 1 = it fits)
