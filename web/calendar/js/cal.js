@@ -367,7 +367,8 @@ function drawMonth() {
   // a moment that then changed in ways its size didn't show, and cards were left cut, 22 Oct 2026)
   for (const t of lateFits) clearTimeout(t);
   const drawn = view.querySelector(".month .grid");
-  lateFits = [700, 2500].map((ms) => setTimeout(() => { if (drawn.isConnected) fitMonth(); }, ms));
+  // (these always fit: what they're for changes nothing the skip below can see)
+  lateFits = [700, 2500].map((ms) => setTimeout(() => { if (drawn.isConnected) fitMonth(true); }, ms));
   // (the days' size changing without the window's, a scroll bar coming or going: they fit again)
   if (typeof ResizeObserver === "function") {
     const grid = view.querySelector(".month .grid");
@@ -452,6 +453,20 @@ function infoLine(e) {
 // it needs measured (its test, over, or another read); fitInfoAll runs them all, and the answers come back in.)
 function fitInfo(c) { fitInfoAll([c]); }
 function fitInfoAll(cells) {
+  stepAll(cells);
+  // (a week's days share its height: as the busier days in a row get smaller the row can get shorter, and a
+  // day that fitted earlier no longer does. So once more for any day left cut, now its neighbours are done,
+  // until none are, at most four rounds; each round only makes things smaller, so it settles)
+  for (let round = 0; round < 4; round++) {
+    const cut = cells.filter((c) => { const card = c.querySelector(":scope > .dayinfo"); return card && !card.classList.contains("fit-hide") && cardCut(c, card); });
+    if (!cut.length) break;
+    stepAll(cut);
+  }
+  // (each card's size as fitted, so its own fitting never reads as a change that fits it again: that ran on
+  // and on, 30 rounds a minute, keeping a tablet busy while nothing happened)
+  for (const c of cells) { const card = c.querySelector(":scope > .dayinfo"); if (card) card.dataset.size = `${card.clientWidth}x${card.clientHeight}`; }
+}
+function stepAll(cells) {
   let live = [];
   // (the steps' changes, all days at once; then all the measuring, one layout; then the next step)
   for (const c of cells) { const g = fitInfoSteps(c); const r = g.next(); if (!r.done) live.push({ g, over: r.value }); }
@@ -461,9 +476,13 @@ function fitInfoAll(cells) {
     live.forEach((x, i) => { const r = x.g.next(said[i]); if (!r.done) next.push({ g: x.g, over: r.value }); });
     live = next;
   }
-  // (each card's size as fitted, so its own fitting never reads as a change that fits it again: that ran on
-  // and on, 30 rounds a minute, keeping a tablet busy while nothing happened)
-  for (const c of cells) { const card = c.querySelector(":scope > .dayinfo"); if (card) card.dataset.size = `${card.clientWidth}x${card.clientHeight}`; }
+}
+// (a day's card running over: what fitInfoSteps' test checks)
+function cardCut(c, card) {
+  if (c.scrollHeight > c.clientHeight + 1 || card.scrollWidth > card.clientWidth + 1) return true;
+  if ([...card.querySelectorAll(":scope > *, .di-in")].some((k) => k.offsetParent && k.scrollWidth > k.clientWidth + 1)) return true;
+  const r = card.getBoundingClientRect();
+  return [...card.children].some((k) => { const b = k.getBoundingClientRect(); return b.height > 0 && (b.bottom > r.bottom + 0.5 || b.right > r.right + 0.5); });
 }
 function* fitInfoSteps(c) {
   const card = c.querySelector(":scope > .dayinfo");
@@ -475,13 +494,8 @@ function* fitInfoSteps(c) {
   for (const l of lines) l.classList.remove("fit-hide");
   // (the card can't grow past its day: what doesn't fit shows as the card itself running over)
   // (measured by where its little cards end, to the pixel: rounding let a card's bottom edge go under the day's)
-  const over = () => {
-    if (c.scrollHeight > c.clientHeight + 1 || card.scrollWidth > card.clientWidth + 1) return true;
-    // (a card whose words run past its side: they're on one line, so it needs smaller words or room)
-    if ([...card.querySelectorAll(":scope > *, .di-in")].some((k) => k.offsetParent && k.scrollWidth > k.clientWidth + 1)) return true;
-    const r = card.getBoundingClientRect();
-    return [...card.children].some((k) => { const b = k.getBoundingClientRect(); return b.height > 0 && (b.bottom > r.bottom + 0.5 || b.right > r.right + 0.5); });
-  };
+  // (a card whose words run past its side counts too: they're on one line, so it needs smaller words or room)
+  const over = () => cardCut(c, card);
   // (every card in sight first: the words a step smaller at a time, down to a size still easy to read)
   // (a busy day's cards sit two side by side before the words get small)
   c.style.removeProperty("--di-fs");
@@ -588,11 +602,14 @@ function pageWeeks(grid, cells) {
   const room = grid.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) + (grid.classList.contains("wk-paged") ? WK_BAR : 0);
   const fits = (h) => Math.max(1, Math.floor((h + gap) / (min + gap)));
   if (!min || fits(room) >= weeks) {
-    grid.classList.remove("wk-paged");
+    grid.classList.remove("wk-paged", "wk-tiny");
     if (bar) bar.remove();
     return;
   }
   grid.classList.add("wk-paged");
+  // (not even one week at the readable height under the week bar, a very short screen: the week takes the
+  // height there is, its days showing what fits and "More", never cut, 22 Oct 2026)
+  grid.classList.toggle("wk-tiny", room - WK_BAR + gap < min + gap);
   const per = fits(room - WK_BAR);
   const pages = Math.ceil(weeks / per);
   // (a new month opens on the chosen day's week, or its first; turning keeps to whole pages)
@@ -629,11 +646,15 @@ function pageWeeks(grid, cells) {
 // so layouts of the whole month, 22 Oct 2026)
 let fitted = null, fontGen = 0;
 document.fonts?.addEventListener?.("loadingdone", () => fontGen++);
-function fitMonth() {
+function fitMonth(always = false) {
   const grid = view.querySelector(".month .grid");
   if (!grid) return;
   const key = `${grid.clientWidth}x${grid.clientHeight}|${fontGen}|${weekAt}`;
-  if (fitted && fitted.grid === grid && fitted.key === key) return;
+  if (fitted && fitted.grid === grid && fitted.key === key) {
+    if (!always) return;
+    // (a late fit: one look first, and the steps only if a day is cut: one layout instead of a dozen)
+    if (grid.classList.contains("textual") && ![...grid.querySelectorAll(":scope > .cell > .dayinfo:not(.fit-hide)")].some((card) => cardCut(card.parentElement, card))) return;
+  }
   fitMonthNow(grid);
   // (the size as it ended up: a fit can change it, the week bar coming or going)
   fitted = { grid, key: `${grid.clientWidth}x${grid.clientHeight}|${fontGen}|${weekAt}` };

@@ -388,6 +388,10 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
    left, clear of the round + at the bottom right and of the day's plan under or beside the month) */
 .month > .grid > .cell.wk-off, .month > .grid.textual > .cell.wk-off { display: none !important; }
 .month > .grid.wk-paged { position: relative; padding-bottom: 44px !important; }
+/* (a very short screen: the week shown takes the room there is, cal.js pageWeeks wk-tiny; and the holiday
+   line steps aside, the days themselves show them) */
+.month > .grid.wk-tiny { grid-auto-rows: minmax(0, 1fr) !important; }
+@media (max-height: 420px) { .month > .strip { display: none !important; } }
 .month > .grid > .wk-pager { left: 8px; right: auto; bottom: 4px; transform: none; }
 /* A booking's name: a long word breaks inside the card instead of being cut at its side, and what
    doesn't fit in its lines ends with … (tap the card for all of it) */
