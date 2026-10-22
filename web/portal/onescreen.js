@@ -29,6 +29,10 @@
   // Boxes that aren't sections or set-height boxes inside them
   const EXTRA = ".sheet:not([hidden]) > .sheet-card, .pillar-drawer";
   const SMALLEST = 0.55;
+  // A page with room left over takes the next row too, drawn a little smaller (never under this), so
+  // the box is full before the next page (22 Oct 2026, the user, on Alerts: "the area needs to be fully
+  // filled up before it decides to go to the next group")
+  const FILL = 0.75;
   const embed = () => document.documentElement.classList.contains("embed");
   const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -122,8 +126,9 @@
       } else out.push(c);
     }
   }
-  // pos: each part's place, measured once with everything showing (hidden parts measure nothing)
-  function pack(leaves, room, pos) {
+  // pos: each part's place, measured once with everything showing (hidden parts measure nothing).
+  // A page is [first, end, size]: size under 1 when it's drawn smaller to take the next row too.
+  function pack(leaves, room, pos, fill) {
     const pages = [];
     let s = 0;
     while (s < leaves.length) {
@@ -131,11 +136,40 @@
       let bottom = pos[s].bottom;
       while (e < leaves.length && Math.max(bottom, pos[e].bottom) - pos[s].top <= room) bottom = Math.max(bottom, pos[e++].bottom);
       // (a heading isn't left at the foot of a page with what it heads on the next)
-      if (e < leaves.length && e - s > 1 && leaves[e - 1].matches(HEADING)) e--;
-      pages.push([s, e]);
+      if (e < leaves.length && e - s > 1 && leaves[e - 1].matches(HEADING)) {
+        e--;
+        bottom = Math.max(...pos.slice(s, e).map((p) => p.bottom));
+      }
+      // Room left over: the next part and any beside it (a row of cards), all a little smaller
+      let size = 1;
+      if (fill && e < leaves.length && room - (bottom - pos[s].top) > room * 0.08 && !leaves[e].matches("tr")) {
+        let f = e + 1;
+        let b = pos[e].bottom;
+        while (f < leaves.length && Math.abs(pos[f].top - pos[e].top) < 2) b = Math.max(b, pos[f++].bottom);
+        const k = Math.floor(((room - 4) / (Math.max(bottom, b) - pos[s].top)) * 1000) / 1000;
+        if (k >= FILL && !(f < leaves.length && leaves[f - 1].matches(HEADING))) {
+          e = f;
+          size = Math.min(0.99, k);
+        }
+      }
+      pages.push([s, e, size]);
       s = e;
     }
     return pages;
+  }
+  // Each part on a page drawn at the page's size (one drawn smaller for an earlier page is put back)
+  function sizePage(st, n) {
+    const [s, e, size = 1] = st.pages[n];
+    for (let i = s; i < e; i++) {
+      const leaf = st.leaves[i];
+      if (size < 1) {
+        setStyle(leaf, "zoom", String(size));
+        leaf.setAttribute("data-os-fill", "");
+      } else if (leaf.hasAttribute("data-os-fill")) {
+        leaf.style.removeProperty("zoom");
+        leaf.removeAttribute("data-os-fill");
+      }
+    }
   }
   function showPage(box, st, n) {
     const [s, e] = st.pages[n];
@@ -147,6 +181,7 @@
       for (let i = s; i < e; i++) st.leaves[i].removeAttribute(OFF);
     }
     st.showing = [s, e];
+    sizePage(st, n);
     const on = new Set();
     for (let i = s; i < e; i++) for (let a = st.leaves[i].parentElement; a && a !== box && !on.has(a); a = a.parentElement) on.add(a);
     for (const p of st.parents) p.toggleAttribute(OFF, !on.has(p));
@@ -162,7 +197,7 @@
 
   function reset(box) {
     for (const el of box.querySelectorAll(`[${OFF}]`)) el.removeAttribute(OFF);
-    for (const el of box.querySelectorAll("[data-os-last]")) el.removeAttribute("data-os-last");
+    for (const el of box.querySelectorAll("[data-os-last], [data-os-fill]")) el.removeAttribute("data-os-last"), el.removeAttribute("data-os-fill");
     putBackStyles(box);
     box.querySelector(":scope > .os-pager")?.remove();
     box.removeAttribute("data-os-paged");
@@ -218,7 +253,12 @@
     // (the bar sits at the bottom of the box, with room kept for it under the page)
     if (getComputedStyle(box).position === "static") setStyle(box, "position", "relative");
     const bar = box.querySelector(":scope > .os-pager");
-    setStyle(box, "padding-bottom", `${parseFloat(getComputedStyle(box).paddingBottom) + bar.offsetHeight + 6}px`);
+    // (on a short screen, a phone on its side, the bar stands at the right instead: the height is the
+    // pages')
+    const side = innerHeight <= 500 && box.clientWidth >= 420;
+    bar.classList.toggle("os-side", side);
+    if (side) setStyle(box, "padding-right", `${parseFloat(getComputedStyle(box).paddingRight) + bar.offsetWidth + 6}px`);
+    else setStyle(box, "padding-bottom", `${parseFloat(getComputedStyle(box).paddingBottom) + bar.offsetHeight + 6}px`);
     const cs = getComputedStyle(box);
     // (the title row stays on every page, unless it would take more than a fifth of a small screen:
     // then it's on the first page only, and the pages have the room)
@@ -233,7 +273,9 @@
     if (!st.leaves.length) return;
     st.room = room;
     st.pos = st.leaves.map(outer);
-    st.pages = pack(st.leaves, room, st.pos);
+    // (sections and Admin pages are filled; a drawer or a sheet's form keeps its size)
+    st.fill = !box.matches(EXTRA);
+    st.pages = pack(st.leaves, room, st.pos, st.fill);
     showPage(box, st, wantedPage(box, st, memo));
     follow(box, st);
   }
@@ -244,11 +286,24 @@
     const room = st.room;
     st.lastOver = undefined;
     st.scaled = null;
+    st.refilled = false;
+    st.long = null;
     for (let guard = 0; guard < 60 && !fits(box); guard++) {
-      const [s, e] = st.pages[st.pages.length ? st.page : 0];
+      const [s, e, size = 1] = st.pages[st.pages.length ? st.page : 0];
+      // (a page drawn smaller to be full: a little smaller again first, then without its last row)
+      if (size < 1) {
+        const over = box.scrollHeight - box.clientHeight;
+        const k = Math.floor(size * (1 - (over + 3) / Math.max(1, room)) * 1000) / 1000;
+        if (k >= FILL - 0.03 && !st.refilled) {
+          st.pages[st.page] = [s, e, k];
+          st.refilled = true;
+          showPage(box, st, st.page);
+          continue;
+        }
+      }
       if (e - s > 1) {
-        const rest = pack(st.leaves.slice(e - 1), room, st.pos.slice(e - 1)).map(([a, b]) => [a + e - 1, b + e - 1]);
-        st.pages = [...st.pages.slice(0, st.page), [s, e - 1], ...rest];
+        const rest = pack(st.leaves.slice(e - 1), room, st.pos.slice(e - 1), st.fill).map(([a, b, k]) => [a + e - 1, b + e - 1, k]);
+        st.pages = [...st.pages.slice(0, st.page), [s, e - 1, 1], ...rest];
         showPage(box, st, st.page);
         continue;
       }
@@ -260,16 +315,29 @@
       // (in steps: its margins and the boxes round it shrink with it, so it's looked at again each time;
       // when a step doesn't help, it's drawn smaller instead, keeping its shape)
       const now = parseFloat(leaf.style.zoom) || 1;
+      // (words that wouldn't fit even at the smallest aren't made smaller at all: they keep their size and
+      // is gone through a screenful at a time, below)
+      const k1 = st.scaled && st.scaled.leaf === leaf ? st.scaled.k : 1;
+      // (only words: a month, a form or a list of buttons is made smaller instead, as far as it takes)
+      const words = leaf.matches("p, pre, blockquote, dd, .details, .cp-plain") || !leaf.querySelector("button, a, input, select, textarea, svg, img, canvas, video, table, [role=grid]");
+      if (words && st.long !== leaf && h > 0 && now * k1 * ((h - over - 2) / h) < SMALLEST) {
+        st.long = leaf;
+        if (now !== 1 || k1 !== 1) {
+          for (const prop of ["zoom", "transform", "transform-origin", "margin-bottom"]) leaf.style.removeProperty(prop);
+          st.scaled = null;
+          continue;
+        }
+      }
       const helped = st.lastOver === undefined || st.lastLeaf !== leaf || over < st.lastOver - 0.5;
       st.lastOver = over;
       st.lastLeaf = leaf;
-      if (helped && now > SMALLEST + 0.001 && h > 0) {
+      if (st.long !== leaf && helped && now > SMALLEST + 0.001 && h > 0) {
         setStyle(leaf, "zoom", String(Math.floor(Math.max(SMALLEST, now * Math.min(0.99, (h - over - 2) / h)) * 1000) / 1000));
         continue;
       }
       // (lengths set on a part that's already smaller are in its own smaller units: divided by its zoom)
       const k0 = st.scaled && st.scaled.leaf === leaf ? st.scaled.k : 1;
-      if (k0 > SMALLEST + 0.001 && h > 0) {
+      if (st.long !== leaf && k0 > SMALLEST + 0.001 && h > 0) {
         const k = Math.max(SMALLEST, k0 * Math.min(0.995, (h - over - 2) / h));
         const full = h / k0; // its height before any scaling, on screen
         st.scaled = { leaf, k };
@@ -278,9 +346,15 @@
         setStyle(leaf, "margin-bottom", `${-Math.ceil((full * (1 - k)) / now)}px`);
         continue;
       }
+      // (still too tall, one long email's words: it shows as much as fits, in whole lines, and turning
+      // the page moves on through it first; nothing scrolls)
+      const cs = getComputedStyle(leaf);
+      const line = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.45 || 20;
+      const pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const lines = Math.max(2, Math.floor(((h - over - 4) / now - pad) / line));
       leaf.setAttribute("data-os-last", "");
-      setStyle(leaf, "max-height", `${Math.max(60, (h - over - 4) / now)}px`);
-      setStyle(leaf, "overflow-y", "auto");
+      setStyle(leaf, "max-height", `${Math.round(lines * line + pad)}px`);
+      setStyle(leaf, "overflow", "hidden");
       break;
     }
   }
@@ -300,14 +374,31 @@
     }
     const total = Math.max(1, st.pages.length);
     bar.querySelector(".os-count").textContent = `${st.page + 1} / ${total}`;
-    bar.querySelector(".os-prev").disabled = st.page <= 0;
-    bar.querySelector(".os-next").disabled = st.page >= total - 1;
-    bar.hidden = total <= 1 && st.pages.length > 0;
+    const long = longPart(box);
+    const more = long && long.scrollTop + long.clientHeight < long.scrollHeight - 1;
+    bar.querySelector(".os-prev").disabled = st.page <= 0 && !(long && long.scrollTop > 0);
+    bar.querySelector(".os-next").disabled = st.page >= total - 1 && !more;
+    bar.hidden = total <= 1 && st.pages.length > 0 && !long;
   }
 
+  // A part too long for any page on the page showing (one long email's words), or null
+  const longPart = (box) => [...box.querySelectorAll("[data-os-last]")].find((el) => !el.closest(`[${OFF}]`) && el.closest("[data-os-paged]") === box) || null;
+  // How far one step through it goes: what shows, in whole lines
+  function stepOf(el) {
+    const cs = getComputedStyle(el);
+    const line = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.45 || 20;
+    return Math.max(line, Math.floor((el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) / line) * line);
+  }
   function turn(box, by) {
     const st = state.get(box);
     if (!st || !st.pages.length) return false;
+    // (a long part on this page is gone through first, a screenful of lines at a time)
+    const long = longPart(box);
+    if (long && (by > 0 ? long.scrollTop + long.clientHeight < long.scrollHeight - 1 : long.scrollTop > 0)) {
+      long.scrollTop += by * stepOf(long);
+      drawPager(box, st);
+      return true;
+    }
     const n = Math.max(0, Math.min(st.pages.length - 1, st.page + by));
     if (n === st.page) return false;
     // (turning on purpose: what was pressed or jumped to before doesn't pull it back)
@@ -317,6 +408,10 @@
     showPage(box, st, n);
     // (inner boxes on the new page are laid out too)
     for (const inner of innerBoxes(box)) layout(inner, { fresh: true });
+    // (going back into a long part starts at its end)
+    const back = by < 0 && longPart(box);
+    if (back) back.scrollTop = back.scrollHeight;
+    drawPager(box, st);
     watch(box);
     if (mo) mo.takeRecords();
     busy = false;

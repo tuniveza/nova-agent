@@ -54,8 +54,13 @@ scrolling (`web/portal/onescreen.js`, `onescreen.css`). Whatever has more than f
 - **The title row** (the section's name and buttons) stays on every page. On a small screen where it
   would take more than a fifth of the height, it's on the first page only.
 - **Pages are cut between whole parts** (cards, rows, fields), and inside a part only when that one part is
-  taller than a page. A part that can't be split (the month, one long email) is made smaller to fit, down
-  to 55%; only past that does that one part scroll.
+  taller than a page. A part that can't be split (the month) is made smaller to fit, down to 55%.
+- **Every page is full:** a page with room left over takes the next row too (a row of Alerts' cards),
+  drawn a little smaller, down to 75%, so the box is filled before the next page.
+- **Nothing scrolls, ever:** one long email's words that wouldn't fit even at 55% keep their size and
+  show as many whole lines as fit; turning the page goes on through them first.
+- **A short screen** (a phone on its side): the page bar stands upright at the right, so the pages keep
+  the height.
 - **What you're working on stays on screen:** when a section redraws, the page with what you last pressed
   stays. Anything that jumps to a part of a section (a Nova Tabs item, a form opening) turns to its page.
 - **The same goes for:** the sheets (Options, Apps and links), the Nova Tabs' drawers, boxes inside a

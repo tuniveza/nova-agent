@@ -26,6 +26,12 @@
 [data-os-paged]:not(#main > .view) > .os-pager button { width: 34px; height: 26px; font-size: 16px; }
 @media (pointer: coarse) { [data-os-paged]:not(#main > .view) > .os-pager button { width: 42px; height: 34px; } }
 
+/* On a short screen (a phone on its side) the bar stands upright at the right, so the pages keep the
+   height */
+.os-pager.os-side { left: auto; right: 4px; top: 50%; bottom: auto; transform: translateY(-50%); flex-direction: column; gap: 3px; }
+.os-pager.os-side .os-count { min-width: 0; font-size: 10px; letter-spacing: 0; }
+html .os-pager.os-side button { width: 38px; height: 34px; }
+
 /* Turning a page: what's new fades in (calm) */
 [data-os-turn] > :not(.os-pager):not(.view-head):not([data-os-pin]) { animation: os-in .2s ease both; }
 @keyframes os-in { from { opacity: 0; } }
