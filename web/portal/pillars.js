@@ -608,8 +608,28 @@
   // pane for easier identification"): every section is framed in its Nova Tab's colour, with its icon
   // beside its title, and named (data-pane: "Inbox · Enquiries") so it can be pointed at ----
   const PANE_OF = { today: ["", "Today"], me: ["You", "Your profile"], profile: ["You", "Your profile"], admin: ["Admin", "Admin pages"], crew: ["Admin", "The crew"] };
+  // (a pane too small for its words, a phone's Inbox or anything on a phone on its side, turns into plain
+  // text, terminal style: the user, 22 Oct 2026, "can the ui become more tui if it get so small that
+  // area's are collapsing and can't see text"; dash.css [data-tui])
+  const TUI_H = 230, TUI_W = 280;
+  const tuiWatch = "ResizeObserver" in window ? new ResizeObserver((list) => {
+    let changed = false;
+    for (const { target: v } of list) {
+      const w = v.clientWidth, h = v.clientHeight;
+      if (!w || !h) continue;
+      const on = document.documentElement.classList.contains("embed") && (h < TUI_H || w < TUI_W);
+      if (v.hasAttribute("data-tui") === on) continue;
+      v.toggleAttribute("data-tui", on);
+      changed = true;
+    }
+    if (changed && window.NovaOneScreen) window.NovaOneScreen.now();
+  }) : null;
   function paneUp() {
     for (const v of document.querySelectorAll("#main > .view")) {
+      if (tuiWatch && !v.dataset.tuiWatch) {
+        v.dataset.tuiWatch = "1";
+        tuiWatch.observe(v);
+      }
       const key = v.id.replace(/^view-/, "");
       let group = "", name = "";
       if (key === "group") {

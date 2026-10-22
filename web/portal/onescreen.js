@@ -113,14 +113,19 @@
   function pinsOf(box) {
     return [...box.children].filter((c) => (c.matches(".view-head, [data-os-pin]") || (box.matches(".sheet-card") && c.matches(".sheet-head, header, .sheet-top"))) && shown(c));
   }
-  // The parts, in order: a part goes in whole unless it alone is taller than a page and has parts of its own
+  // The parts, in order: a part goes in whole unless it alone is taller than a page and has parts of its own.
+  // In a small box (under 300px of page), a list of rows taller than a third of a page is cut between its rows
+  // too, so it starts on the page it's on instead of leaving that page half empty (22 Oct 2026: a phone's
+  // Inbox panes; a bigger box keeps a list whole and draws the page a little smaller to fit it instead)
+  const ROWS = '.list, ul, ol, [role="list"]';
   function partsOf(container, room, pins, out, parents, depth) {
     for (const c of container.children) {
       if (pins.includes(c) || ours(c) || !shown(c) || floating(c)) continue;
       const h = c.getBoundingClientRect().height;
       if (h < 1) continue;
       const kids = [...c.children].filter((k) => shown(k) && !floating(k) && !ours(k));
-      if (h > room && depth < 8 && !c.matches(KEEP) && kids.length >= 1) {
+      const rows = room < 300 && kids.length >= 2 && h > room / 3 && c.matches(ROWS);
+      if ((h > room || rows) && depth < 8 && !c.matches(KEEP) && kids.length >= 1) {
         parents.push(c);
         partsOf(c, room, pins, out, parents, depth + 1);
       } else out.push(c);

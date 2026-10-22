@@ -68,8 +68,8 @@ html.embed #view-today:not([hidden]):has(> #today-dash) { display: block; }
 .gs-more { display: none; }
 .group-strip .pillar-badge { position: static !important; transform: none !important; margin: 0 !important; }
 @media (pointer: coarse) { .gs-tab { height: 40px; } .gs-act, .gs-more { height: 36px; } }
-/* (a phone: the tabs, then More for the group's other items) */
-@media (max-width: 560px) {
+/* (a phone, or a phone on its side: the tabs, then More for the group's other items) */
+@media (max-width: 560px), (max-height: 500px) {
   .group-strip { gap: 4px; margin-bottom: 6px; padding-bottom: 6px; }
   .gs-tabs { gap: 2px; }
   .gs-tab { height: 32px; padding: 0 7px; font-size: 11.5px; gap: 4px; }
@@ -217,9 +217,9 @@ html #main.inbox-all #view-alerts .settings-row { justify-content: flex-start; }
 #enquiry-list > .card.open > .ib-line .al-title { visibility: hidden; }
 /* (a phone on its side: everything a size smaller, so the panes keep their rows) */
 @media (max-height: 500px) {
-  #main.inbox-all > .group-strip { margin-bottom: 4px; padding-bottom: 4px; }
-  #main.inbox-all > .group-strip .gs-tab { height: 28px; }
-  #main.inbox-all > .group-strip :is(.gs-act, .gs-more) { height: 26px; }
+  .group-strip { margin-bottom: 4px; padding-bottom: 4px; }
+  html .group-strip .gs-tab { height: 26px; min-height: 0; }
+  html .group-strip :is(.gs-act, .gs-more) { height: 24px; min-height: 0; }
   html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 13px; line-height: 24px; }
   #main.inbox-all > .view > .view-head { min-height: 24px; margin-bottom: 2px; }
   #main.inbox-all > .view > .view-head::after { flex-basis: 64px; }
@@ -265,3 +265,83 @@ html #main > .view.nova-pane:not([hidden]) {
   html #main > .view.nova-pane:not([hidden]) { padding: 5px 8px 4px; border-radius: 14px; }
   .view-head > .pane-ico { width: 15px; height: 15px; }
 }
+
+/* ===== A pane too small for its words: plain text, terminal style (pillars.js tuiWatch sets [data-tui] when a
+   Nova pane is under 230px tall or 280px wide; the user, 22 Oct 2026: "can the ui become more tui if it get
+   so small that area's are collapsing and can't see text"). One line per thing, monospace, thin line edges,
+   no pills, glows or icons, so the words keep the room ===== */
+html #main > .view.nova-pane[data-tui]:not([hidden]) {
+  padding: 3px 6px 2px; border-radius: 4px; box-shadow: none;
+  background: rgb(6 4 14 / .78) padding-box, color-mix(in oklab, var(--g, var(--hi)) 70%, transparent) border-box;
+}
+html #main > .view[data-tui] :is(h1, h2, h3, h4, p, li, span, b, button, a, input, select, textarea, label, dt, dd, div) {
+  font-family: var(--f-mono, ui-monospace, monospace) !important; letter-spacing: 0 !important; text-shadow: none !important; font-stretch: normal !important;
+}
+html #main > .view[data-tui] :is(.pane-ico, .pillar-ico, .hint, .stage-glow, .stage-stars) { display: none !important; }
+/* (the title: one bold line in the pane's colour, ruled off under it; the page bar small at its end) */
+html #main > .view[data-tui] > .view-head { min-height: 18px; margin: 0 0 2px; padding: 0 0 2px; gap: 2px 6px; border-bottom: 1px dashed color-mix(in oklab, var(--g, var(--hi)) 40%, transparent); }
+html.embed #main > .view[data-tui] > .view-head > h2, html:not(.embed) #main > .view[data-tui] > .view-head > h2 {
+  font-size: 11.5px !important; line-height: 18px; font-weight: 700; text-transform: uppercase; color: var(--g, var(--hi)); background: none; -webkit-text-fill-color: currentColor; filter: none; animation: none;
+}
+html #main > .view[data-tui] > .view-head > h2::before { content: "▌"; }
+#main > .view[data-tui] > .view-head::after { flex-basis: 74px; }
+html #main > .view[data-tui][data-os-paged] > .os-pager { top: 2px; right: 4px; bottom: auto; left: auto; transform: none; padding: 0; gap: 0; border-radius: 2px; background: rgb(6 4 14 / .9); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+html #main > .view[data-tui][data-os-paged] > .os-pager button { width: 20px; height: 17px; min-width: 0; min-height: 0; border-radius: 2px; border: 0; background: none; font: 700 13px/1 var(--f-mono, monospace); }
+html #main > .view[data-tui][data-os-paged] > .os-pager .os-count { min-width: 30px; font-size: 9.5px; }
+/* (buttons and chips: bracketed words, no pills) */
+html #main > .view[data-tui] :is(.btn, .chip, .gs-act, .dash-open, .it-booking) {
+  min-height: 0 !important; height: auto !important; padding: 1px 4px !important; border-radius: 2px !important; box-shadow: none !important;
+  border: 1px solid color-mix(in oklab, var(--g, var(--hi)) 35%, transparent) !important; background: none !important; color: var(--bright, #fff) !important;
+  font-size: 10px !important; line-height: 14px !important; text-transform: none !important; font-weight: 600 !important;
+}
+html #main > .view[data-tui] :is(.chip.active, .chip[aria-pressed="true"], .chip[aria-expanded="true"]) { background: var(--g, var(--hi)) !important; color: #0b0614 !important; }
+html #main > .view[data-tui] .chips { padding: 0 !important; gap: 2px !important; border: 0 !important; background: none !important; }
+html #main > .view[data-tui] :is(input, select, textarea) { min-height: 0 !important; height: 20px; padding: 0 6px !important; border-radius: 2px !important; font-size: 11px !important; }
+/* (rows: one line each, the state in brackets, the time dim at the end) */
+html #main > .view[data-tui] :is(#enquiry-list, #chat-list, #alert-list, .list, .dash-rows) { gap: 0 !important; }
+html #main > .view[data-tui] :is(#enquiry-list, #chat-list, #alert-list) > .card, html[data-align] #main > .view[data-tui] :is(#enquiry-list, #chat-list, #alert-list).list > .card {
+  padding: 1px 2px !important; border-radius: 0 !important; border: 0 !important; border-bottom: 1px dotted rgb(255 255 255 / .12) !important; background: none !important; box-shadow: none !important;
+}
+html #main > .view[data-tui] :is(.al-line, .ib-line) { display: flex !important; align-items: center; gap: 6px; min-height: 17px !important; }
+html #main > .view[data-tui] :is(.al-line, .ib-line):hover { background: color-mix(in oklab, var(--g, var(--hi)) 18%, transparent); }
+html #main > .view[data-tui] :is(.al-line, .ib-line) .al-title { order: 1; font-size: 11px !important; font-weight: 500 !important; line-height: 16px; -webkit-line-clamp: 1; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; color: var(--bright, #fff); }
+html #main > .view[data-tui] :is(.al-line .alert-kind, .ib-line .ib-state) { order: 0; padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; font-size: 9.5px !important; letter-spacing: 0 !important; color: var(--g, var(--hi)) !important; }
+html #main > .view[data-tui] .al-line .alert-kind::before { width: auto; height: auto; flex: none; border-radius: 0; background: none; box-shadow: none; }
+html #main > .view[data-tui] :is(.al-line .alert-kind, .ib-line .ib-state)::before { content: "["; }
+html #main > .view[data-tui] :is(.al-line .alert-kind, .ib-line .ib-state)::after { content: "]"; }
+html #main > .view[data-tui] :is(.al-line, .ib-line) .al-ago { order: 2; font-size: 9.5px !important; color: var(--muted); }
+html #main > .view[data-tui] :is(.al-line, .ib-line) .ib-msgs { order: 3; padding: 0; border: 0; font-size: 9.5px; }
+html #main > .view[data-tui] :is(.al-line, .ib-line) .al-more { order: 3; width: 16px !important; height: 16px !important; min-width: 0; min-height: 0; border: 0; border-radius: 2px; background: none; font-size: 10px; }
+/* (Today's line, the tiles and cards elsewhere: flat boxes with thin edges) */
+html #main > .view[data-tui] .inbox-today { margin: 0 0 2px; gap: 2px 6px; font-size: 10.5px; }
+html #main > .view[data-tui] :is(.card, .dash-tile, .t-tile, .auto-delete) { border-radius: 3px !important; padding: 3px 6px !important; box-shadow: none !important; background: none !important; border: 1px solid rgb(255 255 255 / .14) !important; }
+html #main > .view[data-tui] :is(h3, .card-title, .dash-name) { font-size: 11.5px !important; }
+html #main > .view[data-tui] :is(p, li, .details, .card-who, .dash-small, .dash-main) { font-size: 11px !important; line-height: 1.35 !important; }
+html #main > .view[data-tui] :is(.dash-big, .t-num) { font-size: 13px !important; }
+html #main > .view[data-tui] .dash-grid { gap: 4px; margin-top: 4px; }
+html #main > .view[data-tui] .settings-row { gap: 4px !important; margin: 0 0 2px !important; }
+html #main > .view[data-tui] .switch-track { transform: scale(.7); transform-origin: left center; }
+/* (Booking tools' month, like the cal command: plain day numbers in a tight grid, today ringed, the picked
+   day filled) */
+html #main > .view[data-tui] .cal { max-width: 360px; margin: 0 auto 4px; padding: 2px 4px 3px; border-radius: 3px; border: 1px solid rgb(255 255 255 / .14); background: none; box-shadow: none; }
+html #main > .view[data-tui] .cal-head { margin: 0 0 1px; gap: 4px; }
+html #main > .view[data-tui] .cal-title { flex-direction: row; gap: 6px; }
+html #main > .view[data-tui] .cal-month { font-size: 11px; font-weight: 700; background: none; -webkit-text-fill-color: currentColor; color: var(--g, var(--hi)); animation: none; }
+html #main > .view[data-tui] .cal-head .icon-btn { width: 20px; height: 16px; min-width: 0; min-height: 0; border-radius: 2px; box-shadow: none; }
+html #main > .view[data-tui] .cal-head .icon-btn svg { width: 11px; height: 11px; }
+html #main > .view[data-tui] :is(.cal-weekdays, .cal-grid) { gap: 0; }
+html #main > .view[data-tui] .cal-weekdays { margin: 0; }
+html #main > .view[data-tui] .cal-weekdays span { font-size: 8.5px !important; line-height: 12px; text-align: center; }
+html #main > .view[data-tui] #cal-grid > .cal-day {
+  aspect-ratio: auto; min-height: 0; height: 14px; flex-direction: row; gap: 2px; border-radius: 2px; border: 0;
+  background: none; box-shadow: none; transition: none;
+}
+html #main > .view[data-tui] #cal-grid > .cal-day .cal-num { font-size: 10px; font-weight: 500; }
+html #main > .view[data-tui] #cal-grid > .cal-day.busy .cal-num { color: var(--g, var(--hi)); font-weight: 700; }
+html #main > .view[data-tui] #cal-grid > .cal-day.today { outline: 1px solid var(--g, var(--hi)); outline-offset: -1px; }
+html #main > .view[data-tui] #cal-grid > .cal-day.picked { background: var(--g, var(--hi)); }
+html #main > .view[data-tui] #cal-grid > .cal-day.picked .cal-num { color: #0b0614; }
+html #main > .view[data-tui] .cal-dots { height: auto; gap: 1px; }
+html #main > .view[data-tui] .cal-dots i { width: 3px; height: 3px; box-shadow: none; }
+html #main > .view[data-tui] .cal-dots b { display: none; }
+html #main > .view[data-tui] .cal-day-title { margin: 2px 0; font-size: 10.5px; letter-spacing: 0; }
