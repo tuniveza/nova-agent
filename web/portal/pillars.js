@@ -604,8 +604,40 @@
     if (focusBack && was) row.querySelector(`.mini-pillar[data-group="${CSS.escape(was)}"]`)?.focus({ preventScroll: true });
   }
 
+  // ---- Nova panes (22 Oct 2026, the user: "for all panes in the nova portal can we contain them in a nova
+  // pane for easier identification"): every section is framed in its Nova Tab's colour, with its icon
+  // beside its title, and named (data-pane: "Inbox · Enquiries") so it can be pointed at ----
+  const PANE_OF = { today: ["", "Today"], me: ["You", "Your profile"], profile: ["You", "Your profile"], admin: ["Admin", "Admin pages"], crew: ["Admin", "The crew"] };
+  function paneUp() {
+    for (const v of document.querySelectorAll("#main > .view")) {
+      const key = v.id.replace(/^view-/, "");
+      let group = "", name = "";
+      if (key === "group") {
+        const g = groupsNow().find((x) => slug(x.name) === dashOf());
+        group = g ? g.name : "";
+        name = "Overview";
+      } else if (PANE_OF[key]) [group, name] = PANE_OF[key];
+      else {
+        const g = GROUPS.find((x) => x.items.some((i) => i.at === key));
+        const it = g && g.items.find((i) => i.at === key);
+        if (g) [group, name] = [g.name, it.name];
+      }
+      v.classList.add("nova-pane");
+      v.dataset.pane = [group, name].filter(Boolean).join(" · ");
+      v.style.setProperty("--g", HUE[group] || "var(--hi)");
+      const head = v.querySelector(":scope > .view-head");
+      // (the icon sits beside the title, not in it: some titles are rewritten as you go)
+      if (head && key !== "group" && name && !head.querySelector(":scope > .pane-ico")) {
+        const ico = icon(name);
+        ico.classList.add("pane-ico");
+        head.prepend(ico);
+      }
+    }
+  }
+
   function draw() {
     if (!row) return;
+    paneUp();
     row.classList.toggle("all-hidden", hidden);
     if (hidden) {
       // (only the round Show all button, top right)

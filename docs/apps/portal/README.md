@@ -97,6 +97,12 @@ settings sit behind one small button (Search, Filter, Settings). The old address
 `chats`, `alerts`, `&enquiry=`, `&chat=`) all open the dashboard. Website bot, Saved replies and
 Notifications are along the top. Today itself is still Portal's start page.
 
+### Nova panes (22 October 2026)
+
+Every section in Portal sits in its own **Nova pane**: a rounded frame edged in its Nova Tab's colour,
+with the section's icon beside its title, so each one can be told apart at a glance (`pillars.js`
+paneUp, `dash.css`). Each pane is named in `data-pane`, e.g. "Inbox · Enquiries", so it can be pointed at.
+
 ## The tabs
 
 Every section shows at once, so nothing hides behind a click. On a computer or tablet they sit at the top in **lanes**:
