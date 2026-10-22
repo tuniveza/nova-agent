@@ -161,11 +161,11 @@
 (() => {
   "use strict";
   const KEY = "nova-options";
-  const defaults = { align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "today", menu: "top", saver: "auto" };
+  const defaults = { ui: "simple", align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "today", menu: "top", saver: "auto" };
   const root = document.documentElement;
 
-  // The saved options, with anything missing filled in. Alignment is the same switch as Nova Agent's
-  // "Centre all text" (look.js keeps it, under "nova-look"): centred unless that is switched off.
+  // The saved options, with anything missing filled in. Alignment is the same choice as Nova Agent's
+  // (look.js keeps it, under "nova-look"): centred, left or right; centred unless changed.
   function get() {
     let o;
     try {
@@ -174,23 +174,28 @@
       o = { ...defaults };
     }
     try {
-      o.align = JSON.parse(localStorage.getItem("nova-look") || "{}").center === false ? "left" : "center";
+      const look = JSON.parse(localStorage.getItem("nova-look") || "{}");
+      o.align = ["center", "left", "right"].includes(look.align) ? look.align : look.center === false ? "left" : "center";
     } catch (err) {}
     return o;
   }
-  // Alignment chosen here goes to that one switch (so the Panels window, and every panel, follow)
+  // Alignment chosen here goes to that one choice (so the Panels window, and every panel, follow)
   function setAlign(align) {
-    const center = align !== "left";
-    if (window.NovaLook) return window.NovaLook.setCenter(center);
+    const mode = ["left", "right"].includes(align) ? align : "center";
+    if (window.NovaLook && window.NovaLook.setAlign) return window.NovaLook.setAlign(mode);
+    if (window.NovaLook) return window.NovaLook.setCenter(mode === "center");
     try {
       const look = JSON.parse(localStorage.getItem("nova-look") || "{}");
-      localStorage.setItem("nova-look", JSON.stringify({ ...look, center }));
+      localStorage.setItem("nova-look", JSON.stringify({ ...look, center: mode === "center", align: mode }));
     } catch (err) {}
   }
 
   // Put them on the page (as attributes the styles look at)
   function apply(o) {
-    root.setAttribute("data-align", o.align === "left" ? "left" : "center");
+    root.setAttribute("data-align", ["left", "right"].includes(o.align) ? o.align : "center");
+    // The look: Simple (the default, 22 Oct 2026, the user's choice: one plain, sturdy layout everywhere) or
+    // Rich (the look before); every panel's simple.css is for html:not([data-ui="rich"])
+    root.setAttribute("data-ui", o.ui === "rich" ? "rich" : "simple");
     root.setAttribute("data-size", ["small", "large"].includes(o.size) ? o.size : "normal");
     root.setAttribute("data-motion", o.motion === false ? "calm" : "full");
     root.setAttribute("data-stars", o.stars === false ? "off" : "on");

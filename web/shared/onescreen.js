@@ -105,10 +105,11 @@
     clearTimeout(looking);
     looking = setTimeout(() => {
       if (document.hidden) return;
-      const before = found.size;
+      const had = new Set(found);
       lastLook = 0;
       discover();
-      if (found.size > before) soon(30);
+      const added = [...found].filter((b) => !had.has(b));
+      if (added.length) soon(30, "new box " + added.map(nm).join(", "));
     }, 400);
   }
   function discover() {
@@ -117,8 +118,10 @@
     // (looked less than a second ago: look again once the second is up, so nothing drawn meanwhile is missed)
     const since = performance.now() - lastLook;
     if (since < 900) {
+      // (only a look, laying out only if it finds a new box: a whole layout here hit this same wait and
+      // asked again, a layout about every second for ever on every panel, 22 Oct 2026)
       clearTimeout(lookAgain);
-      lookAgain = setTimeout(() => soon(0), 920 - since);
+      lookAgain = setTimeout(lookSoon, 920 - since);
       return;
     }
     lastLook = performance.now();
@@ -324,7 +327,10 @@
     // then it's on the first page only, and the pages have the room)
     let pins = pinsOf(box);
     let pinned = pins.reduce((h, p) => h + outer(p).bottom - outer(p).top, 0);
-    if (pinned > box.clientHeight * 0.22) {
+    // (a found box in a panel keeps its pins up to half its height: what's under them is often
+    // made to fill what's left, so with them unpinned it no longer fit beside them and the first page held
+    // only the pins, Observatory's header and search, 22 Oct 2026)
+    if (pinned > box.clientHeight * (found.has(box) ? 0.5 : 0.22)) {
       pins = [];
       pinned = 0;
     }
@@ -334,9 +340,9 @@
     st.room = room;
     st.pos = st.leaves.map(outer);
     // (sections and Admin pages are filled; a drawer or a sheet's form keeps its size)
-    // (a box found in a panel isn't: its parts may fit themselves to their size, a Calendar day's cards,
-    // and drawing them smaller undid that)
-    st.fill = !box.matches(EXTRA) && !found.has(box);
+    // (nor a box with parts that fit themselves to their size, a Calendar day's cards: drawing them smaller
+    // undid that)
+    st.fill = !box.matches(EXTRA) && !box.querySelector('[data-guard="off"], [data-os-skip]');
     st.pages = pack(st.leaves, room, st.pos, st.fill);
     showPage(box, st, wantedPage(box, st, memo));
     follow(box, st);
@@ -519,13 +525,25 @@
   const guarded = new Map(); // element -> its own zoom before
   const hasWords = (el) => [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
   // Where el is cut: { by: the box cutting it (null: the screen's edge), x, y: how far it sticks out }
+  // (what a box's overflow and size are, read once per pass: every part asked about every box round it)
+  let boxCache = new Map();
+  const boxOf = (a) => {
+    let v = boxCache.get(a);
+    if (!v) {
+      const cs = getComputedStyle(a);
+      v = { ox: cs.overflowX, oy: cs.overflowY, r: cs.overflowX === "visible" && cs.overflowY === "visible" ? null : a.getBoundingClientRect() };
+      boxCache.set(a, v);
+    }
+    return v;
+  };
   function cutOf(el) {
     const r = el.getBoundingClientRect();
     let left = r.left, right = r.right, top = r.top, bottom = r.bottom;
     for (let a = el.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
-      const cs = getComputedStyle(a);
+      const b = boxOf(a);
+      const cs = { overflowX: b.ox, overflowY: b.oy };
       if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
-      const ar = a.getBoundingClientRect();
+      const ar = b.r;
       if (ar.width <= 2 && ar.height <= 2) return null; // (words for screen readers only)
       const sx = /(auto|scroll|overlay)/.test(cs.overflowX) && !a.matches(BAR_SLIDE);
       const sy = /(auto|scroll|overlay)/.test(cs.overflowY);
@@ -540,6 +558,90 @@
     if (left < -1 || top < -1 || (!pageX && right > innerWidth + 1) || (!pageY && bottom > innerHeight + 1)) return { by: null, r };
     return null;
   }
+  // ---- Centred, or to one side: the layout too, not just the words (22 Oct 2026, the user: "make as much of
+  // gui you can be centered properly including text … I don't like left sided and or right sided only; they
+  // should be options"). html[data-align] is center (the default), left or right (look.js, from Options).
+  // Centred or right: a row of things pushed to its start with room to spare (buttons, chips, cards on a
+  // grid of fixed-width columns) moves to the middle or the end, and so does a box narrower than the space
+  // it's in. What fills its row, or is spread to both ends on purpose, is left alone, as are what you
+  // write in, code and terminals; data-align-off keeps a part as it is. Put back and looked at again on
+  // every layout, like the guard. ----
+  const ALIGN_SKIP = 'pre, code, textarea, input, select, [contenteditable=""], [contenteditable="true"], .cm-editor, .ProseMirror, .xterm, canvas, svg, [data-align-off], [data-os-own], [aria-hidden="true"]';
+  const aligned = new Map(); // element -> { prop: [value, priority] }
+  function unalign() {
+    for (const [el, was] of aligned) if (el.isConnected) for (const [prop, [v, pr]] of Object.entries(was)) (v ? el.style.setProperty(prop, v, pr) : el.style.removeProperty(prop));
+    aligned.clear();
+  }
+  function setAligned(el, prop, value) {
+    let was = aligned.get(el);
+    if (!was) aligned.set(el, (was = {}));
+    if (!(prop in was)) was[prop] = [el.style.getPropertyValue(prop), el.style.getPropertyPriority(prop)];
+    el.style.setProperty(prop, value);
+  }
+  function align() {
+    const mode = document.documentElement.getAttribute("data-align");
+    if (mode !== "center" && mode !== "right") return;
+    const flexEnd = mode === "center" ? "center" : "flex-end";
+    const START = /^(normal|flex-start|start|left)$/;
+    for (const el of document.body.querySelectorAll("*")) {
+      if (el.closest(ALIGN_SKIP) || !el.firstElementChild) continue;
+      const cs = getComputedStyle(el);
+      const flex = cs.display === "flex" || cs.display === "inline-flex";
+      const grid = cs.display === "grid" || cs.display === "inline-grid";
+      if (!flex && !grid && cs.display !== "block") continue;
+      if (!shown(el)) continue;
+      const kids = [...el.children].filter((k) => { const s = getComputedStyle(k); return s.display !== "none" && s.position !== "absolute" && s.position !== "fixed" && !ours(k); });
+      if (!kids.length) continue;
+      const r = el.getBoundingClientRect();
+      const inner = { left: r.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft), right: r.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight) };
+      if (inner.right - inner.left < 40) continue;
+      if (flex && !cs.flexDirection.startsWith("column")) {
+        // a row: centred when what's on it starts at its start and leaves room at its end
+        if (!START.test(cs.justifyContent)) continue;
+        const left = Math.min(...kids.map((k) => k.getBoundingClientRect().left)), right = Math.max(...kids.map((k) => k.getBoundingClientRect().right));
+        if (left - inner.left > 4 || inner.right - right < 12) continue;
+        setAligned(el, "justify-content", flexEnd);
+      } else if (grid) {
+        // columns of a fixed width that don't fill it: the columns centred
+        if (!START.test(cs.justifyContent) || cs.gridTemplateColumns === "none") continue;
+        const right = Math.max(...kids.map((k) => k.getBoundingClientRect().right));
+        if (inner.right - right >= 12) { setAligned(el, "justify-content", mode === "center" ? "center" : "end"); continue; }
+        // a grid that fills its width with a last row only part full (two tiles under four): that row
+        // moved along to the middle, or the end (drawn there; nothing else moves)
+        // (only a run of like tiles: no named areas, nothing placed by hand, every tile about the same width,
+        // every row but the last full. A grid that lays out a page, a month under its weekday names, a plan
+        // beside it, a week's hours, is left alone: moving one of its parts pulled it out of line, 22 Oct 2026)
+        if (cs.gridTemplateAreas !== "none" || el.matches('[role="grid"], [role="table"], table, [role="row"]')) continue;
+        const ws = kids.map((k) => k.getBoundingClientRect().width);
+        if (Math.max(...ws) - Math.min(...ws) > 2) continue;
+        if (kids.some((k) => { const ks = getComputedStyle(k); return ks.gridColumnStart !== "auto" || ks.gridRowStart !== "auto" || ks.gridColumnEnd !== "auto" || ks.gridRowEnd !== "auto"; })) continue;
+        const cols = cs.gridTemplateColumns.split(" ").filter(Boolean).length;
+        const rows = new Map();
+        for (const k of kids) { const t = Math.round(k.getBoundingClientRect().top); rows.set(t, [...(rows.get(t) || []), k]); }
+        if (rows.size < 2 || cols < 2) continue;
+        const tops = [...rows.keys()].sort((a, b) => a - b);
+        const first = rows.get(tops[0]), last = rows.get(tops[tops.length - 1]);
+        if (tops.slice(0, -1).some((t) => rows.get(t).length !== cols)) continue;
+        if (last.length >= first.length || last.some((k) => getComputedStyle(k).translate !== "none")) continue;
+        const end = Math.max(...last.map((k) => k.getBoundingClientRect().right));
+        const room = Math.max(...first.map((k) => k.getBoundingClientRect().right)) - end;
+        if (room < 12) continue;
+        for (const k of last) setAligned(k, "translate", `${Math.round(mode === "center" ? room / 2 : room)}px 0`);
+      } else if (cs.display === "block") {
+        // a box narrower than the space it's in, sat at its start: in the middle (or at the end)
+        for (const k of kids) {
+          const ks = getComputedStyle(k);
+          if (ks.display !== "block" && ks.display !== "flex" && ks.display !== "grid" && ks.display !== "table") continue;
+          if (ks.float !== "none" || ks.position !== "static" || k.closest(ALIGN_SKIP)) continue;
+          const b = k.getBoundingClientRect();
+          if (b.width < 24 || inner.right - b.right < 12 || b.left - inner.left > 2) continue;
+          if (parseFloat(ks.marginLeft) > 0.5 || (ks.marginRight !== "0px" && ks.marginRight !== "auto")) continue;
+          if (mode === "center") { setAligned(k, "margin-left", "auto"); setAligned(k, "margin-right", "auto"); }
+          else setAligned(k, "margin-left", "auto");
+        }
+      }
+    }
+  }
   // (put back before anything is measured, at the start of each layout: put back only at the guard's turn,
   // the boxes were measured with last time's shrinking one time and without it the next, and the sizes
   // went back and forth for ever)
@@ -548,6 +650,7 @@
     guarded.clear();
   }
   function guard() {
+    boxCache = new Map();
     // (first, nothing slides sideways: a big box, or the page, whose insides are wider than it has them
     // drawn smaller to its width; a row of things meant to slide, data-pan, is left as it is)
     const tooWide = () => [document.body, ...document.body.querySelectorAll("*")].filter((el) => {
@@ -573,6 +676,7 @@
      }
     }
     for (let pass = 0; pass < 3; pass++) {
+      boxCache = new Map(); // (each pass reads afresh: the last one may have drawn things smaller)
       let fixed = 0;
       const done = new Set();
       for (const el of document.body.querySelectorAll("*")) {
@@ -644,8 +748,15 @@
     busy = true;
     try {
       unguard();
+      unalign();
+      align();
       discover();
-      for (const box of boxes()) {
+      const list = boxes();
+      // (every box put back first, then each laid out: laid out one at a time, each was measured beside
+      // the others as the last run left them, two side by side paged each other in turn for ever, Notes'
+      // list and guide, ns-df measured it, 22 Oct 2026)
+      for (const box of list) reset(box);
+      for (const box of list) {
         layout(box, opts.fresh && opts.fresh.has(box) ? { fresh: true } : {});
         for (const inner of innerBoxes(box)) layout(inner);
         watch(box);
@@ -661,7 +772,11 @@
   }
   const fresh = new Set();
   // (a section that keeps changing, a clock or a timer in it, is cut again at most twice a second)
-  function soon(ms = 90) {
+  // (why each layout was asked for, the last 30, for checking: NovaOneScreen.why)
+  const why = [];
+  const nm = (e) => (e && e.tagName ? e.tagName.toLowerCase() + (e.id ? "#" + e.id : "") + (e.classList && e.classList[0] ? "." + e.classList[0] : "") : String(e));
+  function soon(ms = 90, reason = "") {
+    if (reason) { why.push(`${Math.round(performance.now())} ${reason}`); if (why.length > 30) why.shift(); }
     clearTimeout(timer);
     const wait = fresh.size ? ms : Math.max(ms, 500 - (performance.now() - lastRun));
     timer = setTimeout(() => requestAnimationFrame(() => {
@@ -681,9 +796,9 @@
       const h = Math.round(en.contentRect.height), w = Math.round(en.contentRect.width);
       const was = sizes.get(en.target);
       sizes.set(en.target, { h, w });
-      if (was && (was.h !== h || was.w !== w) && !busy) any = true;
+      if (was && (was.h !== h || was.w !== w) && !busy) { if (!any) any = `size ${nm(en.target)} ${was.w}x${was.h}→${w}x${h}`; }
     }
-    if (any) soon();
+    if (any) soon(90, any);
   }) : null;
   function watch(box) {
     if (!sizeWatch) return;
@@ -819,13 +934,13 @@
         if (r.type === "attributes" && r.attributeName === "hidden" && r.target.matches && r.target.matches("#main > .view, .sheet") && !r.target.hidden) {
           fresh.add(r.target.matches(".sheet") ? r.target.querySelector(".sheet-card") : r.target);
         }
-        any = true;
+        if (!any) any = `${r.type} ${r.attributeName || ""} on ${nm(t)}`;
       }
-      if (any) soon();
+      if (any) soon(90, "change " + any);
     });
     // (what's added or taken away, and parts shown or hidden; a part changing size is the size watch's)
     mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden", "open"] });
-    const ro = new ResizeObserver(() => !busy && soon(60));
+    const ro = new ResizeObserver(() => !busy && soon(60, "page resized"));
     ro.observe(document.documentElement);
     const main = document.getElementById("main");
     if (main) ro.observe(main);
@@ -845,8 +960,16 @@
     get last() { return { asked: asked.el, askedAt: asked.at, touched: touched.el, touchedAt: touched.at }; },
     // How many times it has laid out (to check it's quiet when nothing changes)
     get runs() { return runs; },
+    get why() { return why.slice(); },
     // Where a box is: { page, pages } (pages 1 = it fits)
     where(box) { const st = state.get(box); return st ? { page: st.page, pages: Math.max(1, st.pages.length) } : null; },
+    // How a box was cut (for checking): its room, each part's name and height, and each page's parts
+    parts(box) {
+      const st = state.get(box);
+      if (!st) return null;
+      const nm = (e) => e.tagName.toLowerCase() + (e.id ? "#" + e.id : "") + (e.classList[0] ? "." + e.classList[0] : "");
+      return { room: st.room, pins: pinsOf(box).map(nm), leaves: st.leaves.map((l, i) => `${i}:${nm(l)}:${st.pos && st.pos[i] ? Math.round(st.pos[i].bottom - st.pos[i].top) : "?"}`), pages: st.pages.map(([a, b, k]) => `${a}-${b - 1}${k && k < 1 ? "@" + k : ""}`) };
+    },
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
   else start();

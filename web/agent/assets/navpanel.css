@@ -51,9 +51,20 @@
 @media (prefers-reduced-motion: reduce) { #nav-panel .nav-btn:active:not(:disabled) { transform: none; } }
 
 /* ---- Where it sits (navpanel.js place(): html[data-nav] row | panel | title) ---- */
-/* A computer: a row of its own between the page and the dock (the handle on the dock's top edge is under it) */
-html[data-nav="row"] .main { grid-template-rows: minmax(0, 1fr) auto auto !important; grid-template-areas: "missions chat quests" "nav nav nav" "suite suite suite" !important; }
-html[data-nav="row"] .main > #nav-panel { grid-area: nav; margin-bottom: 4px; }
+/* A computer: the dock's own top row, in the dock's colours, one panel with it: no border or shadow of its
+   own, a fine line under it, the buttons either side of the handle on the dock's top edge */
+#nav-panel[data-where="dock"] {
+  width: auto; max-width: none; margin: 0; padding: 6px 12px 3px; gap: 2px; border: 0; border-radius: 0;
+  background: none; box-shadow: none; border-bottom: 1px solid color-mix(in srgb, var(--line, #fff3) 70%, transparent);
+}
+#nav-panel[data-where="dock"] .nav-btn { height: 26px; padding: 0 9px; font-size: 11.5px; }
+#nav-panel[data-where="dock"] .nav-btn svg { width: 15px; height: 15px; }
+#nav-panel[data-where="dock"] .nav-gap { flex: none; width: 64px; }
+#nav-panel[data-where="dock"] .nav-where { max-width: 18ch; font-size: 11.5px; }
+#nav-panel[data-where="dock"].icons .nav-words { display: none; }
+#nav-panel[data-where="dock"].icons .nav-btn { padding: 0 7px; }
+#nav-panel[data-where="dock"].icons .nav-where { max-width: 12ch; }
+#nav-panel:not([data-where="dock"]) .nav-gap { display: none; }
 /* A phone or tablet upright: under the open panel, inside its frame's own space, clear of the handle above the
    title panel (the handle stands about 15px up from it) */
 html[data-nav="panel"] #viewer:not([hidden]) { grid-template-rows: minmax(0, 1fr) auto !important; }

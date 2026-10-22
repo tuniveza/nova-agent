@@ -238,6 +238,15 @@
   // so nothing scrolls in any panel (what's too long is shown in pages): /shared/onescreen.js. Next to
   // this file, so every page that has this has those
   const here = (document.currentScript && document.currentScript.src) || "";
+  // (and the Simple design's shared kit, simple.css, the same way)
+  try {
+    if (!document.querySelector('link[href*="/shared/simple.css"]')) {
+      const l = document.createElement("link");
+      l.rel = "stylesheet";
+      l.href = new URL("simple.css", here || location.origin + "/shared/fit.js").href;
+      (document.head || document.documentElement).append(l);
+    }
+  } catch (e) { /* (a page with no address of its own) */ }
   try {
     if (!document.querySelector('link[href*="/shared/onescreen.css"]')) {
       const l = document.createElement("link");

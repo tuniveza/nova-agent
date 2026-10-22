@@ -403,14 +403,25 @@
   const lowBattery = () => !!battery && !battery.charging && battery.level <= 0.2;
   const saveData = () => !!(navigator.connection && navigator.connection.saveData);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
-  const wanted = () => { const c = choice(); return c === "on" || (c === "auto" && (lowBattery() || saveData() || reduce.matches)); };
+  // (the Simple look rests them too, 22 Oct 2026: endless decorative motion kept phones busy on every page;
+  // ns-df measured 250-500 style recalcs per 4s from it; "nova-options".ui, Rich keeps them moving)
+  const simpleLook = () => { try { return JSON.parse(localStorage.getItem("nova-options") || "{}").ui !== "rich"; } catch (e) { return true; } };
+  const wanted = () => { const c = choice(); return c === "on" || (c !== "off" && simpleLook()) || (c === "auto" && (lowBattery() || saveData() || reduce.matches)); };
+  // (what shows something is loading keeps moving: a placeholder's shimmer, a spinner)
+  const BUSY = '[aria-busy="true"], [aria-busy="true"] *, .skeleton, .spinner, .loading, [role="progressbar"]';
   let style = null;
   let resting = 0;
   // (what animates forever rests: CSS animations with no end, found again now and then for new ones)
   const rest = () => {
     if (!document.getAnimations) return;
     for (const a of document.getAnimations()) {
-      try { if (a.effect && a.effect.getTiming().iterations === Infinity && a.playState === "running") { a.pause(); a.__novaRested = true; } } catch (e) {}
+      try {
+        if (!a.effect || a.effect.getTiming().iterations !== Infinity || a.playState !== "running") continue;
+        const el = a.effect.target;
+        if (el && el.matches && el.matches(BUSY)) continue;
+        a.pause();
+        a.__novaRested = true;
+      } catch (e) {}
     }
   };
   const wake = () => {
@@ -444,4 +455,19 @@
   else document.addEventListener("DOMContentLoaded", apply, { once: true });
   addEventListener("load", () => root.classList.contains("nova-saver") && rest());
   window.NovaSaver = { get on() { return root.classList.contains("nova-saver"); }, apply };
+})();
+
+// The look on every page and panel: Simple (the default, 22 Oct 2026, the user's choice of one plain,
+// sturdy layout everywhere) or Rich (the look before), from "nova-options".ui (Portal → Options → Look).
+// Each panel's simple.css and /shared/simple.css are for html:not([data-ui="rich"]).
+(function () {
+  "use strict";
+  const set = () => {
+    let ui = "simple";
+    try { ui = JSON.parse(localStorage.getItem("nova-options") || "{}").ui === "rich" ? "rich" : "simple"; } catch (e) {}
+    if (document.documentElement.getAttribute("data-ui") !== ui) document.documentElement.setAttribute("data-ui", ui);
+  };
+  set();
+  addEventListener("storage", (e) => e.key === "nova-options" && set());
+  addEventListener("novaoptionschange", set);
 })();

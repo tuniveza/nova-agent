@@ -1,0 +1,86 @@
+/* ===== Nova Agent's frame, Simple design (22 Oct 2026). The user chose Simple for the whole suite, and for a
+   phone "one bar + Apps sheet":
+     - at the top, one slim title row: sound, music, the place's name, reload, settings, all big enough to tap
+     - the page in between, with most of the screen
+     - at the bottom, one bar: Back, Home, Forward, History and Apps (navpanel.js, data-where="bar")
+     - Apps opens a sheet of big tiles, every panel, and you (your planet: your card, or Sign in)
+   The Nova tiles and the status line make way on a phone (what was on them is in Apps). A computer keeps its
+   dock, with the navigation row in it. All of it is for html:not([data-ui="rich"]); Rich is the look before. ===== */
+
+/* ---- A phone (Nova Agent's phone room, either way up) ---- */
+html:not([data-ui="rich"])[data-room="phone"] body div.shell,
+html:not([data-ui="rich"])[data-room="phone"] body div.shell:has(> .main.viewing) {
+  display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto minmax(0, 1fr) auto !important;
+  gap: 6px !important; padding: max(4px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)) !important;
+}
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar { grid-row: 1 !important; }
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > .main { grid-row: 2 !important; min-height: 0 !important; }
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > #nav-panel { grid-row: 3 !important; }
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > .tabbar { display: none !important; }
+
+/* the title row: plain, at the top, its buttons 40px */
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar.topbar {
+  position: relative !important; transform: none !important; translate: none !important; display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 4px !important;
+  height: auto !important; min-height: 48px !important; margin: 0 !important; padding: 4px 6px !important; box-sizing: border-box !important;
+  border: 1px solid color-mix(in srgb, var(--line, #fff3) 90%, transparent) !important; border-radius: 16px !important;
+  background: color-mix(in srgb, var(--void, #06040D) 88%, var(--panel, #1a1030)) !important; box-shadow: none !important;
+}
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar::before,
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar::after { display: none !important; }
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar :is(.top-side) { display: flex !important; align-items: center !important; gap: 4px !important; flex: none !important; }
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar :is(.icon-btn, .btn) {
+  width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important; padding: 0 !important; border-radius: 12px !important; box-shadow: none !important;
+}
+/* (Home is in the bar now, and installing is in Settings: the title row keeps sound, music, name, reload, settings) */
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar :is(#viewer-close, .ni-open, [aria-label^="Install"]) { display: none !important; }
+html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar :is(#viewer-name, .brand) { flex: 1 1 auto !important; min-width: 0 !important; justify-content: center !important; text-align: center !important; }
+html:not([data-ui="rich"])[data-room="phone"] body .dock-handle { display: none !important; }
+
+/* ---- The bar (navpanel.js) on a phone: one row, five big buttons ---- */
+html:not([data-ui="rich"]) #nav-panel[data-where="bar"] {
+  display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 4px !important; width: auto !important; max-width: none !important;
+  margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; border-radius: 16px !important;
+  border: 1px solid color-mix(in srgb, var(--line, #fff3) 90%, transparent) !important;
+  background: color-mix(in srgb, var(--void, #06040D) 88%, var(--panel, #1a1030)) !important; box-shadow: none !important;
+}
+html:not([data-ui="rich"]) #nav-panel[data-where="bar"] :is([data-nav="reload"], .nav-where, .nav-gap) { display: none !important; }
+html:not([data-ui="rich"]) #nav-panel[data-where="bar"] .nav-btn {
+  flex-direction: column !important; gap: 2px !important; height: 52px !important; min-width: 0 !important; padding: 0 2px !important; border-radius: 12px !important; font-size: 11px !important;
+}
+html:not([data-ui="rich"]) #nav-panel[data-where="bar"] .nav-btn svg { width: 22px !important; height: 22px !important; }
+html:not([data-ui="rich"]) #nav-panel[data-where="bar"] .nav-words { display: inline !important; }
+html:not([data-ui="rich"]) #nav-panel[data-where="bar"] [data-nav="apps"] { color: var(--hi, #FF5FA8) !important; }
+/* (Apps only in the bar: on a computer the dock shows every panel) */
+#nav-panel:not([data-where="bar"]) [data-nav="apps"] { display: none !important; }
+
+/* ---- Apps: a sheet of big tiles ---- */
+.apps-sheet {
+  box-sizing: border-box; width: min(560px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); margin: auto; padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--hi, #FF5FA8) 30%, transparent); border-radius: 20px; overflow: auto;
+  background: color-mix(in srgb, var(--void, #06040D) 94%, var(--panel, #1a1030)); color: var(--text, #EDE6F7);
+}
+.apps-sheet::backdrop { background: rgb(0 0 0 / .6); }
+.apps-head { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
+.apps-me { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 0 4px; border-radius: 999px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--hi, #FF5FA8) 35%, transparent); background: color-mix(in srgb, var(--panel, #1a1030) 85%, transparent); color: #fff; font: 700 14px/1 var(--f-body, system-ui), sans-serif; white-space: nowrap; }
+.apps-me img, .apps-me-ghost { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; }
+.apps-me-ghost { background: radial-gradient(circle at 35% 35%, var(--soft, #FFD1EA), var(--hi, #FF5FA8) 55%, var(--void, #06040D)); }
+.apps-title { flex: 1; text-align: center; font: 800 16px/1 var(--f-display, var(--f-body, system-ui)), sans-serif; letter-spacing: .04em; }
+.apps-x { width: 44px; height: 44px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--line, #fff3) 90%, transparent); background: none; color: var(--text, #EDE6F7); font-size: 18px; cursor: pointer; }
+.apps-grid { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+.apps-tile { display: grid; justify-items: center; align-content: center; gap: 6px; min-height: 80px; padding: 8px 4px; border-radius: 16px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--line, #fff3) 90%, transparent); background: color-mix(in srgb, var(--panel, #1a1030) 80%, transparent);
+  color: var(--text, #EDE6F7); font: 600 13px/1.2 var(--f-body, system-ui), sans-serif; text-align: center; }
+.apps-tile.here { border-color: var(--hi, #FF5FA8); background: color-mix(in srgb, var(--hi, #FF5FA8) 16%, var(--panel, #1a1030)); }
+.apps-tile:is(:hover, :focus-visible) { border-color: var(--hi, #FF5FA8); outline: none; }
+.apps-tile .pico { width: 36px; height: 36px; display: grid; }
+.apps-tile .pico svg { width: 100%; height: 100%; }
+.apps-tile span { overflow-wrap: anywhere; }
+
+/* (a short screen, a phone on its side: the bar's buttons with their names beside the icon, one slim line) */
+@media (max-height: 500px) {
+  html:not([data-ui="rich"]) #nav-panel[data-where="bar"] .nav-btn { flex-direction: row !important; gap: 6px !important; height: 40px !important; }
+  html:not([data-ui="rich"]) #nav-panel[data-where="bar"] .nav-btn svg { width: 18px !important; height: 18px !important; }
+  html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar.topbar { min-height: 44px !important; padding: 2px 6px !important; }
+  html:not([data-ui="rich"])[data-room="phone"] body div.shell > header.topbar :is(.icon-btn, .btn) { width: 38px !important; height: 38px !important; min-width: 38px !important; min-height: 38px !important; }
+}

@@ -1,0 +1,74 @@
+/* ===== Portal, Simple design (22 Oct 2026, the user chose "Simple design": every panel on one plain, sturdy
+   layout, no per-size tricks; the look before this is "Rich", Options → Look). Everything here is for
+   html:not([data-ui="rich"]), so Simple is what shows unless Rich is chosen.
+
+   The Nova Tabs: a plain row of chips, each group's icon, name and count, that wraps onto another line when
+   it has to: the same at every size and either way up. Their own fancy styles (pillars.css: the dock strip,
+   the planet in the middle, the shoulders, the sideways rows) are set aside first, then they're drawn plainly. ===== */
+html:not([data-ui="rich"]) body nav.pillars,
+html:not([data-ui="rich"]) body nav.pillars :is(.pillar-caps, .mini-pillar, .mini-cap, .pillar-name, .pillar-badge, .tabs-planet, .pillars-toggle) {
+  all: revert !important;
+}
+html:not([data-ui="rich"]) body nav.pillars *::before, html:not([data-ui="rich"]) body nav.pillars *::after,
+html:not([data-ui="rich"]) body nav.pillars::before, html:not([data-ui="rich"]) body nav.pillars::after { content: none !important; display: none !important; }
+html:not([data-ui="rich"]) body nav.pillars :is(.mini-shaft, .mini-base, .tabs-planet-ghost, .pillar-sky, .mini-sky) { display: none !important; }
+
+html:not([data-ui="rich"]) body nav.pillars {
+  display: block !important; box-sizing: border-box !important; width: auto !important; max-width: 100% !important;
+  margin: 6px 8px 4px !important; padding: 0 !important; position: relative !important;
+}
+html:not([data-ui="rich"]) body nav.pillars .pillar-caps {
+  display: flex !important; flex-wrap: wrap !important; align-items: center !important; justify-content: center !important;
+  gap: 6px !important; margin: 0 !important; padding: 6px !important; box-sizing: border-box !important;
+  border: 1px solid color-mix(in srgb, var(--line, #fff3) 80%, transparent) !important; border-radius: 18px !important;
+  background: color-mix(in srgb, var(--panel, #1a1030) 70%, transparent) !important;
+}
+/* each group: a chip */
+html:not([data-ui="rich"]) body nav.pillars .mini-pillar {
+  display: inline-flex !important; align-items: center !important; position: relative !important; box-sizing: border-box !important;
+  height: 36px !important; padding: 0 12px !important; margin: 0 !important; border-radius: 999px !important; cursor: pointer !important;
+  border: 1px solid color-mix(in srgb, var(--g, var(--hi)) 35%, transparent) !important;
+  background: color-mix(in srgb, var(--g, var(--hi)) 8%, var(--panel, #1a1030)) !important;
+  color: var(--text, #EDE6F7) !important; font: 600 13px/1 var(--f-body, system-ui), sans-serif !important; white-space: nowrap !important;
+}
+html:not([data-ui="rich"]) body nav.pillars .mini-pillar:is(:hover, :focus-visible) { border-color: var(--g, var(--hi)) !important; outline: none !important; }
+html:not([data-ui="rich"]) body nav.pillars .mini-pillar:is(.here, [aria-current="true"]) {
+  background: color-mix(in srgb, var(--g, var(--hi)) 26%, var(--panel, #1a1030)) !important; border-color: var(--g, var(--hi)) !important; color: #fff !important;
+}
+html:not([data-ui="rich"]) body nav.pillars .mini-cap { display: inline-flex !important; align-items: center !important; gap: 6px !important; }
+html:not([data-ui="rich"]) body nav.pillars .mini-cap .pillar-ico { display: inline-grid !important; width: 18px !important; height: 18px !important; flex: none !important; color: var(--g, var(--hi)) !important; margin: 0 !important; padding: 0 !important; background: none !important; }
+html:not([data-ui="rich"]) body nav.pillars .mini-cap .pillar-ico svg { width: 100% !important; height: 100% !important; fill: none !important; stroke: currentColor !important; stroke-width: 1.8 !important; stroke-linecap: round !important; stroke-linejoin: round !important; }
+html:not([data-ui="rich"]) body nav.pillars .pillar-name { display: inline !important; font: inherit !important; color: inherit !important; }
+html:not([data-ui="rich"]) body nav.pillars .pillar-badge {
+  display: inline-grid !important; place-items: center !important; min-width: 18px !important; height: 18px !important; padding: 0 5px !important; box-sizing: border-box !important;
+  border-radius: 999px !important; background: var(--hi, #FF5FA8) !important; color: var(--on-hi, #160a14) !important; font: 700 11px/1 var(--f-body, system-ui), sans-serif !important;
+  position: static !important; margin: 0 !important;
+}
+/* your planet: a round chip that opens your card */
+html:not([data-ui="rich"]) body nav.pillars .tabs-planet {
+  display: inline-grid !important; place-items: center !important; position: relative !important; box-sizing: border-box !important;
+  width: 36px !important; height: 36px !important; padding: 0 !important; margin: 0 !important; border-radius: 50% !important; overflow: hidden !important; cursor: pointer !important;
+  border: 1px solid color-mix(in srgb, var(--hi) 35%, transparent) !important; background: var(--void, #06040D) !important;
+}
+html:not([data-ui="rich"]) body nav.pillars .tabs-planet img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+/* Hide all: the same chip; when everything's away, Show all is a round button, top right */
+html:not([data-ui="rich"]) body nav.pillars .pillars-toggle {
+  display: inline-flex !important; align-items: center !important; gap: 6px !important; height: 36px !important; padding: 0 12px !important; border-radius: 999px !important; cursor: pointer !important;
+  border: 1px solid color-mix(in srgb, var(--hi) 40%, transparent) !important; background: var(--panel, #1a1030) !important; color: var(--text, #EDE6F7) !important; font: 600 13px/1 var(--f-body, system-ui), sans-serif !important;
+}
+html:not([data-ui="rich"]) body nav.pillars.all-hidden { position: fixed !important; top: 8px !important; right: 8px !important; margin: 0 !important; z-index: 40 !important; }
+@media (pointer: coarse) {
+  html:not([data-ui="rich"]) body nav.pillars :is(.mini-pillar, .pillars-toggle) { height: 40px !important; }
+  html:not([data-ui="rich"]) body nav.pillars .tabs-planet { width: 40px !important; height: 40px !important; }
+}
+
+/* (a narrow Portal, a phone: each group as its icon and count, the one you're in with its name too, so the
+   row is one or two lines, not four or five; every chip keeps its name for screen readers and on hover) */
+html:not([data-ui="rich"]) body nav.pillars { container-type: inline-size; }
+@container (max-width: 640px) {
+  html:not([data-ui="rich"]) body nav.pillars .mini-pillar:not(.here):not([aria-current="true"]) .pillar-name,
+  html:not([data-ui="rich"]) body nav.pillars .pillars-toggle .pillar-name { display: none !important; }
+  html:not([data-ui="rich"]) body nav.pillars .mini-pillar:not(.here):not([aria-current="true"]),
+  html:not([data-ui="rich"]) body nav.pillars .hide-tab { padding: 0 10px !important; }
+  html:not([data-ui="rich"]) body nav.pillars .pillar-caps { gap: 4px !important; padding: 4px !important; }
+}

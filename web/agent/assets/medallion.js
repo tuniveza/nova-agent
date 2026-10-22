@@ -158,8 +158,14 @@
       return [el, ...el.querySelectorAll(WORDS)].some((k) => k.offsetParent && k.scrollWidth > k.clientWidth + 1);
     });
   };
+  // (looked at again only when a half's width or its words change: putting every part back and hiding them
+  // again each time, three times a second, kept the page restyling for nothing, 22 Oct 2026)
+  const lastKey = new WeakMap();
   function tuck() {
     for (const [side, order] of ORDER) {
+      const key = `${side.clientWidth}|${side.textContent.length}`;
+      if (lastKey.get(side) === key) continue;
+      lastKey.set(side, key);
       for (const el of side.querySelectorAll(".sl-tucked")) el.classList.remove("sl-tucked");
       for (const sel of order) {
         if (!cut(side)) break;

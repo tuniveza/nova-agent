@@ -120,6 +120,7 @@
     home: '<path d="M4 11.5L12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/><path d="M10 19v-5h4v5"/>',
     reload: '<path d="M19 12a7 7 0 1 1-2.05-4.95"/><path d="M19 4v4.5h-4.5"/>',
     list: '<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>',
+    apps: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
   };
   const nav = document.createElement("nav");
   nav.id = "nav-panel";
@@ -130,8 +131,11 @@
     button("back", "Back", "Back (Alt+←)") +
     button("forward", "Forward", "Forward (Alt+→)") +
     button("home", "Home", "Home: Nova Agent's page") +
+    // (in the dock: room in the middle for the dock's handle, which sits on its top edge)
+    `<span class="nav-gap" aria-hidden="true"></span>` +
     button("reload", "Reload", "Reload what's open") +
     button("list", "History", "Where you've been lately").replace('data-nav="list"', 'data-nav="list" aria-haspopup="menu" aria-expanded="false"') +
+    button("apps", "Apps", "Apps: every panel, and you").replace('data-nav="apps"', 'data-nav="apps" aria-haspopup="dialog"') +
     `<span class="nav-where" aria-live="polite"></span>`;
   const menu = document.createElement("div");
   menu.className = "nav-menu";
@@ -183,6 +187,7 @@
     else if (k === "home") home();
     else if (k === "reload") reload();
     else if (k === "list") openMenu(menu.hidden);
+    else if (k === "apps") openApps();
   });
   menu.addEventListener("click", (e) => {
     const b = e.target.closest("[data-go]");
@@ -198,8 +203,52 @@
     else if (e.key === "ArrowRight" && at < list.length - 1) { e.preventDefault(); forward(); }
   });
 
+  // ---- Apps: every panel as a big tile, and you (your planet and name: your card, or Sign in) ----
+  // (the same links as the Panels list, #suite a.suite-app, so each opens just as it always has)
+  let sheet = null;
+  function openApps() {
+    if (!sheet) {
+      sheet = document.createElement("dialog");
+      sheet.id = "apps-sheet";
+      sheet.className = "apps-sheet";
+      sheet.setAttribute("aria-label", "Apps");
+      sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.close(); });
+    }
+    const me = document.querySelector(".sl-me");
+    const meImg = me && me.querySelector(".sl-planet img:not([hidden])");
+    const meName = ((me && me.querySelector(".sl-me-name") && me.querySelector(".sl-me-name").textContent) || "").trim();
+    const head = document.createElement("div");
+    head.className = "apps-head";
+    head.innerHTML = `<button type="button" class="apps-me" data-sfx="open">${meImg ? `<img alt="" src="${esc(meImg.src)}">` : `<span class="apps-me-ghost" aria-hidden="true"></span>`}<span>${esc(meName || "Sign in")}</span></button><b class="apps-title">Apps</b><button type="button" class="apps-x" aria-label="Close" data-sfx="close">✕</button>`;
+    head.querySelector(".apps-me").addEventListener("click", () => { sheet.close(); const p = document.querySelector(".sl-me .sl-planet"); if (p) p.click(); });
+    head.querySelector(".apps-x").addEventListener("click", () => sheet.close());
+    const grid = document.createElement("div");
+    grid.className = "apps-grid";
+    const seen = new Set();
+    for (const a of document.querySelectorAll("#suite a.suite-app")) {
+      const label = ((a.querySelector("b") && a.querySelector("b").textContent) || a.getAttribute("aria-label") || "").trim();
+      const key = label + "|" + a.getAttribute("href") + "|" + (a.dataset.pane || a.dataset.act || "");
+      if (!label || seen.has(key)) continue;
+      seen.add(key);
+      const t = document.createElement("button");
+      t.type = "button";
+      t.className = "apps-tile" + (a.classList.contains("open") || (a.classList.contains("here") && viewer.hidden) ? " here" : "");
+      const ico = a.querySelector(".pico");
+      if (ico) t.append(ico.cloneNode(true));
+      const n = document.createElement("span");
+      n.textContent = label;
+      t.append(n);
+      t.addEventListener("click", () => { sheet.close(); a.click(); });
+      grid.append(t);
+    }
+    sheet.replaceChildren(head, grid);
+    if (!sheet.isConnected) document.body.append(sheet);
+    sheet.showModal();
+  }
+
   // Its place, by the kind of screen (html[data-room], data-form from /shared/look.js; navpanel.css):
-  //   a computer: its own row in Nova Agent's page, between the page (or the open panel) and the dock
+  //   a computer: the top row of the dock itself, one panel with it (22 Oct 2026, the user: "blend the nova
+  //   navigation panel … into the nova dock"), its buttons either side of the dock's handle
   //   a phone or tablet upright: under the open panel, clear of the dock's handle
   //   a short screen (a phone on its side): its arrows and History in the title panel, as small icons (the
   //   title panel's own ← and ↻ are Home and Reload there): no row of its own, the page keeps its height
@@ -207,18 +256,40 @@
   const suite = $("suite-home");
   const root = document.documentElement;
   const short = () => root.dataset.form === "phone-side" || (root.dataset.room === "phone" && innerHeight <= 500);
+  // (the Simple look, 22 Oct 2026, the user's choice for phones: "one bar + Apps sheet": a slim title row at the
+  // top, and at the bottom one bar, Back, Home, Forward, History and Apps; the Nova tiles make way, agent/simple.css)
+  const simple = () => root.getAttribute("data-ui") !== "rich";
   function place() {
     const room = root.dataset.room || (matchMedia("(min-width: 981px) and (min-height: 481px)").matches ? "computer" : "phone");
     const left = document.querySelector(".shell > .topbar .top-side.left");
     let where;
-    if (short() && left) { where = "title"; if (nav.parentElement !== left) left.append(nav); }
-    else if (room === "computer" && main && suite && suite.parentElement === main) { where = "row"; if (nav.nextElementSibling !== suite) main.insertBefore(nav, suite); }
+    if (simple() && room === "phone") { where = "bar"; if (nav.parentElement !== shell) shell.append(nav); }
+    else if (short() && left) { where = "title"; if (nav.parentElement !== left) left.append(nav); }
+    else if (room === "computer" && suite && getComputedStyle(suite).display !== "none") { where = "dock"; if (nav.parentElement !== suite || suite.firstElementChild !== nav) suite.prepend(nav); }
     else { where = "panel"; if (nav.parentElement !== viewer) viewer.append(nav); }
     nav.dataset.where = where;
     root.dataset.nav = where;
+    fitDock();
+  }
+  // (in a narrow dock the buttons go to their icons, their names still their labels; back to their names
+  // when the dock is wide again: on Nova Agent's own page it's the whole width, round a panel it's narrower)
+  function fitDock() {
+    if (nav.dataset.where !== "dock") return nav.classList.remove("icons");
+    nav.classList.remove("icons");
+    // (what its buttons need side by side, against the room the dock's row has)
+    const cs = getComputedStyle(nav);
+    const kids = [...nav.children].filter((k) => getComputedStyle(k).display !== "none");
+    const need = kids.reduce((n, k) => n + k.getBoundingClientRect().width, 0) + parseFloat(cs.columnGap || "0") * Math.max(0, kids.length - 1);
+    const room = nav.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    if (need > room - 2) nav.classList.add("icons");
+  }
+  if (suite && "ResizeObserver" in window) {
+    let w = 0;
+    new ResizeObserver(() => { const now = Math.round(suite.clientWidth); if (now !== w) { w = now; requestAnimationFrame(fitDock); } }).observe(suite);
   }
   place();
   if (window.NovaForm && window.NovaForm.on) window.NovaForm.on(place);
+  new MutationObserver(() => requestAnimationFrame(place)).observe(root, { attributes: true, attributeFilter: ["data-ui", "data-room", "data-form"] });
   addEventListener("resize", () => requestAnimationFrame(place));
 
   // Following where you go: panels opening and closing, and the open panel's own address changing
@@ -230,5 +301,5 @@
   addEventListener("popstate", () => setTimeout(note, 60));
   note();
   draw();
-  window.NovaNav = { back, forward, home, reload, go, here, note, get list() { return list.slice(); }, get at() { return at; } };
+  window.NovaNav = { back, forward, home, reload, go, here, note, apps: openApps, get list() { return list.slice(); }, get at() { return at; } };
 })();

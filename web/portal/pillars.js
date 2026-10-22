@@ -431,6 +431,7 @@
       sky(mini, g.name);
       if (lit) mini.setAttribute("aria-current", "true");
       mini.setAttribute("aria-label", `${g.name}${total ? `, ${total} new` : ""}`);
+      mini.title = g.name; // (its name on hover, where Simple shows only its icon)
       const cap = el("span", "mini-cap");
       cap.append(icon(g.name), el("span", "pillar-name", g.name));
       const b = badge(total);

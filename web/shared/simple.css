@@ -1,0 +1,31 @@
+/* ===== The Simple design's shared kit (22 Oct 2026, the user chose "Simple design": every panel on one plain,
+   sturdy layout system, no per-size tricks; the look before is "Rich", Options → Look). Loaded into every
+   panel by /shared/fit.js; each panel's own <panel>/simple.css builds on it. All of it is for
+   html:not([data-ui="rich"]), so Simple is what shows unless Rich is chosen.
+
+   Rules of the kit, for every panel:
+   - Plain parts: title rows, rows you tap (at least 40px, 44px on touch), cards, buttons and chips that wrap.
+   - Layouts flow by themselves: grids of auto-fill columns with a sensible minimum, one column when there's
+     only room for one; no width or height @media tricks.
+   - Still: nothing moves forever (the battery saver's resting, look.js), no live blur, backgrounds that don't
+     resize or jump as a panel opens. ===== */
+
+/* ---- Still backgrounds: the star layer behind Portal and Index the size of the page, not twice its size and
+   drifting (it resized and jumped as a panel opened: ns-df measured CLS 0.5) ---- */
+html:not([data-ui="rich"]) body::before { inset: 0 !important; animation: none !important; transform: none !important; }
+
+/* ---- The kit's parts, for panels' simple.css to use (and for anything new) ---- */
+html:not([data-ui="rich"]) .s-stack { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+html:not([data-ui="rich"]) .s-row-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+html:not([data-ui="rich"]) .s-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); min-width: 0; }
+html:not([data-ui="rich"]) .s-card {
+  box-sizing: border-box; min-width: 0; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--line, #fff3) 90%, transparent);
+  background: color-mix(in srgb, var(--panel, #1a1030) 82%, transparent);
+}
+html:not([data-ui="rich"]) .s-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; box-sizing: border-box; border-radius: 999px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--hi, #FF5FA8) 32%, transparent); background: color-mix(in srgb, var(--panel, #1a1030) 85%, transparent);
+  color: var(--text, #EDE6F7); font: 600 13px/1 var(--f-body, system-ui), sans-serif; white-space: nowrap;
+}
+@media (pointer: coarse) { html:not([data-ui="rich"]) .s-chip { height: 40px; } }
