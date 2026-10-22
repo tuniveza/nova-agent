@@ -97,6 +97,28 @@
   .suite-app:active, .tg-items [data-tab]:active { scale: .95; }
   /* The panels' icons: one line-art set, each in its own colour mixed with the theme's accent, so
      they follow Cosmic, Ember, Aurora… yet each keeps its own mood */
+  /* Each place's own colour, made from the theme's (22 Oct 2026, the user: colours "consistent as well
+     including theming there shouldn't be drastically discolored"): every place still its own, all of them
+     in the theme's palette, and they follow a change of theme. The icons, the names and the glow behind
+     each place (glow.css) all use these. */
+  :root {
+    --app-chat: var(--hi);
+    --app-portal: color-mix(in oklch, var(--hi) 80%, var(--soft));
+    --app-calendar: var(--lilac);
+    --app-notes: color-mix(in oklch, var(--gold) 70%, var(--hi));
+    --app-board: color-mix(in oklch, var(--lilac) 60%, var(--accent-2));
+    --app-index: color-mix(in oklch, var(--lilac) 70%, var(--soft));
+    --app-quests: var(--gold);
+    --app-missions: color-mix(in oklch, var(--hi) 60%, var(--gold));
+    --app-lossless: color-mix(in oklch, var(--lilac) 50%, var(--hi));
+    --app-visualizer: color-mix(in oklch, var(--soft) 60%, var(--lilac));
+    --app-observatory: color-mix(in oklch, var(--accent-2) 55%, var(--lilac));
+    --app-fixer: color-mix(in oklch, var(--gold) 60%, var(--soft));
+    --app-computer: color-mix(in oklch, var(--lilac) 40%, var(--soft));
+    --app-invoicer: color-mix(in oklch, var(--accent-2) 40%, var(--hi));
+    --app-console: var(--rose, var(--hi));
+    --app-manual: color-mix(in oklch, var(--gold) 50%, var(--soft));
+  }
   .pico { --own: var(--accent); --tint: color-mix(in oklch, var(--own) 66%, var(--accent));
     /* The icon's own colours: a light body, a deep shade, star-white, a glow, and a warm flame */
     --ia: color-mix(in oklch, var(--tint) 55%, #fff 45%); --ib: color-mix(in oklch, var(--tint) 62%, #0a0614 38%);
@@ -122,19 +144,19 @@
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-17 -17 34 34'%3E%3Cpath d='M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z'/%3E%3C/svg%3E") center / contain no-repeat;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-17 -17 34 34'%3E%3Cpath d='M0-17 2.9-2.9 17 0 2.9 2.9 0 17-2.9 2.9-17 0-2.9-2.9z'/%3E%3C/svg%3E") center / contain no-repeat; }
   .pico[data-p="chat"] { --own: var(--hi); }
-  .pico[data-p="portal"] { --own: #ff5fae; }
-  .pico[data-p="calendar"] { --own: #8c7dff; }
-  .pico[data-p="notes"] { --own: #ffb36b; }
-  .pico[data-p="board"] { --own: #5fd8bd; }
-  .pico[data-p="index"] { --own: #45d3c4; }
-  .pico[data-p="quests"] { --own: #ffd166; }
-  .pico[data-p="missions"] { --own: #ff7a6b; }
-  .pico[data-p="lossless"] { --own: #62b6ff; }
-  .pico[data-p="visualizer"] { --own: #6fe6a6; }
-  .pico[data-p="observatory"] { --own: #5b63ff; }
-  .pico[data-p="fixer"] { --own: #b3f26b; }
-  .pico[data-p="computer"] { --own: #7fd8ff; }
-  .pico[data-p="invoicer"] { --own: #b77bff; }
+  .pico[data-p="portal"] { --own: var(--app-portal); }
+  .pico[data-p="calendar"] { --own: var(--app-calendar); }
+  .pico[data-p="notes"] { --own: var(--app-notes); }
+  .pico[data-p="board"] { --own: var(--app-board); }
+  .pico[data-p="index"] { --own: var(--app-index); }
+  .pico[data-p="quests"] { --own: var(--app-quests); }
+  .pico[data-p="missions"] { --own: var(--app-missions); }
+  .pico[data-p="lossless"] { --own: var(--app-lossless); }
+  .pico[data-p="visualizer"] { --own: var(--app-visualizer); }
+  .pico[data-p="observatory"] { --own: var(--app-observatory); }
+  .pico[data-p="fixer"] { --own: var(--app-fixer); }
+  .pico[data-p="computer"] { --own: var(--app-computer); }
+  .pico[data-p="invoicer"] { --own: var(--app-invoicer); }
   /* Invoicer, on its own (no group name): level with the places under the group names */
   .suite-home .suite-group.solo { align-self: flex-end; }
   /* A computer screen (1200px wide, 640px tall or more): the navigation panel's icons bigger, and the
@@ -167,21 +189,21 @@
   /* The navigation panel's names: each a gentle tint of its own icon's colour, blended with the
      theme's text colour (so it reads in every theme); the open one stays bright */
   .suite-app:has(> .pico[data-p="chat"]), .tabbar [data-tab]:has(> .pico[data-p="chat"]) { --tint: var(--hi); }
-  .suite-app:has(> .pico[data-p="portal"]), .tabbar [data-tab]:has(> .pico[data-p="portal"]) { --tint: #ff5fae; }
-  .suite-app:has(> .pico[data-p="calendar"]), .tabbar [data-tab]:has(> .pico[data-p="calendar"]) { --tint: #8c7dff; }
-  .suite-app:has(> .pico[data-p="notes"]), .tabbar [data-tab]:has(> .pico[data-p="notes"]) { --tint: #ffb36b; }
-  .suite-app:has(> .pico[data-p="board"]), .tabbar [data-tab]:has(> .pico[data-p="board"]) { --tint: #5fd8bd; }
-  .suite-app:has(> .pico[data-p="index"]), .tabbar [data-tab]:has(> .pico[data-p="index"]) { --tint: #45d3c4; }
-  .suite-app:has(> .pico[data-p="quests"]), .tabbar [data-tab]:has(> .pico[data-p="quests"]) { --tint: #ffd166; }
-  .suite-app:has(> .pico[data-p="missions"]), .tabbar [data-tab]:has(> .pico[data-p="missions"]) { --tint: #ff7a6b; }
-  .suite-app:has(> .pico[data-p="lossless"]), .tabbar [data-tab]:has(> .pico[data-p="lossless"]) { --tint: #62b6ff; }
-  .suite-app:has(> .pico[data-p="visualizer"]), .tabbar [data-tab]:has(> .pico[data-p="visualizer"]) { --tint: #6fe6a6; }
-  .suite-app:has(> .pico[data-p="observatory"]), .tabbar [data-tab]:has(> .pico[data-p="observatory"]) { --tint: #5b63ff; }
-  .suite-app:has(> .pico[data-p="fixer"]), .tabbar [data-tab]:has(> .pico[data-p="fixer"]) { --tint: #b3f26b; }
-  .suite-app:has(> .pico[data-p="computer"]), .tabbar [data-tab]:has(> .pico[data-p="computer"]) { --tint: #7fd8ff; }
-  .suite-app:has(> .pico[data-p="invoicer"]), .tabbar [data-tab]:has(> .pico[data-p="invoicer"]) { --tint: #b77bff; }
-  .suite-app:has(> .pico[data-p="console"]), .tabbar [data-tab]:has(> .pico[data-p="console"]) { --tint: #ff8cc6; }
-  .suite-app:has(> .pico[data-p="manual"]), .tabbar [data-tab]:has(> .pico[data-p="manual"]) { --tint: #e6cf9f; }
+  .suite-app:has(> .pico[data-p="portal"]), .tabbar [data-tab]:has(> .pico[data-p="portal"]) { --tint: var(--app-portal); }
+  .suite-app:has(> .pico[data-p="calendar"]), .tabbar [data-tab]:has(> .pico[data-p="calendar"]) { --tint: var(--app-calendar); }
+  .suite-app:has(> .pico[data-p="notes"]), .tabbar [data-tab]:has(> .pico[data-p="notes"]) { --tint: var(--app-notes); }
+  .suite-app:has(> .pico[data-p="board"]), .tabbar [data-tab]:has(> .pico[data-p="board"]) { --tint: var(--app-board); }
+  .suite-app:has(> .pico[data-p="index"]), .tabbar [data-tab]:has(> .pico[data-p="index"]) { --tint: var(--app-index); }
+  .suite-app:has(> .pico[data-p="quests"]), .tabbar [data-tab]:has(> .pico[data-p="quests"]) { --tint: var(--app-quests); }
+  .suite-app:has(> .pico[data-p="missions"]), .tabbar [data-tab]:has(> .pico[data-p="missions"]) { --tint: var(--app-missions); }
+  .suite-app:has(> .pico[data-p="lossless"]), .tabbar [data-tab]:has(> .pico[data-p="lossless"]) { --tint: var(--app-lossless); }
+  .suite-app:has(> .pico[data-p="visualizer"]), .tabbar [data-tab]:has(> .pico[data-p="visualizer"]) { --tint: var(--app-visualizer); }
+  .suite-app:has(> .pico[data-p="observatory"]), .tabbar [data-tab]:has(> .pico[data-p="observatory"]) { --tint: var(--app-observatory); }
+  .suite-app:has(> .pico[data-p="fixer"]), .tabbar [data-tab]:has(> .pico[data-p="fixer"]) { --tint: var(--app-fixer); }
+  .suite-app:has(> .pico[data-p="computer"]), .tabbar [data-tab]:has(> .pico[data-p="computer"]) { --tint: var(--app-computer); }
+  .suite-app:has(> .pico[data-p="invoicer"]), .tabbar [data-tab]:has(> .pico[data-p="invoicer"]) { --tint: var(--app-invoicer); }
+  .suite-app:has(> .pico[data-p="console"]), .tabbar [data-tab]:has(> .pico[data-p="console"]) { --tint: var(--app-console); }
+  .suite-app:has(> .pico[data-p="manual"]), .tabbar [data-tab]:has(> .pico[data-p="manual"]) { --tint: var(--app-manual); }
   #suite-home .suite-app b, .tabbar [data-tab] > span:last-child { color: color-mix(in srgb, var(--tint, var(--text)) 40%, var(--text)); }
   #suite-home .suite-app:hover b, .tabbar [data-tab]:hover > span:last-child { color: color-mix(in srgb, var(--tint, var(--text)) 55%, var(--bright, #fff)); }
   html body #suite-home .suite-groups .suite-app.open b, html body .tabbar [data-tab].on > span:last-child, html body .tabbar [data-tab][aria-current="page"] > span:last-child { color: var(--bright, #fff); }
@@ -193,16 +215,16 @@
   /* The group names (Apps, Plans, Tools, Helpers) big enough to read: 9.5px, never smaller */
   html body .main > .suite-home .suite-group h4, html body .main.viewing > .suite-home .suite-group h4 { font-size: 9.5px; }
   /* A smaller computer screen: the groups a little closer, so Invoicer's place fits with the rest */
-  @media (min-width: 981px) and (max-width: 1360px) {
-    html body .main > .suite-home .suite-groups { gap: 10px; } html body #suite-home .suite-group + .suite-group::before { left: -6px; }
+  @media (max-width: 1360px) {
+    html:where([data-room="computer"]) body .main > .suite-home .suite-groups { gap: 10px; } html:where([data-room="computer"]) body #suite-home .suite-group + .suite-group::before { left: -6px; }
     /* each place as wide as its own name needs (never a name running into the next one), the names a
        touch smaller, so all 18 fit */
-    html body .main > .suite-home .suite-grid, html body .main.viewing > .suite-home .suite-grid { grid-auto-columns: minmax(40px, max-content); gap: 2px; }
-    html body .main > .suite-home .suite-app { min-width: 40px; padding-inline: 3px; }
-    html body .main > .suite-home .suite-app b { font-size: 9.5px; white-space: nowrap; letter-spacing: 0; }
+    html:where([data-room="computer"]) body .main > .suite-home .suite-grid, html:where([data-room="computer"]) body .main.viewing > .suite-home .suite-grid { grid-auto-columns: minmax(40px, max-content); gap: 2px; }
+    html:where([data-room="computer"]) body .main > .suite-home .suite-app { min-width: 40px; padding-inline: 3px; }
+    html:where([data-room="computer"]) body .main > .suite-home .suite-app b { font-size: 9.5px; white-space: nowrap; letter-spacing: 0; }
   }
-  .pico[data-p="console"] { --own: #ff8cc6; }
-  .pico[data-p="manual"] { --own: #e6cf9f; }
+  .pico[data-p="console"] { --own: var(--app-console); }
+  .pico[data-p="manual"] { --own: var(--app-manual); }
   .suite-app > .pico { width: 52px; height: 52px; border-radius: 14px; }
   .suite-app > .pico, .suite-app > img, .suite-app > .suite-glyph { transition: transform .35s cubic-bezier(.2,.8,.2,1); }
   .suite-app:hover > img, .suite-app:hover > .suite-glyph, .suite-app:hover > .pico { transform: translateY(-1px) scale(1.06); }
@@ -231,7 +253,7 @@
     background: var(--title-grad); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 10s linear infinite; }
   @keyframes shimmer { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
   .status { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
-  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: #5CFFC0; box-shadow: 0 0 10px #5CFFC0; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok, #5CFFC0); box-shadow: 0 0 10px var(--ok, #5CFFC0); }
   .status.rehearsal .dot { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
   .links { display: flex; gap: 8px; }
   /* Buttons here are small glass pills (.primary ones filled); how they look, hover and press: /shared/buttons.css */
@@ -315,32 +337,28 @@
   /* While an app is open it gets the room: a slimmer bar above it, and the panels strip keeps its
      look but gets smaller. Only side by side: stacked on a phone or a small window, the viewer
      has its own height. */
-  @media (min-width: 981px) and (min-height: 481px) {
-    .main.viewing { gap: 10px; }
-    /* The panels strip: the same bar, the same groups and tiles, just smaller */
-    .main.viewing > .suite-home .suite-body { padding: 5px 12px 6px; }
-    .main.viewing > .suite-home .suite-group h4 { margin: 0 0 3px; font-size: 8px; }
-    .main.viewing > .suite-home .suite-grid { gap: 5px; }
-    .main.viewing > .suite-home .suite-app { gap: 3px; padding: 5px 4px 4px; border-radius: 11px; }
-    .main.viewing > .suite-home .suite-app > img, .main.viewing > .suite-home .suite-app > .suite-glyph, .main.viewing > .suite-home .suite-app > .pico { width: 24px; height: 24px; border-radius: 7px; font-size: 12px; }
-    .main.viewing > .suite-home .suite-app b { font-size: 10px; -webkit-line-clamp: 1; }
-  }
+  :where(html[data-room="computer"]) .main.viewing { gap: 10px; }
+  /* The panels strip: the same bar, the same groups and tiles, just smaller */
+  :where(html[data-room="computer"]) .main.viewing > .suite-home .suite-body { padding: 5px 12px 6px; }
+  :where(html[data-room="computer"]) .main.viewing > .suite-home .suite-group h4 { margin: 0 0 3px; font-size: 8px; }
+  :where(html[data-room="computer"]) .main.viewing > .suite-home .suite-grid { gap: 5px; }
+  :where(html[data-room="computer"]) .main.viewing > .suite-home .suite-app { gap: 3px; padding: 5px 4px 4px; border-radius: 11px; }
+  :where(html[data-room="computer"]) .main.viewing > .suite-home .suite-app > img, :where(html[data-room="computer"]) .main.viewing > .suite-home .suite-app > .suite-glyph, :where(html[data-room="computer"]) .main.viewing > .suite-home .suite-app > .pico { width: 24px; height: 24px; border-radius: 7px; font-size: 12px; }
+  :where(html[data-room="computer"]) .main.viewing > .suite-home .suite-app b { font-size: 10px; -webkit-line-clamp: 1; }
   /* A phone (or a short window) with a panel open: the panel gets the whole screen. Nova Agent's
      header and the panels strip step aside; the slim bar above the panel goes back (← Nova Agent),
      and its name opens the panels to switch. Edge to edge, with room kept for the notch and the
      home bar, and no frosted glass or drifting clouds behind it. */
-  @media (max-width: 980px), (max-height: 480px) {
-    .shell:has(> .main.viewing) { height: 100dvh; grid-template-rows: minmax(0, 1fr); gap: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
-    .main.viewing { display: block; height: 100%; overflow: hidden; }
-    .main.viewing > :not(.viewer) { display: none; }
-    .main.viewing > .viewer { height: 100%; gap: 8px; }
-    .main.viewing > .viewer > .viewer-body { border-radius: 0; border: 0; background: var(--void); backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; }
-    .viewer-name { cursor: pointer; }
-    .viewer-name::after { content: "▾"; font-size: 11px; color: var(--muted); }
-    body:has(.main.viewing) .nebula { animation: none; }
-    /* The Manual's floating button would sit on the panel's own tab bar */
-    body:has(.main.viewing) nova-manual[floating] { display: none; }
-  }
+  :where(html[data-room="phone"]) .shell:has(> .main.viewing) { height: 100dvh; grid-template-rows: minmax(0, 1fr); gap: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  :where(html[data-room="phone"]) .main.viewing { display: block; height: 100%; overflow: hidden; }
+  :where(html[data-room="phone"]) .main.viewing > :not(.viewer) { display: none; }
+  :where(html[data-room="phone"]) .main.viewing > .viewer { height: 100%; gap: 8px; }
+  :where(html[data-room="phone"]) .main.viewing > .viewer > .viewer-body { border-radius: 0; border: 0; background: var(--void); backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; }
+  :where(html[data-room="phone"]) .viewer-name { cursor: pointer; }
+  :where(html[data-room="phone"]) .viewer-name::after { content: "▾"; font-size: 11px; color: var(--muted); }
+  :where(html[data-room="phone"]) body:has(.main.viewing) .nebula { animation: none; }
+  /* The Manual's floating button would sit on the panel's own tab bar */
+  :where(html[data-room="phone"]) body:has(.main.viewing) nova-manual[floating] { display: none; }
   /* (any screen, a panel open: its box is solid, so nothing is blurred live behind it, and the clouds
      rest; 22 Oct 2026, battery) */
   .main.viewing > .viewer > .viewer-body { backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -412,7 +430,7 @@
   .dcard .dfoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
   .dcard .dfoot a { text-decoration: none; }
   .dcard .dstate { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); flex: 1 1 100%; }
-  .dcard .dstate.sent { color: #8EF0C0; }
+  .dcard .dstate.sent { color: var(--ok, #8EF0C0); }
   .dcard .dstate.failed { color: #FF9D9D; }
   /* A booking change Agent proposed: it waits for an admin's Approve (it never happens by itself) */
   .action.booking { border-color: color-mix(in srgb, var(--gold) 45%, transparent); background: color-mix(in srgb, var(--gold) 10%, transparent); color: var(--gold); }
@@ -670,7 +688,7 @@
   .mission-row input[type="date"] { width: auto; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text); }
   .missions { display: grid; gap: 12px; }
   .mission { padding: 14px 16px; border-radius: 20px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 70%, transparent); }
-  .mission.paused { opacity: .7; } .mission.done { border-color: color-mix(in srgb, #5CFFC0 40%, transparent); }
+  .mission.paused { opacity: .7; } .mission.done { border-color: color-mix(in srgb, var(--ok, #5CFFC0) 40%, transparent); }
   .mission-top { display: flex; gap: 14px; align-items: center; }
   .ring { --p: 0; flex: none; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-mono); font-size: 12px; font-weight: 600; color: #fff;
     background: radial-gradient(closest-side, var(--deep) 76%, transparent 78% 100%), conic-gradient(var(--hi) calc(var(--p) * 1%), color-mix(in srgb, var(--line) 80%, transparent) 0); box-shadow: 0 0 18px -6px var(--hi); }
@@ -679,7 +697,7 @@
   .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .badge { padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
   .badge.warn { border-color: rgba(var(--warn-rgb, 255, 184, 107), .53); color: var(--warn, #FFB86B); }
-  .badge.ok { border-color: #5CFFC088; color: #5CFFC0; }
+  .badge.ok { border-color: color-mix(in srgb, var(--ok, #5CFFC0) 53%, transparent); color: var(--ok, #5CFFC0); }
   .mission details { margin-top: 10px; }
   .mission summary { cursor: pointer; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--lilac); }
   .q-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
@@ -795,31 +813,29 @@
   @media (max-height: 940px) { .welcome .mark { display: none; } .welcome h3 { font-size: 17px; } }
   html, body { overflow-x: clip; }
   /* Phones and very short windows can't fit it all: there it stacks and scrolls (the chat first) */
-  @media (max-width: 980px), (max-height: 480px) {
-    .main { overflow-y: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: max-content; grid-template-areas: "chat" "missions" "quests" "suite"; }
-    .chat { height: 72dvh; } .viewer { height: 80dvh; }
-    .side > .view, #view-today, #view-today > .subpanel { overflow: visible; }
-    .strip { grid-template-columns: minmax(0, 1fr); }
-    .suite-home .suite-groups { flex-direction: column; }
-    .suite-home .suite-grid { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
-  }
-  @media (max-width: 980px) {
-    .top-side .btn span:not(.suite-star), .status .label { display: none; }
-    .top-side nova-portal-badge::part(words) { display: none; }
-    .top-side nova-portal-badge::part(chip) { padding: 0 3px; gap: 0; }
-    .kicker { display: none; }
-    .board-head { padding: 8px; gap: 4px; }
-    .seg button { padding: 6px 10px; letter-spacing: .08em; }
-    .view { padding: 14px 12px 24px; }
-    .tl-item { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
-    .now-line { margin-left: 52px; } .now-line::before { left: -52px; width: 44px; letter-spacing: .1em; }
-    .toasts { right: 12px; left: 12px; bottom: 12px; width: auto; }
-    /* A phone, calm (16 Oct 2026): the newest two notices, smaller, and the rest behind "N more" */
-    .toasts:not(.all) > .toast:nth-last-child(n+3) { display: none; }
-    .toasts .toast { padding: 10px 12px; border-radius: 14px; }
-    .toasts .toast h5 { font-size: 13px; margin-bottom: 2px; }
-    .toasts .toast p { font-size: 12.5px; margin-bottom: 6px; }
-  }
+  :where(html[data-room="phone"]) .main { overflow-y: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: max-content; grid-template-areas: "chat" "missions" "quests" "suite"; }
+  :where(html[data-room="phone"]) .chat { height: 72dvh; }
+  :where(html[data-room="phone"]) .viewer { height: 80dvh; }
+  :where(html[data-room="phone"]) .side > .view, :where(html[data-room="phone"]) #view-today, :where(html[data-room="phone"]) #view-today > .subpanel { overflow: visible; }
+  :where(html[data-room="phone"]) .strip { grid-template-columns: minmax(0, 1fr); }
+  :where(html[data-room="phone"]) .suite-home .suite-groups { flex-direction: column; }
+  :where(html[data-room="phone"]) .suite-home .suite-grid { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+  :where(html[data-room="phone"]) .top-side .btn span:not(.suite-star), :where(html[data-room="phone"]) .status .label { display: none; }
+  :where(html[data-room="phone"]) .top-side nova-portal-badge::part(words) { display: none; }
+  :where(html[data-room="phone"]) .top-side nova-portal-badge::part(chip) { padding: 0 3px; gap: 0; }
+  :where(html[data-room="phone"]) .kicker { display: none; }
+  :where(html[data-room="phone"]) .board-head { padding: 8px; gap: 4px; }
+  :where(html[data-room="phone"]) .seg button { padding: 6px 10px; letter-spacing: .08em; }
+  :where(html[data-room="phone"]) .view { padding: 14px 12px 24px; }
+  :where(html[data-room="phone"]) .tl-item { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+  :where(html[data-room="phone"]) .now-line { margin-left: 52px; }
+  :where(html[data-room="phone"]) .now-line::before { left: -52px; width: 44px; letter-spacing: .1em; }
+  :where(html[data-room="phone"]) .toasts { right: 12px; left: 12px; bottom: 12px; width: auto; }
+  /* A phone, calm (16 Oct 2026): the newest two notices, smaller, and the rest behind "N more" */
+  :where(html[data-room="phone"]) .toasts:not(.all) > .toast:nth-last-child(n+3) { display: none; }
+  :where(html[data-room="phone"]) .toasts .toast { padding: 10px 12px; border-radius: 14px; }
+  :where(html[data-room="phone"]) .toasts .toast h5 { font-size: 13px; margin-bottom: 2px; }
+  :where(html[data-room="phone"]) .toasts .toast p { font-size: 12.5px; margin-bottom: 6px; }
   @media (max-width: 600px) {
     .topbar { gap: 8px; padding: 8px 10px; }
     .shell > * { min-width: 0; }
@@ -849,6 +865,7 @@
 <link rel="stylesheet" href="/shared/topbar.css"><!-- One top bar for Nova Agent and every open panel -->
 <link rel="stylesheet" href="/agent/phone-room.css"><!-- A phone: room for the panel (last, so it decides) -->
 <link rel="stylesheet" href="/agent/medallion.css"><!-- The top panel's planet medallion and its bubble buttons -->
+<link rel="stylesheet" href="/agent/quests-simple.css"><!-- Quests, simpler on a laptop or desktop -->
 <script src="/shared/spectrum.js"></script>
 <script src="/shared/look.js"></script>
 </head>
@@ -1098,7 +1115,8 @@
       <div class="look-settings" id="look-settings">
         <div class="look-row look-themes" role="radiogroup" aria-label="Theme for all of Nova Agent"></div>
         <label class="look-planet"><input type="checkbox" role="switch" id="look-planet" data-sfx="none"> Colour everything from my planet (Portal)</label>
-        <label class="look-planet"><input type="checkbox" role="switch" id="look-center" data-sfx="none"> Centre all text</label>
+        <!-- Alignment: centred (the default), left or right, for every panel's words and layout (look.js) -->
+        <div class="look-row look-icon" role="radiogroup" aria-label="Alignment"><span class="look-icon-name">Alignment</span><button type="button" class="chip" data-look-align="center" role="radio" data-sfx="tab">Centred</button><button type="button" class="chip" data-look-align="left" role="radio" data-sfx="tab">Left</button><button type="button" class="chip" data-look-align="right" role="radio" data-sfx="tab">Right</button></div>
         <div class="look-row look-icon" role="radiogroup" aria-label="Nova Agent's icon"><span class="look-icon-name">Nova Agent icon</span><button type="button" class="chip" data-agent-icon="classic" role="radio">Classic</button><button type="button" class="chip" data-agent-icon="chat" role="radio">Chat bubble</button></div>
       </div>
       <button type="button" class="icon-btn suite-x" id="suite-close" aria-label="Close">✕</button>
@@ -1265,10 +1283,10 @@
     refine: { icon: '◇', label: 'Mission detail', hint: 'Re-plans what’s left of your mission with this', send: 'Refine', colour: 'var(--gold)' },
     quest: { icon: '✦', label: 'Quest', hint: 'One task, fitted into your day', send: 'Add quest', colour: 'var(--hi)' },
     repeat: { icon: '∞', label: 'Repeating quest', hint: 'Comes back each time it’s due, until you end it', send: 'Set it up', colour: 'var(--lilac)' },
-    pulse: { icon: '⚡', label: 'Pulse', hint: 'A quick repeat on its own exact timer', send: 'Start it', colour: '#5CE1FF' },
+    pulse: { icon: '⚡', label: 'Pulse', hint: 'A quick repeat on its own exact timer', send: 'Start it', colour: 'color-mix(in oklch, var(--lilac) 60%, var(--soft))' },
     block: { icon: '⛔', label: 'Blocked time', hint: 'Quests move out of the way', send: 'Block it', colour: 'var(--bad, #FF8A8A)' },
-    update: { icon: '✓', label: 'Quest update', hint: 'Marks a quest done, started, skipped or moved', send: 'Update', colour: '#5CFFC0' },
-    calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Calendar', send: 'Add it', colour: '#9DB4FF' },
+    update: { icon: '✓', label: 'Quest update', hint: 'Marks a quest done, started, skipped or moved', send: 'Update', colour: 'var(--ok, #5CFFC0)' },
+    calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Calendar', send: 'Add it', colour: 'var(--app-calendar, #9DB4FF)' },
     studio: { icon: '♫', label: 'Studio bookings', hint: 'Looks at Acuity (read-only)', send: 'Check', colour: 'var(--warn, #FFB86B)' },
     ask: { icon: '?', label: 'Question', hint: 'Nova Agent answers, using your plan', send: 'Ask', colour: 'var(--soft)' },
     chat: { icon: '✦', label: 'Nova Agent', hint: 'Just talking to Nova Agent', send: 'Send', colour: 'var(--muted)' },

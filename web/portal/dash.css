@@ -89,17 +89,26 @@ html.embed #view-today:not([hidden]):has(> #today-dash) { display: block; }
    instead of having to click around"): Enquiries (today's bookings on top), Conversations and Alerts side
    by side, each its own pane that pages itself (onescreen.js); two columns on a tablet, one on a phone ===== */
 #main:not(.inbox-all) #inbox-today { display: none; }
+/* (how many columns and which panes show is worked out for this device's form by app.js layoutInbox, which
+   places each pane; here only each column count's widths) */
 #main.inbox-all {
-  display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
   gap: 0 12px; align-items: stretch;
 }
 #main.inbox-all > .group-strip { grid-column: 1 / -1; grid-row: 1; }
-#main.inbox-all > #view-enquiries { grid-column: 1; grid-row: 2; }
-#main.inbox-all > #view-chats { grid-column: 2; grid-row: 2; }
-#main.inbox-all > #view-alerts { grid-column: 3; grid-row: 2; }
+#main.inbox-all > .ib-switch { grid-column: 1 / -1; grid-row: 2; }
+#main.inbox-all > .view[data-ib-off] { display: none !important; }
 /* (one open: its pane takes more of the width) */
-#main.inbox-all:has(> #view-enquiries #enquiry-thread:not([hidden])) { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
-#main.inbox-all:has(> #view-chats #chats-back:not([hidden])) { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(0, 1fr); }
+#main.inbox-all[data-ib-cols="3"]:has(> #view-enquiries #enquiry-thread:not([hidden])) { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
+#main.inbox-all[data-ib-cols="3"]:has(> #view-chats #chats-back:not([hidden])) { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(0, 1fr); }
+#main.inbox-all[data-ib-cols="2"] { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 10px; }
+#main.inbox-all[data-ib-cols="1"] { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+/* (the panes that didn't fit, one tap away by name: the theme's own chips, the ones showing lit) */
+.ib-switch { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0 0 8px; }
+.ib-switch[hidden] { display: none; }
+#main.inbox-all .ib-switch .chip { min-height: 30px; height: 30px; padding: 0 14px; font-size: 10px; letter-spacing: 0.1em; white-space: nowrap; }
+#main.inbox-all .ib-switch .chip[aria-pressed="true"] { border-color: rgba(var(--hi-rgb), 0.7); background: rgba(var(--hi-rgb), 0.18); color: var(--bright, #fff); }
+html.is-touch #main.inbox-all .ib-switch .chip { min-height: 40px; height: 40px; }
 #main.inbox-all > .view:not([hidden]) { min-width: 0; min-height: 0; }
 #main.inbox-all > .view > .view-head { margin-bottom: 6px; }
 html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 18px; }
@@ -119,25 +128,8 @@ html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inb
 .it-booking:is(:hover, :focus-visible) { background: color-mix(in oklab, var(--hi, #FF5FA8) 22%, transparent); outline: none; }
 .it-tools { height: 26px; }
 
-/* (a tablet: Enquiries on the left, Conversations over Alerts on the right) */
-@media (max-width: 1099px) {
-  #main.inbox-all, #main.inbox-all:has(> .view #enquiry-thread:not([hidden])), #main.inbox-all:has(> .view #chats-back:not([hidden])) {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); gap: 10px 10px;
-  }
-  #main.inbox-all > #view-enquiries { grid-column: 1; grid-row: 2 / 4; }
-  #main.inbox-all > #view-chats { grid-column: 2; grid-row: 2; }
-  #main.inbox-all > #view-alerts { grid-column: 2; grid-row: 3; }
-}
-/* (a phone: the three one above the other, Enquiries the tallest; the hints make way) */
-@media (max-width: 640px) {
-  #main.inbox-all, #main.inbox-all:has(> .view #enquiry-thread:not([hidden])), #main.inbox-all:has(> .view #chats-back:not([hidden])) {
-    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px;
-  }
-  #main.inbox-all > #view-enquiries { grid-column: 1; grid-row: 2; }
-  #main.inbox-all > #view-chats { grid-column: 1; grid-row: 3; }
-  #main.inbox-all > #view-alerts { grid-column: 1; grid-row: 4; }
-  #main.inbox-all > .view > .hint { display: none; }
-}
+/* (a phone: the hints make way) */
+html[data-form^="phone"] #main.inbox-all > .view > .hint { display: none; }
 
 /* ---- One line each in Enquiries and Conversations, like Alerts: its state, who or what, how long ago;
    an enquiry opens in place (▾ or a tap), a conversation opens on a tap ---- */
@@ -190,23 +182,13 @@ html #main.inbox-all #view-alerts .settings-row { justify-content: flex-start; }
 #main.inbox-all #view-alerts .auto-delete select { min-height: 26px; height: 26px; padding: 0 8px; font-size: 12px; }
 #main.inbox-all #alert-list { grid-template-columns: minmax(0, 1fr); }
 .ib-filters { display: none; }
-/* (a phone, or a phone on its side: the filters and settings behind each pane's small button) */
-@media (max-width: 640px), (max-height: 500px) {
-  #main.inbox-all .ib-filters { display: inline-flex; order: 0; min-height: 24px; height: 24px; padding: 0 9px; font-size: 9px; letter-spacing: 0.08em; }
-  #main.inbox-all .ib-filters[aria-expanded="true"] { border-color: rgba(var(--hi-rgb), 0.6); color: #fff; }
-  #main.inbox-all > .view:not(.ib-tools-open) :is(#enq-chips, #enq-tools, #saved-panel, .ib-chat-chips, .settings-row, #alerts-clear) { display: none; }
-  #main.inbox-all > .view > .hint { display: none; }
-  #main.inbox-all > .view > .view-head::after { flex-basis: 100px; }
-}
-/* (a phone on its side: the three side by side, the height is too short to stack them) */
-@media (max-height: 500px) and (min-width: 641px) {
-  #main.inbox-all, #main.inbox-all:has(> .view #enquiry-thread:not([hidden])), #main.inbox-all:has(> .view #chats-back:not([hidden])) {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 0 8px;
-  }
-  #main.inbox-all > #view-enquiries { grid-column: 1; grid-row: 2; }
-  #main.inbox-all > #view-chats { grid-column: 2; grid-row: 2; }
-  #main.inbox-all > #view-alerts { grid-column: 3; grid-row: 2; }
-}
+/* (a phone, upright or on its side: the filters and settings behind each pane's small button; a computer
+   keeps them out, whatever its window's size) */
+html[data-form^="phone"] #main.inbox-all .ib-filters { display: inline-flex; order: 0; min-height: 24px; height: 24px; padding: 0 9px; font-size: 9px; letter-spacing: 0.08em; }
+html[data-form^="phone"] #main.inbox-all .ib-filters[aria-expanded="true"] { border-color: rgba(var(--hi-rgb), 0.6); color: #fff; }
+html[data-form^="phone"] #main.inbox-all > .view:not(.ib-tools-open) :is(#enq-chips, #enq-tools, #saved-panel, .ib-chat-chips, .settings-row, #alerts-clear) { display: none; }
+html[data-form^="phone"] #main.inbox-all > .view > .hint { display: none; }
+html[data-form^="phone"] #main.inbox-all > .view > .view-head::after { flex-basis: 100px; }
 @media (max-width: 640px) {
   #main.inbox-all > .view > .view-head { min-height: 26px; margin-bottom: 4px; }
   html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 15px; line-height: 26px; }
@@ -242,25 +224,6 @@ html #main.inbox-all #view-alerts .settings-row { justify-content: flex-start; }
   #main.inbox-all :is(.al-line, .ib-line) .al-ago { grid-area: ago; justify-self: start; }
   #main.inbox-all :is(.al-line, .ib-line) :is(.al-more, .ib-msgs) { grid-area: more; }
   #main.inbox-all :is(.al-line, .ib-line) .al-title { grid-area: title; }
-}
-
-/* ===== Inbox panes stacked on a short screen (app.js foldInbox, 22 Oct 2026, the user: "stop nova panes
-   from resizing on the height when the width is lower"): never all three squashed; the pane in use keeps
-   the room, the others fold to their title line with ▾, and a tap on a title opens that one ===== */
-#main.inbox-all > .view[data-ib-shut] > :not(.view-head),
-#main.inbox-all > .view[data-ib-shut] > .view-head > :not(h2, .pane-ico) { display: none !important; }
-#main.inbox-all > .view[data-ib-shut] > .view-head { margin: 0; cursor: pointer; flex-wrap: nowrap; }
-#main.inbox-all > .view[data-ib-shut] > .view-head::after { content: "▾"; flex: 0 0 auto; margin-left: auto; padding: 0 4px; color: var(--soft); font-size: 13px; line-height: 1; }
-#main.inbox-all > .view[data-ib-shut] > .view-head:focus-visible { outline: 2px solid rgba(var(--hi-rgb), 0.7); outline-offset: 2px; border-radius: 8px; }
-#main.inbox-all > .view[data-ib-shut]:hover { filter: brightness(1.12); }
-@media (max-width: 640px) {
-  #main.inbox-all[data-ib-fold="enquiries"] { grid-template-rows: auto minmax(0, 1fr) auto auto !important; }
-  #main.inbox-all[data-ib-fold="chats"] { grid-template-rows: auto auto minmax(0, 1fr) auto !important; }
-  #main.inbox-all[data-ib-fold="alerts"] { grid-template-rows: auto auto auto minmax(0, 1fr) !important; }
-}
-@media (min-width: 641px) and (max-width: 1099px) and (min-height: 501px) {
-  #main.inbox-all[data-ib-fold="chats"] { grid-template-rows: auto minmax(0, 1fr) auto !important; }
-  #main.inbox-all[data-ib-fold="alerts"] { grid-template-rows: auto auto minmax(0, 1fr) !important; }
 }
 
 /* ===== Nova panes (pillars.js paneUp, 22 Oct 2026, the user: "for all panes in the nova portal can we

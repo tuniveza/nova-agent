@@ -47,7 +47,7 @@ textarea.field { resize: none; line-height: 1.5; }
 .inv .amt { justify-items: end; flex: none; font-variant-numeric: tabular-nums; }
 /* A stage, in its colour (the same four as the invoice's banners), always with its name */
 .tag { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
-.s-deposit { color: #b98cff; } .s-balance { color: var(--text); } .s-overdue { color: #ff6b81; } .s-paid { color: #4fd18b; }
+.s-deposit { color: #b98cff; } .s-balance { color: var(--text); } .s-overdue { color: var(--bad, #ff6b81); } .s-paid { color: var(--ok, #4fd18b); }
 .tag.waiting { color: var(--warn, #f2c14e); }
 
 /* ---- The invoice ---- */
@@ -302,9 +302,9 @@ html body .lines .n { text-align: right !important; }
 .filters [data-filter="removed"] { --ic: var(--ic-trash); }
 .nb-tool .filters :is([data-filter="deposit"], [data-filter="balance"], [data-filter="overdue"], [data-filter="paid"])::before { width: 8px; height: 8px; border-radius: 50%; -webkit-mask: none; mask: none; background: var(--st); box-shadow: 0 0 6px var(--st); }
 .filters [data-filter="deposit"], .inv[data-st="deposit"] { --st: #b98cff; }
-.filters [data-filter="balance"], .inv[data-st="balance"] { --st: #8fb4ff; }
+.filters [data-filter="balance"], .inv[data-st="balance"] { --st: var(--lilac, #8fb4ff); }
 .filters [data-filter="overdue"], .inv[data-st="overdue"] { --st: #ff6b81; }
-.filters [data-filter="paid"], .inv[data-st="paid"] { --st: #4fd18b; }
+.filters [data-filter="paid"], .inv[data-st="paid"] { --st: var(--ok, #4fd18b); }
 .inv[data-st="waiting"] { --st: #f2c14e; }
 /* The headings: an icon for each part instead of the dot */
 .nb-tool .nt-h::before { width: 15px; height: 15px; border-radius: 0; box-shadow: none; background: var(--hi); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--hi) 70%, transparent)); }

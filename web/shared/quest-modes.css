@@ -3,12 +3,12 @@
    (look.js sets --hi, --accent, --soft and --gold), so they always belong to it. */
 :root {
   --qm-waiting: color-mix(in oklab, #A8A2CC 76%, var(--soft, #F0EAF5));
-  --qm-soon: color-mix(in oklab, #62B8FF 80%, var(--accent, #C7A4FF));
+  --qm-soon: color-mix(in oklab, var(--lilac, #62B8FF) 80%, var(--accent, #C7A4FF));
   --qm-working: color-mix(in oklab, #FFC857 82%, var(--gold, #F2D9A0));
   --qm-nearly: color-mix(in oklab, #9E86FF 78%, var(--hi, #FF5FA8));
   --qm-longer: color-mix(in oklab, #FF8466 82%, var(--hi, #FF5FA8));
   --qm-questions: color-mix(in oklab, #FF6FBF 80%, var(--accent, #C7A4FF));
-  --qm-done: color-mix(in oklab, #4FF2B5 80%, var(--soft, #F0EAF5));
+  --qm-done: color-mix(in oklab, var(--ok, #4FF2B5) 80%, var(--soft, #F0EAF5));
 }
 .qm-waiting { --qm: var(--qm-waiting); }
 .qm-soon { --qm: var(--qm-soon); }

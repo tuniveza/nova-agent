@@ -8,10 +8,9 @@
    Sizes follow the window, the same for both: a computer, a short computer window, a phone, a
    phone on its side. */
 :root { --nv-top-h: 68px; --nv-top-r: 22px; --nv-top-pad: 10px 16px; --nv-mark: 46px; --nv-mark-r: 13px; --nv-word: clamp(19px, 2.2vw, 25px); }
-@media (min-width: 981px) and (min-height: 481px) and (max-height: 820px) {
-  :root { --nv-top-h: 52px; --nv-top-pad: 5px 12px; --nv-mark: 34px; --nv-mark-r: 10px; --nv-word: 19px; } }
-@media (max-width: 980px), (max-height: 480px) {
-  :root { --nv-top-h: 50px; --nv-top-r: 18px; --nv-top-pad: 6px 8px; --nv-mark: 34px; --nv-mark-r: 10px; --nv-word: 17px; } }
+@media (max-height: 820px) {
+  :root:where([data-room="computer"]) { --nv-top-h: 52px; --nv-top-pad: 5px 12px; --nv-mark: 34px; --nv-mark-r: 10px; --nv-word: 19px; } }
+:root:where([data-room="phone"]) { --nv-top-h: 50px; --nv-top-r: 18px; --nv-top-pad: 6px 8px; --nv-mark: 34px; --nv-mark-r: 10px; --nv-word: 17px; }
 @media (max-height: 500px) {
   :root { --nv-top-h: 38px; --nv-top-r: 14px; --nv-top-pad: 3px 8px; --nv-mark: 28px; --nv-mark-r: 8px; } }
 
@@ -42,14 +41,12 @@
 .nv-topbar .vn-app { filter: none; }
 /* The round buttons at the sides: one size */
 .nv-topbar .icon-btn { width: 36px; height: 36px; }
-@media (max-width: 980px), (max-height: 480px) {
-  .nv-topbar { gap: 6px; backdrop-filter: none; -webkit-backdrop-filter: none;
+:where(html[data-room="phone"]) .nv-topbar { gap: 6px; backdrop-filter: none; -webkit-backdrop-filter: none;
     background: radial-gradient(60% 50% at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 62%) padding-box,
       linear-gradient(color-mix(in srgb, var(--panel) 88%, var(--void)), color-mix(in srgb, var(--panel) 88%, var(--void))) padding-box,
       var(--edge-glow, linear-gradient(var(--line), var(--line))) border-box; }
-  .nv-topbar .kicker, .nv-topbar .vn-text::before { display: none; }
-  .nv-topbar .icon-btn { width: 34px; height: 34px; }
-}
+:where(html[data-room="phone"]) .nv-topbar .kicker, :where(html[data-room="phone"]) .nv-topbar .vn-text::before { display: none; }
+:where(html[data-room="phone"]) .nv-topbar .icon-btn { width: 34px; height: 34px; }
 /* A phone on its side: Nova Agent's header shows its mark alone (phone.css); an open panel keeps its name, smaller */
 @media (max-height: 500px) { .nv-topbar .vn-text { font-size: 15px; } .nv-topbar .icon-btn { width: 30px; height: 30px; } }
 
@@ -71,22 +68,16 @@
 .shell:has(> .main.viewing) > .topbar .vn-text::before { display: none; }
 .shell:has(> .main.viewing) > .topbar .top-side { gap: 6px; }
 .shell:has(> .main.viewing) > .topbar .btn { min-height: 32px; padding-block: 4px; }
-@media (min-width: 981px) and (min-height: 481px) {
-  /* As wide as the header is on the home, so the panel below starts in the same place */
-  .shell:has(> .main.viewing) > .topbar { width: var(--top-w, fit-content); min-width: max-content; max-width: 100%; grid-template-columns: auto minmax(0, 1fr) auto; }
-}
-@media (max-width: 980px), (max-height: 480px) {
-  .shell:has(> .main.viewing) > .topbar { --nv-top-h: 44px; --nv-top-pad: 4px 6px; --nv-mark: 26px; --nv-mark-r: 8px; --nv-word: 15px;
+/* As wide as the header is on the home, so the panel below starts in the same place */
+:where(html[data-room="computer"]) .shell:has(> .main.viewing) > .topbar { width: var(--top-w, fit-content); min-width: max-content; max-width: 100%; grid-template-columns: auto minmax(0, 1fr) auto; }
+:where(html[data-room="phone"]) .shell:has(> .main.viewing) > .topbar { --nv-top-h: 44px; --nv-top-pad: 4px 6px; --nv-mark: 26px; --nv-mark-r: 8px; --nv-word: 15px;
     grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; }
-  .shell:has(> .main.viewing) > .topbar .icon-btn { width: 30px; height: 30px; }
-  .shell:has(> .main.viewing) > .topbar > .viewer-name { justify-self: stretch; justify-content: center; min-width: 0; }
-  /* Live keeps its dot and word, smaller */
-  .shell:has(> .main.viewing) > .topbar .status { padding: 3px 7px; font-size: 10px; }
-}
-@media (max-width: 980px), (max-height: 480px) {
-  /* The planet a little smaller in the slim bar */
-  .shell:has(> .main.viewing) > .topbar nova-portal-badge { zoom: .82; }
-}
+:where(html[data-room="phone"]) .shell:has(> .main.viewing) > .topbar .icon-btn { width: 30px; height: 30px; }
+:where(html[data-room="phone"]) .shell:has(> .main.viewing) > .topbar > .viewer-name { justify-self: stretch; justify-content: center; min-width: 0; }
+/* Live keeps its dot and word, smaller */
+:where(html[data-room="phone"]) .shell:has(> .main.viewing) > .topbar .status { padding: 3px 7px; font-size: 10px; }
+/* The planet a little smaller in the slim bar */
+:where(html[data-room="phone"]) .shell:has(> .main.viewing) > .topbar nova-portal-badge { zoom: .82; }
 @media (max-width: 480px) {
   /* A narrow phone: Live shows as its coloured dot (its word is in the tooltip), so the panel's name has room */
   .shell:has(> .main.viewing) > .topbar .status { padding: 6px; }
@@ -113,8 +104,7 @@
    and up, no tiny spaced-out capitals). (The selector covers the home and a panel alike, and wins
    over the older per-place sizes above, in chat.html, phone.css and bar.css.) */
 :root { --tp-h: 52px; --tp-btn: 40px; --tp-mark: 32px; --tp-word: 18px; --tp-gap: 4px; --tp-pad: 0 6px; --tp-r: 16px; --tp-ico: 20px; }
-@media (max-width: 980px), (max-height: 480px) {
-  :root { --tp-h: 52px; --tp-btn: 48px; --tp-mark: 28px; --tp-word: 15px; --tp-gap: 0px; --tp-pad: 0 1px; --tp-r: 14px; } }
+:root:where([data-room="phone"]) { --tp-h: 52px; --tp-btn: 48px; --tp-mark: 28px; --tp-word: 15px; --tp-gap: 0px; --tp-pad: 0 1px; --tp-r: 14px; }
 .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar {
   --nv-top-h: var(--tp-h); --nv-mark: var(--tp-mark); --nv-word: var(--tp-word); --nv-top-r: var(--tp-r);
   box-sizing: border-box; height: var(--tp-h); min-height: var(--tp-h); padding: var(--tp-pad); border-radius: var(--tp-r);
@@ -166,17 +156,15 @@
 .shell > .topbar.nv-topbar > .top-side.right > #viewer-reload { order: 4; }
 .shell > .topbar.nv-topbar > .top-side.right > #suite-btn { order: 5; }
 .shell > .topbar.nv-topbar > .top-side.right > :is(#phone-gear, .gear-btn) { order: 6; }
-@media (max-width: 980px), (max-height: 480px) {
-  /* A phone: the bar's own words make way for the big targets (Live is its dot; Install its icon) */
-  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar { gap: 2px; grid-template-columns: auto minmax(0, 1fr) auto; }
-  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > :is(.brand, .viewer-name) { justify-self: center; min-width: 0; max-width: 100%; }
-  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .status { padding: 0; width: var(--tp-btn); background: transparent; }
-  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .status .label { display: none !important; }
-  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .top-side .icon-btn:has(> span:not(.sfx-on, .sfx-off)) { width: var(--tp-btn); padding: 0; justify-content: center; background: transparent; }
-  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .top-side .icon-btn:has(> span:not(.sfx-on, .sfx-off)) > span { display: none; }
-  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar nova-portal-badge::part(words) { display: none; }
-  .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > .viewer-name { padding: 0 4px; gap: 6px; }
-}
+/* A phone: the bar's own words make way for the big targets (Live is its dot; Install its icon) */
+:where(html[data-room="phone"]) .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar { gap: 2px; grid-template-columns: auto minmax(0, 1fr) auto; }
+:where(html[data-room="phone"]) .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > :is(.brand, .viewer-name) { justify-self: center; min-width: 0; max-width: 100%; }
+:where(html[data-room="phone"]) .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .status { padding: 0; width: var(--tp-btn); background: transparent; }
+:where(html[data-room="phone"]) .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .status .label { display: none !important; }
+:where(html[data-room="phone"]) .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .top-side .icon-btn:has(> span:not(.sfx-on, .sfx-off)) { width: var(--tp-btn); padding: 0; justify-content: center; background: transparent; }
+:where(html[data-room="phone"]) .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar .top-side .icon-btn:has(> span:not(.sfx-on, .sfx-off)) > span { display: none; }
+:where(html[data-room="phone"]) .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar nova-portal-badge::part(words) { display: none; }
+:where(html[data-room="phone"]) .shell:is(:has(> .main.viewing), :not(:has(> .main.viewing))) > .topbar.nv-topbar > .viewer-name { padding: 0 4px; gap: 6px; }
 @media (max-width: 379px) {
   /* The smallest phones: the panel's name gets the room (its icon is on the navigation panel below) */
   .shell:has(> .main.viewing) > .topbar.nv-topbar .vn-ico { display: none; }

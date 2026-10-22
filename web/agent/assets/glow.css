@@ -36,22 +36,18 @@ a:focus-visible:not(.btn, .chip, .mini), button:focus-visible:not(.btn, .icon-bt
 /* Cards inside the columns (missions, quests, chat bubbles) get a hairline of the same light */
 .mission, .now-card, .tl-item .card, .msg.bot .bubble { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 0 0 1px color-mix(in srgb, var(--hi) 10%, transparent); }
 /* Phones: the solid panels keep the glowing edge */
-@media (max-width: 980px), (max-height: 480px) {
-  .main > .side.glass, .main > .chat.glass, .viewer > .viewer-body.glass {
+:where(html[data-room="phone"]) .main > .side.glass, :where(html[data-room="phone"]) .main > .chat.glass, :where(html[data-room="phone"]) .viewer > .viewer-body.glass {
     background: radial-gradient(60% 50% at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 62%) padding-box,
       linear-gradient(color-mix(in srgb, var(--panel) 88%, var(--void)), color-mix(in srgb, var(--panel) 88%, var(--void))) padding-box, var(--edge-glow) border-box; }
-}
 
 /* ---- The columns' titles in the middle (their buttons stay on the right) ---- */
 .side-head { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 10px; }
 .side-head > .sec-title { grid-column: 2; justify-self: center; }
 .side-head > :not(.sec-title) { grid-column: 3; justify-self: end; }
 .suggest, .chips, .seg, .subtabs, .stats, .q-tags, .row-btns { justify-content: safe center; }
-@media (min-width: 981px) and (min-height: 481px) {
-  .side-head, .chat-head { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 10px; }
-  .side-head > .sec-title, .chat-head > .sec-title { grid-column: 2; justify-self: center; }
-  .side-head > :not(.sec-title), .chat-head > :not(.sec-title) { grid-column: 3; justify-self: end; }
-}
+:where(html[data-room="computer"]) .side-head, :where(html[data-room="computer"]) .chat-head { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 10px; }
+:where(html[data-room="computer"]) .side-head > .sec-title, :where(html[data-room="computer"]) .chat-head > .sec-title { grid-column: 2; justify-self: center; }
+:where(html[data-room="computer"]) .side-head > :not(.sec-title), :where(html[data-room="computer"]) .chat-head > :not(.sec-title) { grid-column: 3; justify-self: end; }
 
 /* ---- The conversation in the middle: every message centred, with its words ---- */
 .log { align-items: center; }
@@ -92,16 +88,16 @@ a:focus-visible:not(.btn, .chip, .mini), button:focus-visible:not(.btn, .icon-bt
 @property --scene-b { syntax: "<color>"; inherits: true; initial-value: #7A1F86; }
 html { --scene-own: var(--hi); --scene-a: color-mix(in oklch, var(--scene-own) 45%, var(--accent)); --scene-b: color-mix(in oklch, var(--scene-own) 30%, var(--accent-2));
   transition: --scene-a 2.4s ease, --scene-b 2.4s ease; }
-html[data-scene="portal"] { --scene-own: #ff5fae; }
-html[data-scene="calendar"] { --scene-own: #8c7dff; }
-html[data-scene="notes"] { --scene-own: #ffb36b; }
-html[data-scene="index"] { --scene-own: #45d3c4; }
-html[data-scene="quests"] { --scene-own: #ffd166; }
-html[data-scene="missions"] { --scene-own: #ff7a6b; }
-html[data-scene="lossless"] { --scene-own: #62b6ff; }
-html[data-scene="visualizer"] { --scene-own: #6fe6a6; }
-html[data-scene="observatory"] { --scene-own: #5b63ff; }
-html[data-scene="manual"] { --scene-own: #e6cf9f; }
+html[data-scene="portal"] { --scene-own: var(--app-portal); }
+html[data-scene="calendar"] { --scene-own: var(--app-calendar); }
+html[data-scene="notes"] { --scene-own: var(--app-notes); }
+html[data-scene="index"] { --scene-own: var(--app-index); }
+html[data-scene="quests"] { --scene-own: var(--app-quests); }
+html[data-scene="missions"] { --scene-own: var(--app-missions); }
+html[data-scene="lossless"] { --scene-own: var(--app-lossless); }
+html[data-scene="visualizer"] { --scene-own: var(--app-visualizer); }
+html[data-scene="observatory"] { --scene-own: var(--app-observatory); }
+html[data-scene="manual"] { --scene-own: var(--app-manual); }
 .nebula {
   /* Quiet: two soft washes of colour in the corners, a very faint band of the galaxy, and deep
      space below. Nothing bright, no spots, nothing that pulls the eye. */
@@ -126,38 +122,38 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
 .composer textarea::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* A computer window that isn't very wide: slimmer side columns, a shorter "New" button, smaller
    tool buttons, and the chat's suggestions in one row you can swipe */
-@media (min-width: 981px) and (max-width: 1280px) and (min-height: 481px) {
-  .main { grid-template-columns: minmax(210px, 1fr) minmax(340px, 1.45fr) minmax(210px, 1fr); gap: 10px; }
-  #new-mission-btn { font-size: 0; padding: 6px 10px; }
-  #new-mission-btn::after { content: "✦ New"; font-size: 10.5px; }
-  .strip-tools { gap: 3px; }
-  .strip-tools .icon-btn, .side-head .icon-btn, .chat-head .icon-btn { width: 28px; height: 28px; }
-  .side-head { padding: 6px 8px; }
-  .sec-title { font-size: 13px; gap: 6px; }
-  .sec-title > .pico.sec-ico { width: 20px; height: 20px; }
+@media (max-width: 1280px) {
+  :where(html[data-room="computer"]) .main { grid-template-columns: minmax(210px, 1fr) minmax(340px, 1.45fr) minmax(210px, 1fr); gap: 10px; }
+  :where(html[data-room="computer"]) #new-mission-btn { font-size: 0; padding: 6px 10px; }
+  :where(html[data-room="computer"]) #new-mission-btn::after { content: "✦ New"; font-size: 10.5px; }
+  :where(html[data-room="computer"]) .strip-tools { gap: 3px; }
+  :where(html[data-room="computer"]) .strip-tools .icon-btn, :where(html[data-room="computer"]) .side-head .icon-btn, :where(html[data-room="computer"]) .chat-head .icon-btn { width: 28px; height: 28px; }
+  :where(html[data-room="computer"]) .side-head { padding: 6px 8px; }
+  :where(html[data-room="computer"]) .sec-title { font-size: 13px; gap: 6px; }
+  :where(html[data-room="computer"]) .sec-title > .pico.sec-ico { width: 20px; height: 20px; }
 }
 /* A short computer window: everything a little tighter, so it all fits without scrolling */
-@media (min-width: 981px) and (min-height: 481px) and (max-height: 820px) {
-  .shell { gap: 8px; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
-  .main { gap: 8px; }
+@media (max-height: 820px) {
+  :where(html[data-room="computer"]) .shell { gap: 8px; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  :where(html[data-room="computer"]) .main { gap: 8px; }
   /* (the top bars get smaller here too: /shared/topbar.css) */
-  .welcome { gap: 8px; }
-  .welcome .mark, .welcome p { display: none; }
-  .welcome h3 { font-size: 15px; margin: 0; }
-  .welcome .suggest, .suggest { flex-wrap: wrap; justify-content: safe center; overflow-x: visible; padding-bottom: 4px; }
-  .welcome .suggest .chip { flex: none; scroll-snap-align: start; }
-  .status-line { height: 24px; font-size: 11px; }
+  :where(html[data-room="computer"]) .welcome { gap: 8px; }
+  :where(html[data-room="computer"]) .welcome .mark, :where(html[data-room="computer"]) .welcome p { display: none; }
+  :where(html[data-room="computer"]) .welcome h3 { font-size: 15px; margin: 0; }
+  :where(html[data-room="computer"]) .welcome .suggest, :where(html[data-room="computer"]) .suggest { flex-wrap: wrap; justify-content: safe center; overflow-x: visible; padding-bottom: 4px; }
+  :where(html[data-room="computer"]) .welcome .suggest .chip { flex: none; scroll-snap-align: start; }
+  :where(html[data-room="computer"]) .status-line { height: 24px; font-size: 11px; }
 }
-@media (min-width: 981px) and (min-height: 481px) and (max-height: 660px) {
-  .side > .view { padding: 8px 10px; }
-  #view-today > .day-head .day-sub { display: none; }
-  .main > .suite-home .suite-group h4 { display: none; }
-  .main > .suite-home .suite-app b { font-size: 9px; }
+@media (max-height: 660px) {
+  :where(html[data-room="computer"]) .side > .view { padding: 8px 10px; }
+  :where(html[data-room="computer"]) #view-today > .day-head .day-sub { display: none; }
+  :where(html[data-room="computer"]) .main > .suite-home .suite-group h4 { display: none; }
+  :where(html[data-room="computer"]) .main > .suite-home .suite-app b { font-size: 9px; }
 }
 /* A tablet, or a window between phone and computer size: the bar in one row, centred */
-@media (min-width: 601px) and (max-width: 980px) {
+@media (min-width: 601px) {
   /* (in one row, every place the same width: phone.css) */
-  .tabbar .tgroup[data-group="tasks"] { border-left: 1px solid var(--line); padding-left: 6px; }
+  :where(html[data-room="phone"]) .tabbar .tgroup[data-group="tasks"] { border-left: 1px solid var(--line); padding-left: 6px; }
 }
 /* The welcome (and its row of suggestions) always spans the conversation's width, so a row you
    swipe starts at its first suggestion */
@@ -167,12 +163,10 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
 /* ---- Missions and Quests are as big as what's in them: short when there's little (so they don't
    stand there empty), growing up to the full height when there's a lot (then scrolling inside).
    Their widths follow their contents too, within sensible limits; the chat takes the rest. ---- */
-@media (min-width: 981px) and (min-height: 481px) {
-  .main:not(.viewing) { grid-template-columns: fit-content(clamp(240px, 26vw, 400px)) minmax(360px, 1fr) fit-content(clamp(240px, 28vw, 430px)); }
-  .main > .side { align-self: start; max-height: 100%; min-width: 220px; }
-  .main > .side > .view { min-height: 0; }
-  #view-today { overflow: auto; }
-}
+:where(html[data-room="computer"]) .main:not(.viewing) { grid-template-columns: fit-content(clamp(240px, 26vw, 400px)) minmax(360px, 1fr) fit-content(clamp(240px, 28vw, 430px)); }
+:where(html[data-room="computer"]) .main > .side { align-self: start; max-height: 100%; min-width: 220px; }
+:where(html[data-room="computer"]) .main > .side > .view { min-height: 0; }
+:where(html[data-room="computer"]) #view-today { overflow: auto; }
 
 /* ---- Quests: the day's heading centred (the date, its line, and the counts) ---- */
 #view-today > .day-head, .day-head { display: flex !important; flex-direction: column; align-items: center !important; justify-content: center !important; text-align: center; gap: 6px; }
@@ -190,51 +184,43 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
 .chat-pager .cp-mode { width: auto; padding: 0 10px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; color: var(--hi); }
 .chat-pager .cp-where { min-width: 7ch; text-align: center; }
 .chat { grid-template-rows: auto minmax(0, 1fr) auto auto !important; }
-@media (max-width: 980px), (max-height: 480px) { .chat { grid-template-rows: minmax(0, 1fr) auto auto !important; } }
+:where(html[data-room="phone"]) .chat { grid-template-rows: minmax(0, 1fr) auto auto !important; }
 
 /* ---- One centre line: Missions and Quests the same width, so Agent sits in the middle of the page,
    lined up with the brand panel (top), the navigation panel and the status panel. On the home the
    brand panel is as wide as Agent below it (never narrower than its own buttons need). ---- */
-@media (min-width: 981px) and (min-height: 481px) {
-  html { --side-w: clamp(230px, 22vw, 400px); }
-  .main:not(.viewing) { grid-template-columns: var(--side-w) minmax(340px, 1fr) var(--side-w) !important; }
-  .shell:not(:has(> .main.viewing)) > .topbar { width: var(--chat-w, auto); min-width: max-content; max-width: 100%;
+html:where([data-room="computer"]) { --side-w: clamp(230px, 22vw, 400px); }
+:where(html[data-room="computer"]) .main:not(.viewing) { grid-template-columns: var(--side-w) minmax(340px, 1fr) var(--side-w) !important; }
+:where(html[data-room="computer"]) .shell:not(:has(> .main.viewing)) > .topbar { width: var(--chat-w, auto); min-width: max-content; max-width: 100%;
     grid-template-columns: 1fr auto 1fr; justify-self: center; }
-  .shell:not(:has(> .main.viewing)) > .topbar > .top-side.left { justify-self: start; }
-  .shell:not(:has(> .main.viewing)) > .topbar > .top-side.right { justify-self: end; }
-}
-@media (min-width: 981px) and (max-width: 1280px) and (min-height: 481px) { html { --side-w: clamp(200px, 19vw, 280px); } .topbar { gap: 8px; } .top-side { gap: 6px; } }
+:where(html[data-room="computer"]) .shell:not(:has(> .main.viewing)) > .topbar > .top-side.left { justify-self: start; }
+:where(html[data-room="computer"]) .shell:not(:has(> .main.viewing)) > .topbar > .top-side.right { justify-self: end; }
+@media (max-width: 1280px) { html:where([data-room="computer"]) { --side-w: clamp(200px, 19vw, 280px); } :where(html[data-room="computer"]) .topbar { gap: 8px; } :where(html[data-room="computer"]) .top-side { gap: 6px; } }
 /* The brand panel's small word above Nova Agent: just "Novacane", kept on every computer size */
-@media (min-width: 981px) and (min-height: 481px) { .topbar .brand .kicker { display: block !important; } }
+:where(html[data-room="computer"]) .topbar .brand .kicker { display: block !important; }
 
 /* Missions and Quests: as tall as what's in them, and once that's more than the room, they stop
    at the bottom and scroll inside (nothing goes off the screen) */
-@media (min-width: 981px) and (min-height: 481px) {
-  .main:not(.viewing) > .side { display: flex !important; flex-direction: column; max-height: 100%; min-height: 0; }
-  .main:not(.viewing) > .side > .side-head { flex: none; }
-  .main:not(.viewing) > .side > .view { flex: 1 1 auto; min-height: 0; overflow-y: auto !important; }
-  .main > #quests-panel > #view-today { overflow-y: auto !important; }
-  .main > #quests-panel > #view-today > .subpanel { flex: none; overflow: visible; }
-}
+:where(html[data-room="computer"]) .main:not(.viewing) > .side { display: flex !important; flex-direction: column; max-height: 100%; min-height: 0; }
+:where(html[data-room="computer"]) .main:not(.viewing) > .side > .side-head { flex: none; }
+:where(html[data-room="computer"]) .main:not(.viewing) > .side > .view { flex: 1 1 auto; min-height: 0; overflow-y: auto !important; }
+:where(html[data-room="computer"]) .main > #quests-panel > #view-today { overflow-y: auto !important; }
+:where(html[data-room="computer"]) .main > #quests-panel > #view-today > .subpanel { flex: none; overflow: visible; }
 /* With an app open, Missions and Quests step aside completely (never over the app) */
 .main.viewing > .board, .main.viewing > .side { display: none !important; }
 
 /* Missions and Quests never shrink to a sliver (while their contents load or refresh), and when
    their column is narrow the title and its buttons stack instead of crowding each other */
-@media (min-width: 981px) and (min-height: 481px) {
-  .main:not(.viewing) > .side { min-height: min(220px, 100%); container-type: inline-size; }
-  .main:not(.viewing) > .side > .view { min-height: 120px; }
-}
+:where(html[data-room="computer"]) .main:not(.viewing) > .side { min-height: min(220px, 100%); container-type: inline-size; }
+:where(html[data-room="computer"]) .main:not(.viewing) > .side > .view { min-height: 120px; }
 @container (max-width: 330px) {
   .side-head { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; row-gap: 6px; padding-block: 8px !important; }
   .side-head > .sec-title, .side-head > :not(.sec-title) { grid-column: 1 !important; justify-self: center !important; }
 }
 
 /* Missions and Quests always stay inside their own columns (never under Agent) */
-@media (min-width: 981px) and (min-height: 481px) {
-  .main:not(.viewing) > .side { min-width: 0 !important; width: 100%; max-width: 100%; justify-self: stretch; overflow: hidden; }
-  .main:not(.viewing) > .chat { min-width: 0; }
-}
+:where(html[data-room="computer"]) .main:not(.viewing) > .side { min-width: 0 !important; width: 100%; max-width: 100%; justify-self: stretch; overflow: hidden; }
+:where(html[data-room="computer"]) .main:not(.viewing) > .chat { min-width: 0; }
 
 /* ---- Quests: easy to read, and nothing ever off the screen ----
    The whole pane (the day, the card for now, the tabs and the list) is one scrolling area, so a
@@ -295,11 +281,9 @@ html[data-scene="manual"] { --scene-own: #e6cf9f; }
   #view-today .now-card { padding: 9px 10px; }
 }
 /* A phone: the pane's name and its four buttons share one centred row when they fit */
-@media (max-width: 980px), (max-height: 480px) {
-  #quests-panel > .side-head { display: flex !important; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; padding: 6px 8px !important; }
-  #quests-panel > .side-head > * { grid-column: auto !important; }
-  #quests-panel > .side-head .strip-tools { gap: 3px; }
-}
+:where(html[data-room="phone"]) #quests-panel > .side-head { display: flex !important; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; padding: 6px 8px !important; }
+:where(html[data-room="phone"]) #quests-panel > .side-head > * { grid-column: auto !important; }
+:where(html[data-room="phone"]) #quests-panel > .side-head .strip-tools { gap: 3px; }
 /* A narrow side pane (Quests beside the chat at 1024 wide): its buttons wrap inside the pane instead
    of being cut off at its edge (15 Oct 2026) */
 .side-head .strip-tools { flex-wrap: wrap; justify-content: center; min-width: 0; max-width: 100%; }

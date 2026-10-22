@@ -272,74 +272,113 @@
       b.addEventListener("click", () => b.setAttribute("aria-expanded", String($("view-" + v).classList.toggle("ib-tools-open"))));
       head.append(b);
     }
-    foldOpen = asked;
-    requestAnimationFrame(foldInbox);
+    paneWanted = asked;
+    requestAnimationFrame(layoutInbox);
   }
-  // The Inbox panes stacked on a short screen (22 Oct 2026, the user: "stop nova panes from resizing on the
-  // height when the width is lower"): a stacked pane is never squashed under FOLD_MIN. The one in use keeps
-  // the room and the others fold to their title line (dash.css [data-ib-shut]); a tap on a title opens it.
-  const FOLD_MIN = 170;
-  let foldOpen = "";
-  function foldInbox() {
+  // The Inbox's panes on every device (22 Oct 2026, ns/CLAUDE.md 2c; the user: "stop nova panes from resizing
+  // on the height when the width is lower", then "THE ENTIRE NOVA-SUITE NEEDS TO HAVE CHANGES SO THERE
+  // UNIFIED"): as many panes as fit at a readable size for this device's form (PANE_MIN: width, height),
+  // side by side where there's the width, Enquiries the widest; the rest are one tap away by name on the
+  // switcher above them. A pane is never squashed, folded or cut: what's in it turns pages (onescreen.js).
+  const PANE_MIN = { desktop: [240, 170], "phone-up": [280, 200], "phone-side": [190, 110], "tablet-up": [280, 200], "tablet-side": [260, 180] };
+  const PANE_NAME = { enquiries: "Enquiries", chats: "Conversations", alerts: "Alerts" };
+  let paneWanted = "";
+  function layoutInbox() {
     const main = $("main");
-    const panes = INBOX.map((v) => $("view-" + v)).filter((p) => p && !p.hidden);
-    const shut = new Set();
-    let open = "";
-    if (main.classList.contains("inbox-all") && panes.length > 1) {
-      // (the panes one above the other: the ones sharing a column)
-      const cols = new Map();
+    const panes = INBOX.map((v) => $("view-" + v));
+    let sw = main.querySelector(":scope > .ib-switch");
+    const place = (p, col, row) => {
+      p.style.setProperty("grid-column", col);
+      p.style.setProperty("grid-row", row);
+    };
+    if (!main.classList.contains("inbox-all")) {
+      if (sw) sw.hidden = true;
       for (const p of panes) {
-        const x = Math.round(p.getBoundingClientRect().left);
-        cols.set(x, [...(cols.get(x) || []), p]);
+        p.removeAttribute("data-ib-off");
+        p.style.removeProperty("grid-column");
+        p.style.removeProperty("grid-row");
       }
-      const cs = getComputedStyle(main);
-      const strip = main.querySelector(":scope > .group-strip");
-      const gap = parseFloat(cs.rowGap) || 0;
-      const inner = main.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - (strip ? strip.offsetHeight : 0);
-      for (const col of cols.values()) {
-        if (col.length < 2 || (inner - col.length * gap) / col.length >= FOLD_MIN) continue;
-        const name = (p) => p.id.slice(5);
-        const keep = col.find((p) => name(p) === foldOpen) || col.find((p) => name(p) === main.dataset.inboxAsked) || col[0];
-        open = name(keep);
-        for (const p of col) if (p !== keep) shut.add(p);
+      main.style.removeProperty("grid-template-rows");
+      delete main.dataset.ibCols;
+      return;
+    }
+    if (!sw) {
+      sw = el("nav", "ib-switch");
+      sw.setAttribute("aria-label", "Inbox panes");
+      for (const v of INBOX) {
+        const b = el("button", "chip", PANE_NAME[v]);
+        b.type = "button";
+        b.dataset.pane = v;
+        b.addEventListener("click", () => {
+          paneWanted = v;
+          layoutInbox();
+        });
+        sw.append(b);
       }
     }
-    for (const v of INBOX) {
-      const p = $("view-" + v);
-      const head = p && p.querySelector(".view-head");
-      if (!head || p.hasAttribute("data-ib-shut") === shut.has(p)) continue;
-      p.toggleAttribute("data-ib-shut", shut.has(p));
-      if (shut.has(p)) {
-        head.tabIndex = 0;
-        head.setAttribute("role", "button");
-        head.setAttribute("aria-expanded", "false");
-        head.title = "Open " + (head.querySelector("h2") || head).textContent.trim();
-      } else {
-        for (const a of ["tabindex", "role", "aria-expanded", "title"]) head.removeAttribute(a);
-      }
+    const strip = main.querySelector(":scope > .group-strip");
+    if (sw.previousElementSibling !== strip || !sw.isConnected) strip ? strip.after(sw) : main.prepend(sw);
+    const form = (window.NovaForm && window.NovaForm.get().form) || "desktop";
+    const [minW, minH] = PANE_MIN[form] || PANE_MIN.desktop;
+    const cs = getComputedStyle(main);
+    const gapX = parseFloat(cs.columnGap) || 0;
+    const gapY = parseFloat(cs.rowGap) || 0;
+    const width = main.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const room = main.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - (strip && !strip.hidden ? strip.offsetHeight + gapY : 0);
+    const cols = Math.max(1, Math.min(3, Math.floor((width + gapX) / (minW + gapX))));
+    const fits = (h) => {
+      const rows = Math.max(1, Math.floor((h + gapY) / (minH + gapY)));
+      return cols === 3 ? 3 : cols === 2 ? (rows >= 2 ? 3 : 2) : Math.min(rows, 3);
+    };
+    let n = fits(room);
+    // (not all of them: the switcher takes its line, and the panes what's left)
+    sw.hidden = n >= 3;
+    if (n < 3) n = Math.min(n, fits(room - sw.offsetHeight - gapY));
+    const want = INBOX.includes(paneWanted) ? paneWanted : INBOX.includes(main.dataset.inboxAsked) ? main.dataset.inboxAsked : "enquiries";
+    const showing = [want, ...INBOX.filter((v) => v !== want)].slice(0, n);
+    const shown = INBOX.filter((v) => showing.includes(v)).map((v) => $("view-" + v));
+    for (const p of panes) p.toggleAttribute("data-ib-off", !shown.includes(p));
+    for (const b of sw.children) b.setAttribute("aria-pressed", String(showing.includes(b.dataset.pane)));
+    const used = n === 3 ? cols : n === 2 ? Math.min(cols, 2) : 1;
+    main.dataset.ibCols = String(used);
+    let rows;
+    if (used === 3) {
+      shown.forEach((p, i) => place(p, String(i + 1), "3"));
+      rows = "minmax(0, 1fr)";
+    } else if (used === 2 && n === 3) {
+      place(shown[0], "1", "3 / 5");
+      place(shown[1], "2", "3");
+      place(shown[2], "2", "4");
+      rows = "minmax(0, 1fr) minmax(0, 1fr)";
+    } else if (used === 2) {
+      shown.forEach((p, i) => place(p, String(i + 1), "3"));
+      rows = "minmax(0, 1fr)";
+    } else {
+      shown.forEach((p, i) => place(p, "1 / -1", String(i + 3)));
+      rows = shown.length === 3 ? "minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr)" : shown.map(() => "minmax(0, 1fr)").join(" ");
     }
-    if (open) main.dataset.ibFold = open;
-    else delete main.dataset.ibFold;
+    main.style.setProperty("grid-template-rows", "auto auto " + rows);
     if (window.NovaOneScreen && window.NovaOneScreen.now) window.NovaOneScreen.now();
   }
   {
     const main = $("main");
-    const openFolded = (e) => {
-      const head = e.target.closest && e.target.closest("#main.inbox-all > .view[data-ib-shut] > .view-head");
-      if (!head || (e.type === "keydown" && e.key !== "Enter" && e.key !== " ")) return;
-      e.preventDefault();
-      foldOpen = head.parentElement.id.slice(5);
-      foldInbox();
-      head.parentElement.querySelector(".view-head").focus({ preventScroll: true });
+    let lq = 0;
+    const soon = () => {
+      if (!main.classList.contains("inbox-all") && !main.dataset.ibCols) return;
+      cancelAnimationFrame(lq);
+      lq = requestAnimationFrame(layoutInbox);
     };
-    main.addEventListener("click", openFolded);
-    main.addEventListener("keydown", openFolded);
-    let fq = 0;
-    new ResizeObserver(() => {
-      if (!main.classList.contains("inbox-all") && !main.dataset.ibFold) return;
-      cancelAnimationFrame(fq);
-      fq = requestAnimationFrame(foldInbox);
-    }).observe(main);
+    const watch = new ResizeObserver(soon);
+    watch.observe(main);
+    // (the Nova Tabs strip above the panes is drawn later and can change height)
+    new MutationObserver(() => {
+      const strip = main.querySelector(":scope > .group-strip");
+      if (strip && !strip.dataset.ibWatched) {
+        strip.dataset.ibWatched = "1";
+        watch.observe(strip);
+      }
+    }).observe(main, { childList: true });
+    if (window.NovaForm) window.NovaForm.on(soon);
   }
   function enter(node) {
     node.classList.remove("view-enter");

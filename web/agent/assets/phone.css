@@ -8,140 +8,236 @@
    The bits phone.js adds (.tabbar, .more-sheet, the header's gear and fresh-chat buttons) only show here. */
 .tabbar, .phone-only { display: none; }
 
-@media (max-width: 980px), (max-height: 480px) {
-  html, body { overscroll-behavior: none; }
-  .shell { position: fixed; left: 0; right: 0; top: var(--vv-top, 0px); height: var(--vv-h, 100dvh); grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px;
+html:where([data-room="phone"]), :where(html[data-room="phone"]) body { overscroll-behavior: none; }
+
+:where(html[data-room="phone"]) .shell { position: fixed; left: 0; right: 0; top: var(--vv-top, 0px); height: var(--vv-h, 100dvh); grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px;
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left)); }
-  /* A panel open: still the header, the panel, the bar (not full screen any more: one app) */
-  .shell:has(> .main.viewing) { height: var(--vv-h, 100dvh); grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px;
+
+/* A panel open: still the header, the panel, the bar (not full screen any more: one app) */
+
+:where(html[data-room="phone"]) .shell:has(> .main.viewing) { height: var(--vv-h, 100dvh); grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px;
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left)); }
-  .shell:has(> .main.viewing) > .topbar { display: grid; }
-  /* The header is the panel's title panel while it's open (/shared/topbar.css), then the panel */
-  .main.viewing > .viewer > .viewer-body { border-radius: 18px; border: 1px solid var(--line); background: var(--void); }
-  .viewer { grid-template-rows: minmax(0, 1fr); gap: 8px; }
-  /* Switching panels: the dark stays put and the panel fades in when it's ready (no white flash) */
-  .viewer iframe { background: var(--void); transition: opacity .18s ease; }
-  .viewer iframe.loading { opacity: 0; }
-  .viewer iframe[hidden] { display: none; }
-  .phone-only { display: grid; }
-  .phone-only[hidden] { display: none; }
 
-  /* Lighter: solid panels instead of frosted glass, and nothing moving behind them */
-  .glass { backdrop-filter: none; -webkit-backdrop-filter: none; background: color-mix(in srgb, var(--panel) 88%, var(--void)); }
-  .nebula { animation: none; }
-  #sky { display: none; }
-  .suite-star { animation: none; }
-  dialog.rhythm::backdrop { backdrop-filter: none; }
-  /* The Manual: no floating button (it's on the bar), but its window still opens from there */
-  nova-manual[floating]::part(button) { display: none; }
-  nova-manual[floating], body:has(.main.viewing) nova-manual[floating] { display: inline-block; }
+:where(html[data-room="phone"]) .shell:has(> .main.viewing) > .topbar { display: grid; }
 
-  /* The header: the status (with its word), the mark, your planet */
-  /* (its size and look: /shared/topbar.css) */
-  .top-side .sfx-btn, .top-side .music-btn, .top-side #suite-btn, .top-side nova-manual, .top-side #install { display: none !important; }
-  .top-side .phone-only { width: 36px; height: 36px; flex: none; place-items: center; }
-  .status { padding: 4px 9px; gap: 6px; font-size: 10.5px; letter-spacing: .04em; }
-  .status .label { display: inline !important; }
-  .status.off .dot { background: #FF6B7A; box-shadow: 0 0 8px #FF6B7A; }
-  .status.out .dot { background: var(--muted); box-shadow: none; }
+/* The header is the panel's title panel while it's open (/shared/topbar.css), then the panel */
 
-  /* The home: one pane (Agent, Quests or Missions, picked on the bar) filling the room */
-  .main { overflow: hidden; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-auto-rows: auto; grid-template-areas: "pane"; gap: 8px; }
-  .main > .chat, .main > #missions-panel, .main > #quests-panel { grid-area: pane; height: auto; min-height: 0; border-radius: 18px; }
-  .main > .suite-home { display: none; }
-  .main[data-pane="chat"] > .board, .main[data-pane="quests"] > .chat, .main[data-pane="quests"] > #missions-panel,
-  .main[data-pane="missions"] > .chat, .main[data-pane="missions"] > #quests-panel { display: none; }
-  /* Each pane scrolls inside itself (only one scrolling area at a time) */
-  .side > .view { overflow-y: auto; overscroll-behavior: contain; }
-  #view-today { overflow: hidden; }
-  #view-today > .subpanel { overflow-y: auto; overscroll-behavior: contain; }
-  .side-head { padding: 6px 8px 6px 12px; }
+:where(html[data-room="phone"]) .main.viewing > .viewer > .viewer-body { border-radius: 18px; border: 1px solid var(--line); background: var(--void); }
 
-  /* Agent: the conversation, a row of suggestions you can swipe, and the message box at the bottom */
-  .chat-head { display: none; }
-  .chat { grid-template-rows: minmax(0, 1fr) auto; }
-  .chat > .log { padding: 12px 10px 6px; gap: 10px; overscroll-behavior: contain; }
-  .msg { max-width: 92%; }
-  .welcome { margin: auto 0 0; padding: 4px 0; gap: 8px; justify-items: stretch; text-align: left; }
-  .welcome .mark, .welcome p { display: none; }
-  .welcome h3 { margin: 0 2px; font-size: 14px; letter-spacing: .04em; }
-  .suggest { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; margin: 0; padding: 2px 10px 4px; scrollbar-width: none; }
-  .suggest::-webkit-scrollbar { display: none; }
-  .suggest .chip { flex: none; white-space: nowrap; scroll-snap-align: start; font-size: 13.5px; padding: 8px 12px; min-height: 40px; }
-  .chat > .composer { padding: 8px; gap: 8px; }
-  .composer textarea { font-size: 16px; min-height: 44px; padding: 10px 12px; border-radius: 14px 18px 20px 6px; }
-  .send { height: 44px; padding: 0 14px; border-radius: 14px 18px 20px 6px; }
+:where(html[data-room="phone"]) .viewer { grid-template-rows: minmax(0, 1fr); gap: 8px; }
 
-  /* The bar along the bottom: every place, one tap, all of them in view at once. It's a grid: two
+/* Switching panels: the dark stays put and the panel fades in when it's ready (no white flash) */
+
+:where(html[data-room="phone"]) .viewer iframe { background: var(--void); transition: opacity .18s ease; }
+
+:where(html[data-room="phone"]) .viewer iframe.loading { opacity: 0; }
+
+:where(html[data-room="phone"]) .viewer iframe[hidden] { display: none; }
+
+:where(html[data-room="phone"]) .phone-only { display: grid; }
+
+:where(html[data-room="phone"]) .phone-only[hidden] { display: none; }
+
+/* Lighter: solid panels instead of frosted glass, and nothing moving behind them */
+
+:where(html[data-room="phone"]) .glass { backdrop-filter: none; -webkit-backdrop-filter: none; background: color-mix(in srgb, var(--panel) 88%, var(--void)); }
+
+:where(html[data-room="phone"]) .nebula { animation: none; }
+
+:where(html[data-room="phone"]) #sky { display: none; }
+
+:where(html[data-room="phone"]) .suite-star { animation: none; }
+
+:where(html[data-room="phone"]) dialog.rhythm::backdrop { backdrop-filter: none; }
+
+/* The Manual: no floating button (it's on the bar), but its window still opens from there */
+
+:where(html[data-room="phone"]) nova-manual[floating]::part(button) { display: none; }
+
+:where(html[data-room="phone"]) nova-manual[floating], :where(html[data-room="phone"]) body:has(.main.viewing) nova-manual[floating] { display: inline-block; }
+
+/* The header: the status (with its word), the mark, your planet */
+
+/* (its size and look: /shared/topbar.css) */
+
+:where(html[data-room="phone"]) .top-side .sfx-btn, :where(html[data-room="phone"]) .top-side .music-btn, :where(html[data-room="phone"]) .top-side #suite-btn, :where(html[data-room="phone"]) .top-side nova-manual, :where(html[data-room="phone"]) .top-side #install { display: none !important; }
+
+:where(html[data-room="phone"]) .top-side .phone-only { width: 36px; height: 36px; flex: none; place-items: center; }
+
+:where(html[data-room="phone"]) .status { padding: 4px 9px; gap: 6px; font-size: 10.5px; letter-spacing: .04em; }
+
+:where(html[data-room="phone"]) .status .label { display: inline !important; }
+
+:where(html[data-room="phone"]) .status.off .dot { background: #FF6B7A; box-shadow: 0 0 8px #FF6B7A; }
+
+:where(html[data-room="phone"]) .status.out .dot { background: var(--muted); box-shadow: none; }
+
+/* The home: one pane (Agent, Quests or Missions, picked on the bar) filling the room */
+
+:where(html[data-room="phone"]) .main { overflow: hidden; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-auto-rows: auto; grid-template-areas: "pane"; gap: 8px; }
+
+:where(html[data-room="phone"]) .main > .chat, :where(html[data-room="phone"]) .main > #missions-panel, :where(html[data-room="phone"]) .main > #quests-panel { grid-area: pane; height: auto; min-height: 0; border-radius: 18px; }
+
+:where(html[data-room="phone"]) .main > .suite-home { display: none; }
+
+:where(html[data-room="phone"]) .main[data-pane="chat"] > .board, :where(html[data-room="phone"]) .main[data-pane="quests"] > .chat, :where(html[data-room="phone"]) .main[data-pane="quests"] > #missions-panel, :where(html[data-room="phone"]) .main[data-pane="missions"] > .chat, :where(html[data-room="phone"]) .main[data-pane="missions"] > #quests-panel { display: none; }
+
+/* Each pane scrolls inside itself (only one scrolling area at a time) */
+
+:where(html[data-room="phone"]) .side > .view { overflow-y: auto; overscroll-behavior: contain; }
+
+:where(html[data-room="phone"]) #view-today { overflow: hidden; }
+
+:where(html[data-room="phone"]) #view-today > .subpanel { overflow-y: auto; overscroll-behavior: contain; }
+
+:where(html[data-room="phone"]) .side-head { padding: 6px 8px 6px 12px; }
+
+/* Agent: the conversation, a row of suggestions you can swipe, and the message box at the bottom */
+
+:where(html[data-room="phone"]) .chat-head { display: none; }
+
+:where(html[data-room="phone"]) .chat { grid-template-rows: minmax(0, 1fr) auto; }
+
+:where(html[data-room="phone"]) .chat > .log { padding: 12px 10px 6px; gap: 10px; overscroll-behavior: contain; }
+
+:where(html[data-room="phone"]) .msg { max-width: 92%; }
+
+:where(html[data-room="phone"]) .welcome { margin: auto 0 0; padding: 4px 0; gap: 8px; justify-items: stretch; text-align: left; }
+
+:where(html[data-room="phone"]) .welcome .mark, :where(html[data-room="phone"]) .welcome p { display: none; }
+
+:where(html[data-room="phone"]) .welcome h3 { margin: 0 2px; font-size: 14px; letter-spacing: .04em; }
+
+:where(html[data-room="phone"]) .suggest { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; margin: 0; padding: 2px 10px 4px; scrollbar-width: none; }
+
+:where(html[data-room="phone"]) .suggest::-webkit-scrollbar { display: none; }
+
+:where(html[data-room="phone"]) .suggest .chip { flex: none; white-space: nowrap; scroll-snap-align: start; font-size: 13.5px; padding: 8px 12px; min-height: 40px; }
+
+:where(html[data-room="phone"]) .chat > .composer { padding: 8px; gap: 8px; }
+
+:where(html[data-room="phone"]) .composer textarea { font-size: 16px; min-height: 44px; padding: 10px 12px; border-radius: 14px 18px 20px 6px; }
+
+:where(html[data-room="phone"]) .send { height: 44px; padding: 0 14px; border-radius: 14px 18px 20px 6px; }
+
+/* The bar along the bottom: every place, one tap, all of them in view at once. It's a grid: two
      rows on a phone held upright (--cols is half the places, set by phone.js), one row on its side. */
-  /* Four groups: Apps along the top row; Plans, Tools and Helpers side by side below (one row on its side) */
-  .tabbar { display: grid; grid-template-columns: auto 2fr 2fr 2fr auto; grid-template-areas: "solo apps apps apps end" "solo tasks tools helpers end"; gap: 2px 6px;
+
+/* Four groups: Apps along the top row; Plans, Tools and Helpers side by side below (one row on its side) */
+
+:where(html[data-room="phone"]) .tabbar { display: grid; grid-template-columns: auto 2fr 2fr 2fr auto; grid-template-areas: "solo apps apps apps end" "solo tasks tools helpers end"; gap: 2px 6px;
     margin-inline: calc(-1 * max(8px, env(safe-area-inset-left))) calc(-1 * max(8px, env(safe-area-inset-right)));
     padding: 4px max(4px, env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
     border-top: 1px solid var(--line); background: color-mix(in srgb, var(--void) 90%, var(--panel)); }
-  .tabbar .tgroup { min-width: 0; display: grid; gap: 1px; }
-  .tabbar .tgroup[data-group="apps"] { grid-area: apps; } .tabbar .tgroup[data-group="tasks"] { grid-area: tasks; }
-  .tabbar .tgroup[data-group="tools"] { grid-area: tools; } .tabbar .tgroup[data-group="helpers"] { grid-area: helpers; }
-  /* Invoicer, on its own: down the left of both rows, with no group name */
-  .tabbar .tgroup[data-group="solo"] { grid-area: solo; grid-template-rows: minmax(0, 1fr); }
-  .tabbar .tgroup[data-group="solo"] > .tg-label { display: none; }
-  .tabbar .tgroup[data-group="solo"] .tg-items { grid-template-columns: minmax(48px, auto); }
-  .tabbar .tgroup[data-group="solo"] { border-right: 1px solid var(--line); padding-right: 6px; }
-  /* Nova, on its own: down the right of both rows, no group name (Lossless: in the Panels window) */
-  .tabbar .tgroup[data-group="end"] { grid-area: end; grid-template-rows: minmax(0, 1fr); }
-  .tabbar .tgroup[data-group="end"] > .tg-label { display: none; }
-  .tabbar .tgroup[data-group="end"] .tg-items { grid-template-columns: minmax(48px, auto); }
-  .tabbar .tgroup[data-group="apps"] { border-left: 0; padding-left: 0; }
-  .tabbar .tgroup + .tgroup:not([data-group="tasks"]) { border-left: 1px solid var(--line); padding-left: 6px; }
-  .tabbar .tg-label { padding-left: 6px; font-family: var(--f-mono); font-size: 9.5px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: color-mix(in srgb, var(--muted) 80%, transparent); }
-  .tabbar .tg-items { display: grid; grid-template-columns: repeat(var(--k, 2), minmax(0, 1fr)); gap: 2px; }
-  .tabbar button { position: relative; min-width: 0; display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 48px; padding: 4px 1px 5px; border: 0; border-radius: 12px;
+
+:where(html[data-room="phone"]) .tabbar .tgroup { min-width: 0; display: grid; gap: 1px; }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="apps"] { grid-area: apps; }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="tasks"] { grid-area: tasks; }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="tools"] { grid-area: tools; }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="helpers"] { grid-area: helpers; }
+
+/* Invoicer, on its own: down the left of both rows, with no group name */
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="solo"] { grid-area: solo; grid-template-rows: minmax(0, 1fr); }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="solo"] > .tg-label { display: none; }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="solo"] .tg-items { grid-template-columns: minmax(48px, auto); }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="solo"] { border-right: 1px solid var(--line); padding-right: 6px; }
+
+/* Nova, on its own: down the right of both rows, no group name (Lossless: in the Panels window) */
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="end"] { grid-area: end; grid-template-rows: minmax(0, 1fr); }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="end"] > .tg-label { display: none; }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="end"] .tg-items { grid-template-columns: minmax(48px, auto); }
+
+:where(html[data-room="phone"]) .tabbar .tgroup[data-group="apps"] { border-left: 0; padding-left: 0; }
+
+:where(html[data-room="phone"]) .tabbar .tgroup + .tgroup:not([data-group="tasks"]) { border-left: 1px solid var(--line); padding-left: 6px; }
+
+:where(html[data-room="phone"]) .tabbar .tg-label { padding-left: 6px; font-family: var(--f-mono); font-size: 9.5px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: color-mix(in srgb, var(--muted) 80%, transparent); }
+
+:where(html[data-room="phone"]) .tabbar .tg-items { display: grid; grid-template-columns: repeat(var(--k, 2), minmax(0, 1fr)); gap: 2px; }
+
+:where(html[data-room="phone"]) .tabbar button { position: relative; min-width: 0; display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 48px; padding: 4px 1px 5px; border: 0; border-radius: 12px;
     background: none; color: var(--muted); font-family: var(--f-body); font-size: clamp(9px, 2.6vw, 11px); font-weight: 600; line-height: 1.1; white-space: nowrap; cursor: pointer;
     -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: color .2s, background-color .2s, transform .12s; }
-  .tabbar button > span:last-child { letter-spacing: -.01em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-  .tabbar button:active { transform: scale(.93); }
-  .tabbar button[aria-current="page"] { color: #fff; background: color-mix(in srgb, var(--hi) 16%, transparent); }
-  .tabbar button[aria-current="page"]::after { content: ""; position: absolute; left: 50%; bottom: 2px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--hi); box-shadow: 0 0 8px var(--hi); }
-  .tabbar .t-ico { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; font-size: 15px; }
-  .tabbar svg.t-ico { border-radius: 6px; }
-  .tabbar .t-ico.pico { border-radius: 8px; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tint) 55%, #fff 10%); }
-  .tabbar .t-ico.g { color: #fff; font-size: 14px; background: color-mix(in srgb, var(--panel-2) 85%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
 
-  /* A phone held upright: the navigation panel lighter (every place still there, all at once):
+:where(html[data-room="phone"]) .tabbar button > span:last-child { letter-spacing: -.01em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+:where(html[data-room="phone"]) .tabbar button:active { transform: scale(.93); }
+
+:where(html[data-room="phone"]) .tabbar button[aria-current="page"] { color: #fff; background: color-mix(in srgb, var(--hi) 16%, transparent); }
+
+:where(html[data-room="phone"]) .tabbar button[aria-current="page"]::after { content: ""; position: absolute; left: 50%; bottom: 2px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--hi); box-shadow: 0 0 8px var(--hi); }
+
+:where(html[data-room="phone"]) .tabbar .t-ico { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; font-size: 15px; }
+
+:where(html[data-room="phone"]) .tabbar svg.t-ico { border-radius: 6px; }
+
+:where(html[data-room="phone"]) .tabbar .t-ico.pico { border-radius: 8px; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tint) 55%, #fff 10%); }
+
+:where(html[data-room="phone"]) .tabbar .t-ico.g { color: #fff; font-size: 14px; background: color-mix(in srgb, var(--panel-2) 85%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
+
+/* A phone held upright: the navigation panel lighter (every place still there, all at once):
      shorter buttons, the group names small and close, the status line's rows tight (status.css) */
-  @media (max-width: 600px) and (orientation: portrait) {
-    .tabbar { gap: 0 4px; padding-top: 2px; }
-    .tabbar .tgroup { gap: 0; }
-    .tabbar .tg-label { font-size: 8px; line-height: 10px; letter-spacing: .16em; }
-    .tabbar button { min-height: 40px; gap: 2px; padding: 3px 1px 4px; }
-    .tabbar .t-ico { width: 22px; height: 22px; font-size: 14px; }
+
+@media (max-width: 600px) and (orientation: portrait) {
+    :where(html[data-room="phone"]) .tabbar { gap: 0 4px; padding-top: 2px; }
+    :where(html[data-room="phone"]) .tabbar .tgroup { gap: 0; }
+    :where(html[data-room="phone"]) .tabbar .tg-label { font-size: 8px; line-height: 10px; letter-spacing: .16em; }
+    :where(html[data-room="phone"]) .tabbar button { min-height: 40px; gap: 2px; padding: 3px 1px 4px; }
+    :where(html[data-room="phone"]) .tabbar .t-ico { width: 22px; height: 22px; font-size: 14px; }
   }
 
-  /* Tiles (16 Oct 2026): on a phone or tablet each place on the navigation panel is one tile in
+/* Tiles (16 Oct 2026): on a phone or tablet each place on the navigation panel is one tile in
      its own icon's colours, with its icon and its name inside it (not a small icon with the name
      underneath). The icon's colours fill the tile; the name sits on it in white. */
-  .tabbar button { isolation: isolate; overflow: hidden; align-content: end; gap: 0; min-height: 44px; padding: 25px 2px 4px; margin: 1px; border-radius: 12px; }
-  .tabbar button > .t-ico { position: absolute; inset: 0; z-index: -1; width: auto; height: auto; border-radius: inherit; display: grid; place-items: start center; padding-top: 4px; font-size: 16px; }
-  .tabbar button > .t-ico > svg, .tabbar button > .t-ico > img { width: 21px; height: 21px; }
-  .tabbar button > img.t-ico { object-fit: contain; object-position: center 4px; padding: 0; }
-  .tabbar button > .t-ico.g { background: color-mix(in srgb, var(--panel-2) 90%, transparent); }
-  /* (no Nova sparkle in the tile's corner: taken off at the user's request, 16 Oct 2026, bar.css) */
-  html body .tabbar button > span:last-child { position: relative; color: #fff; font-size: clamp(9px, 2.5vw, 10.5px); text-shadow: 0 1px 2px rgba(0, 0, 0, .75), 0 0 6px rgba(0, 0, 0, .45); }
-  /* The place that's open: a bright ring round its tile (instead of the line underneath) */
-  .tabbar button[aria-current="page"] { background: none; box-shadow: 0 0 0 2px var(--hi), 0 0 12px -2px var(--hi); }
-  .tabbar button[aria-current="page"]::after { display: none; }
-  .tabbar button:not([aria-current="page"]) > .t-ico { filter: saturate(.9) brightness(.92); }
 
-  /* The keyboard is up: give the conversation the room (the bars come back when it's down) */
-  html.kb .shell, html.kb .shell:has(> .main.viewing) { gap: 6px; padding-top: max(6px, env(safe-area-inset-top)); padding-bottom: 6px; grid-template-rows: minmax(0, 1fr); }
-  html.kb .tabbar, html.kb .topbar, html.kb .shell:has(> .main.viewing) > .topbar { display: none; }
+:where(html[data-room="phone"]) .tabbar button { isolation: isolate; overflow: hidden; align-content: end; gap: 0; min-height: 44px; padding: 25px 2px 4px; margin: 1px; border-radius: 12px; }
 
-  /* Pop-ups sit above the bar, and the dialogs fit the screen */
-  .toasts { left: 10px; right: 10px; bottom: calc(var(--bar-h, 126px) + 8px); width: auto; }
-  dialog.rhythm, dialog.rhythm.mission-view, dialog.rhythm.suite-dlg { width: calc(100vw - 16px); max-height: calc(var(--vv-h, 100dvh) - 24px); overflow-y: auto; }
-  .rh { padding: 16px 14px; border-radius: 20px; }
-  .rh input, .rh select, .rh textarea, .mv textarea { font-size: 16px; }
-}
+:where(html[data-room="phone"]) .tabbar button > .t-ico { position: absolute; inset: 0; z-index: -1; width: auto; height: auto; border-radius: inherit; display: grid; place-items: start center; padding-top: 4px; font-size: 16px; }
+
+:where(html[data-room="phone"]) .tabbar button > .t-ico > svg, :where(html[data-room="phone"]) .tabbar button > .t-ico > img { width: 21px; height: 21px; }
+
+:where(html[data-room="phone"]) .tabbar button > img.t-ico { object-fit: contain; object-position: center 4px; padding: 0; }
+
+:where(html[data-room="phone"]) .tabbar button > .t-ico.g { background: color-mix(in srgb, var(--panel-2) 90%, transparent); }
+
+/* (no Nova sparkle in the tile's corner: taken off at the user's request, 16 Oct 2026, bar.css) */
+
+html:where([data-room="phone"]) body .tabbar button > span:last-child { position: relative; color: #fff; font-size: clamp(9px, 2.5vw, 10.5px); text-shadow: 0 1px 2px rgba(0, 0, 0, .75), 0 0 6px rgba(0, 0, 0, .45); }
+
+/* The place that's open: a bright ring round its tile (instead of the line underneath) */
+
+:where(html[data-room="phone"]) .tabbar button[aria-current="page"] { background: none; box-shadow: 0 0 0 2px var(--hi), 0 0 12px -2px var(--hi); }
+
+:where(html[data-room="phone"]) .tabbar button[aria-current="page"]::after { display: none; }
+
+:where(html[data-room="phone"]) .tabbar button:not([aria-current="page"]) > .t-ico { filter: saturate(.9) brightness(.92); }
+
+/* The keyboard is up: give the conversation the room (the bars come back when it's down) */
+
+html.kb:where([data-room="phone"]) .shell, html.kb:where([data-room="phone"]) .shell:has(> .main.viewing) { gap: 6px; padding-top: max(6px, env(safe-area-inset-top)); padding-bottom: 6px; grid-template-rows: minmax(0, 1fr); }
+
+html.kb:where([data-room="phone"]) .tabbar, html.kb:where([data-room="phone"]) .topbar, html.kb:where([data-room="phone"]) .shell:has(> .main.viewing) > .topbar { display: none; }
+
+/* Pop-ups sit above the bar, and the dialogs fit the screen */
+
+:where(html[data-room="phone"]) .toasts { left: 10px; right: 10px; bottom: calc(var(--bar-h, 126px) + 8px); width: auto; }
+
+:where(html[data-room="phone"]) dialog.rhythm, :where(html[data-room="phone"]) dialog.rhythm.mission-view, :where(html[data-room="phone"]) dialog.rhythm.suite-dlg { width: calc(100vw - 16px); max-height: calc(var(--vv-h, 100dvh) - 24px); overflow-y: auto; }
+
+:where(html[data-room="phone"]) .rh { padding: 16px 14px; border-radius: 20px; }
+
+:where(html[data-room="phone"]) .rh input, :where(html[data-room="phone"]) .rh select, :where(html[data-room="phone"]) .rh textarea, :where(html[data-room="phone"]) .mv textarea { font-size: 16px; }
 
 /* A phone on its side (short screen): slimmer bars, icon and word side by side, more room to talk */
 @media (max-height: 500px) {
@@ -195,16 +291,16 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
 /* (a tablet or window held upright has the phone's two rows instead: room for every name; so does
    a window under 820px wide, 16 Oct 2026: the one row only fits every tile from there, and below it
    the last groups wrapped onto a second line) */
-@media (min-width: 820px) and (max-width: 980px) and (orientation: landscape), (min-width: 820px) and (max-height: 500px) {
-  .tabbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 2px 8px;
+@media (min-width: 820px) and (orientation: landscape), (min-width: 820px) and (max-height: 500px) {
+  :where(html:is([data-room="phone"])) .tabbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 2px 8px;
     /* (six groups now: invoicer and Nova on their own at the ends, so the gaps count six times) */
     --tab-w: clamp(42px, calc((100vw - 24px - 6 * 16px - 40px - var(--tab-n, 14) * 5px) / var(--tab-n, 14)), 84px); }
-  .tabbar .tgroup { flex: 0 0 auto; min-width: 0; }
-  .tabbar .tgroup + .tgroup { border-left: 1px solid var(--line); padding-left: 6px; }
-  .tabbar > .status-line { flex: 1 0 100%; }
-  .tabbar .tg-items { grid-template-columns: repeat(var(--k, 2), var(--tab-w)); grid-auto-flow: row; justify-content: start; gap: 0; }
-  .tabbar button { width: var(--tab-w); padding-inline: 2px; font-size: clamp(9.5px, 1.3vw, 11px); letter-spacing: -.01em; }
-  .tabbar button > span:last-child { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  :where(html:is([data-room="phone"])) .tabbar .tgroup { flex: 0 0 auto; min-width: 0; }
+  :where(html:is([data-room="phone"])) .tabbar .tgroup + .tgroup { border-left: 1px solid var(--line); padding-left: 6px; }
+  :where(html:is([data-room="phone"])) .tabbar > .status-line { flex: 1 0 100%; }
+  :where(html:is([data-room="phone"])) .tabbar .tg-items { grid-template-columns: repeat(var(--k, 2), var(--tab-w)); grid-auto-flow: row; justify-content: start; gap: 0; }
+  :where(html:is([data-room="phone"])) .tabbar button { width: var(--tab-w); padding-inline: 2px; font-size: clamp(9.5px, 1.3vw, 11px); letter-spacing: -.01em; }
+  :where(html:is([data-room="phone"])) .tabbar button > span:last-child { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 }
 
 /* ---- A phone on its side (touch, short and wide): the panel gets the room ----
@@ -234,14 +330,13 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
    big box over the panel. The name on one line (… if long), the note on one quiet line, the
    buttons in reach; on a phone on its side, one row (name, then Start / In 15 min), the note left
    out (it's in Quests). The × stays a full-size target. */
-@media (max-width: 980px), (max-height: 500px) {
-  .toasts { grid-template-columns: minmax(0, 1fr); } /* (a long name on its one line can't push the card past the screen) */
-  .toast { min-width: 0; padding: 8px 12px 10px; border-radius: 16px; }
-  .toast .x { width: 40px; height: 40px; margin: -6px -8px 0 4px; font-size: 18px; }
-  .toast h5 { margin: 4px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .toast p { margin: 0 0 6px; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .toast .row-btns .mini { min-height: 40px; }
-}
+:where(html[data-room="phone"]) .toasts { grid-template-columns: minmax(0, 1fr); }
+/* (a long name on its one line can't push the card past the screen) */
+:where(html[data-room="phone"]) .toast { min-width: 0; padding: 8px 12px 10px; border-radius: 16px; }
+:where(html[data-room="phone"]) .toast .x { width: 40px; height: 40px; margin: -6px -8px 0 4px; font-size: 18px; }
+:where(html[data-room="phone"]) .toast h5 { margin: 4px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:where(html[data-room="phone"]) .toast p { margin: 0 0 6px; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:where(html[data-room="phone"]) .toast .row-btns .mini { min-height: 40px; }
 @media (max-height: 500px) and (orientation: landscape) {
   .toasts { left: auto; right: 12px; width: min(560px, calc(100vw - 24px)); }
   .toast { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; column-gap: 8px; padding: 4px 6px 4px 12px; }
@@ -255,7 +350,7 @@ dialog.more-sheet::backdrop { background: rgba(4, 2, 10, .6); }
    phone and tablet layout, so a name is never cut short ("Invoic…" on a 360px phone or an 800px tablet) */
 html body .tabbar .tgroup[data-group="solo"] .tg-items, html body .tabbar .tgroup[data-group="end"] .tg-items { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: max-content; }
 /* (a phone or a tall tablet held upright, two rows: Lossless above Nova, down the right of both rows) */
-@media (max-width: 600px) and (min-height: 761px), (min-width: 601px) and (max-width: 980px) and (orientation: portrait) and (min-height: 501px) { html body .tabbar .tgroup[data-group="end"] .tg-items { grid-auto-flow: row; grid-template-columns: max-content; } }
+@media (max-width: 600px) and (min-height: 761px), (min-width: 601px) and (orientation: portrait) and (min-height: 501px) { html:where([data-room="phone"]) body .tabbar .tgroup[data-group="end"] .tg-items { grid-auto-flow: row; grid-template-columns: max-content; } }
 html body .tabbar .tgroup[data-group="solo"], html body .tabbar .tgroup[data-group="end"] { width: auto; flex: none; }
 html body .tabbar .tgroup[data-group="solo"] [data-tab], html body .tabbar .tgroup[data-group="end"] [data-tab] { min-width: 48px; padding-inline: 4px; }
 html body .tabbar .tgroup[data-group="solo"] [data-tab] > span:last-child, html body .tabbar .tgroup[data-group="end"] [data-tab] > span:last-child { overflow: visible; text-overflow: clip; max-width: none; }
@@ -267,15 +362,12 @@ html body .tabbar .tgroup[data-group="solo"] [data-tab] > span:last-child, html 
    Each name on one line in its tile; one too wide for its tile is made smaller to fit (phone.js,
    fitNames), never ending in "…". Upright, Helpers (three places) gets more of the row than Plans
    and Tools (two each). On its side, each tile shows its name too, as wide as the row allows. */
-@media (max-width: 980px), (max-height: 500px) {
-  .tabbar button { padding-inline: 1px; }
-  html body .tabbar button > span:last-child { display: block; width: 100%; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: clip; letter-spacing: -.02em; text-align: center; }
-  /* (each name keeps clear of the tile's rounded corners, so none is clipped by them: fitNames
+:where(html[data-room="phone"]) .tabbar button { padding-inline: 1px; }
+html:where([data-room="phone"]) body .tabbar button > span:last-child { display: block; width: 100%; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: clip; letter-spacing: -.02em; text-align: center; }
+/* (each name keeps clear of the tile's rounded corners, so none is clipped by them: fitNames
      shrinks it, or takes letters off, to fit that inner width; 16 Oct 2026) */
-  html body .tabbar button > span:last-child { box-sizing: border-box; padding-inline: 3px; }
-  html body .tabbar button { border-radius: 10px; }
-}
-}
+html:where([data-room="phone"]) body .tabbar button > span:last-child { box-sizing: border-box; padding-inline: 3px; }
+html:where([data-room="phone"]) body .tabbar button { border-radius: 10px; }
 @media (max-width: 600px) and (orientation: portrait) {
   .tabbar { grid-template-columns: auto minmax(0, 2fr) minmax(0, 2fr) minmax(0, 3fr) auto; }
 }
@@ -290,41 +382,39 @@ html body .tabbar .tgroup[data-group="solo"] [data-tab] > span:last-child, html 
    Each tile has a surface: a fine stipple and a few soft dents, blended into its own colours (so
    they follow the theme), and a raised edge, light along the top, shadowed underneath, like a key.
    Pressed, it sinks in. Nothing moves the layout (only shadows and a 1px nudge). */
-@media (max-width: 980px), (max-height: 500px) {
-  .tabbar button::before { content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
+:where(html[data-room="phone"]) .tabbar button::before { content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
     background: var(--tex, none) center / var(--tex-size, 48px 48px); mix-blend-mode: soft-light; opacity: .6; }
-  /* (a tablet's own icon size, touch.css, is for the icon itself: the tile's colours fill the tile) */
-  html.is-tablet .tabbar button > .t-ico { width: auto !important; height: auto !important; }
-  /* Each tile's own surface, from what it is (16 Oct 2026; fine lines in the tile's own colours,
+/* (a tablet's own icon size, touch.css, is for the icon itself: the tile's colours fill the tile) */
+html.is-tablet:where([data-room="phone"]) .tabbar button > .t-ico { width: auto !important; height: auto !important; }
+/* Each tile's own surface, from what it is (16 Oct 2026; fine lines in the tile's own colours,
      never in the way of its icon or name): the invoicer a banknote's guilloche, Portal star dust,
      Agent signal rings, Calendar a day grid, Notes ruled paper, Board cork, Index a constellation,
      Quests a map's contours, Missions speed streaks, Fixer a hex mesh, Computer circuit traces,
      Observatory orbits, Console scanlines, the Manual paper fibre, Nova a nebula's spiral, Lossless
      a waveform */
-  .tabbar button[data-tab="/invoicer/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2216%22 viewBox=%220 0 48 16%22%3E%3Cpath d=%22M0 4 C6 -2 18 10 24 4 S42 -2 48 4%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.7%22/%3E%3Cpath d=%22M0 8 C6 2 18 14 24 8 S42 2 48 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.7%22/%3E%3Cpath d=%22M0 12 C6 6 18 18 24 12 S42 6 48 12%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.7%22/%3E%3Cpath d=%22M0 8 C6 14 18 2 24 8 S42 14 48 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.45%22 opacity=%22.5%22/%3E%3C/svg%3E"); --tex-size: 48px 16px; }
-  .tabbar button[data-tab="/portal/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Ccircle cx=%2215.5%22 cy=%227.2%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2239.4%22 cy=%224.5%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%2210.3%22 cy=%224.1%22 r=%221%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2211.6%22 cy=%2226.5%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%225.9%22 cy=%2210.7%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%2228.1%22 cy=%222.4%22 r=%220.55%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2226.7%22 cy=%226.4%22 r=%221%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2226.0%22 cy=%2227.4%22 r=%220.55%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2227.9%22 cy=%2230.7%22 r=%220.7%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2226.3%22 cy=%223.0%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%229.9%22 cy=%2232.7%22 r=%221%22 fill=%22%23fff%22 opacity=%220.7%22/%3E%3Ccircle cx=%2222.3%22 cy=%2244.3%22 r=%220.7%22 fill=%22%23fff%22 opacity=%220.7%22/%3E%3Ccircle cx=%2211.9%22 cy=%228.6%22 r=%220.55%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2227.6%22 cy=%2225.2%22 r=%220.7%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%2221.5%22 cy=%2229.2%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2224.6%22 cy=%227.9%22 r=%220.7%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3C/svg%3E"); --tex-size: 48px 48px; }
-  .tabbar button[data-tab="pane:chat"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22 viewBox=%220 0 64 64%22%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2210%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2220%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2230%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2240%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2250%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2260%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2270%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2280%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 64px 64px; }
-  .tabbar button[data-tab="/calendar/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22%3E%3Cpath d=%22M12 0V12M0 12H12%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 12px 12px; }
-  .tabbar button[data-tab="/notes/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%228%22 viewBox=%220 0 8 8%22%3E%3Cpath d=%22M0 7.5H8%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.6%22/%3E%3C/svg%3E"); --tex-size: 8px 8px; }
-  .tabbar button[data-tab="/board/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22%3E%3Cfilter id=%22c%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.55%22 numOctaves=%222%22 seed=%223%22 stitchTiles=%22stitch%22/%3E%3CfeColorMatrix values=%220 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.6 -.75%22/%3E%3C/filter%3E%3Crect width=%2260%22 height=%2260%22 filter=%22url%28%23c%29%22/%3E%3C/svg%3E"); --tex-size: 60px 60px; }
-  .tabbar button[data-tab="/app/memory/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Cpath d=%22M4 6L18 14L34 8M18 14L14 30L30 34L34 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.5%22 opacity=%22.5%22/%3E%3Ccircle cx=%224%22 cy=%226%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2218%22 cy=%2214%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2234%22 cy=%228%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2214%22 cy=%2230%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2230%22 cy=%2234%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3C/svg%3E"); --tex-size: 40px 40px; }
-  .tabbar button[data-tab="/quests/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2232%22 viewBox=%220 0 64 32%22%3E%3Cpath d=%22M0 5 C12 0 22 10 32 5 S52 0 64 5%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3Cpath d=%22M0 13 C12 8 22 18 32 13 S52 8 64 13%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3Cpath d=%22M0 21 C12 16 22 26 32 21 S52 16 64 21%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3Cpath d=%22M0 29 C12 24 22 34 32 29 S52 24 64 29%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 64px 32px; }
-  .tabbar button[data-tab="pane:missions"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M-2 18L10 6M8 26L20 14M14 8L22 0%22 stroke=%22%23fff%22 stroke-width=%22.7%22 stroke-linecap=%22round%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 24px 24px; }
-  .tabbar button[data-tab="/fixer/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2214%22 viewBox=%220 0 24 14%22%3E%3Cpath d=%22M0 7L4 0H12L16 7L12 14H4ZM16 7H24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 24px 14px; }
-  .tabbar button[data-tab="/computer/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Cpath d=%22M0 10H14V24H26M26 24V40M14 10V0M40 30H32V18H20%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%2226%22 cy=%2224%22 r=%221.6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.7%22/%3E%3Ccircle cx=%2220%22 cy=%2218%22 r=%221.6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.7%22/%3E%3C/svg%3E"); --tex-size: 40px 40px; }
-  .tabbar button[data-tab="/observatory/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2210%22 ry=%226.2%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2220%22 ry=%2212.4%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2230%22 ry=%2218.6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2242%22 ry=%2226.04%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2256%22 ry=%2234.72%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Ccircle cx=%2258%22 cy=%2222%22 r=%221.6%22 fill=%22%23fff%22/%3E%3C/svg%3E"); --tex-size: cover; }
-  .tabbar button[data-tab="/console/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%224%22 height=%224%22 viewBox=%220 0 4 4%22%3E%3Cpath d=%22M0 3.5H4%22 stroke=%22%23fff%22 stroke-width=%22.7%22 opacity=%22.45%22/%3E%3C/svg%3E"); --tex-size: 4px 4px; }
-  .tabbar button[data-tab="manual"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22%3E%3Cfilter id=%22p%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.02 .9%22 numOctaves=%222%22 seed=%225%22 stitchTiles=%22stitch%22/%3E%3CfeColorMatrix values=%220 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.5 -.7%22/%3E%3C/filter%3E%3Crect width=%2260%22 height=%2260%22 filter=%22url%28%23p%29%22/%3E%3C/svg%3E"); --tex-size: 60px 60px; }
-  .tabbar button[data-tab="/visualizer"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Cpath d=%22M40 40c3 0 5 3 4 6-2 5-9 6-13 2-6-6-3-16 4-19 10-4 20 3 21 13 1 13-10 23-23 23-16 0-27-14-25-29%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.7%22 opacity=%22.55%22/%3E%3Cpath d=%22M40 40c-3 0-5-3-4-6 2-5 9-6 13-2 6 6 3 16-4 19-10 4-20-3-21-13-1-13 10-23 23-23 16 0 27 14 25 29%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.4%22/%3E%3C/svg%3E"); --tex-size: cover; }
-  .tabbar button[data-tab="/lossless/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2216%22 viewBox=%220 0 32 16%22%3E%3Cpath d=%22M0 8 Q2 2 4 8 T8 8 T12 8 Q14 0 16 8 T20 8 Q22 13 24 8 T28 8 T32 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 32px 16px; }
-  html body .tabbar button::after { content: ""; display: block; position: absolute; inset: 0; left: 0; bottom: 0; width: auto; height: auto; margin: 0; z-index: 0; border-radius: inherit; pointer-events: none; background: none;
+:where(html[data-room="phone"]) .tabbar button[data-tab="/invoicer/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2216%22 viewBox=%220 0 48 16%22%3E%3Cpath d=%22M0 4 C6 -2 18 10 24 4 S42 -2 48 4%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.7%22/%3E%3Cpath d=%22M0 8 C6 2 18 14 24 8 S42 2 48 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.7%22/%3E%3Cpath d=%22M0 12 C6 6 18 18 24 12 S42 6 48 12%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.7%22/%3E%3Cpath d=%22M0 8 C6 14 18 2 24 8 S42 14 48 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.45%22 opacity=%22.5%22/%3E%3C/svg%3E"); --tex-size: 48px 16px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/portal/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22%3E%3Ccircle cx=%2215.5%22 cy=%227.2%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2239.4%22 cy=%224.5%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%2210.3%22 cy=%224.1%22 r=%221%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2211.6%22 cy=%2226.5%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%225.9%22 cy=%2210.7%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%2228.1%22 cy=%222.4%22 r=%220.55%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2226.7%22 cy=%226.4%22 r=%221%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2226.0%22 cy=%2227.4%22 r=%220.55%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2227.9%22 cy=%2230.7%22 r=%220.7%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2226.3%22 cy=%223.0%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%229.9%22 cy=%2232.7%22 r=%221%22 fill=%22%23fff%22 opacity=%220.7%22/%3E%3Ccircle cx=%2222.3%22 cy=%2244.3%22 r=%220.7%22 fill=%22%23fff%22 opacity=%220.7%22/%3E%3Ccircle cx=%2211.9%22 cy=%228.6%22 r=%220.55%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2227.6%22 cy=%2225.2%22 r=%220.7%22 fill=%22%23fff%22 opacity=%220.9%22/%3E%3Ccircle cx=%2221.5%22 cy=%2229.2%22 r=%220.45%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3Ccircle cx=%2224.6%22 cy=%227.9%22 r=%220.7%22 fill=%22%23fff%22 opacity=%220.5%22/%3E%3C/svg%3E"); --tex-size: 48px 48px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="pane:chat"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22 viewBox=%220 0 64 64%22%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2210%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2220%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2230%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2240%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2250%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2260%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2270%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%220%22 cy=%2264%22 r=%2280%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 64px 64px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/calendar/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22%3E%3Cpath d=%22M12 0V12M0 12H12%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 12px 12px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/notes/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%228%22 viewBox=%220 0 8 8%22%3E%3Cpath d=%22M0 7.5H8%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.6%22/%3E%3C/svg%3E"); --tex-size: 8px 8px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/board/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22%3E%3Cfilter id=%22c%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.55%22 numOctaves=%222%22 seed=%223%22 stitchTiles=%22stitch%22/%3E%3CfeColorMatrix values=%220 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.6 -.75%22/%3E%3C/filter%3E%3Crect width=%2260%22 height=%2260%22 filter=%22url%28%23c%29%22/%3E%3C/svg%3E"); --tex-size: 60px 60px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/app/memory/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Cpath d=%22M4 6L18 14L34 8M18 14L14 30L30 34L34 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.5%22 opacity=%22.5%22/%3E%3Ccircle cx=%224%22 cy=%226%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2218%22 cy=%2214%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2234%22 cy=%228%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2214%22 cy=%2230%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2230%22 cy=%2234%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3C/svg%3E"); --tex-size: 40px 40px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/quests/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2232%22 viewBox=%220 0 64 32%22%3E%3Cpath d=%22M0 5 C12 0 22 10 32 5 S52 0 64 5%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3Cpath d=%22M0 13 C12 8 22 18 32 13 S52 8 64 13%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3Cpath d=%22M0 21 C12 16 22 26 32 21 S52 16 64 21%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3Cpath d=%22M0 29 C12 24 22 34 32 29 S52 24 64 29%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 64px 32px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="pane:missions"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M-2 18L10 6M8 26L20 14M14 8L22 0%22 stroke=%22%23fff%22 stroke-width=%22.7%22 stroke-linecap=%22round%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 24px 24px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/fixer/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2214%22 viewBox=%220 0 24 14%22%3E%3Cpath d=%22M0 7L4 0H12L16 7L12 14H4ZM16 7H24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 24px 14px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/computer/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Cpath d=%22M0 10H14V24H26M26 24V40M14 10V0M40 30H32V18H20%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%2226%22 cy=%2224%22 r=%221.6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.7%22/%3E%3Ccircle cx=%2220%22 cy=%2218%22 r=%221.6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.7%22/%3E%3C/svg%3E"); --tex-size: 40px 40px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/observatory/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2210%22 ry=%226.2%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2220%22 ry=%2212.4%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2230%22 ry=%2218.6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2242%22 ry=%2226.04%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2256%22 ry=%2234.72%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Ccircle cx=%2258%22 cy=%2222%22 r=%221.6%22 fill=%22%23fff%22/%3E%3C/svg%3E"); --tex-size: cover; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/console/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%224%22 height=%224%22 viewBox=%220 0 4 4%22%3E%3Cpath d=%22M0 3.5H4%22 stroke=%22%23fff%22 stroke-width=%22.7%22 opacity=%22.45%22/%3E%3C/svg%3E"); --tex-size: 4px 4px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="manual"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22%3E%3Cfilter id=%22p%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.02 .9%22 numOctaves=%222%22 seed=%225%22 stitchTiles=%22stitch%22/%3E%3CfeColorMatrix values=%220 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.5 -.7%22/%3E%3C/filter%3E%3Crect width=%2260%22 height=%2260%22 filter=%22url%28%23p%29%22/%3E%3C/svg%3E"); --tex-size: 60px 60px; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/visualizer"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Cpath d=%22M40 40c3 0 5 3 4 6-2 5-9 6-13 2-6-6-3-16 4-19 10-4 20 3 21 13 1 13-10 23-23 23-16 0-27-14-25-29%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.7%22 opacity=%22.55%22/%3E%3Cpath d=%22M40 40c-3 0-5-3-4-6 2-5 9-6 13-2 6 6 3 16-4 19-10 4-20-3-21-13-1-13 10-23 23-23 16 0 27 14 25 29%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.4%22/%3E%3C/svg%3E"); --tex-size: cover; }
+:where(html[data-room="phone"]) .tabbar button[data-tab="/lossless/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2216%22 viewBox=%220 0 32 16%22%3E%3Cpath d=%22M0 8 Q2 2 4 8 T8 8 T12 8 Q14 0 16 8 T20 8 Q22 13 24 8 T28 8 T32 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 32px 16px; }
+html:where([data-room="phone"]) body .tabbar button::after { content: ""; display: block; position: absolute; inset: 0; left: 0; bottom: 0; width: auto; height: auto; margin: 0; z-index: 0; border-radius: inherit; pointer-events: none; background: none;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .34), inset 1px 0 0 rgba(255, 255, 255, .1), inset -1px 0 0 rgba(0, 0, 0, .18), inset 0 -3px 4px -1px rgba(0, 0, 0, .45), inset 0 8px 12px -8px rgba(255, 255, 255, .22); }
-  html body .tabbar button > span:last-child { z-index: 1; }
-  .tabbar button { box-shadow: 0 2px 0 rgba(0, 0, 0, .55), 0 4px 10px -4px rgba(0, 0, 0, .6); transition: transform .08s, box-shadow .08s; }
-  .tabbar button:active { transform: translateY(1px) scale(.97); box-shadow: 0 1px 0 rgba(0, 0, 0, .55), 0 1px 4px -2px rgba(0, 0, 0, .6); }
-  html body .tabbar button:active::after { box-shadow: inset 0 2px 5px rgba(0, 0, 0, .55), inset 0 -1px 0 rgba(255, 255, 255, .12); }
-  .tabbar button[aria-current="page"] { box-shadow: 0 0 0 2px var(--hi), 0 0 12px -2px var(--hi), 0 2px 0 rgba(0, 0, 0, .55); }
-}
+html:where([data-room="phone"]) body .tabbar button > span:last-child { z-index: 1; }
+:where(html[data-room="phone"]) .tabbar button { box-shadow: 0 2px 0 rgba(0, 0, 0, .55), 0 4px 10px -4px rgba(0, 0, 0, .6); transition: transform .08s, box-shadow .08s; }
+:where(html[data-room="phone"]) .tabbar button:active { transform: translateY(1px) scale(.97); box-shadow: 0 1px 0 rgba(0, 0, 0, .55), 0 1px 4px -2px rgba(0, 0, 0, .6); }
+html:where([data-room="phone"]) body .tabbar button:active::after { box-shadow: inset 0 2px 5px rgba(0, 0, 0, .55), inset 0 -1px 0 rgba(255, 255, 255, .12); }
+:where(html[data-room="phone"]) .tabbar button[aria-current="page"] { box-shadow: 0 0 0 2px var(--hi), 0 0 12px -2px var(--hi), 0 2px 0 rgba(0, 0, 0, .55); }
 
 /* ---- An extremely thin or short window (16 Oct 2026) ----
    Too narrow (under 300px) or too short (under 360px) for the tiles' two rows: the navigation panel

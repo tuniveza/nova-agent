@@ -25,10 +25,8 @@ html.is-touch .status-line .sl-item { min-height: 28px; }
 
 /* A tablet showing the computer layout: bigger places on the panels bar (the bars come back with
    a swipe or a tap at the edge, bar.js) */
-@media (min-width: 981px) and (min-height: 481px) {
-  html.is-tablet .main > .suite-home .suite-grid { grid-auto-columns: 72px; }
-  html.is-tablet .main > .suite-home .suite-app { padding-block: 7px 6px; }
-}
+html.is-tablet:where([data-room="computer"]) .main > .suite-home .suite-grid { grid-auto-columns: 72px; }
+html.is-tablet:where([data-room="computer"]) .main > .suite-home .suite-app { padding-block: 7px 6px; }
 
 /* A tablet held upright (or a big phone): the one-row bar, with roomier items */
 html.is-tablet .tabbar button { min-height: 52px; }

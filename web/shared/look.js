@@ -5,10 +5,23 @@
 // When no theme is chosen, each panel keeps its own (as before).
 // The spectrum's extra themes and the Custom theme (made from one hue) come from spectrum.js,
 // loaded just before this; without it there are just the seven below.
-//   window.NovaLook = { themes, get(), setTheme(id | null), setPlanet(on), setCenter(on), refreshPlanet() }
+//   window.NovaLook = { themes, get(), setTheme(id | null), setPlanet(on), setCenter(on), setAlign(center | left | right), refreshPlanet() }
 // What kind of device this is, from the device itself (not just the window's size), on <html> for
 // every page and panel: is-touch (a touch screen as the main pointer), is-phone, is-tablet
 // (iPads included, which say they're Macs), and data-device="phone|tablet|desktop".
+//
+// One device model for the whole suite (22 Oct 2026, the user: "THE ENTIRE NOVA-SUITE NEEDS TO HAVE CHANGES
+// SO THERE UNIFIED", after layouts went by the window's width alone, so a narrowed computer window got the
+// phone layout). Every page and panel also gets, on <html>:
+//   data-form   desktop | phone-up | phone-side | tablet-up | tablet-side   (which layout to use)
+//   data-orient up | side   (a phone's or tablet's way round, from the device's screen; a computer's window:
+//               side when wider than tall)
+//   win-narrow, win-short   (a computer's window made small: under 900 wide, under 600 tall)
+//   data-room   phone | computer   (Nova Agent's own arrangement, the same answer in every panel: see below)
+// Layouts key on data-form first; the window's size only tunes within one form. It follows a turn of the
+// phone or a resize straight away. ?form=phone-up (or a frame whose page set one) shows a form on purpose,
+// for the side-by-side phones page and tests.
+//   window.NovaForm = { get() -> { form, device, orient }, on(fn) }
 (() => {
   try {
     const root = document.documentElement;
@@ -19,10 +32,74 @@
     const tabletUA = iPad || (/Android/i.test(ua) && !/Mobile/i.test(ua)) || /Tablet|Silk|Kindle|PlayBook/i.test(ua);
     const short = Math.min(screen.width, screen.height);
     const kind = uaMobile && !tabletUA ? "phone" : tabletUA || (coarse && short >= 600) ? "tablet" : coarse ? "phone" : "desktop";
-    root.dataset.device = kind;
-    root.classList.toggle("is-phone", kind === "phone");
-    root.classList.toggle("is-tablet", kind === "tablet");
-    root.classList.toggle("is-touch", kind !== "desktop" || coarse);
+    const FORMS = ["desktop", "phone-up", "phone-side", "tablet-up", "tablet-side"];
+    // (a form asked for: this page's ?form=, or the page this one is framed in)
+    let forced = new URLSearchParams(location.search).get("form");
+    try { if (!forced && window.parent !== window) forced = window.parent.document.documentElement.dataset.formForced; } catch (err) {}
+    if (!FORMS.includes(forced)) forced = "";
+    if (forced) root.dataset.formForced = forced;
+    const listeners = [];
+    let last = "";
+    // (the way round: the whole window's shape, the top one so every frame agrees. While you type on a phone
+    // or tablet only the height changes, as the keyboard comes up: that's not a turn, so the way round stays)
+    let lastSide = null, lastW = 0;
+    function sideways() {
+      let w = innerWidth, h = innerHeight;
+      try { w = window.top.innerWidth; h = window.top.innerHeight; } catch (err) {}
+      const typing = document.activeElement && document.activeElement.matches && document.activeElement.matches("input, textarea, select, [contenteditable=''], [contenteditable='true']");
+      if (lastSide !== null && kind !== "desktop" && typing && w === lastW) return lastSide;
+      lastW = w;
+      lastSide = w > h;
+      return lastSide;
+    }
+    function apply() {
+      const device = forced ? forced.split("-")[0] : kind;
+      const orient = forced ? (forced === "desktop" ? (sideways() ? "side" : "up") : forced.split("-")[1]) : sideways() ? "side" : "up";
+      const form = device === "desktop" ? "desktop" : device + "-" + orient;
+      root.dataset.device = device;
+      root.dataset.orient = orient;
+      root.dataset.form = form;
+      root.classList.toggle("is-phone", device === "phone");
+      root.classList.toggle("is-tablet", device === "tablet");
+      root.classList.toggle("is-touch", device !== "desktop" || coarse);
+      root.classList.toggle("win-narrow", device === "desktop" && innerWidth < 900);
+      root.classList.toggle("win-short", device === "desktop" && innerHeight < 600);
+      // The room: one decision for Nova Agent and every panel in it, from the device and the whole window
+      // (the top one, so a panel in its frame agrees with the page around it). A phone, or a tablet held
+      // upright: the phone room. A computer, or a tablet on its side: the computer room, once the window
+      // has the room for it (981 × 481), the phone room's one column below that.
+      let tw = innerWidth, th = innerHeight;
+      try { tw = window.top.innerWidth; th = window.top.innerHeight; } catch (err) {}
+      root.dataset.room = form === "desktop" || form === "tablet-side" ? (tw >= 981 && th >= 481 ? "computer" : "phone") : "phone";
+      if (form + root.dataset.room !== last) {
+        last = form + root.dataset.room;
+        for (const fn of listeners) try { fn({ form, device, orient, room: root.dataset.room }); } catch (err) {}
+      }
+    }
+    apply();
+    addEventListener("resize", apply);
+    addEventListener("orientationchange", apply);
+    if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener("change", apply);
+    window.NovaForm = {
+      get: () => ({ form: root.dataset.form, device: root.dataset.device, orient: root.dataset.orient, room: root.dataset.room }),
+      on(fn) { listeners.push(fn); return this; },
+      // The room as a media query would give it (for scripts that used matchMedia for the 980 / 480 split):
+      // .matches, and a "change" event when it changes
+      room(name) {
+        const q = { matches: root.dataset.room === name, media: "room:" + name, fns: [] };
+        q.addEventListener = (type, fn) => { if (type === "change") q.fns.push(fn); };
+        q.removeEventListener = (type, fn) => { q.fns = q.fns.filter((f) => f !== fn); };
+        q.addListener = (fn) => q.addEventListener("change", fn);
+        q.removeListener = (fn) => q.removeEventListener("change", fn);
+        listeners.push(() => {
+          const now = root.dataset.room === name;
+          if (now === q.matches) return;
+          q.matches = now;
+          for (const fn of q.fns) try { fn({ matches: now, media: q.media }); } catch (err) {}
+        });
+        return q;
+      },
+    };
   } catch (err) {}
 })();
 (() => {
@@ -55,12 +132,19 @@
   const csv = (h) => rgb(h).join(", ");
   const lum = (h) => { const [r, g, b] = rgb(h).map((v) => v / 255); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 
+  // One theme for the whole suite unless you choose otherwise (22 Oct 2026, the user: colours "consistent
+  // as well including theming there shouldn't be drastically discolored"): never chosen means Novacane
+  // everywhere, not each panel in its own colours. "Each panel's own" is still there to choose; it's saved
+  // as "own" and read back as no theme (null), as before.
+  const DEFAULT_THEME = "novacane";
   function read() {
     try {
       const v = JSON.parse(localStorage.getItem(KEY) || "{}");
-      return { theme: known(v.theme) ? v.theme : null, planet: v.planet === true, center: v.center !== false };
+      // (alignment: centre, left or right, 22 Oct 2026; older saves only had center: true/false)
+      const align = ["center", "left", "right"].includes(v.align) ? v.align : v.center === false ? "left" : "center";
+      return { theme: v.theme === "own" ? null : known(v.theme) ? v.theme : DEFAULT_THEME, planet: v.planet === true, center: align === "center", align };
     } catch (err) {
-      return { theme: null, planet: false, center: true };
+      return { theme: DEFAULT_THEME, planet: false, center: true, align: "center" };
     }
   }
   function planetPalette() {
@@ -129,6 +213,9 @@
       "--bright": bright, "--accent-mid": mix(t.accent, t.accent2, 0.5), "--rose": mix(t.hi, t.soft, 0.35), "--on-hi": t.deep,
       "--glow-rgb": csv(t.hi), "--glow-accent": t.accent, "--star-rgb": csv(mix(t.soft, "#ffffff", 0.6)),
       "--bg": t.void, "--card": t.panel, "--ink": text, "--accent-text": t.onAccent,
+      // (one green for done / paid / sent, one amber for heads-up, one red for overdue / off, in every panel and
+      // every theme: they mean the same thing everywhere, 22 Oct 2026)
+      "--ok": "#5CFFC0", "--ok-rgb": "92, 255, 192", "--warn": "#FFC861", "--bad": "#FF6B81",
     };
     return v;
   }
@@ -164,28 +251,36 @@
       sheet.replaceSync(text);
     } catch (err) {}
   }
-  // Centred text everywhere (on unless switched off): every bit of text in Nova Agent and its panels
-  // sits in the middle. What you write in (a Notes document, which has its own alignment buttons)
-  // and code keep their own. Titles in a row of buttons sit in the middle of it too.
+  // Alignment everywhere: centred (the default), or to the left or the right (22 Oct 2026, the user: "make
+  // as much of gui you can be centered properly including text … I don't like left sided and or right
+  // sided only; they should be options"). Every bit of text in Nova Agent and its panels sits that way;
+  // what you write in (a Notes document has its own alignment buttons) and code keep their own. The layout
+  // follows too: rows, grids and boxes with room to spare (/shared/onescreen.js align()).
   let centerSheet = null;
-  const CENTER = `body, body :not(pre, code, pre *, code *, [contenteditable="true"], [contenteditable="true"] *, svg, svg *) { text-align: center !important; }
-:is([class*="head"], [class*="title"], header) > :is(h1, h2, h3) { margin-inline: auto !important; }`;
-  function center(on) {
+  const KEEP = "pre, code, pre *, code *, [contenteditable=\"true\"], [contenteditable=\"true\"] *, svg, svg *, [data-align-off], [data-align-off] *";
+  const SHEETS = {
+    center: `body, body :not(${KEEP}) { text-align: center !important; }
+:is([class*="head"], [class*="title"], header) > :is(h1, h2, h3) { margin-inline: auto !important; }`,
+    right: `body, body :not(${KEEP}) { text-align: right !important; }
+:is([class*="head"], [class*="title"], header) > :is(h1, h2, h3) { margin-left: auto !important; }`,
+    left: "",
+  };
+  function alignTo(mode) {
     try {
       if (!centerSheet) {
         centerSheet = new CSSStyleSheet();
         document.adoptedStyleSheets = [...document.adoptedStyleSheets, centerSheet];
       }
-      centerSheet.replaceSync(on ? CENTER : "");
+      centerSheet.replaceSync(SHEETS[mode] || "");
     } catch (err) {}
-    document.documentElement.toggleAttribute("data-centred", on);
-    // One switch for all of it: Portal's and Index's Options → Alignment show the same choice, and
-    // every panel's styles that look at data-align follow it too
-    document.documentElement.setAttribute("data-align", on ? "center" : "left");
+    document.documentElement.toggleAttribute("data-centred", mode === "center");
+    // One choice for all of it: Portal's and Index's Options → Alignment show the same one, and every
+    // panel's styles that look at data-align follow it too
+    document.documentElement.setAttribute("data-align", mode);
   }
   function apply() {
-    const { theme, planet, center: centred } = read();
-    center(centred);
+    const { theme, planet, align } = read();
+    alignTo(align);
     const pal = planet ? planetPalette() : null;
     // The colour: the one chosen for all of Nova Agent, or (with the planet on) this page's own
     const chosen = theme || (pal ? pageTheme() : null);
@@ -216,7 +311,7 @@
   function save(change) {
     const next = { ...read(), ...change };
     try {
-      localStorage.setItem(KEY, JSON.stringify(next));
+      localStorage.setItem(KEY, JSON.stringify({ ...next, theme: next.theme || "own" }));
     } catch (err) {}
     apply();
     window.dispatchEvent(new CustomEvent("novalookchange", { detail: next }));
@@ -283,7 +378,8 @@
     themes: THEMES,
     get: read,
     setTheme: (id) => save({ theme: known(id) ? id : null }),
-    setCenter: (on) => save({ center: Boolean(on) }),
+    setCenter: (on) => save({ center: Boolean(on), align: on ? "center" : "left" }),
+    setAlign: (mode) => save({ align: ["left", "right"].includes(mode) ? mode : "center", center: !["left", "right"].includes(mode) }),
     setPlanet: (on) => { const next = save({ planet: Boolean(on) }); if (on) refreshPlanet(); return next; },
     refreshPlanet,
     palette: (id) => paletteOf(id),

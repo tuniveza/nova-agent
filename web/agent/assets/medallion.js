@@ -57,6 +57,47 @@
   if (viewerEl) new MutationObserver(portalOpen).observe(viewerEl, { attributes: true, attributeFilter: ["hidden"] });
   portalOpen();
 
+  // The Manual as a floating medallion in the bottom-left corner on a laptop or desktop (20 Oct 2026, the
+  // user: "move the manual button and put it in the bottom left corner like a floating medalion"); in the
+  // top panel as before on a phone. It sits just above the Nova dock whenever the dock reaches that corner.
+  const manual = bar.querySelector(".top-side.right > nova-manual");
+  if (manual) {
+    const home = manual.parentElement;
+    const dock = document.getElementById("suite-home");
+    const lift = () => {
+      let bottom = 18;
+      if (dock && manual.hasAttribute("floating")) {
+        const r = dock.getBoundingClientRect();
+        const there = r.height > 0 && r.top < innerHeight - 4 && getComputedStyle(dock).visibility !== "hidden";
+        // (only when the dock would touch it: beside the dock it stays down in the corner)
+        if (there && r.left < 16 + 58 + 2) bottom = Math.max(18, Math.round(innerHeight - r.top + 12));
+      }
+      manual.style.setProperty("--nm-bottom", `${bottom}px`);
+    };
+    // (Nova Agent's computer layout, with the dock along the bottom: narrower or shorter windows use the
+    // phone layout, and there the Manual stays in the top panel)
+    const WIDE = window.NovaForm ? window.NovaForm.room("computer") : matchMedia("(min-width: 981px) and (min-height: 481px)");
+    const float = () => {
+      const on = WIDE.matches;
+      if (on && manual.parentElement !== document.body) document.body.append(manual);
+      else if (!on && manual.parentElement !== home) home.prepend(manual);
+      manual.toggleAttribute("floating", on);
+      manual.toggleAttribute("medal", on);
+      manual.toggleAttribute("flat", !on);
+      lift();
+    };
+    WIDE.addEventListener("change", float);
+    window.addEventListener("resize", lift);
+    if (dock) {
+      if (typeof ResizeObserver === "function") new ResizeObserver(lift).observe(dock);
+      dock.addEventListener("transitionend", lift);
+    }
+    // (the dock going away and coming back: the page's classes change)
+    new MutationObserver(() => setTimeout(lift, 280)).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    setInterval(lift, 1500);
+    float();
+  }
+
   const img = me.querySelector("img");
   const planetBtn = me.querySelector(".sl-planet");
   const nameBtn = me.querySelector(".sl-me-name");

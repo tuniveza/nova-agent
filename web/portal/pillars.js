@@ -332,7 +332,13 @@
   // open a sliding panel that comes out of it with all the items on it"), over the page, so the page
   // keeps all its room. Tapping it again, outside the panel, Escape, or choosing an item closes it.
   // Each group's own colour (20 Oct 2026: "more aesthetic"), like each Nova tile has its own
-  const HUE = { Inbox: "#FF5FA8", Bookings: "#8FB4FF", "Clients & Money": "#F2C14E", Outreach: "#FF8C6B", "Plans & Nova": "#B98CFF", You: "#5CE1C0", "Look & sound": "#FF8CC6", Admin: "#FFB86B" };
+  // Each group's colour, drawn from the theme's own (22 Oct 2026, the user: colours "consistent as well
+  // including theming there shouldn't be drastically discolored"): still one per group, never outside the
+  // theme's palette, and they follow a change of theme
+  const HUE = {
+    Inbox: "var(--hi)", Bookings: "var(--lilac)", "Clients & Money": "var(--gold)", Outreach: "color-mix(in oklab, var(--hi) 55%, var(--gold))",
+    "Plans & Nova": "color-mix(in oklab, var(--lilac) 60%, var(--hi))", You: "var(--soft)", "Look & sound": "var(--rose, var(--hi))", Admin: "color-mix(in oklab, var(--accent) 45%, var(--gold))",
+  };
   // Each group its own sky (20 Oct 2026: "make each group different from the next… vary the dots"): its
   // stars, nebula and orbit ring placed by its own name, so no two tabs look alike, and the same every time
   function sky(node, name) {
@@ -441,7 +447,7 @@
     hideTab.type = "button";
     hideTab.setAttribute("aria-label", "Hide all: the top panel, the Nova Tabs and the Nova tiles");
     hideTab.title = "Hide all: the top panel, the Nova Tabs and the Nova tiles";
-    hideTab.style.setProperty("--g", "#9AA6FF");
+    hideTab.style.setProperty("--g", "color-mix(in oklab, var(--lilac) 55%, var(--muted))");
     sky(hideTab, "Hide all");
     const hideCap = el("span", "mini-cap");
     const eye = el("span", "pillar-ico");

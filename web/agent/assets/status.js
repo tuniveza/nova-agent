@@ -12,7 +12,8 @@
   const $ = (id) => document.getElementById(id);
   const shell = $("shell");
   const DATA = window.NOVA_STATUS || { version: "", build: "", panels: {}, areas: {}, everything: [] };
-  const PHONE = matchMedia("(max-width: 980px), (max-height: 480px)");
+  // (the phone room: one decision for the whole suite, look.js NovaForm, 22 Oct 2026)
+  const PHONE = window.NovaForm ? window.NovaForm.room("phone") : matchMedia("(max-width: 980px), (max-height: 480px)");
   if (!shell) return;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   // Times and days are written the British way, in London time, whatever the browser's language
@@ -78,6 +79,14 @@
     <button type="button" class="sl-item sl-act" data-sfx="open" aria-haspopup="true" aria-expanded="false" title="What you've been doing (tap for the list)">${ico("act")}<span class="sl-act-text"></span></button>
     <span class="sl-item sl-date" title="Today's date">${ico("date")}<time class="sl-day"></time></span>
     <span class="sl-item sl-time">${ico("clock")}<time class="sl-clock"></time></span>`;
+  // Nova Agent's mode light (Live, Rehearsal, PC off, Signed out; chat.html and phone.js set its words and
+  // colour) lives here, before the date, not in the top bar (20 Oct 2026, the user: "move the live pc led
+  // to the status bar")
+  const mode = $("status");
+  if (mode) {
+    mode.classList.add("sl-item", "sl-mode");
+    line.insertBefore(mode, line.querySelector(".sl-date"));
+  }
   const list = document.createElement("div");
   list.className = "sl-list";
   list.setAttribute("data-fit", ""); // (kept on screen by /shared/fit.js)
@@ -307,10 +316,18 @@
       });
       planet.checked = v.planet;
       if (centerBox) centerBox.checked = v.center;
+      // (alignment: centred, left or right, 22 Oct 2026)
+      look.querySelectorAll("[data-look-align]").forEach((b) => {
+        const on = b.dataset.lookAlign === (v.align || (v.center ? "center" : "left"));
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-checked", String(on));
+      });
     }
     look.addEventListener("click", (e) => {
       const b = e.target.closest("[data-look-theme]");
       if (b) { window.NovaLook.setTheme(b.dataset.lookTheme || null); showLook(); }
+      const a = e.target.closest("[data-look-align]");
+      if (a) { (window.NovaLook.setAlign ? window.NovaLook.setAlign(a.dataset.lookAlign) : window.NovaLook.setCenter(a.dataset.lookAlign === "center")); showLook(); }
     });
     planet.addEventListener("change", () => { window.NovaLook.setPlanet(planet.checked); showLook(); });
     const centerBox = look.querySelector("#look-center");

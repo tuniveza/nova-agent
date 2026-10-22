@@ -9,7 +9,8 @@
 // The look is in phone.css; on a computer all of this stays out of the way.
 (function () {
   'use strict';
-  const PHONE = matchMedia('(max-width: 980px), (max-height: 480px)');
+  // (the phone room: one decision for the whole suite, look.js NovaForm, 22 Oct 2026)
+  const PHONE = window.NovaForm ? window.NovaForm.room("phone") : matchMedia('(max-width: 980px), (max-height: 480px)');
   const STILL = matchMedia('(prefers-reduced-motion: reduce)');
   const $ = (id) => document.getElementById(id);
   const main = $('main'), shell = $('shell'), viewer = $('viewer');
@@ -202,18 +203,9 @@
   const toQuests = saved === 'quests';
   if (!['chat', 'missions'].includes(saved)) saved = 'chat';
 
-  // ---- The header: a fresh-chat button (on the chat) and the gear (settings) ----
-  const left = document.querySelector('.topbar .top-side.left');
+  // ---- The header: the gear (settings). (Its fresh-chat trash can is gone, 20 Oct 2026, the user: "get
+  // rid of the trash can new conversation button") ----
   const right = document.querySelector('.topbar .top-side.right');
-  const clear = document.createElement('button');
-  clear.type = 'button';
-  clear.className = 'icon-btn phone-only';
-  clear.id = 'phone-clear';
-  clear.title = 'Start a new conversation';
-  clear.setAttribute('aria-label', 'Start a new conversation');
-  clear.innerHTML = svg('i-clear');
-  clear.addEventListener('click', () => { const c = $('clear'); if (c) c.click(); });
-  if (left) left.append(clear);
   const gear = document.createElement('button');
   gear.type = 'button';
   gear.className = 'icon-btn phone-only';

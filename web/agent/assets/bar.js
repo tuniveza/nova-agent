@@ -38,7 +38,8 @@
   const root = document.documentElement;
   const main = document.getElementById("main");
   if (!main) return;
-  const PHONE = matchMedia("(max-width: 980px), (max-height: 480px)");
+  // (the phone room: one decision for the whole suite, look.js NovaForm, 22 Oct 2026)
+  const PHONE = window.NovaForm ? window.NovaForm.room("phone") : matchMedia("(max-width: 980px), (max-height: 480px)");
   const STILL = matchMedia("(prefers-reduced-motion: reduce)");
   // (where the top panel sits on the Nova tiles as one dock: medallion.css)
   const DOCKED = matchMedia("(max-width: 760px), (max-height: 480px) and (pointer: coarse)");

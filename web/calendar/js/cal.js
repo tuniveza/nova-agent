@@ -359,7 +359,9 @@ function drawMonth() {
   // and the strip ran off the side)
   // (the month fits its own words, fitMonth: Nova's shared fitting, rules.js, is told to leave its days
   // alone, or it holds a phone's titles on one line, where they're meant to go onto two, and cuts them off)
-  view.innerHTML = `<div class="month">${phone() ? stripHtml() : ""}<div class="wk-head">${heads}</div><div class="grid${textual ? " textual" : ""}" data-rules="off">${cells}</div>${phone() ? dayPlanHtml(cursor) : ""}</div>`;
+  // (data-align-off: the month places its own days; onescreen.js's centring would slide a part-full last
+  // row, or the week grid itself, off its weekdays)
+  view.innerHTML = `<div class="month" data-align-off>${phone() ? stripHtml() : ""}<div class="wk-head">${heads}</div><div class="grid${textual ? " textual" : ""}" data-rules="off" data-os-skip>${cells}</div>${phone() ? dayPlanHtml(cursor) : ""}</div>`;
   fitMonth();
   // (and again once the panel has settled: drawn while its panel is still opening, the month was fitted to
   // a moment that then changed in ways its size didn't show, and cards were left cut, 22 Oct 2026)
@@ -548,10 +550,64 @@ function fitChips(c) {
 // words back), and a day that still can't hold all its cards shows the rest as "+N" (all of them
 // are in its list). When the chosen day sits below the month, the month keeps the screen's height.
 const STEPS = ["fit-1", "fit-2", "fit-3", "sym"];
+// Whole weeks a few at a time on a short screen (22 Oct 2026, the one device model; ns/CLAUDE.md 2c):
+// where the weeks keep a readable height (cosmos.css --wk-min) and they don't all fit, the month shows as
+// many whole weeks as fit, with the page bar (the same as everywhere: ‹ 1 / 3 ›) to turn to the others,
+// the weekday names staying above. It opens on the chosen day's week and keeps its page while the month
+// stays the same. (The general page bar took the grid's days one by one, not by the week.)
+let weekAt = 0, weekAtOf = "";
+const WK_BAR = 44; // (the room kept under the weeks for the bar)
+function pageWeeks(grid, cells) {
+  for (const c of cells) c.classList.remove("wk-off");
+  let bar = grid.querySelector(":scope > .wk-pager");
+  const cs = getComputedStyle(grid);
+  const min = parseFloat(cs.getPropertyValue("--wk-min")) || 0;
+  const gap = parseFloat(cs.rowGap) || 0;
+  const weeks = Math.ceil(cells.length / 7);
+  const room = grid.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) + (grid.classList.contains("wk-paged") ? WK_BAR : 0);
+  const fits = (h) => Math.max(1, Math.floor((h + gap) / (min + gap)));
+  if (!min || fits(room) >= weeks) {
+    grid.classList.remove("wk-paged");
+    if (bar) bar.remove();
+    return;
+  }
+  grid.classList.add("wk-paged");
+  const per = fits(room - WK_BAR);
+  const pages = Math.ceil(weeks / per);
+  // (a new month opens on the chosen day's week, or its first; turning keeps to whole pages)
+  const first = cells[0] && cells[0].dataset.date;
+  if (first !== weekAtOf) {
+    weekAtOf = first;
+    const at = cells.findIndex((c) => c.dataset.date === cursor);
+    weekAt = at >= 0 ? Math.floor(at / 7) : 0;
+  }
+  const page = Math.min(pages - 1, Math.floor(Math.min(weekAt, weeks - 1) / per));
+  cells.forEach((c, i) => c.classList.toggle("wk-off", Math.floor(Math.floor(i / 7) / per) !== page));
+  if (!bar) {
+    bar = document.createElement("nav");
+    bar.className = "os-pager wk-pager";
+    bar.setAttribute("aria-label", "Weeks");
+    bar.innerHTML = '<button type="button" class="os-prev" aria-label="Earlier weeks">‹</button><span class="os-count" aria-live="polite"></span><button type="button" class="os-next" aria-label="Later weeks">›</button>';
+    const turn = (by) => {
+      const now = Number(bar.dataset.page) + by, step = Number(bar.dataset.per);
+      weekAt = Math.max(0, now * step);
+      fitMonth();
+    };
+    bar.querySelector(".os-prev").addEventListener("click", () => turn(-1));
+    bar.querySelector(".os-next").addEventListener("click", () => turn(1));
+    grid.append(bar);
+  }
+  bar.dataset.page = String(page);
+  bar.dataset.per = String(per);
+  bar.querySelector(".os-count").textContent = `${page + 1} / ${pages}`;
+  bar.querySelector(".os-prev").disabled = page <= 0;
+  bar.querySelector(".os-next").disabled = page >= pages - 1;
+}
 function fitMonth() {
   const grid = view.querySelector(".month .grid");
   if (!grid) return;
-  const cells = [...grid.children];
+  const cells = [...grid.children].filter((c) => !c.classList.contains("wk-pager"));
+  pageWeeks(grid, cells);
   // (a title that doesn't fit its one line counts as not fitting too)
   const cutTitle = (c) => [...c.querySelectorAll(".pill:not(.fit-hide) > span, .daycard > span")].some((s) => s.offsetParent && s.scrollWidth > s.clientWidth + 1);
   const over = (c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1 || cutTitle(c);
@@ -571,12 +627,9 @@ function fitMonth() {
     const extra = c.querySelector(":scope > .more:not([data-n])");
     if (extra) extra.remove();
   }
-  const plan = view.querySelector(".month > .dayplan");
-  if (!phone() && plan && plan.getBoundingClientRect().top >= grid.getBoundingClientRect().bottom - 1) {
-    const top = grid.getBoundingClientRect().top - view.getBoundingClientRect().top + view.scrollTop;
-    grid.style.height = `${Math.max((cells.length / 7) * 56, view.clientHeight - top)}px`;
-    grid.style.flex = "none";
-  }
+  // (the month's height is never set here any more: its weeks share the room it has, with the chosen day's
+  // plan under it or beside it (cosmos.css). Setting at least 56px a week, from when the page scrolled down
+  // to the plan, pushed the last weeks off the bottom of a short screen; 22 Oct 2026)
   if (grid.classList.contains("textual")) {
     if (phone()) for (const c of cells) fitChips(c);
     for (const c of cells) fitInfo(c);

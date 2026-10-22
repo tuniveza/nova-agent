@@ -70,9 +70,13 @@
   // those is the theme for all of Nova Agent, the star sky here takes its colours too.
   const get = (id) => byId[id] || (window.NovaLook && window.NovaLook.palette(id)) || byId.novacane;
 
-  // Inline style string, for a day card or a calendar cell that wears its own theme
+  // Inline style string, for a day card or a calendar cell that wears its own theme. While one theme is on
+  // for all of Nova Agent (look.js data-look: the usual, 22 Oct 2026, the user: colours "consistent as well
+  // including theming there shouldn't be drastically discolored"), a card keeps that theme and its own colour
+  // is just a small mark (--own); with "Each panel's own" chosen, it wears its whole theme as before.
   const style = (id) => {
     const t = get(id);
+    if (document.documentElement.dataset.look) return `--own:${t.hi}`;
     return Object.entries(VARS).map(([k, v]) => `${v}:${t[k]}`).join(';');
   };
 
