@@ -4244,6 +4244,9 @@
       // One card per alert (only new or changed ones are drawn), and the "ago" times brought up to date
       reconcile(list, notifications.map(alertCard));
       list.querySelectorAll(".alert-when[data-at]").forEach((p) => setTimeText(p, p.dataset.at));
+      list.querySelectorAll(".al-ago[data-at]").forEach((p) => (p.textContent = ago(p.dataset.at)));
+      // (a card kept open by the redraw says so on its button)
+      list.querySelectorAll(".card.open .al-more").forEach((b) => b.setAttribute("aria-expanded", "true"));
     } catch (err) {
       // Show the problem (unless he's just been signed out)
       if (err.message !== "signed out" && currentView === "alerts") emptyState(list, err.message);
@@ -4355,6 +4358,25 @@
     setTimeText(exact, n.created_at);
     card.dataset.key = "a" + n.id;
     card.dataset.sig = sig(n, window.NovaOptions && window.NovaOptions.get().times);
+    // One slim line until it's opened (22 Oct 2026, the user: "shrink the alert blocks so they can all
+    // fit on the same screen"): its kind, its title and how long ago; a tap opens the whole card in place
+    // (and the card stays open when the list refreshes: reconcile keeps "open")
+    const line = el("div", "al-line");
+    const agoText = el("span", "al-ago", ago(n.created_at));
+    agoText.dataset.at = n.created_at;
+    const more = el("button", "al-more", "▾");
+    more.type = "button";
+    more.setAttribute("aria-label", "Open this alert: " + n.title);
+    more.setAttribute("aria-expanded", "false");
+    line.append(el("span", "alert-kind " + kind, KIND_LABELS[kind] || "Alert"), el("span", "al-title", n.title), agoText, more);
+    line.title = n.title;
+    line.addEventListener("click", (e) => {
+      if (e.target.closest("a") || (e.target.closest("button") && e.target.closest("button") !== more)) return;
+      const opened = card.classList.toggle("open");
+      more.setAttribute("aria-expanded", String(opened));
+      more.setAttribute("aria-label", (opened ? "Close this alert: " : "Open this alert: ") + n.title);
+    });
+    card.append(line);
     // Then every detail (coloured), and how many phones it reached
     card.append(remove, el("span", "alert-kind " + kind, KIND_LABELS[kind] || "Alert"), top, exact, richDetails(n.body), el("p", "card-foot", `Alert #${n.id} · delivered to ${n.phones} ${n.phones === 1 ? "phone" : "phones"}`));
     // A booking in Acuity: check it with Acuity itself, so a real booking can't be mistaken for a test or a fake

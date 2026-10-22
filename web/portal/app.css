@@ -1404,3 +1404,52 @@ html.embed .listening-bar { top: 0; }
   .ib-label { max-width: none; }
   .ib-places .chip { padding: 0 10px; }
 }
+
+/* ----- Alerts, one line each (22 Oct 2026, the user: "please shrink the alert blocks so they can all fit on
+   the same screen", and chose "one line each, tap to open"): each alert is a slim row (its kind, its title,
+   how long ago) in as many columns as fit, so a screen holds most of them; a tap opens the whole card in
+   place, the full width of the list, with every line and button as before. A long title wraps onto a
+   second line rather than being cut short. ----- */
+#alert-list { gap: 6px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); grid-auto-flow: row dense; align-items: start; }
+#alert-list > .card, html[data-align] #alert-list.list > .card { padding: 4px 6px 4px 10px; border-radius: 11px; box-shadow: none; }
+html[data-align] #alert-list .al-line .alert-kind { display: inline-flex; }
+#alert-list > .card:not(.open) > :not(.al-line) { display: none; }
+#alert-list > .card.open, html[data-align] #alert-list.list > .card.open { grid-column: 1 / -1; padding: 8px 12px 10px; box-shadow: 0 10px 22px -20px var(--shadow); }
+#alert-list > .card.open > .alert-kind, #alert-list > .card.open > .card-top { display: none; }
+.al-line { display: flex; align-items: center; gap: 8px; min-height: 28px; text-align: left; cursor: pointer; }
+.al-line .alert-kind { flex: none; margin: 0; padding: 2px 7px 2px 6px; font-size: 8.5px; letter-spacing: 0.14em; gap: 5px; }
+.al-line .alert-kind::before { width: 5px; height: 5px; }
+.al-title { text-align: left; flex: 1; min-width: 0; color: #fff; font-family: var(--f-display); font-stretch: 105%; font-weight: 700; font-size: 13px; line-height: 1.2; }
+.al-ago { flex: none; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.04em; color: var(--muted); white-space: nowrap; }
+.al-more {
+  flex: none; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border-radius: 50%;
+  border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); color: var(--soft); font-size: 12px; line-height: 1; cursor: pointer;
+  transition: transform 0.18s ease;
+}
+.al-line:hover .al-more, .al-more:focus-visible { border-color: rgba(var(--hi-rgb), 0.6); }
+.card.open .al-more { transform: rotate(180deg); }
+.card.open > .al-line { padding-right: 30px; margin-bottom: 2px; }
+.card.open > .al-line .al-title { font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .al-more { transition: none; } }
+#alert-list .al-line .al-title { text-align: left !important; }
+/* (a phone: the kind and how long ago on a small first line, the title the full width under them) */
+@media (max-width: 560px) {
+  .al-line { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "kind ago more" "title title more"; column-gap: 8px; row-gap: 1px; align-items: center; }
+  .al-line .alert-kind { grid-area: kind; justify-self: start; }
+  .al-line .al-ago { grid-area: ago; justify-self: start; }
+  .al-line .al-more { grid-area: more; }
+  .al-line .al-title { grid-area: title; font-size: 13.5px; }
+}
+/* (the open card: tighter than the old cards, every line still there) */
+#alert-list .alert-when { margin: 2px 0 0; font-size: 9.5px; letter-spacing: 0.06em; }
+#alert-list .details { margin: 4px 0 0; font-size: 13.5px; line-height: 1.4; }
+#alert-list .card-foot { margin: 3px 0 0; font-size: 9px; }
+#alert-list .actions { margin-top: 6px; gap: 5px; justify-content: inherit; }
+#alert-list .actions .btn { min-height: 30px; height: 30px; padding: 0 12px; font-size: 10px; letter-spacing: 0.08em; }
+#alert-list .card-delete { top: 6px; right: 6px; width: 26px; height: 26px; font-size: 15px; }
+#alert-list .card.has-delete > .alert-when { padding-right: 0; }
+#alert-list .verify, #alert-list .email-panel { margin-top: 5px; padding: 5px 9px; border-radius: 10px; }
+#alert-list .verify-title { font-size: 12.5px; }
+#alert-list .email-panel .details { margin-top: 2px; font-size: 12.5px; }
+#alert-list .email-head { font-size: 9px; }
+@media (pointer: coarse) { .al-line { min-height: 34px; } html .al-line .al-more { width: 28px; height: 28px; min-width: 0; min-height: 0; } #alert-list .actions .btn { min-height: 36px; height: 36px; } #alert-list .card-delete { width: 32px; height: 32px; } }
