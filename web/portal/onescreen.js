@@ -39,7 +39,7 @@
   const state = new WeakMap(); // box -> { page, pages, leaves, parents, pager, key }
   const touched = { key: "", el: null, at: 0 }; // what was last pressed in a box
   const asked = { el: null, at: 0 }; // what was last asked to come into view (it wins over everything for 8 s: a section may finish loading after the jump)
-  const changed = new Set(); // elements whose style we changed (zoom, max-height…), to put back
+  const changed = new Map(); // elements whose style we changed (zoom, max-height…) -> what each property was, to put back
   let busy = false; // (while laying out: our own changes aren't a reason to lay out again)
 
   const shown = (el) => el.isConnected && !el.hidden && getComputedStyle(el).display !== "none";
@@ -59,19 +59,18 @@
     if (key.startsWith("#")) return box.querySelector(key.replace(/([^\w#-])/g, "\\$1")) || (box.id === key.slice(1) ? box : null);
     return box.querySelector(`[data-key="${CSS.escape(key.slice(2))}"]`);
   };
+  // (put back one property at a time: the live site's security rules block rewriting a style attribute,
+  // which once left zoom and padding piling up on anything with a style of its own, like a pane's colour)
   function setStyle(el, prop, value) {
-    if (!el.dataset.osStyle) el.dataset.osStyle = el.getAttribute("style") || "";
+    let was = changed.get(el);
+    if (!was) changed.set(el, (was = new Map()));
+    if (!was.has(prop)) was.set(prop, [el.style.getPropertyValue(prop), el.style.getPropertyPriority(prop)]);
     el.style.setProperty(prop, value);
-    changed.add(el);
   }
   function putBackStyles(within) {
-    for (const el of [...changed]) {
+    for (const [el, was] of [...changed]) {
       if (within && !within.contains(el)) continue;
-      if (el.isConnected) {
-        if (el.dataset.osStyle) el.setAttribute("style", el.dataset.osStyle);
-        else el.removeAttribute("style");
-        delete el.dataset.osStyle;
-      }
+      if (el.isConnected) for (const [prop, [value, priority]] of was) value ? el.style.setProperty(prop, value, priority) : el.style.removeProperty(prop);
       changed.delete(el);
     }
   }
