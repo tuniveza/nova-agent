@@ -40,3 +40,47 @@ html.embed #view-today:not([hidden]):has(> #today-dash) { display: block; }
 #view-today > .today-actions { margin: 4px 0 0; }
 #view-today > #today-calendar-wrap { margin-top: 14px; }
 @media (max-width: 560px) { .dash-rows li:nth-child(n+4) { display: none; } }
+
+/* ===== A Nova Tab's tabbed dashboard (pillars.js drawStrip, 22 Oct 2026): its tabs along the top of Portal's
+   backdrop (Overview, each of its sections), then its other items as smaller buttons; in its colour (--g) */
+.group-strip {
+  flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px;
+  margin: 0 0 10px; padding: 0 0 9px; border-bottom: 1px solid color-mix(in oklab, var(--g, var(--hi)) 30%, transparent);
+}
+.group-strip[hidden] { display: none; }
+.gs-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.gs-tab, .gs-act, .gs-more {
+  position: relative; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; cursor: pointer;
+  border: 1px solid transparent; background: transparent; color: var(--soft, #e9d9f2); font: 600 13px/1 var(--f-body, inherit);
+}
+.gs-tab { height: 36px; padding: 0 14px; border-radius: 11px; }
+.gs-tab .pillar-ico, .gs-act .pillar-ico { flex: none; width: 17px; height: 17px; color: var(--g, var(--hi)); }
+.gs-tab .pillar-ico svg, .gs-act .pillar-ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.gs-tab:is(:hover, :focus-visible) { background: color-mix(in oklab, var(--g, var(--hi)) 12%, transparent); outline: none; }
+.gs-tab.here {
+  color: #fff; border-color: color-mix(in oklab, var(--g, var(--hi)) 60%, transparent);
+  background: linear-gradient(170deg, color-mix(in oklab, var(--g, var(--hi)) 30%, transparent), color-mix(in oklab, var(--g, var(--hi)) 12%, transparent));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .12);
+}
+.gs-acts { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; padding-left: 14px; border-left: 1px solid color-mix(in oklab, var(--g, var(--hi)) 25%, transparent); }
+.gs-act, .gs-more { height: 30px; padding: 0 11px; border-radius: 999px; font-size: 12px; border-color: color-mix(in oklab, var(--g, var(--hi)) 28%, transparent); }
+.gs-act:is(:hover, :focus-visible), .gs-more:is(:hover, :focus-visible) { background: color-mix(in oklab, var(--g, var(--hi)) 14%, transparent); outline: none; }
+.gs-more { display: none; }
+.group-strip .pillar-badge { position: static !important; transform: none !important; margin: 0 !important; }
+@media (pointer: coarse) { .gs-tab { height: 40px; } .gs-act, .gs-more { height: 36px; } }
+/* (a phone: the tabs, then More for the group's other items) */
+@media (max-width: 560px) {
+  .group-strip { gap: 4px; margin-bottom: 6px; padding-bottom: 6px; }
+  .gs-tabs { gap: 2px; }
+  .gs-tab { height: 32px; padding: 0 7px; font-size: 11.5px; gap: 4px; }
+  .gs-tab .pillar-ico { width: 14px; height: 14px; }
+  /* (the tabs and More flow together, so it's two rows rather than three) */
+  .gs-tabs, .gs-acts { display: contents; }
+  .gs-more { height: 30px; font-size: 11.5px; }
+  .gs-more { display: inline-flex; }
+  .gs-acts:not(.open) > .gs-act { display: none; }
+}
+/* (the Overview's title: the group's icon and name) */
+.view-group .view-head h2 { display: inline-flex; align-items: center; gap: 10px; }
+.view-group .view-head h2 .pillar-ico { width: 24px; height: 24px; color: var(--g, var(--hi)); }
+.view-group .view-head h2 .pillar-ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

@@ -57,6 +57,19 @@
 
   // ---- What each section's tile says: { big, small, rows: [[main, side]], empty } ----
   const TILES = {
+    async today() {
+      const [cal, enq, chats] = await Promise.allSettled([get("calendar"), get("enquiries"), get("conversations")]);
+      const today = dayKey(new Date());
+      const bookings = cal.status === "fulfilled" && cal.value.setUp ? cal.value.bookings.filter((b) => { const d = when(b.start); return d && dayKey(d) === today; }) : [];
+      const fresh = enq.status === "fulfilled" ? enq.value.newCount || 0 : 0;
+      const talked = chats.status === "fulfilled" ? chats.value.conversations.filter((c) => c.started && dayKey(new Date(c.started)) === today).length : 0;
+      return {
+        big: plural(bookings.length, "booking") + " today",
+        small: `${plural(fresh, "new enquiry", "new enquiries")} · ${plural(talked, "chat")} today`,
+        rows: bookings.slice(0, 4).map((b) => [bookingName(b), when(b.start) ? hhmm(when(b.start)) : ""]),
+        empty: "Nothing booked today.",
+      };
+    },
     async enquiries() {
       const d = await get("enquiries");
       const c = d.counts || {};
@@ -286,5 +299,21 @@
     }));
   }
 
-  window.NovaDash = { today };
+  // A Nova Tab's Overview: a tile for each of its sections
+  function group() {
+    const P = window.NovaPillars;
+    const grid = $("dash-grid");
+    if (!P || !grid) return;
+    const want = new URLSearchParams(location.search).get("g") || "";
+    const groups = P.now();
+    const g = groups.find((x) => P.slug(x.name) === want) || groups[0];
+    if (!g) return;
+    $("view-group").style.setProperty("--g", P.hue(g.name));
+    $("dash-title").replaceChildren(P.icon(g.name), el("span", "", g.name));
+    cache.clear();
+    const items = g.items.filter((i) => i.at);
+    grid.replaceChildren(...(items.length ? items.map((it) => tile({ ...it, name: it.at === "calendar" ? "Bookings" : it.name }, P)) : [el("p", "dash-empty", "Everything in " + g.name + " is along the top.")]));
+  }
+
+  window.NovaDash = { today, group };
 })();

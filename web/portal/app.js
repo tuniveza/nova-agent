@@ -10,7 +10,7 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group"];
   // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
   const MORE = ["clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk"];
   let currentView = "today";
@@ -289,6 +289,8 @@
     if ((view === "tests" || view === "today") && window.PortalTests) window.PortalTests.load();
     if (view === "google" && window.PortalGoogle) window.PortalGoogle.load();
     if (view === "desk" && window.PortalDesk) window.PortalDesk.load();
+    // A Nova Tab's Overview (dash.js)
+    if (view === "group" && window.NovaDash) window.NovaDash.group();
     // Every section keeps the Alerts badge up to date; the Alerts tab also shows the list
     loadAlerts();
     if (view === "bot") setTimeout(() => $("bot-input").focus({ preventScroll: true }), 50);

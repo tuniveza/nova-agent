@@ -232,6 +232,14 @@
     if (v === "me" || v === "you" || p.get("id")) return "me";
     return (window.PortalApp && window.PortalApp.view) || v || "today";
   }
+  // Each Nova Tab is its own tabbed dashboard, in Portal's backdrop (22 Oct 2026, the user: "turn the nova
+  // tab panels into tabbed dashboards that are integrated into the portal backdrop so each nova tab in the
+  // nova tabs it's own tabbed dashboard"): a tap on a tab opens /portal/?view=group&g=<group> (its
+  // Overview, dash.js), and a strip of its tabs runs along the top of the backdrop: Overview, each of its
+  // sections, then its other items as buttons. The strip stays while you're in any of the group's sections.
+  const slug = (name) => String(name).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const dashOf = () => { const p = new URLSearchParams(location.search); return p.get("view") === "group" ? p.get("g") || "" : ""; };
+  const dashUrl = (g) => "/portal/?view=group&g=" + slug(g.name);
   const groupsNow = () => GROUPS.filter((g) => !g.admin || admin()).filter((g) => g.items.some((i) => !i.admin || admin()));
   const itemsOf = (g) => g.items.filter((i) => !i.admin || admin());
   const homeOf = (where) => groupsNow().find((g) => itemsOf(g).some((i) => i.at === where));
@@ -401,22 +409,21 @@
     for (const g of groups) {
       const items = itemsOf(g);
       const open = g.name === openName;
-      const lit = items.some((i) => i.at === where);
+      const lit = dashOf() ? dashOf() === slug(g.name) : items.some((i) => i.at === where);
       const total = (g.badges || []).reduce((n, id) => n + count(id), 0);
       const mini = el("button", "mini-pillar" + (open ? " open" : "") + (lit ? " here" : ""));
       mini.type = "button";
       mini.dataset.group = g.name;
       mini.style.setProperty("--g", HUE[g.name] || "var(--hi)");
       sky(mini, g.name);
-      mini.setAttribute("aria-expanded", String(open));
-      mini.setAttribute("aria-haspopup", "true");
+      if (lit) mini.setAttribute("aria-current", "true");
       mini.setAttribute("aria-label", `${g.name}${total ? `, ${total} new` : ""}`);
       const cap = el("span", "mini-cap");
       cap.append(icon(g.name), el("span", "pillar-name", g.name));
       const b = badge(total);
       if (b) cap.append(b);
       mini.append(cap);
-      mini.addEventListener("click", () => openPillar(g.name, true));
+      mini.addEventListener("click", () => openGroup(g));
       caps.append(mini);
       // (a computer, 20 Oct 2026, the user: "put the planet in the center of that tab panel"): your
       // planet in the middle of the tabs, four groups either side; it opens your Portal card
@@ -440,8 +447,78 @@
     row.replaceChildren(caps);
     row.classList.add("compact");
     drawDrawer(groups, where);
+    drawStrip(where);
     drawnSig = sig();
     join();
+  }
+
+  // ---- A group's tabbed dashboard: its strip of tabs along the top of Portal's backdrop ----
+  function openGroup(g) {
+    closeDrawer(false);
+    go(dashUrl(g))();
+    setTimeout(draw, 300);
+  }
+  let strip = null;
+  let moreOpen = false;
+  function groupNow(where) {
+    const d = dashOf();
+    return (d && groupsNow().find((g) => slug(g.name) === d)) || homeOf(where) || null;
+  }
+  function stripButton(cls, label, iconName, n, onClick) {
+    const b = el("button", cls);
+    b.type = "button";
+    b.append(icon(iconName), el("span", "gs-label", label));
+    const nb = badge(n);
+    if (nb) b.append(nb);
+    b.addEventListener("click", () => {
+      try {
+        onClick();
+      } catch (err) {
+        say("That didn't open: " + (err.message || err));
+      }
+      setTimeout(draw, 350);
+    });
+    return b;
+  }
+  function drawStrip(where) {
+    const main = $("main");
+    const g = !hidden && main ? groupNow(where) : null;
+    if (!g) {
+      if (strip) strip.hidden = true;
+      return;
+    }
+    if (!strip || !strip.isConnected) {
+      strip = el("nav", "group-strip");
+      main.prepend(strip);
+    }
+    strip.hidden = false;
+    strip.setAttribute("aria-label", g.name);
+    strip.style.setProperty("--g", HUE[g.name] || "var(--hi)");
+    const items = itemsOf(g);
+    const onDash = dashOf() === slug(g.name);
+    const tabs = el("div", "gs-tabs");
+    const over = stripButton("gs-tab" + (onDash ? " here" : ""), "Overview", g.name, 0, () => go(dashUrl(g))());
+    if (onDash) over.setAttribute("aria-current", "page");
+    tabs.append(over);
+    for (const it of items.filter((i) => i.at)) {
+      const here = !onDash && it.at === where;
+      const b = stripButton("gs-tab" + (here ? " here" : ""), it.name, it.name, count(it.badge), () => it.run());
+      if (here) b.setAttribute("aria-current", "page");
+      tabs.append(b);
+    }
+    const acts = items.filter((i) => !i.at);
+    const parts = [tabs];
+    if (acts.length) {
+      const box = el("div", "gs-acts" + (moreOpen ? " open" : ""));
+      // (a phone: the group's other items behind More, so the strip stays short)
+      const more = el("button", "gs-more", moreOpen ? "Less ▴" : "More ▾");
+      more.type = "button";
+      more.setAttribute("aria-expanded", String(moreOpen));
+      more.addEventListener("click", () => { moreOpen = !moreOpen; drawStrip(here()); });
+      box.append(more, ...acts.map((it) => stripButton("gs-act", it.name, it.name, count(it.badge), () => it.run())));
+      parts.push(box);
+    }
+    strip.replaceChildren(...parts);
   }
 
   // ---- The panel that slides out of a group ----
@@ -524,6 +601,7 @@
     if (hidden) {
       // (only the round Show all button, top right)
       closeDrawer(false);
+      if (strip) strip.hidden = true;
       row.replaceChildren(toggleButton());
       drawnSig = sig();
       return;
@@ -539,7 +617,7 @@
     const first = drawer && drawer.querySelector(".pillar-btn");
     if (first && byHand && matchMedia("(pointer: fine)").matches) first.focus({ preventScroll: true });
   }
-  const sig = () => [hidden, here(), admin(), openName, ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
+  const sig = () => [hidden, here(), dashOf(), admin(), openName, ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
 
   // ---- In place of the tab panel ----
   function place() {
@@ -589,7 +667,7 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
-  window.NovaPillars = { groups: GROUPS, open: (name) => openPillar(name, true), redraw: draw, hide: () => setHidden(true), show: () => setHidden(false),
+  window.NovaPillars = { groups: GROUPS, open: (name) => { const g = groupsNow().find((x) => x.name === name); return g ? openGroup(g) : openPillar(name, true); }, redraw: draw, hide: () => setHidden(true), show: () => setHidden(false),
     // (for Today's dashboard, dash.js: every section, its icon, its count and its group's colour)
-    now: () => groupsNow().map((g) => ({ ...g, items: itemsOf(g) })), icon, count, hue: (name) => HUE[name] || "var(--hi)" };
+    now: () => groupsNow().map((g) => ({ ...g, items: itemsOf(g) })), icon, count, slug, hue: (name) => HUE[name] || "var(--hi)" };
 })();

@@ -76,6 +76,15 @@ and (admins) Google, Computer and Test stuff. Each tile shows its count and its 
 that very thing (an enquiry, a chat), and **Open ›** opens the whole section. Booking tools and Test
 stuff sit along the top. On a phone each tile shows three lines; Today is paged like every section.
 
+## Nova Tabs: a tabbed dashboard each (22 October 2026)
+
+Each Nova Tab (Inbox, Bookings, Clients & Money, Outreach, Plans & Nova, You, Look & sound, Admin) is
+its own tabbed dashboard inside Portal's backdrop. A tap on one opens its **Overview** (a live tile for
+each of its sections, `dash.js`), and a strip of its tabs runs along the top of the backdrop: Overview,
+each of its sections, then its other items as buttons (on a phone behind **More**). The strip stays while
+you're in any of the group's sections, with that section's tab lit (`pillars.js` drawStrip,
+`/portal/?view=group&g=<group>`). The panel that used to slide out of a tab is no longer used.
+
 ## The tabs
 
 Every section shows at once, so nothing hides behind a click. On a computer or tablet they sit at the top in **lanes**:
