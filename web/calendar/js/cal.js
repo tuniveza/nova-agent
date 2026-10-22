@@ -361,6 +361,11 @@ function drawMonth() {
   // alone, or it holds a phone's titles on one line, where they're meant to go onto two, and cuts them off)
   view.innerHTML = `<div class="month">${phone() ? stripHtml() : ""}<div class="wk-head">${heads}</div><div class="grid${textual ? " textual" : ""}" data-rules="off">${cells}</div>${phone() ? dayPlanHtml(cursor) : ""}</div>`;
   fitMonth();
+  // (and again once the panel has settled: drawn while its panel is still opening, the month was fitted to
+  // a moment that then changed in ways its size didn't show, and cards were left cut, 22 Oct 2026)
+  for (const t of lateFits) clearTimeout(t);
+  const drawn = view.querySelector(".month .grid");
+  lateFits = [700, 2500].map((ms) => setTimeout(() => { if (drawn.isConnected) fitMonth(); }, ms));
   // (the days' size changing without the window's, a scroll bar coming or going: they fit again)
   if (typeof ResizeObserver === "function") {
     const grid = view.querySelector(".month .grid");
@@ -378,17 +383,32 @@ function drawMonth() {
       for (const { target: card } of list) {
         const now = `${card.clientWidth}x${card.clientHeight}`;
         if (card.dataset.size === now) continue;
-        const first = !card.dataset.size;
         card.dataset.size = now;
-        const n = Number(card.dataset.refits || 0);
-        if (!first && n < 4 && card.parentElement) { card.dataset.refits = String(n + 1); fitInfo(card.parentElement); }
+        resized.add(card);
       }
+      // (once the sizes stop changing, a tenth of a second later: the month settles in a few steps as its
+      // panel opens, and only the last one counts; never more than 30 rounds a minute, so nothing can run away)
+      clearTimeout(refitSoon);
+      if (resized.size) refitSoon = setTimeout(() => {
+        const now = Date.now();
+        if (now - refitWindow > 60000) { refitWindow = now; refitCount = 0; }
+        if (refitCount++ < 30) for (const card of resized) if (card.isConnected && card.parentElement) fitInfo(card.parentElement);
+        resized.clear();
+      }, 100);
     })).disconnect();
-    for (const card of grid.querySelectorAll(":scope > .cell > .dayinfo")) cardSize.observe(card);
+    // (each card's size as it was fitted: the month is often fitted while its panel is still opening, at
+    // another size, and the first size seen after must count as a change)
+    for (const card of grid.querySelectorAll(":scope > .cell > .dayinfo")) {
+      card.dataset.size = `${card.clientWidth}x${card.clientHeight}`;
+      cardSize.observe(card);
+    }
   }
 }
 let monthSize = null;
 let cardSize = null;
+let lateFits = [];
+const resized = new Set();
+let refitSoon = 0, refitWindow = 0, refitCount = 0;
 // (fonts arriving after the month is drawn change the words' sizes, not the days': fit again then, or cards
 // fitted to the stand-in font stick out of their day, 22 Oct 2026)
 if (document.fonts && document.fonts.addEventListener) {
@@ -683,9 +703,12 @@ function daySummary(d, list) {
   return `<div class="dp-info">${out.map((x) => `<p>${x}</p>`).join("")}</div>`;
 }
 // (withRows false: without its list of cards, for beside Day view, whose grid shows them)
+// (data-os-skip: the page bar leaves the chosen day's list alone, it scrolls in itself on a phone: paged,
+// its height changed under the month as pages turned, the days grew and shrank with it and their cards were
+// left fitted to the other size, cut, 22 Oct 2026)
 function dayPlanHtml(d, withRows = true) {
   // On a phone the chosen day sits below the month: it's drawn with the sky, a moment after the month
-  if (!skyDrawn && phone()) return `<section class="dayplan" aria-label="${dayLabel(d)}"></section>`;
+  if (!skyDrawn && phone()) return `<section class="dayplan" data-os-skip aria-label="${dayLabel(d)}"></section>`;
   const list = onDay(entries(d, d), d);
   const days = list.filter((e) => e.type === "day");
   const rest = list.filter((e) => e.type !== "day");
@@ -705,7 +728,7 @@ function dayPlanHtml(d, withRows = true) {
   const specials = sky
     .map((x) => `<div class="sky-row"><span>${esc(x.title)}</span><button type="button" data-make-day="${esc(JSON.stringify({ date: d, ...x }))}">Make it a day card</button></div>`)
     .join("");
-  return `<section class="dayplan" aria-label="${dayLabel(d)}">
+  return `<section class="dayplan" data-os-skip aria-label="${dayLabel(d)}">
     <div class="dp-head"><div><span class="dp-kicker">${d === today() ? "Today" : WD_LONG[weekday(d)]}</span><h3>${dayLabel(d)}</h3>${moon}</div>
       <div class="dp-add"><button type="button" data-add="${d}">+ Note card</button><button type="button" data-add-day="${d}">+ Day card</button></div></div>
     ${daySummary(d, list)}${banners}${specials}${

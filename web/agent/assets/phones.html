@@ -3,75 +3,188 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nova Agent on phones</title>
-<!-- Nova Agent as a phone shows it, on a computer screen: the real thing (/agent/) in phone-sized
-     screens side by side, each one working (tap, type, open panels). All of them fit the window
-     (scaled down to fit, never a scroll). Address: /agent/phones.html (also /phones). -->
+<title>Nova on phones</title>
+<!-- The Nova suite on today's phones, on a computer screen (22 Oct 2026, the user: "implement an iphone webpage
+     emulation, android webpage emulation so I can see what it looks like on various phones for real"). Each
+     phone shows the real thing at the exact size its own browser gives a page (Safari on an iPhone, Chrome on
+     an Android, their bars taken off), inside the phone with those bars drawn where they are: Safari's at the
+     bottom, Chrome's at the top. Each screen works (tap, type, open panels). Upright or on its side; any
+     place in the suite. For each phone's own browser engine, touch and user agent too, there's the phone
+     windows launcher: node scripts/phones.mjs (in Nova Agent's folder). Address: /agent/phones.html. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110..125,700..900&family=Saira:wght@400..700&display=swap">
 <link rel="stylesheet" href="/shared/themes.css">
 <style>
+  :root { --hi: #FF5FA8; --line: rgb(255 255 255 / .14); }
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--void, #06040D); color: var(--text, #EDE6F7); font-family: Saira, system-ui, sans-serif; }
   body { display: grid; grid-template-rows: auto minmax(0, 1fr); }
-  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 10px 18px; border-bottom: 1px solid color-mix(in srgb, var(--hi, #FF5FA8) 25%, transparent); }
-  h1 { margin: 0; font: 800 17px/1.2 Archivo, sans-serif; letter-spacing: .02em; }
-  header p { margin: 0; font-size: 13px; opacity: .75; }
-  header .pick { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
-  header button { font: 600 13px Saira, sans-serif; color: inherit; background: color-mix(in srgb, var(--panel, #1a1030) 80%, transparent); border: 1px solid color-mix(in srgb, var(--hi, #FF5FA8) 30%, transparent); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
-  header button[aria-pressed="true"] { background: color-mix(in srgb, var(--hi, #FF5FA8) 26%, transparent); border-color: var(--hi, #FF5FA8); }
+  header { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid color-mix(in srgb, var(--hi) 25%, transparent); }
+  h1 { margin: 0; font: 800 16px/1.2 Archivo, sans-serif; letter-spacing: .02em; white-space: nowrap; }
+  .group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .group b { font: 700 11px/1 Saira, sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: .6; margin-right: 2px; white-space: nowrap; }
+  header button, header select { font: 600 12px Saira, sans-serif; color: inherit; background: color-mix(in srgb, var(--panel, #1a1030) 80%, transparent); border: 1px solid color-mix(in srgb, var(--hi) 30%, transparent); border-radius: 999px; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
+  header button[aria-pressed="true"] { background: color-mix(in srgb, var(--hi) 28%, transparent); border-color: var(--hi); color: #fff; }
+  header .tools { margin-left: auto; }
   main { position: relative; overflow: hidden; }
-  #row { position: absolute; left: 50%; top: 50%; display: flex; align-items: flex-end; gap: 36px; transform-origin: center; }
+  #row { position: absolute; left: 50%; top: 50%; display: flex; align-items: flex-end; gap: 40px; transform-origin: center; }
   figure { margin: 0; display: grid; justify-items: center; gap: 10px; }
-  figure[hidden] { display: none; }
-  .phone { padding: 12px; border-radius: 44px; background: linear-gradient(160deg, #2a2338, #0d0a14); box-shadow: 0 0 0 2px #3a3148, 0 30px 60px -20px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .12); }
-  .phone.side { border-radius: 36px; }
-  iframe { display: block; border: 0; border-radius: 32px; background: #000; }
-  .side iframe { border-radius: 26px; }
-  figcaption { font-size: 15px; opacity: .8; }
+  figcaption { font-size: 14px; opacity: .85; white-space: nowrap; text-align: center; }
+  figcaption small { display: block; opacity: .7; font-size: 12px; }
+  /* The phone: its body, its screen, and on the screen its browser's own bars round the page */
+  .phone { padding: 11px; border-radius: 52px; background: linear-gradient(160deg, #34293f, #0d0a14); box-shadow: 0 0 0 2px #463a55, 0 30px 60px -20px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .14); }
+  .phone.android { border-radius: 40px; }
+  .phone.fold { border-radius: 26px; }
+  .screen { position: relative; display: grid; overflow: hidden; border-radius: 42px; background: #000; }
+  .android .screen { border-radius: 30px; }
+  .fold .screen { border-radius: 16px; }
+  .screen iframe { display: block; border: 0; background: #000; }
+  .bar { display: flex; align-items: center; justify-content: space-between; padding: 0 26px; color: #fff; font: 600 14px/1 -apple-system, "SF Pro Text", Saira, sans-serif; background: #0b0910; }
+  .bar .url { flex: 1; margin: 0 6px; height: 34px; display: grid; place-items: center; border-radius: 999px; background: #1f1b27; font-size: 13px; font-weight: 500; color: #ddd; }
+  .iphone .bar .url { flex: none; width: 82%; }
+  #row.two { display: grid; grid-template-columns: repeat(2, auto); align-items: end; justify-items: center; }
+  .android .bar .url { height: 38px; border-radius: 999px; background: #2a2533; justify-items: start; padding: 0 16px; }
+  .island { width: 120px; height: 34px; border-radius: 20px; background: #000; box-shadow: 0 0 0 1px #111; }
+  .hole { width: 12px; height: 12px; border-radius: 50%; background: #000; box-shadow: 0 0 0 2px #1a1a1a; }
+  .home { width: 130px; height: 5px; border-radius: 3px; background: rgb(255 255 255 / .7); margin: 0 auto; }
+  .sideways .screen { place-items: center; }
+  .note { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); margin: 0; font-size: 12px; opacity: .6; white-space: nowrap; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Nova Agent on phones</h1>
-  <p>The real Nova Agent at phone sizes. Each screen works: tap, type, open panels.</p>
-  <div class="pick" role="group" aria-label="Which phones">
-    <button type="button" data-show="all" aria-pressed="true">All</button>
-    <button type="button" data-show="iphone">iPhone</button>
-    <button type="button" data-show="android">Android</button>
-    <button type="button" data-show="small">Small phone</button>
-    <button type="button" data-show="side">On its side</button>
-    <button type="button" id="reload">Reload all</button>
+  <h1>Nova on phones</h1>
+  <div class="group" role="group" aria-label="iPhones" id="iphones"><b>iPhone</b></div>
+  <div class="group" role="group" aria-label="Androids" id="androids"><b>Android</b></div>
+  <div class="group tools" role="group" aria-label="Show">
+    <button type="button" id="turn" aria-pressed="false">On its side</button>
+    <select id="place" aria-label="Which place">
+      <option value="/agent/">Nova Agent</option>
+      <option value="/portal/">Portal</option>
+      <option value="/calendar/">Calendar</option>
+      <option value="/notes/">Notes</option>
+      <option value="/board/">Board</option>
+      <option value="/quests/">Quests</option>
+      <option value="/invoicer/">Invoicer</option>
+      <option value="/fixer/">Fixer</option>
+    </select>
+    <button type="button" id="reload">Reload</button>
   </div>
 </header>
 <main>
-  <div id="row">
-    <figure data-k="iphone"><div class="phone"><iframe title="iPhone (390 × 844)" src="/agent/" width="390" height="844"></iframe></div><figcaption>iPhone · 390 × 844</figcaption></figure>
-    <figure data-k="android"><div class="phone"><iframe title="Android (412 × 915)" src="/agent/" width="412" height="915"></iframe></div><figcaption>Android · 412 × 915</figcaption></figure>
-    <figure data-k="small"><div class="phone"><iframe title="Small phone (360 × 640)" src="/agent/" width="360" height="640"></iframe></div><figcaption>Small phone · 360 × 640</figcaption></figure>
-    <figure data-k="side"><div class="phone side"><iframe title="A phone on its side (844 × 390)" src="/agent/" width="844" height="390"></iframe></div><figcaption>On its side · 844 × 390</figcaption></figure>
-  </div>
+  <div id="row"></div>
+  <p class="note">Exact page sizes from each phone's own browser. For each phone's own engine and touch: node scripts/phones.mjs</p>
 </main>
 <script>
 (() => {
   "use strict";
-  const row = document.getElementById("row");
-  const main = document.querySelector("main");
+  // Each phone: the page size its browser gives (upright, on its side) and its whole screen (Playwright's
+  // device list, 22 Oct 2026). k: iphone (Safari, bar at the bottom), android (Chrome, bar at the top), fold.
+  const PHONES = [
+    { n: "iPhone SE (3rd gen)", k: "iphone", up: [375, 667], side: [667, 375], screen: [375, 667 + 20 + 76], home: false },
+    { n: "iPhone 13 Mini", k: "iphone", up: [375, 629], side: [712, 327], screen: [375, 812] },
+    { n: "iPhone 15", k: "iphone", up: [393, 659], side: [734, 343], screen: [393, 852] },
+    { n: "iPhone 17", k: "iphone", up: [402, 681], side: [756, 352], screen: [402, 874] },
+    { n: "iPhone Air", k: "iphone", up: [420, 719], side: [794, 370], screen: [420, 912] },
+    { n: "iPhone 17 Pro Max", k: "iphone", up: [440, 763], side: [838, 390], screen: [440, 956] },
+    { n: "Pixel 8a", k: "android", up: [412, 839], side: [863, 360], screen: [412, 915] },
+    { n: "Pixel 10", k: "android", up: [360, 732], side: [756, 308], screen: [360, 808] },
+    { n: "Pixel 9 Pro XL", k: "android", up: [448, 921], side: [945, 396], screen: [448, 997] },
+    { n: "Galaxy S24", k: "android", up: [360, 780], side: [780, 360], screen: [360, 856] },
+    { n: "Galaxy A55", k: "android", up: [480, 1040], side: [1040, 480], screen: [480, 1116] },
+    { n: "Galaxy Z Flip 7", k: "android", up: [360, 764], side: [788, 308], screen: [360, 840] },
+    { n: "Galaxy Z Fold 7", k: "fold", up: [984, 1016], side: [1040, 932], screen: [984, 1092] },
+  ];
+  const $ = (id) => document.getElementById(id);
+  const row = $("row"), main = document.querySelector("main");
+  let chosen = new Set(["iPhone 17", "Pixel 10"]);
+  let sideways = false;
+  try { const s = JSON.parse(localStorage.getItem("nova-phones") || "null"); if (s) { chosen = new Set(s.chosen); sideways = !!s.sideways; $("place").value = s.place || "/agent/"; } } catch (e) {}
+  const save = () => { try { localStorage.setItem("nova-phones", JSON.stringify({ chosen: [...chosen], sideways, place: $("place").value })); } catch (e) {} };
+
+  for (const p of PHONES) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = p.k === "iphone" ? p.n.replace(/^iPhone /, "") : p.n.replace(/^Galaxy /, "");
+    b.title = p.n;
+    b.dataset.n = p.n;
+    b.addEventListener("click", () => { chosen.has(p.n) ? chosen.delete(p.n) : chosen.add(p.n); draw(); });
+    $(p.k === "iphone" ? "iphones" : "androids").append(b);
+  }
+
+  function phone(p) {
+    const [w, h] = sideways ? p.side : p.up;
+    const fig = document.createElement("figure");
+    const body = document.createElement("div");
+    body.className = `phone ${p.k}${sideways ? " sideways" : ""}`;
+    const screen = document.createElement("div");
+    screen.className = "screen";
+    const frame = document.createElement("iframe");
+    frame.title = `${p.n} (${w} × ${h})`;
+    frame.width = w;
+    frame.height = h;
+    frame.src = $("place").value;
+    if (sideways) {
+      // On its side the bars mostly go; the rest of the screen stays dark round the page
+      screen.style.width = `${p.screen[1]}px`;
+      screen.style.height = `${p.screen[0]}px`;
+      screen.append(frame);
+    } else {
+      const extra = Math.max(0, p.screen[1] - h);
+      const top = document.createElement("div"), bottom = document.createElement("div");
+      top.className = bottom.className = "bar";
+      if (p.k === "iphone") {
+        // Safari: the status bar (the time, the Dynamic Island) above; its address bar below, then the home bar
+        const t = Math.min(extra, p.home === false ? 20 : 54);
+        top.style.height = `${t}px`;
+        top.innerHTML = p.home === false ? `<span>9:41</span><span></span><span>●●●</span>` : `<span>9:41</span><span class="island"></span><span>●●● ▮</span>`;
+        bottom.style.height = `${extra - t}px`;
+        bottom.style.flexDirection = "column";
+        bottom.style.justifyContent = "center";
+        bottom.style.gap = "10px";
+        bottom.innerHTML = `<span class="url">nova.novacane.co.uk</span>${p.home === false ? "" : `<span class="home"></span>`}`;
+      } else {
+        // Chrome: the status bar and the address bar above; the gesture bar below
+        const b = Math.min(extra, 20);
+        top.style.height = `${extra - b}px`;
+        top.style.flexDirection = "column";
+        top.style.alignItems = "stretch";
+        top.style.justifyContent = "space-evenly";
+        top.style.padding = "0 14px";
+        top.innerHTML = `<span style="display:flex;justify-content:space-between;align-items:center"><span>9:41</span><span class="hole"></span><span>▾ ▮</span></span><span class="url">nova.novacane.co.uk</span>`;
+        bottom.style.height = `${b}px`;
+        bottom.innerHTML = `<span class="home" style="width:100px;height:4px"></span>`;
+      }
+      screen.append(top, frame, bottom);
+    }
+    body.append(screen);
+    const cap = document.createElement("figcaption");
+    cap.innerHTML = `${p.n}<small>${w} × ${h} · ${p.k === "iphone" ? "Safari" : "Chrome"}${sideways ? " · on its side" : ""}</small>`;
+    fig.append(body, cap);
+    return fig;
+  }
   // Everything showing fits the window: scaled down (never up past life size), centred
   function fit() {
     row.style.transform = "translate(-50%, -50%)";
     const w = row.scrollWidth, h = row.scrollHeight;
-    const s = Math.min(1, (main.clientWidth - 32) / w, (main.clientHeight - 24) / h);
+    const s = Math.min(1, (main.clientWidth - 32) / Math.max(1, w), (main.clientHeight - 40) / Math.max(1, h));
     row.style.transform = `translate(-50%, -50%) scale(${s})`;
   }
-  for (const b of document.querySelectorAll("[data-show]")) b.addEventListener("click", () => {
-    for (const x of document.querySelectorAll("[data-show]")) x.setAttribute("aria-pressed", String(x === b));
-    for (const f of row.querySelectorAll("figure")) f.hidden = b.dataset.show !== "all" && f.dataset.k !== b.dataset.show;
+  function draw() {
+    for (const b of document.querySelectorAll("[data-n]")) b.setAttribute("aria-pressed", String(chosen.has(b.dataset.n)));
+    $("turn").setAttribute("aria-pressed", String(sideways));
+    const shown = PHONES.filter((p) => chosen.has(p.n));
+    row.replaceChildren(...shown.map(phone));
+    // (on their sides, wide and short: two to a row, so they're bigger)
+    row.classList.toggle("two", sideways && shown.length > 2);
+    save();
     fit();
-  });
-  document.getElementById("reload").addEventListener("click", () => { for (const f of row.querySelectorAll("iframe")) f.src = f.src; });
+  }
+  $("turn").addEventListener("click", () => { sideways = !sideways; draw(); });
+  $("place").addEventListener("change", draw);
+  $("reload").addEventListener("click", () => { for (const f of row.querySelectorAll("iframe")) f.src = f.src; });
   addEventListener("resize", fit);
-  fit();
+  draw();
 })();
 </script>
 </body>

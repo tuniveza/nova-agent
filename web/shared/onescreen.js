@@ -99,6 +99,18 @@
   const NOT_BOX = 'textarea, select, input, iframe, svg, canvas, [data-os-skip], [data-os-own], .os-pager';
   let lastLook = 0;
   let lookAgain = 0;
+  // (new boxes only: looked for a moment after things are added, laid out only if one was found)
+  let looking = 0;
+  function lookSoon() {
+    clearTimeout(looking);
+    looking = setTimeout(() => {
+      if (document.hidden) return;
+      const before = found.size;
+      lastLook = 0;
+      discover();
+      if (found.size > before) soon(30);
+    }, 400);
+  }
   function discover() {
     for (const b of [...found]) if (!b.isConnected) found.delete(b);
     if (portalPage()) return;
@@ -528,9 +540,14 @@
     if (left < -1 || top < -1 || (!pageX && right > innerWidth + 1) || (!pageY && bottom > innerHeight + 1)) return { by: null, r };
     return null;
   }
-  function guard() {
+  // (put back before anything is measured, at the start of each layout: put back only at the guard's turn,
+  // the boxes were measured with last time's shrinking one time and without it the next, and the sizes
+  // went back and forth for ever)
+  function unguard() {
     for (const [el, [v, pr]] of guarded) if (el.isConnected) (v ? el.style.setProperty("zoom", v, pr) : el.style.removeProperty("zoom"));
     guarded.clear();
+  }
+  function guard() {
     // (first, nothing slides sideways: a big box, or the page, whose insides are wider than it has them
     // drawn smaller to its width; a row of things meant to slide, data-pan, is left as it is)
     const tooWide = () => [document.body, ...document.body.querySelectorAll("*")].filter((el) => {
@@ -603,9 +620,12 @@
           if (A === document.body || !A) A = [...document.body.children].find((c) => c.contains(el));
           if (A) {
             const a = A.getBoundingClientRect();
+            // (how far it reaches either way: a box centred in the screen and taller than it sticks out
+            // above as much as below, and all of that has to come in)
+            const near = { left: Math.min(Math.max(0, a.left), cut.r.left), top: Math.min(Math.max(0, a.top), cut.r.top) };
             const far = { right: Math.max(a.right, cut.r.right), bottom: Math.max(a.bottom, cut.r.bottom, A.scrollHeight + a.top) };
-            const kx = far.right > innerWidth + 1 ? (innerWidth - a.left) / Math.max(1, far.right - a.left) : 1;
-            const ky = far.bottom > innerHeight + 1 ? (innerHeight - a.top) / Math.max(1, far.bottom - a.top) : 1;
+            const kx = far.right > innerWidth + 1 || near.left < -1 ? innerWidth / Math.max(1, far.right - Math.min(0, near.left) - Math.max(0, near.left)) : 1;
+            const ky = far.bottom > innerHeight + 1 || near.top < -1 ? innerHeight / Math.max(1, far.bottom - Math.min(0, near.top) - Math.max(0, near.top)) : 1;
             changed = shrink(A, Math.min(kx, ky, 0.97));
           }
         }
@@ -623,6 +643,7 @@
     runs++;
     busy = true;
     try {
+      unguard();
       discover();
       for (const box of boxes()) {
         layout(box, opts.fresh && opts.fresh.has(box) ? { fresh: true } : {});
@@ -788,10 +809,13 @@
         if (ours(r.target)) continue;
         const t = r.target.nodeType === 1 ? r.target : r.target.parentElement;
         const toggled = r.type === "attributes" && r.attributeName === "hidden" && t && t.matches && t.matches("#main > .view, .sheet, .pillar-drawer");
-        // (outside Portal, parts added anywhere may be a new box that would scroll; words changing, a
-        // clock ticking, don't count)
-        const added = !portalPage() && r.type === "childList" && [...r.addedNodes].some((n) => n.nodeType === 1 && !ours(n));
-        if (!toggled && !added && !live.some((b) => b.contains(t))) continue;
+        // (outside Portal, parts added outside its boxes may be a new box that would scroll: that's only
+        // looked for, and laid out if it's new; laying everything out again for it set a panel's own
+        // fitting going round and round with this, the Calendar's day cards, 22 Oct 2026)
+        if (!toggled && !live.some((b) => b.contains(t))) {
+          if (!portalPage() && r.type === "childList" && [...r.addedNodes].some((n) => n.nodeType === 1 && !ours(n))) lookSoon();
+          continue;
+        }
         if (r.type === "attributes" && r.attributeName === "hidden" && r.target.matches && r.target.matches("#main > .view, .sheet") && !r.target.hidden) {
           fresh.add(r.target.matches(".sheet") ? r.target.querySelector(".sheet-card") : r.target);
         }
