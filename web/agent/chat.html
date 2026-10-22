@@ -287,8 +287,10 @@
   .viewer > .viewer-body { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; border-radius: 24px; overflow: hidden; }
   .viewer-body > iframe { grid-area: 1 / 1 / 2 / 2; }
   .main.viewing > .chat, .main.viewing > .board { display: none; }
-  /* The title panel's back (←) */
-  .viewer-back { font-size: 17px; line-height: 1; }
+  /* The title panel's back (←): a drawn arrow, not a letter (a font's arrow sits off the middle), in the
+     exact middle of its button both ways (22 Oct 2026) */
+  .viewer-back { display: grid; place-items: center; padding: 0; font-size: 17px; line-height: 1; }
+  .viewer-back > svg { display: block; width: 18px; height: 18px; margin: 0; }
   /* The panel's box: the same dark as the panel inside it */
   #viewer-body { background: var(--void); }
   .viewer-name { text-align: center; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 15px; color: #fff; }
@@ -904,7 +906,7 @@
   <header class="topbar glass nv-topbar">
     <div class="top-side left">
       <!-- With a panel open this header is the panel's title panel: ← back, its name, Reload (below) -->
-      <button type="button" class="icon-btn viewer-back" id="viewer-close" data-sfx="close" title="Back to Nova Agent" aria-label="Back to Nova Agent">←</button>
+      <button type="button" class="icon-btn viewer-back" id="viewer-close" data-sfx="close" title="Back to Nova Agent" aria-label="Back to Nova Agent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
       <!-- Sound effects on or off (sfx.js; remembered on this computer) -->
       <button type="button" class="icon-btn sfx-btn" id="sfx-btn" data-sfx="none" aria-pressed="true" title="Sound effects" aria-label="Sound effects"><span class="sfx-on">🔊</span><span class="sfx-off">🔈</span></button>
       <!-- Ambient music on or off (ambient.js: quiet Novacane music, carries on across panels; remembered here) -->
