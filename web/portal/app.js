@@ -10,10 +10,16 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group", "inbox"];
+  // Inbox (22 Oct 2026, the user: "id like all of it on one dashboard instead of having to click around"):
+  // Enquiries, Conversations and Alerts are one dashboard, side by side, with today's bookings at the top
+  // of Enquiries. Any of the three (?view=enquiries, chats, alerts, or inbox) shows all three.
+  const INBOX = ["enquiries", "chats", "alerts"];
   // On a phone these live under More, so the tab bar fits (the You tab too: portal.js's)
   const MORE = ["clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk"];
   let currentView = "today";
+  // (is this section on screen: itself, or as part of the Inbox dashboard)
+  const onView = (v) => currentView === v || (currentView === "inbox" && INBOX.includes(v));
   let running = false;
   let sessions = null; // session types for booking links
   let sheetEnquiry = null;
@@ -245,6 +251,28 @@
       if (on) enter(v);
     });
   }
+  // The Inbox dashboard: its three sections on screen together
+  function showInbox(asked) {
+    const want = INBOX.map((v) => "view-" + v);
+    document.querySelectorAll("#main > .view").forEach((v) => {
+      const on = want.includes(v.id);
+      if (v.hidden === !on) return;
+      v.hidden = !on;
+      if (on) enter(v);
+    });
+    // (the one asked for is the one a keyboard lands in)
+    $("main").dataset.inboxAsked = asked;
+    // (a phone: each pane's filters and settings behind one small button, so its rows have the room)
+    for (const [v, word] of [["enquiries", "Search"], ["chats", "Filter"], ["alerts", "Settings"]]) {
+      const head = $("view-" + v).querySelector(".view-head");
+      if (head.querySelector(".ib-filters")) continue;
+      const b = el("button", "chip ib-filters", word);
+      b.type = "button";
+      b.setAttribute("aria-expanded", "false");
+      b.addEventListener("click", () => b.setAttribute("aria-expanded", String($("view-" + v).classList.toggle("ib-tools-open"))));
+      head.append(b);
+    }
+  }
   function enter(node) {
     node.classList.remove("view-enter");
     if (calm()) return;
@@ -257,19 +285,24 @@
   // Show one of the work tabs (portal.js decides which from the address, and calls this)
   function show(view) {
     if (!VIEWS.includes(view)) view = "today";
+    const asked = view;
+    if (INBOX.includes(view)) view = "inbox";
     currentView = view;
     document.querySelectorAll(".tabs .tab").forEach((t) => {
       // (Portal's bookings month lights Booking tools: the Calendar item opens the Calendar panel)
-      const on = t.id === "nav-booking-tools" ? view === "calendar" : t.dataset.view === "calendar" ? false : t.dataset.view === view || (t.id === "tab-more" && (MORE.includes(view) || view === "calendar"));
+      const on = t.id === "nav-booking-tools" ? view === "calendar" : t.dataset.view === "calendar" ? false : t.dataset.view === (view === "inbox" ? asked : view) || (t.id === "tab-more" && (MORE.includes(asked) || view === "calendar"));
       if (t.classList.contains("active") !== on) t.classList.toggle("active", on);
       if (on) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
     });
-    showOnly("view-" + view);
+    if (view === "inbox") showInbox(asked);
+    else showOnly("view-" + view);
+    $("main").classList.toggle("inbox-all", view === "inbox");
     if (view === "today") loadToday();
     if (view === "quests") loadQuests();
-    if (view === "enquiries") loadEnquiries();
-    if (view === "chats") {
+    if (view === "inbox") loadEnquiries();
+    if (view === "inbox" && window.NovaDash && window.NovaDash.inboxToday) window.NovaDash.inboxToday();
+    if (view === "inbox") {
       // (?chat=ID, from a phone ping about a chat: open that one, once)
       const wanted = new URLSearchParams(location.search).get("chat");
       if (wanted && wanted !== pickedChat) {
@@ -301,7 +334,7 @@
     // One calendar: Calendar (and Today's "Bookings today") open the Calendar panel
     if (view === "calendar") return openCalendar();
     // Conversations from the menu starts at the list
-    if (view === "chats" && currentView !== "chats") openChatId = null;
+    if (view === "chats" && !onView("chats")) openChatId = null;
     return window.PortalPage && window.PortalPage.go("/portal/?view=" + (view === "admin" ? "manage" : view), { replace: VIEWS.includes(view) });
   };
   document.querySelectorAll(".tabs .tab[data-view]").forEach((tab) => tab.addEventListener("click", () => goView(tab.dataset.view)));
@@ -423,7 +456,7 @@
     if (window.PortalGoogle && window.PortalGoogle.today) window.PortalGoogle.today();
     syncCounts();
   }
-  const onWorkTab = () => running && !$("view-" + currentView).hidden;
+  const onWorkTab = () => running && !$("view-" + (currentView === "inbox" ? "enquiries" : currentView)).hidden;
   $("refresh").addEventListener("click", () => {
     if (onWorkTab()) show(currentView);
     else window.PortalPage && window.PortalPage.refresh();
@@ -641,6 +674,20 @@
       if (e.target.closest("a, button, select, input, label")) return;
       card.classList.toggle("open");
     });
+    // (Inbox's dashboard, 22 Oct 2026: one line each, its state, who and what, how long ago; a tap opens
+    // the whole card in place, like Alerts)
+    const state = q.status === "spam" ? "Spam" : q.do_not_contact_at ? "Don't contact" : { new: "New", open: "Open", replied: "Replied" }[q.status] || "Done";
+    const line = el("div", "ib-line");
+    const agoText = el("span", "al-ago", ago(q.created_at));
+    agoText.dataset.at = q.created_at;
+    const more = el("button", "al-more", "▾");
+    more.type = "button";
+    more.setAttribute("aria-label", "Open this enquiry: " + (q.subject || q.name));
+    more.setAttribute("aria-expanded", "false");
+    more.addEventListener("click", () => more.setAttribute("aria-expanded", String(card.classList.toggle("open"))));
+    line.append(el("span", "ib-state ib-" + (q.status || "done"), state), el("span", "al-title", [q.name, q.subject].filter(Boolean).join(" · ") || "Enquiry"), agoText, more);
+    line.title = (q.subject || "Enquiry") + " · " + q.name;
+    card.append(line);
     const top = el("div", "card-top");
     const title = el("h3", "card-title", q.subject || "Enquiry");
     statePills(title, q);
@@ -848,7 +895,7 @@
   });
 
   // The enquiry list refreshes itself while it's on screen (only what changed is redrawn)
-  setInterval(() => !document.hidden && running && currentView === "enquiries" && !threadId && loadEnquiries(), 20000);
+  setInterval(() => !document.hidden && running && onView("enquiries") && !threadId && loadEnquiries(), 20000);
 
   // ===== Approvals: booking changes waiting for an admin =====
   // Agent (and Portal's staff chat) can only PROPOSE a booking change: a new booking, a move, a
@@ -2691,7 +2738,7 @@
       delete $("thread-head").dataset.sig;
       setMode("reply");
       loadSaved();
-      threadTimer = setInterval(() => !document.hidden && running && currentView === "enquiries" && loadThread(), THREAD_POLL_MS);
+      threadTimer = setInterval(() => !document.hidden && running && onView("enquiries") && loadThread(), THREAD_POLL_MS);
       if (window.portalTop) window.portalTop(); else window.scrollTo(0, 0);
     }
     await loadThread();
@@ -3281,6 +3328,14 @@
           if (c.ticket === "needs-person") title.appendChild(el("span", "pill-open", "Needs a person"));
           if (c.ticket === "done") title.appendChild(el("span", "pill-done", "Done"));
           top.append(title, el("span", "card-meta", when(c.started)));
+          // (Inbox's dashboard: one line each; a tap opens the conversation)
+          const line = el("div", "ib-line");
+          const agoText = el("span", "al-ago", ago(c.last || c.started));
+          agoText.dataset.at = c.last || c.started;
+          const state = c.live === "staff" ? "Live" : c.ticket === "needs-person" ? "Needs a person" : c.ticket === "done" ? "Done" : c.enquiries ? "Enquiry" : "Chat";
+          line.append(el("span", "ib-state ib-" + (c.ticket || (c.enquiries ? "new" : "chat")), state), el("span", "al-title", (c.first_question || "(no question)").slice(0, 120)), agoText, el("span", "ib-msgs", String(c.messages)));
+          line.title = (c.first_question || "") + " · " + c.messages + (c.messages === 1 ? " message" : " messages");
+          card.append(line);
           card.append(top, el("p", "card-foot", [c.messages + (c.messages === 1 ? " message" : " messages"), c.assigned_name ? c.assigned_name + "'s on it" : ""].filter(Boolean).join(" · ")));
           card.appendChild(chatMarks(c.chat_id, c.ticket));
           card.addEventListener("click", (e) => {
@@ -3348,12 +3403,12 @@
     clearTimeout(chatTimer);
     const gap = live && live.mode === "staff" ? 4000 : 10000;
     chatTimer = setTimeout(() => {
-      if (openChatId === chatId && currentView === "chats" && !document.hidden) openChat(chatId, openChatName);
+      if (openChatId === chatId && onView("chats") && !document.hidden) openChat(chatId, openChatName);
       else if (openChatId === chatId) watchChat(chatId, live);
     }, gap);
   }
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && openChatId && currentView === "chats") openChat(openChatId, openChatName);
+    if (!document.hidden && openChatId && onView("chats")) openChat(openChatId, openChatName);
   });
 
   async function chatLive(chatId, action, extra, said) {
@@ -4232,7 +4287,7 @@
       // Keep the list for voice commands ("call Eric")
       lastAlerts = notifications;
       // Is the Alerts tab the one on screen?
-      const looking = currentView === "alerts";
+      const looking = onView("alerts");
       // He's looking at them: they count as seen
       if (looking && notifications.length) markAlertsSeen(notifications[0].id);
       // How many are newer than the last one he saw
@@ -4253,7 +4308,7 @@
       list.querySelectorAll(".card.open .al-more").forEach((b) => b.setAttribute("aria-expanded", "true"));
     } catch (err) {
       // Show the problem (unless he's just been signed out)
-      if (err.message !== "signed out" && currentView === "alerts") emptyState(list, err.message);
+      if (err.message !== "signed out" && onView("alerts")) emptyState(list, err.message);
     }
   }
 
@@ -4337,7 +4392,7 @@
   }
 
   // Changing how times show (in Options) redraws the Alerts straight away
-  window.addEventListener("novaoptionschange", () => currentView === "alerts" && loadAlerts());
+  window.addEventListener("novaoptionschange", () => onView("alerts") && loadAlerts());
 
   // One alert, drawn as a card
   function alertCard(n) {

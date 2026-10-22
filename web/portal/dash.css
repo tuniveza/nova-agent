@@ -84,3 +84,168 @@ html.embed #view-today:not([hidden]):has(> #today-dash) { display: block; }
 .view-group .view-head h2 { display: inline-flex; align-items: center; gap: 10px; }
 .view-group .view-head h2 .pillar-ico { width: 24px; height: 24px; color: var(--g, var(--hi)); }
 .view-group .view-head h2 .pillar-ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ===== Inbox: one dashboard (app.js showInbox, 22 Oct 2026, the user: "id like all of it on one dashboard
+   instead of having to click around"): Enquiries (today's bookings on top), Conversations and Alerts side
+   by side, each its own pane that pages itself (onescreen.js); two columns on a tablet, one on a phone ===== */
+#main:not(.inbox-all) #inbox-today { display: none; }
+#main.inbox-all {
+  display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  gap: 0 12px; align-items: stretch;
+}
+#main.inbox-all > .group-strip { grid-column: 1 / -1; grid-row: 1; }
+#main.inbox-all > #view-enquiries { grid-column: 1; grid-row: 2; }
+#main.inbox-all > #view-chats { grid-column: 2; grid-row: 2; }
+#main.inbox-all > #view-alerts { grid-column: 3; grid-row: 2; }
+/* (one open: its pane takes more of the width) */
+#main.inbox-all:has(> #view-enquiries #enquiry-thread:not([hidden])) { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
+#main.inbox-all:has(> #view-chats #chats-back:not([hidden])) { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(0, 1fr); }
+#main.inbox-all > .view:not([hidden]) {
+  min-width: 0; min-height: 0; padding: 10px 12px 8px; border-radius: 16px;
+  border: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 22%, transparent);
+  background: color-mix(in oklab, var(--hi, #FF5FA8) 4%, transparent);
+}
+#main.inbox-all > .view > .view-head { margin-bottom: 6px; }
+html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 18px; }
+#main.inbox-all > .view > .hint { margin: 0 0 6px; font-size: 12px; }
+
+/* Today's bookings, one line along the top of Enquiries */
+.inbox-today { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; margin: 0 0 8px; font-size: 12.5px; }
+.inbox-today:empty { display: none; }
+.it-label { font-family: var(--f-display); font-weight: 800; color: #fff; white-space: nowrap; }
+.it-none, .it-small { color: var(--muted); white-space: nowrap; }
+.it-booking {
+  display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; height: 26px; padding: 0 10px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  border: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 35%, transparent); background: color-mix(in oklab, var(--hi, #FF5FA8) 10%, transparent);
+  color: var(--bright, #fff); font: 600 12px/24px var(--f-body, inherit);
+}
+.it-booking b { font-family: var(--f-mono); font-weight: 700; }
+.it-booking:is(:hover, :focus-visible) { background: color-mix(in oklab, var(--hi, #FF5FA8) 22%, transparent); outline: none; }
+.it-tools { height: 26px; }
+
+/* (a tablet: Enquiries on the left, Conversations over Alerts on the right) */
+@media (max-width: 1099px) {
+  #main.inbox-all, #main.inbox-all:has(> .view #enquiry-thread:not([hidden])), #main.inbox-all:has(> .view #chats-back:not([hidden])) {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); gap: 10px 10px;
+  }
+  #main.inbox-all > #view-enquiries { grid-column: 1; grid-row: 2 / 4; }
+  #main.inbox-all > #view-chats { grid-column: 2; grid-row: 2; }
+  #main.inbox-all > #view-alerts { grid-column: 2; grid-row: 3; }
+}
+/* (a phone: the three one above the other, Enquiries the tallest; the hints make way) */
+@media (max-width: 640px) {
+  #main.inbox-all, #main.inbox-all:has(> .view #enquiry-thread:not([hidden])), #main.inbox-all:has(> .view #chats-back:not([hidden])) {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px;
+  }
+  #main.inbox-all > #view-enquiries { grid-column: 1; grid-row: 2; }
+  #main.inbox-all > #view-chats { grid-column: 1; grid-row: 3; }
+  #main.inbox-all > #view-alerts { grid-column: 1; grid-row: 4; }
+  #main.inbox-all > .view:not([hidden]) { padding: 6px 8px 4px; }
+  #main.inbox-all > .view > .hint { display: none; }
+}
+
+/* ---- One line each in Enquiries and Conversations, like Alerts: its state, who or what, how long ago;
+   an enquiry opens in place (▾ or a tap), a conversation opens on a tap ---- */
+#enquiry-list, #chat-list { gap: 5px; }
+#enquiry-list > .card, #chat-list > .card, html[data-align] #enquiry-list.list > .card, html[data-align] #chat-list.list > .card { padding: 4px 6px 4px 8px; border-radius: 11px; box-shadow: none; }
+#enquiry-list > .card:not(.open) > :not(.ib-line), #chat-list > .card > :not(.ib-line) { display: none; }
+#enquiry-list > .card > .ib-line, #chat-list > .card > .ib-line { display: flex; }
+#enquiry-list > .card.open, html[data-align] #enquiry-list.list > .card.open { padding: 8px 12px 10px; }
+#enquiry-list > .card.open > .ib-line { margin-bottom: 4px; }
+.ib-line { align-items: center; gap: 8px; min-height: 28px; text-align: left; cursor: pointer; }
+html .ib-line .al-title { flex: 1; min-width: 0; text-align: left !important; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.ib-state {
+  flex: none; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap;
+  font-family: var(--f-mono); font-size: 8.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft);
+}
+.ib-state.ib-new, .ib-state.ib-needs-person { border-color: rgba(var(--hi-rgb), 0.6); background: rgba(var(--hi-rgb), 0.16); color: #fff; }
+.ib-state.ib-open, .ib-state.ib-replied { border-color: rgba(var(--lilac-rgb), 0.5); color: var(--lilac); }
+.ib-state.ib-done, .ib-state.ib-spam, .ib-state.ib-chat { color: var(--muted); }
+.ib-msgs { flex: none; min-width: 20px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); text-align: center; font-family: var(--f-mono); font-size: 9.5px; color: var(--muted); }
+.card.open .ib-line .al-more { transform: rotate(180deg); }
+@media (pointer: coarse) { .ib-line { min-height: 34px; } html .ib-line .al-more { width: 28px; height: 28px; min-width: 0; min-height: 0; } }
+
+/* ---- The Inbox panes, compact: small titles, the page bar in the title row, small filter chips ---- */
+#main.inbox-all > .view > .view-head { min-height: 30px; margin-bottom: 6px; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 8px; }
+/* (room for the page bar at the end of the title's line; the filters go on the line under it) */
+#main.inbox-all > .view > .view-head::after { content: ""; order: 1; flex: 0 0 112px; }
+#main.inbox-all > .view > .view-head > .chips { order: 2; }
+html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { margin: 0 !important; font-size: 17px; line-height: 30px; }
+#main.inbox-all > .view[data-os-paged] > .os-pager { top: 8px; right: 10px; bottom: auto; left: auto; transform: none; padding: 2px; }
+html #main.inbox-all > .view[data-os-paged] > .os-pager button { width: 30px; height: 24px; min-width: 0; min-height: 0; font-size: 15px; }
+#main.inbox-all > .view[data-os-paged] > .os-pager .os-count { min-width: 38px; font-size: 10px; }
+#main.inbox-all .chips .chip { min-height: 26px; height: 26px; padding: 0 9px; font-size: 9.5px; letter-spacing: 0.1em; }
+#main.inbox-all #enq-chips { flex: 0 1 auto; justify-content: flex-start; gap: 3px; padding: 3px; }
+#main.inbox-all .ib-chat-chips { justify-content: flex-start; margin: 0 0 6px; }
+#main.inbox-all .ib-chat-chips .chips { padding: 3px; gap: 3px; }
+#main.inbox-all .inbox-today { justify-content: flex-start; }
+#main.inbox-all #enq-tools { gap: 6px; margin-bottom: 6px; }
+#main.inbox-all #enq-tools input { height: 32px; min-height: 32px; padding: 0 12px; font-size: 13px; }
+#main.inbox-all #enq-tools .btn { height: 32px; min-height: 32px; font-size: 10px; }
+html #main.inbox-all > .view > .hint { text-align: left; }
+html #main.inbox-all #view-alerts .settings-row { justify-content: flex-start; }
+#main.inbox-all .it-tools { min-height: 24px; height: 24px; padding: 0 9px; font-size: 9px; letter-spacing: 0.1em; }
+#main.inbox-all #enquiry-list { grid-template-columns: minmax(0, 1fr); }
+#main.inbox-all #alerts-clear { min-height: 26px; height: 26px; padding: 0 10px; font-size: 9.5px; }
+/* (Alerts' settings, one slim row: this phone's notifications, and the auto-delete switch) */
+#main.inbox-all #view-alerts .settings-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 6px; }
+#main.inbox-all #view-alerts .settings-row > .chip { min-height: 26px; height: 26px; padding: 0 9px; font-size: 9.5px; letter-spacing: 0.1em; }
+#main.inbox-all #view-alerts .auto-delete { display: flex; align-items: center; gap: 6px; margin: 0; padding: 2px 4px 2px 8px; border-radius: 999px; font-size: 12px; }
+#main.inbox-all #view-alerts .auto-delete .switch { gap: 6px; }
+#main.inbox-all #view-alerts .auto-delete select { min-height: 26px; height: 26px; padding: 0 8px; font-size: 12px; }
+#main.inbox-all #alert-list { grid-template-columns: minmax(0, 1fr); }
+.ib-filters { display: none; }
+/* (a phone, or a phone on its side: the filters and settings behind each pane's small button) */
+@media (max-width: 640px), (max-height: 500px) {
+  #main.inbox-all .ib-filters { display: inline-flex; order: 0; min-height: 24px; height: 24px; padding: 0 9px; font-size: 9px; letter-spacing: 0.08em; }
+  #main.inbox-all .ib-filters[aria-expanded="true"] { border-color: rgba(var(--hi-rgb), 0.6); color: #fff; }
+  #main.inbox-all > .view:not(.ib-tools-open) :is(#enq-chips, #enq-tools, #saved-panel, .ib-chat-chips, .settings-row, #alerts-clear) { display: none; }
+  #main.inbox-all > .view > .hint { display: none; }
+  #main.inbox-all > .view > .view-head::after { flex-basis: 100px; }
+}
+/* (a phone on its side: the three side by side, the height is too short to stack them) */
+@media (max-height: 500px) and (min-width: 641px) {
+  #main.inbox-all, #main.inbox-all:has(> .view #enquiry-thread:not([hidden])), #main.inbox-all:has(> .view #chats-back:not([hidden])) {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 0 8px;
+  }
+  #main.inbox-all > #view-enquiries { grid-column: 1; grid-row: 2; }
+  #main.inbox-all > #view-chats { grid-column: 2; grid-row: 2; }
+  #main.inbox-all > #view-alerts { grid-column: 3; grid-row: 2; }
+  #main.inbox-all > .view:not([hidden]) { padding: 4px 6px 2px; }
+}
+@media (max-width: 640px) {
+  #main.inbox-all > .view > .view-head { min-height: 26px; margin-bottom: 4px; }
+  html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 15px; line-height: 26px; }
+  #main.inbox-all > .view[data-os-paged] > .os-pager { top: 5px; right: 6px; }
+  #main.inbox-all .chips .chip { min-height: 24px; height: 24px; padding: 0 7px; font-size: 9px; letter-spacing: 0.06em; }
+}
+/* (an enquiry open in place: its title is in the card, so the line keeps only its state and when) */
+#enquiry-list > .card.open > .ib-line .al-title { visibility: hidden; }
+/* (a phone on its side: everything a size smaller, so the panes keep their rows) */
+@media (max-height: 500px) {
+  #main.inbox-all > .group-strip { margin-bottom: 4px; padding-bottom: 4px; }
+  #main.inbox-all > .group-strip .gs-tab { height: 28px; }
+  #main.inbox-all > .group-strip :is(.gs-act, .gs-more) { height: 26px; }
+  html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 13px; line-height: 24px; }
+  #main.inbox-all > .view > .view-head { min-height: 24px; margin-bottom: 2px; }
+  #main.inbox-all > .view > .view-head::after { flex-basis: 64px; }
+  #main.inbox-all > .view[data-os-paged] > .os-pager { top: 3px; right: 4px; }
+  #main.inbox-all > .view[data-os-paged] > .os-pager .os-count { display: none; }
+  #main.inbox-all .inbox-today { margin-bottom: 4px; }
+}
+/* (a narrow pane, whatever the screen: its title smaller so it clears the page bar, and each row's
+   state and time on a small first line with the words the full width under them) */
+#main.inbox-all > .view:not([hidden]) { container-type: inline-size; }
+@container (max-width: 360px) {
+  html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 14px; }
+}
+@container (max-width: 280px) {
+  html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 11.5px; }
+}
+@container (max-width: 330px) {
+  #main.inbox-all :is(.al-line, .ib-line) { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "kind ago more" "title title more"; column-gap: 8px; row-gap: 1px; align-items: center; }
+  #main.inbox-all :is(.al-line .alert-kind, .ib-line .ib-state) { grid-area: kind; justify-self: start; }
+  #main.inbox-all :is(.al-line, .ib-line) .al-ago { grid-area: ago; justify-self: start; }
+  #main.inbox-all :is(.al-line, .ib-line) :is(.al-more, .ib-msgs) { grid-area: more; }
+  #main.inbox-all :is(.al-line, .ib-line) .al-title { grid-area: title; }
+}

@@ -315,5 +315,37 @@
     grid.replaceChildren(...(items.length ? items.map((it) => tile({ ...it, name: it.at === "calendar" ? "Bookings" : it.name }, P)) : [el("p", "dash-empty", "Everything in " + g.name + " is along the top.")]));
   }
 
-  window.NovaDash = { today, group };
+  // Inbox's dashboard (app.js showInbox): today's bookings along the top of Enquiries, each opening
+  // Booking tools (the user, 22 Oct 2026: "today can be in enquiries")
+  function inboxToday() {
+    const box = $("inbox-today");
+    if (!box) return;
+    cache.delete("calendar");
+    cache.delete("conversations");
+    const tools = () => window.PortalPage && window.PortalPage.go("/portal/?view=calendar", { replace: true });
+    TILES.today()
+      .then((t) => {
+        const parts = [el("span", "it-label", "Today")];
+        if (!t.rows.length) parts.push(el("span", "it-none", t.empty));
+        for (const [name, time] of t.rows.slice(0, 3)) {
+          const b = el("button", "it-booking");
+          b.type = "button";
+          b.title = "Open Booking tools";
+          b.append(el("b", "", time), el("span", "", name));
+          b.addEventListener("click", tools);
+          parts.push(b);
+        }
+        if (t.rows.length > 3) parts.push(el("span", "it-none", `+${t.rows.length - 3} more`));
+        const talked = (t.small.split(" · ")[1] || "").trim();
+        if (talked) parts.push(el("span", "it-small", talked));
+        const open = el("button", "chip it-tools", "Booking tools");
+        open.type = "button";
+        open.addEventListener("click", tools);
+        parts.push(open);
+        box.replaceChildren(...parts);
+      })
+      .catch((err) => box.replaceChildren(el("span", "it-label", "Today"), el("span", "it-none", err.message === "signed out" ? "" : "Couldn't load today's bookings: " + err.message)));
+  }
+
+  window.NovaDash = { today, group, inboxToday };
 })();

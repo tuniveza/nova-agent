@@ -56,13 +56,15 @@
   // ---- The pillars and their buttons (8 or so each; admin: only for admins) ----
   // glyph: a small mark for each; badge: the tab's count shown on it; at: the tab it lights up for
   const GROUPS = [
-    { name: "Inbox", glyph: "✉", badges: ["new-badge", "alert-badge"], items: [
-      { name: "Today", glyph: "⌂", at: "today", run: tab("today") },
-      { name: "Enquiries", glyph: "✉", badge: "new-badge", at: "enquiries", run: tab("enquiries") },
-      { name: "Conversations", glyph: "❝", at: "chats", run: tab("chats") },
-      { name: "Alerts", glyph: "◔", badge: "alert-badge", at: "alerts", run: tab("alerts") },
-      { name: "Saved replies", glyph: "❏", run: press("enquiries", "#saved-open") },
+    // (Inbox is one dashboard, 22 Oct 2026, the user: "no need for overview… today can be in enquiries…
+    // all of it on one dashboard instead of having to click around": Enquiries with today's bookings,
+    // Conversations and Alerts side by side, app.js showInbox; Today itself is still Portal's start page)
+    { name: "Inbox", glyph: "✉", dash: "inbox", badges: ["new-badge", "alert-badge"], items: [
+      { name: "Enquiries", glyph: "✉", badge: "new-badge", at: "enquiries", inDash: true, run: tab("enquiries") },
+      { name: "Conversations", glyph: "❝", at: "chats", inDash: true, run: tab("chats") },
+      { name: "Alerts", glyph: "◔", badge: "alert-badge", at: "alerts", inDash: true, run: tab("alerts") },
       { name: "Website bot", glyph: "✦", at: "bot", run: tab("bot") },
+      { name: "Saved replies", glyph: "❏", run: press("enquiries", "#saved-open") },
       { name: "Notifications", glyph: "◉", run: press("alerts", "#alerts-notify") },
     ] },
     { name: "Bookings", glyph: "◷", badges: ["approvals-badge"], items: [
@@ -238,11 +240,16 @@
   // Overview, dash.js), and a strip of its tabs runs along the top of the backdrop: Overview, each of its
   // sections, then its other items as buttons. The strip stays while you're in any of the group's sections.
   const slug = (name) => String(name).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const dashOf = () => { const p = new URLSearchParams(location.search); return p.get("view") === "group" ? p.get("g") || "" : ""; };
-  const dashUrl = (g) => "/portal/?view=group&g=" + slug(g.name);
+  // (a group with a dashboard of its own, like Inbox's, opens that instead of an Overview)
+  const dashOf = () => {
+    const p = new URLSearchParams(location.search);
+    const own = GROUPS.find((g) => g.dash && (g.dash === p.get("view") || g.items.some((i) => i.inDash && i.at === p.get("view"))));
+    return own ? slug(own.name) : p.get("view") === "group" ? p.get("g") || "" : "";
+  };
+  const dashUrl = (g) => (g.dash ? "/portal/?view=" + g.dash : "/portal/?view=group&g=" + slug(g.name));
   const groupsNow = () => GROUPS.filter((g) => !g.admin || admin()).filter((g) => g.items.some((i) => !i.admin || admin()));
   const itemsOf = (g) => g.items.filter((i) => !i.admin || admin());
-  const homeOf = (where) => groupsNow().find((g) => itemsOf(g).some((i) => i.at === where));
+  const homeOf = (where) => groupsNow().find((g) => g.dash === where || itemsOf(g).some((i) => i.at === where));
 
   let row = null; // the pillars, where the tab panel was
   let openName = null; // the pillar that's open (risen)
@@ -497,10 +504,12 @@
     const items = itemsOf(g);
     const onDash = dashOf() === slug(g.name);
     const tabs = el("div", "gs-tabs");
-    const over = stripButton("gs-tab" + (onDash ? " here" : ""), "Overview", g.name, 0, () => go(dashUrl(g))());
+    // (its dashboard first: the Overview, or for a group with its own, like Inbox, its name, lit while
+    // it's showing, so the way back from its other sections is one tap)
+    const over = stripButton("gs-tab" + (onDash ? " here" : ""), g.dash ? g.name : "Overview", g.name, 0, () => go(dashUrl(g))());
     if (onDash) over.setAttribute("aria-current", "page");
     tabs.append(over);
-    for (const it of items.filter((i) => i.at)) {
+    for (const it of items.filter((i) => i.at && !i.inDash)) {
       const here = !onDash && it.at === where;
       const b = stripButton("gs-tab" + (here ? " here" : ""), it.name, it.name, count(it.badge), () => it.run());
       if (here) b.setAttribute("aria-current", "page");

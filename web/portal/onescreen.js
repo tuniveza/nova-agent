@@ -255,10 +255,12 @@
     const bar = box.querySelector(":scope > .os-pager");
     // (on a short screen, a phone on its side, the bar stands at the right instead: the height is the
     // pages')
-    const side = innerHeight <= 500 && box.clientWidth >= 420;
+    // (a box whose bar is in its title row, like Inbox's panes, keeps no room for it under the page)
+    const inHead = box.matches("#main.inbox-all > .view");
+    const side = !inHead && innerHeight <= 500 && box.clientWidth >= 420;
     bar.classList.toggle("os-side", side);
     if (side) setStyle(box, "padding-right", `${parseFloat(getComputedStyle(box).paddingRight) + bar.offsetWidth + 6}px`);
-    else setStyle(box, "padding-bottom", `${parseFloat(getComputedStyle(box).paddingBottom) + bar.offsetHeight + 6}px`);
+    else if (!inHead) setStyle(box, "padding-bottom", `${parseFloat(getComputedStyle(box).paddingBottom) + bar.offsetHeight + 6}px`);
     const cs = getComputedStyle(box);
     // (the title row stays on every page, unless it would take more than a fifth of a small screen:
     // then it's on the first page only, and the pages have the room)

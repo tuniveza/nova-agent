@@ -85,6 +85,18 @@ each of its sections, then its other items as buttons (on a phone behind **More*
 you're in any of the group's sections, with that section's tab lit (`pillars.js` drawStrip,
 `/portal/?view=group&g=<group>`). The panel that used to slide out of a tab is no longer used.
 
+### Inbox: one dashboard (22 October 2026)
+
+Inbox has no Overview and no tabs. A tap on it opens one dashboard (`/portal/?view=inbox`, `app.js`
+showInbox) with **Enquiries**, **Conversations** and **Alerts** side by side. On a tablet Enquiries is on
+the left with the other two stacked on the right; on a phone the three are stacked. Today's bookings run
+along the top of Enquiries (`dash.js` inboxToday), and each one opens Booking tools. Every row is one line
+(its state, who or what, how long ago). An enquiry opens in place, and a conversation opens in its pane,
+which widens. Each pane has its own page bar in its title row. On a phone, each pane's filters and
+settings sit behind one small button (Search, Filter, Settings). The old addresses (`?view=enquiries`,
+`chats`, `alerts`, `&enquiry=`, `&chat=`) all open the dashboard. Website bot, Saved replies and
+Notifications are along the top. Today itself is still Portal's start page.
+
 ## The tabs
 
 Every section shows at once, so nothing hides behind a click. On a computer or tablet they sit at the top in **lanes**:
