@@ -47,6 +47,25 @@
     }
     return raf(cb);
   };
+  // A panel kept in the background also says it's hidden (22 Oct 2026, battery): document.hidden and
+  // visibilityState follow whether it's on show, and "visibilitychange" fires when that changes, so
+  // every panel's "only when visible" checks (Portal's and Notes' refreshes every 15–60 s, Calendar's,
+  // Quests'…) rest while another panel is in front, as they already do in a hidden browser tab
+  try {
+    const proto = Document.prototype;
+    const hid = Object.getOwnPropertyDescriptor(proto, "hidden");
+    const vis = Object.getOwnPropertyDescriptor(proto, "visibilityState");
+    if (hid && hid.get && vis && vis.get) {
+      Object.defineProperty(document, "hidden", { configurable: true, get() { return hid.get.call(this) || away(); } });
+      Object.defineProperty(document, "visibilityState", { configurable: true, get() { const v = vis.get.call(this); return v === "visible" && away() ? "hidden" : v; } });
+      let was = document.hidden;
+      setInterval(() => {
+        checkedAt = -1e9;
+        const now = document.hidden;
+        if (now !== was) { was = now; document.dispatchEvent(new Event("visibilitychange")); }
+      }, 1000);
+    }
+  } catch (e) {}
 })();
 
 (function () {

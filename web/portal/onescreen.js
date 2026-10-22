@@ -443,8 +443,11 @@
   let timer = 0;
   let lastRun = 0;
   let runs = 0;
+  let skipped = false;
   function run(opts = {}) {
     timer = 0;
+    // (out of sight, Portal in the background behind another panel: cut again once it's back)
+    if (document.hidden) { skipped = true; return; }
     runs++;
     busy = true;
     try {
@@ -627,6 +630,7 @@
     if (main) ro.observe(main);
     soon(200);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => soon(60));
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && skipped) { skipped = false; soon(30); } });
   }
 
   window.NovaOneScreen = {

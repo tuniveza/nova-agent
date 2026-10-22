@@ -341,6 +341,10 @@
     /* The Manual's floating button would sit on the panel's own tab bar */
     body:has(.main.viewing) nova-manual[floating] { display: none; }
   }
+  /* (any screen, a panel open: its box is solid, so nothing is blurred live behind it, and the clouds
+     rest; 22 Oct 2026, battery) */
+  .main.viewing > .viewer > .viewer-body { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  body:has(.main.viewing) .nebula { animation-play-state: paused; }
   /* The panels, along the bottom in one row: the panels together, then services and admin */
   .suite-groups { display: grid; gap: 18px; }
   .suite-group h4 { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
@@ -2518,6 +2522,9 @@
     try {
       audio = audio || new (window.AudioContext || window.webkitAudioContext)();
       if (audio.state === 'suspended') audio.resume();
+      // (asleep again 10 s after its last chime: a running sound maker keeps the audio awake in silence)
+      clearTimeout(chime.sleep);
+      chime.sleep = setTimeout(() => audio && audio.state === 'running' && audio.suspend().catch(() => {}), 10000);
       const t0 = audio.currentTime + 0.02;
       (PINGS[kind] || PINGS.starting).forEach((f, i) => {
         const t = t0 + i * 0.11;
@@ -2532,7 +2539,7 @@
     } catch (e) {}
   }
   // Browsers only allow sound after a click: wake it on the first one
-  document.addEventListener('pointerdown', () => { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) {} }, { once: true });
+  document.addEventListener('pointerdown', () => { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); chime.sleep = setTimeout(() => audio.state === 'running' && audio.suspend().catch(() => {}), 10000); } catch (e) {} }, { once: true });
   function toast(n) {
     const el = document.createElement('div');
     el.className = 'toast';

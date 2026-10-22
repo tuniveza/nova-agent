@@ -368,8 +368,12 @@
     return left;
   }
   let waits = 0, popping = false;
+  let skipped = false;
   function run() {
     timer = 0;
+    // (out of sight, a hidden tab or a panel in the background: nothing to look at until it's back;
+    // 22 Oct 2026, battery)
+    if (document.hidden) { skipped = true; return; }
     if (held) return later(400);
     // (only just after a window or pop-up opened: asking the page for its animations costs time)
     const left = popping ? settling() : 0;
@@ -416,6 +420,7 @@
     later(60);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fresh = true; later(60); });
     addEventListener("load", () => later(300), { once: true });
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && skipped) { skipped = false; fresh = true; later(60); } });
   }
 
   window.NovaRules = {

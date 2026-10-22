@@ -161,7 +161,7 @@
 (() => {
   "use strict";
   const KEY = "nova-options";
-  const defaults = { align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "today", menu: "top" };
+  const defaults = { align: "center", size: "normal", times: "both", motion: true, stars: true, pings: true, volume: 40, startTab: "today", menu: "top", saver: "auto" };
   const root = document.documentElement;
 
   // The saved options, with anything missing filled in. Alignment is the same switch as Nova Agent's

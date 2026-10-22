@@ -864,16 +864,41 @@
     return el("span", "pill active", "Active");
   }
 
+  // The planet on the stage moves for its first 10 s, then holds still (22 Oct 2026, battery: the user
+  // chose "move 10 s, then still"); pointing at it or tapping it wakes it for another 10 s. With less
+  // motion asked for, or the battery saver on, it's still from the start.
+  const saving = () => still() || root.classList.contains("nova-saver");
+  let planetRest = 0;
+  function restPlanetSoon(img, person, wait = 10000) {
+    clearTimeout(planetRest);
+    planetRest = setTimeout(async () => {
+      const moving = planetUrl(person, 512, true);
+      const quiet = planetUrl(person, 512, false);
+      if (img.dataset.src !== moving) return;
+      await preload(quiet);
+      if (img.dataset.src === moving && img.getAttribute("src") === moving) img.src = quiet;
+    }, wait);
+  }
+  function wakePlanet() {
+    const img = $("planet");
+    const person = img && img._person;
+    if (!person || saving() || img.dataset.src !== planetUrl(person, 512, true)) return;
+    if (img.getAttribute("src") !== img.dataset.src) img.src = img.dataset.src;
+    restPlanetSoon(img, person);
+  }
+  if ($("planet")) ["pointerenter", "click"].forEach((type) => $("planet").addEventListener(type, wakePlanet));
+
   // Put a planet on the stage (and find out what it's like for the caption)
   async function setPlanet(person, bloom) {
     const img = $("planet");
     const url = planetUrl(person, 512, true);
     img.alt = `${possessive(person.display_name)} planet`;
+    img._person = person;
     if (img.dataset.src === url && !bloom) return;
     img.dataset.src = url;
     loadCaption(person);
-    if (still()) {
-      img.src = url;
+    if (saving()) {
+      img.src = planetUrl(person, 512, false);
       return;
     }
     img.classList.remove("going", "coming");
@@ -883,6 +908,7 @@
     img.src = url;
     img.classList.remove("loading");
     replay(img, "coming");
+    restPlanetSoon(img, person);
   }
 
   // The caption: what the planet generator says this world is like (it's the picture's <title>)
@@ -938,6 +964,8 @@
       await Promise.all([collapsed, preload(url)]);
       img.dataset.src = url;
       img.src = url;
+      img._person = state.me;
+      restPlanetSoon(img, state.me);
       img.classList.remove("going");
       if (!still()) replay(img, "coming");
       sfx("done");

@@ -289,3 +289,63 @@
     palette: (id) => paletteOf(id),
   };
 })();
+
+// Battery saver (22 Oct 2026, the user chose "automatic, with a switch"): html.nova-saver in every panel
+// when it's on. On by itself when the battery is low and not charging, with data saver on, or when the
+// device asks for less motion; Portal → Options → Battery saver makes it always on or always off
+// ("nova-options".saver: auto, on or off). While it's on: the star skies hold still (their backdrop.js),
+// planets hold still (Portal's planet), nothing is blurred live behind glass, and anything that animates
+// forever (a shimmer, a breathing glow, drifting clouds) rests where it is. One-off animations still run.
+(function () {
+  "use strict";
+  if (window.NovaSaver) return;
+  const root = document.documentElement;
+  let battery = null;
+  const choice = () => {
+    try { return JSON.parse(localStorage.getItem("nova-options") || "{}").saver || "auto"; } catch (e) { return "auto"; }
+  };
+  const lowBattery = () => !!battery && !battery.charging && battery.level <= 0.2;
+  const saveData = () => !!(navigator.connection && navigator.connection.saveData);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+  const wanted = () => { const c = choice(); return c === "on" || (c === "auto" && (lowBattery() || saveData() || reduce.matches)); };
+  let style = null;
+  let resting = 0;
+  // (what animates forever rests: CSS animations with no end, found again now and then for new ones)
+  const rest = () => {
+    if (!document.getAnimations) return;
+    for (const a of document.getAnimations()) {
+      try { if (a.effect && a.effect.getTiming().iterations === Infinity && a.playState === "running") { a.pause(); a.__novaRested = true; } } catch (e) {}
+    }
+  };
+  const wake = () => {
+    if (!document.getAnimations) return;
+    for (const a of document.getAnimations()) if (a.__novaRested) { a.__novaRested = false; try { a.play(); } catch (e) {} }
+  };
+  function apply() {
+    const on = wanted();
+    if (on === root.classList.contains("nova-saver")) return;
+    root.classList.toggle("nova-saver", on);
+    if (on) {
+      if (!style) {
+        style = document.createElement("style");
+        style.textContent = "html.nova-saver *, html.nova-saver *::before, html.nova-saver *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }";
+        document.head.appendChild(style);
+      }
+      rest();
+      resting = setInterval(rest, 4000);
+    } else {
+      clearInterval(resting);
+      wake();
+    }
+    window.dispatchEvent(new CustomEvent("novasaverchange", { detail: { on } }));
+  }
+  if (navigator.getBattery) navigator.getBattery().then((b) => { battery = b; b.addEventListener("levelchange", apply); b.addEventListener("chargingchange", apply); apply(); }).catch(() => {});
+  if (navigator.connection && navigator.connection.addEventListener) navigator.connection.addEventListener("change", apply);
+  reduce.addEventListener("change", apply);
+  addEventListener("storage", (e) => e.key === "nova-options" && apply());
+  addEventListener("novaoptionschange", apply);
+  if (document.head) apply();
+  else document.addEventListener("DOMContentLoaded", apply, { once: true });
+  addEventListener("load", () => root.classList.contains("nova-saver") && rest());
+  window.NovaSaver = { get on() { return root.classList.contains("nova-saver"); }, apply };
+})();

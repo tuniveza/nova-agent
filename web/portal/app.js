@@ -4669,6 +4669,10 @@
       if (!sound) sound = new (window.AudioContext || window.webkitAudioContext)();
       // Wake it if the phone put it to sleep
       if (sound.state === "suspended") sound.resume();
+      // (and back to sleep 10 s after: a running sound maker keeps the phone's audio awake in silence;
+      // 22 Oct 2026, battery)
+      clearTimeout(wakeSound.sleep);
+      wakeSound.sleep = setTimeout(() => sound && sound.state === "running" && sound.suspend().catch(() => {}), 10000);
     } catch (err) {}
   }
   // Listen for that first tap (and later ones, in case the phone sends it back to sleep)
@@ -4692,8 +4696,13 @@
   // Play a ping: soft bell-like notes, each with a faint shimmer an octave up (quiet and unhurried,
   // so an alert arriving is noticed without a jolt)
   function ping(kind) {
-    // Wake the sound maker if it's allowed
+    // Wake the sound maker if it's allowed (asleep: once it's awake, then the ping)
     wakeSound();
+    if (sound && sound.state === "suspended" && !ping.waking) {
+      ping.waking = true;
+      sound.resume().catch(() => {}).finally(() => { ping.waking = false; ping(kind); });
+      return;
+    }
     // No sound on this phone: just buzz (where phones allow it)
     if (!sound || sound.state !== "running") return navigator.vibrate && navigator.vibrate([200, 100, 200]);
     // The notes to play

@@ -370,7 +370,8 @@
     });
     return btn;
   }
-  setInterval(findPlanet, 1500);
+  // (these checks rest while Portal is out of sight: a hidden tab, or behind another panel; 22 Oct 2026)
+  setInterval(() => !document.hidden && findPlanet(), 1500);
   setTimeout(findPlanet, 300);
 
   // A panel of their own, matching Nova Agent's top panel (20 Oct 2026, the user: "seperate the nova tabs
@@ -390,7 +391,7 @@
   }
   let joining = 0;
   const join = () => { if (!joining) joining = requestAnimationFrame(() => { joining = 0; joinTop(); }); };
-  setInterval(join, 1500);
+  setInterval(() => !document.hidden && join(), 1500);
   addEventListener("resize", join);
 
   function drawCompact(groups, where) {
@@ -571,7 +572,7 @@
       place();
       if (sig() !== drawnSig) draw();
     };
-    setInterval(refresh, 1000);
+    setInterval(() => !document.hidden && refresh(), 1000);
     addEventListener("popstate", () => setTimeout(refresh, 200));
     document.addEventListener("click", (e) => {
       if (!row.contains(e.target)) setTimeout(refresh, 300);

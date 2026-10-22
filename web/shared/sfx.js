@@ -103,6 +103,10 @@
       desk();
     }
     if (ctx.state === "suspended") ctx.resume();
+    // (asleep 10 s after the last sound, its echoes long gone: a running sound maker keeps the phone's
+    // audio awake even in silence; the next sound wakes it, 22 Oct 2026)
+    clearTimeout(ready.sleep);
+    if (typeof ctx.suspend === "function") ready.sleep = setTimeout(() => ctx && ctx.state === "running" && ctx.suspend().catch(() => {}), 10000);
     return ctx;
   }
   // The mixing desk on the current sound maker (the live one, or an offline one for checks)

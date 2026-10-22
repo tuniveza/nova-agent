@@ -11,7 +11,7 @@
   let W = 0, H = 0, stars = [], pal = null, shooter = null, nextShot = 0, running = false;
 
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     W = window.innerWidth;
     H = window.innerHeight;
     canvas.width = Math.round(W * dpr);
@@ -30,7 +30,8 @@
     if (still.matches) draw(0);
   }
 
-  function draw(t) {
+  function draw(t, dt = 16.7) {
+    const k = Math.min(4, dt / 16.7); // (the shooting star moves by time, not by frames)
     ctx.clearRect(0, 0, W, H);
     for (const s of stars) {
       const tw = still.matches ? 1 : 0.6 + 0.4 * Math.sin(s.tw + (t / 1000) * s.sp);
@@ -64,9 +65,9 @@
       ctx.moveTo(s.x, s.y);
       ctx.lineTo(s.x - s.vx * tail, s.y - s.vy * tail);
       ctx.stroke();
-      s.x += s.vx;
-      s.y += s.vy;
-      s.life -= 0.012;
+      s.x += s.vx * k;
+      s.y += s.vy * k;
+      s.life -= 0.012 * k;
       if (s.life <= 0 || s.x < -200 || s.x > W + 200 || s.y > H + 200) {
         shooter = null;
         nextShot = t + 8000 + Math.random() * 12000;
@@ -74,8 +75,18 @@
     }
   }
 
+  // Light on the battery (22 Oct 2026): about 20 frames a second, plenty for a twinkle, and none at all
+  // while it can't be seen (the tab hidden, a panel open over it in Nova Agent, the battery saver on);
+  // it looks for its moment to start again once a second
+  let last = 0, napping = 0;
+  const quiet = () => document.hidden || document.documentElement.classList.contains('nova-saver') || !!document.querySelector('.main.viewing') || (typeof canvas.checkVisibility === 'function' && !canvas.checkVisibility());
   function loop(t) {
-    draw(t);
+    if (quiet()) {
+      running = false;
+      if (!napping) napping = setInterval(() => { if (!quiet()) { clearInterval(napping); napping = 0; start(); } }, 1000);
+      return;
+    }
+    if (t - last >= 48) { draw(t, Math.min(200, t - last)); last = t; }
     if (!still.matches) requestAnimationFrame(loop);
     else running = false;
   }
