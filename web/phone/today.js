@@ -34,6 +34,8 @@
         <a class="sum" href="#calendar"><b>${cal ? day.length : "–"}</b><span>On today</span></a>
         <a class="sum${over.count ? " bad" : ""}" href="#money"><b>${cash ? (over.count ? money(over.pence) : "£0") : "–"}</b><span>Overdue</span></a>
       </div>`);
+      // Portal's parts, one tap each (as on Nova Desk's Portal)
+      parts.push(`<div class="chips portal-parts">${[["inbox", "Inbox", newOnes.length], ["inbox/approvals", "Approvals"], ["clients", "Clients"], ["outreach", "Campaigns"], ["outreach/social", "Social"], ["outreach/funnel", "Funnel"], ["inbox/alerts", "Alerts", notes.length], ["you", "You"]].map(([to, name, n]) => `<a class="chip" href="#${to}">${name}${n ? ` <span class="n">${n}</span>` : ""}</a>`).join("")}</div>`);
       if (cal) {
         parts.push(`<h3 class="h">Today's calendar</h3>${day.length ? list(day.map(N.cal.row)) : empty({ icon: "calendar", title: "Nothing on today", action: `<a class="btn" href="#calendar/new/${today()}">${icon("plus")} Add a note card</a>` })}`);
       }

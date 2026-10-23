@@ -118,7 +118,7 @@
   let stream = null;
   addEventListener("hashchange", () => { if (stream && !location.hash.startsWith("#visualizer")) { stream.close(); stream = null; } });
   N.section({
-    id: "visualizer", name: "Visualizer", tile: "visualizer",
+    id: "visualizer", name: "Nova", tile: "visualizer",
     async draw(box, path, ui) {
       let tasks;
       try { tasks = await api("/tasks"); } catch (err) { if (adminsOnly(err)) return forAdmins(box); if (err.status === 503 || err.status === 502) return pcOff(box, "The Visualizer"); throw err; }

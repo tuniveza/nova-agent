@@ -38,6 +38,8 @@ const PLACES: [string, string][] = ([
   ["Agent", "/agent/"], ["Portal", "/portal/?view=inbox"], ["Today", "/portal/?view=today"], ["Calendar", "/calendar/"], ["Notes", "/notes/"],
   ["Board", "/board/"], ["Index", "/app/memory/"], ["Quests", "/quests/"], ["Fixer", "/fixer/"], ["Computer", "/computer/"],
   ["Observatory", "/observatory/"], ["Console", "/console/"], ["Invoicer", "/invoicer/"],
+  // Nova Phone (/phone/, the mobile app): its busiest screens
+  ["Phone Today", "/phone/#today"], ["Phone Inbox", "/phone/#inbox"], ["Phone Calendar", "/phone/#calendar"], ["Phone Money", "/phone/#money"], ["Phone More", "/phone/#more"],
 ] as [string, string][]).filter((p) => !pickPlaces || pickPlaces.includes(p[0]));
 
 const web = join(process.cwd(), "web");
@@ -190,7 +192,7 @@ try {
       const ctx = await browser.newContext({ ...d.opts, serviceWorkers: "block" } as any);
       await ctx.addCookies([{ name: s.cookie || "nova_session", value: s.token!, url: base }]);
       await ctx.addInitScript({ content: "window.__name = (f) => f;" + WATCH });
-      if (local) for (const dir of ["shared", "portal", "agent", "calendar", "notes", "board", "index", "quests", "fixer", "computer", "observatory", "console", "invoicer"]) await ctx.route(`${base}/${dir}/**`, serve);
+      if (local) for (const dir of ["shared", "portal", "agent", "calendar", "notes", "board", "index", "quests", "fixer", "computer", "observatory", "console", "invoicer", "phone"]) await ctx.route(`${base}/${dir}/**`, serve);
       for (const p of PLACES) {
         const row = await measure(ctx, d, p);
         if (p[0] !== "Agent") row.switchMs = await switchTo(ctx, d, p[0], p[1]);

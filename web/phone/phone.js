@@ -38,27 +38,53 @@
 
   // ---- Screens, and the bar of five sections ----
   const sections = new Map();
-  // The bar: Nova Desk's own tiles (the user: "the nova tiles should actually be like it was on nova desk"):
-  // [screen, name, tile]; Portal is Today with the Inbox inside it (its count on the tile)
-  const TABS = [["today", "Portal", "portal"], ["calendar", "Calendar", "calendar"], ["agent", "Agent", "chat"], ["money", "Invoicer", "invoicer"], ["quests", "Quests", "quests"], ["more", "More", ""]];
+  // The Nova tiles (the user: "the nova tiles should actually be like it was on nova desk"): Nova Desk's bar on
+  // a phone, every place a tile in its own colours with its name inside it. Invoicer tall down the left, Nova
+  // (Nova Desk's Visualizer, Nova's browser helper) tall down the right; everything else, and the look, in More
+  // (the grid button at the top left of every main screen, as Nova Desk keeps its settings in its top bar); Apps along the top row; Plans, Tools and Helpers
+  // below, each group set apart by a fine line. [address, name, tile drawing]
+  const SIDE_L = ["money", "Invoicer", "invoicer"];
+  const SIDE_R = ["visualizer", "Nova", "visualizer"];
+  const ROWS = [
+    [["today", "Portal", "portal"], ["agent", "Agent", "chat"], ["calendar", "Calendar", "calendar"], ["notes", "Notes", "notes"], ["board", "Board", "board"], ["index", "Index", "index"]],
+    [["quests", "Quests", "quests"], ["agent/missions", "Missions", "missions"], "|", ["fixer", "Fixer", "fixer"], ["computer", "Computer", "computer"], "|", ["observatory", "Observatory", "observatory"], ["console", "Console", "console"], ["help", "Manual", "manual"]],
+  ];
   const badges = {};
   function section(def) {
     sections.set(def.id, def);
-    drawTabs();
+    if (!tabs.firstChild) drawTiles();
     if (current().id === def.id) show();
   }
-  function drawTabs() {
-    const tile = (p) => (p && window.NovaTile ? window.NovaTile(p) : `<span class="pico more-tile" aria-hidden="true">${icon("more")}</span>`);
-    tabs.innerHTML = TABS.filter(([id]) => sections.has(id)).map(([id, name, p]) => {
-      const n = id === "today" ? badges.inbox : badges[id];
-      return `<a class="tab" href="#${id}" data-id="${id}">${tile(p)}<span>${esc(name)}</span>${n ? `<b class="tab-badge">${n > 99 ? "99+" : n}</b>` : ""}</a>`;
-    }).join("");
-    mark();
+  function tileHtml([to, name, p], tall) {
+    const art = p && window.NovaTile ? window.NovaTile(p) : `<span class="pico nova-pico" aria-hidden="true"><img src="${window.NovaMark || "/agent/icon.svg"}" alt=""></span>`;
+    const n = to === "today" ? badges.inbox : badges[to];
+    return `<a class="nt${tall ? " tall" : ""}" href="#${to}" data-to="${to}" aria-label="${esc(name)}">${art}<span class="nt-name" aria-hidden="true">${esc(name)}</span>${SHORT[name] ? `<span class="nt-short" aria-hidden="true">${SHORT[name]}</span>` : ""}${n ? `<b class="tab-badge">${n > 99 ? "99+" : n}</b>` : ""}</a>`;
   }
+  function drawTiles() {
+    tabs.innerHTML = `${tileHtml(SIDE_L, true)}<div class="nt-rows">${ROWS.map((r) => `<div class="nt-row">${r.map((t) => (t === "|" ? '<i class="nt-sep" aria-hidden="true"></i>' : tileHtml(t))).join("")}</div>`).join("")}</div>${tileHtml(SIDE_R, true)}`;
+    mark();
+    fitTiles();
+  }
+  // A row too tight for its names, step by step, never cut: the names smaller; then the short names Nova Desk
+  // shows on a phone (Comp, Obs, Cons: whole words, not chopped); then only read out (the drawings stay)
+  const SHORT = { Computer: "Comp", Observatory: "Obs", Console: "Cons", Missions: "Miss" };
+  function fitTiles() {
+    for (const row of tabs.querySelectorAll(".nt-row")) {
+      row.classList.remove("tight", "short", "tiny", "names-off");
+      // (each tile is at least as wide as its name, the rest of the row shared out: a row is too tight when its
+      // tiles together are wider than it)
+      const over = () => row.scrollWidth > row.clientWidth + 1;
+      for (const step of ["tight", "short", "tiny", "names-off"]) { if (!over()) break; row.classList.add(step); }
+    }
+  }
+  addEventListener("resize", () => requestAnimationFrame(fitTiles));
+  document.fonts?.ready.then(fitTiles);
+  // (and again once the real font is in: measured with the stand-in font, the names looked too wide)
+  document.fonts?.addEventListener?.("loadingdone", () => requestAnimationFrame(fitTiles));
   function badge(id, n) {
     if ((badges[id] || 0) === (n || 0)) return;
     badges[id] = n || 0;
-    drawTabs();
+    drawTiles();
   }
   // Where we are: #calendar, #calendar/card/abc (the screen and what's after it)
   function current() {
@@ -66,11 +92,13 @@
     const home = sections.has("today") ? "today" : sections.keys().next().value;
     return sections.has(id) ? { id, rest } : { id: home, rest: [] };
   }
+  // The tile that's lit: the place you're in (Portal's parts light Portal; anything else lights Nova)
+  const PORTAL = ["today", "inbox", "clients", "outreach", "you", "crew", "google", "tests"];
+  const OWN = ["money", "agent", "calendar", "notes", "board", "index", "quests", "fixer", "computer", "observatory", "console", "help", "visualizer"];
   function mark() {
-    const s = sections.get(current().id);
-    // (a screen on the bar lights its tile; Inbox lights Portal's; any other place, More's)
-    const tab = !s ? "" : TABS.some(([id]) => id === s.id) ? s.id : s.under || "more";
-    for (const a of tabs.querySelectorAll(".tab")) (a.dataset.id === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+    const { id, rest } = current();
+    const to = PORTAL.includes(id) ? "today" : id === "agent" && /^missions?$/.test(rest[0] || "") ? "agent/missions" : OWN.includes(id) ? id : "";
+    for (const a of tabs.querySelectorAll(".nt")) (a.dataset.to === to ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   }
 
   let drawn = "", drawing = 0;
@@ -111,7 +139,8 @@
   function head({ title: t, back, action, tile }) {
     title.innerHTML = `${tile && window.NovaTile ? window.NovaTile(tile) : ""}${esc(t)}`;
     document.title = t === "Nova Phone" ? t : `${t} · Nova Phone`;
-    left.innerHTML = back ? `<a class="icon-btn" href="${esc(back)}" aria-label="Back">${icon("back")}</a>` : "";
+    // (Back on a screen inside another; on a main screen, More: every place and the look)
+    left.innerHTML = back ? `<a class="icon-btn" href="${esc(back)}" aria-label="Back">${icon("back")}</a>` : `<a class="icon-btn${current().id === "more" ? " lit" : ""}" href="#more" aria-label="More: every place, and the look">${icon("more")}</a>`;
     right.innerHTML = action ? (action.href ? `<a class="icon-btn lit" href="${esc(action.href)}" aria-label="${esc(action.label)}">${icon(action.icon || "plus")}</a>` : `<button type="button" class="icon-btn lit" aria-label="${esc(action.label)}">${icon(action.icon || "plus")}</button>`) : "";
     if (action && action.run) right.querySelector("button").addEventListener("click", action.run);
   }

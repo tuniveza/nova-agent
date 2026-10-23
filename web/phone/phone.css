@@ -73,33 +73,55 @@ svg.i { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor;
 .page::-webkit-scrollbar { display: none; }
 .page-in { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 
-/* ---- The bar of sections ---- */
+/* ---- The Nova tiles: Nova Desk's bar on a phone (phone.js drawTiles). Every place a tile in its own colours,
+   its drawing at the top and its name inside it in white; Invoicer tall down the left, Nova down the right, two
+   rows between, groups set apart by a fine line; the place you're in ringed in the highlight. Copied from Nova
+   Desk's phone.css "Tiles (16 Oct 2026)". ---- */
 .tabs {
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px;
   padding: 6px max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
-  background: linear-gradient(to top, var(--deep), rgba(var(--deep-rgb), .92)); border-top: 1px solid rgba(var(--hi-rgb), .12);
+  background: color-mix(in srgb, var(--void) 90%, var(--panel));
 }
-.tab {
-  position: relative; display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 62px; padding: 6px 0 4px; border-radius: 16px;
-  color: var(--muted); font: 600 11px/1.1 var(--f-body); text-align: center; white-space: nowrap;
+/* (its top edge glows, as Nova Desk's) */
+.tabs::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(120deg, color-mix(in srgb, var(--hi) 70%, transparent), color-mix(in srgb, var(--accent-2) 45%, transparent) 30%, color-mix(in srgb, var(--line, #fff3) 100%, transparent) 55%, color-mix(in srgb, var(--hi) 55%, transparent)); box-shadow: 0 0 10px color-mix(in srgb, var(--hi) 45%, transparent); }
+.nt-rows { display: grid; gap: 4px; min-width: 0; }
+.nt-row { display: flex; gap: 4px; min-width: 0; overflow: hidden; }
+.nt-sep { flex: none; width: 1px; margin: 4px 1px; background: color-mix(in srgb, var(--line, #fff3) 100%, transparent); }
+.nt {
+  position: relative; isolation: isolate; overflow: hidden; flex: 1 1 0; min-width: max-content; min-height: 50px;
+  display: grid; justify-items: center; align-content: end; padding: 26px 2px 4px; border-radius: 12px;
+  color: #fff; font: 600 clamp(9px, 2.6vw, 11px)/1.1 var(--f-body); text-align: center; white-space: nowrap; text-decoration: none;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform .12s;
 }
-/* each a Nova tile, as on Nova Desk's dock: the one you're on lit and lifted */
-.tab .pico { width: 36px; height: 36px; border-radius: 11px; transition: transform .15s; }
-.tab .more-tile { --own: var(--muted); color: var(--bright); }
-.tab .more-tile svg.i { width: 20px; height: 20px; filter: none; }
-.tab[aria-current="page"] { color: var(--bright); }
-.tab[aria-current="page"] .pico { transform: translateY(-2px) scale(1.08); box-shadow: 0 0 0 2px var(--hi), 0 8px 18px -6px var(--hi); }
-.tab:active .pico { transform: scale(.94); }
+.nt > .pico { position: absolute; inset: 0; z-index: -1; width: auto; height: auto; border-radius: inherit; display: grid; place-items: start center; padding-top: 5px; }
+.nt > .pico svg { width: 22px; height: 22px; }
+.nt > .pico::before, .nt > .pico::after { display: none; }
+.nt:not([aria-current="page"]) > .pico { filter: saturate(.9) brightness(.92); }
+.nt-name { position: relative; max-width: 100%; text-shadow: 0 1px 2px rgba(0, 0, 0, .75), 0 0 6px rgba(0, 0, 0, .45); }
+.nt[aria-current="page"] { box-shadow: 0 0 0 2px var(--hi), 0 0 12px -2px var(--hi); }
+.nt:active { transform: scale(.94); }
+/* Invoicer and Nova: tall, down both rows */
+.nt.tall { width: clamp(46px, 13vw, 56px); min-height: 0; height: 100%; padding-bottom: 6px; }
+.nt.tall > .pico { place-items: center; padding: 0 0 14px; }
+.nt.tall > .pico svg { width: 30px; height: 30px; }
+.nova-pico { padding: 0 !important; overflow: hidden; }
+.nova-pico img { width: 100%; height: 100%; object-fit: cover; }
+.nova-pico { --own: var(--hi); }
 .tab-badge {
-  position: absolute; top: 2px; left: calc(50% + 8px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
-  background: var(--hi); color: var(--on-hi); font: 700 11px/18px var(--f-body); text-align: center; box-shadow: 0 0 0 2px var(--deep);
+  position: absolute; top: 3px; right: 3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; z-index: 1;
+  background: var(--hi); color: var(--on-hi); font: 700 11px/18px var(--f-body); text-align: center; box-shadow: 0 0 0 2px rgba(0, 0, 0, .35);
 }
-/* (a phone on its side: everything slimmer, names beside the icons) */
+/* (a phone on its side: one row of tiles, the names only read out, as Nova Desk's) */
 @media (max-height: 500px) {
   .top { min-height: 48px; }
   .top-title { font-size: 16px; }
-  .tab { grid-auto-flow: column; gap: 6px; min-height: 46px; font-size: 12px; }
-  .tab .pico { width: 30px; height: 30px; border-radius: 9px; }
+  .tabs { grid-template-columns: auto minmax(0, 1fr) auto; padding-top: 4px; }
+  .nt-rows { display: flex; gap: 4px; }
+  .nt-row { flex: 1 1 auto; }
+  .nt, .nt.tall { min-height: 40px; height: 40px; width: auto; flex: 1 1 0; padding: 0; align-content: center; }
+  .nt.tall { width: 46px; flex: none; }
+  .nt .nt-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .nt > .pico, .nt.tall > .pico { place-items: center; padding: 0; }
 }
 
 /* ---- Words ---- */
@@ -407,3 +429,87 @@ button.sum { border: 1px solid rgba(var(--hi-rgb), .14); font: inherit; cursor: 
 .meter-top b { color: var(--bright); font-weight: 600; }
 .meter .bar { display: block; height: 8px; width: 0; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--hi)); }
 .switch > span small { display: block; margin-top: 2px; font-size: 13px; font-weight: 400; }
+/* board: a sticky note, its colour dot in a list, a picture */
+.sticky { padding: 22px 20px; border-radius: 6px 6px 18px 6px; background: var(--c, #FFC069); color: #2a1a10; font: 500 18px/1.45 var(--f-body); box-shadow: 0 14px 30px -18px #000; transform: rotate(-.6deg); }
+.sticky-dot { display: block; width: 22px; height: 22px; border-radius: 6px; background: #FFC069; }
+.board-img, .shot img { width: 100%; height: auto; border-radius: 12px; }
+.shot { margin: 0; display: grid; gap: 8px; }
+/* console: what was typed and what came back */
+.console { display: grid; gap: 6px; padding: 14px; border-radius: 16px; background: rgba(0, 0, 0, .45); border: 1px solid rgba(var(--hi-rgb), .14); font: 14px/1.5 var(--f-mono, ui-monospace, monospace); min-height: 40vh; overflow-wrap: anywhere; }
+.console p { margin: 0; }
+.console .cmd { color: var(--hi); }
+.console .out { color: var(--text); }
+.input.mono { font-family: var(--f-mono, ui-monospace, monospace); }
+
+/* the tile drawings' colours (tiles.js: Nova Desk's drawings, their inline styles as classes) */
+.pico .ts1 { fill:none;stroke:var(--ig);stroke-width:1.3;opacity:.55; }
+.pico .ts2 { fill:var(--ig);opacity:.22; }
+.pico .ts3 { fill:var(--ia); }
+.pico .ts4 { fill:var(--ib); }
+.pico .ts5 { fill:none;stroke:var(--ia);stroke-width:2; }
+.pico .ts6 { fill:none;stroke:var(--ic);stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+.pico .ts7 { fill:var(--ig); }
+.pico .ts8 { fill:var(--ic); }
+.pico .ts9 { fill:var(--ic);opacity:1; }
+.pico .ts10 { fill:var(--ig);opacity:.2; }
+.pico .ts11 { fill:none;stroke:var(--ig);stroke-width:2;opacity:.75; }
+.pico .ts12 { fill:none;stroke:var(--ib);stroke-width:2.2;opacity:.5; }
+.pico .ts13 { fill:var(--ib);opacity:.5; }
+.pico .ts14 { fill:none;stroke:var(--ic);stroke-width:2.4;stroke-linecap:round; }
+.pico .ts15 { fill:var(--ib);opacity:.45; }
+.pico .ts16 { fill:var(--ia);opacity:0.55; }
+.pico .ts17 { fill:var(--ia);opacity:0.45; }
+.pico .ts18 { fill:var(--ib);opacity:.55; }
+.pico .ts19 { fill:none;stroke:var(--ia);stroke-width:1.3; }
+.pico .ts20 { fill:none;stroke:var(--ia);stroke-width:1.1; }
+.pico .ts21 { fill:none;stroke:var(--ia);stroke-width:1.4;opacity:.7; }
+.pico .ts22 { fill:none;stroke:var(--ic);stroke-width:.9;opacity:.6; }
+.pico .ts23 { fill:var(--ig);opacity:.18; }
+.pico .ts24 { fill:none;stroke:var(--ib);stroke-width:1.2;opacity:.8; }
+.pico .ts25 { fill:none;stroke:var(--ib);stroke-width:.9;opacity:.55; }
+.pico .ts26 { fill:var(--ig);opacity:.85; }
+.pico .ts27 { fill:var(--ic);opacity:.7; }
+.pico .ts28 { fill:var(--ig);opacity:.16; }
+.pico .ts29 { fill:var(--ia);opacity:.14; }
+.pico .ts30 { fill:none;stroke:var(--ia);stroke-width:1.3;opacity:.85; }
+.pico .ts31 { fill:var(--ig);opacity:.35; }
+.pico .ts32 { fill:none;stroke:var(--ia);stroke-width:6;stroke-linecap:round;opacity:.2; }
+.pico .ts33 { fill:none;stroke:var(--ia);stroke-width:2.6;stroke-linecap:round;opacity:.6; }
+.pico .ts34 { fill:var(--ig);opacity:.3; }
+.pico .ts35 { fill:none;stroke:var(--ia);stroke-width:1.8;stroke-linecap:round; }
+.pico .ts36 { fill:var(--iw); }
+.pico .ts37 { fill:var(--ia);opacity:.32; }
+.pico .ts38 { fill:none;stroke:var(--ia);stroke-width:1.6;opacity:.55;stroke-linecap:round; }
+.pico .ts39 { fill:none;stroke:var(--ig);stroke-width:1.3;opacity:.7; }
+.pico .ts40 { fill:var(--ig);opacity:.32; }
+.pico .ts41 { fill:var(--ig);opacity:.14; }
+.pico .ts42 { fill:none;stroke:var(--ia);stroke-width:4.5;stroke-linecap:round;opacity:.3; }
+.pico .ts43 { fill:none;stroke:var(--ig);stroke-width:4.5;stroke-linecap:round;opacity:.25; }
+.pico .ts44 { fill:none;stroke:var(--ig);stroke-width:1.6;stroke-linecap:round; }
+.pico .ts45 { fill:none;stroke:var(--ia);stroke-width:3;stroke-linecap:round;stroke-linejoin:round; }
+.pico .ts46 { fill:none;stroke:var(--ig);stroke-width:3;stroke-linecap:round; }
+.pico .ts47 { fill:var(--ib);opacity:.35; }
+.pico .ts48 { stroke:var(--ia);stroke-width:1.2; }
+.pico .ts49 { fill:var(--ia);opacity:.28; }
+.pico .ts50 { stroke:var(--ib);stroke-width:2.6;stroke-linecap:round; }
+.pico .ts51 { fill:var(--ia);opacity:.5; }
+.pico .ts52 { stroke:var(--ia);stroke-width:2.2;stroke-linecap:round;opacity:.55; }
+.pico .ts53 { fill:none;stroke:var(--ic);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round; }
+.pico .ts54 { fill:none;stroke:var(--ig);stroke-width:1.2;opacity:.5; }
+.pico .ts55 { fill:none;stroke:var(--ib);stroke-width:5.6;stroke-linecap:round; }
+.pico .ts56 { fill:none;stroke:var(--ia);stroke-width:1.4;stroke-linecap:round;opacity:.6; }
+.pico .ts57 { fill:none;stroke:var(--ic);stroke-width:4.6;stroke-linecap:round; }
+.pico .ts58 { fill:var(--ia);opacity:.78; }
+.pico .ts59 { stroke:var(--ib);stroke-width:1.4; }
+.pico .ts60 { fill:none;stroke:var(--ib);stroke-width:1;opacity:.75; }
+.pico .ts61 { fill:var(--ib);opacity:1; }
+/* the tiles' names, row by row (phone.js fitTiles): smaller, then Nova Desk's short names, then Nova Desk's
+   smallest (8.5px), then only read out */
+.nt-short { display: none; }
+.nt-row.tight .nt { font-size: 9px; letter-spacing: -.01em; }
+.nt-row.short .nt:has(.nt-short) .nt-name { display: none; }
+.nt-row.short .nt-short { display: block; position: relative; text-shadow: 0 1px 2px rgba(0, 0, 0, .75), 0 0 6px rgba(0, 0, 0, .45); }
+.nt-row.tiny .nt { font-size: 8.5px; letter-spacing: -.02em; padding-inline: 1px; }
+.nt-row.names-off .nt { padding-top: 0; align-content: center; }
+.nt-row.names-off .nt :is(.nt-name, .nt-short) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.nt-row.names-off .nt > .pico { place-items: center; padding: 0; }

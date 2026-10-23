@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 rm -rf out && mkdir -p out/lib
 web=../web
-cp "$web"/phone/{phone.css,tiles.js,phone.js,today.js,inbox.js,calendar.js,agent.js,quests.js,money.js,notes.js,clients.js,outreach.js,you.js,admin.js,memory.js,more.js} out/
+cp "$web"/phone/{phone.css,tiles.js,phone.js,today.js,inbox.js,calendar.js,agent.js,quests.js,money.js,notes.js,clients.js,outreach.js,you.js,admin.js,memory.js,board.js,helpers.js,more.js} out/
 cp "$web"/phone/lib/*.js out/lib/
 cp "$web"/shared/themes.css "$web"/shared/themes.js out/
 cp sample-data.js preview-extra.js preview.css index.html out/

@@ -10,9 +10,9 @@
     ["Studio", [["inbox", "Inbox", "portal"], ["inbox/approvals", "Approvals", "portal"], ["calendar", "Calendar", "calendar"], ["clients", "Clients", "portal"], ["money", "Money", "invoicer"]]],
     ["Outreach", [["outreach", "Campaigns", "portal"], ["outreach/one", "One-to-one", "portal"], ["outreach/social", "Social", "portal"], ["outreach/funnel", "Funnel", "portal"]]],
     ["Plans", [["agent", "Agent", "chat"], ["agent/plan", "Today's plan", "missions"], ["agent/missions", "Missions", "missions"], ["quests", "Quests", "quests"], ["notes", "Notes", "notes"], ["board", "Board", "board"], ["index", "Index", "index"]]],
-    ["Helpers", [["observatory", "Observatory", "observatory"], ["console", "Console", "console"], ["lossless", "Lossless", "lossless"], ["help", "Help", "manual"]]],
+    ["Helpers", [["observatory", "Observatory", "observatory"], ["console", "Console", "console"], ["lossless", "Lossless", "lossless"], ["help", "Manual", "manual"], ["visualizer", "Nova", "visualizer"]]],
     ["You", [["you", "Your profile", "portal"], ["inbox/alert/phone", "Notifications", "portal"]]],
-    ["Admin", [["crew", "The crew", "portal"], ["google", "Google", "portal"], ["computer", "Computer", "computer"], ["tests", "Test stuff", "portal"], ["fixer", "Fixer", "fixer"], ["visualizer", "Visualizer", "visualizer"]]],
+    ["Admin", [["crew", "The crew", "portal"], ["google", "Google", "portal"], ["computer", "Computer", "computer"], ["tests", "Test stuff", "portal"], ["fixer", "Fixer", "fixer"]]],
   ];
   N.section({
     id: "more",
