@@ -1,0 +1,78 @@
+/* Nova Phone: Lossless (lossless.js). phone.css's cards, buttons, fields and choices; here only what's its own:
+   the status line in colour, the two level meters, the mic button on and off, the connection's figures, and the
+   slim "In a call" bar under the title elsewhere in Nova Phone. The theme's colours only. */
+
+.lossless-intro { margin: 0 4px; }
+/* A phone on its side or a tablet: two columns, Room beside Live, Sound beside The connection */
+@media (min-width: 640px) {
+  .lossless-page { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .lossless-page > .lossless-intro, .lossless-page > .lossless-notes, .lossless-page > .lossless-daw { grid-column: 1 / -1; }
+}
+.lossless-room { display: grid; gap: 14px; }
+.lossless-room > * { margin: 0 !important; }
+.lossless-room .input.mono { font-family: var(--f-mono, ui-monospace, monospace); letter-spacing: .04em; }
+.lossless-other { margin: 0; color: var(--warn); font-size: 14px; }
+.lossless-head { margin: 0 !important; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(var(--warn-rgb), .4); background: rgba(var(--warn-rgb), .08); color: var(--text); font-size: 14px; line-height: 1.45; }
+.lossless-head b { color: var(--warn); }
+
+/* Live: what's happening, a word coloured by how it's going */
+.lossless-live { display: grid; gap: 12px; }
+.lossless-live > * { margin: 0 !important; }
+.lossless-status { font: 700 17px/1.35 var(--f-display); letter-spacing: .02em; color: var(--bright); overflow-wrap: anywhere; }
+.lossless-status[data-tone="good"] { color: var(--ok); }
+.lossless-status[data-tone="warn"] { color: var(--warn); }
+.lossless-status[data-tone="bad"] { color: var(--bad); }
+.btn.lossless-mic[data-on="1"]:not([disabled]) { border-color: rgba(var(--ok-rgb), .6); color: var(--ok); }
+.btn.lossless-mic[data-on="0"] { border-color: rgba(var(--bad-rgb), .6); background: rgba(var(--bad-rgb), .1); color: var(--bad); }
+
+/* the meters: You and Them, -60 to 0 dBFS (the level set from the script as --lvl, 0 to 1; drawn by the
+   graphics chip, so nothing on the page is laid out again) */
+.lossless-meter { display: grid; gap: 6px; }
+.lossless-meter .meter-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.lossless-meter .meter-top b { color: var(--bright); font-weight: 600; }
+.lossless-meter .meter-top span { font-family: var(--f-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+.lossless-bar { display: block; height: 10px; border-radius: 5px; overflow: hidden; background: rgba(var(--deep-rgb), .9); border: 1px solid rgba(var(--hi-rgb), .16); }
+.lossless-bar > i { display: block; width: 100%; height: 100%; transform-origin: 0 50%; transform: scaleX(var(--lvl, 0)); background: linear-gradient(90deg, var(--accent), var(--hi)); }
+
+/* Sound: each choice with a line under it saying what it means */
+.lossless-sound .form { gap: 18px; }
+.lossless-hint { margin: 8px 4px 0 !important; }
+.lossless-sound .form > .lossless-hint { margin-top: -10px !important; }
+.lossless-warn { margin: 0 !important; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(var(--warn-rgb), .45); background: rgba(var(--warn-rgb), .1); color: var(--warn); font-size: 14px; }
+
+/* The connection: label over figure, two side by side where they fit */
+.lossless-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; margin-top: 12px; }
+.lossless-stats .fact.wide { grid-column: 1 / -1; }
+.lossless-stats .fact > b { font-variant-numeric: tabular-nums; }
+
+.lossless-notes p { font-size: 15px; line-height: 1.55; }
+.lossless-notes code, .lossless-daw code { font-family: var(--f-mono, ui-monospace, monospace); font-size: 14px; padding: 1px 5px; border-radius: 6px; background: rgba(var(--deep-rgb), .8); overflow-wrap: anywhere; }
+.lossless-daw ol { margin: 0; padding-left: 22px; line-height: 1.55; font-size: 15px; }
+.lossless-daw li { margin-bottom: 8px; }
+.lossless-daw li::marker { color: var(--hi); font-weight: 700; }
+.lossless-daw a { text-decoration: underline; }
+
+/* In a call, elsewhere in Nova Phone: a slim bar across the bottom of the title bar (its own row: it covers nothing) */
+.lossless-pill { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 2px 4px 2px; min-width: 0; }
+.lossless-pill-go {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px 0 14px; border-radius: 999px;
+  border: 1px solid rgba(var(--ok-rgb), .5); background: rgba(var(--ok-rgb), .1); color: var(--text); font-size: 14px; line-height: 1.25;
+}
+.lossless-pill-go > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.lossless-pill-go b { color: var(--ok); }
+.lossless-pill-go svg.i { width: 18px; height: 18px; opacity: .7; }
+.lossless-pill-go:active { filter: brightness(1.2); }
+.lossless-pill-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--ok); }
+.lossless-pill[data-tone="warn"] .lossless-pill-go { border-color: rgba(var(--warn-rgb), .5); background: rgba(var(--warn-rgb), .1); }
+.lossless-pill[data-tone="warn"] .lossless-pill-go b { color: var(--warn); }
+.lossless-pill[data-tone="warn"] .lossless-pill-dot { background: var(--warn); }
+.lossless-pill[data-paused="1"] .lossless-pill-go b::after { content: " · tap to resume"; font-weight: 400; color: var(--text); }
+.lossless-pill-mic {
+  flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(var(--ok-rgb), .55); background: rgba(var(--ok-rgb), .08);
+  color: var(--ok); font: 700 14px/1 var(--f-body); white-space: nowrap;
+}
+.lossless-pill-mic[data-on="0"] { border-color: rgba(var(--bad-rgb), .6); background: rgba(var(--bad-rgb), .12); color: var(--bad); }
+.lossless-pill-mic[disabled] { opacity: .45; }
+@media (max-height: 500px) {
+  .lossless-pill-go, .lossless-pill-mic { min-height: 36px; }
+}
