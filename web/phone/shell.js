@@ -118,7 +118,8 @@
   const busy = () => {
     const a = document.activeElement;
     const typing = a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) && (a.isContentEditable || (a.value || "").length > 0);
-    return !!(typing || document.querySelector("dialog[open], form.dirty"));
+    // (a Lossless call counts as busy: reloading for an update would end it)
+    return !!(typing || document.querySelector("dialog[open], form.dirty") || (window.NovaLossless && (window.NovaLossless.active || window.NovaLossless.starting)));
   };
   function update() {
     if (busy()) {

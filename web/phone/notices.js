@@ -54,8 +54,9 @@
       // Portal: its views
       const v = q.get("view") || u.hash.slice(1).split(/[/?&]/)[0] || "";
       if (v === "enquiries" || v === "inbox") return q.get("enquiry") ? `#inbox/enquiry/${id("enquiry")}` : "#inbox";
-      if (v === "conversations") return q.get("chat") ? `#inbox/chat/${id("chat")}` : "#inbox/chats";
-      if (v === "approvals") return "#inbox/approvals";
+      if (u.hash === "#nova") return "#inbox/alerts";
+      if (v === "conversations" || v === "chats") return q.get("chat") ? `#inbox/chat/${id("chat")}` : "#inbox/chats";
+      if (v === "approvals") return q.get("action") ? `#inbox/approvals/${id("action")}` : "#inbox/approvals";
       if (v === "alerts") return "#inbox/alerts";
       if (v === "campaigns") return q.get("campaign") ? `#outreach/campaign/${id("campaign")}` : q.get("outreach") ? `#outreach/one/${id("outreach")}` : "#outreach";
       if (v === "social") return q.get("post") ? `#outreach/social/${id("post")}` : "#outreach/social";

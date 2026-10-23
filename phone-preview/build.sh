@@ -12,6 +12,7 @@ cp "$web"/phone/lib/*.js "$out"/lib/
 cp "$web"/shared/themes.css "$web"/shared/themes.js "$out"/
 cp "$web"/shared/spectrum.js "$web"/shared/ambient.js "$web"/shared/status-data.js "$web"/shared/manual-news.js "$web"/agent/assets/music-data.js "$out"/
 cp sample-*.js preview-extra.js preview.css index.html "$out"/
+mkdir -p "$out/lossless" && cp "$web"/lossless/public/lossless/capture-worklet.js "$web"/lossless/public/lossless/playback-worklet.js "$out/lossless/"
 # (each place's sample answers, sample-<place>.js, load straight after sample-data.js)
 extra=$( (ls sample-*.js | grep -v '^sample-data.js$' || true) | sed 's|.*|<script src="&"></script>|' | tr '\n' ' ')
 sed -i "s|<script src=\"sample-data.js\"></script>|<script src=\"sample-data.js\"></script>${extra}|" "$out/index.html"

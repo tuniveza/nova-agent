@@ -263,6 +263,8 @@
     // (the session watch, signin.js, and the reminders, notices.js: run, not just fetched)
     load("signin.js").catch(() => {});
     load("notices.js").catch(() => {});
+    // (and Inbox's: a push while open, key renewal, the Home Screen dot, on every screen)
+    load("inbox.js").catch(() => {});
     const files = [...new Set(Object.values(FILES).flat())];
     const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 200));
     // (fetched, not run: the service worker keeps each by its fingerprint, so opening a place later runs it from the
@@ -406,8 +408,9 @@
     } catch (e) {
       throw Object.assign(new Error(navigator.onLine === false ? "You're offline" : "Couldn't reach Nova"), { offline: true });
     }
-    if (res.status === 401 || res.status === 403) {
-      if (res.status === 401 && String(path).startsWith("/auth/me")) { store.set(ME, ""); paintMe(); }
+    // (401: not signed in. 403 is "not for this sign-in": an error the place shows in its own words)
+    if (res.status === 401) {
+      if (String(path).startsWith("/auth/me")) { store.set(ME, ""); paintMe(); }
       throw Object.assign(new Error("Sign in first"), { signIn: true });
     }
     const data = res.headers.get("content-type")?.includes("json") ? await res.json().catch(() => null) : await res.text();

@@ -253,12 +253,6 @@ self.addEventListener("notificationclick", (event) => {
   const url = event.notification.data?.url ? panelUrl(event.notification.data.url) : "";
   event.waitUntil(
     Promise.all([self.clients.matchAll({ type: "window", includeUncontrolled: true }), homeApp()]).then(([windows, home]) => {
-      // The Portal phone app: open (or bring back) Portal itself, on the right tab
-      const portal = windows.find((w) => new URL(w.url).pathname.startsWith("/portal/"));
-      if (home === "portal" || (portal && !windows.some((w) => new URL(w.url).pathname === "/agent/"))) {
-        if (portal) return (url && portal.navigate ? portal.navigate(portalAppUrl(url)).catch(() => portal) : Promise.resolve(portal)).then((w) => (w || portal).focus());
-        return self.clients.openWindow(portalAppUrl(url || "/portal/"));
-      }
       // Nova Phone (/phone/): open there when it's open, or when it's this phone's Home Screen app; it turns
       // Nova's address into its own place (notices.js)
       const phone = windows.find((w) => new URL(w.url).pathname.startsWith("/phone/"));
@@ -267,6 +261,12 @@ self.addEventListener("notificationclick", (event) => {
         return phone.focus();
       }
       if (home === "phone") return self.clients.openWindow(url && url.startsWith("/") ? "/phone/?open=" + encodeURIComponent(url) : "/phone/");
+      // The Portal phone app: open (or bring back) Portal itself, on the right tab
+      const portal = windows.find((w) => new URL(w.url).pathname.startsWith("/portal/"));
+      if (home === "portal" || (portal && !windows.some((w) => new URL(w.url).pathname === "/agent/"))) {
+        if (portal) return (url && portal.navigate ? portal.navigate(portalAppUrl(url)).catch(() => portal) : Promise.resolve(portal)).then((w) => (w || portal).focus());
+        return self.clients.openWindow(portalAppUrl(url || "/portal/"));
+      }
       // Nova Agent already open: bring it to the front, on the right panel
       const open = windows.find((w) => new URL(w.url).pathname === "/agent/");
       if (open && (!url || url.startsWith("/"))) {
