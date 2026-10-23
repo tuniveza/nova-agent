@@ -52,7 +52,7 @@
       if (q && !`${i.number} ${i.billTo?.name}`.toLowerCase().includes(q)) return false;
       if (filter === "void") return i.status === "void";
       if (i.status === "void") return false;
-      if (filter === "approve") return WAITING.includes(i.status) || (data.reminders || []).some((r) => r.invoiceId === i.id && r.status === "pending");
+      if (filter === "approve") return WAITING.includes(i.status) || (data.reminders || []).some((r) => r.invoiceId === i.id && r.status === "pending_approval");
       if (["deposit", "balance", "overdue", "paid"].includes(filter)) return !WAITING.includes(i.status) && stageOf(i) === filter;
       return true;
     });
@@ -74,7 +74,7 @@
     ui.title(i.number);
     const stage = st?.stage || stageOf(i);
     const can = !!data.canDecide;
-    const pendingRem = (r.reminders || []).filter((x) => x.status === "pending");
+    const pendingRem = (r.reminders || []).filter((x) => x.status === "pending_approval");
     const waiting = WAITING.includes(i.status);
     const pdf = (s) => `${A}/invoices/${encodeURIComponent(i.id)}/pdf?stage=${s}`;
     box.innerHTML = `<div class="card"><p class="kicker">${esc(i.number)} · ${esc(STATUS[i.status] || i.status)}${i.overdue && !waiting ? " · overdue" : ""}</p><h2 class="card-title">${esc(i.billTo?.name || "")}</h2>
