@@ -1,0 +1,121 @@
+/* Nova Phone in Nova Agent's own look (the user, 23 Oct 2026: "why does gui on nova phone look all non-nova
+   agent theming"). Nova Desk's rules, worn by Nova Phone's screens: the glass top bar (shared/topbar.css), the
+   framed Nova panes with their glowing edge (agent/assets/music.css .cpanel), the house buttons, chips and
+   segments (shared/buttons.css), the small spaced headings with their lines (music.css .mw-title), the
+   comet-shaped fields and the gradient wordmark. Only how things look: sizes, spacing and layout stay
+   phone.css's, so nothing moves or gets cut. Every colour is the theme's (shared/themes.css, look.js), so
+   any theme chosen in Settings or on Nova Desk dresses both apps the same. */
+
+:root {
+  --nl-edge: linear-gradient(120deg, color-mix(in srgb, var(--hi) 45%, transparent), color-mix(in srgb, var(--soft, var(--text)) 14%, transparent) 40%, color-mix(in srgb, var(--accent-2) 35%, transparent));
+  --nl-pane: color-mix(in srgb, var(--panel) 55%, transparent);
+  --nl-shape: 16px 22px 26px 6px; /* Nova's house shape for big buttons: a comet's tail, bottom left */
+  --nl-field: 14px 18px 20px 6px;
+  --nl-word: linear-gradient(100deg, #FFD1EA 0%, var(--hi) 18%, var(--lilac, #C7A4FF) 36%, #FFFFFF 50%, var(--lilac, #C7A4FF) 64%, var(--hi) 82%, #FFD1EA 100%);
+}
+body { font-size: 15px; }
+
+/* ---- The top bar: a glass capsule with the theme's glowing edge (Desk's .nv-topbar on a phone) ---- */
+.app > .top {
+  margin: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
+  padding: 4px 6px; min-height: 52px; border-radius: 18px; border: 1px solid transparent;
+  background:
+    radial-gradient(60% 50% at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 62%) padding-box,
+    linear-gradient(color-mix(in srgb, var(--panel) 88%, var(--void)), color-mix(in srgb, var(--panel) 88%, var(--void))) padding-box,
+    var(--edge-glow, var(--nl-edge)) border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+/* the name: wide capitals in the theme's gradient; the place's tile as the mark beside it */
+.top-title {
+  font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .02em; text-transform: uppercase;
+  background: var(--nl-word); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+}
+.top-title .pico { -webkit-text-fill-color: initial; border-radius: 10px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 8px 20px -10px var(--hi), 0 0 18px -8px var(--hi); }
+/* its round buttons: Nova's glossy ones */
+.top .icon-btn {
+  width: 42px; height: 42px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .14); color: #FFFFFF;
+  background:
+    radial-gradient(120% 70% at 30% -10%, rgba(255, 255, 255, .42), rgba(255, 255, 255, .1) 45%, transparent 58%),
+    linear-gradient(165deg, color-mix(in srgb, var(--accent) 62%, var(--void)), color-mix(in srgb, var(--accent-2) 55%, var(--void)));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 6px 16px -10px var(--accent);
+}
+.top .icon-btn.lit { color: #FFFFFF; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .24), 0 0 0 2px color-mix(in srgb, var(--hi) 55%, transparent), 0 0 18px -6px var(--hi); }
+.top .icon-btn:active { filter: brightness(.94); scale: .94; }
+
+/* ---- Nova panes: every framed area wears the glowing edge and the glass fill ---- */
+.card, .list, .sum, .empty, .seg, .sheet[open] {
+  border: 1px solid transparent;
+  background:
+    radial-gradient(60% 80% at 0% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%) padding-box,
+    radial-gradient(50% 80% at 100% 100%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 70%) padding-box,
+    linear-gradient(color-mix(in srgb, var(--panel) 62%, transparent), color-mix(in srgb, var(--void) 55%, transparent)) padding-box,
+    var(--nl-edge) border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 0 24px -14px var(--hi);
+}
+.card, .list, .empty { border-radius: 16px; }
+.sum { border-radius: 16px; }
+.empty { border-style: solid; }
+.list > li + li { border-top-color: color-mix(in srgb, var(--soft, var(--text)) 10%, transparent); }
+.card .list, .list .list { box-shadow: none; }
+.sheet[open] { border-radius: 22px 22px 0 0; border-bottom: 0; }
+
+/* ---- Headings: Nova's small spaced capitals between two fine lines ---- */
+.h {
+  display: flex; align-items: center; gap: 10px; margin: 14px 2px 2px; opacity: 1;
+  font: 600 11px/1.4 var(--f-mono, ui-monospace, monospace); letter-spacing: .26em; text-transform: uppercase; color: var(--muted);
+}
+.h::before, .h::after { content: ""; flex: 1; min-width: 12px; height: 1px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--hi) 45%, transparent)); }
+.h::after { transform: scaleX(-1); }
+.h.now { color: var(--hi); }
+.kicker { font: 600 10.5px/1.4 var(--f-mono, ui-monospace, monospace); letter-spacing: .22em; color: var(--muted); }
+.card-title { font-stretch: 112%; }
+
+/* ---- Buttons (shared/buttons.css): Primary filled with the theme's gradient, Secondary glass, Quiet, Danger ---- */
+.btn { border-radius: var(--nl-shape); }
+.btn:not(.main):not(.quiet):not(.danger) {
+  border-color: color-mix(in srgb, var(--soft, var(--text)) 18%, transparent); color: var(--text);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, 0) 60%), color-mix(in srgb, var(--panel-2) 55%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+.btn.main {
+  border-color: transparent; color: var(--on-accent, #FFFFFF);
+  font-family: var(--f-display); font-weight: 800; letter-spacing: .03em;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(120deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 50%, var(--accent-2)) 55%, var(--accent-2) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), inset 0 -1px 0 rgba(0, 0, 0, .14), 0 8px 22px -12px color-mix(in srgb, var(--accent) 90%, transparent);
+}
+.btn.danger {
+  border-color: color-mix(in srgb, var(--bad) 45%, transparent); color: color-mix(in srgb, var(--bad) 70%, #FFFFFF);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, 0) 60%), color-mix(in srgb, var(--bad) 12%, transparent);
+}
+.btn:active { filter: brightness(.96); scale: .97; }
+@media (prefers-reduced-motion: reduce) { .btn:active, .top .icon-btn:active { scale: none; } }
+
+/* ---- Chips: Nova's small pills; a chosen one fills like Primary ---- */
+.chip {
+  border-color: color-mix(in srgb, var(--soft, var(--text)) 15%, transparent); color: var(--text);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, 0) 60%), color-mix(in srgb, var(--panel-2) 50%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+.chip[aria-current="page"], .chip[aria-pressed="true"], .chip[aria-selected="true"], .chip.active {
+  border-color: transparent; color: var(--on-accent, #FFFFFF);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 55%), linear-gradient(120deg, var(--accent), var(--accent-2));
+}
+/* Segments: choices in one well, the chosen one filled */
+.seg { border-radius: 16px; }
+.seg-a[aria-selected="true"], .seg label:has(input:checked) {
+  color: var(--on-accent, #FFFFFF);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 55%), linear-gradient(120deg, var(--accent), var(--accent-2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 6px 16px -10px var(--accent);
+}
+
+/* ---- Fields: the comet shape, a deep glass well ---- */
+.input, textarea.input, select.input {
+  border-radius: var(--nl-field); border-color: color-mix(in srgb, var(--soft, var(--text)) 16%, transparent);
+  background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text);
+}
+.input:focus { border-color: var(--hi); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 22%, transparent), 0 0 18px -8px var(--hi); }
+
+/* ---- The Nova tiles' bar keeps its glowing top edge; the switch and toast take the theme's light ---- */
+.toast { border: 1px solid transparent; background: linear-gradient(color-mix(in srgb, var(--panel) 92%, var(--void)), color-mix(in srgb, var(--panel) 92%, var(--void))) padding-box, var(--nl-edge) border-box; }
