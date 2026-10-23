@@ -60,13 +60,6 @@ window.NOVA_STATUS = {
    "Plain app names again",
    "Nova first in every app name"
   ],
-  "missions": [
-   "Quest 1",
-   "Portal everywhere",
-   "Plain names",
-   "Nova Agent talks to Nova Bot at…",
-   "Portal is Studio"
-  ],
   "lossless": [
    "One title panel",
    "One screen everywhere",
@@ -162,14 +155,6 @@ window.NOVA_STATUS = {
    {
     "panel": "quests",
     "words": "Google round two on the PC and…"
-   },
-   {
-    "panel": "missions",
-    "words": "Quest 1"
-   },
-   {
-    "panel": "missions",
-    "words": "Portal everywhere"
    }
   ],
   "tools": [

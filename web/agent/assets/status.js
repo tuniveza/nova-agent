@@ -214,9 +214,9 @@
   const AREA_NAMES = { apps: "Apps", tasks: "Plans", tools: "Tools", helpers: "Helpers" };
   // An area's news names the panel it's about (the simple words come after)
   const PANEL_NAMES = { chat: "Nova Agent", portal: "Portal", calendar: "Calendar", notes: "Notes", index: "Index", quests: "Quests", lossless: "Lossless", visualizer: "Nova", observatory: "Observatory", manual: "Manual", look: "Look & sound" };
-  // (what's new about a place that isn't on the bar, the old Agent pane and the Backend's panels, isn't told about a
-  // group on the bar; a Backend panel that's open still shows its own news)
-  const UNSEEN = new Set(["missions", "fixer", "computer", "observatory", "console", "manual", "index"]);
+  // (what's new about a place that isn't on the bar, the Backend's panels, isn't told about a group on the bar; a
+  // Backend panel that's open still shows its own news)
+  const UNSEEN = new Set(["fixer", "computer", "observatory", "console", "manual", "index"]);
   const areaLabel = line.querySelector(".sl-area");
   const wordsEl = line.querySelector(".sl-words");
   let shownKey = null;

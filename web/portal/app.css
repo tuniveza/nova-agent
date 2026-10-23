@@ -337,14 +337,12 @@ main {
 .alert-kind.nova-booking { background: linear-gradient(120deg, var(--hi), var(--lilac)); border-color: transparent; color: var(--on-hi); }
 .alert-kind.enquiry { background: rgba(var(--lilac-rgb), 0.12); border-color: rgba(var(--lilac-rgb), 0.5); color: var(--lilac); }
 .alert-kind.quest, .nova-label.quest { background: rgba(var(--hi-rgb), 0.13); border-color: rgba(var(--hi-rgb), 0.55); color: var(--soft); }
-.alert-kind.mission, .nova-label.mission { background: rgba(var(--warn-rgb), 0.12); border-color: rgba(var(--warn-rgb), 0.55); color: var(--warn); }
 .alert-kind.agent, .nova-label.agent { background: linear-gradient(120deg, var(--accent-2), var(--accent)); border-color: transparent; color: var(--on-accent); }
 .alert-kind.health { background: rgba(var(--ok-rgb), 0.1); border-color: rgba(var(--ok-rgb), 0.5); color: var(--ok); }
 .alert-kind.test { background: rgba(var(--gold-rgb), 0.08); border-color: rgba(var(--gold-rgb), 0.5); border-style: dashed; color: var(--gold); }
 .alert-kind.other { color: var(--muted); }
-/* Nova Agent, Quest and Mission alerts: the card's edge in their colour */
+/* Nova Agent and Quest alerts: the card's edge in their colour */
 .nova-alert.quest { --card-edge: linear-gradient(135deg, rgba(var(--hi-rgb), 0.75), rgba(var(--lilac-rgb), 0.35) 55%, rgba(var(--hi-rgb), 0.3)); }
-.nova-alert.mission { --card-edge: linear-gradient(135deg, rgba(var(--warn-rgb), 0.7), rgba(var(--hi-rgb), 0.3) 55%, rgba(var(--warn-rgb), 0.3)); }
 .nova-alert.agent { --card-edge: linear-gradient(135deg, rgba(var(--lilac-rgb), 0.6), rgba(var(--accent-2-rgb), 0.35) 55%, rgba(var(--accent-rgb), 0.4)); }
 /* The check against Acuity on a booking alert: is it a real booking? */
 .verify {
@@ -575,7 +573,6 @@ main {
 }
 .ping-banner strong { display: block; color: #fff; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 15px; }
 .ping-banner p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
-.ping-banner.mission { background: linear-gradient(var(--deep), var(--deep)) padding-box, linear-gradient(120deg, var(--warn), var(--hi), var(--gold)) border-box; }
 .ping-banner.going { opacity: 0; transform: translateY(-20px); transition: opacity 0.5s, transform 0.5s; }
 @keyframes ping-in { from { opacity: 0; transform: translateY(-10px); } }
 

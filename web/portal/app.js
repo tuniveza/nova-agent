@@ -4360,7 +4360,9 @@
     // Try it, and show any problem in the list
     try {
       // Ask the Worker for the alerts and the auto-delete setting
-      const { notifications, autoDeleteDays, choices } = await api("notifications");
+      const got = await api("notifications");
+      const { autoDeleteDays, choices } = got;
+      const notifications = (got.notifications || []).map(plainAlert);
       // Show the auto-delete switch's setting
       showAutoDelete(autoDeleteDays, choices);
       // Keep the list for voice commands ("call Eric")
@@ -4391,10 +4393,17 @@
     }
   }
 
+  // An alert kept from before Missions went (23 Oct 2026): shown as a plain Quest alert, in plain words
+  function plainAlert(n) {
+    if (!n || (n.kind !== "mission" && !/\bmissions?\b/i.test(`${n.title || ""} ${n.body || ""}`))) return n;
+    const words = (t) => String(t == null ? "" : t).replace(/^Mission: /, "Quest: ").replace(/\b([Mm])ission(s?)\b/g, (_, m, s) => (m === "M" ? "Plan" : "plan") + s);
+    return { ...n, kind: n.kind === "mission" ? "quest" : n.kind, title: words(n.title), body: typeof n.body === "string" ? words(n.body) : n.body };
+  }
+
   // Which Nova app an alert came from (from the start of its title), or null
   function novaSource(title) {
-    // The three Nova apps that send alerts, and their colour names
-    const sources = [["Quest: ", "quest"], ["Mission: ", "mission"], ["Nova Agent: ", "agent"]];
+    // The Nova apps that send alerts, and their colour names
+    const sources = [["Quest: ", "quest"], ["Nova Agent: ", "agent"]];
     // Find the one the title starts with
     const found = sources.find(([prefix]) => String(title).startsWith(prefix));
     // Its name (without the colon) and colour, or nothing
@@ -4402,7 +4411,7 @@
   }
 
   // The label for each kind of alert
-  const KIND_LABELS = { booking: "Booking · Acuity", "nova-booking": "Booking · Nova", enquiry: "Enquiry", quest: "Quest", mission: "Mission", agent: "Nova Agent", health: "Acuity connection", test: "Test", other: "Alert" };
+  const KIND_LABELS = { booking: "Booking · Acuity", "nova-booking": "Booking · Nova", enquiry: "Enquiry", quest: "Quest", agent: "Nova Agent", health: "Acuity connection", test: "Test", other: "Alert" };
 
   // "Tue 6 Oct 2026 · 21:02:40" (UK time, to the second)
   function exactTime(iso) {
@@ -4525,7 +4534,7 @@
     if (n.email) card.appendChild(emailPanel(n.email));
     // A row of buttons
     const actions = el("div", "actions");
-    // Alerts from Nova Agent, Quest and Mission: nothing to open
+    // Alerts from Nova Agent and Quests: nothing to open
     const nova = novaSource(n.title);
     if (nova) {
       // Mark the card with its colour
@@ -4825,8 +4834,6 @@
     pulse: [2093],
     // A check-in: a quick double ping, twice
     checkin: [1760, 1760, 2349.3, 2349.3],
-    // A mission: a sparkling run up
-    mission: [1046.5, 1318.5, 1568, 2093, 2637],
     // Nova Agent: one clear, lower bell
     agent: [880, 1318.5],
   };
@@ -4907,7 +4914,7 @@
           banner(event.data);
         }
         loadAlerts();
-        if (event.data.source === "quest" || event.data.source === "mission") loadQuests();
+        if (event.data.source === "quest") loadQuests();
       }
       // A notification was tapped: show the Alerts tab
       if (event.data?.type === "nova-open" && String(event.data.url).includes("#nova")) window.PortalPage.go("/portal/?view=alerts", { replace: true });

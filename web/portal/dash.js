@@ -95,7 +95,8 @@
       return {
         big: plural(list.length, "alert"),
         small: d.autoDeleteDays ? `Deleted after ${plural(d.autoDeleteDays, "day")}` : "Kept until deleted",
-        rows: list.slice(0, 4).map((n) => [n.title, ago(n.created_at)]),
+        // (an alert kept from before Missions went: in plain words, as Portal's Alerts shows it)
+        rows: list.slice(0, 4).map((n) => [String(n.title || "").replace(/^Mission: /, "Quest: ").replace(/\b([Mm])ission(s?)\b/g, (_, m, s) => (m === "M" ? "Plan" : "plan") + s), ago(n.created_at)]),
         empty: "No alerts yet.",
       };
     },

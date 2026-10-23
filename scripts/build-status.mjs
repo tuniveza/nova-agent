@@ -20,14 +20,13 @@ const PANELS = {
   console: ["web/console", "src/console.ts", "docs/apps/console"],
   index: ["web/index", "docs/apps/index"],
   quests: ["src/quests"],
-  missions: ["src/tasks.ts", "src/jobs.ts"],
   lossless: ["web/lossless"],
   visualizer: ["web/agent/page.html", "src/visualizer"],
   observatory: ["web/observatory"],
   manual: ["web/shared/manual.js", "scripts/build-manual.mjs"],
   look: ["web/shared/sfx.js", "web/shared/ambient.js", "web/shared/look.js", "web/agent/assets"],
 };
-const GROUPS = { apps: ["chat", "portal", "calendar", "notes", "board", "index"], tasks: ["quests", "missions"], tools: ["lossless", "visualizer", "console"], helpers: ["observatory", "manual"] };
+const GROUPS = { apps: ["chat", "portal", "calendar", "notes", "board", "index"], tasks: ["quests"], tools: ["lossless", "visualizer", "console"], helpers: ["observatory", "manual"] };
 
 // A commit's subject made into a few plain words: no "Panel:" prefix, up to the first comma
 function words(subject) {
@@ -37,7 +36,7 @@ function words(subject) {
   // Desk is called Computer now
   subject = subject.replace(/\bDesk\b/g, "Computer");
   if (/\bPortal\b.*\bPortal\b/.test(subject) && /takes in|part of|merged|folded/i.test(subject)) return "";
-  let s = subject.replace(/^(Notes|Calendar|Portal|Index|Observatory|Lossless audio|Visualizer|Quests|Missions|Manual|Phones?|Admin|Nova Agent)\s*:\s+/i, "");
+  let s = subject.replace(/^(Notes|Calendar|Portal|Index|Observatory|Lossless audio|Visualizer|Quests|Manual|Phones?|Admin|Nova Agent)\s*:\s+/i, "");
   // Up to the first comma or colon, but never just one word
   const parts = s.split(/[,;:(]| — | - /).map((p) => p.trim()).filter(Boolean);
   s = parts[0] || "";

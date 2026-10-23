@@ -3,7 +3,7 @@
 //
 // Two lists, shown as one: Nova Bot's (/app/api/tidy: enquiries, chats, chat bookings, clients,
 // Index pages, shared notes, drafts; src/tidy.js there) and the studio PC's (/tidy-api/state:
-// quests, missions, calendar notes, Fixer jobs, files; src/tidy.ts in Nova Agent, relayed when
+// quests, calendar notes, Fixer jobs, files; src/tidy.ts in Nova Agent, relayed when
 // online). PC off: Nova Bot's list still shows, and it says so.
 //
 // Deleting puts a copy in the bin first: "Recently deleted" puts it back for 30 days (a Fixer job

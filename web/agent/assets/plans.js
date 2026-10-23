@@ -1,6 +1,6 @@
 // Quests' plain rules, kept apart from the page so they can be tested (test/plans.spec.ts):
-//   sources(q, missionTitle): where a quest came from, as tags (its mission, "Notes · Studio
-//     plan", or Agent when Nova Agent made it itself)
+//   sources(q): where a quest came from, as tags ("Notes · Studio plan", or Agent when Nova Agent
+//     made it itself)
 //   comingUp(notes, now, occurrences, days): Calendar's note cards with reminders in the next
 //     few days, for Quests' "Also coming up" (times are UK time, as Calendar keeps them)
 //   remindWords(minutes), calendarDay(date): the words and the Calendar address for one of them
@@ -20,11 +20,10 @@
     return `${x.getUTCFullYear()}-${pad(x.getUTCMonth() + 1)}-${pad(x.getUTCDate())}T${pad(x.getUTCHours())}:${pad(x.getUTCMinutes())}`;
   }
 
-  // Where a quest came from: its mission and where it was made ("Notes · Studio plan" is saved;
+  // Where a quest came from: where it was made ("Notes · Studio plan" is saved;
   // it shows as "Notes · Studio plan"), or Nova Agent itself
-  function sources(q, missionTitle) {
+  function sources(q) {
     const out = [];
-    if (missionTitle) out.push({ kind: 'mission', label: String(missionTitle) });
     if (q && q.from) out.push({ kind: /^Notes\b/.test(q.from) ? 'notes' : 'from', label: String(q.from).replace(/^Notes\b/, 'Notes') });
     if (!out.length) out.push({ kind: 'agent', label: 'Nova Agent' });
     return out;

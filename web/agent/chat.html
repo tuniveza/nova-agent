@@ -52,7 +52,9 @@
     animation: drift 60s ease-in-out infinite alternate; }
   @keyframes drift { to { transform: translate3d(2%, -1.5%, 0) scale(1.04); } }
 
-  .shell { position: relative; z-index: 2; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom)); }
+  /* (one column the whole width, from the first frame: an auto column shrank to what was in it once the page's
+     centring (/shared/onescreen.js) centred the shell's parts, and the home jumped narrower, 23 Oct 2026) */
+  .shell { position: relative; z-index: 2; height: 100%; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 12px; padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom)); }
   .glass { background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(16px) saturate(1.15); -webkit-backdrop-filter: blur(16px) saturate(1.15); }
 
   /* Top bar */
