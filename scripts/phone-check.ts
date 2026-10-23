@@ -79,7 +79,8 @@ try {
     const where = (h: string) => `${engine} · ${name} · #${h}`;
     let at = "";
     page.on("pageerror", (e) => fail(where(at), `page error: ${e.message.slice(0, 120)}`));
-    page.on("console", (m) => { if (m.type() === "error" && !/status of (401|403|404|503)|favicon|Service Worker/i.test(m.text())) fail(where(at), m.text().slice(0, 160)); });
+    let shooting = false; // (WebKit: Playwright's screenshot adds a <style> of its own, which the page's CSP reports)
+    page.on("console", (m) => { if (!shooting && m.type() === "error" && !/status of (401|403|404|503)|favicon|Service Worker/i.test(m.text())) fail(where(at), m.text().slice(0, 160)); });
     const go = async (h: string, wait = 3500) => { at = h; await page.goto(`${base}/phone/#${h}`, { waitUntil: "load" }); await page.waitForTimeout(wait); };
     console.log(`${engine} · ${name}`);
     // the bar's sections, and More's screens
@@ -87,7 +88,7 @@ try {
     const hashes = new Set<string>((await page.$$eval(".tabs a[href^='#'], .tab[href^='#'], .bar a[href^='#']", (as) => as.map((a) => a.getAttribute("href")!.slice(1)))).filter(Boolean));
     await go("more");
     for (const h of await page.$$eval("#page a[href^='#']", (as) => as.map((a) => a.getAttribute("href")!.slice(1)))) hashes.add(h);
-    for (const h of hashes) { await go(h, h.startsWith("agent") ? 6000 : 3500); await look(page, where(h)); await page.screenshot({ path: join(out, `${engine}-${name.replace(/\W+/g, "-")}-${h.replace(/\W+/g, "-")}.png`) }); }
+    for (const h of hashes) { await go(h, h.startsWith("agent") ? 6000 : 3500); await look(page, where(h)); shooting = true; await page.screenshot({ path: join(out, `${engine}-${name.replace(/\W+/g, "-")}-${h.replace(/\W+/g, "-")}.png`) }); await page.waitForTimeout(400); shooting = false; }
     // the first row of each list opens its own screen
     for (const h of hashes) {
       await go(h);
@@ -104,7 +105,8 @@ try {
     if (name === PROFILES[engine][0][0]) {
       await go("calendar/new/2026-12-24");
       const form = page.locator("#cal-form");
-      if (!(await form.count())) fail(where("calendar/new"), "no note card form");
+      await form.waitFor({ timeout: 8000 }).catch(() => {});
+      if (!(await form.count())) fail(where("calendar/new"), `no note card form (at ${new URL(page.url()).hash}, showing "${(await page.locator("#title").textContent().catch(() => "")) || ""}": ${((await page.locator("#page").innerText().catch(() => "")) || "").replace(/\s+/g, " ").slice(0, 100)})`);
       else {
         await page.fill("#cal-form [name=title]", "Phone check card");
         await page.locator("#cal-form [type=submit]").click();

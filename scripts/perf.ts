@@ -39,7 +39,7 @@ const PLACES: [string, string][] = ([
   ["Board", "/board/"], ["Index", "/app/memory/"], ["Quests", "/quests/"], ["Fixer", "/fixer/"], ["Computer", "/computer/"],
   ["Observatory", "/observatory/"], ["Console", "/console/"], ["Invoicer", "/invoicer/"],
   // Nova Phone (/phone/, the mobile app): its busiest screens
-  ["Phone Today", "/phone/#today"], ["Phone Inbox", "/phone/#inbox"], ["Phone Calendar", "/phone/#calendar"], ["Phone Money", "/phone/#money"], ["Phone More", "/phone/#more"],
+  ["Phone Today", "/phone/#today"], ["Phone Inbox", "/phone/#inbox"], ["Phone Calendar", "/phone/#calendar"], ["Phone Money", "/phone/#money"], ["Phone More", "/phone/#more"], ["Phone Agent", "/phone/#agent"], ["Phone Notes", "/phone/#notes"], ["Phone Quests", "/phone/#quests"],
 ] as [string, string][]).filter((p) => !pickPlaces || pickPlaces.includes(p[0]));
 
 const web = join(process.cwd(), "web");

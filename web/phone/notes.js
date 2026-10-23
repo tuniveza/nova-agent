@@ -20,10 +20,13 @@
     }
     loadedAt = Date.now();
   }
-  const textOf = (html) => new DOMParser().parseFromString(html || "", "text/html").body.textContent.replace(/\s+/g, " ").trim();
+  // Read as a page of its own, with style attributes and blocks renamed first: Chrome holds a parsed page to Nova
+  // Phone's CSP and reports every style="…" in it as blocked (the styles are dropped below anyway)
+  const parse = (html) => new DOMParser().parseFromString(String(html || "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[a-z][^>]*>/gi, (t) => t.replace(/\sstyle\s*=/gi, " data-style=")), "text/html");
+  const textOf = (html) => parse(html).body.textContent.replace(/\s+/g, " ").trim();
   // A note's words, safe to show and to write in: no scripts, frames or handlers; links to web pages only
   function clean(html) {
-    const doc = new DOMParser().parseFromString(html || "", "text/html");
+    const doc = parse(html);
     for (const el of doc.body.querySelectorAll("script, style, iframe, object, embed, link, meta, form, button, select, textarea")) el.remove();
     for (const el of doc.body.querySelectorAll("*")) {
       for (const a of [...el.attributes]) {
