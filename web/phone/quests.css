@@ -1,0 +1,108 @@
+@charset "utf-8";
+/* ===== Nova Phone: Quests (quests.js). Built on phone.css's parts; only what's Quests' own is here.
+   How it's going (Waiting, Soon, Working on it…) is a colour from the theme, the same on every row, chip and card. ===== */
+
+/* how it's going: each its own colour, from the theme */
+:is(.quests-q, .quests-chip, .quests-focus, .quests-detail, .quests-col, .quests-modebtn) { --qm: var(--soft); }
+:is(.quests-q, .quests-chip, .quests-focus, .quests-detail, .quests-col, .quests-modebtn)[data-qm="soon"] { --qm: var(--gold); }
+:is(.quests-q, .quests-chip, .quests-focus, .quests-detail, .quests-col, .quests-modebtn)[data-qm="working"] { --qm: var(--hi); }
+:is(.quests-q, .quests-chip, .quests-focus, .quests-detail, .quests-col, .quests-modebtn)[data-qm="nearly"] { --qm: var(--ok); }
+:is(.quests-q, .quests-chip, .quests-focus, .quests-detail, .quests-col, .quests-modebtn)[data-qm="longer"] { --qm: var(--warn); }
+:is(.quests-q, .quests-chip, .quests-focus, .quests-detail, .quests-col, .quests-modebtn)[data-qm="questions"] { --qm: var(--lilac); }
+:is(.quests-q, .quests-chip, .quests-focus, .quests-detail, .quests-col, .quests-modebtn)[data-qm="done"] { --qm: var(--muted); }
+.quests-focus, .quests-detail { --c: var(--qm); }
+
+/* ---- the top: views, quick add, the bar, search ---- */
+.quests-quick { display: grid; gap: 10px; }
+.quests-quick .form-said { margin: -2px 4px 0; min-height: 0; }
+.quests-quick .form-said:empty { display: none; }
+.quests-bar { align-items: center; }
+.quests-bar .chip svg.i { width: 18px; height: 18px; }
+.quests-streak { padding: 0 4px; color: var(--gold); font: 600 14px/1.3 var(--f-body); }
+.quests-tags .chip { min-height: 40px; padding: 0 14px; }
+.quests-off .kicker { color: var(--warn); }
+.quests-off .btn { margin-top: 4px; }
+.quests-sync, .quests-hint, .quests-free, .quests-more, .quests-info { margin: 0 4px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.quests-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.quests-body:empty { display: none; }
+
+/* group headings: Done folds; a board column has its colour's dot */
+.quests-h { display: flex; align-items: center; gap: 8px; }
+.quests-fold { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; margin: -10px 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; }
+.quests-col::before { content: ""; width: 10px; height: 10px; flex: none; border-radius: 50%; background: var(--qm); }
+
+/* ---- a quest as a row: tick | title and details (opens it) ; under them: how it's going and its tags ---- */
+.quests-list { margin: 0; padding: 0; list-style: none; border-radius: 20px; overflow: hidden; border: 1px solid rgba(var(--hi-rgb), .14); background: rgba(var(--panel-rgb), .94); }
+.quests-list > li + li { border-top: 1px solid rgba(var(--hi-rgb), .1); }
+.quests-q { display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 8px; align-items: center; min-height: 64px; padding: 8px 14px 8px 10px; box-shadow: inset 4px 0 0 color-mix(in srgb, var(--qm) 80%, transparent); }
+.quests-q.timed { grid-template-columns: 46px 44px minmax(0, 1fr); }
+.quests-q.doing { background: rgba(var(--hi-rgb), .06); }
+.quests-q.is-now { background: rgba(var(--hi-rgb), .12); }
+.quests-time { display: grid; justify-items: center; gap: 2px; color: var(--hi); font: 700 14px/1.15 var(--f-body); text-align: center; }
+.quests-time small { color: var(--muted); font-weight: 500; font-size: 13px; }
+.quests-time .quests-nowword { color: var(--hi); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+.quests-tick { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; }
+.quests-tick svg.i { width: 28px; height: 28px; padding: 4px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--qm) 65%, var(--muted)); stroke: transparent; stroke-width: 3; }
+.quests-tick:active svg.i { background: rgba(var(--hi-rgb), .18); }
+.quests-tick[aria-pressed="true"] svg.i { border-color: var(--ok); background: var(--ok); stroke: var(--void); }
+.quests-open { display: grid; align-content: center; gap: 2px; min-width: 0; min-height: 44px; padding: 6px 0; color: var(--text); overflow-wrap: anywhere; }
+.quests-open:active { opacity: .75; }
+.quests-open b { font-weight: 600; color: var(--bright); line-height: 1.35; }
+.quests-q.done .quests-open b { text-decoration: line-through; opacity: .65; }
+.quests-meta { color: var(--muted); font-size: 14px; line-height: 1.45; }
+.quests-m + .quests-m::before { content: " \00B7  "; color: var(--muted); }
+.quests-m.late, .quests-m.risk, .quests-m.p-critical { color: var(--bad); }
+.quests-m.p-high { color: var(--warn); }
+.quests-extras { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px; }
+.quests-q.timed .quests-extras { grid-column: 3 / -1; }
+.quests-glow { animation: quests-glow 1.2s ease-out 1; }
+@keyframes quests-glow { from { background-color: rgba(var(--ok-rgb), .3); } }
+@media (prefers-reduced-motion: reduce) { .quests-glow { animation: none; } }
+
+/* how it's going, as a chip (tap: choose another); a tag; up and down */
+.quests-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--qm) 50%, transparent); background: color-mix(in srgb, var(--qm) 14%, transparent); color: var(--bright); font: 600 14px/1.2 var(--f-body); white-space: nowrap; }
+.quests-chip::before { content: ""; width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--qm); }
+.quests-chip:active, .quests-tag:active, .quests-move:active { filter: brightness(1.25); }
+.quests-tag { display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(var(--hi-rgb), .2); background: none; color: var(--hi); font: 600 14px/1 var(--f-body); white-space: nowrap; }
+.quests-move { display: grid; place-items: center; width: 44px; height: 44px; flex: none; padding: 0; border-radius: 12px; border: 1px solid rgba(var(--hi-rgb), .24); background: rgba(var(--deep-rgb), .6); color: var(--bright); }
+.quests-move svg.i { width: 20px; height: 20px; }
+
+/* ---- Focus, and a quest's own screen ---- */
+.quests-focus .quests-meta, .quests-detail .quests-meta { margin: 0 0 4px; }
+.quests-focus .btns { margin-top: 14px; }
+.quests-notes { margin: 12px 0 0; color: var(--text); }
+.quests-risk { margin: 8px 0 0; color: var(--bad); font-weight: 600; }
+.quests-qtags { margin-top: 12px; padding: 0; }
+.quests-modebtn { border-color: color-mix(in srgb, var(--qm) 55%, transparent); background: color-mix(in srgb, var(--qm) 14%, transparent); }
+.quests-modebtn::before { content: ""; width: 10px; height: 10px; flex: none; border-radius: 50%; background: var(--qm); }
+
+/* steps to tick */
+.quests-steps { display: grid; gap: 2px; margin: 12px 0 0; }
+.card > .quests-steps:first-child { margin-top: 0; }
+.quests-steps .quests-steps-n { margin: 0 0 4px; color: var(--muted); font-size: 13px; }
+.quests-step { display: flex; align-items: center; gap: 12px; min-height: 44px; color: var(--bright); overflow-wrap: anywhere; }
+.quests-step input { position: relative; display: grid; place-items: center; width: 26px; height: 26px; flex: none; margin: 0; border-radius: 8px; border: 2px solid rgba(var(--hi-rgb), .5); background: rgba(var(--deep-rgb), .6); -webkit-appearance: none; appearance: none; }
+.quests-step input:checked { border-color: var(--ok); background: var(--ok); }
+.quests-step input:checked::after { content: ""; width: 12px; height: 7px; border: solid var(--void); border-width: 0 0 3px 3px; transform: translateY(-2px) rotate(-45deg); }
+.quests-step input:checked + span { color: var(--muted); text-decoration: line-through; }
+.quests-step input[disabled] { opacity: .5; }
+
+/* the editor's steps: tick | words | remove; then a new one */
+.quests-editsteps legend small { margin-left: 6px; color: var(--muted); font-weight: 500; }
+.quests-elist { display: grid; gap: 8px; margin: 0 0 8px; padding: 0; list-style: none; }
+.quests-elist:empty { display: none; }
+.quests-estep { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 8px; align-items: center; }
+.quests-stepbox { justify-content: center; min-height: 52px; }
+.quests-addstep { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.quests-addstep .btn { padding: 0 16px; }
+
+/* ---- a word at the bottom with one button (Undo, Tick it off) ---- */
+.quests-undo {
+  position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom)); z-index: 51; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px; width: max-content; max-width: calc(100% - 32px); min-height: 56px; padding: 6px 6px 6px 18px;
+  border-radius: 16px; background: var(--bright); color: var(--void); font: 600 15px/1.35 var(--f-body); box-shadow: 0 16px 40px -12px #000;
+}
+.quests-undo.bare { padding: 14px 20px; text-align: center; }
+.quests-undo span { min-width: 0; overflow-wrap: anywhere; }
+.quests-undo-btn { flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--void); color: var(--bright); font: 700 15px/1 var(--f-body); white-space: nowrap; }
+@media (max-height: 500px) { .quests-undo { bottom: calc(64px + env(safe-area-inset-bottom)); } }
