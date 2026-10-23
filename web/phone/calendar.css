@@ -1,0 +1,167 @@
+/* Nova Phone: Calendar's own look (calendar.js). The theme's colours only (a day card wearing its own theme
+   gets that theme's colours put on it by calendar.js); one column, thumb-sized, nothing cut or off the side. */
+
+/* ---- The status line: offline, saving ---- */
+.cal-status { margin: 0; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(var(--warn-rgb), .35); background: rgba(var(--warn-rgb), .1); color: var(--warn); font-size: 14px; }
+
+/* ---- The bar over each view: before, the title (a tap picks a date), after, Today ---- */
+.cal-stepper { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 4px; }
+.cal-stepper.with-today { grid-template-columns: 44px minmax(0, 1fr) 44px auto; }
+.cal-stepper .icon-btn { width: 44px; height: 44px; }
+.cal-jump { position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 48px; border-radius: 14px; color: var(--bright); }
+.cal-jump:active { background: rgba(var(--hi-rgb), .1); }
+.cal-jump-t { font: 700 17px/1.2 var(--f-display); white-space: nowrap; }
+.cal-caret { color: var(--muted); font-size: 13px; }
+.cal-jump-in { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; color: transparent; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.cal-jump-in::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.cal-today { min-height: 44px; padding: 0 14px; }
+@media (max-width: 359px) { .cal-jump-t { font-size: 15px; } .cal-today { padding: 0 10px; font-size: 14px; } }
+
+/* ---- One day: its name, moon, day cards, special days, sentences ---- */
+.cal-plan { display: grid; gap: 12px; }
+.cal-dhead { display: grid; gap: 2px; }
+.cal-dhead .kicker { margin: 0; }
+.cal-dname { margin: 0; font: 700 22px/1.25 var(--f-display); color: var(--bright); overflow-wrap: anywhere; }
+.cal-moon { display: flex; align-items: center; gap: 8px; margin: 4px 0 0; color: var(--muted); font-size: 14px; font-style: italic; }
+.cal-moon svg { flex: none; }
+.cal-moon.full { color: var(--gold); }
+.moon-dark { fill: rgba(var(--text-rgb), .1); stroke: rgba(var(--text-rgb), .25); stroke-width: .8; }
+.moon-lit { fill: var(--soft); }
+.cal-moon.full .moon-lit, .cal-moonmark.full .moon-lit { fill: var(--gold); }
+.cal-moonmark { display: inline-grid; place-items: center; vertical-align: -2px; margin-left: 6px; }
+.cal-sum { display: grid; gap: 4px; padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(var(--hi-rgb), .12); background: rgba(var(--panel-rgb), .7); color: var(--text); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.cal-sum p { margin: 0; }
+.cal-sum b { color: var(--bright); font-weight: 600; }
+.cal-sky-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 14px; border-radius: 16px; border: 1px dashed rgba(var(--gold-rgb), .4); background: rgba(var(--gold-rgb), .06); color: var(--gold); font-style: italic; }
+.cal-sky-row span { flex: 1 1 8em; min-width: 0; overflow-wrap: anywhere; }
+.btn.cal-sm { min-height: 44px; padding: 0 14px; font-size: 14px; font-style: normal; border-color: rgba(var(--gold-rgb), .45); color: var(--gold); background: none; }
+
+/* ---- Rows: the times on the card's own picture; what it is; its notes' first line ---- */
+.cal-lead { display: grid; place-items: center; align-content: center; width: 56px; min-height: 56px; padding: 4px 2px; border-radius: 12px; background: rgba(var(--hi-rgb), .1); color: var(--hi); font: 700 14px/1.2 var(--f-body); text-align: center; }
+.cal-lead small { font-size: 13px; font-weight: 600; color: var(--muted); }
+.cal-lead.art { background: linear-gradient(135deg, rgba(var(--accent-rgb), .45), rgba(var(--accent-2-rgb), .45)); color: var(--bright); text-shadow: 0 1px 3px var(--void), 0 0 8px var(--void); }
+.cal-lead.art small { color: var(--bright); }
+.cal-lead.art.cal-painted { background: linear-gradient(rgba(var(--void-rgb), .4), rgba(var(--void-rgb), .4)), var(--art) center / cover; }
+.cal-what { color: var(--muted); font-size: 14px; font-style: italic; }
+.cal-now { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 14px; color: var(--hi); font: 700 13px/1.3 var(--f-body); letter-spacing: .06em; text-transform: uppercase; }
+.cal-now::before, .cal-now::after { content: ""; flex: 1; height: 2px; border-radius: 1px; background: var(--hi); opacity: .7; }
+.cal-now::before { flex: 0 0 10px; }
+.row.cal-gap { min-height: 56px; background: rgba(var(--hi-rgb), .03); }
+.row.cal-gap .row-lead { color: var(--ok); font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+.row.cal-gap .row-main b { color: var(--text); font-weight: 600; }
+
+/* ---- Day cards: a banner in their own colours and title style, over their header art ---- */
+.cal-banner {
+  position: relative; display: grid; gap: 6px; align-content: end; min-height: 108px; padding: 14px 16px; border-radius: 18px; overflow: hidden; color: var(--bright);
+  border: 1px solid rgba(var(--hi-rgb), .3);
+  background: linear-gradient(90deg, rgba(var(--void-rgb), .6), rgba(var(--void-rgb), .1)), linear-gradient(120deg, var(--accent), var(--accent-2));
+}
+.cal-banner.cal-painted { background: linear-gradient(90deg, rgba(var(--void-rgb), .65), rgba(var(--void-rgb), .05)), var(--art) center / cover; }
+.cal-banner.big { min-height: 140px; }
+a.cal-banner:active { filter: brightness(1.12); }
+.cal-banner-kicker { font: 700 12px/1.3 var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); text-shadow: 0 1px 6px var(--void); }
+.cal-banner small { color: var(--bright); font-size: 14px; text-shadow: 0 1px 6px var(--void); overflow-wrap: anywhere; }
+/* (the title styles, the computer's: calendar/css/extras.css) */
+.dc-title { margin: 0; color: var(--bright); overflow-wrap: anywhere; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: 22px; line-height: 1.1; letter-spacing: .01em; }
+.aes-nebula .dc-title { background: linear-gradient(90deg, var(--bright), var(--soft), var(--hi), var(--bright)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.aes-supernova .dc-title { text-shadow: 0 0 10px var(--hi), 0 0 28px var(--accent), 0 0 50px var(--accent-2); }
+.aes-orbit .dc-title { position: relative; justify-self: start; letter-spacing: .16em; font-size: 19px; padding: 4px 6px; }
+.aes-orbit .dc-title::after { content: ""; position: absolute; inset: -40% -10%; pointer-events: none; border: 1.5px solid color-mix(in srgb, var(--hi) 70%, transparent); border-radius: 50%; transform: rotate(-7deg) scaleY(.42); }
+.aes-constellation .dc-title { justify-self: start; font-family: "Source Code Pro", var(--f-mono, monospace); font-stretch: normal; font-weight: 600; letter-spacing: .24em; font-size: 16px; color: var(--soft); padding-bottom: 6px; border-bottom: 1px dashed color-mix(in srgb, var(--soft) 45%, transparent); }
+.aes-eclipse .dc-title { color: var(--gold); text-shadow: 0 0 18px color-mix(in srgb, var(--gold) 55%, transparent), 0 0 2px var(--void); }
+.aes-aurora .dc-title { background: linear-gradient(90deg, var(--hi), var(--lilac), var(--accent), var(--soft)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.aes-celestial .dc-title { font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 600; font-stretch: normal; text-transform: none; font-size: 28px; letter-spacing: 0; color: var(--soft); text-shadow: 0 0 22px color-mix(in srgb, var(--lilac) 55%, transparent); }
+
+/* ---- Week: each day's name, its moon, its day cards and special days, its cards ---- */
+.cal-week { display: grid; gap: 16px; }
+.cal-wday { display: grid; gap: 8px; padding: 10px; margin: 0 -10px; border-radius: 20px; }
+.cal-wday[data-tint] { background: linear-gradient(160deg, rgba(var(--tint), .16), transparent 70%); }
+.cal-whead { display: flex; align-items: center; min-height: 44px; padding: 0 4px; color: var(--soft); font: 700 13px/1.3 var(--f-body); letter-spacing: .1em; text-transform: uppercase; }
+.cal-wday.now .cal-whead { color: var(--hi); }
+.cal-chiprow { display: flex; flex-wrap: wrap; gap: 8px; }
+.cal-dchip, .cal-skychip { display: inline-flex; align-items: center; min-height: 40px; max-width: 100%; padding: 6px 14px; border-radius: 12px; font: 600 14px/1.3 var(--f-body); overflow-wrap: anywhere; }
+.cal-dchip { background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: var(--on-accent); }
+.cal-skychip { border: 1px dashed rgba(var(--gold-rgb), .45); color: var(--gold); font-style: italic; }
+@media (min-width: 700px) { .cal-week { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } .cal-wday { margin: 0; } }
+
+/* ---- Month: "This month", then the days with their cards' titles in words ---- */
+.cal-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.cal-strip-item { display: inline-flex; align-items: baseline; gap: 6px; min-height: 40px; max-width: 100%; padding: 9px 12px; border-radius: 12px; border: 1px solid rgba(var(--hi-rgb), .2); background: rgba(var(--panel-rgb), .8); color: var(--text); font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.cal-strip-item b { flex: none; color: var(--bright); font-weight: 700; }
+.cal-strip-item.day { border-color: transparent; background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: var(--on-accent); }
+.cal-strip-item.day b { color: var(--on-accent); }
+.cal-strip-item.moon, .cal-strip-item.sky { border-style: dashed; border-color: rgba(var(--gold-rgb), .45); color: var(--gold); font-style: italic; }
+.cal-strip-item.moon b, .cal-strip-item.sky b { color: var(--gold); font-style: normal; }
+.cal-month { padding: 6px; border-radius: 20px; border: 1px solid rgba(var(--hi-rgb), .14); background: rgba(var(--panel-rgb), .94); }
+.cal-mhead, .cal-mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.cal-mhead span { padding: 4px 0 6px; text-align: center; color: var(--muted); font: 700 12px/1 var(--f-body); }
+.cal-mday { display: flex; flex-direction: column; gap: 2px; min-width: 0; min-height: 58px; padding: 4px 2px; border-radius: 10px; color: var(--text); overflow: hidden; }
+.cal-mday[data-tint] { background: rgba(var(--tint), .16); }
+.cal-mday:active { background: rgba(var(--hi-rgb), .12); }
+.cal-mday.out { opacity: .4; }
+.cal-mday.picked { box-shadow: inset 0 0 0 2px var(--hi); background: rgba(var(--hi-rgb), .14); }
+.cal-mnum { display: flex; align-items: center; justify-content: center; gap: 0; min-height: 20px; font: 600 14px/1 var(--f-body); }
+.cal-mnum .cal-moonmark { margin-left: 2px; }
+.cal-mday.today .cal-mnum { color: var(--hi); font-weight: 800; }
+.cal-mt, .cal-mcard, .cal-msky, .cal-mmore { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font: 600 11px/1.2 var(--f-body); overflow-wrap: anywhere; word-break: break-word; -webkit-hyphens: auto; hyphens: auto; }
+.cal-mt { padding: 1px 3px; border-radius: 4px; background: color-mix(in srgb, var(--c, var(--hi)) 26%, transparent); color: var(--bright); box-shadow: inset 2px 0 0 var(--c, var(--hi)); }
+.cal-mcard { padding: 1px 3px; border-radius: 4px; background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: var(--on-accent); }
+.cal-msky { color: var(--gold); font-style: italic; text-align: center; }
+.cal-mmore { color: var(--muted); text-align: center; -webkit-line-clamp: 1; }
+@media (min-width: 560px) { .cal-mday { min-height: 72px; padding: 6px 4px; } .cal-mt, .cal-mcard, .cal-msky { font-size: 12px; } }
+
+/* ---- List and search ---- */
+.cal-results { display: grid; gap: 14px; }
+.cal-found { margin: 0 4px; }
+
+/* ---- One card: its artwork on top ---- */
+.cal-hero { aspect-ratio: 16 / 9; border-radius: 20px; border: 1px solid rgba(var(--hi-rgb), .18); background: linear-gradient(135deg, rgba(var(--accent-rgb), .5), rgba(var(--accent-3-rgb), .9)); }
+.cal-hero.cal-painted { background: var(--art) center / cover; }
+.cal-words { margin: 14px 0 0 !important; }
+
+/* ---- The forms ---- */
+.cal-quick-hint { min-height: 1.4em; margin: -8px 4px 0; color: var(--hi); font-size: 14px; }
+.cal-quick-hint:empty { display: none; }
+.cal-art-edit { position: relative; display: flex; align-items: flex-end; aspect-ratio: 16 / 9; max-height: 240px; padding: 14px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(var(--hi-rgb), .25); background: linear-gradient(135deg, rgba(var(--accent-rgb), .5), rgba(var(--accent-3-rgb), .9)); }
+.cal-art-edit.cal-painted { background: linear-gradient(rgba(var(--void-rgb), 0) 50%, rgba(var(--void-rgb), .6)), var(--art) center / cover; }
+.cal-art-title { color: var(--bright); font: 700 19px/1.25 var(--f-display); text-shadow: 0 2px 10px var(--void); overflow-wrap: anywhere; }
+.cal-art-tools { align-items: end; }
+.cal-art-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.cal-art-btns .btn { flex: 1 1 auto; padding: 0 12px; }
+@media (max-width: 420px) { .cal-art-tools { grid-template-columns: minmax(0, 1fr); } }
+.cal-custom { padding: 14px; border-radius: 16px; border: 1px solid rgba(var(--hi-rgb), .14); background: rgba(var(--panel-rgb), .6); }
+.cal-meet-note { margin: -8px 4px 0; }
+.cal-banner-edit { min-height: 120px; }
+.cal-aes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 132px), 1fr)); gap: 8px; }
+.cal-aes { position: relative; display: grid; gap: 4px; align-content: center; min-height: 64px; padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(var(--hi-rgb), .2); background: rgba(var(--deep-rgb), .9); overflow: hidden; }
+.cal-aes input, .cal-theme input { position: absolute; opacity: 0; pointer-events: none; }
+.cal-aes .dc-title { font-size: 15px; justify-self: start; }
+.cal-aes.aes-celestial .dc-title { font-size: 20px; }
+.cal-aes.aes-constellation .dc-title { font-size: 12px; letter-spacing: .1em; }
+.cal-aes.aes-orbit .dc-title::after { inset: -55% -18%; }
+.cal-aes small { color: var(--muted); font-size: 13px; line-height: 1.3; }
+.cal-aes:has(input:checked), .cal-theme:has(input:checked) { border-color: var(--hi); box-shadow: 0 0 0 2px rgba(var(--hi-rgb), .35); }
+.cal-theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 8px; }
+.cal-theme { position: relative; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 12px; border-radius: 14px; border: 1px solid rgba(var(--hi-rgb), .18); background: rgba(var(--deep-rgb), .9); color: var(--text); font-weight: 600; white-space: nowrap; }
+.cal-theme i { flex: none; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--hi), var(--accent) 50%, var(--accent-3)); box-shadow: inset 0 0 0 1px rgba(var(--text-rgb), .3); }
+
+/* ---- The note card and day card lists ---- */
+.cal-lhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cal-lhead p { margin: 0 4px; }
+.cal-lrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.cal-lrow .row { grid-template-columns: minmax(0, 1fr) auto; }
+.cal-ldel { width: 48px; height: 48px; margin-right: 8px; color: var(--bad); }
+
+/* ---- Backup ---- */
+.cal-import { position: relative; overflow: hidden; }
+.cal-import input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+
+/* ---- Undo: just above the tiles ---- */
+.cal-undo {
+  position: fixed; left: 50%; bottom: calc(var(--cal-undo-b, 96px) + env(safe-area-inset-bottom)); z-index: 51; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 14px; width: max-content; max-width: calc(100% - 32px); padding: 8px 8px 8px 18px; border-radius: 16px;
+  background: var(--bright); color: var(--void); font: 600 15px/1.35 var(--f-body); box-shadow: 0 16px 40px -12px var(--shadow, #000);
+}
+.cal-undo > span { min-width: 0; overflow-wrap: anywhere; }
+.cal-undo:not(:has(button)) { padding-right: 18px; }
+.cal-undo-btn { flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--accent); color: var(--on-accent); font: 700 15px/1 var(--f-body); white-space: nowrap; }
