@@ -973,6 +973,8 @@ function listStep(dir) {
 // time now. drawTimeGrid sets the first hour and each hour's height once it has measured the room.
 let gridH0 = 0;
 let gridHh = 0;
+// (Day view's hour at most: compact, the day's cards a card's size, 23 Oct 2026)
+const DAY_HH = 36;
 function hourHeight() {
   return gridHh || (phone() ? 44 : 52);
 }
@@ -1063,6 +1065,28 @@ function drawTimeGrid(n) {
       h0 = Math.min(h0, Math.floor(nowM / 60));
       h1 = Math.max(h1, Math.floor(nowM / 60) + 1);
     }
+    // Day view: just the day's own hours, an hour before its first card to an hour after its last (and, today,
+    // the time now), at least a working day's eight; a day with nothing on, 08:00 to 18:00. Its hours are a
+    // set height (DAY_HH), not stretched to the screen's (23 Oct 2026, the user: "the ui is so stretched and
+    // huge sized can we make this more compact and optimized")
+    if (n === 1) {
+      const list = shown[0];
+      if (list.length) {
+        h0 = Math.floor(Math.min(...list.map((x) => x.v0)) / 60) - 1;
+        h1 = Math.ceil(Math.max(...list.map((x) => x.v1)) / 60) + 1;
+      } else [h0, h1] = [8, 18];
+      if (nowM >= 0) {
+        h0 = Math.min(h0, Math.floor(nowM / 60));
+        h1 = Math.max(h1, Math.floor(nowM / 60) + 1);
+      }
+      h0 = Math.max(0, h0);
+      h1 = Math.min(24, h1);
+      // (too few: one more hour after, then one before, in turn, until there are eight)
+      for (let up = true; h1 - h0 < 8; up = !up) {
+        if ((up && h1 < 24) || h0 === 0) h1++;
+        else h0--;
+      }
+    }
     h0 = Math.max(0, h0);
     h1 = Math.min(24, h1);
     H = h1 - h0;
@@ -1121,8 +1145,9 @@ function drawTimeGrid(n) {
   const tg = view.querySelector(".tg");
   // (less the room kept clear under the phone's round + button)
   const room = () => tg.clientHeight - (parseFloat(getComputedStyle(tg).paddingBottom) || 0) - tg.querySelector(".tg-head").offsetHeight - 10;
+  // (Day view: each hour DAY_HH tall at most, less when they'd not all fit; the week's share out the height)
   for (let pass = 0; ; pass++) {
-    gridHh = Math.max(10, room() / H);
+    gridHh = Math.max(10, Math.min(n === 1 ? DAY_HH : Infinity, room() / H));
     tg.style.setProperty("--hh", `${gridHh}px`);
     const want = shortest(gridHh);
     if (want === minM || pass >= 3) break;

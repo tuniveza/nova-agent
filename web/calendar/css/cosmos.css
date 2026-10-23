@@ -802,7 +802,7 @@ html.embed .bar { padding-top: 4px !important; }
   .view > .dayview { grid-template-columns: minmax(0, 1fr) 320px; grid-template-rows: minmax(0, 1fr); }
   .dayview > .tg { grid-column: 1; grid-row: 1; }
   .dayview > .dv-side { grid-column: 2; grid-row: 1; min-height: 0; overflow: hidden; border-left: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 35%, transparent); }
-  .dv-side > .dayplan { height: 100%; padding: 14px 16px !important; border-top: 0; content-visibility: visible;
+  .dv-side > .dayplan { height: 100%; padding: 14px 16px; border-top: 0; content-visibility: visible;
     background: linear-gradient(180deg, color-mix(in oklab, var(--hi, #FF5FA8) 10%, var(--deep, #100816)), var(--void, #06040D)) !important; }
   .dv-side .dp-head { flex-direction: column; align-items: stretch; gap: 8px; }
   .dv-side .dp-add { justify-content: flex-start; }
@@ -874,7 +874,7 @@ html.embed .bar { padding-top: 4px !important; }
 /* (beside Day view: the day's cards slimmer, a line or two each, so more fit on a page; what doesn't fit goes
    onto the next page, /shared/onescreen.js's page bar, never a scroll bar or a card cut off at the foot) */
 @media (min-width: 900px) {
-  .dv-side > .dayplan { padding: 12px 14px !important; }
+  .dv-side > .dayplan { padding: 12px 14px; }
   .dv-side > .dayplan > * + * { margin-top: 8px; }
   /* (each card its own list here, so a page can end between any two: cal.js dayPlanHtml) */
   .dv-side > .dayplan > .rows + .rows { margin-top: 5px; }
@@ -884,4 +884,46 @@ html.embed .bar { padding-top: 4px !important; }
   .dv-side .row-item strong { font-size: 12.5px; line-height: 1.25; }
   .dv-side .row-item small { font-size: 11px; line-height: 1.2; }
   .dv-side .row-item.day { padding-block: 6px; }
+}
+
+/* ---- Day view, compact (23 Oct 2026, the user, looking at the day: "the ui is so stretched and huge sized can
+   we make this more compact and optimized"). The day's name a pill its own width, as the week's today; the day
+   a column a card or two wide, its hours a set height (cal.js DAY_HH) and only the day's own hours (cal.js
+   drawTimeGrid), next to the day's list, the two together in the middle; the list's rows a line or two each,
+   so a usual day is one page of it (a busy one still in pages, /shared/onescreen.js) ---- */
+.dayview .tg-day b.tg-word { width: max-content !important; max-width: 100%; }
+/* (the hours' names 11px, never smaller: the least that reads, ns/CLAUDE.md 2b) */
+.tg .hour, .tg .hours > .hour-end { font-size: 11px; }
+.dayview > .tg { --ev-max: 360px; width: 100%; max-width: 766px; justify-self: center; align-content: start; }
+@media (min-width: 900px) {
+  .view > .dayview { grid-template-columns: minmax(0, 766px) 300px; justify-content: center; }
+  .dv-side > .dayplan { padding: 10px 12px; }  /* (no !important: the page bar keeps its room under the page with padding-bottom, onescreen.js) */
+  .dv-side > .dayplan > * + * { margin-top: 6px; }
+  .dv-side > .dayplan > .rows + .rows { margin-top: 4px; }
+  /* (its name and moon beside its two + buttons, not one under the other) */
+  .dv-side .dp-head { flex-direction: row !important; flex-wrap: wrap; align-items: center !important; justify-content: space-between; gap: 6px 10px !important; }
+  .dv-side .dp-head > div:first-child { flex: 1 1 auto; }
+  .dv-side .dayplan h3 { font-size: 17px; }
+  .dv-side .dp-moon { margin-top: 3px; gap: 6px; font-size: 12px; }
+  .dv-side .dp-moon svg { width: 16px; height: 16px; }
+  .dv-side .dp-add { flex-direction: column; flex-wrap: nowrap; gap: 4px; }
+  .dv-side .dp-add button { height: 28px; padding: 0 10px; border-radius: 9px; font-size: 12px; white-space: nowrap; }
+  html:is([data-form^="tablet"], [data-form^="phone"]) .dv-side .dp-add button { height: 36px; }
+  .dv-side .dp-info { padding: 6px 9px; border-radius: 10px; }
+  .dv-side .dp-info p { font-size: 12px; line-height: 1.35; }
+  .dv-side .dp-info p + p { margin-top: 2px; }
+  /* (each card: its times, its title, and under the title what it is and where it's from; ".view … .dayplan"
+     outranks Simple's rows for a narrow list, simple.css) */
+  .view .dv-side > .dayplan .row-item.note.has-art { grid-template-columns: 38px minmax(0, 1fr) !important; grid-template-areas: "time title" "time meta";
+    column-gap: 8px !important; row-gap: 1px; align-items: center; padding: 4px 9px !important; min-height: 0 !important; border-radius: 10px; }
+  .view .dv-side > .dayplan .row-item.note.has-art:has(> .row-sym) { grid-template-columns: 38px auto minmax(0, 1fr) !important; grid-template-areas: "time title title" "time kind meta"; }
+  /* (Rich look: a note card's picture a little chip where the others say what they are; Simple shows none) */
+  html[data-ui="rich"] .view .dv-side > .dayplan .row-item.note.has-art:has(> .art) { grid-template-columns: 38px auto minmax(0, 1fr) !important; grid-template-areas: "time title title" "time kind meta"; }
+  .view .dv-side > .dayplan .row-item.note.has-art > span:last-child { display: contents; }
+  .dv-side .row-item.note > time { grid-area: time; font-size: 11px; line-height: 1.25; }
+  .dv-side .row-item.note strong { grid-area: title; font-size: 12.5px; line-height: 1.25; }
+  .dv-side .row-item.note small { grid-area: meta; font-size: 11px; line-height: 1.25; }
+  .view .dv-side > .dayplan .row-item.note > .row-sym { grid-area: kind; width: auto !important; min-height: 0 !important; display: block; align-self: center; line-height: 0; }
+  .view .dv-side > .dayplan .row-item.note > .art { grid-area: kind; width: 30px !important; height: 16px; min-height: 0 !important; border-radius: 4px; -webkit-mask: none; mask: none; }
+  .dv-side .kind-pill { padding: 0 6px; font-size: 11px; line-height: 1.3; }
 }
