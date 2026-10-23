@@ -106,14 +106,16 @@ async function profile([name, dev]: [string, any]) {
     at = h;
     await page.goto(`${base}/phone/#${h}`, { waitUntil: "load" });
     await page.waitForTimeout(wait);
-    if (!(await signedOut(page))) return;
-    console.log(`  (${name}: signed in again at #${h}: the session was taken, by the Fixer's hourly check most likely)`);
+    if (await signedOut(page)) await signIn(h, wait);
+  };
+  async function signIn(h: string, wait: number) {
+    console.log(`  (${name}: signed in again at #${h}: the session was taken, by the Fixer's hourly or after-deploy check most likely)`);
     const now = await renew(mine);
     mine = now.token;
     await ctx.addCookies([{ name: now.cookie, value: now.token, url: base }]);
     await page.reload({ waitUntil: "load" });
     await page.waitForTimeout(wait);
-  };
+  }
   console.log(`${engine} · ${name}`);
   // the bar's sections, and More's screens
   await go("today");
@@ -130,6 +132,7 @@ async function profile([name, dev]: [string, any]) {
     await first.click();
     await page.waitForTimeout(3000);
     at = href.slice(1);
+    if (await signedOut(page)) await signIn(at, 3000);
     if (decodeURIComponent(new URL(page.url()).hash) !== decodeURIComponent(href)) fail(where(h), `tapping ${href} went to ${new URL(page.url()).hash}`);
     else await look(page, where(at));
   }
