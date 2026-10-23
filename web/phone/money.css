@@ -1,0 +1,65 @@
+/* Nova Phone: Money (money.js), the Invoicer made for the phone. Only what phone.css doesn't already have; the
+   theme's colours only, the same on every engine. */
+
+/* words under a part: set in a little from the edge, as the headings are */
+.money-say { margin: -4px 4px 0; overflow-wrap: anywhere; }
+.card .money-say, .sheet .money-say { margin: 0; }
+
+/* buttons with longer words: a little smaller on a narrow phone, never onto a second line */
+.btn.money-small { min-height: 48px; padding: 0 12px; font-size: 14px; }
+.btn.money-fit { padding: 0 12px; font-size: clamp(14px, 4.2vw, 16px); }
+.btn.money-pick { justify-self: start; margin: -8px 0 -4px; }
+
+/* the list: a dot and words where a reminder or receipt waits for an admin */
+.money-waits { display: flex; align-items: center; gap: 6px; color: var(--warn) !important; font-size: 13px !important; }
+.money-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+.row.money-missing { box-shadow: inset 4px 0 0 var(--warn); }
+
+/* one invoice */
+.money-head .money-sumline, .money-sumline { margin: 8px 0 0; color: var(--bright); font-weight: 600; overflow-wrap: anywhere; }
+.card p.money-real { margin: 4px 0 0; }
+.money-stages label { padding: 0 4px; font-size: 14px; }
+.money-stages label.money-auto { color: var(--soft); }
+.money-now { position: absolute; top: 5px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--hi); }
+/* (a narrow phone: the four stages two by two, so none is squashed) */
+@media (max-width: 359px) { .money-stages { grid-auto-flow: row; grid-template-columns: 1fr 1fr; } }
+
+/* the invoice (and the email, and the live preview) at its full height, inside the page */
+.money-doc { position: relative; height: var(--h, 420px); border-radius: 16px; overflow: hidden; background: rgba(var(--deep-rgb), .6); border: 1px solid rgba(var(--hi-rgb), .12); }
+.money-doc iframe { display: block; width: 100%; height: var(--h, 420px); border: 0; background: transparent; }
+.money-doc.money-zoomed iframe { transform: scale(var(--z, 1)); transform-origin: 0 0; }
+
+.money-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.money-h { margin: 0; font: 700 18px/1.3 var(--f-display); color: var(--bright); }
+.money-mail, .money-look { display: grid; gap: 14px; }
+.money-mail > *, .money-look > * { margin: 0 !important; }
+.money-quote { padding: 12px 14px; border-radius: 14px; border: 1px dashed rgba(var(--warn-rgb), .5); background: rgba(var(--deep-rgb), .5); }
+.money-quote p { margin: 0 0 6px !important; }
+.money-quote p:last-child { margin: 0 !important; }
+
+/* the look: each colour a round chip with its band and accent, side by side and onto the next line */
+.money-themes { display: flex; flex-wrap: wrap; gap: 8px; }
+.money-sw { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 0 10px; border-radius: 999px; border: 1px solid rgba(var(--hi-rgb), .2); background: rgba(var(--deep-rgb), .6); font: 600 15px/1 var(--f-body); color: var(--text); white-space: nowrap; cursor: pointer; }
+.money-sw input { position: absolute; opacity: 0; pointer-events: none; }
+.money-sw i { flex: none; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--b, var(--deep)) 50%, var(--a, var(--hi)) 50%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3); }
+.money-sw:has(input:checked) { border-color: var(--hi); background: rgba(var(--hi-rgb), .18); color: var(--bright); }
+.money-sw:has(input:focus-visible) { outline: 2px solid var(--hi); outline-offset: 2px; }
+.money-star { color: var(--gold, var(--hi)); font-weight: 700; }
+
+/* a button the address asked for: shown, briefly */
+.money-flash { box-shadow: 0 0 0 3px var(--hi), 0 0 18px -2px var(--hi) !important; transition: box-shadow .3s; }
+
+/* a reminder or receipt in the history */
+.money-rem { display: grid; gap: 8px; }
+.money-rem > * { margin: 0 !important; }
+
+/* a new invoice: each line's amount, and the live preview */
+.line.money-amt { margin: 0; }
+.money-lines { display: grid; gap: 10px; }
+.money-sums { margin: 0; padding: 0; border-top: 0; }
+.money-live { display: grid; gap: 12px; }
+.money-live .h { margin-top: 6px; }
+
+/* a row of buttons and the words that explain them */
+.money-tools { display: grid; gap: 10px; }
+.money-tools > .money-say { margin: 0 4px; }
