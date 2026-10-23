@@ -274,6 +274,20 @@
   @media (max-width: 1199px), (max-height: 639px) {
     html:where([data-room="computer"]) body .main > .suite-home .suite-app > .pico, html:where([data-room="computer"]) body .main.viewing > .suite-home .suite-app > .pico { width: 36px; height: 36px; border-radius: 10px; }
   }
+  /* The dock stays at least as wide as it was with its fifteen places (23 Oct 2026, the owner: "don't get rid of the
+     nova dock status bar or anything around it"): the status line inside it keeps every part it had (the version,
+     "Here since"…), and the eight places share the width out, each group as wide as its places. The widths are
+     the dock's widths before, at each of its sizes (on Nova Agent's page or round an open panel, the wider). */
+  html:where([data-room="computer"]) { --dock-min: 650px; }
+  @media (min-width: 1200px) and (min-height: 640px) { html:where([data-room="computer"]) { --dock-min: 760px; } }
+  @media (min-width: 1361px) { html:where([data-room="computer"]) { --dock-min: 1180px; } }
+  @media (min-width: 1600px) and (min-height: 860px) { html:where([data-room="computer"]) { --dock-min: 1290px; } }
+  @media (min-width: 2200px) and (min-height: 1100px) { html:where([data-room="computer"]) { --dock-min: 1500px; } }
+  html:where([data-room="computer"]) body .main > #suite-home { min-width: min(100%, var(--dock-min)); }
+  html:where([data-room="computer"]) body .main > .suite-home .suite-groups > .suite-group { flex: 1 1 0; min-width: max-content; }
+  html:where([data-room="computer"]) body .main > .suite-home .suite-groups > .suite-group.apps { flex-grow: 5; }
+  html:where([data-room="computer"]) body .main > .suite-home .suite-groups .suite-grid,
+  html:where([data-room="computer"]) body .main.viewing > .suite-home .suite-groups .suite-grid { grid-auto-columns: minmax(max-content, 1fr); }
   .pico[data-p="console"] { --own: var(--app-console); }
   .pico[data-p="manual"] { --own: var(--app-manual); }
   .suite-app > .pico { width: 52px; height: 52px; border-radius: 14px; }
@@ -912,6 +926,7 @@
     <span class="viewer-name" id="viewer-name" role="button" tabindex="0" title="Switch panel"></span>
     <div class="top-side right">
       <!-- Portal: who Nova Agent works for (found by itself, or "Connect as me"): their planet, name and role -->
+      <nova-manual compact></nova-manual>
       <nova-portal-badge></nova-portal-badge>
       <button type="button" class="btn primary" id="install" hidden><svg class="ico"><use href="#i-down"/></svg><span>Install app</span></button>
       <!-- Every other Nova Agent app, one tap away -->
@@ -990,9 +1005,6 @@
 </div>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
-<!-- The Manual lives in the Backend now (23 Oct 2026): this keeps the ? key and NovaManual.open working, with no
-     button of its own on the top bar or in a corner -->
-<nova-manual nobutton></nova-manual>
 <!-- Files Nova Agent wrote, and the viewer for one -->
 <dialog class="rhythm files-dlg" id="files-dlg" aria-labelledby="files-title">
   <div class="rh" style="position:relative">
@@ -1108,7 +1120,7 @@
     <div class="suite-groups">
       <div class="suite-group tools backend" data-group="backend" aria-label="Backend">
         <div class="suite-grid">
-          <div class="bk-tile"><a class="suite-app" href="/fixer/" data-inside="/fixer/" aria-describedby="bk-d-fixer"><span class="pico" data-p="fixer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-fixer"/></svg></span><b>Fixer</b></a><small id="bk-d-fixer">Hourly checks, and fixes that wait for an admin's Approve</small></div>
+          <div class="bk-tile"><a class="suite-app" href="/fixer/" data-inside="/fixer/" aria-describedby="bk-d-fixer"><span class="pico" data-p="fixer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-fixer"/></svg></span><b>Fixer</b></a><small id="bk-d-fixer">Every screen checked against the four rules</small></div>
           <div class="bk-tile"><a class="suite-app" href="/computer/" data-inside="/computer/" aria-describedby="bk-d-computer"><span class="pico" data-p="computer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-computer"/></svg></span><b>Computer</b></a><small id="bk-d-computer">The VPS live: its Claude sessions, Claude Code, how busy it is, and Nova (admins)</small></div>
           <div class="bk-tile"><a class="suite-app" href="/observatory/" data-inside="/observatory/" aria-describedby="bk-d-observatory"><span class="pico" data-p="observatory" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-observatory"/></svg></span><b>Observatory</b></a><small id="bk-d-observatory">Every project, lines of code and the star map</small></div>
           <div class="bk-tile"><a class="suite-app" href="/console/" data-inside="/console/" aria-describedby="bk-d-console"><span class="pico" data-p="console" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-console"/></svg></span><b>Console</b></a><small id="bk-d-console">Type commands for all of Nova Agent; terminals and the VPS on the studio PC</small></div>

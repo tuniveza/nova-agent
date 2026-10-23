@@ -697,6 +697,9 @@
         const tag = el.tagName.toUpperCase();
         if (el.closest("svg") && tag !== "SVG") continue;
         if (!(MEANS.test(tag) || el.getAttribute("role") || hasWords(el)) || el.closest(IGNORE) || !shown(el)) continue;
+        // (not drawn at all, inside something hidden: no box, so nothing to cut. Its empty box at the page's corner
+        // read as cut off, and Nova Agent's dock and chat were drawn smaller a moment after they showed, 23 Oct 2026)
+        if (!el.getClientRects().length) continue;
         if ([...done].some((d) => d.contains(el))) continue;
         const cut = cutOf(el);
         if (!cut) continue;

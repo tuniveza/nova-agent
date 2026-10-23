@@ -150,10 +150,6 @@
 }
 :host([floating]) { position: fixed; z-index: 2147482000; left: calc(var(--nm-side, 16px) + env(safe-area-inset-left, 0px)); bottom: calc(var(--nm-bottom, 16px) + env(safe-area-inset-bottom, 0px)); }
 :host([hidden]) { display: none; }
-/* nobutton (an attribute): no button of its own; the manual still opens with the ? key and NovaManual.open() (Nova Agent's
-   page, where the Manual is in the Backend: 23 Oct 2026) */
-:host([nobutton]) { position: fixed; left: 0; top: 0; }
-:host([nobutton]) .open { display: none; }
 * { box-sizing: border-box; }
 button, a, input { font: inherit; color: inherit; }
 button { cursor: pointer; }

@@ -397,6 +397,10 @@
     h.tabIndex = 0;
     h.className = "dock-handle";
     h.dataset.sfx = "none";
+    // (it sits on the dock's top edge, half above it, on purpose: the page's cut-off guard, /shared/onescreen.js,
+    // took that for the dock cutting it off and drew the dock's insides smaller a moment after the page showed,
+    // so everything above the dock jumped, 23 Oct 2026)
+    h.dataset.guard = "off";
     const say = () => { const t = `Hide the ${dockName()}`; h.setAttribute("aria-label", t); h.title = t; };
     say();
     PHONE.addEventListener("change", say);
