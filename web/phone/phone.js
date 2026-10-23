@@ -38,7 +38,9 @@
 
   // ---- Screens, and the bar of five sections ----
   const sections = new Map();
-  const TABS = ["today", "inbox", "calendar", "agent", "more"];
+  // The bar: Nova Desk's own tiles (the user: "the nova tiles should actually be like it was on nova desk"):
+  // [screen, name, tile]; Portal is Today with the Inbox inside it (its count on the tile)
+  const TABS = [["today", "Portal", "portal"], ["calendar", "Calendar", "calendar"], ["agent", "Agent", "chat"], ["money", "Invoicer", "invoicer"], ["quests", "Quests", "quests"], ["more", "More", ""]];
   const badges = {};
   function section(def) {
     sections.set(def.id, def);
@@ -46,9 +48,10 @@
     if (current().id === def.id) show();
   }
   function drawTabs() {
-    tabs.innerHTML = TABS.filter((id) => sections.has(id)).map((id) => {
-      const s = sections.get(id);
-      return `<a class="tab" href="#${id}" data-id="${id}">${icon(s.icon || id)}<span>${esc(s.tab || s.name)}</span>${badges[id] ? `<b class="tab-badge">${badges[id] > 99 ? "99+" : badges[id]}</b>` : ""}</a>`;
+    const tile = (p) => (p && window.NovaTile ? window.NovaTile(p) : `<span class="pico more-tile" aria-hidden="true">${icon("more")}</span>`);
+    tabs.innerHTML = TABS.filter(([id]) => sections.has(id)).map(([id, name, p]) => {
+      const n = id === "today" ? badges.inbox : badges[id];
+      return `<a class="tab" href="#${id}" data-id="${id}">${tile(p)}<span>${esc(name)}</span>${n ? `<b class="tab-badge">${n > 99 ? "99+" : n}</b>` : ""}</a>`;
     }).join("");
     mark();
   }
@@ -65,7 +68,8 @@
   }
   function mark() {
     const s = sections.get(current().id);
-    const tab = s ? s.under || s.id : "";
+    // (a screen on the bar lights its tile; Inbox lights Portal's; any other place, More's)
+    const tab = !s ? "" : TABS.some(([id]) => id === s.id) ? s.id : s.under || "more";
     for (const a of tabs.querySelectorAll(".tab")) (a.dataset.id === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   }
 

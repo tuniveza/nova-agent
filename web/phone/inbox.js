@@ -33,6 +33,7 @@
   N.section({
     id: "inbox",
     name: "Inbox",
+    under: "today",
     tile: "portal",
     async draw(box, [part, a, b], ui) {
       if (part === "enquiry") return drawThread(box, a, ui);

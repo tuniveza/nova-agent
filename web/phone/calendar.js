@@ -341,3 +341,5 @@ function drawDayForm(box, it, date, ui) {
 
 // For Today: today's cards, as rows
 N.cal = { load, day: (d) => onDay(entries(d, d), d), row: entryRow };
+// (Today can draw before this file is ready on some engines: draw it again with what this file adds)
+if (!location.hash || location.hash.startsWith("#today")) N.show();

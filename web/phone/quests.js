@@ -166,3 +166,5 @@ function drawForm(box, q, ui) {
 }
 
 N.quests = { now: async () => { await load(); return state ? focusList(quests(), state.now).slice(0, 3) : []; }, row: (q) => row({ href: `#quests/quest/${encodeURIComponent(q.id)}`, icon: "quests", title: q.title, text: q.start ? `${hm(q.start)}–${hm(q.end)}` : "" }) };
+// (Today can draw before this file is ready on some engines: draw it again with what this file adds)
+if (!location.hash || location.hash.startsWith("#today")) N.show();
