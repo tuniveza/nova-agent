@@ -59,7 +59,8 @@
   <div class="group tools" role="group" aria-label="Show">
     <button type="button" id="turn" aria-pressed="false">On its side</button>
     <select id="place" aria-label="Which place">
-      <option value="/agent/">Nova Agent</option>
+      <option value="/phone/">Nova on a phone (what phones open)</option>
+      <option value="/agent/">Nova Agent (the computer version)</option>
       <option value="/portal/">Portal</option>
       <option value="/calendar/">Calendar</option>
       <option value="/notes/">Notes</option>
@@ -99,7 +100,7 @@
   const row = $("row"), main = document.querySelector("main");
   let chosen = new Set(["iPhone 17", "Pixel 10"]);
   let sideways = false;
-  try { const s = JSON.parse(localStorage.getItem("nova-phones") || "null"); if (s) { chosen = new Set(s.chosen); sideways = !!s.sideways; $("place").value = s.place || "/agent/"; } } catch (e) {}
+  try { const s = JSON.parse(localStorage.getItem("nova-phones") || "null"); if (s) { chosen = new Set(s.chosen); sideways = !!s.sideways; $("place").value = s.place || "/phone/"; } } catch (e) {}
   const save = () => { try { localStorage.setItem("nova-phones", JSON.stringify({ chosen: [...chosen], sideways, place: $("place").value })); } catch (e) {} };
 
   for (const p of PHONES) {
