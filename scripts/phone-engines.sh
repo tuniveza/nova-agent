@@ -33,7 +33,7 @@ run() {  # engine
   if [ "$1" = chromium ]; then
     LOOKS_FILE="$session" PHONE_CHECK_PARALLEL=$parallel npx tsx scripts/phone-check.ts chromium "$mode" "$out"
   else
-    podman run --rm --ipc=host --userns=keep-id -e HOME=/tmp -e LOOKS_FILE="$session" -e PHONE_CHECK_PARALLEL=$parallel \
+    podman run --rm --network=host --ipc=host --userns=keep-id -e HOME=/tmp -e LOOKS_FILE="$session" -e PHONE_CHECK_PARALLEL=$parallel \
       -v "$here:$here" $modules -w "$here" "$image" npx tsx scripts/phone-check.ts "$1" "$mode" "$out"
   fi > "$out/$1.log" 2>&1
 }
