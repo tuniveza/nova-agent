@@ -7,7 +7,7 @@
   "use strict";
   const N = window.NovaPhone;
   const { esc, icon, row, list, empty } = N;
-  const data = () => (window.NOVA_MUSIC ? Promise.resolve(window.NOVA_MUSIC) : N.script(N.asset("/agent/assets/music-data.js")).then(() => window.NOVA_MUSIC));
+  const data = () => (window.NOVA_MUSIC ? Promise.resolve(window.NOVA_MUSIC) : N.script(N.asset("/agent/music-data.js")).then(() => window.NOVA_MUSIC));
   // Today's picks: the same all day, new ones tomorrow (as Nova Desk)
   const today = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
   const pick = (a, salt = 0) => a[(today() + salt) % a.length];
