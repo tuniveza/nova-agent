@@ -584,7 +584,7 @@
   const opened = new URLSearchParams(location.search).get("open");
   if (opened) {
     history.replaceState(null, "", location.pathname + location.hash);
-    load("notices.js").then(() => { location.hash = (window.NovaPhone.place && window.NovaPhone.place(opened)) || "#inbox/alerts"; }).catch(() => (location.hash = "#inbox/alerts"));
+    load("notices.js").then(() => { location.hash = (window.NovaPhone.place && window.NovaPhone.place(opened)) || "#today"; }).catch(() => (location.hash = "#today"));
   }
 
   // The bar now, then the screen asked for (its code loads first)

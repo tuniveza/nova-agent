@@ -3,7 +3,9 @@
 // Loaded first thing on Nova Agent's page, so a phone moves on before anything is drawn.
 //   ?app=computer   asked for on purpose (the phone app's "computer version" links): stays, for this visit
 //   localStorage "nova-app": "computer" | "phone" chooses for good on this device ("Always…" in the phone app)
-// A place with no phone section yet (?open=/board/) stays in Nova Agent; one with a section opens it there.
+// Since 23 Oct 2026 Nova Phone has every place of Nova Desk, so every address goes there (the user: phones
+// opening Nova Desk go to Nova Phone; invite links land on its invite screen). Loaded on Nova Desk's page and
+// Portal's.
 (() => {
   "use strict";
   try {
@@ -22,19 +24,10 @@
     const kind = uaMobile && !tabletUA ? "phone" : tabletUA || (coarse && short >= 600) ? "tablet" : coarse ? "phone" : "desktop";
     const upright = screen.height >= screen.width;
     if (chosen !== "phone" && !(kind === "phone" || (kind === "tablet" && upright))) return;
-    // Where it was going: the phone app's section for that place, if it has one
-    const open = q.get("open") || "";
-    const SECTIONS = [
-      [/^\/calendar\//, "calendar"], [/^\/notes\//, "notes"], [/^\/invoicer\/.*[?&]invoice=(\d+)/, "money/invoice/$1"], [/^\/invoicer\//, "money"],
-      [/^\/portal\/.*[?&]view=inbox/, "inbox"], [/^\/portal\/?(\?|$)/, "today"], [/^\/agent\/?$/, "agent"],
-    ];
-    let to = "";
-    if (open) {
-      const hit = SECTIONS.find(([re]) => re.test(open));
-      if (!hit) return; // (no phone section for it yet: Nova Agent opens it)
-      to = hit[1].replace("$1", open.match(hit[0])[1] || "");
-    }
-    location.replace(`/phone/${to ? `#${to}` : ""}`);
+    // Where it was going: Nova Desk's ?open=<address>, or this very page (Portal opened straight, an invite link
+    // /portal/?invite=…); Nova Phone turns any Nova address into its own place (notices.js place())
+    const here = /^\/agent\/?$/.test(location.pathname) ? q.get("open") || "" : location.pathname + location.search;
+    location.replace(here ? `/phone/?open=${encodeURIComponent(here)}` : "/phone/");
   } catch (e) {
     /* (no storage, an old browser: Nova Agent, as before) */
   }

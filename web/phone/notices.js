@@ -52,7 +52,8 @@
         if (open && open !== "pane:chat") return place(open) || "#agent";
         return "#agent";
       }
-      // Portal: its views
+      // Portal: an invite link (its own sign-up screen), then its views
+      if (q.get("invite")) return `#join/${id("invite")}`;
       const v = q.get("view") || u.hash.slice(1).split(/[/?&]/)[0] || "";
       if (v === "enquiries" || v === "inbox") return q.get("enquiry") ? `#inbox/enquiry/${id("enquiry")}` : "#inbox";
       if (u.hash === "#nova") return "#inbox/alerts";
