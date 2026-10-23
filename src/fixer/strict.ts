@@ -14,7 +14,9 @@
 //                 the Nova tiles and dock, the status line, or a row an app marks data-one-row) stay one
 //                 row. Groups of choices (colours, filters, chips, toolbars) may wrap onto more rows: that
 //                 keeps every choice in sight instead of off to the side (the user, 16 Oct 2026). Reading
-//                 text (a paragraph, a message, a note) is left out: it's meant to wrap.
+//                 text (a paragraph, a message, a note) is left out: it's meant to wrap, and so is a card
+//                 marked data-content-card (Calendar's cards: their titles wrap rather than hide, the user,
+//                 23 Oct 2026).
 //   4. works      Every button and link works (the user, 19 Oct 2026: "everything, test or otherwise, should be
 //                 functional and working when it's not impossible"): no link, or button that opens a page,
 //                 leads to a page that isn't there (Not found) or is broken, and a link to a place on its
@@ -185,7 +187,9 @@ export function measureStrict(): StrictFound[] {
   // ---- 3. Never onto the next line ----
   const CONTROL = 'button, a, label, h1, h2, h3, h4, h5, h6, summary, legend, th, select, [role="button"], [role="tab"], [role="menuitem"], [role="link"], [role="option"]';
   const BARS = 'header, nav, footer, [role="toolbar"], [role="tablist"], [role="menubar"], .tabbar, .topbar, .status-line';
-  const READING = 'p, blockquote, pre, code, textarea, [contenteditable="true"], article, .md, .msg, .bubble, .prose, td';
+  // (and a card whose title is content, not a button's words, marked data-content-card: Calendar's note cards,
+  // bookings and quests in Day and Week, whose titles wrap rather than hide; the user, 23 Oct 2026)
+  const READING = 'p, blockquote, pre, code, textarea, [contenteditable="true"], article, .md, .msg, .bubble, .prose, td, [data-content-card]';
   const lines = (el: Element) => {
     let most = 1;
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
