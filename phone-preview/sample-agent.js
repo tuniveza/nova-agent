@@ -1,5 +1,5 @@
 // The phone preview: Agent's sample answers (made-up: no real people). While Agent is on screen (#agent…) these
-// answer the plan, missions, the conversation and its cards, files and Nova Agent's status, kept in memory; on
+// answer the plan, the conversation and its cards, files and Nova Agent's status, kept in memory; on
 // any other screen they pass, so each place keeps its own sample data. Also: notices.js loaded as the real page
 // will load it, a stand-in for the live line (window.NovaSampleNotice({ kind, title, message, questId }) sends a
 // reminder), files' words, and Download / Open working from those words.
@@ -31,30 +31,21 @@
   // ---- The plan ----
   const me = { id: "s1", name: "Jordan Lee", role: "admin" };
   const quests = [
-    { id: "aq1", owner: "s1", title: "Mix the vocals for Night Drive", status: "doing", mode: "working", start: stamp(-30), end: stamp(30), minutes: 60, priority: "high", missionId: "am1", track: "Music", location: "Studio A", phones: [] },
-    { id: "aq2", owner: "s1", title: "Film the teaser clip", status: "todo", mode: "soon", start: stamp(70), end: stamp(115), minutes: 45, priority: "normal", missionId: "am1", track: "Content", location: "Riverside", travelStart: stamp(50), travelMinutes: 20, phones: ["p1"] },
+    { id: "aq1", owner: "s1", title: "Mix the vocals for Night Drive", status: "doing", mode: "working", start: stamp(-30), end: stamp(30), minutes: 60, priority: "high", location: "Studio A", phones: [] },
+    { id: "aq2", owner: "s1", title: "Film the teaser clip", status: "todo", mode: "soon", start: stamp(70), end: stamp(115), minutes: 45, priority: "normal", location: "Riverside", travelStart: stamp(50), travelMinutes: 20, phones: ["p1"] },
     { id: "aq3", owner: "s1", title: "Call the piano tuner", status: "todo", mode: "waiting", start: stamp(150), end: stamp(165), minutes: 15, priority: "normal", from: "Notes · Studio plan", phones: [] },
     { id: "aq4", owner: "s1", title: "Order new XLR cables", status: "done", mode: "done", start: stamp(-200), end: stamp(-170), minutes: 30, priority: "low", phones: [] },
     { id: "aq5", owner: "s1", title: "Practise scales", status: "todo", mode: "waiting", ongoing: true, every: "day", sessions: 4, start: stamp(220), end: stamp(240), minutes: 20, priority: "normal", phones: [] },
     { id: "aq6", owner: "s1", title: "Send the stems to Kai", status: "todo", mode: "questions", start: stamp(-120), end: stamp(-90), minutes: 30, priority: "high", phones: [] },
-    { id: "aq7", owner: "s1", title: "Post the single's artwork", status: "todo", mode: "soon", start: day(1, "11:00"), end: day(1, "11:30"), minutes: 30, priority: "normal", missionId: "am1", track: "Content", phones: [] },
-    { id: "aq8", owner: "s1", title: "Write the press release", status: "todo", mode: "waiting", start: day(2, "10:00"), end: day(2, "11:30"), minutes: 90, priority: "high", missionId: "am1", track: "Release", atRisk: true, deadline: day(2, "18:00"), phones: [] },
+    { id: "aq7", owner: "s1", title: "Post the single's artwork", status: "todo", mode: "soon", start: day(1, "11:00"), end: day(1, "11:30"), minutes: 30, priority: "normal", phones: [] },
+    { id: "aq8", owner: "s1", title: "Write the press release", status: "todo", mode: "waiting", start: day(2, "10:00"), end: day(2, "11:30"), minutes: 90, priority: "high", atRisk: true, deadline: day(2, "18:00"), phones: [] },
     { id: "aq9", owner: "s1", title: "Back up the session drives", status: "todo", mode: "waiting", minutes: 90, priority: "normal", phones: [] },
-    { id: "aq10", owner: "s1", title: "Book the launch venue", status: "todo", mode: "waiting", minutes: 60, priority: "high", missionId: "am1", track: "Release", phones: [] },
+    { id: "aq10", owner: "s1", title: "Book the launch venue", status: "todo", mode: "waiting", minutes: 60, priority: "high", phones: [] },
     { id: "ap1", owner: "s1", title: "Stretch", status: "doing", mode: "working", ongoing: true, every: "interval", everyMinutes: 1, minutes: 0.5, priority: "normal", phones: [] },
     { id: "aq11", owner: "s2", ownerName: "Sam Okoro", title: "Restring the house guitar", status: "todo", mode: "waiting", start: stamp(100), end: stamp(130), minutes: 30, priority: "normal", phones: [] },
-    { id: "aq12", owner: "s1", title: "Sign off the mixes", status: "done", mode: "done", start: day(-3, "15:00"), end: day(-3, "16:00"), minutes: 60, missionId: "am1", track: "Music", phones: [] },
+    { id: "aq12", owner: "s1", title: "Sign off the mixes", status: "done", mode: "done", start: day(-3, "15:00"), end: day(-3, "16:00"), minutes: 60, phones: [] },
   ];
-  const missions = [
-    { id: "am1", owner: "s1", title: "Release the Night Drive EP", summary: "Four singles, a video and a launch show by spring.", request: "Release the EP by spring", status: "active", deadline: day(120), created: iso(9000), researched: day(-6),
-      tracks: [{ name: "Music", colour: "#C7A4FF" }, { name: "Content", colour: "#FFC069" }, { name: "Release", colour: "#4CC9FF" }],
-      milestones: [{ id: "ams0", title: "Mixes signed off", at: day(-3, "16:00"), track: "Music", done: true }, { id: "ams1", title: "Single 1 out", at: day(3, "18:00"), track: "Release", done: false }, { id: "ams2", title: "Video shoot", at: day(20, "10:00"), track: "Content", done: false }, { id: "ams3", title: "Launch show", at: day(60, "20:00"), track: "Release", done: false }],
-      strategy: [{ heading: "Release strategy", body: "- One single a month, on Fridays at 6pm\n- A teaser clip a week before each\n- The EP itself the week after the last single" }, { heading: "Content strategy", body: "Short clips from the sessions, **three a week**, filmed on Sundays." }],
-      assumptions: ["The mixes are finished by next week", "Sam can film on Sundays"], questions: ["Who's filming the video?", "Which day suits the launch show?"],
-      refinements: [{ at: day(-2), text: "The mixes for tracks 1 and 2 are done." }],
-      research: [{ text: "Fridays are the usual release day for new music.", title: "Release day guide", url: "https://example.com/release-day" }] },
-    { id: "am2", owner: "s2", ownerName: "Sam Okoro", title: "Learn Ableton Live", summary: "From the basics to a finished track in six weeks.", status: "paused", deadline: "", created: iso(20000), tracks: [], milestones: [], strategy: [], assumptions: [], questions: [], refinements: [], research: [], researched: "" },
-  ];
+  const missions = []; // (Missions are gone from Nova, 23 Oct 2026)
   let blocks = [{ id: "ab1", owner: "s1", reason: "Dentist", start: stamp(300), end: stamp(360) }, { id: "ab2", owner: "s1", reason: "Away at the festival", start: day(4, "09:00"), end: day(4, "22:00") }];
   let rhythm = { wake: "07:30", sleep: "23:30", startUpMinutes: 30, windDownMinutes: 45, bufferMinutes: 10, remindMinutesBefore: 10, breakAfterMinutes: 120, breakMinutes: 15, maxQuestHoursPerDay: 8, horizonDays: 14, homeBase: "Studio", daysOff: [0], checkIns: true, dailyBriefing: true, phonePush: true, paceLimits: true };
   const isPulse = (q) => q.ongoing && q.every === "interval" && q.everyMinutes < 5;
@@ -187,9 +178,9 @@
     }
     if (p === "/actions/missions") {
       await new Promise((res) => setTimeout(res, 900));
-      const m = { id: `am${missions.length + 5}`, owner: "s1", title: String(body.request || "New mission").split(/[.,:]/)[0].slice(0, 60), summary: body.request, request: body.request, status: "active", deadline: body.deadline || "", created: new Date().toISOString(), tracks: [{ name: "Plan", colour: "#4CC9FF" }], milestones: [{ id: "amn1", title: "First step done", at: day(7, "18:00"), track: "Plan", done: false }], strategy: [{ heading: "The approach", body: "- Start small\n- Keep going" }], assumptions: [], questions: ["When are you free to work on it?"], refinements: [], research: [], researched: "" };
+      const m = { id: `am${missions.length + 5}`, owner: "s1", title: String(body.request || "New mission").split(/[.,:]/)[0].slice(0, 60), summary: body.request, request: body.request, status: "active", deadline: body.deadline || "", created: new Date().toISOString(), tracks: [{ name: "Plan", colour: "#4CC9FF" }], milestones: [{ id: "amn1", title: "First step done", at: day(7, "18:00"), done: false }], strategy: [{ heading: "The approach", body: "- Start small\n- Keep going" }], assumptions: [], questions: ["When are you free to work on it?"], refinements: [], research: [], researched: "" };
       missions.unshift(m);
-      quests.push({ id: `${m.id}-q1`, owner: "s1", title: "Make a start", status: "todo", mode: "waiting", start: day(1, "10:00"), end: day(1, "11:00"), minutes: 60, missionId: m.id, track: "Plan", phones: [] });
+      quests.push({ id: `${m.id}-q1`, owner: "s1", title: "Make a start", status: "todo", mode: "waiting", start: day(1, "10:00"), end: day(1, "11:00"), minutes: 60, missionId: m.id, phones: [] });
       changed();
       return { ok: true, result: { mission: m, quests: quests.filter((x) => x.missionId === m.id), atRisk: 0 } };
     }
