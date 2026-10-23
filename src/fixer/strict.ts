@@ -271,6 +271,10 @@ export function linksOnScreen(): StrictLink[] {
     const what = name(form ? el.querySelector('button, [type="submit"]') || el : el);
     if (raw.startsWith("#")) {
       const id = decodeURIComponent(raw.slice(1));
+      // (Nova Phone goes from screen to screen by the address's #: a link there is to one of its screens, fine when
+      // Nova Phone has that screen, not to a place on the page)
+      const app = (window as any).NovaPhone;
+      if (app && typeof app.has === "function") { if (!app.has(id.split(/[/?]/)[0] || "today") && !document.getElementById(id)) out.push({ what, url: raw, missing: true }); continue; }
       if (id && id !== "top" && !document.getElementById(id) && !document.getElementsByName(id).length) out.push({ what, url: raw, missing: true });
       continue;
     }
