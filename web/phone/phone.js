@@ -333,7 +333,12 @@
   const pad = (n) => String(n).padStart(2, "0");
   const localStamp = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const today = () => localStamp(new Date()).slice(0, 10);
-  const asDate = (v) => { if (!v) return null; const s = String(v); const d = new Date(/^\d{4}-\d\d-\d\d \d/.test(s) ? s.replace(" ", "T") + "Z" : s); return isNaN(d) ? null : d; };
+  // (a date in words, "2026-10-23 09:00:00" from the database (UTC), or a number: seconds or milliseconds)
+  const asDate = (v) => {
+    if (!v) return null;
+    if (typeof v === "number" || /^\d{9,13}$/.test(String(v))) { const n = Number(v); return new Date(n < 1e12 ? n * 1000 : n); }
+    const s = String(v); const d = new Date(/^\d{4}-\d\d-\d\d \d/.test(s) ? s.replace(" ", "T") + "Z" : s); return isNaN(d) ? null : d;
+  };
   function ago(v) {
     const d = asDate(v);
     if (!d) return "";
