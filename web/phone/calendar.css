@@ -165,3 +165,80 @@ a.cal-banner:active { filter: brightness(1.12); }
 .cal-undo > span { min-width: 0; overflow-wrap: anywhere; }
 .cal-undo:not(:has(button)) { padding-right: 18px; }
 .cal-undo-btn { flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--accent); color: var(--on-accent); font: 700 15px/1 var(--f-body); white-space: nowrap; }
+
+/* ---- Compact (the user, 23 Oct 2026: "make the whole nova phone calender compact and optimized"): more of the
+   day on one screen. The views and their bar a size smaller; one-line day names; slimmer rows, banners, chips and
+   month cells. Taps stay 40px or more; words wrap, never cut; the forms and Today's rows keep their own sizes. ---- */
+.cal-views { gap: 10px; }
+.cal-bar { display: grid; gap: 6px; }
+.cal-views .seg { padding: 3px; gap: 3px; border-radius: 14px; }
+.cal-views .seg-a { min-height: 40px; font-size: 14px; border-radius: 11px; }
+.cal-views .cal-stepper { grid-template-columns: 40px minmax(0, 1fr) 40px; gap: 2px; }
+.cal-views .cal-stepper.with-today { grid-template-columns: 40px minmax(0, 1fr) 40px auto; }
+.cal-views .cal-stepper .icon-btn { width: 40px; height: 40px; }
+.cal-views .cal-stepper .icon-btn svg.i { width: 20px; height: 20px; }
+.cal-views .cal-jump { min-height: 40px; border-radius: 12px; }
+.cal-views .cal-jump-t { font-size: 16px; }
+.cal-views .cal-today { min-height: 40px; padding: 0 12px; font-size: 14px; }
+/* a phone on its side: the views and the date in one slim bar */
+@media (max-height: 500px) {
+  .cal-bar { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; gap: 8px; }
+}
+@media (min-width: 640px) and (max-height: 500px) { .cal-bar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+/* one day: its name, the moon and "Today" on one line */
+.cal-views .cal-plan { gap: 8px; }
+.cal-views .cal-dhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.cal-views .cal-dname { font-size: 18px; line-height: 1.3; }
+.cal-views .cal-moon { margin: 0; gap: 6px; font-size: 13px; align-self: center; }
+.cal-views .cal-moon svg { width: 16px; height: 16px; }
+.cal-views .cal-sum { gap: 2px; padding: 8px 12px; border-radius: 14px; font-size: 14px; line-height: 1.4; }
+.cal-views .cal-sky-row { gap: 6px 8px; padding: 6px 6px 6px 12px; border-radius: 14px; font-size: 14px; }
+.cal-views .btn.cal-sm { min-height: 40px; padding: 0 12px; font-size: 13px; }
+.cal-views .cal-banner { gap: 4px; min-height: 72px; padding: 10px 12px; border-radius: 14px; }
+.cal-views .cal-banner.big { min-height: 96px; }
+.cal-views .cal-banner-kicker { font-size: 11px; }
+.cal-views .cal-banner small { font-size: 13px; }
+.cal-views .dc-title { font-size: 18px; }
+.cal-views .aes-orbit .dc-title { font-size: 16px; }
+.cal-views .aes-constellation .dc-title { font-size: 14px; }
+.cal-views .aes-celestial .dc-title { font-size: 22px; }
+
+/* rows: slimmer, the times on a smaller picture */
+.cal-views .list { border-radius: 16px; }
+.cal-views .row { gap: 10px; min-height: 52px; padding: 7px 10px 7px 12px; }
+.cal-views .row-main { gap: 0; }
+.cal-views .row-main b { font-size: 15px; line-height: 1.3; }
+.cal-views .row-main span { font-size: 13px; line-height: 1.35; }
+.cal-views .row-end svg.i { width: 16px; height: 16px; }
+.cal-views .cal-lead { width: 46px; min-height: 42px; padding: 3px 2px; border-radius: 10px; font-size: 13px; line-height: 1.15; }
+.cal-views .cal-lead small { font-size: 12px; }
+.cal-views .cal-what { font-size: 13px; }
+.cal-views .row.cal-gap { min-height: 44px; }
+.cal-views .row.cal-gap .row-lead { min-width: 46px; font-size: 12px; }
+.cal-views .cal-now { padding: 2px 12px; font-size: 12px; }
+.cal-views .add-line { min-height: 44px; padding: 0 14px; border-radius: 14px; font-size: 14px; }
+.cal-views .btns { gap: 8px; }
+.cal-views .cal-plan .btn { min-height: 44px; padding: 0 14px; font-size: 15px; border-radius: 14px; }
+.cal-views .cal-plan .btn.quiet { min-height: 40px; }
+
+/* week: each day a tight block, its name one slim line */
+.cal-views .cal-week { gap: 8px; }
+.cal-views .cal-wday { gap: 6px; padding: 6px; margin: 0 -6px; border-radius: 16px; }
+.cal-views .cal-whead { min-height: 40px; padding: 0 6px; font-size: 12px; }
+.cal-views .cal-chiprow { gap: 6px; }
+.cal-views .cal-dchip, .cal-views .cal-skychip { min-height: 40px; padding: 4px 12px; border-radius: 11px; font-size: 13px; }
+@media (min-width: 700px) { .cal-views .cal-week { gap: 8px 10px; } .cal-views .cal-wday { margin: 0; } }
+
+/* month: the strip as small chips, the cells a little shorter */
+.cal-views .cal-strip { gap: 6px; }
+.cal-views .cal-strip-item { min-height: 40px; align-items: center; padding: 4px 10px; border-radius: 11px; font-size: 13px; line-height: 1.3; }
+.cal-views .cal-month { padding: 4px; border-radius: 16px; }
+.cal-views .cal-mhead span { padding: 2px 0 4px; font-size: 11px; }
+.cal-views .cal-mday { min-height: 50px; padding: 3px 2px; border-radius: 8px; }
+.cal-views .cal-mnum { min-height: 18px; font-size: 13px; }
+@media (min-width: 560px) { .cal-views .cal-mday { min-height: 60px; padding: 4px 3px; } }
+
+/* list: the day headings closer to their cards */
+.cal-views .cal-results { gap: 8px; }
+.cal-views .cal-results .h { margin: 6px 2px 0; }

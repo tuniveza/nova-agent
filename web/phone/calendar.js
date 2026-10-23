@@ -485,8 +485,10 @@ N.section({
     if (valid(a)) cursor = a;
     ui.action({ icon: "plus", label: "New note card", href: `#calendar/new/${cursor}` });
     const tabs = `<div class="seg" role="tablist" aria-label="View">${[["day", "Day"], ["week", "Week"], ["month", "Month"], ["list", "List"]].map(([v, l]) => `<a role="tab" class="seg-a" href="#calendar/${v}/${cursor}" aria-selected="${v === view}">${l}</a>`).join("")}</div>`;
-    const body = view === "day" ? dayView() : view === "month" ? monthView() : view === "list" ? listView() : weekView();
-    box.innerHTML = `${tabs}${statusHtml()}<div class="cal-view" data-cal-view>${body}</div>${footerHtml()}`;
+    // (the view's own bar, before / the date / after, beside the views: one bar, side by side on a phone on its side)
+    const [stepBar, body] = view === "day" ? dayView() : view === "month" ? monthView() : view === "list" ? listView() : weekView();
+    box.classList.add("cal-views");
+    box.innerHTML = `<div class="cal-bar">${tabs}${stepBar}</div>${statusHtml()}<div class="cal-view" data-cal-view>${body}</div>${footerHtml()}`;
     decorate(box);
   },
 });
@@ -624,7 +626,7 @@ function planHtml(d) {
 }
 function dayView() {
   const d = cursor;
-  return `${stepper(`#calendar/day/${addDays(d, -1)}`, d === today() ? "Today" : dayLabel(d), `#calendar/day/${addDays(d, 1)}`, d !== today())}${planHtml(d)}`;
+  return [stepper(`#calendar/day/${addDays(d, -1)}`, d === today() ? "Today" : dayLabel(d), `#calendar/day/${addDays(d, 1)}`, d !== today()), planHtml(d)];
 }
 function weekView() {
   const from = mondayOf(cursor), to = addDays(from, 6), t = today();
@@ -646,7 +648,7 @@ function weekView() {
       ${chips.length ? `<div class="cal-chiprow">${chips.join("")}</div>` : ""}
       ${dayRows(d, rest)}</section>`;
   }).join("");
-  return `${stepper(`#calendar/week/${addDays(from, -7)}`, label, `#calendar/week/${addDays(from, 7)}`, !(from <= t && t <= to))}<div class="cal-week">${blocks}</div>`;
+  return [stepper(`#calendar/week/${addDays(from, -7)}`, label, `#calendar/week/${addDays(from, 7)}`, !(from <= t && t <= to)), `<div class="cal-week">${blocks}</div>`];
 }
 function monthView() {
   const first = `${cursor.slice(0, 7)}-01`;
@@ -671,10 +673,10 @@ function monthView() {
       ${days.length ? `<span class="cal-mcard"${wearAttr(days[0].item.theme)}>${esc(titleOf(days[0]))}</span>` : sky ? `<span class="cal-msky">${esc(sky)}</span>` : ""}
       ${shown.map((e) => `<span class="cal-mt" data-c="${esc(e.color)}">${esc(titleOf(e).replace(/^quest:\s*/i, ""))}</span>`).join("")}${shown.length < rest.length ? '<span class="cal-mmore">More</span>' : ""}</a>`);
   }
-  return `${stepper(`#calendar/month/${prev}`, `${MONTHS[Number(first.slice(5, 7)) - 1]} ${first.slice(0, 4)}`, `#calendar/month/${next}`, t.slice(0, 7) !== first.slice(0, 7))}
+  return [stepper(`#calendar/month/${prev}`, `${MONTHS[Number(first.slice(5, 7)) - 1]} ${first.slice(0, 4)}`, `#calendar/month/${next}`, t.slice(0, 7) !== first.slice(0, 7)), `
     ${stripHtml(first, last)}
     <div class="cal-month"><div class="cal-mhead" aria-hidden="true">${["M", "T", "W", "T", "F", "S", "S"].map((x) => `<span>${x}</span>`).join("")}</div><div class="cal-mgrid">${cells.join("")}</div></div>
-    ${planHtml(cursor)}`;
+    ${planHtml(cursor)}`];
 }
 // This month at a glance: day cards, named full moons and special days, each a tap away
 function stripHtml(first, last) {
@@ -692,9 +694,9 @@ function stripHtml(first, last) {
 let query = "";
 function listView() {
   const prev = `#calendar/list/${addDays(cursor, -60)}`, next = `#calendar/list/${addDays(cursor, 60)}`;
-  return `${stepper(prev, `From ${shortDate(cursor)}`, next, cursor !== today())}
+  return [stepper(prev, `From ${shortDate(cursor)}`, next, cursor !== today()), `
     <form class="search" role="search" data-cal-search><label class="field"><span class="sr">Search note cards and day cards</span><input class="input" type="search" name="q" value="${esc(query)}" placeholder="Search note cards and day cards" autocomplete="off" enterkeyhint="search"></label></form>
-    <div class="cal-results" data-cal-results>${listBody()}</div>`;
+    <div class="cal-results" data-cal-results>${listBody()}</div>`];
 }
 function listBody() {
   if (query) {
@@ -763,7 +765,7 @@ document.addEventListener("touchend", (e) => {
   swipe = null;
   const dx = e.changedTouches[0].clientX - s.x, dy = e.changedTouches[0].clientY - s.y;
   if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6 && Date.now() - s.t < 600) {
-    const a = s.v.querySelector(`[data-step="${dx < 0 ? "next" : "prev"}"]`);
+    const a = document.querySelector(`[data-cal-stepper] [data-step="${dx < 0 ? "next" : "prev"}"]`);
     if (a) location.hash = a.getAttribute("href");
   }
 }, { passive: true });

@@ -144,6 +144,10 @@ body { font-size: 15px; }
 @media (prefers-reduced-motion: reduce) { .nt.nt-hold { animation: none; box-shadow: 0 0 0 2px var(--hi); } }
 /* a phone on its side: one slim row, as before */
 @media (max-height: 500px) {
+  /* (and a slim top bar: the short screen goes to the page) */
+  .app > .top { margin-top: max(4px, env(safe-area-inset-top)); min-height: 44px; padding: 1px 6px; border-radius: 14px; }
+  .top .icon-btn { width: 40px; height: 40px; }
+  .page { padding-bottom: 12px; }
   .app > .tabs { margin-bottom: max(4px, env(safe-area-inset-bottom)); padding: 4px; }
   .nt, .nt.tall { min-height: 42px; height: 42px; padding: 0; }
   .nt.tall { width: 52px; }
