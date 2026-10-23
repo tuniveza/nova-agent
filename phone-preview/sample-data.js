@@ -98,6 +98,14 @@
     if (u.origin !== "https://nova.example" && !String(input).startsWith("/")) return real(input, opts);
     const method = (opts.method || "GET").toUpperCase();
     await new Promise((r) => setTimeout(r, 250));
+    // Each place's own sample answers (sample-<place>.js push handlers here): (url, method, body) → the data,
+    // { status, body } for an error, or undefined to pass
+    let sent = null;
+    try { sent = opts.body && typeof opts.body === "string" ? JSON.parse(opts.body) : opts.body || null; } catch (e) { sent = opts.body; }
+    for (const h of window.NovaSampleExtra || []) {
+      const out = await h(u, method, sent);
+      if (out !== undefined) return out && out.status && "body" in out ? json(out.body, out.status) : json(out);
+    }
     if (method !== "GET") {
       const body = opts.body ? JSON.parse(opts.body) : {};
       if (u.pathname === "/actions/chat") { chat.push({ role: "user", content: body.message }); const reply = { role: "assistant", content: "This is the preview, so I can't really answer, but this is where my reply appears.", actions: [] }; chat.push(reply); return json({ ok: true, reply: reply.content, actions: [] }); }

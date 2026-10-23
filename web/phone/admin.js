@@ -1,10 +1,6 @@
-// Nova Phone: the admin places (Nova Desk's Portal → Admin, and Computer, Fixer, Visualizer). For admins;
-// anyone else is told it's for admins.
+// Nova Phone: the admin places (Nova Desk's Portal → Admin). For admins; anyone else is told it's for admins.
 //   Google       connected or not; each part on or off, sync now; Drive, Sheets, Calendar, Contacts links
-//   Computer     the server: health, memory, disk, backups, jobs, problems; back up now, restart (two steps)
 //   Test stuff   what looks like a test, and why: delete (with what goes with it), not a test, put back
-//   Fixer        the four rules on every screen: problems by place, a check now
-//   Visualizer   Nova Agent's helper for Acuity: its tasks, run one, the steps as they happen
 (() => {
   "use strict";
   const N = window.NovaPhone;
@@ -45,30 +41,6 @@
     },
   });
 
-  // ---- Computer: the server ----
-  N.section({
-    id: "computer", name: "Computer", tile: "computer",
-    async draw(box, path, ui) {
-      let d;
-      try { d = await api(`${A}desk`); } catch (err) { if (adminsOnly(err)) return forAdmins(box); throw err; }
-      const v = d.vps || {}, h = d.here || {}, svc = v.services || {};
-      const on = (n) => /active|running|on/i.test(String(svc[n] ?? ""));
-      box.innerHTML = `<div class="card"><p class="kicker">${v.reachable ? "Running" : "Can't reach it"}</p><h2 class="card-title">${esc(v.host || "The server")}</h2>
-          <div class="facts">${[["Up for", v.uptimeSeconds ? `${Math.floor(v.uptimeSeconds / 86400)} days ${Math.floor((v.uptimeSeconds % 86400) / 3600)} h` : ""], ["Version", v.version || h.version], ["Nova Bot since", ago(v.novaSince)], ["Nova Agent since", ago(v.agentSince)], ["Last backup", ago(v.lastBackup)], ["Last data copy", ago(v.lastSync)], ["Why not", v.reason]].filter(([, x]) => x).map(([k, x]) => `<div class="fact"><span>${k}</span><b>${esc(x)}</b></div>`).join("")}</div></div>
-        ${v.cpu || v.memory || v.disk ? `<div class="card">${v.cpu ? `<p class="small"><b>${esc(v.cpu.count)} processors</b> · busy ${esc((v.cpu.load || []).join(" · "))}</p>` : ""}${v.memory ? meter("Memory", v.memory.total - v.memory.free, v.memory.total, `${gb(v.memory.total - v.memory.free)} of ${gb(v.memory.total)}`) : ""}${v.disk ? meter("Disk", v.disk.total - v.disk.free, v.disk.total, `${gb(v.disk.free)} free of ${gb(v.disk.total)}`) : ""}</div>` : ""}
-        ${Object.keys(svc).length ? `<h3 class="h">Services</h3>${list(Object.keys(svc).map((n) => row({ icon: on(n) ? "check" : "globe", title: n.replace(/\.(service|timer)$/, ""), end: `<span class="pill ${on(n) ? "ok" : "warn"}">${esc(svc[n])}</span>` })))}` : ""}
-        ${(h.jobs || []).length ? `<h3 class="h">Jobs: last run</h3>${list(h.jobs.slice(0, 14).map((j) => row({ icon: "clock", title: j.name, text: `${ago(j.at)}${j.note ? ` · ${j.ok ? "" : "Problem: "}${j.note}` : ""}` })))}` : ""}
-        ${(v.problems || []).length ? `<h3 class="h">Recent problems</h3><div class="card">${v.problems.slice(-8).map((p) => `<p class="small pre">${esc(p)}</p>`).join("")}</div>` : ""}
-        ${d.canAct ? `<div class="btns two"><button type="button" class="btn" data-do="backup">Back up now</button><button type="button" class="btn" data-do="restart">Restart Nova Bot</button><button type="button" class="btn" data-do="restart-agent">Restart Nova Agent</button><button type="button" class="btn" data-do="restart-web">Restart the web front</button></div>` : `<p class="muted small">Backups and restarts need an admin signed in on this phone's browser.</p>`}`;
-      widths(box);
-      box.querySelectorAll("[data-do]").forEach((b) => b.addEventListener("click", async () => {
-        const what = b.dataset.do;
-        if (what !== "backup" && !(await confirm({ title: `${b.textContent}?`, text: "Nova is unreachable for a few seconds.", ok: b.textContent }))) return;
-        await busy(b, "…", async () => { try { await post(`${A}desk/action`, { do: what }); toast(what === "backup" ? "Backing up" : "Restarting"); } catch (err) { toast(err.message, true); } });
-      }));
-    },
-  });
-
   // ---- Test stuff ----
   N.section({
     id: "tests", name: "Test stuff", tile: "portal",
@@ -99,44 +71,4 @@
     },
   });
 
-  // ---- Fixer ----
-  N.section({
-    id: "fixer", name: "Fixer", tile: "fixer",
-    async draw(box, [place], ui) {
-      let s;
-      try { s = await api("/fixer-api/state"); } catch (err) { if (adminsOnly(err)) return forAdmins(box); if (err.status === 503 || err.status === 502) return pcOff(box, "The Fixer"); throw err; }
-      const ps = s.problems || [];
-      box.innerHTML = `<p class="muted small">Checks all of Nova every ${esc(s.every || "30 minutes")} against four rules.${s.last ? ` Last check ${esc(ago(s.last.at))}, ${esc(s.last.screens)} screens.` : ""}${s.running ? " Checking now…" : ""}</p>
-        ${list((s.rules || []).map((r) => row({ icon: r.problems ? "globe" : "check", title: r.title, text: r.text, end: `<span class="pill ${r.problems ? "bad" : "ok"}">${r.problems ? `${r.problems} problem${r.problems > 1 ? "s" : ""}` : "Kept everywhere"}</span>` })))}
-        ${ps.length ? `<h3 class="h">Problems</h3>${list(ps.slice(0, 60).map((p) => row({ icon: "search", title: `${p.place}: ${p.what}`, text: `${p.why}${(p.at || []).length ? ` · ${p.at.map((a) => a.size).join(", ")}` : ""}` })))}` : empty({ icon: "check", title: "Nothing to fix ✦" })}
-        <button type="button" class="btn main wide" data-check${s.running ? " disabled" : ""}>${icon("refresh")} ${s.running ? "Checking…" : "Check now"}</button>`;
-      box.querySelector("[data-check]").addEventListener("click", async (e) => { try { await post("/actions/fixer/check", {}, HDR); toast("Checking: it takes a few minutes"); N.show(); } catch (err) { toast(err.message, true); } });
-    },
-  });
-
-  // ---- Visualizer ----
-  let stream = null;
-  addEventListener("hashchange", () => { if (stream && !location.hash.startsWith("#visualizer")) { stream.close(); stream = null; } });
-  N.section({
-    id: "visualizer", name: "Nova", tile: "visualizer",
-    async draw(box, path, ui) {
-      let tasks;
-      try { tasks = await api("/tasks"); } catch (err) { if (adminsOnly(err)) return forAdmins(box); if (err.status === 503 || err.status === 502) return pcOff(box, "The Visualizer"); throw err; }
-      box.innerHTML = `<p class="muted small">Nova Agent's helper for Acuity's pages: run a task and watch each step.</p>
-        <div class="btns two">${(tasks || []).map((t) => `<button type="button" class="btn" data-run="${esc(t.id)}">${icon("play")} ${esc(t.label)}</button>`).join("")}</div>
-        <h3 class="h">Steps, live</h3><ul class="list" id="steps"><li><div class="row"><span class="row-lead">${icon("clock")}</span><span class="row-main"><span>Waiting for steps…</span></span></div></li></ul>`;
-      box.querySelectorAll("[data-run]").forEach((b) => b.addEventListener("click", () => busy(b, "Running…", async () => { try { const r = await post(`/actions/run/${encodeURIComponent(b.dataset.run)}`, {}, HDR); toast(r.message || "Done"); } catch (err) { toast(err.message, true); } })));
-      if (stream) stream.close();
-      stream = new EventSource("/events");
-      const steps = box.querySelector("#steps");
-      let first = true;
-      stream.onmessage = (e) => {
-        let ev; try { ev = JSON.parse(e.data); } catch (x) { return; }
-        if (!ev || !ev.message) return;
-        if (first) { steps.innerHTML = ""; first = false; }
-        steps.insertAdjacentHTML("afterbegin", row({ icon: ev.level === "error" ? "globe" : "check", title: ev.message, text: [ev.part, new Date(ev.time || Date.now()).toLocaleTimeString("en-GB")].filter(Boolean).join(" · ") }));
-        while (steps.children.length > 60) steps.lastElementChild.remove();
-      };
-    },
-  });
 })();

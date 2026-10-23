@@ -93,8 +93,9 @@
   const FILES = {
     today: ["inbox.js", "today.js", "calendar.js*", "quests.js*"], inbox: ["inbox.js"], calendar: ["calendar.js*"], quests: ["quests.js*"],
     agent: ["agent.js"], notes: ["notes.js"], money: ["money.js"], clients: ["clients.js"], outreach: ["outreach.js"], you: ["you.js"], crew: ["you.js"],
-    google: ["admin.js"], computer: ["admin.js"], tests: ["admin.js"], fixer: ["admin.js"], visualizer: ["admin.js"],
-    index: ["memory.js"], board: ["board.js"], help: ["helpers.js"], observatory: ["helpers.js"], console: ["helpers.js"], more: ["more.js"],
+    google: ["admin.js"], tests: ["admin.js"], computer: ["computer.js"], fixer: ["fixer.js"], visualizer: ["visualizer.js"],
+    index: ["memory.js"], board: ["board.js"], help: ["manual.js"], observatory: ["observatory.js"], console: ["console.js"], more: ["more.js"],
+    lossless: ["lossless.js"], bookings: ["bookings.js"], bot: ["bot.js"],
   };
   // (its name and tile in the title bar while it comes)
   const NAMES = {
@@ -102,6 +103,7 @@
     money: "Money:invoicer", clients: "Clients:portal", outreach: "Outreach:portal", you: "You:portal", crew: "The crew:portal", google: "Google:portal",
     computer: "Computer:computer", tests: "Test stuff:portal", fixer: "Fixer:fixer", visualizer: "Nova:visualizer", index: "Index:index", board: "Board:board",
     help: "Manual:manual", observatory: "Observatory:observatory", console: "Console:console", more: "More",
+    lossless: "Lossless:lossless", bookings: "Booking tools:calendar", bot: "Website bot:portal",
   };
   const loading = new Map();
   function load(f) {
@@ -118,6 +120,17 @@
       document.head.append(s);
     }));
     return loading.get(file);
+  }
+  // A place's own stylesheet (money.css and so on), added once when the place first draws: await N.css("money.css")
+  const sheets = new Map();
+  function css(file) {
+    if (!sheets.has(file)) sheets.set(file, new Promise((resolve) => {
+      if (document.querySelector(`link[href="${file}"], link[href="/phone/${file}"]`)) return resolve();
+      const l = Object.assign(document.createElement("link"), { rel: "stylesheet", href: file });
+      l.onload = l.onerror = () => resolve();
+      document.head.append(l);
+    }));
+    return sheets.get(file);
   }
   let rested = false;
   function loadRest() {
@@ -346,7 +359,7 @@
   queueMicrotask(show);
 
   window.NovaPhone = {
-    section, has: (id) => sections.has(id) || !!FILES[id], show, badge, api, post, esc, icon, row, list, field, toggle, choices, empty, oops, skeleton,
+    section, has: (id) => sections.has(id) || !!FILES[id], show, css, badge, api, post, esc, icon, row, list, field, toggle, choices, empty, oops, skeleton,
     toast, confirm, choose, form, busy, today, localStamp, asDate, ago, money, initials, signInCard, paint,
   };
 })();
