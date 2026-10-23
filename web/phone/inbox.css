@@ -1,8 +1,10 @@
 /* Nova Phone: Inbox's own parts (inbox.js). Theme variables only; everything else is phone.css's. */
 
-/* The four parts along the top: side by side, onto a second line on a narrow phone (a name never wraps) */
-.inbox-parts { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 16px; background: rgba(var(--deep-rgb), .8); border: 1px solid rgba(var(--hi-rgb), .16); }
-.inbox-parts .seg-a { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 0 10px; }
+/* The four parts along the top: two rows of two on an upright phone, one row of four when there's room. Set by
+   the width alone, never by the counts, so a count arriving can't move the page (a name never wraps) */
+.inbox-parts { display: grid; grid-template-columns: repeat(4, minmax(max-content, 1fr)); gap: 4px; padding: 4px; border-radius: 16px; background: rgba(var(--deep-rgb), .8); border: 1px solid rgba(var(--hi-rgb), .16); }
+@media (max-width: 479px) { .inbox-parts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.inbox-parts .seg-a { display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 0 10px; }
 .inbox-n { min-width: 20px; padding: 1px 6px; border-radius: 10px; background: var(--hi); color: var(--on-hi); font: 700 12px/18px var(--f-body); text-align: center; }
 
 /* A row with its own button beside it: the row opens the thing, the button does the rest */
