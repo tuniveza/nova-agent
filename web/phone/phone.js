@@ -557,6 +557,12 @@
 
   // Opened from the Home Screen: notifications tapped later open Nova Phone (the service worker asks "nova-home")
   if (matchMedia("(display-mode: standalone)").matches || navigator.standalone) caches?.open("nova-home").then((c) => c.put("/home", new Response("phone"))).catch(() => {});
+  // Shared into Nova Phone from another app (manifest share_target: /phone/?title=&text=&url=): a new note
+  const shared = new URLSearchParams(location.search);
+  if (["title", "text", "url"].some((k) => shared.has(k)) && !shared.has("open")) {
+    const keep = new URLSearchParams([...shared].filter(([k]) => ["title", "text", "url"].includes(k)));
+    history.replaceState(null, "", location.pathname + `#notes/share?${keep}`);
+  }
   // A tapped notification that opened Nova Phone (/phone/?open=<Nova's address>): that place
   const opened = new URLSearchParams(location.search).get("open");
   if (opened) {
