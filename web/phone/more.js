@@ -15,7 +15,7 @@
     ["Plans", [["agent", "Agent", "chat"], ["agent/plan", "Today's plan", "missions"], ["agent/missions", "Missions", "missions"], ["quests", "Quests", "quests"], ["notes", "Notes", "notes"], ["board", "Board", "board"], ["index", "Index", "index"]]],
     ["Helpers", [["observatory", "Observatory", "observatory"], ["console", "Console", "console"], ["lossless", "Lossless", "lossless"], ["help", "Manual", "manual"], ["visualizer", "Nova", "visualizer"]]],
     ["You", [["you", "Your profile", "portal"], ["inbox/alert/phone", "Notifications", "portal"]]],
-    ["Admin", [["crew", "The crew", "portal"], ["google", "Google", "portal"], ["computer", "Computer", "computer"], ["tests", "Test stuff", "portal"], ["fixer", "Fixer", "fixer"]]],
+    ["Admin", [["crew", "The crew", "portal"], ["google", "Google", "portal"], ["computer", "Computer", "computer"], ["tests", "Test stuff", "portal"], ["fixer", "Fixer", "fixer"], ["admin/referrals", "Referrals", "portal"], ["admin/links", "Links", "portal"], ["admin/test-booking", "Test booking", "portal"]]],
   ];
   // What each place is for (Nova Desk's words under each tile, its Panels window)
   const DESC = {

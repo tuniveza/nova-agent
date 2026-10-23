@@ -212,6 +212,7 @@
     google: ["admin.js"], tests: ["admin.js"], computer: ["computer.js"], fixer: ["fixer.js"], visualizer: ["visualizer.js"],
     index: ["memory.js"], board: ["board.js"], help: ["manual.js"], observatory: ["observatory.js"], console: ["console.js"], more: ["more.js"],
     lossless: ["lossless.js"], bookings: ["bookings.js"], bot: ["bot.js"],
+    admin: ["admin.js"], signin: ["signin.js"], join: ["signin.js"],
     // (Nova Phone as a whole: its settings, and Today in music)
     settings: ["settings.js"], music: ["music.js"],
   };
@@ -222,6 +223,7 @@
     computer: "Computer:computer", tests: "Test stuff:portal", fixer: "Fixer:fixer", visualizer: "Nova:visualizer", index: "Index:index", board: "Board:board",
     help: "Manual:manual", observatory: "Observatory:observatory", console: "Console:console", more: "More",
     lossless: "Lossless:lossless", bookings: "Booking tools:calendar", bot: "Website bot:portal",
+    admin: "Admin:portal", signin: "Sign in:portal", join: "Your invite:portal",
     settings: "Settings", music: "Today in music",
   };
   const loading = new Map();
@@ -258,6 +260,8 @@
     // holds back everything waiting for that, the service worker included)
     if (document.readyState !== "complete") return addEventListener("load", loadRest, { once: true });
     rested = true;
+    // (the session watch, signin.js: run, not just fetched, so being signed out elsewhere is noticed)
+    load("signin.js").catch(() => {});
     const files = [...new Set(Object.values(FILES).flat())];
     const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 200));
     // (fetched, not run: the service worker keeps each by its fingerprint, so opening a place later runs it from the
@@ -278,7 +282,7 @@
     return sections.has(id) || FILES[id] ? { id, rest } : { id: "today", rest: [] };
   }
   // The tile that's lit: the place you're in (Portal's parts light Portal; anything else lights Nova)
-  const PORTAL = ["today", "inbox", "clients", "outreach", "you", "crew", "google", "tests"];
+  const PORTAL = ["today", "inbox", "clients", "outreach", "you", "crew", "google", "tests", "admin", "signin", "join"];
   const OWN = ["money", "agent", "calendar", "notes", "board", "index", "quests", "fixer", "computer", "observatory", "console", "help", "visualizer"];
   function mark() {
     const { id, rest } = current();
@@ -531,7 +535,7 @@
   // Signed out: the sign-in, which comes back here after
   function signInCard(box, back = "") {
     box.innerHTML = `<div class="card"><p class="kicker">Nova Phone</p><h2 class="card-title">Sign in to carry on</h2><p class="muted">The same sign-in as Nova Desk.</p></div>
-      <a class="btn main wide" href="/portal/?app=1&next=${encodeURIComponent(`/phone/${back ? `#${back}` : ""}`)}">Sign in</a>`;
+      <a class="btn main wide" href="#signin/${esc(back)}">Sign in</a>`;
   }
 
   // The service worker: Nova's files kept on the phone between visits (fetched again only when they change)
