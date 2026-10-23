@@ -1,0 +1,83 @@
+/* Nova Phone: Outreach (outreach.js). Only what phone.css doesn't already have; the theme's colours only. */
+
+/* the four parts: side by side, or two by two when the phone is too narrow for their names on one line */
+.outreach-tabs .seg-a { white-space: nowrap; padding: 0 2px; }
+@media (max-width: 380px) {
+  .outreach-tabs { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
+}
+
+/* pills under a row's words, and next to each other on a card (the words of a pill never wrap) */
+.outreach-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.outreach .kicker .pill { text-transform: none; letter-spacing: normal; }
+.outreach-on { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; }
+.outreach-none { margin: 0 4px; }
+.outreach-day { margin: 2px 4px -6px; color: var(--soft); font-weight: 700; font-size: 14px; }
+.outreach-sub { margin: 12px 0 6px; color: var(--soft); font-weight: 700; font-size: 14px; }
+.outreach-problem { margin: 0 4px; }
+.outreach-problem[hidden] { display: none; }
+.outreach-link { display: block; margin: 0 0 12px; color: var(--hi); overflow-wrap: anywhere; }
+.outreach-sums { margin-top: 12px; }
+.outreach-sums .sum span, .outreach-glance .sum span { overflow-wrap: anywhere; }
+
+/* at a glance: tiles to tap (each shows its part) */
+.outreach-glance { grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); }
+.outreach-sum { font: inherit; color: inherit; min-height: 64px; }
+button.outreach-sum:active { filter: brightness(1.15); }
+.outreach-sum small { color: var(--muted); font-size: 13px; line-height: 1.35; }
+.outreach-sum[aria-pressed="true"] { border-color: var(--hi); background: rgba(var(--hi-rgb), .18); }
+
+/* a list row's still: the post's first picture */
+.outreach-thumb-s { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; object-fit: cover; background: rgba(var(--hi-rgb), .14); }
+.outreach-vid svg.i { width: 20px; height: 20px; }
+
+/* the email as people will get it: as it's written (its own colours), never wider than the phone */
+.outreach-mail { border-radius: 14px; overflow: hidden; }
+.outreach-mail-in { padding: 4px 0; border-radius: 14px; color: #1d1820; background: #f7f5f8; overflow-wrap: anywhere; }
+.outreach-mail-in * { max-width: 100%; }
+.outreach-mail-in img { height: auto; }
+.outreach-mail-in table { width: 100% !important; }
+.outreach-mail-link { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; }
+.outreach-plain { margin: 0; padding: 14px; border-radius: 14px; background: rgba(var(--deep-rgb), .7); border: 1px solid rgba(var(--hi-rgb), .12); }
+.outreach-subject { font-weight: 700; color: var(--bright); }
+
+/* pictures and videos */
+.outreach-media { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 120px), 1fr)); gap: 10px; margin: 10px 0; }
+.outreach-media:empty { display: none; }
+.outreach-media-one { display: grid; gap: 4px; align-content: start; }
+.outreach-thumb { margin: 0; display: grid; gap: 4px; }
+.outreach-thumb img, .outreach-thumb video { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; background: rgba(var(--deep-rgb), .8); }
+.outreach-thumb figcaption { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.outreach-x { min-height: 44px; padding: 0 8px; font-size: 14px; }
+.outreach-add { position: relative; margin-top: 4px; }
+.outreach-adding { margin: 0; }
+.outreach-count { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -8px 4px 0; color: var(--muted); font-size: 13px; }
+.outreach-count:empty { display: none; }
+.field > small[data-rules] { display: grid; gap: 4px; }
+.outreach-file { padding-top: 13px; }
+.outreach-small-btn { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.outreach-posted { margin-top: 14px; }
+.outreach-find [data-found] .list { margin-top: 8px; }
+
+/* the funnel: how it's going, the warm-up's bars, the scores */
+.outreach-status { display: grid; gap: 6px; }
+.outreach-line { display: flex; gap: 10px; margin: 0; font-size: 14px; }
+.outreach-line::before { content: ""; flex: none; width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: rgba(var(--muted-rgb), .6); }
+.outreach-line.on { color: var(--bright); }
+.outreach-line.on::before { background: var(--ok); }
+.outreach-line.off::before { background: transparent; border: 2px solid var(--warn); }
+.outreach-line.bad { color: var(--bad); }
+.outreach-line.bad::before { background: var(--bad); }
+.outreach-line.muted { color: var(--muted); }
+.outreach-bars { display: flex; align-items: stretch; gap: 3px; height: 80px; margin: 16px 0 8px; }
+.outreach-bar { position: relative; flex: 1 1 0; min-width: 0; border-radius: 4px 4px 2px 2px; background: rgba(var(--hi-rgb), .07); }
+.outreach-bar.future { background: none; border: 1px dashed rgba(var(--hi-rgb), .3); }
+.outreach-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; border-radius: 4px 4px 2px 2px; background: linear-gradient(180deg, var(--hi), var(--accent)); }
+.outreach-bar.today .outreach-fill { background: linear-gradient(180deg, var(--bright), var(--hi)); }
+.outreach-bar.today { box-shadow: 0 0 0 1px var(--hi); }
+.outreach-cap { position: absolute; left: -1px; right: -1px; bottom: 0; height: 2px; background: var(--warn); }
+.outreach-days, .outreach-tips { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
+.outreach-days li.today { color: var(--bright); font-weight: 600; }
+.outreach-track { display: block; height: 8px; border-radius: 4px; background: rgba(var(--hi-rgb), .12); overflow: hidden; }
+.outreach-low .meter-top b { color: var(--warn); }
+.outreach-low .bar { background: var(--warn); }
+.outreach-two { align-items: end; }
