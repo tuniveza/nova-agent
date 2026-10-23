@@ -10,6 +10,7 @@ web=../web
 cp "$web"/phone/*.js "$web"/phone/*.css "$out"/
 cp "$web"/phone/lib/*.js "$out"/lib/
 cp "$web"/shared/themes.css "$web"/shared/themes.js "$out"/
+cp "$web"/shared/spectrum.js "$web"/shared/ambient.js "$web"/shared/status-data.js "$web"/shared/manual-news.js "$web"/agent/assets/music-data.js "$out"/
 cp sample-*.js preview-extra.js preview.css index.html "$out"/
 # (each place's sample answers, sample-<place>.js, load straight after sample-data.js)
 extra=$( (ls sample-*.js | grep -v '^sample-data.js$' || true) | sed 's|.*|<script src="&"></script>|' | tr '\n' ' ')
