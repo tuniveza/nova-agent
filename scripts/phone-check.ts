@@ -7,8 +7,10 @@
 //   - a new note card is filled in and saved, then deleted; a message goes to Agent (both caught)
 //   - no page errors, no console errors, no blocked styles or scripts (CSP)
 // Exits 1 if anything failed, with the list. WebKit and Firefox need the Playwright container
-// (scripts/phone-engines.sh runs all three).
-import { existsSync, readFileSync, mkdirSync } from "node:fs";
+// (scripts/phone-engines.sh runs all three at once). PHONE_CHECK_PARALLEL=1: every profile at once (each its own
+// window, with the same steps and waits). LOOKS_FILE: the looks session to use, shared with the other engines'
+// checks running beside this one (started and ended by phone-engines.sh, not here).
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { extname, join } from "node:path";
 import { chromium, webkit, firefox, devices, type Route, type Page, type BrowserContext } from "playwright";
 import { measureStrict } from "../src/fixer/strict";
@@ -65,85 +67,107 @@ async function look(page: Page, where: string) {
 }
 
 // (only one looks session exists at a time: when the Fixer's own hourly check starts one, ours ends, so a screen
-// that comes up signed out gets a new session and another try)
-let s: any = await (await looks("start")).json();
-const browser = await ({ webkit, chromium, firefox }[engine]).launch();
-try {
-  for (const [name, dev] of PROFILES[engine]) {
-    const { defaultBrowserType, isMobile, ...d } = dev as any;
-    const ctx = await browser.newContext({ ...d, ...(engine === "firefox" ? {} : { isMobile }), serviceWorkers: "block" });
-    await ctx.addCookies([{ name: s.cookie, value: s.token, url: base }]);
-    if (!live) for (const dd of ["phone", "shared"]) await ctx.route(`${base}/${dd}/**`, serve);
-    const writes: any[] = [];
-    await catchWrites(ctx, writes);
-    await ctx.addInitScript({ content: "addEventListener('securitypolicyviolation', (e) => console.error('BLOCKED ' + e.violatedDirective + ' ' + (e.sourceFile || '') + ':' + e.lineNumber + ' ' + (e.sample || '').slice(0, 60)), true); addEventListener('unhandledrejection', (e) => console.error('UNHANDLED ' + (e.reason && e.reason.message || e.reason)));" });
-    const page = await ctx.newPage();
-    const where = (h: string) => `${engine} · ${name} · #${h}`;
-    let at = "";
-    page.on("pageerror", (e) => fail(where(at), `page error: ${e.message.slice(0, 120)}`));
-    let shooting = false; // (WebKit: Playwright's screenshot adds a <style> of its own, which the page's CSP reports)
-    page.on("console", (m) => { if (!shooting && m.type() === "error" && !/status of (401|403|404|503)|favicon|Service Worker/i.test(m.text())) fail(where(at), m.text().slice(0, 160)); });
-    const go = async (h: string, wait = 3500) => {
-      at = h;
-      await page.goto(`${base}/phone/#${h}`, { waitUntil: "load" });
-      await page.waitForTimeout(wait);
-      if (!(await signedOut(page))) return;
-      console.log(`  (signed in again at #${h}: the session was taken, by the Fixer's hourly check most likely)`);
+// that comes up signed out gets a new session and another try. Checks running side by side share it: whoever finds
+// it gone first starts the new one, and the rest pick that up instead of starting another.)
+const shared = process.env.LOOKS_FILE;
+const parallel = process.env.PHONE_CHECK_PARALLEL === "1";
+let s: any = shared ? JSON.parse(readFileSync(shared, "utf8")) : await (await looks("start")).json();
+let renewing: Promise<any> | null = null;
+const renew = (gone: string) => {
+  if (s.token !== gone) return Promise.resolve(s);
+  return (renewing ||= (async () => {
+    const now = shared ? JSON.parse(readFileSync(shared, "utf8")) : null;
+    if (now && now.token !== gone) s = now;
+    else {
       s = await (await looks("start")).json();
-      await ctx.addCookies([{ name: s.cookie, value: s.token, url: base }]);
-      await page.reload({ waitUntil: "load" });
-      await page.waitForTimeout(wait);
-    };
-    console.log(`${engine} · ${name}`);
-    // the bar's sections, and More's screens
-    await go("today");
-    const hashes = new Set<string>((await page.$$eval(".tabs a[href^='#'], .tab[href^='#'], .bar a[href^='#']", (as) => as.map((a) => a.getAttribute("href")!.slice(1)))).filter(Boolean));
-    await go("more");
-    for (const h of await page.$$eval("#page a[href^='#']", (as) => as.map((a) => a.getAttribute("href")!.slice(1)))) hashes.add(h);
-    for (const h of hashes) { await go(h, h.startsWith("agent") ? 6000 : 3500); await look(page, where(h)); shooting = true; await page.screenshot({ path: join(out, `${engine}-${name.replace(/\W+/g, "-")}-${h.replace(/\W+/g, "-")}.png`) }); await page.waitForTimeout(400); shooting = false; }
-    // the first row of each list opens its own screen
-    for (const h of hashes) {
-      await go(h);
-      const first = page.locator("#page a.row[href^='#']").first();
-      if (!(await first.count())) continue;
-      const href = (await first.getAttribute("href"))!;
-      await first.click();
-      await page.waitForTimeout(3000);
-      at = href.slice(1);
-      if (decodeURIComponent(new URL(page.url()).hash) !== decodeURIComponent(href)) fail(where(h), `tapping ${href} went to ${new URL(page.url()).hash}`);
-      else await look(page, where(at));
+      if (shared) writeFileSync(shared, JSON.stringify(s));
     }
-    // a note card, saved then deleted (caught); a message to Agent (caught)
-    if (name === PROFILES[engine][0][0]) {
-      await go("calendar/new/2026-12-24");
-      const form = page.locator("#cal-form");
-      await form.waitFor({ timeout: 8000 }).catch(() => {});
-      if (!(await form.count())) fail(where("calendar/new"), `no note card form (at ${new URL(page.url()).hash}, showing "${(await page.locator("#title").textContent().catch(() => "")) || ""}": ${((await page.locator("#page").innerText().catch(() => "")) || "").replace(/\s+/g, " ").slice(0, 100)})`);
-      else {
-        await page.fill("#cal-form [name=title]", "Phone check card");
-        await page.locator("#cal-form [type=submit]").click();
-        await page.waitForTimeout(2000);
-        const put = writes.find((w) => w.method === "PUT" && w.path.startsWith("/app/api/calendar/items/"));
-        if (!put) fail(where("calendar/new"), "saving sent nothing");
-        else if (put.origin !== base || put.body?.kind !== "event" || put.body?.title !== "Phone check card") fail(where("calendar/new"), `saving sent the wrong thing: ${JSON.stringify(put.body).slice(0, 120)}`);
-        else if (!new URL(page.url()).hash.startsWith("#calendar/card/")) fail(where("calendar/new"), `after saving, at ${new URL(page.url()).hash}`);
-      }
-      await go("agent", 6000);
-      const box = page.locator("#ask-box:not([disabled]), #ask textarea:not([disabled])").first();
-      if (await box.count()) {
-        await box.fill("Check");
-        await page.locator("#ask [type=submit]").click();
-        await page.waitForTimeout(2500);
-        const chat = writes.find((w) => w.path === "/actions/chat");
-        if (!chat) fail(where("agent"), "sending a message sent nothing");
-        else if (!(await page.locator("text=A reply from the check").count())) fail(where("agent"), "the reply didn't show");
-      }
-    }
-    await ctx.close();
+    renewing = null;
+    return s;
+  })());
+};
+const browser = await ({ webkit, chromium, firefox }[engine]).launch();
+async function profile([name, dev]: [string, any]) {
+  const { defaultBrowserType, isMobile, ...d } = dev as any;
+  const ctx = await browser.newContext({ ...d, ...(engine === "firefox" ? {} : { isMobile }), serviceWorkers: "block" });
+  await ctx.addCookies([{ name: s.cookie, value: s.token, url: base }]);
+  if (!live) for (const dd of ["phone", "shared"]) await ctx.route(`${base}/${dd}/**`, serve);
+  const writes: any[] = [];
+  await catchWrites(ctx, writes);
+  await ctx.addInitScript({ content: "addEventListener('securitypolicyviolation', (e) => console.error('BLOCKED ' + e.violatedDirective + ' ' + (e.sourceFile || '') + ':' + e.lineNumber + ' ' + (e.sample || '').slice(0, 60)), true); addEventListener('unhandledrejection', (e) => console.error('UNHANDLED ' + (e.reason && e.reason.message || e.reason)));" });
+  const page = await ctx.newPage();
+  const where = (h: string) => `${engine} · ${name} · #${h}`;
+  let at = "";
+  page.on("pageerror", (e) => fail(where(at), `page error: ${e.message.slice(0, 120)}`));
+  let shooting = false; // (WebKit: Playwright's screenshot adds a <style> of its own, which the page's CSP reports)
+  page.on("console", (m) => { if (!shooting && m.type() === "error" && !/status of (401|403|404|503)|favicon|Service Worker/i.test(m.text())) fail(where(at), m.text().slice(0, 160)); });
+  let mine = s.token;
+  const go = async (h: string, wait = 3500) => {
+    at = h;
+    await page.goto(`${base}/phone/#${h}`, { waitUntil: "load" });
+    await page.waitForTimeout(wait);
+    if (!(await signedOut(page))) return;
+    console.log(`  (${name}: signed in again at #${h}: the session was taken, by the Fixer's hourly check most likely)`);
+    const now = await renew(mine);
+    mine = now.token;
+    await ctx.addCookies([{ name: now.cookie, value: now.token, url: base }]);
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(wait);
+  };
+  console.log(`${engine} · ${name}`);
+  // the bar's sections, and More's screens
+  await go("today");
+  const hashes = new Set<string>((await page.$$eval(".tabs a[href^='#'], .tab[href^='#'], .bar a[href^='#']", (as) => as.map((a) => a.getAttribute("href")!.slice(1)))).filter(Boolean));
+  await go("more");
+  for (const h of await page.$$eval("#page a[href^='#']", (as) => as.map((a) => a.getAttribute("href")!.slice(1)))) hashes.add(h);
+  for (const h of hashes) { await go(h, h.startsWith("agent") ? 6000 : 3500); await look(page, where(h)); shooting = true; await page.screenshot({ path: join(out, `${engine}-${name.replace(/\W+/g, "-")}-${h.replace(/\W+/g, "-")}.png`) }); await page.waitForTimeout(400); shooting = false; }
+  // the first row of each list opens its own screen
+  for (const h of hashes) {
+    await go(h);
+    const first = page.locator("#page a.row[href^='#']").first();
+    if (!(await first.count())) continue;
+    const href = (await first.getAttribute("href"))!;
+    await first.click();
+    await page.waitForTimeout(3000);
+    at = href.slice(1);
+    if (decodeURIComponent(new URL(page.url()).hash) !== decodeURIComponent(href)) fail(where(h), `tapping ${href} went to ${new URL(page.url()).hash}`);
+    else await look(page, where(at));
   }
+  // a note card, saved then deleted (caught); a message to Agent (caught)
+  if (name === PROFILES[engine][0][0]) {
+    await go("calendar/new/2026-12-24");
+    const form = page.locator("#cal-form");
+    await form.waitFor({ timeout: 8000 }).catch(() => {});
+    if (!(await form.count())) fail(where("calendar/new"), `no note card form (at ${new URL(page.url()).hash}, showing "${(await page.locator("#title").textContent().catch(() => "")) || ""}": ${((await page.locator("#page").innerText().catch(() => "")) || "").replace(/\s+/g, " ").slice(0, 100)})`);
+    else {
+      await page.fill("#cal-form [name=title]", "Phone check card");
+      await page.locator("#cal-form [type=submit]").click();
+      await page.waitForTimeout(2000);
+      const put = writes.find((w) => w.method === "PUT" && w.path.startsWith("/app/api/calendar/items/"));
+      if (!put) fail(where("calendar/new"), "saving sent nothing");
+      else if (put.origin !== base || put.body?.kind !== "event" || put.body?.title !== "Phone check card") fail(where("calendar/new"), `saving sent the wrong thing: ${JSON.stringify(put.body).slice(0, 120)}`);
+      else if (!new URL(page.url()).hash.startsWith("#calendar/card/")) fail(where("calendar/new"), `after saving, at ${new URL(page.url()).hash}`);
+    }
+    await go("agent", 6000);
+    const box = page.locator("#ask-box:not([disabled]), #ask textarea:not([disabled])").first();
+    if (await box.count()) {
+      await box.fill("Check");
+      await page.locator("#ask [type=submit]").click();
+      await page.waitForTimeout(2500);
+      const chat = writes.find((w) => w.path === "/actions/chat");
+      if (!chat) fail(where("agent"), "sending a message sent nothing");
+      else if (!(await page.locator("text=A reply from the check").count())) fail(where("agent"), "the reply didn't show");
+    }
+  }
+  await ctx.close();
+}
+try {
+  const one = (p: [string, any]) => profile(p).catch((e) => fail(`${engine} · ${p[0]}`, `stopped: ${String(e?.message || e).slice(0, 160)}`));
+  if (parallel) await Promise.all(PROFILES[engine].map(one));
+  else for (const p of PROFILES[engine]) await one(p);
 } finally {
   await browser.close();
-  await looks("end");
+  if (!shared) await looks("end");
 }
 console.log(problems.length ? `\n${engine}: ${problems.length} problem(s)` : `\n${engine}: all clear`);
 process.exit(problems.length ? 1 : 0);
