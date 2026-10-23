@@ -29,3 +29,10 @@ html:not([data-ui="rich"]) .s-chip {
   color: var(--text, #EDE6F7); font: 600 13px/1 var(--f-body, system-ui), sans-serif; white-space: nowrap;
 }
 @media (pointer: coarse) { html:not([data-ui="rich"]) .s-chip { height: 40px; } }
+
+/* ---- No live blur on a touch screen: blurring what's behind a panel redraws it on every move, the heaviest
+   thing a mid-range phone draws here; the panels are already see-through over the dark sky, which reads the same
+   (the perf brief, 23 Oct 2026) ---- */
+@media (pointer: coarse) {
+  html:not([data-ui="rich"]) *, html:not([data-ui="rich"]) *::before, html:not([data-ui="rich"]) *::after, html:not([data-ui="rich"]) *::backdrop { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}

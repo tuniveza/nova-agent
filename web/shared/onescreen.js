@@ -126,10 +126,12 @@
     }
     lastLook = performance.now();
     for (const el of document.body.querySelectorAll("*")) {
+      // (the cheap looks first, sizes, and the style only of a box that has more in it than shows: the style of
+      // every part on the page each time was a tenth of a phone's load, 23 Oct 2026)
+      if (el.clientHeight < 48 || el.clientWidth < 120 || el.scrollHeight <= el.clientHeight + 2) continue;
       if (found.has(el) || el.hasAttribute(OFF) || el.hasAttribute("data-os-last") || el.closest(NOT_BOX)) continue;
       const cs = getComputedStyle(el);
-      if (!/(auto|scroll|overlay)/.test(cs.overflowY) || el.clientHeight < 48 || el.clientWidth < 120) continue;
-      if (el.scrollHeight <= el.clientHeight + 2 || !shown(el)) continue;
+      if (!/(auto|scroll|overlay)/.test(cs.overflowY) || !shown(el)) continue;
       if ([...found].some((f) => f.contains(el) || el.contains(f))) continue;
       // (an editor or a big writing box isn't paged; a small box to type in, among other things, is fine)
       if (el.matches(TYPING) || [...el.querySelectorAll(TYPING)].some((t) => t.getBoundingClientRect().height > el.clientHeight * 0.45)) continue;
@@ -579,69 +581,80 @@
     if (!(prop in was)) was[prop] = [el.style.getPropertyValue(prop), el.style.getPropertyPriority(prop)];
     el.style.setProperty(prop, value);
   }
+  // (everything looked at first, then everything moved at once: moving each part as it was found made the
+  // page lay itself out again before the next look, hundreds of times a pass, a third of a phone's load,
+  // 23 Oct 2026. Moving one part never changes what's decided for another: a row's things move together, a
+  // box keeps its width, a moved tile is only drawn along. What's skipped is skipped whole, with all in it.)
   function align() {
     const mode = document.documentElement.getAttribute("data-align");
     if (mode !== "center" && mode !== "right") return;
     const flexEnd = mode === "center" ? "center" : "flex-end";
     const START = /^(normal|flex-start|start|left)$/;
-    for (const el of document.body.querySelectorAll("*")) {
-      if (el.closest(ALIGN_SKIP) || !el.firstElementChild) continue;
+    const moves = [];
+    const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT, {
+      acceptNode: (el) => (el.hidden || el.hasAttribute("data-os-own") || el.matches(ALIGN_SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+    });
+    for (let el = walk.nextNode(); el; el = walk.nextNode()) {
+      // (the cheap looks first: no parts in it, or no room to move them)
+      if (!el.firstElementChild || el.clientWidth < 40) continue;
       const cs = getComputedStyle(el);
       const flex = cs.display === "flex" || cs.display === "inline-flex";
       const grid = cs.display === "grid" || cs.display === "inline-grid";
       if (!flex && !grid && cs.display !== "block") continue;
-      if (!shown(el)) continue;
-      const kids = [...el.children].filter((k) => { const s = getComputedStyle(k); return s.display !== "none" && s.position !== "absolute" && s.position !== "fixed" && !ours(k); });
+      if (flex && (cs.flexDirection.startsWith("column") || !START.test(cs.justifyContent))) continue;
+      if (grid && (!START.test(cs.justifyContent) || cs.gridTemplateColumns === "none")) continue;
+      const kids = [...el.children].filter((k) => { const s = getComputedStyle(k); return s.display !== "none" && s.position !== "absolute" && s.position !== "fixed" && !k.hasAttribute("data-os-own"); });
       if (!kids.length) continue;
       const r = el.getBoundingClientRect();
       const inner = { left: r.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft), right: r.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight) };
       if (inner.right - inner.left < 40) continue;
-      if (flex && !cs.flexDirection.startsWith("column")) {
+      if (flex) {
         // a row: centred when what's on it starts at its start and leaves room at its end
-        if (!START.test(cs.justifyContent)) continue;
-        const left = Math.min(...kids.map((k) => k.getBoundingClientRect().left)), right = Math.max(...kids.map((k) => k.getBoundingClientRect().right));
+        const rects = kids.map((k) => k.getBoundingClientRect());
+        const left = Math.min(...rects.map((k) => k.left)), right = Math.max(...rects.map((k) => k.right));
         if (left - inner.left > 4 || inner.right - right < 12) continue;
-        setAligned(el, "justify-content", flexEnd);
+        moves.push([el, "justify-content", flexEnd]);
       } else if (grid) {
         // columns of a fixed width that don't fill it: the columns centred
-        if (!START.test(cs.justifyContent) || cs.gridTemplateColumns === "none") continue;
-        const right = Math.max(...kids.map((k) => k.getBoundingClientRect().right));
-        if (inner.right - right >= 12) { setAligned(el, "justify-content", mode === "center" ? "center" : "end"); continue; }
+        const rects = kids.map((k) => k.getBoundingClientRect());
+        const right = Math.max(...rects.map((k) => k.right));
+        if (inner.right - right >= 12) { moves.push([el, "justify-content", mode === "center" ? "center" : "end"]); continue; }
         // a grid that fills its width with a last row only part full (two tiles under four): that row
         // moved along to the middle, or the end (drawn there; nothing else moves)
         // (only a run of like tiles: no named areas, nothing placed by hand, every tile about the same width,
         // every row but the last full. A grid that lays out a page, a month under its weekday names, a plan
         // beside it, a week's hours, is left alone: moving one of its parts pulled it out of line, 22 Oct 2026)
         if (cs.gridTemplateAreas !== "none" || el.matches('[role="grid"], [role="table"], table, [role="row"]')) continue;
-        const ws = kids.map((k) => k.getBoundingClientRect().width);
+        const ws = rects.map((k) => k.width);
         if (Math.max(...ws) - Math.min(...ws) > 2) continue;
         if (kids.some((k) => { const ks = getComputedStyle(k); return ks.gridColumnStart !== "auto" || ks.gridRowStart !== "auto" || ks.gridColumnEnd !== "auto" || ks.gridRowEnd !== "auto"; })) continue;
         const cols = cs.gridTemplateColumns.split(" ").filter(Boolean).length;
         const rows = new Map();
-        for (const k of kids) { const t = Math.round(k.getBoundingClientRect().top); rows.set(t, [...(rows.get(t) || []), k]); }
+        kids.forEach((k, i) => { const t = Math.round(rects[i].top); rows.set(t, [...(rows.get(t) || []), i]); });
         if (rows.size < 2 || cols < 2) continue;
         const tops = [...rows.keys()].sort((a, b) => a - b);
         const first = rows.get(tops[0]), last = rows.get(tops[tops.length - 1]);
         if (tops.slice(0, -1).some((t) => rows.get(t).length !== cols)) continue;
-        if (last.length >= first.length || last.some((k) => getComputedStyle(k).translate !== "none")) continue;
-        const end = Math.max(...last.map((k) => k.getBoundingClientRect().right));
-        const room = Math.max(...first.map((k) => k.getBoundingClientRect().right)) - end;
+        if (last.length >= first.length || last.some((i) => getComputedStyle(kids[i]).translate !== "none")) continue;
+        const end = Math.max(...last.map((i) => rects[i].right));
+        const room = Math.max(...first.map((i) => rects[i].right)) - end;
         if (room < 12) continue;
-        for (const k of last) setAligned(k, "translate", `${Math.round(mode === "center" ? room / 2 : room)}px 0`);
-      } else if (cs.display === "block") {
+        for (const i of last) moves.push([kids[i], "translate", `${Math.round(mode === "center" ? room / 2 : room)}px 0`]);
+      } else {
         // a box narrower than the space it's in, sat at its start: in the middle (or at the end)
         for (const k of kids) {
           const ks = getComputedStyle(k);
           if (ks.display !== "block" && ks.display !== "flex" && ks.display !== "grid" && ks.display !== "table") continue;
-          if (ks.float !== "none" || ks.position !== "static" || k.closest(ALIGN_SKIP)) continue;
+          if (ks.float !== "none" || ks.position !== "static" || k.matches(ALIGN_SKIP)) continue;
           const b = k.getBoundingClientRect();
           if (b.width < 24 || inner.right - b.right < 12 || b.left - inner.left > 2) continue;
           if (parseFloat(ks.marginLeft) > 0.5 || (ks.marginRight !== "0px" && ks.marginRight !== "auto")) continue;
-          if (mode === "center") { setAligned(k, "margin-left", "auto"); setAligned(k, "margin-right", "auto"); }
-          else setAligned(k, "margin-left", "auto");
+          if (mode === "center") { moves.push([k, "margin-left", "auto"]); moves.push([k, "margin-right", "auto"]); }
+          else moves.push([k, "margin-left", "auto"]);
         }
       }
     }
+    for (const [el, prop, value] of moves) setAligned(el, prop, value);
   }
   // (put back before anything is measured, at the start of each layout: put back only at the guard's turn,
   // the boxes were measured with last time's shrinking one time and without it the next, and the sizes
