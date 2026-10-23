@@ -1,0 +1,59 @@
+/* Nova Phone: the Fixer (fixer.js). The theme's colours only. */
+.fx-sub { margin: 0 4px; }
+
+/* the four rules: one card each, a tap shows only its problems */
+.fx-rules { display: grid; gap: 8px; }
+@media (min-width: 600px) { .fx-rules { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.fx-rule {
+  display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: 12px; width: 100%; min-height: 64px; padding: 12px 14px;
+  border-radius: 18px; border: 1px solid rgba(var(--hi-rgb), .14); background: rgba(var(--panel-rgb), .94); color: var(--text); text-align: left;
+}
+.fx-rule:active { background: rgba(var(--hi-rgb), .1); }
+.fx-rule[aria-pressed="true"] { border-color: var(--hi); background: rgba(var(--hi-rgb), .14); }
+.fx-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(var(--muted-rgb), .2); color: var(--muted); font: 700 18px/1 var(--f-body); }
+.fx-rule.kept .fx-mark { background: rgba(var(--ok-rgb), .16); color: var(--ok); }
+.fx-rule.broken .fx-mark { background: rgba(var(--bad-rgb), .16); color: var(--bad); }
+.fx-words { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.fx-words b { font-weight: 600; color: var(--bright); line-height: 1.35; }
+.fx-words small { font-size: 14px; color: var(--muted); }
+.fx-rule.kept .fx-words small { color: var(--ok); }
+.fx-rule.broken .fx-words small { color: var(--bad); }
+.fx-text { margin-top: 4px; font-size: 14px; line-height: 1.45; color: var(--text); }
+
+.fx-when { margin: 0 4px; font-size: 14px; color: var(--soft); overflow-wrap: anywhere; }
+.fx-when.bad { color: var(--bad); }
+.fx-auto-words { display: block; margin-top: 2px; font-size: 13px; line-height: 1.4; color: var(--muted); font-weight: 400; }
+
+/* Phones · Tablets · Computers: four across, two by two on the narrowest phones */
+.seg.fx-kinds { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.seg.fx-kinds > button.seg-a { border: 0; background: none; font-size: 14px; white-space: nowrap; }
+.seg.fx-kinds > button.seg-a[aria-selected="true"] { background: rgba(var(--hi-rgb), .22); color: var(--bright); }
+@media (max-width: 359px) { .seg.fx-kinds { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* the problems, by place */
+.fx-count { margin: 0 4px; }
+.fx-place { display: grid; gap: 10px; }
+.fx-place .h { display: flex; align-items: center; gap: 8px; margin-bottom: 0; }
+.fx-problem { display: grid; gap: 8px; padding: 14px; }
+.fx-problem p { margin: 0 !important; }
+.fx-what { color: var(--bright); font-weight: 600; line-height: 1.4; }
+.fx-why { color: var(--text); font-size: 14px; }
+.fx-tag {
+  display: inline-block; margin-right: 4px; padding: 2px 8px; border-radius: 999px; font: 700 12px/1.5 var(--f-body);
+  background: rgba(var(--hi-rgb), .16); color: var(--soft); vertical-align: 1px;
+}
+.fx-tag.offscreen { background: rgba(var(--bad-rgb), .16); color: var(--bad); }
+.fx-tag.onescreen { background: rgba(var(--warn-rgb), .16); color: var(--warn); }
+.fx-tag.oneline { background: rgba(var(--lilac-rgb), .18); color: var(--lilac); }
+.fx-tag.works { background: rgba(var(--accent-rgb), .16); color: var(--accent); }
+.fx-sizes .chip { min-height: 40px; padding: 0 12px; font-size: 14px; }
+.fx-noshot { opacity: .7; }
+.fx-errs > summary { min-height: 44px; }
+.fx-err-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.fx-err-list li { display: grid; gap: 2px; overflow-wrap: anywhere; }
+.fx-err-list span { color: var(--muted); font-size: 14px; }
+
+/* a screen's picture in the sheet */
+.fx-shot { display: grid; gap: 8px; margin: 0 0 12px; }
+.fx-shot img { width: 100%; height: auto; border-radius: 12px; border: 1px solid rgba(var(--hi-rgb), .2); background: rgba(var(--deep-rgb), .8); }
+.fx-shot img[hidden] { display: none; }
