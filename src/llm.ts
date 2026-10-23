@@ -3,7 +3,7 @@
 // The agent mostly needs one thing from the AI: a JSON answer that matches a
 // schema we define. The SDK checks the reply against that schema for us, so we
 // never have to pick JSON out of free text. askWithResearch lets the answer
-// look things up on the web first (mission plans do).
+// look things up on the web first.
 
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
@@ -33,7 +33,7 @@ export async function askForJson<Schema extends z.ZodType>(options: {
   prompt: string;
   schema: Schema;
   purpose: string; // short label shown in the visualizer, e.g. "find login.email_field"
-  // Big answers (a whole mission plan): streamed, with room for the model to
+  // Big answers: streamed, with room for the model to
   // think and write at length, at the effort given
   long?: { effort: "low" | "medium" | "high" | "xhigh" | "max" };
 }): Promise<z.infer<Schema>> {

@@ -1,7 +1,7 @@
 // Quest's eyes on the internet.
 //
 //   - webTools(): Claude's own web search and web fetch (they run on
-//     Anthropic's servers), for the chat and the mission planner
+//     Anthropic's servers), for the chat
 //   - sourcesIn(): the pages Claude actually searched up or read in a reply,
 //     so a plan's research only ever cites real pages
 //   - lookAt(): open any public webpage in a browser of its own (never the

@@ -27,7 +27,7 @@ afterEach(() => {
 describe("finding test stuff on the PC", () => {
   const find = async (over: Record<string, unknown>) => {
     const { findPcTestStuff } = await import("../src/tidy");
-    return findPcTestStuff({ quests: [], missions: [], notes: [], jobs: [], issues: [], fixerQuests: [], files: [], real: [], ...over } as any);
+    return findPcTestStuff({ quests: [], notes: [], jobs: [], issues: [], fixerQuests: [], files: [], real: [], ...over } as any);
   };
 
   it("catches the studio's own test quests, and leaves real ones alone", async () => {

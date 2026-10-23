@@ -110,7 +110,7 @@ export async function whoAmI(force = false): Promise<Who> {
 }
 
 // Who Nova Agent works for on this PC, straight away (no waiting for Nova Bot): the last answer,
-// else what's saved, else "owner" (not known yet). Quests, missions and chats with no owner of
+// else what's saved, else "owner" (not known yet). Quests and chats with no owner of
 // their own are this person's (src/person.ts).
 export function pcOwnerId(): string {
   if (cache) return cache.who.staff.id;

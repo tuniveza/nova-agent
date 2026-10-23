@@ -1,4 +1,4 @@
-// Everything you can do with missions and quests. The chat's tools and the
+// Everything you can do with quests. The chat's tools and the
 // page's buttons both use these, so they always behave the same. Every change
 // re-plans, so the schedule stays optimised after each one.
 
@@ -7,9 +7,9 @@ import { replan, nowMinutes } from "./plan";
 import { acknowledge, firstTimeForTap } from "./deliveries";
 import { nextSession, splitLong } from "./lengths";
 import { isPulse } from "./pulses";
-import { notifyMission, recentNotices } from "./reminders";
+import { recentNotices } from "./reminders";
 import { fromMin, toMin } from "./scheduler";
-import { cleanQuest, cleanRhythm, cleanSteps, cleanTags, EVERY, MAX_STEPS, MAX_TAGS, MODES, PRIORITIES, readQuests, readStamp, rhythmFor, TIMES_OF_DAY, writeQuests, type Block, type Mission, type Quest, type QuestData, type QuestMode, type Rhythm } from "./store";
+import { cleanQuest, cleanRhythm, cleanSteps, cleanTags, EVERY, MAX_STEPS, MAX_TAGS, MODES, PRIORITIES, readQuests, readStamp, rhythmFor, TIMES_OF_DAY, writeQuests, type Block, type Quest, type QuestMode, type Rhythm } from "./store";
 import { ownerOf, personName } from "../person";
 import { pcOwnerId } from "../staff";
 
@@ -26,23 +26,10 @@ function find<T extends { id: string }>(list: T[], id: string, what: string): T 
   return starts[0];
 }
 
-function missionProgress(data: QuestData, m: Mission) {
-  const qs = data.quests.filter((q) => q.missionId === m.id);
-  const done = qs.filter((q) => q.status === "done").length;
-  const counted = qs.filter((q) => q.status !== "skipped").length;
-  // Each workstream's share, and the next milestone still to reach
-  const tracks = m.tracks.map((t) => {
-    const mine = qs.filter((q) => q.track === t.name && q.status !== "skipped");
-    return { ...t, done: mine.filter((q) => q.status === "done").length, total: mine.length };
-  });
-  const nextMilestone = m.milestones.find((x) => !x.done) ?? null;
-  return { total: counted, done, atRisk: qs.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length, minutesLeft: qs.filter((q) => q.status === "todo" || q.status === "doing").reduce((n, q) => n + q.minutes, 0), tracks, nextMilestone };
-}
-
 // Everything the page needs, in one go
 // A tap from Portal's Quests tab (passed on by Nova Bot's worker)
 export interface QuestTap {
-  kind: "quest" | "mission";
+  kind?: string; // "quest" (a tap from before Missions went may say "mission": it's turned away)
   id: string;
   action: string;
   minutes?: number;
@@ -53,20 +40,16 @@ export interface QuestTap {
   admin?: boolean; // ...and whether they're an admin
 }
 export function applyQuestTap(t: QuestTap): string {
+  // Missions have gone from Nova: a tap on one (queued before they went) is turned away
+  if (t.kind !== undefined && t.kind !== "quest") throw new Error("Only quests can be tapped");
   if (t.tapId && !firstTimeForTap(t.tapId)) {
-    const item = t.kind === "mission" ? readQuests().missions.find((m) => m.id === t.id) : readQuests().quests.find((q) => q.id === t.id);
+    const item = readQuests().quests.find((q) => q.id === t.id);
     return `${item?.title ?? t.id} (already counted)`;
   }
-  // Staff tap their own quests and missions (admins anyone's)
+  // Staff tap their own quests (admins anyone's)
   if (t.by && !t.admin) {
-    const data = readQuests();
-    const item = t.kind === "mission" ? find(data.missions, t.id, "mission") : find(data.quests, t.id, "quest");
+    const item = find(readQuests().quests, t.id, "quest");
     if (!mayChange(item, { id: t.by, everyone: false })) throw new Error(`“${item.title}” isn't theirs to change`);
-  }
-  if (t.kind === "mission") {
-    if (t.action === "pause") return updateMission(t.id, { status: "paused" }).title;
-    if (t.action === "resume") return updateMission(t.id, { status: "active" }).title;
-    throw new Error(`Missions can't "${t.action}"`);
   }
   const done = (q: Quest) => q.title;
   if (t.action === "done") return done(setQuestStatus(t.id, "done", false, t.session));
@@ -116,7 +99,6 @@ export function questState(viewer?: Viewer) {
   return {
     now: nowStamp,
     rhythm: viewer ? rhythmFor(data, viewer.id, pcOwnerId()) : data.rhythm,
-    missions: data.missions.filter((m) => sees(m, viewer && { ...viewer, notes: false })).map((m) => named({ ...m, progress: missionProgress(data, m) })),
     quests: quests.map(named),
     blocks: data.blocks.filter((b) => sees(b, viewer && { ...viewer, notes: false })).map(named),
     current: doing && named(doing),
@@ -185,13 +167,6 @@ export function setQuestStatus(id: string, status: Quest["status"], finish = fal
     if (toMin(q.end || q.start) > now || !q.end) q.end = fromMin(now);
   }
   if (status === "todo") q.start = q.end = q.travelStart = "";
-  // Finishing every quest finishes the mission
-  const mission = data.missions.find((m) => m.id === q.missionId);
-  if (mission && mission.status !== "done" && data.quests.filter((x) => x.missionId === mission.id).every((x) => x.status === "done" || x.status === "skipped")) {
-    mission.status = "done";
-    const count = data.quests.filter((x) => x.missionId === mission.id && x.status === "done").length;
-    notifyMission("complete", `Mission complete ✦ ${mission.title}`, `All ${count} quest${count === 1 ? "" : "s"} done. Brilliant work.`, mission.id);
-  }
   writeQuests(data);
   replan();
   return readQuests().quests.find((x) => x.id === q.id)!;
@@ -351,37 +326,6 @@ export function removeQuest(id: string): Quest {
   writeQuests(data);
   replan();
   return q;
-}
-
-export function updateMission(id: string, changes: Partial<Pick<Mission, "title" | "status" | "deadline" | "summary">>): Mission {
-  const data = readQuests();
-  const m = find(data.missions, id, "mission");
-  Object.assign(m, Object.fromEntries(Object.entries(changes).filter(([, v]) => v !== undefined)), { updated: new Date().toISOString() });
-  writeQuests(data);
-  replan();
-  return m;
-}
-
-// Tick a milestone off (or untick it)
-export function setMilestone(missionId: string, milestoneId: string, done: boolean): Mission {
-  const data = readQuests();
-  const m = find(data.missions, missionId, "mission");
-  const ms = find(m.milestones, milestoneId, "milestone");
-  ms.done = done;
-  m.updated = new Date().toISOString();
-  writeQuests(data);
-  replan();
-  return m;
-}
-
-export function removeMission(id: string): Mission {
-  const data = readQuests();
-  const m = find(data.missions, id, "mission");
-  data.missions = data.missions.filter((x) => x.id !== m.id);
-  data.quests = data.quests.filter((q) => q.missionId !== m.id);
-  writeQuests(data);
-  replan();
-  return m;
 }
 
 // A blocked time is one person's (`owner`; "" = the PC's person): only their quests move for it

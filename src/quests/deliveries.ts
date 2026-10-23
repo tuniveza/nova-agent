@@ -49,14 +49,14 @@ export interface Attempt {
 export interface Push {
   title: string;
   message: string;
-  source: "quest" | "mission";
+  source: "quest";
   kind: string;
   tag: string;
   ttl: number; // seconds it's worth delivering
   urgent: boolean;
   keep: boolean;
   phones?: string[]; // which phones (Nova Bot's phone ids); none = the owner's phones
-  owner?: string; // whose quest or mission it is (staff id): their phones, never anyone else's
+  owner?: string; // whose quest it is (staff id): their phones, never anyone else's
 }
 
 // Waits between tries: 15 s, 30 s, 1 min, 2 min, then every 5 min (until the ttl runs out)
@@ -150,6 +150,11 @@ async function attempt(key: string): Promise<void> {
   const r = d.prepare("SELECT * FROM deliveries WHERE key = ?").get(key) as any;
   if (!r || !r.push) return;
   const push = JSON.parse(r.push) as Push;
+  // A mission's ping saved before Missions went from Nova (still waiting for a retry): never sent now
+  if ((push.kind as string) === "mission") {
+    d.prepare("UPDATE deliveries SET state = 'expired', next_try = NULL WHERE key = ?").run(key);
+    return;
+  }
   d.prepare("UPDATE deliveries SET state = 'sent', sent = ?, attempts = attempts + 1 WHERE key = ?").run(Date.now(), key);
   let status: number | null = null;
   let phones = 0;

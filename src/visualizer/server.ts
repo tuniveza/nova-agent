@@ -42,16 +42,14 @@ import { adoptChat, chatTurn, clearChat, readChat } from "../chats";
 import { ownerToSave, personFor, type Person } from "../person";
 import { whoAmI } from "../staff";
 import { drawPlanet } from "./planet";
-import { addBlock, addQuest, mayChange, orderQuests, questState, removeBlock, removeMission, removeQuest, setMilestone, setQuestMode, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateMission, updateQuest } from "../quests/actions";
+import { addBlock, addQuest, mayChange, orderQuests, questState, removeBlock, removeQuest, setQuestMode, setQuestStatus, setRhythm, snoozeQuest, tidyBlocks, updateQuest } from "../quests/actions";
 import { replan } from "../quests/plan";
-import { createMission, refineMission } from "../quests/planner";
 import { startPortalSync } from "../quests/portalsync";
 import { startPulses } from "../quests/pulses";
 import { startQuestReminders } from "../quests/reminders";
 import { startBookingRefresh } from "../quests/bookings";
 import { questEvents, readQuests } from "../quests/store";
-import { missionMarkdown } from "../quests/export";
-import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile, saveFile } from "../files";
+import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile } from "../files";
 import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, receipts } from "../receipts";
 import { registerBoardRoutes } from "../board-routes";
 import { registerConsoleRoutes } from "../console";
@@ -481,7 +479,7 @@ app.get("/status", (c) =>
   c.json({ live: !config.dryRun, connected: Boolean(config.agentNovaKey), model: config.novaModel || "claude-opus-5-5" }),
 );
 
-// ---- Missions and Quests ----
+// ---- Quests ----
 // Each person's own (who's asking: src/person.ts). ?who=everyone: everyone's, for admins and the
 // studio computer; ?who=notes: their own plus quests tied to a note (Notes, for shared notes).
 app.get("/quests/state", async (c) => {
@@ -516,9 +514,9 @@ app.get("/quests/events", async (c) => {
   });
 });
 // Theirs to change? (anyone's for an admin or the PC; staff: their own, and quests tied to a note)
-function allowed(person: Person, kind: "quest" | "mission" | "block", id: string): void {
+function allowed(person: Person, kind: "quest" | "block", id: string): void {
   const data = readQuests();
-  const list: { id: string; owner: string; link?: string }[] = kind === "quest" ? data.quests : kind === "mission" ? data.missions : data.blocks;
+  const list: { id: string; owner: string; link?: string }[] = kind === "quest" ? data.quests : data.blocks;
   const exact = list.find((x) => x.id === id);
   const starts = list.filter((x) => x.id.startsWith(id));
   const item = exact ?? (starts.length === 1 ? starts[0] : undefined);
@@ -531,24 +529,6 @@ const questAction = async (c: any, fn: () => unknown) => {
     return c.json({ ok: false, message: (error as Error).message }, 400);
   }
 };
-app.post("/actions/missions", async (c) => {
-  const person = await personFor(c.req.raw);
-  const body = await c.req.json().catch(() => ({}));
-  if (typeof body.request !== "string" || !body.request.trim()) return c.json({ ok: false, message: "Describe the mission first." }, 400);
-  return questAction(c, () => createMission(body.request, { deadline: body.deadline, owner: ownerToSave(person) }));
-});
-app.post("/actions/missions/:id", async (c) => {
-  const person = await personFor(c.req.raw);
-  const body = await c.req.json().catch(() => ({}));
-  const id = c.req.param("id");
-  return questAction(c, () => {
-    allowed(person, "mission", id);
-    if (body.remove) return removeMission(id);
-    if (typeof body.milestone === "string") return setMilestone(id, body.milestone, body.done === true);
-    return updateMission(id, { title: body.title, status: body.status, deadline: body.deadline });
-  });
-});
-// Answers to the plan's questions, or any new detail: the work that's left is planned again
 // ---- Social posts' pictures and videos (social-media.ts): Portal → Social adds them; Nova Bot
 // fetches them for Meta when an approved post goes out (both over the link when online) ----
 app.post("/actions/social-media", async (c) => {
@@ -652,29 +632,6 @@ app.get("/receipts/:id", (c) => {
     "Content-Security-Policy": "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; object-src 'self'",
     "X-Content-Type-Options": "nosniff",
     "Cache-Control": "private, max-age=3600",
-  });
-});
-// A mission's whole plan as a Markdown file (exporting again updates the same file)
-app.post("/actions/missions/:id/export", async (c) => {
-  const person = await personFor(c.req.raw);
-  try {
-    allowed(person, "mission", c.req.param("id"));
-    const doc = missionMarkdown(c.req.param("id"));
-    const source = `mission:${doc.missionId}`;
-    const before = listFiles().find((f) => f.source === source);
-    return c.json({ ok: true, file: fileCard(saveFile({ name: doc.name, title: doc.title, content: doc.content, id: before?.id, source })) });
-  } catch (error) {
-    return c.json({ ok: false, message: (error as Error).message }, 400);
-  }
-});
-
-app.post("/actions/missions/:id/refine", async (c) => {
-  const person = await personFor(c.req.raw);
-  const body = await c.req.json().catch(() => ({}));
-  if (typeof body.detail !== "string" || !body.detail.trim()) return c.json({ ok: false, message: "Say what's new first." }, 400);
-  return questAction(c, () => {
-    allowed(person, "mission", c.req.param("id"));
-    return refineMission(c.req.param("id"), body.detail, { deadline: body.deadline });
   });
 });
 // A new quest is the asker's (from Notes: the person who wrote it in the note)

@@ -2,7 +2,7 @@
 //
 // This computer can't be reached from the internet, so Nova Agent dials out instead: it keeps
 // a WebSocket open to Nova Bot (/nova-agent/link, with AGENT_NOVA_KEY). When a signed-in staff
-// member uses Nova Agent online, Nova Bot sends their request down it (chat, Missions, Quests,
+// member uses Nova Agent online, Nova Bot sends their request down it (chat, Quests,
 // Calendar's data, the Visualizer); it's answered here by the same server as the local page,
 // and the answer goes back up, streamed. The other side is src/agent-relay.js in Nova Bot.
 //
@@ -52,8 +52,8 @@ const RELAYED: { methods: string[]; path: RegExp; admin?: boolean }[] = [
   { methods: ["GET"], path: /^\/quests\/(state|events)$/ },
   { methods: ["GET"], path: /^\/chat\/history$/ },
   { methods: ["POST"], path: /^\/actions\/chat\/(clear|adopt)$/ },
-  { methods: ["POST"], path: /^\/actions\/(chat|missions|quests|blocks|rhythm|replan)$/ },
-  { methods: ["POST"], path: /^\/actions\/(missions|quests)\/[\w-]+(\/(refine|export))?$/ },
+  { methods: ["POST"], path: /^\/actions\/(chat|quests|blocks|rhythm|replan)$/ },
+  { methods: ["POST"], path: /^\/actions\/quests\/[\w-]+$/ },
   { methods: ["POST"], path: /^\/actions\/files\/[\w-]+\/remove$/ },
   { methods: ["GET"], path: /^\/files\/(list|[\w-]+\/[^/]+)$/ },
   { methods: ["GET", "PUT"], path: /^\/calendar-api\/data$/ },
@@ -117,8 +117,8 @@ const PASS_HEADERS = ["accept", "content-type", "x-nova-visualizer", "x-nova-rev
 // A made-up host: relayed requests are never "from this computer" (see fromOurPage)
 const RELAY_ORIGIN = "http://online.nova-agent.invalid";
 
-// The request a relayed frame becomes, marked with who sent it (src/person.ts): the chat, quests
-// and missions it reaches are that person's
+// The request a relayed frame becomes, marked with who sent it (src/person.ts): the chat and
+// quests it reaches are that person's
 export function relayedRequest(req: Pick<Extract<Frame, { t: "req" }>, "method" | "path" | "headers" | "staff">, body?: Buffer, signal?: AbortSignal): Request {
   const headers = new Headers();
   for (const h of PASS_HEADERS) if (req.headers?.[h]) headers.set(h, req.headers[h]);

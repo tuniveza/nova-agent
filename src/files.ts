@@ -20,7 +20,7 @@ export interface FileEntry {
   title: string; // "Release plan: 33 songs by New Year"
   type: FileType;
   size: number; // bytes
-  source: string; // "chat", or "mission:<id>" for a mission's export
+  source: string; // "chat" (or "mission:<id>": a mission's export, from before Missions went)
   created: string;
   updated: string;
 }

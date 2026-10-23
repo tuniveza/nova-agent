@@ -1,5 +1,5 @@
-// Portal's Quests and Calendar tabs: Nova Agent sends its plan (missions,
-// quests, pulses, and Calendar's note and day cards)
+// Portal's Quests and Calendar tabs: Nova Agent sends its plan (quests,
+// pulses, and Calendar's note and day cards)
 // to Nova Bot's worker whenever it changes (and every minute, so "now" moves
 // on), and carries out the taps made in Portal (Done, Start, Not now...).
 // Taps also arrive with each job check (jobs.ts), so they land within a second.
@@ -42,11 +42,11 @@ export function snapshot() {
       .filter((d) => d.repeat === "yearly" || (d.date >= from && d.date <= to))
       .map((d) => ({ id: d.id, date: d.date, title: d.title, preset: d.preset, info: d.info.slice(0, 300), location: d.location, repeat: d.repeat })),
   };
-  const owners = [...new Set([...st.quests, ...st.missions].map((x) => x.owner))];
+  const owners = [...new Set(st.quests.map((x) => x.owner))];
   const people = Object.fromEntries(
     owners.map((id) => {
       const theirs = questState({ id });
-      return [id, { name: theirs.quests.find((q) => q.owner === id)?.ownerName ?? theirs.missions.find((m) => m.owner === id)?.ownerName ?? id, current: theirs.current && slim(theirs.current), next: theirs.next.map(slim) }];
+      return [id, { name: theirs.quests.find((q) => q.owner === id)?.ownerName ?? id, current: theirs.current && slim(theirs.current), next: theirs.next.map(slim) }];
     }),
   );
   return {
@@ -54,7 +54,6 @@ export function snapshot() {
     people,
     calendar,
     rhythm: { wake: st.rhythm.wake, sleep: st.rhythm.sleep, paceLimits: st.rhythm.paceLimits },
-    missions: st.missions.map(({ request, strategy, refinements, ...m }) => m),
     quests: quests.map(slim),
     current: st.current && slim(st.current),
     next: st.next.map(slim),

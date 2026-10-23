@@ -16,14 +16,13 @@
 //   - email campaigns to opted-in fans and clients (campaigns.ts): suggest ideas, DRAFT and edit
 //     them, read how sent ones did. It can't send, schedule or approve: an admin approves each
 //     campaign (Approve, in Portal → Campaigns or on the campaign's card) before anything goes
-//   - plan Missions for any goal (a strategy, tracks, milestones and quests),
-//     refine them with new detail, and run the quests day to day
+//   - plan any goal straight into Quests (and Calendar), change them as plans change,
+//     and run the quests day to day
 //   - research the internet (web search and web fetch, run by Anthropic) and
 //     look at any public webpage in a browser of its own (web.ts): a
 //     screenshot and the page's text, so it sees the page as a person would
 //   - write files for you (Markdown, text, CSV, JSON, HTML) to preview, download
-//     or open in Notes, read them back, and export a mission as a document
-//     (files.ts, quests/export.ts)
+//     or open in Notes, and read them back (files.ts)
 //   - the studio's money (money.ts): read the totals and invoices, WRITE and edit invoices (an admin
 //     approves each one in Portal → Money before it's emailed) and note expenses (unconfirmed until
 //     a person confirms them). It can't send, remind, record payments, void or change settings
@@ -45,7 +44,6 @@ import { checkLogin, describeAppointments, listTask } from "./tasks";
 import { getRecentEvents, trace } from "./trace";
 import { lookAt, lookResult, webTools } from "./web";
 import { fileCard, FILE_TYPES, findFile, listFiles, readFileText, removeFile, saveFile, sizeText } from "./files";
-import { missionMarkdown } from "./quests/export";
 import { draftReply, listEnquiries, readEnquiry, savedReplies, sortEnquiry, threadText, type DraftCard } from "./enquiries";
 import { actionLine, appointmentsText, availability, BOOKING_KINDS, feedBookingsText, findClients, listActions, listAppointments, listBlocks, listFeedBookings, proposeChange, sessionTypes, ukWhen, type BookingAction, type BookingKind } from "./acuity-api";
 import { commentLine, contextText as socialContextText, createSocialDraft, draftCommentReply, editSocialDraft, listSocialComments, listSocialPosts, PLATFORMS, postLine, postStatsText, POST_STATUSES, readSocialPost, socialContext } from "./social";
@@ -55,12 +53,11 @@ import { MONEY_PROMPT, moneyTools } from "./money";
 import { tidyTools } from "./tidy-agent";
 import { GOOGLE_PROMPT, googleTools } from "./google-agent";
 import { clientHistory, clientsLapsed, clientsOwing, clientsText, findClients as findStudioClients, historyText, lapsedText, MONTH_NAMES, owingText, sinceDate } from "./clients";
-import { addBlock, addQuest, questState, removeBlock, removeMission, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateMission, updateQuest } from "./quests/actions";
+import { addBlock, addQuest, questState, removeBlock, removeQuest, setQuestStatus, setRhythm, snoozeQuest, updateQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
-import { createMission, refineMission } from "./quests/planner";
 import { describeLength } from "./quests/lengths";
 import { isPulse } from "./quests/pulses";
-import { EVERY, MODES, MODE_NAMES, PRIORITIES, readQuests, rhythmFor, TIMES_OF_DAY, WEEKDAYS, type Mission, type Quest } from "./quests/store";
+import { EVERY, MODES, MODE_NAMES, PRIORITIES, readQuests, rhythmFor, TIMES_OF_DAY, WEEKDAYS, type Quest } from "./quests/store";
 import { mayChange } from "./quests/actions";
 import { localPerson, ownerOf, ownerToSave, personName, type Person } from "./person";
 import { pcOwnerId } from "./staff";
@@ -103,7 +100,7 @@ function nowInUk() {
 export function personPrompt(person: Person): string {
   const role = person.role === "admin" ? "an admin" : "a member of staff";
   const where = person.online ? "signed in to Portal, using Nova Agent online" : "on the studio computer (Nova Agent works for them here)";
-  return `You're talking to ${person.name} (${role} at the studio, staff id ${person.id}), ${where}. Address them by name now and then, and act as them: missions, quests, blocked times, the rhythm and reminders you set up are theirs (reminders go to their phones), and "my", "me" and "I" mean ${person.name}. Your quest and mission tools show their own${person.everyone ? "; they can also see everyone's (pass everyone: true to quests_list), but change someone else's only when they clearly ask to" : ""}. This conversation is theirs alone: other people have their own.`;
+  return `You're talking to ${person.name} (${role} at the studio, staff id ${person.id}), ${where}. Address them by name now and then, and act as them: quests, blocked times, the rhythm and reminders you set up are theirs (reminders go to their phones), and "my", "me" and "I" mean ${person.name}. Your quest tools show their own${person.everyone ? "; they can also see everyone's (pass everyone: true to quests_list), but change someone else's only when they clearly ask to" : ""}. This conversation is theirs alone: other people have their own.`;
 }
 
 export function systemPrompt(person: Person = localPerson()): string {
@@ -116,10 +113,9 @@ You help with anything they want to get done: inside Nova Agent and the studio, 
 
 It is ${now.words}, ${now.time} (UK time). Today's date is ${now.date}.
 
-You also run Missions and Quests, a smart planner for the people you talk to:
-- A Mission is an end goal (e.g. "release the EP by 1 December", "catch up on my 52-release challenge by the end of the year"). mission_create turns their request into a full plan and schedules it: a written strategy (e.g. release, content, production, filming and editing, a typical week), workstreams (tracks), dated milestones, Quests (concrete tasks with time estimates, priorities, deadlines, dependencies, locations and travel; repeated pipelines like one per song are written out exactly), plus the assumptions it made and questions that would sharpen it.
-- For any goal with several parts, or anything that asks for a schedule, a strategy or a plan, use mission_create straight away. Pass everything they said, in their words (numbers, constraints, what's behind, gear coming, what they want help thinking through), and the deadline if there is one (work it out: "the end of the year" is 31 December; "two months" from today). Planning takes a minute or two. Then reply with: the shape of the plan (the tracks and the pace, e.g. "a release every 2.5 days"), the first few things to do this week, the strategy's key points in a few bullets, the assumptions it made, and its questions, inviting them to answer so you can sharpen it. Their full plan is in the Missions column (tap the mission to open it).
-- When they answer a mission's questions or add detail to a mission ("I've actually released 19", "the interface arrives on Friday"), use mission_refine: it re-plans the work that's left. To talk through a plan's strategy, milestones or tracks, read it with mission_details first.
+You also run Quests, a smart planner for the people you talk to:
+- A big goal is planned straight into Quests, by you. For any goal with several parts, or anything that asks for a schedule, a strategy or a plan (e.g. "release the EP by 1 December", "catch up on my 52-release challenge by the end of the year"), work out the steps and add each one with quest_add straight away: concrete tasks with realistic lengths, priorities and deadlines worked back from theirs (repeated work, like the same steps for every song, written out exactly, one quest each), with locations and travel where it matters. Work out the deadline from what they said ("the end of the year" is 31 December; "two months" is from today). The quests are scheduled around everything else by themselves and show in Calendar; something at a set time (a session, a gig) gets fixed_start, and a key day (a release day) can also get a Calendar day card. Then reply with: the shape of the plan (the pace, e.g. "a release every 2.5 days"), the first few things to do this week, the strategy's key points in a few bullets, what you assumed, and any questions that would sharpen it. When they answer or add detail ("I've actually released 19", "the interface arrives on Friday"), change the quests that are left (quests_list to find them, then quest_update, quest_status or quest_add). If they want the plan as a document, write it with file_write.
+- There are no Missions in Nova any more: never make or offer one, and don't call a plan a mission. A goal is simply its quests (and its Calendar cards). If someone asks about a mission they had, say missions have gone from Nova and its quests are still there as ordinary quests.
 - A quest can be any length: seconds ("text Sam back", 30 seconds), minutes, hours, or days of work (split into sessions automatically). An ongoing quest repeats: every day, weekday or week, or at any interval ("drink water every 30 minutes until 11pm": ongoing, every interval, every_minutes 30, a length of seconds, deadline 23:00), until they end it (quest_status finish) or its deadline passes. Prefer one ongoing quest over many copies. Repeats faster than every 5 minutes (even every second) are pulses: they run on their own exact timer only while they're awake, don't take slots in the plan, and on the phone each ping replaces the last, so they're cheap and safe; set them up whenever asked.
 - The people you talk to run the studio and the staff phones are theirs. Do what they ask with quests, repeats and reminders, however often, short or many: never refuse, bargain or offer watered-down alternatives. If something has a real cost they may not expect, mention it in one short line after doing it.
 - Quests are planned hour by hour around their sleep and wind-down, travel, buffers and breaks, the calendar, and blocked-out time. Every change re-plans automatically, most urgent first, so the plan stays optimised.
@@ -134,7 +130,6 @@ ${bookingsPrompt()}
 - Research the internet: search the web (web_search) and read pages (web_fetch) for anything current or specific (prices, opening times, platform rules, news, how-tos, people and companies). Say where facts came from, with the link.
 - See webpages: page_look opens a public page in a browser and gives you a screenshot and its contents, for when how a page looks matters or web_fetch can't read it (pages built by scripts, a profile, a shop page, checking their own site or socials). It can't log in anywhere.
 - Write files: file_write makes a document they can preview, download to their computer, or open in Notes (Markdown .md by default; also .txt, .csv for spreadsheets, .json, .html). Use it whenever they ask for a file, document, list, plan, report, template, script, spreadsheet or "something I can download", or when an answer is long and worth keeping. Write the whole thing, properly formatted (headings, lists, tables), then reply in a line or two saying what's in it; the file card with Preview and Download appears under your reply, so don't paste the file into the chat too. To change a file, read it (file_read), then file_write with its id. file_list shows what's there.
-- Export a mission: mission_export writes a mission's whole plan (strategy, milestones, every quest, research links) as a Markdown file.
 - Enquiries: read the studio's enquiries from customers (enquiry_list, enquiry_read), sort them in the inbox (enquiry_set_state: new, open, waiting, done, or spam for junk; it only sorts, never sends), read the team's saved replies to routine questions (saved_replies_list: use their facts and wording for prices, opening times, how to book), and draft a reply to one (enquiry_draft_reply). You can only ever draft: you can't send, approve or email anyone, and nothing goes to a customer until a person from the studio reads your draft and presses Approve & send (on the card under your reply, or in Portal). Say that plainly when you draft ("Here's a draft for you to check; it goes when you approve it"), never that you've replied or sent anything. Read the enquiry and its conversation first, write the whole email in a warm, plain UK English voice signed "Novacane Studios" (the footer about why they're getting it and how to stop is added automatically), and only promise what the studio has said it can do. Never draft for someone marked do-not-contact.
 - The studio's clients (read-only): client_find (by name, email or phone), client_history (one client's sessions), clients_owing (who owes money, biggest first), clients_not_booked_since (who hasn't booked since a date: for "since July" pass month "July", which means 1 July of the most recent July; for "in the last 3 months" pass months_back 3). Say money in pounds (£120.00) and dates in UK time, as the tools give them. These are the list in Portal → Clients, where staff edit contact details, notes, money and marketing consent; you can't change anything there. Marketing consent is "no" unless it's been recorded with a date and a source: never suggest sending marketing to someone marked "marketing: no".
 - Email campaigns (newsletters to the studio's fans and clients, sent by the studio's own mail server): suggest_campaign (who's opted in, how recent ones did; then you suggest 1–3 ideas, and nothing is saved), create_campaign_draft, edit_campaign_draft, campaign_results (how a sent one did: opened and clicked as percentages), list_campaigns. You can only draft and edit: you can't send, schedule or approve a campaign, and nobody can through you. Nothing is sent to anyone until an admin presses Approve in Portal → Campaigns (or on the card under your reply). Say that plainly every time you draft or change one ("It's saved as a draft: nothing is sent until an admin approves it in Portal → Campaigns"), and never say a campaign is sent or scheduled unless campaign_results or list_campaigns shows it. Only people who opted in get campaigns (confirmed fans, and clients who said yes to studio news); Nova Bot adds the footer saying who it's from, why they're getting it and how to unsubscribe, so don't write one. Write in warm, plain UK English: a short subject line, short paragraphs separated by blank lines, **bold** for the one thing that matters, full links (https://…), signed "Novacane Studios". Give a send time (UK) when one is asked for or matters; otherwise it goes as soon as it's approved.
@@ -549,25 +544,6 @@ const musicLine = (m: ReturnType<typeof currentMusic>[number]) => `${longDate(m.
 const questLine = (q: Quest) =>
   `${q.id.slice(0, 8)} · ${q.title}${q.track ? ` [${q.track}]` : ""} · ${q.start ? `${longDate(q.start.slice(0, 10))} ${hm(q.start)}–${hm(q.end)}` : isPulse(q) ? `pulse (own timer${q.deadline ? `, until ${hm(q.deadline)}` : ""})` : "not scheduled"} · ${describeLength(q)}${q.ongoing ? ` · ${q.sessions} sessions done` : ""} · ${q.priority}${q.deadline ? ` · due ${q.deadline.replace("T", " ")}` : ""}${q.location ? ` · at ${q.location} (+${q.travelMinutes} min travel)` : ""} · ${q.status} · ${MODE_NAMES[q.mode] ?? q.mode}${q.from ? ` · from ${q.from}` : ""}${q.atRisk ? " · AT RISK" : ""}`;
 
-// What a new or re-planned mission looks like, for Claude to explain (the first stretch of quests in full)
-function missionReport(r: { mission: Mission; quests: Quest[]; atRisk: number; unplaced: string[] }): string {
-  const m = r.mission;
-  const planned = [...r.quests].sort((a, b) => (a.start || "z").localeCompare(b.start || "z"));
-  const shown = planned.slice(0, 25);
-  return [
-    `Mission ${m.id.slice(0, 8)} “${m.title}”${m.deadline ? `, due ${m.deadline}` : ""}: ${m.summary}`,
-    m.tracks.length ? `Tracks: ${m.tracks.map((t) => `${t.name} (${r.quests.filter((q) => q.track === t.name).length} quests)`).join(", ")}` : "",
-    m.strategy.length ? `Strategy:\n${m.strategy.map((x) => `## ${x.heading}\n${x.body}`).join("\n\n")}` : "",
-    m.milestones.length ? `Milestones (${m.milestones.length}): ${m.milestones.slice(0, 12).map((x) => `${x.at.replace("T", " ")} ${x.title}`).join("; ")}${m.milestones.length > 12 ? "; …" : ""}` : "",
-    m.assumptions.length ? `Assumed: ${m.assumptions.join(" | ")}` : "",
-    m.questions.length ? `Questions to ask them: ${m.questions.join(" | ")}` : "",
-    `${r.quests.length} quests to go, ${r.atRisk} at risk. The first ${shown.length}:\n${shown.map(questLine).join("\n")}`,
-    r.unplaced.length ? `Couldn't place: ${r.unplaced.slice(0, 10).join("; ")}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-}
-
 function fileTools(actions: ChatAction[]) {
   const made = (f: ReturnType<typeof saveFile>, verb: string) => {
     actions.push({ kind: "file", text: `${verb} ${f.name}`, file: fileCard(f) });
@@ -624,23 +600,6 @@ function fileTools(actions: ChatAction[]) {
           return `Deleted ${f.name}.`;
         } catch (error) {
           return (error as Error).message;
-        }
-      },
-    }),
-    betaZodTool({
-      name: "mission_export",
-      description: "Write a mission's whole plan as a Markdown file to download: summary, progress, tracks, strategy, milestones, every quest by track, assumptions, questions and research links. Exporting again updates the same file.",
-      inputSchema: z.object({ id: z.string().describe("The mission's id") }),
-      run: async ({ id }) => {
-        try {
-          const doc = missionMarkdown(id);
-          const source = `mission:${doc.missionId}`;
-          const before = listFiles().find((f) => f.source === source);
-          const f = saveFile({ name: doc.name, title: doc.title, content: doc.content, id: before?.id, source });
-          made(f, before ? "Updated" : "Exported");
-          return `Exported “${doc.title}” as ${f.name} (${sizeText(f.size)}).`;
-        } catch (error) {
-          return `Couldn't export it: ${(error as Error).message}`;
         }
       },
     }),
@@ -1178,8 +1137,8 @@ const noteAction = (actions: ChatAction[], kind: ChatAction["kind"], text: strin
   trace("input", "ok", `Chat: ${text}`);
 };
 
-// Missions and quests for one person: what they make is theirs, and they see their own (an admin,
-// or the studio computer, can look at everyone's)
+// Quests for one person: what they make is theirs, and they see their own (an admin, or the
+// studio computer, can look at everyone's)
 export function questTools(actions: ChatAction[], person: Person = localPerson()) {
   const did = (kind: ChatAction["kind"], text: string) => {
     actions.push({ kind, text });
@@ -1195,7 +1154,6 @@ export function questTools(actions: ChatAction[], person: Person = localPerson()
   };
   const byId = <T extends { id: string }>(list: T[], id: string) => list.find((x) => x.id === id) ?? (list.filter((x) => x.id.startsWith(id)).length === 1 ? list.find((x) => x.id.startsWith(id)) : undefined);
   const questById = (id: string) => byId(readQuests().quests, id);
-  const missionById = (id: string) => byId(readQuests().missions, id);
   const STAMP_OR_EMPTY = z.string().describe('"YYYY-MM-DDTHH:MM" (UK time, ":SS" seconds allowed), or "" for none');
   // Any length, from a second up: give it in whichever units fit (they're added together)
   const LENGTH = {
@@ -1213,52 +1171,8 @@ export function questTools(actions: ChatAction[], person: Person = localPerson()
   };
   return [
     betaZodTool({
-      name: "mission_create",
-      description: "Create a Mission from what the person wants to achieve: it's broken into Quests and scheduled straight away. Pass their goal in their own words, with any constraints they mentioned.",
-      inputSchema: z.object({ request: z.string().min(3), deadline: z.string().optional().describe('The mission deadline if they gave one: "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM"') }),
-      run: async ({ request, deadline }) => {
-        const r = await createMission(request, { deadline, owner });
-        did("added", `Mission “${r.mission.title}”: ${r.quests.length} quests planned`);
-        return missionReport(r);
-      },
-    }),
-    betaZodTool({
-      name: "mission_refine",
-      description: "Give a mission new detail or answers to its questions: the work that's left is planned again with it (done quests stay). Takes a minute or two.",
-      inputSchema: z.object({ id: z.string(), detail: z.string().min(2).describe("What's new, in their words"), deadline: z.string().optional().describe('A new deadline if they changed it: "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM"') }),
-      run: async ({ id, detail, deadline }) => {
-        check(missionById(id), "mission");
-        const r = await refineMission(id, detail, { deadline });
-        did("changed", `Re-planned “${r.mission.title}”: ${r.quests.length} quests to go`);
-        return missionReport(r);
-      },
-    }),
-    betaZodTool({
-      name: "mission_details",
-      description: "A mission's full plan: its strategy, tracks and their progress, milestones, assumptions, open questions and what they've added since.",
-      inputSchema: z.object({ id: z.string() }),
-      run: async ({ id }) => {
-        const m = questState({ ...mine, everyone: person.everyone }).missions.find((x) => x.id === id || x.id.startsWith(id));
-        if (!m) return `No mission with id ${id}.`;
-        return JSON.stringify({
-          id: m.id.slice(0, 8),
-          title: m.title,
-          summary: m.summary,
-          status: m.status,
-          deadline: m.deadline,
-          progress: `${m.progress.done}/${m.progress.total} quests done, ${m.progress.atRisk} at risk, ${Math.round(m.progress.minutesLeft / 60)} h left`,
-          tracks: m.progress.tracks.map((t) => `${t.name}: ${t.done}/${t.total}`),
-          strategy: m.strategy,
-          milestones: m.milestones.map((x) => `${x.done ? "✓" : "·"} ${x.at.replace("T", " ")} ${x.title}`),
-          assumptions: m.assumptions,
-          questions: m.questions,
-          added_since: m.refinements.map((x) => x.text),
-        });
-      },
-    }),
-    betaZodTool({
       name: "what_now",
-      description: "The quest happening now, the next few, anything overdue or unplanned, missions at risk, music time today and tomorrow, and today's calendar (including Google Calendar's events, which quests are planned around). Use it for 'what should I do now?' and before giving advice on priorities.",
+      description: "The quest happening now, the next few, anything overdue or unplanned (quests at risk say AT RISK), music time today and tomorrow, and today's calendar (including Google Calendar's events, which quests are planned around). Use it for 'what should I do now?' and before giving advice on priorities.",
       inputSchema: z.object({}),
       run: async () => {
         const st = questState(mine);
@@ -1268,7 +1182,6 @@ export function questTools(actions: ChatAction[], person: Person = localPerson()
           next: st.next.map(questLine),
           overdue: st.overdue.map(questLine),
           unplanned: st.unplanned.map(questLine),
-          missions: st.missions.filter((m) => m.status === "active").map((m) => `${m.id.slice(0, 8)} · ${m.title}${m.deadline ? ` · due ${m.deadline}` : ""} · ${m.progress.done}/${m.progress.total} done · ${m.progress.atRisk} at risk · ${Math.round(m.progress.minutesLeft / 60)} h left`),
           music_time: currentMusic(person.id).slice(0, 2).map(musicLine),
           // Today's events (the studio's own and Google Calendar's): quests are planned around them
           calendar_today: todayCalendar(),
@@ -1277,21 +1190,20 @@ export function questTools(actions: ChatAction[], person: Person = localPerson()
     }),
     betaZodTool({
       name: "quests_list",
-      description: `Quests scheduled between two dates, or all quests of one mission: the person's own${person.everyone ? " (everyone: true for everyone's, each with whose it is)" : ""}. Use it to find a quest's id.`,
-      inputSchema: z.object({ from: DATE.optional(), to: DATE.optional(), mission_id: z.string().optional(), everyone: z.boolean().optional().describe("Everyone's quests, not just theirs (admins only)") }),
-      run: async ({ from, to, mission_id, everyone }) => {
+      description: `Quests scheduled between two dates (or all of them): the person's own${person.everyone ? " (everyone: true for everyone's, each with whose it is)" : ""}. Use it to find a quest's id.`,
+      inputSchema: z.object({ from: DATE.optional(), to: DATE.optional(), everyone: z.boolean().optional().describe("Everyone's quests, not just theirs (admins only)") }),
+      run: async ({ from, to, everyone }) => {
         const all = everyone && person.everyone;
-        const qs = questState({ ...mine, everyone: all }).quests.filter((q) => (mission_id ? q.missionId.startsWith(mission_id) : true) && (from ? q.start.slice(0, 10) >= from : true) && (to ? q.start && q.start.slice(0, 10) <= to : true));
+        const qs = questState({ ...mine, everyone: all }).quests.filter((q) => (from ? q.start.slice(0, 10) >= from : true) && (to ? q.start && q.start.slice(0, 10) <= to : true));
         return qs.length ? qs.sort((a, b) => (a.start || "z").localeCompare(b.start || "z")).map((q) => `${questLine(q)}${all ? ` · ${q.ownerName}'s` : ""}`).join("\n") : everyone && !person.everyone ? "Only admins can see everyone's quests. No quests of theirs found." : "No quests found.";
       },
     }),
     betaZodTool({
       name: "quest_add",
-      description: "Add a single Quest (optionally to a mission). It's scheduled automatically unless fixed_start pins it.",
+      description: "Add a Quest. It's scheduled automatically unless fixed_start pins it. For a big goal, add each of its steps as a quest of its own.",
       inputSchema: z.object({
         title: z.string().min(1),
         ...LENGTH,
-        mission_id: z.string().optional(),
         priority: z.enum(PRIORITIES).optional(),
         deadline: STAMP_OR_EMPTY.optional(),
         fixed_start: STAMP_OR_EMPTY.optional(),
@@ -1301,8 +1213,7 @@ export function questTools(actions: ChatAction[], person: Person = localPerson()
         notes: z.string().optional(),
       }),
       run: async (i) => {
-        const missionId = i.mission_id ? check(readQuests().missions.find((m) => m.id.startsWith(i.mission_id!)), "mission")?.id ?? "" : "";
-        const q = addQuest({ title: i.title, minutes: totalMinutes(i) ?? 60, ongoing: i.ongoing, every: i.every, everyMinutes: i.every_minutes, missionId, priority: i.priority, deadline: i.deadline, fixedStart: i.fixed_start, location: i.location, travelMinutes: i.travel_minutes, timeOfDay: i.time_of_day, notes: i.notes }, owner);
+        const q = addQuest({ title: i.title, minutes: totalMinutes(i) ?? 60, ongoing: i.ongoing, every: i.every, everyMinutes: i.every_minutes, priority: i.priority, deadline: i.deadline, fixedStart: i.fixed_start, location: i.location, travelMinutes: i.travel_minutes, timeOfDay: i.time_of_day, notes: i.notes }, owner);
         did("added", `Quest “${q.title}”${q.start ? `: ${longDate(q.start.slice(0, 10))} ${hm(q.start)}` : ""}`);
         return `Added: ${questLine(q)}`;
       },
@@ -1373,22 +1284,6 @@ export function questTools(actions: ChatAction[], person: Person = localPerson()
         const b = addBlock(start, end, reason || "Busy", owner);
         did("added", `Blocked ${longDate(start.slice(0, 10))} ${hm(start)}–${hm(end)}: ${b.reason}`);
         return `Blocked ${b.start}–${b.end} (${b.reason}), id ${b.id.slice(0, 8)}. Quests have moved around it.`;
-      },
-    }),
-    betaZodTool({
-      name: "mission_update",
-      description: "Rename a mission, change its deadline, pause or resume it, mark it done, or remove it (with its quests).",
-      inputSchema: z.object({ id: z.string(), title: z.string().optional(), deadline: z.string().optional(), status: z.enum(["active", "paused", "done"]).optional(), remove: z.boolean().optional() }),
-      run: async ({ id, remove, ...changes }) => {
-        check(missionById(id), "mission");
-        if (remove) {
-          const m = removeMission(id);
-          did("removed", `Removed mission “${m.title}”`);
-          return `Removed “${m.title}” and its quests.`;
-        }
-        const m = updateMission(id, changes);
-        did("changed", `Mission “${m.title}”: ${m.status}`);
-        return `Updated mission “${m.title}”.`;
       },
     }),
     betaZodTool({

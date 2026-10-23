@@ -1,4 +1,4 @@
-// P0-4: Nova Agent tells people apart. Chats, missions, quests, blocked times and reminders are
+// P0-4: Nova Agent tells people apart. Chats, quests, blocked times and reminders are
 // tied to the person: online, the signed-in staff member Nova Bot's relay passes; on the PC, the
 // person Nova Agent works for (who also owns everything made before owners existed).
 //   Run: npm test
@@ -91,7 +91,7 @@ describe("chats per person", () => {
   });
 });
 
-describe("quests and missions per person", () => {
+describe("quests per person", () => {
   const run = async (tools: any[], name: string, input: Record<string, unknown>) => tools.find((t) => t.name === name).run(input);
 
   it("a quest the Agent adds for a relayed staff member is theirs, and their tools show their own", async () => {
@@ -135,13 +135,15 @@ describe("quests and missions per person", () => {
     writeFileSync(file, JSON.stringify({ rhythm: {}, missions: [{ id: "m1", title: "Release the EP" }], quests: [{ id: "q1", title: "Mix", minutes: 60, missionId: "m1" }], blocks: [] }));
     const st = nova.actions.questState({ id: "ana" });
     expect(st.quests.map((q) => [q.id, q.owner])).toEqual([["q1", "ana"]]);
-    expect(st.missions.map((m) => [m.id, m.owner])).toEqual([["m1", "ana"]]);
+    // (Missions went from Nova: a saved one stays in the file, but isn't shown)
+    expect(st).not.toHaveProperty("missions");
     expect(nova.actions.questState({ id: "bea" }).quests).toEqual([]);
     nova.plan.replan();
     expect(existsSync(`${file}.pre-per-person`)).toBe(true);
     expect(JSON.parse(readFileSync(`${file}.pre-per-person`, "utf8")).quests[0]).not.toHaveProperty("owner");
     // Saved with no owner (still the PC's person's), so going back to the copy loses nothing
     expect(JSON.parse(readFileSync(file, "utf8")).quests[0].owner).toBe("");
+    expect(JSON.parse(readFileSync(file, "utf8")).missions.map((m: { id: string }) => m.id)).toEqual(["m1"]);
   });
 
   it("Notes: a shared note's quest is found by whoever has it open (no copies), and its owner is whoever wrote it", async () => {
@@ -225,7 +227,7 @@ describe("reminders reach their owner only", () => {
 });
 
 describe("Portal's copy", () => {
-  it("says whose each quest and mission is, and each person's own 'now'", async () => {
+  it("says whose each quest is, and each person's own 'now'", async () => {
     const { nova } = await studio("2026-10-07T09:55");
     nova.setQuests({ quests: [{ id: "bea-q", owner: "bea", title: "Practise scales", minutes: 30, fixedStart: "2026-10-07T10:00" }, { id: "ana-q", title: "Mix the EP", minutes: 30, fixedStart: "2026-10-07T11:00" }] });
     nova.plan.replan();

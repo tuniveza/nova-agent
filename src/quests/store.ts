@@ -1,10 +1,5 @@
-// Missions and Quests: what they are, and where they're kept.
+// Quests: what they are, and where they're kept.
 //
-//   Mission  an end goal ("Release the EP by 1 December", "finish my 52-release
-//                 challenge by New Year", "get fit for the summer"), turned into
-//                 quests, with a written strategy, workstreams (tracks), dated
-//                 milestones, the assumptions the plan made and the questions
-//                 that would sharpen it
 //   Quest    one actionable task: how long it takes (anything from a second
 //                 up; long ones are split into sessions, and an ongoing quest
 //                 never ends: it gets a session every day, weekday or week),
@@ -12,6 +7,9 @@
 //   Block         time that's taken ("out tonight 7-11", "off sick today")
 //   Rhythm        how the days work: wake, sleep, wind-down, buffers, breaks,
 //                 reminders, and music time (time set aside for music)
+//   (Mission      kept as saved data only. Missions went from Nova on 23 Oct 2026: nothing makes,
+//                 changes, shows or announces them now, but the ones already in quests.json stay
+//                 there untouched, and their quests are ordinary quests.)
 //
 // Each mission, quest and blocked time belongs to a person (`owner`, their staff id; "" = the
 // person Nova Agent works for on the PC, src/person.ts). People other than that one can have a
@@ -106,8 +104,8 @@ export interface Mission {
 export interface Quest {
   id: string;
   owner: string; // whose it is (staff id; "" = the person Nova Agent works for on the PC)
-  missionId: string; // "" for a quest on its own
-  track: string; // the mission's workstream it belongs to ("" = none)
+  missionId: string; // the mission it came from, before Missions went ("" = none); kept, never used for planning
+  track: string; // the mission workstream it came from ("" = none)
   title: string;
   notes: string;
   minutes: number; // how long the work takes (can be a fraction: 0.5 = 30 seconds); for an ongoing quest, each session
@@ -143,7 +141,7 @@ export interface Quest {
   checkedFor: string; // the end time a check-in was sent for
   missed: number;
   completed: string;
-  edited: string; // when it was last changed by hand ("" = never): a mission re-plan keeps it
+  edited: string; // when it was last changed by hand ("" = never)
   created: string;
   updated: string;
 }

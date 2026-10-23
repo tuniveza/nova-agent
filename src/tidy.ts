@@ -1,11 +1,11 @@
-// Portal → Test stuff, the studio PC's half: quests, missions, calendar notes, Fixer jobs and files
+// Portal → Test stuff, the studio PC's half: quests, calendar notes, Fixer jobs and files
 // that look like tests or copies (Nova Bot finds its own: src/tidy.js there). Portal shows both lists.
 //
 // Each thing comes with plain reasons (rude or joke words, "test", a copy of another quest, a
 // reminder test seconds long, a Fixer fix for a problem that's gone…). One strong reason, or two
 // weak ones, makes it "Likely a test"; one weak one makes it "Maybe".
 //
-// Deleting goes through each thing's own way of being deleted (removeQuest, removeMission, the
+// Deleting goes through each thing's own way of being deleted (removeQuest, the
 // calendar store, so the calendar's sync tells Nova Bot too; the Fixer's Reject; removeFile), and a
 // whole copy goes in data/tidy.json's bin first, so "Recently deleted" can put it back for 30 days.
 // (A Fixer job is only cleared, the Fixer's own Reject: there's nothing to put back.) "Not a test"
@@ -22,15 +22,16 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { readCalendar, removeNote, writeCalendar, type NoteCard } from "./calendar/store";
 import { config } from "./config";
 import { listFiles, readFileText, removeFile, saveFile, type FileEntry } from "./files";
-import { removeMission, removeQuest } from "./quests/actions";
+import { removeQuest } from "./quests/actions";
 import { replan } from "./quests/plan";
-import { cleanMission, cleanQuest, readQuests, writeQuests, type Mission, type Quest } from "./quests/store";
+import { cleanMission, cleanQuest, readQuests, writeQuests, type Quest } from "./quests/store";
 import { trace } from "./trace";
 import { isTestName, jokeWordsIn, testWordsIn } from "./tidy-words";
 
 const DAY = 86_400_000;
 const BIN_DAYS = 30;
 
+// (a "mission" is only ever in the bin, deleted before Missions went from Nova: it can still be put back)
 export const PC_KINDS = { quest: "Quest", mission: "Mission", calnote: "Calendar note", fixer: "Fixer job", file: "File" } as const;
 export type PcKind = keyof typeof PC_KINDS;
 
@@ -67,7 +68,6 @@ export interface JobLike {
 
 export interface PcData {
   quests: Quest[];
-  missions: Mission[];
   notes: NoteCard[];
   jobs: JobLike[];
   issues: { id: string }[];
@@ -152,22 +152,6 @@ export function findPcTestStuff(d: PcData, now = Date.now()): TidyItem[] {
       reasons.push({ text: "Short, with no notes, and finished", strong: false });
     if (reasons.length && q.status === "skipped") reasons.push({ text: "Skipped", strong: false });
     put("quest", q.id, q.title, { where: "Quests", open: "/portal/?view=quests", created: q.created, by: q.from || (q.owner ? q.owner : "") }, reasons);
-  }
-
-  // --- Missions (deleting one takes its quests with it)
-  const mKeep = new Map<string, Mission>();
-  for (const m of d.missions) {
-    const was = mKeep.get(norm(m.title));
-    if (!was || m.updated > was.updated) mKeep.set(norm(m.title), m);
-  }
-  for (const m of d.missions) {
-    const reasons = wordReasons(m.title);
-    if (mKeep.get(norm(m.title))!.id !== m.id) reasons.push({ text: "A copy of a newer mission with the same name", strong: true });
-    const item = put("mission", m.id, m.title, { where: "Missions", open: "/agent/", created: m.created, by: "" }, reasons);
-    if (item) {
-      const n = d.quests.filter((q) => q.missionId === m.id).length;
-      if (n) item.note = `Its ${n} quest${n === 1 ? "" : "s"} go${n === 1 ? "es" : ""} with it.`;
-    }
   }
 
   // --- Calendar notes (a quest's own card, quest-…, follows its quest)
@@ -266,7 +250,6 @@ export function pcData(fixer: FixerLike | null): PcData {
   });
   return {
     quests: q.quests,
-    missions: q.missions,
     notes: readCalendar().notes,
     jobs: st ? [...st.working, ...st.done, ...st.needsYou] : [],
     issues: st ? st.issues : [],
@@ -301,14 +284,6 @@ function deleteOne(kind: PcKind, id: string, fixer: FixerLike | null, actor: Act
     if (!q) throw new Error("It's already gone.");
     removeQuest(id);
     return { data: q };
-  }
-  if (kind === "mission") {
-    const data = readQuests();
-    const m = data.missions.find((x) => x.id === id);
-    if (!m) throw new Error("It's already gone.");
-    const quests = data.quests.filter((q) => q.missionId === id);
-    removeMission(id);
-    return { data: { mission: m, quests } };
   }
   if (kind === "calnote") {
     const n = readCalendar().notes.find((x) => x.id === id);

@@ -90,7 +90,7 @@ describe("reading what's typed", () => {
 // answered with nothing (cancelled).
 describe("every command runs", () => {
   const answers: Record<string, unknown> = {
-    "/quests/state": { quests: [{ id: "abcdef12-1", title: "Mix the EP", status: "todo", start: "2026-10-14T09:00:00Z" }], missions: [{ id: "m1234567", title: "EP", progress: { percent: 40 } }], current: null, next: [], overdue: [] },
+    "/quests/state": { quests: [{ id: "abcdef12-1", title: "Mix the EP", status: "todo", start: "2026-10-14T09:00:00Z" }], current: null, next: [], overdue: [] },
     "/actions/": { ok: true },
     "/calendar-api/data": { notes: [{ id: "c1", title: "Session", start: "2026-10-14T10:00" }], rev: 3 },
     "/board-api/boards": { boards: [{ name: "Welcome", cards: [{ title: "Hello" }] }] },

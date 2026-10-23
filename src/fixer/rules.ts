@@ -148,7 +148,7 @@ export function recommend(input: { checks: Check[]; trivial: boolean; sensitive:
 
 // ---- Suggestions: quests that look like Nova Agent development work ----
 const APP_WORDS = /\b(nova\s*agent|nova\s*bot|novabot|fixer|portal|observatory|visuali[sz]er|lossless|the manual|panels?|the app|apps?)\b/i;
-const PANEL_NAMES = /\b(calendar|notes|index|quests|missions|admin)\b/i;
+const PANEL_NAMES = /\b(calendar|notes|index|quests|admin)\b/i;
 const DEV_WORDS = /\b(bugs?|glitch(es|y)?|crash(es|ing)?|broken|breaks?|error|errors|fix(es|ing)?|button|buttons|tab|tabs|toolbar|screen|page|layout|overflow|scroll(s|ing|bar)?|sideways|off-?screen|css|theme|themes|dark mode|font|icon|icons|ui|ux|feature|deploy|worker|relay|api|endpoint|typecheck|tests?|redesign|dropdown|menu|modal|dialog|slider|sound effects?|sfx|animation|loads?|loading|sync(s|ing)?|notifications?|phone width|mobile)\b/i;
 const NOT_DEV = /\b(mix|master|mastering|release|single|ep|album|gym|run|shop|buy|call mum|dentist|invoice|rent|groceries|laundry|kitchen|car)\b/i;
 

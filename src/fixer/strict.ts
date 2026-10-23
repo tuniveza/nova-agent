@@ -431,8 +431,9 @@ export async function runStrict(opts: StrictOptions): Promise<StrictRun> {
           await record(p.name, Date.now() - t, [], `couldn't be looked at (${String((err as Error).message).split("\n")[0].slice(0, 120)})`);
         }
       }
-      // Missions and the Manual: opened from the navigation panel, like a person would
-      for (const [place, sel] of [["Missions", '#tabbar [data-tab="pane:missions"], [data-pane="missions"]'], ["Manual", '#tabbar [data-tab="manual"], [data-act="manual"]']] as const) {
+      // The Manual: opened from the navigation panel, like a person would (Missions went from Nova
+      // on 23 Oct 2026, so there's no Missions screen to check; a place that isn't there is skipped)
+      for (const [place, sel] of [["Manual", '#tabbar [data-tab="manual"], [data-act="manual"]']] as const) {
         if (!want(place)) continue;
         const t = Date.now();
         const opened = await page

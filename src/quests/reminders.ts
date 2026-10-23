@@ -23,7 +23,7 @@ import { pcOwnerId } from "../staff";
 export interface QuestNotice {
   // missed: a session that passed without a ping (Nova Agent was off); undelivered: a ping the phones never got
   // music: a studio booking change moved today's or tomorrow's music time
-  kind: "starting" | "leave" | "checkin" | "moved" | "briefing" | "wrapup" | "mission" | "pulse" | "missed" | "undelivered" | "music";
+  kind: "starting" | "leave" | "checkin" | "moved" | "briefing" | "wrapup" | "pulse" | "missed" | "undelivered" | "music";
   title: string;
   message: string;
   questId?: string;
@@ -42,30 +42,27 @@ const PHONE: Record<QuestNotice["kind"], { ttl: number; urgent: boolean }> = {
   moved: { ttl: 3600, urgent: false },
   briefing: { ttl: 4 * 3600, urgent: false },
   wrapup: { ttl: 2 * 3600, urgent: false },
-  mission: { ttl: 86400, urgent: false },
   pulse: { ttl: 60, urgent: false },
   missed: { ttl: 3600, urgent: false },
   undelivered: { ttl: 3600, urgent: false },
   music: { ttl: 3 * 3600, urgent: false },
 };
 
-// Whose a notice is: its quest's or mission's owner, else the one given, else the PC's person
+// Whose a notice is: its quest's owner, else the one given, else the PC's person
 function ownerFor(n: Pick<QuestNotice, "questId" | "owner">, data: QuestData): string {
   if (n.owner) return n.owner;
   const q = n.questId ? data.quests.find((x) => x.id === n.questId) : undefined;
-  if (q) return ownerOf(q);
-  const m = n.questId?.startsWith("mission-") ? data.missions.find((x) => `mission-${x.id}` === n.questId) : undefined;
-  return m ? ownerOf(m) : pcOwnerId();
+  return q ? ownerOf(q) : pcOwnerId();
 }
 
 // Show a notice on the page and send it to the phones, once: `session` is what
 // it's about (a session's start, a day), so asking twice sends nothing new.
 // `covers`: other sessions the same notice tells about.
 function notify(n: Omit<QuestNotice, "time">, push: boolean, session = fromMin(nowMinutes()), covers?: string[]): boolean {
-  const source = n.kind === "mission" ? "mission" : "quest";
+  const source = "quest";
   const data = readQuests();
   const owner = ownerFor(n, data);
-  // To the owner's phones too, labelled as Quest or Mission.
+  // To the owner's phones too, labelled as Quest.
   // Pulses replace each other on the phone and stay out of Portal's Alerts list
   // Only the phones the quest picked; none picked: the owner's phones (Nova Bot finds them;
   // "owner" means the PC doesn't know who it works for yet, so Nova Bot uses the studio owner's)
@@ -84,7 +81,7 @@ function notify(n: Omit<QuestNotice, "time">, push: boolean, session = fromMin(n
   recent.push(notice);
   if (recent.length > 50) recent.shift();
   questEvents.emit("notice", notice);
-  trace("task", "info", `Nova ${source === "mission" ? "Mission" : "Quest"}: ${n.title}: ${n.message}`);
+  trace("task", "info", `Nova Quest: ${n.title}: ${n.message}`);
   return true;
 }
 
@@ -106,13 +103,6 @@ export function remindLate(q: Quest, sessions: string[], push: boolean): void {
   const times = sessions.map(hm);
   const list = times.length > 4 ? `${times.slice(0, 3).join(", ")} and ${times.length - 3} more` : times.length > 1 ? `${times.slice(0, -1).join(", ")} and ${times.at(-1)}` : times[0];
   notify({ kind: "missed", title: `Missed: ${q.title}`, message: `${sessions.length === 1 ? "The session" : "Sessions"} due at ${list} went by without a reminder. The next one is lined up.`, questId: q.id }, push, sessions[0], sessions.slice(1));
-}
-
-// Mission news (planned, complete): on the page and, if the rhythm says so, the phones
-export function notifyMission(what: "planned" | "complete", title: string, message: string, missionId: string): void {
-  const data = readQuests();
-  const m = data.missions.find((x) => x.id === missionId);
-  notify({ kind: "mission", title, message, questId: `mission-${missionId}` }, rhythmFor(data, m ? ownerOf(m) : pcOwnerId(), pcOwnerId()).phonePush, `${what}@${fromMin(nowMinutes())}`);
 }
 
 // A booking change moved today's or tomorrow's music time: one calm notice, said once

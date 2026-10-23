@@ -1,6 +1,6 @@
 // Re-planning: run the planner over everything open, save the times, and show
-// the plan in Calendar (each planned quest, each blocked time, each mission
-// milestone and each day's music time becomes a note card there, kept in step
+// the plan in Calendar (each planned quest, each blocked time and each day's
+// music time becomes a note card there, kept in step
 // automatically). Taken time is the calendar, blocked time, and (with
 // ACUITY_SOURCE=api) the studio's bookings and Acuity's blocked times (bookings.ts).
 // Each person's quests are planned in their own time: their own rhythm (or the main one), their
@@ -21,10 +21,10 @@ import { pcOwnerId } from "../staff";
 
 const QUEST_NOTE = "quest-";
 const BLOCK_NOTE = "block-";
-const MILESTONE_NOTE = "mile-";
+const MILESTONE_NOTE = "mile-"; // (cards of mission milestones, from before Missions went: cleared away)
 const MUSIC_NOTE = "music-";
 const isOurNote = (id: string) => id.startsWith(QUEST_NOTE) || id.startsWith(BLOCK_NOTE) || id.startsWith(MILESTONE_NOTE) || id.startsWith(MUSIC_NOTE);
-// However far ahead the rhythm says to plan, a mission's work is planned as far as its deadlines (up to a year)
+// However far ahead the rhythm says to plan, quests are planned as far as their deadlines (up to a year)
 const MAX_HORIZON_DAYS = 370;
 
 // "Now" as UK wall-clock minutes (the planner's time), to the second
@@ -101,10 +101,8 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
       q.start = q.end = q.travelStart = "";
     }
   }
-  // Quests of paused or finished missions wait
-  const paused = new Set(data.missions.filter((m) => m.status !== "active").map((m) => m.id));
   // Pulses run on their own timers (pulses.ts), not in the plan
-  const planning = data.quests.filter((q) => !paused.has(q.missionId) && !isPulse(q) && !waiting.has(q.id));
+  const planning = data.quests.filter((q) => !isPulse(q) && !waiting.has(q.id));
   // The studio's shared taken time: the calendar and the bookings
   const shared: Busy[] = [...calendarBusy(), ...bookingsBusy()];
   // Each person on their own: the PC's person always (their music time shows in Calendar), anyone
@@ -138,10 +136,6 @@ export function replan(data: QuestData = readQuests()): { data: QuestData; atRis
     if (isPulse(q)) {
       q.start = q.end = q.travelStart = "";
       q.atRisk = false;
-      continue;
-    }
-    if (paused.has(q.missionId)) {
-      if (q.status === "todo") q.start = q.end = q.travelStart = "";
       continue;
     }
     if (waiting.has(q.id)) continue;
@@ -179,19 +173,17 @@ function tellMissed(q: Quest, slots: string[], push: boolean): void {
 // Keep Calendar showing the plan: one note card per planned quest, per blocked time and per day's music time
 export function syncCalendar(data: QuestData, music: MusicSlot[] = lastMusic): void {
   const cal = readCalendar();
-  const missions = new Map(data.missions.map((m) => [m.id, m]));
   const seed = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
   const ours: NoteCard[] = [];
   for (const q of data.quests) {
     if (!q.start || q.status === "skipped") continue;
-    const mission = missions.get(q.missionId);
     // The calendar works to the minute: a quest of seconds still shows as a minute
     const start = q.start.slice(0, 16);
     const end = q.end.slice(0, 16) > start ? q.end.slice(0, 16) : fromMin(toMin(start) + 1);
     ours.push({
       id: `${QUEST_NOTE}${q.id}`,
       title: `${q.status === "done" ? "✓" : q.atRisk ? "⚠" : q.ongoing ? "∞" : "✦"} ${q.title}`.slice(0, 120),
-      body: [mission ? `Mission: ${mission.title}` : "Quest", q.location ? `At ${q.location}${q.travelMinutes ? ` (${q.travelMinutes} min travel first)` : ""}` : "", q.notes].filter(Boolean).join("\n"),
+      body: ["Quest", q.location ? `At ${q.location}${q.travelMinutes ? ` (${q.travelMinutes} min travel first)` : ""}` : "", q.notes].filter(Boolean).join("\n"),
       author: "Quest",
       start,
       end,
@@ -199,12 +191,6 @@ export function syncCalendar(data: QuestData, music: MusicSlot[] = lastMusic): v
       created: q.created,
       updated: q.updated,
     });
-  }
-  // Each mission's milestones, as short cards at their time (they don't count as busy)
-  for (const m of data.missions) {
-    for (const ms of m.milestones) {
-      ours.push({ id: `${MILESTONE_NOTE}${ms.id}`, title: `${ms.done ? "✓" : "◆"} ${ms.title}`.slice(0, 120), body: [`Mission milestone: ${m.title}`, ms.track ? `Track: ${ms.track}` : ""].filter(Boolean).join("\n"), author: "Mission", start: ms.at.slice(0, 16), end: fromMin(toMin(ms.at) + 15), art: { seed: seed(ms.id), subject: "auto" }, created: m.created, updated: m.updated });
-    }
   }
   for (const b of data.blocks) {
     ours.push({ id: `${BLOCK_NOTE}${b.id}`, title: `Busy · ${b.reason}`.slice(0, 120), body: "Blocked out in Nova Agent", author: "Nova Agent", start: b.start, end: b.end, art: { seed: seed(b.id), subject: "auto" }, created: b.start, updated: b.start });

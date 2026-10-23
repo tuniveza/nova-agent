@@ -68,11 +68,10 @@ function schedule(): void {
   for (const t of timers.values()) clearTimeout(t);
   timers.clear();
   const data = readQuests();
-  const paused = new Set(data.missions.filter((m) => m.status !== "active").map((m) => m.id));
   const now = exactNow();
   let changed = false;
   for (const q of data.quests) {
-    if (!isPulse(q) || q.status === "done" || q.status === "skipped" || paused.has(q.missionId)) continue;
+    if (!isPulse(q) || q.status === "done" || q.status === "skipped") continue;
     // Pulses count from when they were added, unless they were given a start
     if (!q.earliest) {
       q.earliest = fromMin(Math.ceil(now * 60) / 60);

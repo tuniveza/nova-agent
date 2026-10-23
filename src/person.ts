@@ -5,7 +5,7 @@
 //   Request object it builds (a WeakMap here), so no header or address can pretend to be someone.
 //   On the PC itself: the person Nova Agent works for (src/staff.ts, the badge).
 //
-// Chats, missions, quests, blocked times and reminders belong to a person (their staff id).
+// Chats, quests, blocked times and reminders belong to a person (their staff id).
 // Anything with no owner (everything made before this) belongs to the person Nova Agent works
 // for on the PC, so existing data keeps working without being rewritten.
 
@@ -19,7 +19,7 @@ export interface Person {
   role: string; // "admin" | "staff"
   online: boolean; // came through Nova Bot's relay
   pcOwner: boolean; // the person Nova Agent works for on the PC (owns everything ownerless)
-  everyone: boolean; // may see everyone's quests and missions (admins, and the PC itself)
+  everyone: boolean; // may see everyone's quests (admins, and the PC itself)
 }
 export type RelayStaff = { id?: string; name?: string; role?: string } | null;
 

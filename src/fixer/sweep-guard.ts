@@ -5,7 +5,7 @@
 // note on every sweep, shared with everyone (16 copies). So every request the sweep's browser makes
 // to Nova Agent carries SWEEP_HEADER (sweep.ts adds it, to this server only), and Nova Agent's
 // server turns away anything that would change something (any method but GET, HEAD and OPTIONS):
-// shared notes, calendar saves, quests, missions, Index, files, chats, Portal's and Nova Bot's
+// shared notes, calendar saves, quests, Index, files, chats, Portal's and Nova Bot's
 // addresses passed on. The panels treat the answer like the studio computer being briefly off:
 // their changes stay in the sweep's own browser, which is thrown away.
 //
