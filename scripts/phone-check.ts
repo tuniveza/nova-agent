@@ -58,6 +58,11 @@ async function catchWrites(ctx: BrowserContext, writes: any[]) {
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(res) });
   });
 }
+// Answers the server is meant to give, each with its reason (ns CLAUDE.md 2f: only these, never a whole kind)
+const KNOWN: [RegExp, number, string][] = [
+  [/\/admin\/test-booking\/acuity\/state$/, 502, "Acuity's API refuses this account (not on its Powerhouse plan); the screen says so in words"],
+];
+const known = (m: any) => { const u = m.location()?.url || ""; return KNOWN.some(([re, code]) => re.test(u) && m.text().includes(`status of ${code}`)); };
 const signedOut = (page: Page) => page.getByText(/Sign in to carry on|Sign in to see this/).count().catch(() => 0);
 async function look(page: Page, where: string) {
   const st = ((await page.evaluate(measureStrict).catch(() => [])) as any[]).filter((x) => x.rule !== "works");
@@ -100,7 +105,7 @@ async function profile([name, dev]: [string, any]) {
   let at = "";
   page.on("pageerror", (e) => fail(where(at), `page error: ${e.message.slice(0, 120)}`));
   let shooting = false; // (WebKit: Playwright's screenshot adds a <style> of its own, which the page's CSP reports)
-  page.on("console", (m) => { if (!shooting && m.type() === "error" && !/status of (401|403|404|503)|favicon|Service Worker/i.test(m.text())) fail(where(at), m.text().slice(0, 160)); });
+  page.on("console", (m) => { if (!shooting && m.type() === "error" && !/status of (401|403|404|503)|favicon|Service Worker/i.test(m.text()) && !known(m)) fail(where(at), m.text().slice(0, 160)); });
   let mine = s.token;
   const go = async (h: string, wait = 3500) => {
     at = h;

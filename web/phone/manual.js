@@ -388,13 +388,11 @@ browser ⇄ WebSocket ⇄ LosslessRoom (Durable Object) ⇄ browser</code></pre>
     id: "help", name: "Manual", tile: "manual",
     async draw(box, path, ui) {
       await N.css("manual.css");
-      const [app = "", part = "", gid = ""] = path;
-      // (a place's help button: its own page, and that app marked as where you came from)
+      let [app = "", part = "", gid = ""] = path;
+      // (a place's help button: its app's page, shown at this address, and that app marked as where you came from)
       if (app === "for") {
         here = PLACE_APP[part] || "";
-        location.replace(manualFor(part));
-        box.innerHTML = N.skeleton();
-        return;
+        [app = "", part = "", gid = ""] = manualFor(part).slice(1).split("/").slice(1);
       }
       let M;
       try { M = await loadData("/shared/manual-data.js", "NovaManualData"); } catch (err) {
