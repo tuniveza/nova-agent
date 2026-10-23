@@ -1229,7 +1229,7 @@
     if (!state.terminals && state.why) {
       const server = state.where === "server";
       // (Desk links to its own Console on the computer; Nova Phone's own address there, once Nova Agent gives it)
-      add(`<div class="console-note"><p class="console-p">Terminals: ${esc(state.why)}</p>${state.phoneUrl ? `<a class="btn" href="${esc(state.phoneUrl)}" target="_blank" rel="noopener">${server ? "Open Console on the server" : "Open Console on this computer"}</a>` : ""}${server && state.tunnel ? `<p class="console-p muted">First, in a terminal on your computer:</p><div class="console-copy"><code>${esc(state.tunnel)}</code>${navigator.clipboard?.writeText ? `<button type="button" class="btn" data-copy="${esc(state.tunnel)}">Copy</button>` : ""}</div>` : ""}</div>`);
+      add(`<div class="console-note"><p class="console-p">Terminals: ${esc(state.why)}</p>${state.phoneUrl ? `<a class="btn" href="${esc(state.phoneUrl)}" target="_blank" rel="noopener">${server ? "Open Console on the server" : "Open Console on this computer"}</a>` : ""}${server && state.tunnel ? `<p class="console-p muted">First, in an SSH app on this phone (Termius, Termux) or a terminal on a computer:</p><div class="console-copy"><code>${esc(state.tunnel)}</code>${navigator.clipboard?.writeText ? `<button type="button" class="btn" data-copy="${esc(state.tunnel)}">Copy</button>` : ""}</div>` : ""}</div>`);
     }
     entry = null;
     paintLine();
