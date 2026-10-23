@@ -1,0 +1,46 @@
+/* Nova Phone: Today's tiles (today.js). One column on a phone held upright; two side by side when there's room
+   (a phone on its side, a tablet). A tile still loading keeps the room it will need, so nothing jumps. */
+/* (two side by side only when there's room for two of at least 310px: by the room it has, not the window) */
+.today-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr)); align-items: start; gap: 12px; }
+.today-tile { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; align-content: start; min-width: 0; padding: 10px 14px 10px; }
+/* (the room a tile needs while it loads: its name, its line, and its rows of 44px) */
+.today-tile[data-wait] { min-height: calc(96px + var(--rows, 0) * 44px); }
+.today-tile[data-wait="1"] { --rows: 1; } .today-tile[data-wait="2"] { --rows: 2; } .today-tile[data-wait="3"] { --rows: 3; } .today-tile[data-wait="4"] { --rows: 4; }
+.today-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; min-height: 44px; margin: 0 -6px; padding: 0 6px; border-radius: 12px; color: var(--bright); }
+.today-head:active { background: rgba(var(--hi-rgb), .1); }
+.today-name { flex: 1 1 auto; min-width: 0; font: 700 17px/1.25 var(--f-display); white-space: nowrap; }
+.today-open { display: inline-flex; align-items: center; gap: 2px; color: var(--hi); font: 600 14px/1 var(--f-body); white-space: nowrap; }
+.today-open svg.i { width: 16px; height: 16px; }
+.today-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 0 !important; }
+.today-big { font: 700 19px/1.25 var(--f-display); color: var(--bright); }
+.today-small { color: var(--muted); font-size: 14px; line-height: 1.4; }
+.today-rows { margin: 0 -6px; padding: 0; list-style: none; }
+.today-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; padding: 6px; border-top: 1px solid rgba(var(--hi-rgb), .08); border-radius: 10px; color: var(--text); font-size: 15px; line-height: 1.35; }
+a.today-row:active { background: rgba(var(--hi-rgb), .1); }
+.today-main { min-width: 0; overflow-wrap: anywhere; }
+.today-main small { display: block; color: var(--muted); font-size: 13px; }
+.today-main .pill { margin-left: 4px; vertical-align: 1px; }
+.today-side { color: var(--muted); font-size: 14px; white-space: nowrap; text-align: right; }
+.today-empty { margin: 0 !important; color: var(--muted); font-size: 14px; line-height: 1.4; }
+.today-foot { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 2px -6px 0; padding: 6px; border-top: 1px solid rgba(var(--hi-rgb), .08); border-radius: 10px; color: var(--hi); font: 600 15px/1.3 var(--f-body); }
+.today-foot svg.i { flex: none; width: 20px; height: 20px; }
+.today-foot:active { background: rgba(var(--hi-rgb), .1); }
+.today-two { display: flex; flex-wrap: wrap; gap: 8px; }
+.today-meetrow { color: var(--hi); font-weight: 600; }
+.today-meetrow svg.i { display: inline-block; width: 18px; height: 18px; vertical-align: -3px; }
+.today-meetrow small { font-weight: 400; }
+/* (placeholders: still bars, nothing moving while they wait) */
+.today-wait { display: grid; gap: 10px; padding: 4px 0; }
+.today-wait i { display: block; height: 14px; border-radius: 7px; background: rgba(var(--hi-rgb), .08); }
+.today-wait i:first-child { width: 55%; height: 18px; }
+.today-wait i:nth-child(n + 3) { height: 34px; border-radius: 10px; }
+/* today's calendar: its sentences, the moon and a special day, then the cards */
+.today-say { min-width: 0; overflow-wrap: anywhere; }
+.today-say p { margin: 0 0 6px !important; line-height: 1.45; }
+.today-say p:last-child { margin-bottom: 0 !important; }
+.today-say b { color: var(--bright); font-weight: 600; }
+.today-sky { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 !important; color: var(--soft); font-size: 14px; }
+.today-sky span { display: inline-flex; align-items: center; gap: 6px; }
+.today-sky svg.i { width: 18px; height: 18px; color: var(--gold, var(--hi)); }
+.today-cal .list { margin-top: 4px; }
+.portal-parts { margin: 2px 0; }

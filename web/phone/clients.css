@@ -1,0 +1,18 @@
+/* Nova Phone: Clients (clients.js) */
+.clients-pills { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 2px 0 0; }
+.card .clients-pills { margin: 4px 0 0; }
+.clients-facts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
+.clients-notes { margin: 12px 0 0 !important; }
+.clients-tools { margin-top: 4px; }
+.clients-consent { display: grid; gap: 10px; }
+.clients-consent > p { margin: 0 !important; }
+.clients-sub { margin: 6px 0 0 !important; }
+.clients-log { display: grid; gap: 6px; margin: 0; padding-left: 18px; color: var(--soft); font-size: 14px; line-height: 1.4; }
+.clients-idea { min-height: 48px; padding-top: 8px; padding-bottom: 8px; }
+.clients-find { gap: 12px; }
+.clients-file { position: relative; cursor: pointer; }
+.clients-result { display: grid; gap: 12px; }
+.clients-result > p { margin: 0 4px; }
+.clients-found { display: grid; gap: 6px; }
+.clients-found .facts { margin: 4px 0 8px; }
+.clients-steps { margin: 0; padding-left: 20px; display: grid; gap: 8px; line-height: 1.45; }

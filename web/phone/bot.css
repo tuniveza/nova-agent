@@ -1,0 +1,10 @@
+/* Nova Phone: Website bot (bot.js) */
+.bot-about { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.bot-about p { margin: 0; flex: 1 1 200px; }
+.bot-hint { margin: 0; padding: 10px 14px; border-radius: 14px; border: 1px dashed rgba(var(--hi-rgb), .22); color: var(--soft); line-height: 1.45; }
+.bot-talk:empty { display: none; }
+.bot-talk .say a { color: var(--hi); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+/* (the two by their words' widths, so "NovaBot · bookings" stays on one line on the narrowest phones) */
+.bot-seg { grid-auto-columns: auto; grid-template-columns: minmax(max-content, 1fr) minmax(max-content, 1.4fr); }
+.bot-seg .seg-a { white-space: nowrap; padding: 0 8px; }
+@media (max-width: 340px) { .bot-seg .seg-a { font-size: 14px; padding: 0 6px; } }

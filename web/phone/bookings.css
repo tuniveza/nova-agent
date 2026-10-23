@@ -1,0 +1,40 @@
+/* Nova Phone: Booking tools (bookings.js) */
+.bookings-week { display: grid; gap: 10px; padding: 14px; }
+.bookings-week .kicker { margin: 0; }
+.bookings-sums { grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr)); gap: 8px; }
+.bookings-sum { padding: 10px 6px; border-radius: 14px; }
+.bookings-sum span { font-size: 13px; line-height: 1.3; }
+.bookings-sum.free b { color: var(--ok); }
+.bookings-sum.warn b { color: var(--warn); }
+a.bookings-sum:active { background: rgba(var(--hi-rgb), .14); }
+/* the month: each day glowing by how full it is */
+.bookings-month { display: grid; gap: 2px; }
+.bookings-mbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 0 0 4px; }
+.bookings-mbar b { text-align: center; font: 700 17px/1.2 var(--f-display); color: var(--bright); white-space: nowrap; }
+.bookings-day { position: relative; min-height: 46px; }
+.bookings-day.loaded { background: rgba(var(--hi-rgb), calc(.06 + var(--load, 0) * .3)); }
+.bookings-day.full { box-shadow: inset 0 0 0 1.5px var(--hi); }
+.bookings-day.past { opacity: .55; }
+.bookings-day.picked { background: rgba(var(--hi-rgb), .32); box-shadow: inset 0 0 0 2px var(--bright); opacity: 1; }
+.bookings-day:active { filter: brightness(1.25); }
+.bookings-day .dots em { font: 700 9px/5px var(--f-body); font-style: normal; color: var(--soft); }
+.bookings-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 6px 4px 2px; }
+.bookings-key span { display: inline-flex; align-items: center; gap: 6px; }
+.bookings-key .chip { margin-left: auto; min-height: 40px; }
+.bookings-glow { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: rgba(var(--hi-rgb), .36); }
+.bookings-key .bookings-suite { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--lilac, var(--hi))); }
+/* the picked day */
+.bookings-dayname { margin-top: 14px; }
+.bookings-smart { display: grid; gap: 10px; padding: 14px; }
+.bookings-smart > p { margin: 0 !important; }
+.bookings-smart .meter { margin: 0; }
+.bookings-warn { color: var(--warn); line-height: 1.4; }
+.bookings-note { color: var(--soft); line-height: 1.4; }
+.bookings-label { margin-bottom: -4px !important; }
+.bookings-free { font-variant-numeric: tabular-nums; }
+.bookings-card { display: grid; gap: 4px; }
+.bookings-card .card-title { margin: 0; }
+.bookings-card > .muted { margin: 0 !important; }
+.bookings-card .facts { margin: 8px 0 4px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
+.bookings-acts { margin-top: 8px; }
+.bookings-acts .btn { padding: 0 14px; }
