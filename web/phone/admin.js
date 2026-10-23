@@ -214,7 +214,7 @@
   // Where each thing lives, in Nova Phone
   function openHref(i) {
     const id = encodeURIComponent(i.id || "");
-    const to = { quest: `quests/quest/${id}`, mission: `agent/mission/${id}`, calnote: "calendar", fixer: "fixer", file: `agent/file/${id}`, booking: i.open && i.open.includes("view=chats") ? "inbox/chats" : "bot", enquiry: `inbox/enquiry/${id}`, chat: `inbox/chat/${id}`, client: `clients/${id}`, index: "index", note: `notes/${id}`, social: `outreach/social/${id}`, outreach: `outreach/one/${id}`, invoice: `money/invoice/${id}`, expense: `money/expense/${id}` }[i.kind];
+    const to = { quest: `quests/quest/${id}`, mission: "quests", calnote: "calendar", fixer: "fixer", file: `agent/file/${id}`, booking: i.open && i.open.includes("view=chats") ? "inbox/chats" : "bot", enquiry: `inbox/enquiry/${id}`, chat: `inbox/chat/${id}`, client: `clients/${id}`, index: "index", note: `notes/${id}`, social: `outreach/social/${id}`, outreach: `outreach/one/${id}`, invoice: `money/invoice/${id}`, expense: `money/expense/${id}` }[i.kind];
     return to && N.has(to.split("/")[0]) ? `#${to}` : "";
   }
   N.section({

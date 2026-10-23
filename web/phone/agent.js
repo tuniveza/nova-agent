@@ -1,15 +1,14 @@
 // Nova Phone: Agent. Talking to Nova Agent (one conversation per person, kept by Nova Agent on the
 // studio's PC, the same as on the computer), and what it runs for you:
 //   Chat       the conversation, one question and its answer a page (or All); as you type, what the message will
-//              become (a Mission, a Quest, Blocked time…) and the details picked out; under each reply what Nova
+//              become (a Quest, Blocked time…) and the details picked out; under each reply what Nova
 //              Agent did, each opening its place here, and cards to act on: files it wrote, a reply it drafted
 //              (Approve & send), a booking change (Approve, Edit, Reject), an email campaign or a one-to-one email
 //   Plan       today: the header, the quest on now (or next) with its progress, the day's timeline (quests,
 //              blocked time, Calendar's note cards), Done, Coming up, Pulses, Needs a slot; how each is going
 //              and which phones get its reminders; Also coming up from Calendar; re-plan; your rhythm
-//   Missions   big goals planned into quests: each one's plan, roadmap, quests by track and week, refine
 //   Files      what Nova Agent wrote: read it here (Markdown, tables, JSON, web pages), save, copy, open in Notes
-// Live: the plan and missions follow changes as they happen (notices.js keeps the one line to Nova Agent).
+// Live: the plan follows changes as they happen (notices.js keeps the one line to Nova Agent).
 // When the studio's PC is off, Agent says so and looks again every 20 s; the rest of the app still works.
 // Other places start a message here with #agent?say=<text> or NovaPhone.agentSay(text) (never sent by itself).
 (() => {
@@ -21,9 +20,9 @@
   const isOff = (err) => err && (err.status === 503 || err.status === 502 || err.data?.pcOffline);
   const typing = () => !!document.querySelector("#page input:focus, #page textarea:focus, #page form.dirty, dialog[open]");
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-  const PARTS = [["chat", "Chat"], ["plan", "Plan"], ["missions", "Missions"], ["files", "Files"]];
+  const PARTS = [["chat", "Chat"], ["plan", "Plan"], ["files", "Files"]];
   const partTabs = (on) => `<div class="seg agent-tabs">${PARTS.map(([p, l]) => `<a class="seg-a" href="#agent${p === "chat" ? "" : `/${p}`}" aria-selected="${p === on}">${l}</a>`).join("")}</div>`;
-  const pcOff = () => `<div class="empty">${icon("globe")}<b>Nova Agent's computer is off</b><span>Agent, its plan, missions and files live on the studio's computer. Everything else here still works. This looks again every 20 seconds and comes back by itself.</span><button type="button" class="btn" data-again>${icon("refresh")} Try again</button></div>`;
+  const pcOff = () => `<div class="empty">${icon("globe")}<b>Nova Agent's computer is off</b><span>Agent, its plan and files live on the studio's computer. Everything else here still works. This looks again every 20 seconds and comes back by itself.</span><button type="button" class="btn" data-again>${icon("refresh")} Try again</button></div>`;
   const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
   // (a reply: Nova Phone's own sounds when they're loaded, sound.js; else the calm chime, notices.js)
   const chime = (k) => (N.sound ? N.sound(k) : N.chime && N.chime(k));
@@ -143,8 +142,6 @@
 
   // ---- The type cue: what a message will become, worked out as it's typed (no AI, so it's instant) ----
   const KINDS = {
-    mission: { icon: "◆", label: "Mission", hint: "Plans the lot: a strategy, tracks, milestones and every quest, fitted into your days", send: "Plan it" },
-    refine: { icon: "◇", label: "Mission detail", hint: "Re-plans what’s left of your mission with this", send: "Refine" },
     quest: { icon: "✦", label: "Quest", hint: "One task, fitted into your day", send: "Add quest" },
     repeat: { icon: "∞", label: "Repeating quest", hint: "Comes back each time it’s due, until you end it", send: "Set it up" },
     pulse: { icon: "⚡", label: "Pulse", hint: "A quick repeat on its own exact timer", send: "Start it" },
@@ -176,16 +173,13 @@
     const sentences = t.split(/[.!?;\n]+/).filter((x) => x.trim().length > 3).length;
     const big = (words >= 25 && goals >= 2) || goals >= 4 || (sentences >= 3 && goals >= 2) || (/\b(?:plan|schedule|strategy)\b.*\b(?:for|to|so)\b/.test(t) && words >= 10);
     let kind = "chat";
-    if (big) kind = "mission";
-    else if (RX.pulse.test(t)) kind = "pulse";
-    else if (RX.refine.test(t) && state && (state.missions || []).some((m) => m.status !== "done")) kind = "refine";
+    if (RX.pulse.test(t)) kind = "pulse";
     else if (RX.repeat.test(t)) kind = "repeat";
     else if (RX.block.test(t)) kind = "block";
     else if (RX.update.test(t)) kind = "update";
     else if (RX.calendar.test(t)) kind = "calendar";
     else if (RX.studio.test(t)) kind = "studio";
     else if (/\?\s*$/.test(t) || RX.ask.test(t)) kind = "ask";
-    else if (goals >= 2 && words >= 12) kind = "mission";
     else if (RX.quest.test(t) || words <= 12) kind = "quest";
     return { kind, ...KINDS[kind], bits: pickOut(t) };
   }
@@ -209,7 +203,6 @@
     add("📍", (t.match(/\b(?:at|to) the (?:gym|studio|shop|shops|park|office|venue|station|airport|bank|doctor'?s|dentist|post office|library)\b/) || [])[0]);
     return bits.slice(0, 6);
   }
-  // (fixed: the mission form, where it's always a mission)
   function cueHtml(text, fixed) {
     const c = classify(text);
     if (!c) return "";
@@ -247,8 +240,8 @@
   let messages = null, histAt = 0, waiting = false, waitKind = "", typed = "", paged = store.get("nova-phone/chat-pages", "pages") !== "all", pageAt = -1;
   const acts = new Map(); // "message:action" → the action, for its card
   const known = new Map(); // file id → file card
-  const SUGGEST = ["What should I do now?", "Plan a mission: finish the EP by 1 December", "I'm out tonight from 7 to 11", "What's on this week?", "Add a note card for Friday at 2pm: mix review", "Make 31 October a Halloween day card", "What's booked in Acuity tomorrow?", "How are you doing?"];
-  const welcome = () => `<li class="agent-welcome card"><p class="kicker">✦ Nova Agent</p><h2 class="card-title">Hey, I'm Nova Agent</h2><p>Give me a goal and I'll turn it into a Mission, plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's Acuity bookings.</p>${list(SUGGEST.map((t) => row({ button: `data-say="${esc(t)}"`, icon: "send", title: t })))}</li>`;
+  const SUGGEST = ["What should I do now?", "What's left to do today?", "I'm out tonight from 7 to 11", "What's on this week?", "Add a note card for Friday at 2pm: mix review", "Make 31 October a Halloween day card", "What's booked in Acuity tomorrow?", "How are you doing?"];
+  const welcome = () => `<li class="agent-welcome card"><p class="kicker">✦ Nova Agent</p><h2 class="card-title">Hey, I'm Nova Agent</h2><p>Tell me what needs doing and I'll plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's Acuity bookings.</p>${list(SUGGEST.map((t) => row({ button: `data-say="${esc(t)}"`, icon: "send", title: t })))}</li>`;
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const pad = (n) => String(n).padStart(2, "0");
   // "Friday 9 October 2026" in a reply → 2026-10-09
@@ -268,7 +261,7 @@
     if (/^Looked at (?:Acuity bookings|free times|blocked times)/.test(t)) { const d = dateIn(t); return d ? `#calendar/day/${d}` : "#calendar"; }
     if (/\binvoice\b/i.test(t)) return "#money";
     if (/\bexpense\b/i.test(t)) return "#money/expenses";
-    if (/^(?:Mission “|Re-planned “|Removed mission)/.test(t)) return "#agent/missions";
+    if (/^(?:Mission “|Re-planned “|Removed mission)/.test(t)) return "#agent/plan";
     if (/^(?:Quest “|Removed quest|Snoozed|Session done|Done|Started|Skipped|Ended|Blocked|Unblocked|Rhythm|Re-planned every|Music time)/.test(t)) return "#agent/plan";
     return "";
   }
@@ -316,7 +309,7 @@
     const n = pageAt < 0 || pageAt >= pages.length ? pages.length - 1 : pageAt;
     const on = new Set(paged && pages.length ? pages[n] : messages.map((_, i) => i));
     const k = classify(typed);
-    const planning = waitKind === "mission" ? "Planning your mission: the strategy, tracks, milestones and every quest. This can take a minute or two…" : waitKind === "refine" ? "Re-planning what’s left with that. This can take a minute or two…" : "";
+    const planning = "";
     box.innerHTML = `${partTabs("chat")}${statusLine(s)}${offline ? pcOff() : ""}
       <ul class="talk agent-talk" id="agent-talk">${messages.length ? messages.map((m, i) => bubble(m, i).replace(/^<li class="/, `<li class="${on.has(i) ? "" : "agent-off "}`)).join("") : offline ? "" : welcome()}${waiting ? `<li class="agent-typing"><span class="typing" aria-label="Nova Agent is writing"><i></i><i></i><i></i></span>${planning ? `<small>${esc(planning)}</small>` : ""}</li>` : ""}</ul>
       ${pages.length > 1 || (pages.length && !paged) ? `<div class="agent-pager">${paged ? `<button type="button" class="icon-btn" data-page="-1" aria-label="The one before"${n === 0 ? " disabled" : ""}>${icon("back")}</button><span aria-live="polite">${n + 1} of ${pages.length}</span><button type="button" class="icon-btn" data-page="1" aria-label="The next one"${n === pages.length - 1 ? " disabled" : ""}>${icon("next")}</button>` : `<span>${pages.length} ${pages.length === 1 ? "reply" : "replies"}</span>`}<button type="button" class="chip" data-paged>${paged ? "All" : "Pages"}</button></div>` : ""}
@@ -688,15 +681,15 @@
       await N.css("agent.css");
       if (part === "plan") return drawPlan(box, a || "ahead", ui);
       if (part === "rhythm") return drawRhythm(box, ui);
-      if (part === "missions") return drawMissions(box, ui);
-      if (part === "mission") return drawMission(box, a, b || "plan", c, ui);
+      // (Missions are gone from Nova, 23 Oct 2026: old links open the plan)
+      if (part === "missions" || part === "mission") { history.replaceState(null, "", "#agent/plan"); return drawPlan(box, "ahead", ui); }
       if (part === "files") return drawFiles(box, ui);
       if (part === "file") return drawFile(box, a, ui);
       return drawChat(box, ui);
     },
   });
 
-  // ---- Missions and quests: the plan, kept up to date ----
+  // ---- Quests: the plan, kept up to date ----
   let state = null, stateAt = 0, stateWho = "", who = store.get("nova-phone/agent-who", "mine") === "everyone" ? "everyone" : "mine";
   async function loadState(maxAge = 0) {
     if (state && stateWho === who && Date.now() - stateAt < maxAge) return state;
@@ -717,7 +710,7 @@
     return cal;
   }
   const times = (n, from, to) => (recur ? recur.occurrences(n, from, to) : n.repeat ? [] : [{ start: n.start, end: n.end || n.start, date: n.start.slice(0, 10) }]);
-  const onLive = () => /^#agent\/(plan|missions|mission\/)/.test(location.hash);
+  const onLive = () => /^#agent\/plan/.test(location.hash);
   let liveT = 0, refreshT = 0;
   const keyOf = (s) => (s ? JSON.stringify([{ ...s, now: String(s.now).slice(0, 16), notices: undefined }, (cal || []).length]) : "");
   function refreshLive(wait = 250) {
@@ -768,17 +761,14 @@
   const MODE = Object.fromEntries(MODES);
   const modeOf = (q) => (MODE[q.mode] ? q.mode : q.status === "done" ? "done" : q.status === "doing" ? "working" : "waiting");
   const modeChip = (q) => `<button type="button" class="agent-qm" data-mode="${modeOf(q)}" data-qmode="${esc(q.id)}" aria-label="How it's going: ${esc(MODE[modeOf(q)])} (tap to change)">${esc(MODE[modeOf(q)])}</button>`;
-  const missionOf = (id) => (state.missions || []).find((x) => x.id === id);
-  const missionName = (id) => (missionOf(id) || {}).title || "";
-  const trackColour = (missionId, name) => { const t = ((missionOf(missionId) || {}).tracks || []).find((x) => x.name === name); return t ? t.colour : ""; };
-  const trackTag = (q) => (q.track ? `<span class="agent-track" data-c="${esc(trackColour(q.missionId, q.track) || "violet")}">${esc(q.track)}</span>` : "");
+  // (no missions shown any more: a quest's mission name and track tags stay out of sight)
+  const missionName = () => "";
+  const trackTag = () => "";
   const whose = (x) => (state && state.person && x && x.owner && x.owner !== state.person.id ? `${x.ownerName || x.owner}’s` : "");
-  // Where a quest came from: its mission ◆, where it was made ✎ ("Notes · Studio plan"), or ✧ Nova Agent
-  const SRC = { mission: "◆", notes: "✎", from: "✎", agent: "✧", person: "◎" };
+  // Where a quest came from: where it was made ✎ ("Notes · Studio plan"), or ✧ Nova Agent
+  const SRC = { notes: "✎", from: "✎", agent: "✧", person: "◎" };
   function sources(q) {
     const out = [];
-    const mt = missionName(q.missionId);
-    if (mt) out.push({ kind: "mission", label: mt });
     if (q.from) out.push({ kind: /^Notes\b/.test(q.from) ? "notes" : "from", label: String(q.from) });
     if (!out.length) out.push({ kind: "agent", label: "Nova Agent" });
     if (whose(q)) out.push({ kind: "person", label: whose(q) });
@@ -834,7 +824,7 @@
     } else if (nxt) {
       html += `<div class="card agent-now" data-mode="${modeOf(nxt)}"><div class="agent-now-top"><p class="kicker">✦ Quest · Up next</p>${modeChip(nxt)}</div><h2 class="card-title">${esc(nxt.title)}</h2>
         <p class="muted small">${nxt.start.startsWith(today) ? "" : `${esc(dayLong(nxt.start.slice(0, 10)))} · `}${hm(nxt.travelStart && nxt.travelMinutes ? nxt.travelStart : nxt.start)}${nxt.travelMinutes ? ` (leave) · starts ${hm(nxt.start)}` : ""} · ${esc(dur(nxt))}${missionName(nxt.missionId) ? ` · ${esc(missionName(nxt.missionId))}` : ""}${nxt.location ? ` · at ${esc(nxt.location)}` : ""}</p>${from(nxt)}${questButtons(nxt)}</div>`;
-    } else html += empty({ icon: "quests", title: "Nothing on right now", text: "Ask Nova Agent to plan a mission, or say what you need to get done." });
+    } else html += empty({ icon: "quests", title: "Nothing on right now", text: "Say what you need to get done and Nova Agent fits it into your day." });
 
     // One timeline row: a quest, blocked time or a Calendar note card. Folded rows show the time and title, so the
     // whole day fits; tap one for its details and buttons
@@ -866,7 +856,7 @@
     const qRow = (q, extra = "", chips = "") => `<li class="agent-line"><div class="agent-line-main"><a href="#quests/quest/${encodeURIComponent(q.id)}">${extra}<b>${q.atRisk ? "⚠ " : ""}${esc(q.title)}</b><span>${esc([dur(q), sourceText(q)].filter(Boolean).join(" · "))}</span></a>${chips ? `<span class="agent-tags">${chips}</span>` : ""}</div>`;
     if (tab === "ahead") {
       if (over.length) html += `<h3 class="h">Overdue</h3><ul class="list">${over.map((q) => `${qRow(q, `<small>Was due ${hm(q.end || q.deadline)}</small>`)}<span class="agent-line-end"><button type="button" class="agent-mini" data-q="${esc(q.id)}" data-a="done">✓ Done</button></span></li>`).join("")}</ul>`;
-      if (!ahead.length) html += empty({ icon: "quests", title: items.length ? "All done for today ✦" : "Nothing planned today", text: items.length ? "" : "Ask Nova Agent to plan a mission, or say what you need to get done." });
+      if (!ahead.length) html += empty({ icon: "quests", title: items.length ? "All done for today ✦" : "Nothing planned today", text: items.length ? "" : "Say what you need to get done and Nova Agent fits it into your day." });
       else {
         const first = Math.max(0, ahead.findIndex((it) => !(it.kind === "quest" && it.q.id === nowId)));
         html += `<ul class="agent-timeline">${ahead.map((it, i) => (i === 0 && mins(it.start) > nowM ? `<li class="agent-nowline"><span>Now · ${hm(s.now)}</span></li>` : "") + tl(it, i === first, i === first && cur && i > 0 && it.kind === "quest" ? "Up next" : "")).join("")}</ul>`;
@@ -999,150 +989,6 @@
       for (const k of ["checkIns", "dailyBriefing", "phonePush", "paceLimits"]) out[k] = x[k].checked;
       await busy(f.querySelector("[type=submit]"), "Saving…", async () => { try { await act("/actions/rhythm", out); f.classList.remove("dirty"); toast("Rhythm saved ✦ Everything has been re-planned around it"); stateAt = 0; location.hash = "#agent/plan"; } catch (err) { toast(err.message, true); } });
     });
-  }
-
-  // ---- Missions ----
-  const pct = (m) => { const p = m.progress || {}; if (p.total) return Math.round(((Number(p.done) || 0) / p.total) * 100); return Math.round(Number(p.percent) || 0); };
-  const ring = (m) => `<span class="agent-ring" data-pct="${pct(m)}" aria-label="${pct(m)}% done"><b>${pct(m)}%</b></span>`;
-  const trackBars = (tracks) => (tracks && tracks.length ? `<div class="agent-tracks">${tracks.map((t) => `<div class="agent-trackrow" data-c="${esc(t.colour || "violet")}"><b>${esc(t.name)}</b><span class="agent-tbar"><i data-w="${t.total ? Math.round((t.done / t.total) * 100) : 0}"></i></span><span>${t.done || 0}/${t.total || 0}</span></div>`).join("")}</div>` : "");
-  const badges = (m, withMilestones) => {
-    const p = m.progress || {};
-    return `<p class="agent-badges">${m.deadline ? `<span class="pill">Due ${esc(shortDay(m.deadline))}</span>` : ""}<span class="pill">${p.done || 0}/${p.total || 0} quests</span><span class="pill">${((Number(p.minutesLeft) || 0) / 60).toFixed(1)}h left</span>${p.atRisk ? `<span class="pill warn">${p.atRisk} at risk</span>` : ""}${withMilestones && (m.milestones || []).length ? `<span class="pill">${m.milestones.filter((x) => x.done).length}/${m.milestones.length} milestones</span>` : ""}${m.status === "done" ? '<span class="pill ok">Mission complete</span>' : ""}${m.status === "paused" ? '<span class="pill">Paused</span>' : ""}</p>`;
-  };
-  async function drawMissions(box, ui) {
-    try { await loadState(4000); } catch (err) { return offCard(box, "missions", err); }
-    liveOn();
-    ui.action({ icon: "plus", label: "New mission", run: newMission });
-    const order = { active: 0, paused: 1, done: 2 };
-    const ms = [...(state.missions || [])].sort((a, b) => (order[a.status] ?? 0) - (order[b.status] ?? 0) || String(b.created || "").localeCompare(String(a.created || "")));
-    box.innerHTML = `${partTabs("missions")}${whoChips()}${ms.length ? ms.map((m) => {
-      const nx = (m.progress || {}).nextMilestone;
-      return `<a class="card agent-mission${m.status !== "active" ? ` ${m.status}` : ""}" href="#agent/mission/${encodeURIComponent(m.id)}"><div class="agent-mission-top">${ring(m)}<div class="agent-mission-words"><h2 class="card-title">${esc(m.title)}</h2>${whose(m) ? `<p class="muted small">◎ ${esc(whose(m))}</p>` : ""}${m.summary ? `<p class="muted small">${esc(m.summary)}</p>` : ""}</div></div>
-        ${trackBars((m.progress || {}).tracks)}${badges(m)}
-        ${nx ? `<p class="agent-next">◆ Next: <b>${esc(nx.title)}</b> · ${esc(shortDay(nx.at))} ${hm(nx.at)}</p>` : ""}
-        ${(m.questions || []).length && m.status !== "done" ? `<p class="agent-ask">? ${m.questions.length} question${m.questions.length === 1 ? "" : "s"} would sharpen this plan</p>` : ""}</a>`;
-    }).join("") : empty({ icon: "star", title: "No missions yet", text: "A mission is any big goal, in the studio or anywhere in your life: Nova Agent plans it into quests. Tap New mission, or ask Nova Agent.", action: `<button type="button" class="btn main" data-new-mission>${icon("plus")} New mission</button>` })}
-      ${ms.length ? `<button type="button" class="btn wide" data-new-mission>${icon("plus")} New mission</button>` : ""}`;
-    paintBars(box);
-    box.querySelectorAll("[data-new-mission]").forEach((b) => b.addEventListener("click", newMission));
-    box.addEventListener("click", questClicks);
-  }
-  const keyWords = (msg) => (/api[_ ]?key|authentication/i.test(msg || "") ? "Nova Agent can’t reach Claude yet: add ANTHROPIC_API_KEY to its .env." : msg || "Couldn’t plan that just now.");
-  async function newMission() {
-    await sheetForm(`<h2 class="sheet-title">✦ New mission</h2><p class="sheet-text">Any goal, in the studio or anywhere in your life. Say what you want to achieve, where you're up to, what's in the way and by when, and what you'd like help thinking through. Nova Agent writes the strategy, splits it into tracks and milestones, and fits every quest into your days.</p>
-      <form class="form" data-f>${field({ label: "What's the mission?", name: "request", type: "textarea", rows: 5, placeholder: "e.g. I'm doing a 52-release challenge on Instagram and TikTok and I've fallen behind, with two months left this year…" })}<div class="agent-cue" data-cue hidden></div>${field({ label: "Deadline (optional)", name: "deadline", type: "date" })}<p class="form-said" data-said role="status"></p><div class="btns"><button class="btn main wide" type="submit">Plan the mission</button><button type="button" class="btn quiet wide" data-no>Cancel</button></div></form>`,
-    (el, done) => {
-      const f = el.querySelector("[data-f]"), cue = el.querySelector("[data-cue]"), said = el.querySelector("[data-said]");
-      f.elements.request.addEventListener("input", () => { const h = cueHtml(f.elements.request.value, "mission"); cue.hidden = !h; cue.innerHTML = h; });
-      el.querySelector("[data-no]").onclick = () => done(null);
-      f.onsubmit = async (ev) => {
-        ev.preventDefault();
-        const request = f.elements.request.value.trim();
-        said.classList.remove("bad");
-        if (!request) { said.textContent = "Say what you want to achieve first, in the box above."; said.classList.add("bad"); f.elements.request.focus(); return; }
-        said.textContent = "Planning your mission: the strategy, tracks, milestones and every quest. This can take a minute or two…";
-        await busy(f.querySelector("[type=submit]"), "Planning…", async () => {
-          try {
-            const r = await act("/actions/missions", { request, deadline: f.elements.deadline.value || undefined });
-            const res = r.result || r;
-            f.classList.remove("dirty");
-            done(true);
-            toast(`Mission planned ✦ “${res.mission ? res.mission.title : ""}”: ${(res.quests || []).length} quests planned${res.atRisk ? `, ${res.atRisk} at risk` : ""}`);
-            stateAt = 0;
-            location.hash = res.mission ? `#agent/mission/${encodeURIComponent(res.mission.id)}` : "#agent/missions";
-          } catch (err) { said.textContent = keyWords(err.message); said.classList.add("bad"); }
-        });
-      };
-    });
-  }
-  const refineTyped = {};
-  async function drawMission(box, id, tab, extra, ui) {
-    ui.back("#agent/missions");
-    try { await loadState(4000); } catch (err) { return offCard(box, "missions", err); }
-    liveOn();
-    const m = missionOf(id);
-    if (!m) { box.innerHTML = empty({ icon: "star", title: "That mission isn't there any more", action: '<a class="btn" href="#agent/missions">All missions</a>' }); return; }
-    ui.title("Mission");
-    const qn = (m.questions || []).length && m.status !== "done" ? m.questions.length : 0;
-    const base = `#agent/mission/${encodeURIComponent(id)}`;
-    const tabs = [["plan", "Plan"], ["roadmap", "Roadmap"], ["quests", "Quests"], ["refine", qn ? `Refine · ${qn}` : "Refine"]];
-    let html = `<div class="card agent-mv-head"><div class="agent-mission-top">${ring(m)}<div class="agent-mission-words"><p class="kicker">◆ Mission${m.status === "done" ? " · complete" : m.status === "paused" ? " · paused" : ""}</p><h2 class="card-title">${esc(m.title)}</h2>${whose(m) ? `<p class="muted small">◎ ${esc(whose(m))}</p>` : ""}</div></div>${m.summary ? `<p>${esc(m.summary)}</p>` : ""}${badges(m, true)}</div>
-      <div class="seg agent-tabs" role="tablist">${tabs.map(([t, l]) => `<a class="seg-a" role="tab" href="${base}/${t}" aria-selected="${t === tab}">${esc(l)}</a>`).join("")}</div>`;
-    const p = m.progress || {};
-    if (tab === "plan") {
-      if ((p.tracks || []).length) html += `<div class="card"><p class="kicker">Tracks</p>${trackBars(p.tracks)}</div>`;
-      html += `<h3 class="h">Strategy</h3>${(m.strategy || []).length ? m.strategy.map((x) => `<div class="card prose agent-doc"><h3 class="agent-doc-h">${esc(x.heading)}</h3>${md(x.body)}</div>`).join("") : `<p class="muted">This plan is small enough not to need a written strategy. Ask Nova Agent for one in <a href="${base}/refine">Refine</a> if you'd like.</p>`}`;
-      if ((m.research || []).length) html += `<h3 class="h">Researched on the web${m.researched ? ` · ${esc(shortDay(m.researched))}` : ""}</h3><div class="card prose"><ul class="agent-ul">${m.research.map((x) => { let host = ""; try { host = new URL(x.url).hostname; } catch (e) {} return `<li>${esc(x.text)} <a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${esc(x.title || host || "source")} ↗</a></li>`; }).join("")}</ul></div>`;
-      if ((m.assumptions || []).length) html += `<h3 class="h">What the plan assumed</h3><div class="card prose"><ul class="agent-ul">${m.assumptions.map((x) => `<li>${esc(x)}</li>`).join("")}</ul><p class="muted small">Not right? Say so in <a href="${base}/refine"><b>Refine</b></a> and the plan adjusts.</p></div>`;
-    } else if (tab === "roadmap") {
-      const months = {};
-      for (const x of m.milestones || []) (months[String(x.at).slice(0, 7)] ||= []).push(x);
-      const keys = Object.keys(months).sort();
-      html += keys.length ? keys.map((ym) => `<h3 class="h">${esc(new Date(`${ym}-15T12:00:00Z`).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }))}</h3><ul class="list">${months[ym].sort((a, b) => String(a.at).localeCompare(String(b.at))).map((x) => `<li class="agent-line${x.done ? " done-row" : ""}"><button type="button" class="agent-tick${x.done ? " on" : ""}" data-ms="${esc(x.id)}" data-done="${x.done ? 1 : 0}" aria-pressed="${!!x.done}" aria-label="${x.done ? "Not reached yet" : "Reached"}: ${esc(x.title)}">${x.done ? icon("check") : ""}</button><span class="agent-line-main"><small>${esc(shortDay(x.at))} ${hm(x.at)}</small><b>◆ ${esc(x.title)}</b></span><span class="agent-line-end">${x.track ? `<span class="agent-track" data-c="${esc(trackColour(m.id, x.track) || "violet")}">${esc(x.track)}</span>` : ""}</span></li>`).join("")}</ul>`).join("") : empty({ icon: "star", title: "No milestones in this plan" });
-    } else if (tab === "quests") {
-      const tracks = m.tracks || [];
-      const track = extra !== undefined && tracks[Number(extra)] ? tracks[Number(extra)].name : "";
-      const all = (state.quests || []).filter((q) => q.missionId === m.id && (!track || q.track === track));
-      if (tracks.length) html += `<div class="chips" role="group" aria-label="Track">${[["", "All"], ...tracks.map((t, i) => [String(i), t.name, t.colour])].map(([i, l, c]) => `<a class="chip agent-trackchip" href="${base}/quests${i === "" ? "" : `/${i}`}"${c ? ` data-c="${esc(c)}"` : ""} aria-current="${(i === "" ? !track : tracks[Number(i)].name === track) ? "page" : "false"}">${esc(l)}</a>`).join("")}</div>`;
-      const open = all.filter((q) => q.status !== "done" && q.status !== "skipped").sort((a, b) => (a.start || "z").localeCompare(b.start || "z"));
-      const done = all.filter((q) => q.status === "done");
-      const monday = (s) => { const d = new Date(`${s.slice(0, 10)}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
-      const thisWeek = monday(String(state.now));
-      const weeks = {};
-      for (const q of open) (weeks[q.start ? monday(q.start) : "zz"] ||= []).push(q);
-      const qline = (q) => `<li class="agent-line${q.status === "done" ? " done-row" : ""}${q.atRisk ? " risk" : ""}" data-mode="${modeOf(q)}"><button type="button" class="agent-tick${q.status === "done" ? " on" : ""}" data-q="${esc(q.id)}" data-a="${q.status === "done" ? "reopen" : "done"}" aria-pressed="${q.status === "done"}" aria-label="${q.status === "done" ? "Not done yet" : "Done"}: ${esc(q.title)}">${q.status === "done" ? icon("check") : ""}</button><div class="agent-line-main"><a href="#quests/quest/${encodeURIComponent(q.id)}"><small>${q.start ? `${esc(shortDay(q.start))} ${hm(q.start)}` : "Not planned yet"}</small><b>${q.atRisk ? "⚠ " : ""}${esc(q.title)}</b></a><span class="agent-tags">${modeChip(q)}${trackTag(q)}</span></div></li>`;
-      for (const [wk, l] of Object.entries(weeks).sort()) html += `<h3 class="h">${wk === "zz" ? "Needs a slot" : wk === thisWeek ? "This week" : wk < thisWeek ? "Earlier" : `Week of ${esc(shortDay(wk))}`} · ${l.length}</h3><ul class="list">${l.map(qline).join("")}</ul>`;
-      if (!open.length) html += empty({ icon: "check", title: "Nothing left to do here ✦" });
-      if (done.length) html += `<details class="card"><summary>Done · ${done.length}</summary><ul class="list">${done.map(qline).join("")}</ul></details>`;
-    } else {
-      html += `${qn ? `<h3 class="h">Questions that would sharpen the plan</h3><p class="muted small">Tap one to answer it in the box.</p>${list(m.questions.map((q, i) => row({ button: `data-askq="${i}"`, icon: "chat", title: `? ${q}` })))}` : '<h3 class="h">Anything new?</h3>'}
-        <form class="form" id="agent-refine">${field({ label: "Tell Nova Agent", name: "detail", type: "textarea", rows: 4, value: refineTyped[id] || "", placeholder: "e.g. I've released 19 so far, I release on Fridays at 6pm, the interface arrives next Tuesday, and I'd rather film on Sundays." })}${field({ label: "New deadline (optional)", name: "deadline", type: "date" })}<p class="form-said" data-said role="status">Done quests stay done; everything still to do is planned again with what you add.</p><button class="btn main wide" type="submit">✦ Re-plan what's left</button></form>
-        ${(m.refinements || []).length ? `<h3 class="h">Added so far</h3>${list([...m.refinements].reverse().map((x) => row({ lead: esc(shortDay(x.at)), title: x.text })))}` : ""}`;
-    }
-    html += `<div class="btns two agent-mv-foot">${m.status === "active" ? `<button type="button" class="btn" data-mstatus="paused">Pause</button>` : m.status === "paused" ? `<button type="button" class="btn" data-mstatus="active">Resume</button>` : ""}<button type="button" class="btn" data-export>⤓ Export as Markdown</button><button type="button" class="btn" data-talk>${icon("chat")} Talk about it in the chat</button><button type="button" class="btn danger" data-remove>${icon("trash")} Remove</button></div>`;
-    box.innerHTML = html;
-    paintBars(box);
-    box.addEventListener("click", questClicks);
-    box.querySelectorAll("[data-ms]").forEach((b) => b.addEventListener("click", () => busy(b, "…", async () => { try { await act(`/actions/missions/${encodeURIComponent(id)}`, { milestone: b.dataset.ms, done: b.dataset.done !== "1" }); toast(b.dataset.done !== "1" ? "Reached ◆" : "Not reached yet"); stateAt = 0; N.show(); } catch (err) { toast(err.message, true); } })));
-    box.querySelector("[data-mstatus]")?.addEventListener("click", (ev) => busy(ev.currentTarget, "…", async () => { const to = ev.currentTarget.dataset.mstatus; try { await act(`/actions/missions/${encodeURIComponent(id)}`, { status: to }); toast(to === "paused" ? "Paused" : "Resumed"); stateAt = 0; N.show(); } catch (err) { toast(err.message, true); } }));
-    box.querySelector("[data-remove]").addEventListener("click", async () => {
-      if (!(await confirm({ title: `Remove “${m.title}”?`, text: "Its quests go too.", ok: "Remove it and its quests", danger: true }))) return;
-      try { await act(`/actions/missions/${encodeURIComponent(id)}`, { remove: true }); toast("Removed"); stateAt = 0; location.hash = "#agent/missions"; } catch (err) { toast(err.message, true); }
-    });
-    box.querySelector("[data-export]").addEventListener("click", (ev) => busy(ev.currentTarget, "Exporting…", async () => {
-      try { const r = await act(`/actions/missions/${encodeURIComponent(id)}/export`, {}); if (r.file) { known.set(r.file.id, r.file); filesAt = 0; location.hash = `#agent/file/${encodeURIComponent(r.file.id)}`; } } catch (err) { toast(err.message, true); }
-    }));
-    box.querySelector("[data-talk]").addEventListener("click", () => say(`About my mission “${m.title}”: `));
-    const rf = box.querySelector("#agent-refine");
-    if (rf) {
-      const ta = rf.elements.detail, said = rf.querySelector("[data-said]");
-      ta.addEventListener("input", () => (refineTyped[id] = ta.value));
-      box.querySelectorAll("[data-askq]").forEach((b) => b.addEventListener("click", () => {
-        ta.value = `${ta.value ? ta.value.replace(/\s*$/, "\n\n") : ""}${m.questions[Number(b.dataset.askq)]}\n→ `;
-        refineTyped[id] = ta.value;
-        ta.dispatchEvent(new Event("input", { bubbles: true }));
-        ta.focus();
-        ta.setSelectionRange(ta.value.length, ta.value.length);
-      }));
-      rf.addEventListener("submit", async (ev) => {
-        ev.preventDefault();
-        const detail = ta.value.trim();
-        said.classList.remove("bad");
-        if (!detail) { said.textContent = "Write what’s new first (or tap a question)."; said.classList.add("bad"); ta.focus(); return; }
-        said.textContent = "Re-planning… this can take a minute or two.";
-        await busy(rf.querySelector("[type=submit]"), "Re-planning…", async () => {
-          try {
-            const r = await act(`/actions/missions/${encodeURIComponent(id)}/refine`, { detail, deadline: rf.elements.deadline.value || undefined });
-            const res = r.result || r;
-            refineTyped[id] = "";
-            rf.classList.remove("dirty");
-            toast(`Plan sharpened ✦ “${res.mission ? res.mission.title : m.title}”: ${(res.quests || []).length} quests to go${res.atRisk ? `, ${res.atRisk} at risk` : ""}`);
-            stateAt = 0;
-            location.hash = `${base}/plan`;
-          } catch (err) { said.textContent = keyWords(err.message) === "Couldn’t plan that just now." ? "Couldn’t re-plan that just now." : keyWords(err.message); said.classList.add("bad"); }
-        });
-      });
-    }
   }
 
   // ---- Files Nova Agent wrote ----

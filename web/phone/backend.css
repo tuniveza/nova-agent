@@ -1,0 +1,3 @@
+/* Nova Phone: the Backend (backend.js): the six tiles, then what each is for */
+.backend-say { margin: 4px 4px 12px; text-align: center; }
+.backend-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }

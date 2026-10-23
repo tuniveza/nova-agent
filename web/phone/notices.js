@@ -47,7 +47,7 @@
       for (const k of ["fixer", "computer", "observatory", "console", "visualizer", "lossless"]) if (p.startsWith(`/${k}`)) return `#${k}`;
       if (p.startsWith("/agent")) {
         const open = q.get("open");
-        if (open === "pane:missions") return "#agent/missions";
+        if (open === "pane:missions") return "#agent/plan";
         if (open === "manual") return "#help";
         if (open && open !== "pane:chat") return place(open) || "#agent";
         return "#agent";
@@ -66,7 +66,7 @@
       if (v === "clients") return q.get("client") ? `#clients/${id("client")}` : "#clients";
       if (v === "money" || v === "invoices") return q.get("invoice") ? `#money/invoice/${id("invoice")}` : "#money";
       if (v === "quests") return "#quests";
-      if (v === "missions") return "#agent/missions";
+      if (v === "missions") return "#agent/plan";
       if (v === "manage" || v === "team" || v === "crew") return "#crew";
       if (v === "google") return "#google";
       if (v === "tests") return "#tests";
@@ -218,7 +218,7 @@
     function buttonsFor(n, q) {
       const id = n.questId;
       if (!id || id.startsWith("mission-")) {
-        if (n.kind === "mission") return `<a class="nn-btn" href="#agent/missions">See Missions</a>`;
+        if (n.kind === "mission") return `<a class="nn-btn" href="#agent/plan">See the plan</a>`;
         if (["briefing", "wrapup", "moved"].includes(n.kind)) return `<a class="nn-btn" href="#agent/plan">See the plan</a>`;
         return "";
       }

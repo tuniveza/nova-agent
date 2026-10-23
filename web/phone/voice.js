@@ -188,7 +188,7 @@
   // Places by the names people say
   const PLACES = [
     [/\b(calendar|diary|schedule|bookings?|sessions?)\b/, "#calendar"], [/\b(alerts?|notifications?)\b/, "#inbox/alerts"], [/\b(chats?|conversations?)\b/, "#inbox/chats"],
-    [/\bapprovals?\b/, "#inbox/approvals"], [/\b(invoices?|money|invoicer)\b/, "#money"], [/\bquests?\b/, "#quests"], [/\bmissions?\b/, "#agent/missions"], [/\bnotes?\b/, "#notes"],
+    [/\bapprovals?\b/, "#inbox/approvals"], [/\b(invoices?|money|invoicer)\b/, "#money"], [/\bquests?\b/, "#quests"], [/\bnotes?\b/, "#notes"],
     [/\bboard\b/, "#board"], [/\bindex\b/, "#index"], [/\bclients?\b/, "#clients"], [/\b(campaigns?|outreach)\b/, "#outreach"], [/\bsettings?\b/, "#settings"], [/\b(today|portal|home)\b/, "#today"],
   ];
   async function run(said) {

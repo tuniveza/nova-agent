@@ -182,7 +182,7 @@
       end: esc(N.ago(e.created_at)),
     });
   }
-  const KIND = { booking: "Booking · Acuity", "nova-booking": "Booking · Nova", enquiry: "Enquiry", quest: "Quest", mission: "Mission", agent: "Nova Agent", health: "Acuity connection", test: "Test", other: "Alert" };
+  const KIND = { booking: "Booking · Acuity", "nova-booking": "Booking · Nova", enquiry: "Enquiry", quest: "Quest", mission: "Quest", agent: "Nova Agent", health: "Acuity connection", test: "Test", other: "Alert" };
   const kindName = (n) => KIND[n.kind] || "Alert";
   // (Today maps rows with (n, index): the "seen" mark is passed only from here)
   const alertRow = (n) => alertRowSeen(n, seenAlert());
@@ -914,7 +914,7 @@
     if (document.hidden || N.notices) return;
     const { id, rest } = here();
     const quest = /^(quest|mission)$/.test(d.source || d.kind || "");
-    const refresh = id === "inbox" || id === "today" || (quest && (id === "quests" || (id === "agent" && /^missions?$/.test(rest[0] || ""))));
+    const refresh = id === "inbox" || id === "today" || (quest && (id === "quests" || (id === "agent" && rest[0] === "plan")));
     if (refresh && !busyWriting()) N.show();
     else if (id !== "inbox") api(`${A}enquiries?box=new`).then((r) => N.badge("inbox", (r.counts || {}).new || r.newCount || 0), () => {});
   }

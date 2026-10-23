@@ -75,14 +75,16 @@
   const sections = new Map();
   // The Nova tiles (the user: "the nova tiles should actually be like it was on nova desk"): Nova Desk's bar on
   // a phone, every place a tile in its own colours with its name inside it. Invoicer tall down the left, Nova
-  // (Nova Desk's Visualizer, Nova's browser helper) tall down the right; everything else, and the look, in More
-  // (the grid button at the top left of every main screen, as Nova Desk keeps its settings in its top bar); Apps along the top row; Plans, Tools and Helpers
-  // below, each group set apart by a fine line. [address, name, tile drawing]
+  // (Nova Desk's Visualizer, Nova's browser helper) tall down the right, and the main places between, two rows of
+  // three, bigger since 23 Oct 2026 (the user: Missions gone; Fixer, Computer, Observatory, Console, Manual and
+  // Index moved to the Backend, "your welcome to resize nova tiles since there will be a lot more space").
+  // Everything else, and the look, in More (the grid button at the top left of every main screen); the Backend by
+  // pressing and holding the Agent tile (Nova Agent). [address, name, tile drawing]
   const SIDE_L = ["money", "Invoicer", "invoicer"];
   const SIDE_R = ["visualizer", "Nova", "visualizer"];
   const ROWS = [
-    [["today", "Portal", "portal"], ["agent", "Agent", "chat"], ["calendar", "Calendar", "calendar"], ["notes", "Notes", "notes"], ["board", "Board", "board"], ["index", "Index", "index"]],
-    [["quests", "Quests", "quests"], ["agent/missions", "Missions", "missions"], "|", ["fixer", "Fixer", "fixer"], ["computer", "Computer", "computer"], "|", ["observatory", "Observatory", "observatory"], ["console", "Console", "console"], ["help", "Manual", "manual"]],
+    [["today", "Portal", "portal"], ["agent", "Agent", "chat"], ["calendar", "Calendar", "calendar"]],
+    [["notes", "Notes", "notes"], ["board", "Board", "board"], ["quests", "Quests", "quests"]],
   ];
   const badges = {};
   function section(def) {
@@ -100,6 +102,21 @@
     const n = badgeOf(to);
     return `<a class="nt${tall ? " tall" : ""}" href="#${to}" data-to="${to}" aria-label="${esc(name)}">${art}<span class="nt-name" aria-hidden="true">${esc(name)}</span>${SHORT[name] ? `<span class="nt-short" aria-hidden="true">${SHORT[name]}</span>` : ""}${n ? `<b class="tab-badge">${n > 99 ? "99+" : n}</b>` : ""}</a>`;
   }
+  // The Backend (Fixer, Computer, Observatory, Console, Manual, Index): press and hold the Agent tile, Nova
+  // Agent, for a moment; it glows as it fills, then opens. A normal tap is still Agent.
+  let holdTimer = 0, held = false, holdAt = null;
+  const holdStop = () => { clearTimeout(holdTimer); holdAt = null; tabs.querySelector(".nt-hold")?.classList.remove("nt-hold"); };
+  tabs.addEventListener("pointerdown", (e) => {
+    const a = e.target.closest('.nt[data-to="agent"]');
+    if (!a) return;
+    held = false; holdAt = [e.clientX, e.clientY]; a.classList.add("nt-hold");
+    holdTimer = setTimeout(() => { held = true; holdStop(); try { navigator.vibrate?.(12); } catch (err) {} location.hash = "#backend"; }, 650);
+  });
+  tabs.addEventListener("pointermove", (e) => { if (holdAt && Math.hypot(e.clientX - holdAt[0], e.clientY - holdAt[1]) > 12) holdStop(); });
+  for (const t of ["pointerup", "pointercancel"]) tabs.addEventListener(t, holdStop);
+  // (the tap that ends a hold doesn't also open Agent; a long press never brings up the phone's link menu)
+  tabs.addEventListener("click", (e) => { if (held && e.target.closest('.nt[data-to="agent"]')) { e.preventDefault(); held = false; } }, true);
+  tabs.addEventListener("contextmenu", (e) => { if (e.target.closest('.nt[data-to="agent"]')) e.preventDefault(); });
   function drawTiles() {
     tabs.innerHTML = `${tileHtml(SIDE_L, true)}<div class="nt-rows">${ROWS.map((r) => `<div class="nt-row">${r.map((t) => (t === "|" ? '<i class="nt-sep" aria-hidden="true"></i>' : tileHtml(t))).join("")}</div>`).join("")}</div>${tileHtml(SIDE_R, true)}`;
     mark();
@@ -107,7 +124,7 @@
   }
   // A row too tight for its names, step by step, never cut: the names smaller; then the short names Nova Desk
   // shows on a phone (Comp, Obs, Cons: whole words, not chopped); then only read out (the drawings stay)
-  const SHORT = { Computer: "Comp", Observatory: "Obs", Console: "Cons", Missions: "Miss" };
+  const SHORT = {};
   function fitTiles() {
     for (const row of tabs.querySelectorAll(".nt-row")) {
       row.classList.remove("tight", "short", "tiny", "names-off");
@@ -214,7 +231,7 @@
     google: ["admin.js"], tests: ["admin.js"], computer: ["computer.js"], fixer: ["fixer.js"], visualizer: ["visualizer.js"],
     index: ["memory.js"], board: ["board.js"], help: ["manual.js"], observatory: ["observatory.js"], console: ["console.js"], more: ["more.js"],
     lossless: ["lossless.js"], bookings: ["bookings.js"], bot: ["bot.js"],
-    admin: ["admin.js"], signin: ["signin.js"], join: ["signin.js"],
+    admin: ["admin.js"], signin: ["signin.js"], join: ["signin.js"], backend: ["backend.js"],
     // (Nova Phone as a whole: its settings, and Today in music)
     settings: ["settings.js"], music: ["music.js"],
   };
@@ -225,7 +242,7 @@
     computer: "Computer:computer", tests: "Test stuff:portal", fixer: "Fixer:fixer", visualizer: "Nova:visualizer", index: "Index:index", board: "Board:board",
     help: "Manual:manual", observatory: "Observatory:observatory", console: "Console:console", more: "More",
     lossless: "Lossless:lossless", bookings: "Booking tools:calendar", bot: "Website bot:portal",
-    admin: "Admin:portal", signin: "Sign in:portal", join: "Your invite:portal",
+    admin: "Admin:portal", signin: "Sign in:portal", join: "Your invite:portal", backend: "Backend:console",
     settings: "Settings", music: "Today in music",
   };
   const loading = new Map();
@@ -289,10 +306,10 @@
   }
   // The tile that's lit: the place you're in (Portal's parts light Portal; anything else lights Nova)
   const PORTAL = ["today", "inbox", "clients", "outreach", "you", "crew", "google", "tests", "admin", "signin", "join", "bookings", "bot"];
-  const OWN = ["money", "agent", "calendar", "notes", "board", "index", "quests", "fixer", "computer", "observatory", "console", "help", "visualizer"];
+  const OWN = ["money", "agent", "calendar", "notes", "board", "quests", "visualizer"];
   function mark() {
     const { id, rest } = current();
-    const to = PORTAL.includes(id) ? "today" : id === "agent" && /^missions?$/.test(rest[0] || "") ? "agent/missions" : OWN.includes(id) ? id : "";
+    const to = PORTAL.includes(id) ? "today" : OWN.includes(id) ? id : "";
     for (const a of tabs.querySelectorAll(".nt")) (a.dataset.to === to ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   }
 

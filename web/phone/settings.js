@@ -65,7 +65,7 @@
           ${news.length ? `<p class="settings-news"><b>What's new${was ? ` in ${esc(placeName(was))}` : ""}:</b> ${news.map(esc).join(" · ")}</p>` : ""}
           <a class="btn quiet settings-more" href="#settings/status">Lately and your visits ${icon("next")}</a>
         </div>
-        ${was ? `<h3 class="h">For ${esc(placeName(was))}</h3>${list([...(own ? [row({ href: own[0], lead: icon("cog"), title: own[1], text: own[2] })] : []), ...(N.has("help") && !was.to.startsWith("help") ? [row({ href: `#help/for/${encodeURIComponent(was.to.split("/")[0])}`, lead: icon("book"), title: `Help for ${placeName(was)}`, text: "How it works, in the Manual" })] : [])])}` : ""}
+        ${was && own ? `<h3 class="h">For ${esc(placeName(was))}</h3>${list([row({ href: own[0], lead: icon("cog"), title: own[1], text: own[2] })])}` : ""}
 
         <h3 class="h">Look</h3>
         <div class="card settings-look">
@@ -114,7 +114,6 @@
         ${list([
           row({ href: "#settings/install", lead: icon("download"), title: "Install or remove Nova Phone", text: "On your Home Screen, full screen, with notifications" }),
           row({ href: "#settings/links", lead: icon("link"), title: "Apps and links", text: "Every place, every address and its check, what's changed" }),
-          row({ href: "#help", lead: icon("book"), title: "Manual", text: "How everything works" }),
         ])}
         <button type="button" class="btn quiet wide" data-s="reset">Reset these settings</button>`;
       for (const b of box.querySelectorAll("[data-orb]")) paintOrb(b.querySelector(".settings-orb-dot"), themes.find((t) => t.id === b.dataset.orb)?.palette);
@@ -297,7 +296,7 @@
     ui.title("Apps and links");
     ui.back("#settings");
     ui.action({ icon: "refresh", label: "Check every address again", run: () => recheck(box) });
-    const PLACES = [["today", "Portal", "portal", "Enquiries, conversations, bookings, alerts"], ["agent", "Agent", "chat", "The conversation with Nova Agent"], ["calendar", "Calendar", "calendar", "Note cards and day cards"], ["notes", "Notes", "notes", "Notes and documents"], ["board", "Board", "board", "Notes, pictures and links laid out"], ["index", "Index", "index", "Everything Nova Agent remembers"], ["money", "Invoicer", "invoicer", "Invoices at every stage, payments, expenses"], ["quests", "Quests", "quests", "Every quest, today first"], ["agent/missions", "Missions", "missions", "Your goals, planned into Quests"], ["fixer", "Fixer", "fixer", "Every screen checked against the four rules"], ["computer", "Computer", "computer", "The VPS live (admins)"], ["observatory", "Observatory", "observatory", "Every project and its lines of code"], ["console", "Console", "console", "Commands for all of Nova"], ["help", "Manual", "manual", "How everything works"], ["visualizer", "Nova", "visualizer", "Nova's browser helper, live"]].filter(([to]) => N.has(to.split("/")[0]));
+    const PLACES = [["today", "Portal", "portal", "Enquiries, conversations, bookings, alerts"], ["agent", "Agent", "chat", "The conversation with Nova Agent"], ["calendar", "Calendar", "calendar", "Note cards and day cards"], ["notes", "Notes", "notes", "Notes and documents"], ["board", "Board", "board", "Notes, pictures and links laid out"], ["money", "Invoicer", "invoicer", "Invoices at every stage, payments, expenses"], ["quests", "Quests", "quests", "Every quest, today first"], ["visualizer", "Nova", "visualizer", "Nova's browser helper, live"]].filter(([to]) => N.has(to.split("/")[0]));
     let data = null, problem = "";
     try { data = await api(`/app/api/links${fresh ? "?recheck=1" : ""}`); } catch (err) { if (err.signIn) throw err; problem = err.message; }
     const at = data && data.checkedAt ? new Date(data.checkedAt) : null;

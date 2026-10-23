@@ -62,7 +62,7 @@
   const manualFor = (placeId) => `#help${PLACE_APP[placeId] ? `/${PLACE_APP[placeId]}` : ""}`;
   N.manualFor = manualFor;
   // A Nova Desk address (/calendar/, https://nova.novacane.co.uk/portal/…) as the Nova Phone place that does the same
-  const PATH_PLACE = [["/agent/nova", "visualizer"], ["/agent/computer", "computer"], ["/agent/invoicer", "money"], ["/agent/missions", "agent/missions"], ["/agent", "agent"], ["/portal", "today"],
+  const PATH_PLACE = [["/agent/nova", "visualizer"], ["/agent/computer", "computer"], ["/agent/invoicer", "money"], ["/agent/missions", "agent/plan"], ["/agent", "agent"], ["/portal", "today"],
     ["/calendar", "calendar"], ["/notes", "notes"], ["/quests", "quests"], ["/board", "board"], ["/app/memory", "index"], ["/console", "console"], ["/observatory", "observatory"],
     ["/lossless", "lossless"], ["/fixer", "fixer"], ["/computer", "computer"], ["/invoicer", "money"], ["/visualizer", "visualizer"]];
   const OURS = (host) => host === location.host || host === "nova.novacane.co.uk" || /novacane-worker/.test(host) || /^(127\.0\.0\.1|localhost)(:\d+)?$/.test(host);

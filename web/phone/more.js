@@ -12,17 +12,17 @@
   const GROUPS = [
     ["Studio", [["inbox", "Inbox", "portal"], ["inbox/alerts", "Alerts", "portal"], ["inbox/approvals", "Approvals", "portal"], ["calendar", "Calendar", "calendar"], ["clients", "Clients", "portal"], ["money", "Money", "invoicer"], ["bookings", "Booking tools", "calendar"], ["bot", "Website bot", "portal"]]],
     ["Outreach", [["outreach", "Campaigns", "portal"], ["outreach/one", "One-to-one", "portal"], ["outreach/social", "Social", "portal"], ["outreach/funnel", "Funnel", "portal"]]],
-    ["Plans", [["agent", "Agent", "chat"], ["agent/plan", "Today's plan", "missions"], ["agent/missions", "Missions", "missions"], ["quests", "Quests", "quests"], ["notes", "Notes", "notes"], ["board", "Board", "board"], ["index", "Index", "index"]]],
-    ["Helpers", [["observatory", "Observatory", "observatory"], ["console", "Console", "console"], ["lossless", "Lossless", "lossless"], ["help", "Manual", "manual"], ["visualizer", "Nova", "visualizer"]]],
+    ["Plans", [["agent", "Agent", "chat"], ["agent/plan", "Today's plan", "missions"], ["quests", "Quests", "quests"], ["notes", "Notes", "notes"], ["board", "Board", "board"]]],
+    ["Helpers", [["lossless", "Lossless", "lossless"], ["visualizer", "Nova", "visualizer"]]],
     ["You", [["you", "Your profile", "portal"], ["inbox/alert/phone", "Notifications", "portal"]]],
-    ["Admin", [["crew", "The crew", "portal"], ["google", "Google", "portal"], ["computer", "Computer", "computer"], ["tests", "Test stuff", "portal"], ["fixer", "Fixer", "fixer"], ["admin/referrals", "Referrals", "portal"], ["admin/links", "Links", "portal"], ["admin/test-booking", "Test booking", "portal"]]],
+    ["Admin", [["crew", "The crew", "portal"], ["google", "Google", "portal"], ["tests", "Test stuff", "portal"], ["admin/referrals", "Referrals", "portal"], ["admin/links", "Links", "portal"], ["admin/test-booking", "Test booking", "portal"]]],
   ];
   // What each place is for (Nova Desk's words under each tile, its Panels window)
   const DESC = {
     inbox: "Enquiries, with replies to send", "inbox/alerts": "What reached the phones", "inbox/approvals": "Booking changes waiting for an admin", calendar: "The one Nova Agent plans into",
     clients: "Everyone the studio works with", money: "Invoices at each stage, payments and expenses", outreach: "Emails to fans and clients who opted in", "outreach/one": "One-to-one emails, approved before they go",
     "outreach/social": "Facebook and Instagram posts", "outreach/funnel": "Prospects, first emails and the warm-up", agent: "The conversation with Nova Agent", "agent/plan": "Your day, planned",
-    "agent/missions": "Your goals, planned into Quests", quests: "Every quest: add in your own words, today first", notes: "Notes and documents", board: "A table for notes, pictures and links",
+    quests: "Every quest: add in your own words, today first", notes: "Notes and documents", board: "A table for notes, pictures and links",
     index: "Everything Nova Agent remembers: browse, edit, approve", observatory: "Every project, lines of code and the star map", console: "Type commands for all of Nova", lossless: "Raw sound between two devices, anywhere",
     help: "How everything in Nova works", visualizer: "Nova's browser helper, live", you: "Your planet, name, email and password", "inbox/alert/phone": "Notifications on this phone",
     crew: "Everyone, invites and roles", google: "Calendar, Contacts, Drive and Sheets", computer: "The VPS live: its sessions and how busy it is", tests: "What looks like test stuff, to tidy", fixer: "Every screen checked against the four rules",
@@ -65,7 +65,7 @@
           ${me.planet && me.planet.description ? `<p class="small muted">${esc(me.planet.description)}</p>` : ""}
         </div>
         <div class="more-acts">
-          <a class="more-act" href="#you">${icon("user")}<span>Your profile</span></a><a class="more-act" href="#index">${icon("book")}<span>Your Index</span></a>
+          <a class="more-act" href="#you">${icon("user")}<span>Your profile</span></a>
           <a class="more-act" href="#settings">${icon("cog")}<span>Settings</span></a>${canVoice ? `<button type="button" class="more-act" data-m="voice">${icon("mic")}<span>Voice</span></button>` : ""}
         </div>` : `<div class="card"><p class="kicker">Portal</p><h2 class="card-title">Who's here?</h2><p class="muted">Sign in once with Portal and Nova Phone knows who you are.</p></div><div class="btns two"><a class="btn main" href="/portal/?app=1&next=${encodeURIComponent("/phone/#more")}">Sign in</a><a class="btn" href="#settings">${icon("cog")} Settings</a></div>`}
         <fieldset class="field more-view"><legend class="sr">Show the places as</legend><div class="seg">
@@ -74,7 +74,6 @@
         ${groups}
         <h3 class="h">Nova Phone</h3>
         ${list([
-          ...(wasId && wasId !== "help" && N.has("help") ? [row({ href: `#help/for/${encodeURIComponent(wasId)}`, lead: icon("book"), title: `Help for ${was.title || wasId}`, text: "How it works, in the Manual" })] : []),
           row({ href: "#settings", lead: icon("cog"), title: "Settings", text: "Look, sound, music, battery, where it opens" }),
           row({ href: "#music", lead: icon("music"), title: "Today in music", text: "The Top 10, genres, gear, the song of the day" }),
           row({ href: "#settings/links", lead: icon("link"), title: "Apps and links", text: "Every place, every address and its check" }),

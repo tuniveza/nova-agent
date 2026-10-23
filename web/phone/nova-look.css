@@ -119,3 +119,32 @@ body { font-size: 15px; }
 
 /* ---- The Nova tiles' bar keeps its glowing top edge; the switch and toast take the theme's light ---- */
 .toast { border: 1px solid transparent; background: linear-gradient(color-mix(in srgb, var(--panel) 92%, var(--void)), color-mix(in srgb, var(--panel) 92%, var(--void))) padding-box, var(--nl-edge) border-box; }
+
+/* ---- The Nova tiles' bar: a framed Nova panel like Nova Desk's navigation panel; bigger tiles, since there
+   are fewer of them (23 Oct 2026: two rows of three between Invoicer and Nova) ---- */
+.app > .tabs {
+  margin: 0 max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  padding: 6px; gap: 6px; border-radius: 18px; border: 1px solid transparent;
+  background:
+    radial-gradient(60% 60% at 100% 100%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 64%) padding-box,
+    linear-gradient(color-mix(in srgb, var(--panel) 88%, var(--void)), color-mix(in srgb, var(--panel) 88%, var(--void))) padding-box,
+    var(--edge-glow, var(--nl-edge)) border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 -6px 24px -18px var(--hi);
+}
+.app > .tabs::before { display: none; }
+.nt-rows, .nt-row { gap: 6px; }
+.nt { min-height: 60px; padding: 34px 4px 6px; border-radius: 14px; font-size: 12.5px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.nt > .pico { padding-top: 7px; }
+.nt > .pico svg { width: 28px; height: 28px; }
+.nt.tall { width: clamp(60px, 17vw, 76px); }
+.nt.tall > .pico svg { width: 38px; height: 38px; }
+/* holding the Agent tile: it fills with light, then the Backend opens */
+.nt.nt-hold { animation: nt-hold .65s ease-in forwards; }
+@keyframes nt-hold { to { transform: scale(.92); box-shadow: 0 0 0 2px var(--hi), 0 0 26px 2px var(--hi); filter: brightness(1.25); } }
+@media (prefers-reduced-motion: reduce) { .nt.nt-hold { animation: none; box-shadow: 0 0 0 2px var(--hi); } }
+/* a phone on its side: one slim row, as before */
+@media (max-height: 500px) {
+  .app > .tabs { margin-bottom: max(4px, env(safe-area-inset-bottom)); padding: 4px; }
+  .nt, .nt.tall { min-height: 42px; height: 42px; padding: 0; }
+  .nt.tall { width: 52px; }
+}

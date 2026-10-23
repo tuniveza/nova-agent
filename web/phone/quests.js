@@ -93,7 +93,6 @@ function repeatWords(q) {
   return q.every === "day" ? "every day" : q.every === "weekday" ? "weekdays" : "every week";
 }
 const cap = (s) => String(s || "").replace(/^./, (c) => c.toUpperCase());
-const missionOf = (q) => (q.missionId ? (state?.missions || []).find((m) => m.id === q.missionId) : null);
 const whose = (q) => (state?.scope === "everyone" && q.ownerName && q.owner !== state?.person?.id ? q.ownerName : "");
 const leave = (q) => (q.location && q.travelMinutes && q.travelStart ? ` (leave ${hm(q.travelStart)})` : "");
 const dayName = (d) => {
@@ -108,7 +107,7 @@ function sinceWords(at) {
   return n < 1 ? "just now" : n < 60 ? `${n} min ago` : n < 1440 ? `${Math.round(n / 60)} h ago` : N.ago(at);
 }
 
-// A quest's details in a line: when, by when, at risk, priority, repeats, how long, steps, where, from, mission, whose
+// A quest's details in a line: when, by when, at risk, priority, repeats, how long, steps, where, from, whose
 function meta(q, { short = false, noWhen = false, pulse = false } = {}) {
   const b = [];
   if (pulse) {
@@ -131,8 +130,6 @@ function meta(q, { short = false, noWhen = false, pulse = false } = {}) {
   if (q.steps?.length) b.push(["", `${q.steps.filter((s) => s.done).length}/${q.steps.length} steps`]);
   if (!short && q.location) b.push(["", `at ${q.location}${leave(q)}`]);
   if (!short && q.from) b.push(["", `✎ ${q.from}`]);
-  const m = !short && missionOf(q);
-  if (m) b.push(["", `◆ ${m.title}`]);
   if (whose(q)) b.push(["", whose(q)]);
   return b.map(([cls, words]) => `<span class="quests-m${cls ? ` ${cls}` : ""}">${esc(words)}</span>`).join("");
 }
@@ -463,7 +460,7 @@ function drawQuest(box, id, ui) {
   if (!q || hidden.has(id)) { box.innerHTML = empty({ icon: "quests", title: "That quest isn't there any more", action: `<a class="btn" href="#quests">All quests</a>` }); return; }
   ui.title("Quest");
   if (!offline) ui.action({ icon: "edit", label: "Change it", href: `#quests/edit/${encodeURIComponent(id)}` });
-  const done = q.status === "done", skipped = q.status === "skipped", m = missionOf(q);
+  const done = q.status === "done", skipped = q.status === "skipped";
   const kicker = [q.ongoing ? "∞ Quest · repeat" : "✦ Quest", done ? "Done" : skipped ? "Skipped" : MODE[modeOf(q)]].join(" · ");
   const facts = [
     ["Planned for", q.start ? `${when(q.start)}–${hm(q.end)}` : isOpen(q) && !q.fixedStart ? "Not given a time yet" : ""],
@@ -475,7 +472,6 @@ function drawQuest(box, id, ui) {
     ["Priority", (PRIORITY.find(([p]) => p === q.priority) || [])[1] || ""],
     ["Where", q.location ? `${q.location}${q.travelMinutes ? ` · ${q.travelMinutes} min to get there${q.travelStart ? `, leave at ${hm(q.travelStart)}` : ""}` : ""}` : ""],
     ["From", q.from || ""],
-    ["Part of a mission", m ? m.title : q.missionId ? "Yes" : ""],
     ["Whose", whose(q) || (state?.scope === "everyone" ? q.ownerName : "")],
     ["Reminders", state?.rhythm && isOpen(q) ? (state.rhythm.phonePush ? `${state.rhythm.remindMinutesBefore ?? 10} min before, on your phone too` : `${state.rhythm.remindMinutesBefore ?? 10} min before (phone reminders are off: Quests → Options)`) : ""],
   ].filter(([, v]) => v);
@@ -605,7 +601,6 @@ function drawForm(box, q, ui) {
   const info = [];
   if (q?.start) info.push(`Planned for ${when(q.start)}–${hm(q.end)}.`);
   if (q?.from) info.push(`From ${q.from}.`);
-  if (q?.missionId) info.push(missionOf(q) ? `Part of the mission “${missionOf(q).title}”.` : "Part of a mission.");
   if (state?.rhythm) info.push(state.rhythm.phonePush ? `A reminder comes ${state.rhythm.remindMinutesBefore ?? 10} min before, on your phone too.` : `A reminder comes ${state.rhythm.remindMinutesBefore ?? 10} min before (phone reminders are off: Quests → Options).`);
   box.innerHTML = `<form class="form" id="quests-form" novalidate autocomplete="off">
       ${field({ label: "What", name: "title", value: base.title, required: true, attrs: 'maxlength="140"', placeholder: "Call Sam about the mix" })}
