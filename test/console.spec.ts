@@ -3,6 +3,8 @@
 // (src/console.ts): terminals only for admins on the studio computer itself, never online, the
 // VPS's address checked, each terminal's token.
 //   Run: npm test
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { boot, shutdown } from "./harness";
@@ -256,5 +258,75 @@ describe("terminals on the studio computer", () => {
     con2.usePty(null);
     delete process.env.AGENT_NOVA_KEY;
     delete process.env.NOVA_WORKER_URL;
+  });
+});
+
+// Nova Phone's Console with real terminals (23 Oct 2026): Nova Agent serves Nova Phone too, at
+// http://localhost:<port>/phone/?here=1#console, which stays on this computer (not sent online) so its
+// terminals open; /console-api/state says that address (phoneUrl), which Nova Phone's Console offers.
+describe("Nova Phone's Console on this computer", () => {
+  const read = (p: string) => readFileSync(new URL(p, import.meta.url), "utf8");
+  const webDir = (p: string) => fileURLToPath(new URL(`../web/${p}`, import.meta.url));
+
+  it("?here=1 keeps Console and Nova Phone on this computer, and nothing else", async () => {
+    await boot("2026-10-23T09:00");
+    const { openedHere } = await import("../src/console");
+    expect(openedHere("/phone/", "?here=1")).toBe(true);
+    expect(openedHere("/phone", "?here=1")).toBe(true);
+    expect(openedHere("/phone/index.html", "?here=1&x=2")).toBe(true);
+    expect(openedHere("/console/", "?here=1")).toBe(true);
+    expect(openedHere("/phone/", "")).toBe(false);
+    expect(openedHere("/phone/", "?here=0")).toBe(false);
+    expect(openedHere("/phonebook/", "?here=1")).toBe(false);
+    expect(openedHere("/portal/", "?here=1")).toBe(false);
+    expect(openedHere("/agent/", "?here=1")).toBe(false);
+  });
+
+  it("the state says Nova Phone's address with terminals (on the PC and on the server, online too)", async () => {
+    await boot("2026-10-23T09:00");
+    const con = await import("../src/console");
+    const relay = await import("../src/relay");
+    const { config } = await import("../src/config");
+    const app = new Hono();
+    con.registerConsoleRoutes(app);
+    const ask = async () => (await app.fetch(relay.relayedRequest({ method: "GET", path: "/console-api/state", headers: {}, staff: { id: "dee", name: "Dee", role: "admin" } }))).json();
+    const pc = await ask();
+    expect(pc).toMatchObject({ terminals: false, where: "pc", tunnel: "", localUrl: "http://localhost:4545/console/?here=1", phoneUrl: "http://localhost:4545/phone/?here=1#console" });
+    const was = config.onServer;
+    config.onServer = true;
+    try {
+      const server = await ask();
+      expect(server).toMatchObject({ terminals: false, where: "server", phoneUrl: "http://localhost:4545/phone/?here=1#console" });
+      expect(server.tunnel).toBe(con.SERVER_TUNNEL);
+      expect(server.tunnel).toMatch(/^ssh -L 4545:localhost:4545 root@/);
+    } finally {
+      config.onServer = was;
+    }
+    // …the field Nova Phone's Console reads, and the button it shows
+    const phone = read("../web/phone/console.js");
+    expect(phone).toContain("state.phoneUrl");
+    expect(phone).toContain("Open Console on the server");
+  });
+
+  it("Nova Agent serves Nova Phone, and every file its page asks for is where Nova Agent serves it", () => {
+    const server = read("../src/visualizer/server.ts");
+    expect(server).toContain('serveFolder("/phone", "phone/"');
+    expect(server).toContain('serveFolder("/shared", "shared/"');
+    // (the one-address rule lets ?here=1 through for Nova Phone too; without it, Nova Phone goes online)
+    expect(server).toMatch(/const consoleHere = [^\n]*openedHere\(/);
+    expect(server).toMatch(/path === "\/phone" \|\| path\.startsWith\("\/phone\/"\)\) return c\.redirect\(config\.workerUrl/);
+    // (not a panel: a document at /phone/ isn't turned into Nova Agent's /agent/?open=…)
+    expect(server).not.toMatch(/const PANELS = \[[^\]]*"\/phone"/);
+    const html = read("../web/phone/index.html");
+    const local = [...html.matchAll(/(?:src|href)="(\/[^"/][^"]*)"/g)].map((m) => m[1].split(/[?#]/)[0]);
+    expect(local.length).toBeGreaterThan(5);
+    const where = (a: string) =>
+      a.startsWith("/phone/") ? webDir("phone/" + a.slice(7)) : a.startsWith("/shared/") ? webDir("shared/" + a.slice(8)) : a.startsWith("/agent/") ? webDir("agent/assets/" + a.slice(7)) : "";
+    const missing = local.filter((a) => !where(a) || !existsSync(where(a)));
+    expect(missing).toEqual([]);
+    // …and the places' own files it loads later (phone.js: FILES), from /phone/
+    const files = [...new Set([...read("../web/phone/phone.js").matchAll(/"([a-z]+\.js)\*?"/g)].map((m) => m[1]))];
+    expect(files.length).toBeGreaterThan(10);
+    expect(files.filter((f) => !existsSync(webDir("phone/" + f)))).toEqual([]);
   });
 });

@@ -52,7 +52,7 @@ import { questEvents, readQuests } from "../quests/store";
 import { CONTENT_TYPES, fileCard, findFile, listFiles, readFileText, removeFile } from "../files";
 import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, receipts } from "../receipts";
 import { registerBoardRoutes } from "../board-routes";
-import { registerConsoleRoutes } from "../console";
+import { openedHere, registerConsoleRoutes } from "../console";
 import { currentStrictFixer, registerStrictRoutes, startStrictFixer } from "../fixer/strict-service";
 import { registerPdfRoutes } from "../pdf";
 import { registerComputerRoutes } from "../computer";
@@ -117,8 +117,9 @@ app.use("/actions/*", async (c, next) => {
 // (https://nova.novacane.co.uk/agent/), which reaches this server over its link (src/relay.ts).
 // NOVA_LOCAL_UI=1 keeps the pages here (for when the internet is down). Only top-level pages:
 // Nova Agent's own requests, files and the online link's requests aren't touched.
-// Console opened on this computer itself (/console/?here=1): its terminals only open at localhost
-const consoleHere = (c: { req: { path: string; url: string } }) => c.req.path.startsWith("/console") && new URL(c.req.url).searchParams.get("here") === "1";
+// Console opened on this computer itself (/console/?here=1, or Nova Phone's: /phone/?here=1#console):
+// its terminals only open at localhost
+const consoleHere = (c: { req: { path: string; url: string } }) => openedHere(c.req.path, new URL(c.req.url).search);
 app.use("*", async (c, next) => {
   if (config.localUi || consoleHere(c) || c.req.header("Sec-Fetch-Dest") !== "document" || (c.req.method !== "GET" && c.req.method !== "HEAD")) return next();
   const path = c.req.path;
@@ -128,6 +129,8 @@ app.use("*", async (c, next) => {
   const search = new URL(c.req.url).search;
   if (path === "/" || path === "/agent" || path === "/agent/") return c.redirect(online + search);
   if (path.startsWith("/agent/")) return c.redirect(config.workerUrl.replace(/\/$/, "") + path + search);
+  // (Nova Phone: online, Nova Bot's /phone/)
+  if (path === "/phone" || path.startsWith("/phone/")) return c.redirect(config.workerUrl.replace(/\/$/, "") + path + search);
   if (PANELS.some((p) => path === p || path.startsWith(p + "/"))) return c.redirect(online + "?open=" + encodeURIComponent(path + search));
   return c.redirect(online);
 });
@@ -224,6 +227,9 @@ registerBoardRoutes(app);
 // Console: Nova commands for the whole of Nova Agent, and (on this computer, for admins) real terminals (src/console.ts)
 serveFolder("/console", "console/", "Console is missing from web/console.");
 registerConsoleRoutes(app);
+// Nova Phone, here too (online it's Nova Bot's): opened on this computer at /phone/?here=1#console (on the
+// server, through the ssh tunnel), its Console opens real terminals. Its files are /phone/… and /shared/…
+serveFolder("/phone", "phone/", "Nova Phone is missing from web/phone.");
 // Lossless audio: the page only; its signalling and relay setup are Nova Bot's (/lossless/ws, /lossless/ice)
 serveFolder("/lossless", "lossless/public/lossless/", "Lossless audio is missing from web/lossless.");
 serveFolder("/app/memory", "index/", "Index is missing from web/index.");

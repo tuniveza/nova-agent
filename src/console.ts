@@ -87,6 +87,16 @@ export function saveVps(v: VpsSettings): void {
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 // How an admin opens the server's terminals from their own computer (Nova Agent on the server)
 export const SERVER_TUNNEL = `ssh -L ${config.visualizerPort}:localhost:${config.visualizerPort} root@${DEFAULT_VPS.host}`;
+// Where Console opens on this computer itself, with its terminals: Desk's Console, and Nova Phone
+// on its Console (on the server: the same addresses, through the ssh tunnel)
+export const localUrl = () => `http://localhost:${config.visualizerPort}/console/?here=1`;
+export const phoneUrl = () => `http://localhost:${config.visualizerPort}/phone/?here=1#console`;
+// A page opened at one of those (?here=1) stays on this computer instead of going to Nova Agent online
+// (src/visualizer/server.ts): Desk's Console, or Nova Phone
+export function openedHere(path: string, search: string | URLSearchParams): boolean {
+  if (new URLSearchParams(search).get("here") !== "1") return false;
+  return path.startsWith("/console") || path === "/phone" || path.startsWith("/phone/");
+}
 const here = () => (config.onServer ? "the server" : "the studio computer");
 
 // Why a terminal can't open for this request ("" = it can)
@@ -259,8 +269,9 @@ export function registerConsoleRoutes(app: Hono): void {
         vps: person.role === "admin" ? readVps() : null,
         open: why ? [] : openTerminals(),
         // Where Console opens on the studio computer itself, with its terminals (on the server: the
-        // same address, through the ssh tunnel)
-        localUrl: `http://localhost:${config.visualizerPort}/console/?here=1`,
+        // same address, through the ssh tunnel): Desk's, and Nova Phone's
+        localUrl: localUrl(),
+        phoneUrl: phoneUrl(),
         where: config.onServer ? "server" : "pc",
         tunnel: config.onServer ? SERVER_TUNNEL : "",
       },
