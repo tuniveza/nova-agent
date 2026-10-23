@@ -1,0 +1,45 @@
+/* Nova Phone: the reminders and notices pile (notices.js), at the top of the screen under the title bar.
+   The newest two show; "N more notices" brings the rest. Theme colours only; nothing moves but a soft glow on a
+   pulse's beat. */
+.nn-pile {
+  position: fixed; z-index: 45; left: 50%; top: calc(60px + env(safe-area-inset-top)); transform: translateX(-50%);
+  display: grid; gap: 8px; width: min(calc(100% - 24px), 520px); max-height: calc(100dvh - 80px - env(safe-area-inset-top)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+}
+.nn-pile::-webkit-scrollbar { display: none; }
+.nn-card {
+  position: relative; padding: 14px 52px 14px 16px; border-radius: 18px;
+  border: 1px solid rgba(var(--hi-rgb), .35); background: var(--deep); color: var(--text);
+  box-shadow: 0 18px 40px -16px rgba(var(--shadow-rgb), .95), inset 4px 0 0 var(--hi); overflow-wrap: anywhere;
+}
+.nn-card.nn-off { display: none; }
+.nn-checkin, .nn-leave { box-shadow: 0 18px 40px -16px rgba(var(--shadow-rgb), .95), inset 4px 0 0 var(--gold); }
+.nn-moved, .nn-missed, .nn-undelivered { box-shadow: 0 18px 40px -16px rgba(var(--shadow-rgb), .95), inset 4px 0 0 var(--warn); }
+.nn-mission, .nn-briefing, .nn-wrapup { box-shadow: 0 18px 40px -16px rgba(var(--shadow-rgb), .95), inset 4px 0 0 var(--lilac); }
+.nn-pulse.nn-beat { animation: nn-beat .6s ease-out 1; }
+@keyframes nn-beat { from { border-color: var(--hi); } to { border-color: rgba(var(--hi-rgb), .35); } }
+@media (prefers-reduced-motion: reduce) { .nn-pulse.nn-beat { animation: none; } }
+.nn-title { margin: 0; font: 700 16px/1.35 var(--f-body); color: var(--bright); }
+.nn-text { margin: 4px 0 0; font-size: 15px; line-height: 1.45; color: var(--muted); }
+.nn-x {
+  position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; border: 0; border-radius: 50%;
+  background: none; color: var(--muted); font: 400 24px/1 var(--f-body);
+}
+.nn-x:active { background: rgba(var(--hi-rgb), .12); }
+.nn-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.nn-btn {
+  flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px;
+  border-radius: 14px; border: 1px solid rgba(var(--hi-rgb), .3); background: rgba(var(--hi-rgb), .08); color: var(--bright);
+  font: 700 15px/1.2 var(--f-body); white-space: nowrap; text-decoration: none;
+}
+.nn-btn.main { border-color: transparent; background: linear-gradient(135deg, var(--accent), var(--accent-mid, var(--accent)) 55%, var(--accent-2)); color: var(--on-accent, #fff); }
+.nn-btn[disabled] { opacity: .5; }
+.nn-more {
+  order: 99; justify-self: center; min-height: 44px; padding: 0 18px; border-radius: 999px;
+  border: 1px solid rgba(var(--hi-rgb), .3); background: var(--deep); color: var(--hi); font: 700 14px/1 var(--f-body);
+  box-shadow: 0 10px 24px -14px rgba(var(--shadow-rgb), .9);
+}
+@media (max-height: 500px) {
+  .nn-pile { top: calc(52px + env(safe-area-inset-top)); width: min(calc(100% - 24px), 460px); }
+  .nn-card { padding: 10px 48px 10px 14px; }
+  .nn-btns { margin-top: 8px; }
+}
