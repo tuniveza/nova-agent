@@ -27,12 +27,14 @@ looks start > "$session" && grep -q '"token"' "$session" || { echo "Couldn't sta
 trap 'looks end >/dev/null; rm -f "$session"' EXIT
 
 parallel=1; [ "${ONE_AT_A_TIME:-}" = 1 ] && parallel=0
+# (a copy of the project made to check while work goes on, scripts/check-copy.sh, borrows the real node_modules)
+modules=""; real="$(realpath node_modules)"; [ "$real" != "$here/node_modules" ] && modules="-v $real:$real"
 run() {  # engine
   if [ "$1" = chromium ]; then
     LOOKS_FILE="$session" PHONE_CHECK_PARALLEL=$parallel npx tsx scripts/phone-check.ts chromium "$mode" "$out"
   else
     podman run --rm --ipc=host --userns=keep-id -e HOME=/tmp -e LOOKS_FILE="$session" -e PHONE_CHECK_PARALLEL=$parallel \
-      -v "$here:$here" -w "$here" "$image" npx tsx scripts/phone-check.ts "$1" "$mode" "$out"
+      -v "$here:$here" $modules -w "$here" "$image" npx tsx scripts/phone-check.ts "$1" "$mode" "$out"
   fi > "$out/$1.log" 2>&1
 }
 bad=0
