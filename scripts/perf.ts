@@ -51,10 +51,19 @@ const serve = async (route: Route) => {
   if (file.endsWith("/")) file += "index.html";
   const path = join(web, file);
   if (!existsSync(path)) return route.continue();
-  const orig = await route.fetch().catch(() => null);
-  const keep = Object.fromEntries(Object.entries(orig ? orig.headers() : {}).filter(([k]) => /^content-security-policy$/i.test(k)));
+  // (the live page's CSP, asked for once per page: it only matters for pages, and a trip to the server for every
+  // script and style made each local number swing with the network)
+  let keep = {};
+  if (extname(path) === ".html") {
+    if (!csp.has(file)) {
+      const orig = await route.fetch().catch(() => null);
+      csp.set(file, Object.fromEntries(Object.entries(orig ? orig.headers() : {}).filter(([k]) => /^content-security-policy$/i.test(k))));
+    }
+    keep = csp.get(file)!;
+  }
   return route.fulfill({ status: 200, body: readFileSync(path), headers: { ...keep, "Content-Type": TYPES[extname(path)] || "application/octet-stream", "Cache-Control": "no-store" } });
 };
+const csp = new Map<string, Record<string, string>>();
 
 // (in every frame, from the start: long tasks and layout shifts, kept on window.__perf)
 const WATCH = `(() => {

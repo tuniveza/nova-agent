@@ -53,7 +53,8 @@
   function section(def) {
     sections.set(def.id, def);
     if (!tabs.firstChild) drawTiles();
-    if (current().id === def.id) show();
+    // (once the rest of its file has run: it may draw with things defined further down)
+    if (current().id === def.id) queueMicrotask(show);
   }
   function tileHtml([to, name, p], tall) {
     const art = p && window.NovaTile ? window.NovaTile(p) : `<span class="pico nova-pico" aria-hidden="true"><img src="${window.NovaMark || "/agent/icon.svg"}" alt=""></span>`;
@@ -86,11 +87,63 @@
     badges[id] = n || 0;
     drawTiles();
   }
+  // Each place's code, run when it's first opened (ns CLAUDE.md 2e: what's needed first comes first), and the
+  // rest fetched quietly once the first screen is up, so a tap on a tile is still quick. "*": a module. Today also
+  // shows Inbox's rows, the Calendar and Quests.
+  const FILES = {
+    today: ["inbox.js", "today.js", "calendar.js*", "quests.js*"], inbox: ["inbox.js"], calendar: ["calendar.js*"], quests: ["quests.js*"],
+    agent: ["agent.js"], notes: ["notes.js"], money: ["money.js"], clients: ["clients.js"], outreach: ["outreach.js"], you: ["you.js"], crew: ["you.js"],
+    google: ["admin.js"], computer: ["admin.js"], tests: ["admin.js"], fixer: ["admin.js"], visualizer: ["admin.js"],
+    index: ["memory.js"], board: ["board.js"], help: ["helpers.js"], observatory: ["helpers.js"], console: ["helpers.js"], more: ["more.js"],
+  };
+  // (its name and tile in the title bar while it comes)
+  const NAMES = {
+    today: "Today:portal", inbox: "Inbox:portal", calendar: "Calendar:calendar", quests: "Quests:quests", agent: "Agent:chat", notes: "Notes:notes",
+    money: "Money:invoicer", clients: "Clients:portal", outreach: "Outreach:portal", you: "You:portal", crew: "The crew:portal", google: "Google:portal",
+    computer: "Computer:computer", tests: "Test stuff:portal", fixer: "Fixer:fixer", visualizer: "Nova:visualizer", index: "Index:index", board: "Board:board",
+    help: "Manual:manual", observatory: "Observatory:observatory", console: "Console:console", more: "More",
+  };
+  const loading = new Map();
+  function load(f) {
+    const file = f.replace("*", "");
+    // (a page that lists the files itself, like the preview, has them already)
+    if (document.querySelector(`script[src="${file}"], script[src="/phone/${file}"]`) && !loading.has(file)) return Promise.resolve();
+    if (!loading.has(file)) loading.set(file, new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      if (f.endsWith("*")) s.type = "module";
+      s.async = false; // (in the order asked for: Inbox's rows before Today)
+      s.src = file;
+      s.onload = resolve;
+      s.onerror = () => { loading.delete(file); s.remove(); reject(new Error("It didn't load. Check the connection and try again.")); };
+      document.head.append(s);
+    }));
+    return loading.get(file);
+  }
+  let rested = false;
+  function loadRest() {
+    if (rested) return;
+    // (only once the page has finished loading: started before, the browser counts it as part of the page and
+    // holds back everything waiting for that, the service worker included)
+    if (document.readyState !== "complete") return addEventListener("load", loadRest, { once: true });
+    rested = true;
+    const files = [...new Set(Object.values(FILES).flat())];
+    const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 200));
+    // (fetched, not run: the service worker keeps each by its fingerprint, so opening a place later runs it from the
+    // phone with no wait, and nothing runs in the background meanwhile)
+    const next = () => {
+      const f = files.shift();
+      if (!f) return;
+      const file = f.replace("*", "");
+      if (loading.has(file) || document.querySelector(`script[src="${file}"], script[src="/phone/${file}"]`)) return next();
+      fetch(file, { priority: "low", credentials: "same-origin" }).catch(() => {}).finally(() => idle(next));
+    };
+    idle(next);
+  }
+
   // Where we are: #calendar, #calendar/card/abc (the screen and what's after it)
   function current() {
     const [id, ...rest] = decodeURIComponent(location.hash.slice(1)).split("/");
-    const home = sections.has("today") ? "today" : sections.keys().next().value;
-    return sections.has(id) ? { id, rest } : { id: home, rest: [] };
+    return sections.has(id) || FILES[id] ? { id, rest } : { id: "today", rest: [] };
   }
   // The tile that's lit: the place you're in (Portal's parts light Portal; anything else lights Nova)
   const PORTAL = ["today", "inbox", "clients", "outreach", "you", "crew", "google", "tests"];
@@ -106,7 +159,21 @@
     const { id, rest } = current();
     const s = sections.get(id);
     mark();
-    if (!s) return;
+    if (!s) {
+      // (its code isn't here yet: a placeholder while it comes, then section() shows it)
+      if (drawn !== `load:${id}`) {
+        drawn = `load:${id}`;
+        page.replaceChildren(Object.assign(document.createElement("div"), { className: "page-in", innerHTML: skeleton() }));
+        const [t, tile] = (NAMES[id] || "Nova Phone").split(":");
+        head({ title: t, tile });
+      }
+      Promise.all(FILES[id].map(load)).catch((err) => {
+        if (current().id !== id || sections.has(id)) return;
+        drawn = "";
+        page.replaceChildren(Object.assign(document.createElement("div"), { className: "page-in", innerHTML: oops(err, true) }));
+      });
+      return;
+    }
     const key = `${id}/${rest.join("/")}`;
     const fresh = key !== drawn;
     drawn = key;
@@ -132,6 +199,7 @@
     if (token !== drawing) return;
     page.replaceChildren(box);
     head(bar);
+    loadRest();
     if (typeof s.bottom === "function" ? s.bottom(rest) : s.bottom) page.scrollTop = page.scrollHeight;
     else if (fresh) page.scrollTop = 0;
   }
@@ -273,8 +341,12 @@
   // The service worker: Nova's files kept on the phone between visits (fetched again only when they change)
   if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).catch(() => {}));
 
+  // The bar now, then the screen asked for (its code loads first)
+  drawTiles();
+  queueMicrotask(show);
+
   window.NovaPhone = {
-    section, has: (id) => sections.has(id), show, badge, api, post, esc, icon, row, list, field, toggle, choices, empty, oops, skeleton,
+    section, has: (id) => sections.has(id) || !!FILES[id], show, badge, api, post, esc, icon, row, list, field, toggle, choices, empty, oops, skeleton,
     toast, confirm, choose, form, busy, today, localStamp, asDate, ago, money, initials, signInCard, paint,
   };
 })();
