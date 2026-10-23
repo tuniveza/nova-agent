@@ -4057,7 +4057,7 @@
   // Nova Agent (on the studio computer) sends its plan here every time it
   // changes. Taps (Done, Start, Not now...) go back to it, usually within a second.
 
-  // Which part is showing: today, missions, or every quest
+  // Which part is showing: today, or every quest
   let questTab = "today";
   // The last plan we got (for redrawing without asking again)
   let lastQuests = null;
@@ -4154,17 +4154,15 @@
   }
 
   // One quest as a card
-  function questCard(q, missions, big) {
+  function questCard(q, big) {
     // The whole card wears its mode's colour (Waiting, Soon, Working On It...: /shared/quest-modes.css)
     const mode = q.mode || (q.status === "done" ? "done" : q.status === "doing" ? "working" : "waiting");
     const card = el("article", "card quest-card " + q.status + (q.atRisk ? " risk" : "") + (big ? " now" : "") + " qm-tinted qm-" + mode);
-    const mission = missions.find((m) => m.id === q.missionId);
     card.dataset.key = "q" + q.id + (big ? ":now" : "");
-    card.dataset.sig = sig(q, mission && mission.title);
-    // Every quest says so: "✦ Quest" (with where it's at for the big one), and its mission
+    card.dataset.sig = sig(q);
+    // Every quest says so: "✦ Quest" (with where it's at for the big one)
     const tags = el("div", "q-tags");
     tags.appendChild(el("span", "q-tag", (q.ongoing ? "∞ Quest · repeat" : "✦ Quest") + (big ? (q.status === "doing" ? " · in progress" : " · up next") : "")));
-    if (mission) tags.appendChild(el("span", "m-tag", "◆ " + mission.title));
     if (q.from) tags.appendChild(el("span", "m-tag", "✎ " + q.from));
     // Someone else's (an admin looking at everyone's): whose it is
     const whose = ownerLabel(q);
@@ -4206,7 +4204,6 @@
     const st = data.state;
     const ago = data.at ? Math.round((Date.now() - Date.parse(data.at)) / 60000) : null;
     setText("quests-sync", (data.online ? "● Nova Agent is online" : "○ Nova Agent is offline") + (ago !== null ? ` · updated ${ago < 1 ? "just now" : ago + " min ago"}` : ""));
-    const missions = st.missions || [];
     const quests = st.quests || [];
     const today = (st.now || "").slice(0, 10);
     const open = quests.filter((q) => q.status === "todo" || q.status === "doing");
@@ -4225,7 +4222,7 @@
 
     if (questTab === "today") {
       const current = st.current || (st.next || [])[0];
-      if (current) cards.push(questCard(current, missions, true));
+      if (current) cards.push(questCard(current, true));
       for (const q of st.pulses || []) {
         const card = el("article", "card quest-card pulse");
         card.dataset.key = "p" + q.id;
@@ -4235,7 +4232,7 @@
         cards.push(card);
       }
       const todays = quests.filter((q) => q.start && q.start.startsWith(today) && q.status !== "skipped" && (!current || q.id !== current.id)).sort((a, b) => a.start.localeCompare(b.start));
-      if (todays.length) cards.push(el("h3", "quest-day", "Today · " + dayName(today)), ...todays.map((q) => questCard(q, missions)));
+      if (todays.length) cards.push(el("h3", "quest-day", "Today · " + dayName(today)), ...todays.map((q) => questCard(q)));
       const later = open.filter((q) => q.start && q.start.slice(0, 10) > today).sort((a, b) => a.start.localeCompare(b.start)).slice(0, 12);
       let day = "";
       for (const q of later) {
@@ -4243,37 +4240,12 @@
           day = q.start.slice(0, 10);
           cards.push(el("h3", "quest-day", dayName(day)));
         }
-        cards.push(questCard(q, missions));
+        cards.push(questCard(q));
       }
       // Quests with no time yet (from Notes, or waiting for room in the plan)
       const unplanned = open.filter((q) => !q.start && (!current || q.id !== current.id));
-      if (unplanned.length) cards.push(el("h3", "quest-day", "Not planned yet"), ...unplanned.map((q) => questCard(q, missions)));
-      if (!cards.length) return emptyState(body, "Nothing planned. Ask Nova Agent for a mission, or add a quest.");
-    }
-
-    if (questTab === "missions") {
-      if (!missions.length) return emptyState(body, "No missions yet. Ask Nova Agent: \"Plan a mission: finish the EP by 1 December\".");
-      for (const m of missions) {
-        const p = m.progress || { done: 0, total: 0, atRisk: 0, minutesLeft: 0 };
-        const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
-        const card = el("article", "card mission-card " + m.status);
-        card.dataset.key = "m" + m.id;
-        card.dataset.sig = sig(m);
-        const ring = el("div", "ring", pct + "%");
-        ring.style.setProperty("--p", pct);
-        const head = el("div", "mission-head");
-        const words = el("div", "mission-words");
-        words.append(el("h3", "card-title", m.title), el("p", "quest-meta", m.summary || ""));
-        head.append(ring, words);
-        card.append(el("span", "m-badge", "◆ Mission" + (m.status === "done" ? " · complete" : m.status === "paused" ? " · paused" : "") + (ownerLabel(m) ? " · " + ownerLabel(m) : "")), head);
-        if (p.atRisk) card.classList.add("risk");
-        card.appendChild(el("p", "quest-meta", [m.deadline ? "Due " + m.deadline.replace("T", " ") : "", `${p.done}/${p.total} quests`, (p.minutesLeft / 60).toFixed(1) + " h left", p.atRisk ? `⚠ ${p.atRisk} at risk` : ""].filter(Boolean).join(" · ")));
-        const row = el("div", "actions");
-        if (m.status === "active") row.appendChild(questButton("Pause", () => questTap(m.id, "pause", "mission")));
-        if (m.status === "paused") row.appendChild(questButton("Resume", () => questTap(m.id, "resume", "mission"), true));
-        card.appendChild(row);
-        cards.push(card);
-      }
+      if (unplanned.length) cards.push(el("h3", "quest-day", "Not planned yet"), ...unplanned.map((q) => questCard(q)));
+      if (!cards.length) return emptyState(body, "Nothing planned. Ask Nova Agent, or add a quest.");
     }
 
     if (questTab === "all") {
@@ -4287,10 +4259,10 @@
         if (!group.length) continue;
         const head = el("h3", "quest-day quest-mode-head");
         head.innerHTML = (window.NovaQuestModes ? NovaQuestModes.chip(mode, { tag: "span" }) : mode) + ` <small>${group.length}</small>`;
-        cards.push(head, ...group.map((q) => questCard(q, missions)));
+        cards.push(head, ...group.map((q) => questCard(q)));
       }
       const skipped = quests.filter((q) => q.status === "skipped");
-      if (skipped.length) cards.push(el("h3", "quest-day", `Skipped · ${skipped.length}`), ...skipped.map((q) => questCard(q, missions)));
+      if (skipped.length) cards.push(el("h3", "quest-day", `Skipped · ${skipped.length}`), ...skipped.map((q) => questCard(q)));
     }
     reconcile(body, cards);
   }

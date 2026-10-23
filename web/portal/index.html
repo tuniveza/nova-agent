@@ -796,13 +796,12 @@
       <div id="client-page" class="list" hidden></div>
     </section>
 
-    <!-- Quests: Nova Agent's plan (missions, today's quests, pulses), synced from the studio computer -->
+    <!-- Quests: Nova Agent's plan (today's quests, pulses), synced from the studio computer -->
     <section id="view-quests" class="view" hidden>
       <div class="view-head">
         <h2>Quests</h2>
         <div class="chips" role="tablist">
           <button class="chip active" data-quests="today" type="button">Today</button>
-          <button class="chip" data-quests="missions" type="button">Missions</button>
           <button class="chip" data-quests="all" type="button">All quests</button>
         </div>
         <!-- Admins: just yours, or everyone's -->
@@ -940,8 +939,9 @@
 
       <!-- Under the hero, in groups: Index, Account, Connections, Admin -->
       <div class="panels">
-        <!-- Index: their own memory, and what the studio shares (one button, like Index's own) -->
-        <section class="group" aria-labelledby="group-index-head">
+        <!-- Index: their own memory, and what the studio shares (one button, like Index's own). Out of sight since
+             23 Oct 2026: Index is in Nova Agent's Backend (hold Nova Agent's mark), and /app/memory/ still opens it -->
+        <section class="group" aria-labelledby="group-index-head" hidden>
           <h2 class="group-head" id="group-index-head">Index</h2>
           <div class="group-cards">
             <section id="memory-card" class="card memory-card" aria-labelledby="memory-title">
@@ -1395,14 +1395,6 @@
         <span class="suite-tag here">This app</span>
       </li>
       <li class="suite-app">
-        <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-sky"/><path d="M176 152h160v52h-50v124h50v52H176v-52h50V204h-50z" fill="#FF5FA8" opacity=".75" filter="url(#nv-glow)"/><path d="M176 152h160v52h-50v124h50v52H176v-52h50V204h-50z" fill="url(#nv-letter)"/><path d="M65.8 309.4A196 50-14 0 0 446.2 214.6" fill="none" stroke="#FFD1EA" stroke-opacity=".85" stroke-width="4" stroke-dasharray="3 11" stroke-linecap="round"/><path transform="translate(256 100)" d="M0-24 4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff"/></svg>
-        <div class="suite-words">
-          <strong class="suite-name">Index</strong>
-          <p>Nova Agent's shared memory: browse what it has learned, watch it grow, fix a line and approve new facts.</p>
-        </div>
-        <a class="btn small ghost suite-open" href="/app/memory/" target="_blank" rel="noopener" aria-label="Open Index">Open</a>
-      </li>
-      <li class="suite-app">
         <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-n"/></svg>
         <div class="suite-words">
           <strong class="suite-name">Notes</strong>
@@ -1422,7 +1414,7 @@
         <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-a"/></svg>
         <div class="suite-words">
           <strong class="suite-name">Nova Agent</strong>
-          <p>The conversation, Missions and Quests, Acuity helper, and every panel. It runs on the studio's server, so it's always on.</p>
+          <p>The conversation, Quests, Acuity helper, and every panel. It runs on the studio's server, so it's always on.</p>
         </div>
         <a class="btn small ghost suite-open" href="https://nova.novacane.co.uk/agent/" target="_blank" rel="noopener" aria-label="Open Nova Agent">Open</a>
       </li>
@@ -1433,14 +1425,6 @@
           <p>The studio's website assistant: answers questions and takes bookings (with deposit).</p>
         </div>
         <a class="btn small ghost suite-open" href="https://novacane.co.uk" target="_blank" rel="noopener" aria-label="Open NovaBot on novacane.co.uk">Open</a>
-      </li>
-      <li class="suite-app">
-        <span class="suite-badge suite-glyph" aria-hidden="true">✧</span>
-        <div class="suite-words">
-          <strong class="suite-name">Observatory</strong>
-          <p>Every project, its lines of code and the star map.</p>
-        </div>
-        <a class="btn small ghost suite-open" href="https://nova.novacane.co.uk/observatory/" target="_blank" rel="noopener" aria-label="Open Observatory">Open</a>
       </li>
       <li class="suite-app">
         <span class="suite-badge suite-glyph" aria-hidden="true">⚙</span>

@@ -39,7 +39,7 @@ const FORMS: Form[] = [
   dev("iPad Mini", "tablet-side", true), dev("Galaxy Tab S9", "tablet-side", true), dev("iPad Pro 11", "tablet-side", true),
 ].filter((f) => !pickForms || pickForms.includes(f.name) || pickForms.includes(f.form));
 const PLACES: [string, string, string?][] = ([
-  ["Agent", "/agent/"], ["Missions", "/agent/", '[data-pane="missions"]'], ["Manual", "/agent/", '[data-act="manual"], #tabbar [data-tab="manual"]'],
+  ["Agent", "/agent/"], ["Manual", "/agent/", '[data-act="manual"], #tabbar [data-tab="manual"]'],
   ["Portal", "/portal/?view=inbox"], ["Today", "/portal/?view=today"], ["Calendar", "/calendar/"], ["Notes", "/notes/"], ["Board", "/board/"], ["Index", "/app/memory/"],
   ["Quests", "/quests/"], ["Fixer", "/fixer/"], ["Computer", "/computer/"], ["Observatory", "/observatory/"], ["Console", "/console/"],
   ["Lossless", "/lossless/"], ["Invoicer", "/invoicer/"],

@@ -240,9 +240,6 @@
 .mw-detail .mw-list b { white-space: normal; }
 .mw-detail .mw-src { margin: 0; }
 .mw-detail .mw-song-pop .mw-art { width: 140px !important; height: 140px !important; }
-/* Missions with nothing to show: a short note rather than an empty box */
-#missions:empty::before { content: "No missions yet. Tap ✦ New, or ask Agent."; display: block; padding: 18px 10px; color: var(--muted); text-align: center; }
-#view-missions:has(> :not(#missions)) #missions:empty::before { content: none; }
 
 /* No corner brackets on the content panels: just the soft glowing edge and the nebula inside */
 .welcome .cpanel {

@@ -213,7 +213,10 @@
   // ---- What's new, for the part of the bar you're on ----
   const AREA_NAMES = { apps: "Apps", tasks: "Plans", tools: "Tools", helpers: "Helpers" };
   // An area's news names the panel it's about (the simple words come after)
-  const PANEL_NAMES = { chat: "Nova Agent", portal: "Portal", calendar: "Calendar", notes: "Notes", index: "Index", quests: "Quests", missions: "Missions", lossless: "Lossless", visualizer: "Nova", observatory: "Observatory", manual: "Manual", look: "Look & sound" };
+  const PANEL_NAMES = { chat: "Nova Agent", portal: "Portal", calendar: "Calendar", notes: "Notes", index: "Index", quests: "Quests", lossless: "Lossless", visualizer: "Nova", observatory: "Observatory", manual: "Manual", look: "Look & sound" };
+  // (what's new about a place that isn't on the bar, the old Agent pane and the Backend's panels, isn't told about a
+  // group on the bar; a Backend panel that's open still shows its own news)
+  const UNSEEN = new Set(["missions", "fixer", "computer", "observatory", "console", "manual", "index"]);
   const areaLabel = line.querySelector(".sl-area");
   const wordsEl = line.querySelector(".sl-words");
   let shownKey = null;
@@ -221,7 +224,7 @@
     if (key === shownKey) return;
     shownKey = key;
     let label = "New", items = DATA.everything || [];
-    if (AREA_NAMES[key]) { const list = DATA.areas[key] || []; label = list[0] ? PANEL_NAMES[list[0].panel] : AREA_NAMES[key]; items = list.map((x) => x.words); }
+    if (AREA_NAMES[key]) { const list = (DATA.areas[key] || []).filter((x) => !UNSEEN.has(x.panel)); label = list[0] ? PANEL_NAMES[list[0].panel] : AREA_NAMES[key]; items = list.map((x) => x.words); }
     else if (PANEL_NAMES[key]) { label = PANEL_NAMES[key]; items = DATA.panels[key] || []; }
     areaLabel.textContent = label === "New" ? "New:" : `${label}:`;
     // Still, and as simple as it gets: the latest change in a few words
@@ -239,21 +242,20 @@
   const keyOf = (path) => {
     const p = String(path || "");
     if (/quests/.test(p)) return "quests";
-    if (/missions/.test(p)) return "missions";
     if (/pane:chat|^\/agent\/?$/.test(p)) return "chat";
     for (const k of ["portal", "calendar", "notes", "board", "console", "lossless", "visualizer", "observatory", "manual"]) if (p.includes(k)) return k;
     if (/memory|index/.test(p)) return "index";
     return "";
   };
   function home() {
-    const open = document.querySelector("#suite-home .suite-app.open, #tabbar [data-tab][aria-current='page']");
+    const open = document.querySelector("#suite-home .suite-app.open, #tabbar [data-tab][aria-current='page'], #backend .suite-app.open");
     const viewing = $("main") && $("main").classList.contains("viewing");
     const key = viewing && open ? keyOf(open.dataset.tab || open.dataset.inside || open.getAttribute("href")) || "" : "";
     news(key);
-    // The sky behind takes on the open app's colour (glow.css); the home: Quests or Missions when
+    // The sky behind takes on the open app's colour (glow.css); the home: Quests when
     // they're the pane in view on a phone, Nova Agent's own otherwise
     const pane = $("main") && $("main").dataset.pane;
-    document.documentElement.dataset.scene = key || (PHONE.matches && (pane === "quests" || pane === "missions") ? pane : "chat");
+    document.documentElement.dataset.scene = key || (PHONE.matches && pane === "quests" ? pane : "chat");
   }
   // Pointing at a group or a panel on the bar shows its news
   let back = null;

@@ -8,10 +8,10 @@
 // Every panel has its own sounds, in keeping with what it's for (all in the same key): Notes is
 // paper and pencil, Calendar soft clock ticks and chimes, Portal deep and roomy like its planet,
 // Index droplets that echo, Observatory the wide night sky, Lossless audio a soft electric piano,
-// Visualizer glass glints, Quests a warm kalimba and Missions a low, steady swell. Buttons that
+// Visualizer glass glints and Quests a warm kalimba. Buttons that
 // open a panel sound like that panel, and each button keeps its own note, so different buttons
 // sound a little different (the same one always the same). A part of a page can choose its theme
-// with data-sfx-theme="notes|calendar|portal|index|observatory|lossless|visualizer|quests|missions|agent".
+// with data-sfx-theme="notes|calendar|portal|index|observatory|lossless|visualizer|quests|agent".
 //
 // Sounds play by themselves: one listener works out what kind of thing was pressed (a tab, a
 // switch, a tick box, a menu item, a link, a "send", a "delete"...). An element can choose its own
@@ -497,7 +497,7 @@
     tidy(first, parts);
   }
 
-  // A deep, soft hum that swells and fades (planets, missions, the night sky)
+  // A deep, soft hum that swells and fades (planets, big moments, the night sky)
   function hum(freq, at, { gain = 0.02, length = 1.4, room: r = 0.6 } = {}) {
     freq *= jitter;
     const t = ctx.currentTime + at;
@@ -860,21 +860,12 @@
       check: () => together(pluck, [N.A5, N.E6], 0, { gain: 0.016, length: 1.0, echo: 0.2 }),
       remove: () => pluck(N.D4, 0, { gain: 0.02, length: 0.6 }),
     },
-    // Missions (in Nova Agent): the big goals. Deeper and steady, with a warm low swell.
-    missions: {
-      tap: (k, v) => drop(at([N.D4, N.A3 * 2, N.Fs4], v), 0, { gain: 0.026, length: 0.6, pan: wobble() }),
-      tab: (k, v) => { hum(at([N.D3, N.A2], v), 0, { gain: 0.01, length: 0.9 }); drop(at([N.A4, N.Fs4], v), 0.02, { gain: 0.02, length: 0.5 }); },
-      open: () => { swell([N.D3, N.A3, N.E4], 0, { gain: 0.014, length: 1.6 }); bell(N.A4, 0.1, { gain: 0.018, length: 1.4, attack: 0.08, warmth: 0.6 }); },
-      send: () => { swell([N.D3, N.A3, N.Fs4], 0, { gain: 0.014, length: 1.8 }); bloom([N.A4, N.E5], 0.12, { gain: 0.02, length: 1.6, attack: 0.08, echo: 0.3 }); },
-      done: () => { hum(N.D2 * 2, 0, { gain: 0.016, length: 2.6 }); swell([N.D3, N.A3, N.Fs4, N.Cs5], 0, { gain: 0.016, length: 2.6 }); bloom([N.D5, N.A5, N.E6], 0.2, { gain: 0.018, length: 2.2, attack: 0.1, echo: 0.3 }); },
-    },
   };
 
   // Which panel a page, a link or a button belongs to
   function themeFromPath(p) {
     p = String(p || "");
     if (/^pane:quests|#quests/.test(p)) return "quests";
-    if (/^pane:missions|#missions/.test(p)) return "missions";
     if (/^pane:/.test(p)) return "agent";
     if (/\/notes(\/|$)/.test(p)) return "notes";
     if (/\/calendar(\/|$)/.test(p)) return "calendar";

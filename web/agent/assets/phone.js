@@ -1,6 +1,6 @@
 // Nova Agent on a phone (or a small window): one bar along the bottom that never goes away, with
-// every place in Nova Agent on it (Portal, Agent, Calendar, Notes, Quests, Missions, Index,
-// Observatory, Lossless audio, Admin, Visualizer, Manual: swipe it sideways for the rest); the
+// every place in Nova Agent on it (Invoicer, Portal, Agent, Calendar, Notes, Board, Quests, Nova;
+// Fixer, Computer, Observatory, Console, Manual and Index are in the Backend: backend.js); the
 // panels open between the header and the bar, and the last few stay loaded so switching back is
 // instant. Settings (rhythm, sound, music, refresh, all links) are behind the gear in the header.
 // Also: sizing to the visible screen (so the keyboard never hides the message box), the phone's
@@ -18,8 +18,11 @@
   const root = document.documentElement;
 
   // ---- The tiles in the launcher say what each panel is called, where it is and its icon ----
-  const tiles = () => [...document.querySelectorAll('#suite a.suite-app[data-inside]')];
-  const tile = (address) => document.querySelector(`#suite a.suite-app[data-inside="${address}"]`);
+  // (the Panels window's and the Backend's: a Backend panel opened by its address still has its name and icon)
+  const tiles = () => [...document.querySelectorAll(':is(#suite, #backend) a.suite-app[data-inside]')];
+  const tile = (address) => document.querySelector(`:is(#suite, #backend) a.suite-app[data-inside="${address}"]`);
+  // (the bar's places: the Panels window's only, never the Backend's)
+  const barTiles = () => [...document.querySelectorAll('#suite a.suite-app[data-inside]')];
   const nameOf = (a) => (a && a.querySelector('b') ? a.querySelector('b').textContent : '');
   // The panel an address belongs to (the longest address it starts with)
   function baseOf(url) {
@@ -189,7 +192,7 @@
   const closePanel = () => { if (!viewer.hidden) $('viewer-close').click(); };
   const sfx = (name) => window.NovaSfx && window.NovaSfx.play && window.NovaSfx.play(name);
 
-  // ---- The home: Agent, Quests or Missions, one at a time (picked on the bar) ----
+  // ---- The home: Agent (Quests opens as its own panel) ----
   const PANE_KEY = 'nova-agent/phone-pane';
   function setPane(pane) {
     main.dataset.pane = pane;
@@ -201,7 +204,7 @@
   // (today's plan used to be a pane here; it's Quests now, which opens on Today: a phone that was on
   // it opens Quests instead, once the page is ready)
   const toQuests = saved === 'quests';
-  if (!['chat', 'missions'].includes(saved)) saved = 'chat';
+  if (saved !== 'chat') saved = 'chat';
 
   // ---- The header: the gear (settings). (Its fresh-chat trash can is gone, 20 Oct 2026, the user: "get
   // rid of the trash can new conversation button") ----
@@ -216,19 +219,18 @@
   gear.innerHTML = svg('i-tune');
   if (right) right.append(gear);
 
-  // ---- The bar along the bottom: every place in Nova Agent, always there, in four groups ----
-  // Apps (Portal, Agent, Calendar, Notes, Index) · Plans (Quests, Today, Missions) · Tools (Fixer,
-  // Computer) · Helpers (Observatory, Console, Manual); Invoicer on its own at the left end, Nova on its
-  // own at the right end (Lossless: in the Panels window, behind the gear). Any other panel joins Tools.
-  // Every place stays on the bar on every screen (no More menu): on a phone held upright it's two
-  // rows, Apps along the top and Plans, Tools and Helpers below
+  // ---- The bar along the bottom: every place in Nova Agent, always there ----
+  // Apps (Portal, Agent, Calendar, Notes, Board) · Plans (Quests); Invoicer on its own at the left end, Nova
+  // on its own at the right end (Lossless: in the Panels window, behind the gear). Any other panel in the
+  // Panels window joins Tools (none now). Fixer, Computer, Observatory, Console, Manual and Index are in the
+  // Backend (23 Oct 2026), so the eight places left are bigger (phone.css). Every place stays on the bar on
+  // every screen (no More menu); an empty group isn't drawn
   const SKIP = ['/admin/links', '/lossless/']; // All links and Lossless: behind the gear (the Panels window), not on the bar
   const GROUPS = [
     ['solo', '', ['/invoicer/']], // Invoicer: on its own, in no group, at the left end
-    ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/app/memory/']], // Portal first, Agent second
-    ['tasks', 'Plans', ['/quests/', 'pane:missions']],
-    ['tools', 'Tools', []], // (Fixer and Computer: the panels not placed elsewhere join Tools)
-    ['helpers', 'Helpers', ['/observatory/', '/console/', 'manual']],
+    ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/']], // Portal first, Agent second
+    ['tasks', 'Plans', ['/quests/']],
+    ['tools', 'Tools', []], // (any panel in the Panels window not placed elsewhere joins Tools)
     ['end', '', ['/visualizer']], // Nova: on its own, in no group, at the right end (Lossless: in the Panels window)
   ];
   const bar = document.createElement('nav');
@@ -246,16 +248,15 @@
   const pico = (k) => `<span class="pico t-ico" data-p="${k}" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-${k}"/></svg></span>`;
   const FIXED = {
     'pane:chat': () => item('pane:chat', 'Agent', pico('chat')),
-    'pane:missions': () => item('pane:missions', 'Missions', pico('missions')),
-    manual: () => item('manual', 'Manual', pico('manual')),
   };
   // The bar keeps its short labels: "Notes" in the launcher is "Notes" here
   const panelItem = (p) => (tile(p) ? item(p, nameOf(tile(p)).replace(/^Nova /, '').replace('Lossless audio', 'Lossless'), tileIcon(p, 't-ico')) : '');
   function fillBar() {
     const placed = new Set(GROUPS.flatMap((g) => g[2]));
-    const extra = tiles().map((a) => a.dataset.inside).filter((p) => !placed.has(p) && !SKIP.includes(p));
+    const extra = barTiles().map((a) => a.dataset.inside).filter((p) => !placed.has(p) && !SKIP.includes(p));
     row.innerHTML = GROUPS.map(([id, label, keys]) => {
       const items = (id === 'tools' ? [...keys, ...extra] : keys).map((k) => (FIXED[k] ? FIXED[k]() : panelItem(k))).join('');
+      if (!items) return '';
       // (a group with no name, like Invoicer's, keeps the room a name takes so its place lines up)
       return `<div class="tgroup" data-group="${id}" role="group" aria-label="${label || (id === 'end' ? 'Nova' : 'Invoicer')}"><span class="tg-label" aria-hidden="true">${label || '&nbsp;'}</span><div class="tg-items">${items}</div></div>`;
     }).join('');
@@ -263,21 +264,20 @@
   }
   shell.append(bar);
 
-  // Tasks and Helpers in the panels list (computer and phone): Quests and Missions are Nova Agent's own
-  // panes, the Manual opens over everything; none of them leave the page
+  // The Manual (in the Backend) opens over everything, and an old Agent pane link comes back to Agent; none
+  // of them leave the page
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a.suite-app[data-pane], a.suite-app[data-act]');
     if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    const dlg = $('suite');
-    if (dlg && dlg.open) dlg.close();
+    for (const id of ['suite', 'backend']) { const dlg = $(id); if (dlg && dlg.open) dlg.close(); }
     if (a.dataset.act === 'manual') { if (window.NovaManual) window.NovaManual.open(); return; }
     if (!viewer.hidden) $('viewer-close').click();
     const pane = a.dataset.pane;
     if (pane === 'quests') { open('/quests/'); return; } // (old links to today's plan: Quests, on Today)
-    if (PHONE.matches) { setPane(pane); sfx('open'); return; }
-    const box = $(pane === 'quests' ? 'quests-panel' : 'missions-panel');
+    if (PHONE.matches) { setPane('chat'); sfx('open'); return; }
+    const box = $(pane === 'chat' ? 'main' : 'quests-panel');
     if (box) {
       box.scrollIntoView({ behavior: STILL.matches ? 'auto' : 'smooth', block: 'nearest' });
       box.animate && !STILL.matches && box.animate([{ boxShadow: '0 0 0 0 transparent' }, { boxShadow: '0 0 0 3px var(--hi), 0 0 40px -6px var(--hi)' }, { boxShadow: '0 0 0 0 transparent' }], { duration: 1100 });
@@ -288,7 +288,6 @@
   function go(t) {
     if (t === 'pane:quests') { open('/quests/'); return; } // (today's plan is Quests now)
     if (t.startsWith('pane:')) { closePanel(); setPane(t.slice(5)); sfx('open'); return; }
-    if (t === 'manual') { if (window.NovaManual) window.NovaManual.open(); return; }
     open(t);
   }
   bar.addEventListener('click', (e) => {
@@ -311,8 +310,6 @@
     if (key === laidOut) return;
     laidOut = key;
     for (const g of groups) g.style.setProperty('--k', k[g.dataset.group]);
-    // The second row on a phone held upright: each group as wide as its places (phone.css)
-    bar.style.setProperty('--row2', ['tasks', 'tools', 'helpers'].map((id) => `minmax(0, ${k[id] || 1}fr)`).join(' ').replace(/^/, 'auto ') + ' auto');
     // In one row (a tablet, a short or zoomed-in window, a phone on its side) every place is the same
     // width, whatever its group: phone.css shares the row out by how many places are showing
     bar.style.setProperty('--tab-n', n);
@@ -408,7 +405,6 @@
         ${openName ? btn('reload-panel', `Reload ${openName}`, g('↻')) : ''}
         ${window.NovaSettings && window.NovaSettings.panel() ? btn('panel-settings', `${openName} settings`, g('⚙')) : ''}
         ${btn('rhythm', 'Your rhythm', g('⚙'))}
-        ${btn('new-mission', 'New mission', g('+'))}
         ${btn('sfx', sfxOn ? 'Sound: on' : 'Sound: off', g(sfxOn ? '🔊' : '🔈'))}
         ${btn('music', musicOn ? 'Music: on' : 'Music: off', g(musicOn ? '♫' : '♪'))}
         ${window.NovaBar ? btn('bar', `Bar: ${window.NovaBar.name()}`, g('▤')) : ''}
@@ -439,7 +435,6 @@
     if (act === 'reload-panel') { const r = $('viewer-reload'); if (r) r.click(); return; }
     if (act === 'panel-settings') { const p = window.NovaSettings && window.NovaSettings.panel(); if (p) p.open(); return; }
     if (act === 'rhythm') { const r = $('btn-rhythm'); if (r) r.click(); return; }
-    if (act === 'new-mission') { closePanel(); setPane('missions'); const n = $('new-mission-btn'); if (n) n.click(); return; }
     if (act === 'sfx') { const s = $('sfx-btn'); if (s) s.click(); return; }
     if (act === 'music') { const m = $('music-btn'); if (m) m.click(); return; }
     if (act === 'bar') { if (window.NovaBar) window.NovaBar.next(); return; }
@@ -456,7 +451,7 @@
   });
 
   // ---- The phone's back button (or swipe) closes what's open instead of leaving Nova Agent ----
-  // A window or sheet first (the settings, a mission, the Panels window...), then an open panel.
+  // A window or sheet first (the settings, the Backend, the Panels window...), then an open panel.
   // On phones and on tablets (any touch screen), where Back is the system's own gesture.
   const TOUCH = matchMedia('(pointer: coarse)');
   const backOn = () => PHONE.matches || TOUCH.matches;

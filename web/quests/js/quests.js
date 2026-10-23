@@ -508,7 +508,6 @@ function openEditor(q, preset = {}) {
   const info = [];
   if (q?.start) info.push(`Planned for ${when(q.start)}–${q.end.slice(11, 16)}.`);
   if (q?.from) info.push(`From ${q.from}.`);
-  if (q?.missionId) info.push("Part of a mission.");
   if (state?.rhythm) info.push(state.rhythm.phonePush ? `A reminder comes ${state.rhythm.remindMinutesBefore} min before, on your phone too.` : `A reminder comes ${state.rhythm.remindMinutesBefore} min before (phone reminders are off: Options).`);
   $("ed-info").textContent = info.join(" ");
   $("editor").showModal();

@@ -344,11 +344,10 @@ h3 { margin: 4px 0 2px; font-family: var(--f-d); font-weight: 900; font-size: 22
       let body;
       if (s) {
         const role = s.role === "admin" ? "Admin" : "Staff";
-        const index = (mode === "connect" ? WORKER : "") + "/app/memory/";
         const profile = portalUrl + (mode === "connect" ? "?id=" + encodeURIComponent(s.id) : "?view=me");
         const links = [
           `<a class="main" data-open="/portal/?view=me" href="${profile}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.profile}<span>Your profile</span></a>`,
-          `<a data-open="/app/memory/" href="${index}" target="${mode === "connect" ? "_blank" : "_self"}" rel="noopener">${ICON.index}<span>Your Index</span></a>`,
+          // (Your Index: in Nova Agent's Backend now, 23 Oct 2026, not on the card)
           `<button type="button" class="quiet" data-act="out">${ICON.out}<span>${mode === "connect" ? "Disconnect" : mode === "agent" ? "Sign out" : "Sign out everywhere"}</span></button>`,
         ].join("");
         body = `

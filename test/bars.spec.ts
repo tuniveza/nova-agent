@@ -213,8 +213,9 @@ describe("the panels bar along the bottom", () => {
 });
 
 describe("Plans", () => {
-  it("is Quests and Missions: today's plan isn't a place of its own any more (Quests opens on Today)", () => {
-    expect(phoneJs).toContain("['tasks', 'Plans', ['/quests/', 'pane:missions']],");
+  it("is Quests (Missions are gone, 23 Oct 2026): today's plan isn't a place of its own any more (Quests opens on Today)", () => {
+    expect(phoneJs).toContain("['tasks', 'Plans', ['/quests/']],");
+    expect(phoneJs).not.toContain("pane:missions");
     expect(phoneJs).not.toMatch(/'pane:quests': \(\) =>/);
     expect(phoneJs).not.toMatch(/MORE_ORDER = \['pane:quests'/);
     expect(html).not.toContain("Today's plan");

@@ -106,7 +106,7 @@ describe("every command runs", () => {
     "/app/api/memory/index": { files: [{ path: "studio", description: "the studio" }] },
     "/app/api/": { items: [{ id: 1, title: "Thing", status: "new" }] },
   };
-  const LINE: Record<string, string> = { quests: 'quests add "Mix" --minutes 20', missions: "missions list", search: "search mix", agent: 'agent "hi"', ask: 'ask "hi"', index: "index search studio", open: "open board", approve: "approve campaign 12", reject: "reject social 7", vps: "vps show", shell: "shell", theme: "theme list", music: "music", google: "google status", fixer: "fixer", lossless: "lossless status", logs: "logs 3", portal: "portal enquiries" };
+  const LINE: Record<string, string> = { quests: 'quests add "Mix" --minutes 20', search: "search mix", agent: 'agent "hi"', ask: 'ask "hi"', index: "index search studio", open: "open board", approve: "approve campaign 12", reject: "reject social 7", vps: "vps show", shell: "shell", theme: "theme list", music: "music", google: "google status", fixer: "fixer", lossless: "lossless status", logs: "logs 3", portal: "portal enquiries" };
   for (const name of Object.keys(Nova.COMMANDS)) {
     it(name, async () => {
       const { ctx } = fakeCtx({ answers: { ...answers, "/actions/chat": { reply: "Hello", actions: [] } } });

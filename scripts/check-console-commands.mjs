@@ -7,7 +7,7 @@ const BASE = (process.argv.find((a) => /^https?:/.test(a)) || "http://localhost:
 const only = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7).split(",").filter(Boolean);
 export const LINES = [
   "help", "help quests", "status", "now", "plans", "today", "whoami", "version", "history",
-  "quests", "quests list", "quests list --all", "missions", "missions list",
+  "quests", "quests list", "quests list --all",
   "calendar today", "calendar week", "notes", "notes list", "board", "board list",
   "portal enquiries", "portal chats", "portal clients", "portal money", "portal campaigns", "portal outreach", "portal social", "portal approvals", "portal tests", "portal alerts",
   "enquiries", "clients", "money", "campaigns", "social", "approvals",

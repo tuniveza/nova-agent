@@ -1,7 +1,7 @@
 /* Nova Agent on a phone (or a small window): one screen, no long scroll.
    The same header at the top and one bar along the bottom, always there, with every place in Nova
-   Agent on it, all at once (two rows when they don't fit in one; never a scroll). The home shows one thing at a time (Agent, Quests or
-   Missions, picked on the bar); a panel opens between the header and the bar, so it feels like one
+   Agent on it, all at once (two rows when they don't fit in one; never a scroll). The home shows Agent (Quests opens as its own
+   panel from the bar); a panel opens between the header and the bar, so it feels like one
    app (panels with sections of their own show them as a row at their top, never a second bar).
    Sized to the visible part of the screen (--vv-h, set by phone.js from the visual viewport), so the
    keyboard never hides the message box. Lighter too: no frosted glass, drifting clouds or stars.
@@ -72,15 +72,15 @@ html:where([data-room="phone"]), :where(html[data-room="phone"]) body { overscro
 
 :where(html[data-room="phone"]) .status.out .dot { background: var(--muted); box-shadow: none; }
 
-/* The home: one pane (Agent, Quests or Missions, picked on the bar) filling the room */
+/* The home: one pane (Agent) filling the room */
 
 :where(html[data-room="phone"]) .main { overflow: hidden; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-auto-rows: auto; grid-template-areas: "pane"; gap: 8px; }
 
-:where(html[data-room="phone"]) .main > .chat, :where(html[data-room="phone"]) .main > #missions-panel, :where(html[data-room="phone"]) .main > #quests-panel { grid-area: pane; height: auto; min-height: 0; border-radius: 18px; }
+:where(html[data-room="phone"]) .main > .chat, :where(html[data-room="phone"]) .main > #quests-panel { grid-area: pane; height: auto; min-height: 0; border-radius: 18px; }
 
 :where(html[data-room="phone"]) .main > .suite-home { display: none; }
 
-:where(html[data-room="phone"]) .main[data-pane="chat"] > .board, :where(html[data-room="phone"]) .main[data-pane="quests"] > .chat, :where(html[data-room="phone"]) .main[data-pane="quests"] > #missions-panel, :where(html[data-room="phone"]) .main[data-pane="missions"] > .chat, :where(html[data-room="phone"]) .main[data-pane="missions"] > #quests-panel { display: none; }
+:where(html[data-room="phone"]) .main[data-pane="chat"] > .board, :where(html[data-room="phone"]) .main[data-pane="quests"] > .chat { display: none; }
 
 /* Each pane scrolls inside itself (only one scrolling area at a time) */
 
@@ -233,11 +233,11 @@ html.kb:where([data-room="phone"]) .tabbar, html.kb:where([data-room="phone"]) .
 
 :where(html[data-room="phone"]) .toasts { left: 10px; right: 10px; bottom: calc(var(--bar-h, 126px) + 8px); width: auto; }
 
-:where(html[data-room="phone"]) dialog.rhythm, :where(html[data-room="phone"]) dialog.rhythm.mission-view, :where(html[data-room="phone"]) dialog.rhythm.suite-dlg { width: calc(100vw - 16px); max-height: calc(var(--vv-h, 100dvh) - 24px); overflow-y: auto; }
+:where(html[data-room="phone"]) dialog.rhythm, :where(html[data-room="phone"]) dialog.rhythm.suite-dlg { width: calc(100vw - 16px); max-height: calc(var(--vv-h, 100dvh) - 24px); overflow-y: auto; }
 
 :where(html[data-room="phone"]) .rh { padding: 16px 14px; border-radius: 20px; }
 
-:where(html[data-room="phone"]) .rh input, :where(html[data-room="phone"]) .rh select, :where(html[data-room="phone"]) .rh textarea, :where(html[data-room="phone"]) .mv textarea { font-size: 16px; }
+:where(html[data-room="phone"]) .rh input, :where(html[data-room="phone"]) .rh select, :where(html[data-room="phone"]) .rh textarea { font-size: 16px; }
 
 /* A phone on its side (short screen): slimmer bars, icon and word side by side, more room to talk */
 @media (max-height: 500px) {
@@ -389,7 +389,7 @@ html.is-tablet:where([data-room="phone"]) .tabbar button > .t-ico { width: auto 
 /* Each tile's own surface, from what it is (16 Oct 2026; fine lines in the tile's own colours,
      never in the way of its icon or name): the invoicer a banknote's guilloche, Portal star dust,
      Agent signal rings, Calendar a day grid, Notes ruled paper, Board cork, Index a constellation,
-     Quests a map's contours, Missions speed streaks, Fixer a hex mesh, Computer circuit traces,
+     Quests a map's contours, Fixer a hex mesh, Computer circuit traces,
      Observatory orbits, Console scanlines, the Manual paper fibre, Nova a nebula's spiral, Lossless
      a waveform */
 :where(html[data-room="phone"]) .tabbar button[data-tab="/invoicer/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2216%22 viewBox=%220 0 48 16%22%3E%3Cpath d=%22M0 4 C6 -2 18 10 24 4 S42 -2 48 4%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.7%22/%3E%3Cpath d=%22M0 8 C6 2 18 14 24 8 S42 2 48 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.7%22/%3E%3Cpath d=%22M0 12 C6 6 18 18 24 12 S42 6 48 12%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.7%22/%3E%3Cpath d=%22M0 8 C6 14 18 2 24 8 S42 14 48 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.45%22 opacity=%22.5%22/%3E%3C/svg%3E"); --tex-size: 48px 16px; }
@@ -400,7 +400,6 @@ html.is-tablet:where([data-room="phone"]) .tabbar button > .t-ico { width: auto 
 :where(html[data-room="phone"]) .tabbar button[data-tab="/board/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22%3E%3Cfilter id=%22c%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.55%22 numOctaves=%222%22 seed=%223%22 stitchTiles=%22stitch%22/%3E%3CfeColorMatrix values=%220 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.6 -.75%22/%3E%3C/filter%3E%3Crect width=%2260%22 height=%2260%22 filter=%22url%28%23c%29%22/%3E%3C/svg%3E"); --tex-size: 60px 60px; }
 :where(html[data-room="phone"]) .tabbar button[data-tab="/app/memory/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Cpath d=%22M4 6L18 14L34 8M18 14L14 30L30 34L34 8%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.5%22 opacity=%22.5%22/%3E%3Ccircle cx=%224%22 cy=%226%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2218%22 cy=%2214%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2234%22 cy=%228%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2214%22 cy=%2230%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3Ccircle cx=%2230%22 cy=%2234%22 r=%221.1%22 fill=%22%23fff%22 opacity=%22.85%22/%3E%3C/svg%3E"); --tex-size: 40px 40px; }
 :where(html[data-room="phone"]) .tabbar button[data-tab="/quests/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2232%22 viewBox=%220 0 64 32%22%3E%3Cpath d=%22M0 5 C12 0 22 10 32 5 S52 0 64 5%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3Cpath d=%22M0 13 C12 8 22 18 32 13 S52 8 64 13%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3Cpath d=%22M0 21 C12 16 22 26 32 21 S52 16 64 21%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3Cpath d=%22M0 29 C12 24 22 34 32 29 S52 24 64 29%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 64px 32px; }
-:where(html[data-room="phone"]) .tabbar button[data-tab="pane:missions"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M-2 18L10 6M8 26L20 14M14 8L22 0%22 stroke=%22%23fff%22 stroke-width=%22.7%22 stroke-linecap=%22round%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 24px 24px; }
 :where(html[data-room="phone"]) .tabbar button[data-tab="/fixer/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2214%22 viewBox=%220 0 24 14%22%3E%3Cpath d=%22M0 7L4 0H12L16 7L12 14H4ZM16 7H24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.55%22/%3E%3C/svg%3E"); --tex-size: 24px 14px; }
 :where(html[data-room="phone"]) .tabbar button[data-tab="/computer/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Cpath d=%22M0 10H14V24H26M26 24V40M14 10V0M40 30H32V18H20%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.55%22/%3E%3Ccircle cx=%2226%22 cy=%2224%22 r=%221.6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.7%22/%3E%3Ccircle cx=%2220%22 cy=%2218%22 r=%221.6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.6%22 opacity=%22.7%22/%3E%3C/svg%3E"); --tex-size: 40px 40px; }
 :where(html[data-room="phone"]) .tabbar button[data-tab="/observatory/"] { --tex: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2210%22 ry=%226.2%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2220%22 ry=%2212.4%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2230%22 ry=%2218.6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2242%22 ry=%2226.04%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Cellipse cx=%2258%22 cy=%2222%22 rx=%2256%22 ry=%2234.72%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%22.55%22 opacity=%22.5%22 transform=%22rotate%28-18 58 22%29%22/%3E%3Ccircle cx=%2258%22 cy=%2222%22 r=%221.6%22 fill=%22%23fff%22/%3E%3C/svg%3E"); --tex-size: cover; }

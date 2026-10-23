@@ -556,11 +556,6 @@ main {
   font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.26em; text-transform: uppercase; color: var(--muted); text-align: left;
 }
 .quest-day::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-strong), transparent); }
-.mission-head { display: flex; gap: 14px; align-items: center; }
-.mission-words { min-width: 0; }
-.mission-words .quest-meta { margin-top: 3px; }
-.mission-card.paused { opacity: 0.7; }
-.mission-card.done { --card-edge: linear-gradient(135deg, rgba(var(--ok-rgb), 0.5), rgba(var(--accent-2-rgb), 0.3)); }
 .ring {
   --p: 0; flex: none; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
   font-family: var(--f-mono); font-size: 12px; font-weight: 600; color: #fff;
@@ -994,7 +989,6 @@ html[data-align="center"] .card.has-delete > .alert-when { padding-left: 44px; }
 html[data-align="center"] .actions { justify-content: center; }
 html[data-align="center"] .verify-lines { justify-items: center; }
 html[data-align="center"] .verify { border-left-width: 1px; border-top-width: 3px; }
-html[data-align="center"] .mission-head { flex-direction: column; text-align: center; }
 html[data-align="center"] .quest-day { display: block; }
 html[data-align="center"] .quest-day::after { display: none; }
 html[data-align="center"] .suite-head { display: grid; justify-items: center; position: relative; }
@@ -1029,7 +1023,7 @@ html[data-stars="off"] body::before { display: none; }
 html[data-align="center"] .suite-head > div { justify-self: center; text-align: center; padding: 0 48px; }
 html[data-align="center"] .option-switch { text-align: left; }
 
-/* ===================== Quests and Missions: unmistakable, and calm ===================== */
+/* ===================== Quests: unmistakable, and calm ===================== */
 /* (colour and a soft glow say what's what; nothing shines, sweeps or pulses by itself) */
 @property --p { syntax: "<number>"; inherits: false; initial-value: 0; }
 .quest-card { overflow: hidden;
@@ -1053,11 +1047,6 @@ html[data-align="center"] .q-tags { justify-content: center; }
 .q-tag { color: var(--on-accent); background: linear-gradient(120deg, var(--hi), var(--accent-2)); box-shadow: 0 4px 14px -8px var(--glow-accent); }
 .m-tag { color: var(--gold); border: 1px solid rgba(var(--gold-rgb), 0.55); background: rgba(var(--gold-rgb), 0.1); letter-spacing: 0.08em; }
 .risk-tag { color: var(--warn); border: 1px solid rgba(var(--warn-rgb), 0.55); box-shadow: 0 0 10px -4px var(--warn); }
-.mission-card { overflow: hidden;
-  --card-edge: linear-gradient(135deg, var(--gold), rgba(var(--hi-rgb), 0.5) 50%, rgba(var(--gold-rgb), 0.4)); box-shadow: 0 18px 46px -28px rgba(var(--gold-rgb), 0.7); }
-.mission-card::after { content: "✦"; position: absolute; right: 16px; top: 12px; color: var(--gold); text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.6); }
-.mission-card .card-title { font-size: 19px; background: linear-gradient(100deg, #fff, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.mission-card.risk { box-shadow: 0 0 0 1px rgba(var(--warn-rgb), 0.45), 0 18px 46px -24px var(--warn); }
 .m-badge { margin-bottom: 10px; color: #1a1206; background: linear-gradient(120deg, var(--gold), #fff3d6); box-shadow: 0 4px 16px -8px rgba(var(--gold-rgb), 0.9); }
 
 /* Everything Nova Agent can do (in the All links section) */

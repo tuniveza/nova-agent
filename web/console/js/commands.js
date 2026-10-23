@@ -87,7 +87,7 @@ export function summary(x) {
   };
 }
 
-// Find a quest/mission by its id or the start of it (8 characters is enough)
+// Find a quest by its id or the start of it (8 characters is enough)
 export function pick(list, key, what) {
   const k = String(need(key, what)).toLowerCase();
   const hits = list.filter((x) => String(x.id).toLowerCase() === k || String(x.id).toLowerCase().startsWith(k));
@@ -121,7 +121,7 @@ export const PORTAL = {
   alerts: "notifications",
 };
 
-export const APPS = { invoicer: "/invoicer/", portal: "/portal/", calendar: "/calendar/", notes: "/notes/", board: "/board/", index: "/app/memory/", lossless: "/lossless/", visualizer: "/visualizer", observatory: "/observatory/", fixer: "/fixer/", console: "/console/", agent: "pane:chat", quests: "pane:quests", missions: "pane:missions", manual: "manual" };
+export const APPS = { invoicer: "/invoicer/", portal: "/portal/", calendar: "/calendar/", notes: "/notes/", board: "/board/", index: "/app/memory/", lossless: "/lossless/", visualizer: "/visualizer", observatory: "/observatory/", fixer: "/fixer/", console: "/console/", agent: "pane:chat", quests: "pane:quests", manual: "manual" };
 
 const P = (path) => "/app/api/" + path;
 
@@ -209,33 +209,6 @@ export const COMMANDS = {
       if (sub === "snooze") body.minutes = Number(extra) || 15;
       await ctx.api(`/actions/quests/${q.id}`, { method: "POST", body });
       ctx.ok(`${sub === "done" ? "Done" : sub === "start" ? "Started" : sub === "skip" ? "Skipped" : "Snoozed"}: ${q.title}`);
-    },
-  },
-
-  missions: {
-    help: "Your missions: list, new, show",
-    usage: 'missions [list | new "<what you want done>" [--deadline YYYY-MM-DD] | show <id>]',
-    subs: ["list", "new", "show"],
-    async run(ctx, [sub = "list", key], flags) {
-      const s = await ctx.api("/quests/state");
-      if (sub === "list") {
-        if (!(s.missions || []).length) return ctx.dim('No missions. Start one: missions new "Release the EP by December"');
-        return ctx.table(s.missions.map((m) => ({ id: short(m.id), title: m.title, progress: m.progress?.percent != null ? `${m.progress.percent}%` : "", state: m.status || "" })), ["id", "title", "progress", "state"]);
-      }
-      if (sub === "new") {
-        const body = { request: need(key, "mission (in quotes)") };
-        if (flags.deadline) body.deadline = String(flags.deadline);
-        ctx.dim("Planning it (this can take a little while)…");
-        const r = await ctx.api("/actions/missions", { method: "POST", body });
-        return ctx.ok(`Mission made${r.mission?.title ? `: ${r.mission.title}` : ""}`);
-      }
-      if (sub === "show") {
-        const m = pick(s.missions || [], key, "mission");
-        ctx.print(m.title);
-        const qs = (s.quests || []).filter((q) => q.missionId === m.id);
-        return ctx.table(qs.map((q) => ({ id: short(q.id), title: q.title, state: q.status, when: ukTime(q.start) })), ["id", "title", "state", "when"]);
-      }
-      throw new Error(`missions ${sub}? Try: ${this.subs.join(", ")}`);
     },
   },
 
@@ -707,7 +680,7 @@ async function decide(ctx, action, kind, id) {
 // ---- help's groups and an example for each ----
 export const GROUPS = [
   ["Start here", ["help", "today", "now", "status", "search", "whoami", "version"]],
-  ["Plans", ["quests", "missions", "plans"]],
+  ["Plans", ["quests", "plans"]],
   ["Apps", ["calendar", "notes", "board", "agent", "ask", "index", "open"]],
   ["Studio", ["invoicer", "enquiries", "chats", "clients", "money", "campaigns", "outreach", "social", "approvals", "alerts", "tests", "portal", "approve", "reject"]],
   ["Tools", ["google", "fixer", "lossless", "music", "theme", "logs"]],
@@ -725,7 +698,7 @@ export const QUICK = [
 ];
 export const EXAMPLES = {
   help: "help quests", today: "today", now: "now", status: "status", search: "search mixing", whoami: "whoami", version: "version",
-  quests: 'quests add "Mix the EP" --minutes 60', missions: 'missions new "Release the EP by December"', plans: "plans",
+  quests: 'quests add "Mix the EP" --minutes 60', plans: "plans",
   calendar: "calendar week", notes: "notes list", board: "board list", agent: 'agent "what\'s on today?"', ask: 'ask "who booked last week?"', index: "index search pricing", open: "open board",
   enquiries: "enquiries", chats: "chats", clients: "clients", money: "money", campaigns: "campaigns", outreach: "outreach", social: "social", approvals: "approvals", alerts: "alerts", tests: "tests",
   portal: "portal enquiries", approve: "approve campaign 12", reject: "reject social 7",
