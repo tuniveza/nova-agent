@@ -865,7 +865,7 @@
   }
   // (phones only allow sound after a tap: the first tap unlocks it, once)
   document.addEventListener("pointerdown", () => pingsOn() && wake(), { once: true, passive: true });
-  const PINGS = { starting: [1318.5, 1975.5], leave: [1174.7, 1568, 2093], pulse: [2093], checkin: [1760, 1760, 2349.3, 2349.3], mission: [1046.5, 1318.5, 1568, 2093, 2637], agent: [880, 1318.5] };
+  const PINGS = { starting: [1318.5, 1975.5], leave: [1174.7, 1568, 2093], pulse: [2093], checkin: [1760, 1760, 2349.3, 2349.3], agent: [880, 1318.5] };
   function ping(kind, again) {
     if (!sound) return navigator.vibrate && navigator.vibrate([200, 100, 200]);
     if (sound.state !== "running") {
@@ -913,7 +913,7 @@
     // (notices.js, when it's here, already brings the screen in view up to date)
     if (document.hidden || N.notices) return;
     const { id, rest } = here();
-    const quest = /^(quest|mission)$/.test(d.source || d.kind || "");
+    const quest = /^quest$/.test(d.source || d.kind || "");
     const refresh = id === "inbox" || id === "today" || (quest && (id === "quests" || (id === "agent" && rest[0] === "plan")));
     if (refresh && !busyWriting()) N.show();
     else if (id !== "inbox") api(`${A}enquiries?box=new`).then((r) => N.badge("inbox", (r.counts || {}).new || r.newCount || 0), () => {});

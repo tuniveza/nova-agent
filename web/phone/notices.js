@@ -1,13 +1,13 @@
 // Nova Phone: reminders and notices, always on (a small piece loaded with the page, the rest of Agent loads only
 // when it's opened). What Nova Agent says while Nova Phone is open comes as a card at the top of the screen, with
 // a calm chime: a quest starting or time to leave (Start, In 15 min), a check-in when one should be done (Done,
-// +15 min, Move it; Session done for a repeating one), a mission planned, a quest moved, the morning plan and the
+// +15 min, Move it; Session done for a repeating one), a quest moved, the morning plan and the
 // evening wrap-up. A pulse (a quick repeat on its own timer) is one card that ticks, with its beat count, instead
 // of a new one each time. The newest two show; the rest wait behind "N more notices".
 //   - One live line to Nova Agent (/quests/events), only while Nova Phone is on screen: closed when it's hidden,
 //     opened again on coming back (the page then catches up). When the line is down it tries again, slower each time.
 //   - "changed" from the line, or a notice: window event "nova-quests-changed", so whatever shows the plan
-//     (Agent → Plan, Missions) fetches it again.
+//     (Agent → Plan) fetches it again.
 //   - A notification tapped while Nova Phone is open (the service worker's "nova-open"): that place, here.
 //     "nova-push": the screen in view is brought up to date.
 //   - N.place(address): a Nova Desk address (/invoicer/?invoice=32, /portal/?view=campaigns&campaign=5 …) as the
@@ -110,7 +110,6 @@
       starting: [[0, FS4], [0.4, A4, 0.8]],
       leave: [[0, E4], [0.42, A4, 0.8]],
       checkin: [[0, D4], [0.45, FS4, 0.7]],
-      mission: [[0, D4], [0, A4, 0.7], [0.5, E4 * 2, 0.35]],
       moved: [[0, A4], [0.42, FS4, 0.8]],
       briefing: [[0, D4], [0.38, FS4, 0.8], [0.76, A4, 0.6]],
       wrapup: [[0, A4], [0.4, FS4, 0.75], [0.8, D4, 0.65]],
@@ -218,7 +217,6 @@
     function buttonsFor(n, q) {
       const id = n.questId;
       if (!id || id.startsWith("mission-")) {
-        if (n.kind === "mission") return `<a class="nn-btn" href="#agent/plan">See the plan</a>`;
         if (["briefing", "wrapup", "moved"].includes(n.kind)) return `<a class="nn-btn" href="#agent/plan">See the plan</a>`;
         return "";
       }
@@ -339,7 +337,7 @@
       const d = e.data || {};
       if (d.type === "nova-open") { const to = place(d.url) || "#inbox/alerts"; if (location.hash !== to) location.hash = to; else N.show(); }
       else if (d.type === "nova-push") {
-        if (d.source === "quest" || d.source === "mission") { st = null; changed(); }
+        if (d.source === "quest") { st = null; changed(); }
         if (!typing()) N.show();
       }
     });

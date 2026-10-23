@@ -160,7 +160,6 @@
     update: /^(?:done|finished|completed|started|starting|skip|skipped|snooze)\b|\bi(?:'ve| have)?\s+(?:just\s+)?(?:done|finished|completed|started)\s+(?:the|my|it|that)\b|\bmark\b.*\b(?:done|complete|finished)\b|\bnot now\b|\bpush (?:it|that) back\b/,
     calendar: /\b(?:note card|day card|calendar|birthday|anniversary)\b/,
     studio: /\b(?:acuity|bookings?|booked|appointments?|who'?s in)\b/,
-    refine: /\b(?:i'?ve (?:actually |already )?(?:released|put out|done|finished) \d+|actually i|update (?:the|my) (?:plan|mission)|change (?:the|my) (?:plan|mission)|refine|(?:gear|interface|mic|hardware|kit) (?:arrives|is coming|came|arrived))\b/,
     goal: /\b(?:schedule|strategy|strategies|plan(?:ned|ning)? out|roadmap|campaign|challenge|launch|release|releases|goal|mission|project|deadline|catch up|fallen behind|behind on|by (?:the )?end of|months?|content|following|grow|course|exam|marathon|business|album|ep|tour)\b/g,
     ask: /^(?:what|when|where|why|how|should|can|could|would|is|are|do|does|did|which|who|any)\b/,
     quest: /\b(?:remind me to|i need to|i have to|i'?ve got to|i must|add (?:a )?(?:quest|task)|to-?do|task)\b|^(?:call|text|email|ring|buy|book|send|write|record|mix|master|finish|clean|go|pick up|collect|pay|post|film|edit|practi[cs]e|upload|bounce|tidy|cook|read|study|revise|train|run)\b/,
@@ -761,8 +760,7 @@
   const MODE = Object.fromEntries(MODES);
   const modeOf = (q) => (MODE[q.mode] ? q.mode : q.status === "done" ? "done" : q.status === "doing" ? "working" : "waiting");
   const modeChip = (q) => `<button type="button" class="agent-qm" data-mode="${modeOf(q)}" data-qmode="${esc(q.id)}" aria-label="How it's going: ${esc(MODE[modeOf(q)])} (tap to change)">${esc(MODE[modeOf(q)])}</button>`;
-  // (no missions shown any more: a quest's mission name and track tags stay out of sight)
-  const missionName = () => "";
+  // (no track tags: they belonged to missions, gone from Nova since 23 Oct 2026)
   const trackTag = () => "";
   const whose = (x) => (state && state.person && x && x.owner && x.owner !== state.person.id ? `${x.ownerName || x.owner}’s` : "");
   // Where a quest came from: where it was made ✎ ("Notes · Studio plan"), or ✧ Nova Agent
@@ -815,15 +813,15 @@
     let html = `${partTabs("plan")}${whoChips()}<div class="card agent-day"><p class="kicker">Today · up ${esc(r.wake || "")} · sleep ${esc(r.sleep || "")}${r.paceLimits === false ? ' · <span class="agent-warn">⚡ pace limits off</span>' : ""}</p><h2 class="card-title">${esc(dayLong(today))}</h2>
       <div class="sums"><div class="sum"><b>${todays.length}</b><span>quests</span></div><div class="sum"><b>${(plannedMin / 60).toFixed(1)}h</b><span>planned</span></div><div class="sum"><b>${doneN}</b><span>done</span></div>${atRisk ? `<div class="sum bad"><b>${atRisk}</b><span>at risk</span></div>` : ""}</div></div>`;
     // The quest on the big card: on now, or up next
-    const from = (q) => (q.from ? `<p class="agent-tags"><span class="agent-tag-s">✎ ${esc(q.from)}</span></p>` : missionName(q.missionId) ? "" : `<p class="agent-tags">${sourceTags(q)}</p>`);
+    const from = (q) => (q.from ? `<p class="agent-tags"><span class="agent-tag-s">✎ ${esc(q.from)}</span></p>` : `<p class="agent-tags">${sourceTags(q)}</p>`);
     if (cur) {
       const pct = cur.start && cur.end ? Math.max(0, Math.min(100, ((nowM - mins(cur.start)) / Math.max(1, mins(cur.end) - mins(cur.start))) * 100)) : 0;
       html += `<div class="card agent-now" data-mode="${modeOf(cur)}"><div class="agent-now-top"><p class="kicker">✦ Quest · ${cur.status === "doing" ? "In progress" : "Happening now"}</p>${modeChip(cur)}</div><h2 class="card-title">${esc(cur.title)}</h2>
-        <p class="muted small">${cur.start ? `${hm(cur.start)}–${hm(cur.end)} · ` : ""}${esc(dur(cur))}${missionName(cur.missionId) ? ` · ${esc(missionName(cur.missionId))}` : ""}${cur.location ? ` · at ${esc(cur.location)}` : ""}</p>${from(cur)}
+        <p class="muted small">${cur.start ? `${hm(cur.start)}–${hm(cur.end)} · ` : ""}${esc(dur(cur))}${cur.location ? ` · at ${esc(cur.location)}` : ""}</p>${from(cur)}
         <div class="agent-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct.toFixed(0)}" aria-label="How far through"><i data-w="${pct.toFixed(0)}"></i></div>${questButtons(cur)}</div>`;
     } else if (nxt) {
       html += `<div class="card agent-now" data-mode="${modeOf(nxt)}"><div class="agent-now-top"><p class="kicker">✦ Quest · Up next</p>${modeChip(nxt)}</div><h2 class="card-title">${esc(nxt.title)}</h2>
-        <p class="muted small">${nxt.start.startsWith(today) ? "" : `${esc(dayLong(nxt.start.slice(0, 10)))} · `}${hm(nxt.travelStart && nxt.travelMinutes ? nxt.travelStart : nxt.start)}${nxt.travelMinutes ? ` (leave) · starts ${hm(nxt.start)}` : ""} · ${esc(dur(nxt))}${missionName(nxt.missionId) ? ` · ${esc(missionName(nxt.missionId))}` : ""}${nxt.location ? ` · at ${esc(nxt.location)}` : ""}</p>${from(nxt)}${questButtons(nxt)}</div>`;
+        <p class="muted small">${nxt.start.startsWith(today) ? "" : `${esc(dayLong(nxt.start.slice(0, 10)))} · `}${hm(nxt.travelStart && nxt.travelMinutes ? nxt.travelStart : nxt.start)}${nxt.travelMinutes ? ` (leave) · starts ${hm(nxt.start)}` : ""} · ${esc(dur(nxt))}${nxt.location ? ` · at ${esc(nxt.location)}` : ""}</p>${from(nxt)}${questButtons(nxt)}</div>`;
     } else html += empty({ icon: "quests", title: "Nothing on right now", text: "Say what you need to get done and Nova Agent fits it into your day." });
 
     // One timeline row: a quest, blocked time or a Calendar note card. Folded rows show the time and title, so the

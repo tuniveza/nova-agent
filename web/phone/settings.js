@@ -290,7 +290,7 @@
   const KINDS = { live: "Live", machine: "Used by the apps", testing: "Testing", local: "Studio computer", planned: "Not set up yet" };
   const STATES = { up: ["●", "Up", "ok"], down: ["✕", "Down", "bad"], unchecked: ["○", "Not checked", ""] };
   // (Nova Desk's own pages aren't opened from Nova Phone: their addresses can be copied)
-  const DESK = /^\/(agent|portal|invoicer|calendar|notes|board|quests|app|fixer|computer|observatory|console|lossless|visualizer|admin|missions)(\/|$|\?)/;
+  const DESK = /^\/(agent|portal|invoicer|calendar|notes|board|quests|app|fixer|computer|observatory|console|lossless|visualizer|admin)(\/|$|\?)/;
   const deskPage = (url) => { try { const u = new URL(url, location.origin); return u.origin === location.origin && DESK.test(u.pathname); } catch (err) { return false; } };
   async function drawLinks(box, ui, fresh = false) {
     ui.title("Apps and links");
