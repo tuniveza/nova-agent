@@ -485,14 +485,21 @@
     toastTimer = setTimeout(() => (toastEl.hidden = true), act ? 6500 : bad ? 4500 : 2600);
   }
   // A sheet from the bottom. confirm(): resolves true or false. choose(): the chosen value, or null.
+  // (one sheet at a time: a sheet's own close never answers the next one, and a sheet opened over another
+  // answers the first with nothing)
+  let sheetAnswer = null;
   function openSheet(html, wire) {
+    if (sheetAnswer) sheetAnswer(null);
     return new Promise((resolve) => {
+      let answered = false;
+      const answer = (v) => { if (answered) return; answered = true; if (sheetAnswer === answer) sheetAnswer = null; resolve(v); };
+      sheetAnswer = answer;
       sheet.innerHTML = `<div class="sheet-in">${html}</div>`;
-      const done = (v) => { if (sheet.open) sheet.close(); resolve(v); };
-      sheet.onclose = () => resolve(null);
+      const done = (v) => { sheet.onclose = null; if (sheet.open) sheet.close(); answer(v); };
+      sheet.onclose = () => answer(null);
       sheet.onclick = (e) => { if (e.target === sheet) done(null); };
       wire(sheet, done);
-      sheet.showModal();
+      if (!sheet.open) sheet.showModal();
     });
   }
   const confirm = ({ title: t, text = "", ok = "OK", danger = false }) => openSheet(
