@@ -64,15 +64,23 @@
   if (manual) {
     const home = manual.parentElement;
     const dock = document.getElementById("suite-home");
+    // (23 Oct 2026, the owner: "reduce the crazy margins between the nova dock app, helper and icons": where the
+    // dock leaves room beside it, the medallion sits just left of the dock, level with its bottom, not out in the
+    // far corner; where it doesn't, it rises just above the dock as before)
+    let was = "";
     const lift = () => {
-      let bottom = 18;
+      let bottom = 18, side = 16;
       if (dock && manual.hasAttribute("floating")) {
         const r = dock.getBoundingClientRect();
         const there = r.height > 0 && r.top < innerHeight - 4 && getComputedStyle(dock).visibility !== "hidden";
-        // (only when the dock would touch it: beside the dock it stays down in the corner)
-        if (there && r.left < 16 + 58 + 2) bottom = Math.max(18, Math.round(innerHeight - r.top + 12));
+        if (there && r.left >= 16 + 58 + 12) { side = Math.round(r.left - 58 - 12); bottom = Math.max(18, Math.round(innerHeight - r.bottom + 8)); }
+        else if (there) bottom = Math.max(18, Math.round(innerHeight - r.top + 12));
       }
+      const now = `${bottom}/${side}`;
+      if (now === was) return;
+      was = now;
       manual.style.setProperty("--nm-bottom", `${bottom}px`);
+      manual.style.setProperty("--nm-side", `${side}px`);
     };
     // (Nova Agent's computer layout, with the dock along the bottom: narrower or shorter windows use the
     // phone layout, and there the Manual stays in the top panel)

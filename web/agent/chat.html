@@ -227,10 +227,10 @@
     html body .main > .suite-home .suite-app > .pico, html body .main.viewing > .suite-home .suite-app > .pico { width: 56px; height: 56px; border-radius: 15px; }
     html body .main > .suite-home .suite-app b, html body .main.viewing > .suite-home .suite-app b { font-size: 14px; }
   }
-  /* More room between the groups (Apps, Plans, Tools, Helpers) where there's room for it */
+  /* A little more room between the groups (Apps, Plans, Tools, Helpers) where there's room for it */
   @media (min-width: 1361px) {
-    html body .main > .suite-home .suite-groups { gap: 30px; }
-    html body #suite-home .suite-group + .suite-group::before { left: -15px; }
+    html body .main > .suite-home .suite-groups { gap: 18px; }
+    html body #suite-home .suite-group + .suite-group::before { left: -9px; }
   }
   /* Behind the navigation panel: the moon's surface, barely there (soft craters and a fine dust) */
   #suite-home, .shell > .tabbar { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22360%22%20height%3D%22120%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22c%22%20cx%3D%2250%25%22%20cy%3D%2250%25%22%20r%3D%2250%25%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23000%22%20stop-opacity%3D%22.34%22/%3E%3Cstop%20offset%3D%22.7%22%20stop-color%3D%22%23000%22%20stop-opacity%3D%22.16%22/%3E%3Cstop%20offset%3D%22.86%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%22.16%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%220%22/%3E%3C/radialGradient%3E%3Cfilter%20id%3D%22n%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%22.9%22%20numOctaves%3D%222%22%20seed%3D%224%22%20stitchTiles%3D%22stitch%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%201%200%200%200%200%201%200%200%200%200%201%200%200%200%20.08%200%22/%3E%3C/filter%3E%3C/defs%3E%3Crect%20width%3D%22360%22%20height%3D%22120%22%20filter%3D%22url%28%23n%29%22/%3E%3Cg%20fill%3D%22url%28%23c%29%22%3E%3Ccircle%20cx%3D%2238%22%20cy%3D%2230%22%20r%3D%2213%22/%3E%3Ccircle%20cx%3D%22118%22%20cy%3D%2286%22%20r%3D%227%22/%3E%3Ccircle%20cx%3D%22196%22%20cy%3D%2224%22%20r%3D%224%22/%3E%3Ccircle%20cx%3D%22262%22%20cy%3D%2274%22%20r%3D%2217%22/%3E%3Ccircle%20cx%3D%22330%22%20cy%3D%2222%22%20r%3D%226%22/%3E%3Ccircle%20cx%3D%2272%22%20cy%3D%2298%22%20r%3D%224%22/%3E%3Ccircle%20cx%3D%22160%22%20cy%3D%2256%22%20r%3D%223%22/%3E%3Ccircle%20cx%3D%22306%22%20cy%3D%22104%22%20r%3D%225%22/%3E%3Ccircle%20cx%3D%22224%22%20cy%3D%22108%22%20r%3D%223%22/%3E%3C/g%3E%3C/svg%3E"); background-size: 360px 120px; background-blend-mode: soft-light; }
@@ -274,20 +274,25 @@
   @media (max-width: 1199px), (max-height: 639px) {
     html:where([data-room="computer"]) body .main > .suite-home .suite-app > .pico, html:where([data-room="computer"]) body .main.viewing > .suite-home .suite-app > .pico { width: 36px; height: 36px; border-radius: 10px; }
   }
-  /* The dock stays at least as wide as it was with its fifteen places (23 Oct 2026, the owner: "don't get rid of the
-     nova dock status bar or anything around it"): the status line inside it keeps every part it had (the version,
-     "Here since"…), and the eight places share the width out, each group as wide as its places. The widths are
-     the dock's widths before, at each of its sizes (on Nova Agent's page or round an open panel, the wider). */
+  /* The dock as wide as what's in it (23 Oct 2026, the owner: "reduce the crazy margins between the nova dock app,
+     helper and icons"): its eight places close together, each as wide as its name, the groups centred, and the
+     dock never narrower than its status line needs to show every part (the owner: "don't get rid of the nova dock
+     status bar or anything around it": it keeps its width, so the line keeps every part). The helper (the Manual's
+     medallion) sits just beside it (medallion.js). */
+  @media (min-width: 1200px) and (min-height: 640px) {
+    html:where([data-room="computer"]) body .main > .suite-home .suite-grid, html:where([data-room="computer"]) body .main.viewing > .suite-home .suite-grid { grid-auto-columns: minmax(72px, max-content); gap: 4px; }
+    html:where([data-room="computer"]) body .main > .suite-home .suite-app { padding-inline: 8px; }
+  }
+  /* (as wide as before, so the status line keeps every part it had, with no widening as its parts arrive; and
+     always room beside it for the helper, so the helper never has to sit over the page) */
   html:where([data-room="computer"]) { --dock-min: 650px; }
   @media (min-width: 1200px) and (min-height: 640px) { html:where([data-room="computer"]) { --dock-min: 760px; } }
   @media (min-width: 1361px) { html:where([data-room="computer"]) { --dock-min: 1180px; } }
   @media (min-width: 1600px) and (min-height: 860px) { html:where([data-room="computer"]) { --dock-min: 1290px; } }
   @media (min-width: 2200px) and (min-height: 1100px) { html:where([data-room="computer"]) { --dock-min: 1500px; } }
-  html:where([data-room="computer"]) body .main > #suite-home { min-width: min(100%, var(--dock-min)); }
-  html:where([data-room="computer"]) body .main > .suite-home .suite-groups > .suite-group { flex: 1 1 0; min-width: max-content; }
-  html:where([data-room="computer"]) body .main > .suite-home .suite-groups > .suite-group.apps { flex-grow: 5; }
-  html:where([data-room="computer"]) body .main > .suite-home .suite-groups .suite-grid,
-  html:where([data-room="computer"]) body .main.viewing > .suite-home .suite-groups .suite-grid { grid-auto-columns: minmax(max-content, 1fr); }
+  html:where([data-room="computer"]) body .main > #suite-home { --dock-max: calc(100% - 2 * (16px + 58px + 12px)); max-width: var(--dock-max); min-width: min(var(--dock-max), var(--dock-min)); }
+  html:where([data-room="computer"]) body .main > .suite-home .suite-groups { justify-content: center; }
+  html:where([data-room="computer"]) body .main > .suite-home .suite-groups > .suite-group { flex: none; min-width: max-content; }
   .pico[data-p="console"] { --own: var(--app-console); }
   .pico[data-p="manual"] { --own: var(--app-manual); }
   .suite-app > .pico { width: 52px; height: 52px; border-radius: 14px; }
