@@ -7,7 +7,9 @@ cd "$(dirname "$0")/.."
 here="$(pwd)"; copy="${TMPDIR:-/tmp}/na-check-copy"
 git worktree remove --force "$copy" 2>/dev/null; rm -rf "$copy"
 git worktree add -q --detach "$copy" HEAD || exit 1
-ln -s "$here/node_modules" "$copy/node_modules"; ln -s "$here/.env" "$copy/.env"
+ln -s "$here/node_modules" "$copy/node_modules"
+# (its own copy of .env, readable only by you and removed with the copy: the phone containers can't follow a link)
+install -m 600 "$here/.env" "$copy/.env"
 echo "Checking $(git -C "$copy" log --oneline -1)"
 "$copy/scripts/phone-engines.sh" "${1:-local}"; status=$?
 mkdir -p "$here/.phone-check"; cp -r "$copy/.phone-check/." "$here/.phone-check/" 2>/dev/null
