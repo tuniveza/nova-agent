@@ -1,0 +1,96 @@
+/* Nova Phone: Board (board.js). The table read as a list: tiles in the order the cards lie, groups of cards that
+   lie together, a bigger card a bigger tile, a small map of the table. Theme colours only, except a sticky note's
+   own colour (Nova Desk's six), which comes in as --c from the script. */
+
+.board-status { margin: 0; color: var(--soft); border-color: rgba(var(--warn-rgb), .35); }
+.board-undo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 10px 10px 16px; }
+.board-undo .btn { min-height: 44px; }
+.board-welcome p:not(.kicker) { color: var(--text); }
+
+/* the map: the table from above */
+.board-map { margin: 0; display: grid; gap: 8px; }
+.board-map .kicker { margin: 0; }
+.board-map svg { width: 100%; height: auto; max-height: 190px; }
+.board-map p { margin: 0; }
+.bm:not(.k-sticky) rect { fill: rgba(var(--hi-rgb), .2); }
+.bm rect { stroke: rgba(var(--hi-rgb), .65); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+.bm.k-sticky rect { stroke: rgba(0, 0, 0, .35); }
+.bm.k-image rect, .bm.k-file rect { fill: rgba(var(--accent-rgb), .3); }
+.bm.k-calendar rect { fill: rgba(var(--ok-rgb), .22); stroke: rgba(var(--ok-rgb), .6); }
+.bm text { fill: var(--bright); font-family: var(--f-body); font-weight: 700; }
+.bm.k-sticky text { fill: #2a1a10; }
+.bm circle { fill: var(--hi); }
+.bm.k-sticky circle { fill: #2a1a10; }
+
+/* groups and tiles */
+.board-group { display: grid; gap: 8px; }
+.board-group-head { margin: 4px 4px 0; font: 700 13px/1.3 var(--f-body); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+.board-group .board-tiles { padding: 8px; border-radius: 22px; border: 1px dashed rgba(var(--hi-rgb), .3); }
+.board-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 10px; }
+.board-tile {
+  display: grid; align-content: start; gap: 8px; min-width: 0; min-height: 88px; padding: 12px 14px 14px; border-radius: 18px;
+  border: 1px solid rgba(var(--hi-rgb), .16); background: linear-gradient(160deg, rgba(var(--panel-2-rgb), .96), rgba(var(--panel-rgb), .96));
+  color: var(--text); overflow-wrap: anywhere;
+}
+.board-tile:active { filter: brightness(1.15); }
+.board-tile.big { grid-column: 1 / -1; min-height: 140px; }
+.board-tile.big .board-tile-body b { font: 700 19px/1.3 var(--f-display); }
+.board-tile.small { min-height: 72px; padding: 10px 12px; }
+.board-tile.is-new { box-shadow: 0 0 0 2px var(--hi); }
+.board-tile-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.board-n { display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 13px; background: rgba(var(--hi-rgb), .18); color: var(--bright); font: 700 13px/1 var(--f-body); }
+.board-kind { color: var(--hi); font: 700 13px/1.3 var(--f-body); letter-spacing: .08em; text-transform: uppercase; margin-right: auto; white-space: nowrap; }
+.board-tile-body { display: grid; gap: 4px; min-width: 0; }
+.board-tile-body p { margin: 0; color: var(--bright); line-height: 1.45; }
+.board-tile-body b { color: var(--bright); font-weight: 600; line-height: 1.35; }
+.board-tile-body span { color: var(--muted); font-size: 14px; line-height: 1.4; }
+.board-tile-body small { color: var(--muted); font-size: 13px; }
+.board-tile.k-sticky { border-color: transparent; background: var(--c, #ffc94a); color: #2a1a10; }
+.board-tile.k-sticky .board-tile-body p, .board-tile.k-sticky .board-kind, .board-tile.k-sticky .board-n { color: #2a1a10; }
+.board-tile.k-sticky .board-n { background: rgba(0, 0, 0, .12); }
+.board-tile.k-sticky .pill { background: rgba(0, 0, 0, .14); color: #2a1a10; }
+.board-tile.k-sticky .board-tile-body p { font-size: 17px; font-weight: 500; }
+.board-tile.k-text .board-tile-body p { color: var(--text); }
+
+/* links */
+.board-link { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.board-link b { min-width: 0; }
+.board-fav { flex: none; width: 18px; height: 18px; border-radius: 4px; }
+.board-url { margin: 0 0 12px; color: var(--muted); overflow-wrap: anywhere; }
+
+/* pictures, videos and sounds: a calm placeholder until they're there */
+.board-media { position: relative; display: grid; place-items: center; min-height: 64px; border-radius: 12px; overflow: hidden; background: rgba(var(--deep-rgb), .6); }
+.board-media img, .board-media video { display: block; width: 100%; height: auto; max-height: 60vh; object-fit: contain; }
+.board-tile .board-media img { max-height: 200px; object-fit: cover; }
+.board-tile.big .board-media img { max-height: 320px; }
+.board-media audio { width: 100%; }
+.board-media.m-audio { background: none; }
+.board-wait, .board-failed, .board-retry { display: none; }
+.board-media.is-loading img, .board-media.is-loading video { opacity: 0; position: absolute; }
+.board-media.is-loading .board-wait { display: block; padding: 20px; }
+.board-media.is-failed img, .board-media.is-failed video, .board-media.is-failed audio { display: none; }
+.board-media.is-failed .board-failed { display: block; padding: 20px; color: var(--bad); }
+.board-media.is-failed .board-retry { display: inline-flex; margin: 16px; }
+.card .board-media { margin-bottom: 10px; }
+
+/* a sticky note open: in its colour, its colours to pick under it */
+.board-sticky { padding: 22px 20px; border-radius: 6px 6px 18px 6px; background: var(--c, #ffc94a); color: #2a1a10; font: 500 18px/1.45 var(--f-body); box-shadow: 0 14px 30px -18px #000; overflow-wrap: anywhere; }
+.board-swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.board-swatch { width: 44px; height: 44px; border-radius: 12px; border: 2px solid transparent; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); }
+.board-swatch input { position: absolute; opacity: 0; pointer-events: none; }
+label.board-swatch { position: relative; display: block; cursor: pointer; }
+.board-swatch:has(input:checked), .board-swatch[aria-pressed="true"] { border-color: var(--bright); box-shadow: 0 0 0 2px var(--void), inset 0 0 0 1px rgba(0, 0, 0, .2); }
+
+/* Agent's answer, the calendar on a card */
+.board-answer p { margin: 0 0 10px; }
+.board-answer ul { margin: 0 0 10px; padding-left: 20px; }
+.board-thinking { margin: 0; }
+.board-cal { display: grid; gap: 10px; }
+.board-time { color: var(--hi); font: 700 14px/1.2 var(--f-body); white-space: nowrap; }
+.board-free { margin: 0 4px; }
+.board-where p { margin: 0 0 10px; }
+.board-where .btns { margin-bottom: 10px; }
+
+/* the pick lists in a sheet */
+.board-pick { max-width: 100%; }
+.board-where .btns.two > .btn { padding: 0 12px; }
