@@ -1,0 +1,136 @@
+/* ===== Nova Phone: the Console (console.js). Nova Desk's Console drawn for a phone: what you typed and the answers
+   as words (headings, facts in two columns, tables that stack on a narrow screen), the line and Desk's extra keys
+   kept at the bottom, terminals drawn by lib/term.js. Text size: A−/A+ (--console-size). Theme colours only. ===== */
+.console-root { display: grid; gap: 12px; min-width: 0; --console-size: 16px; --console-lh: 21px; }
+
+/* ---- Tabs: Nova, the terminals, + Shell / + VPS ---- */
+.console-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.console-tabs .chip[aria-selected="true"] { border-color: var(--hi); background: rgba(var(--hi-rgb), .18); color: var(--bright); }
+.console-tab { display: inline-flex; align-items: center; gap: 2px; }
+.console-tab.ended .chip { opacity: .6; text-decoration: line-through; }
+.console-x { display: grid; place-items: center; width: 40px; height: 44px; padding: 0; border: 0; border-radius: 12px; background: none; color: var(--muted); font: 600 22px/1 var(--f-body); }
+.console-x:active { background: rgba(var(--hi-rgb), .12); }
+
+/* ---- Quick commands: Desk's four groups, one at a time ---- */
+.console-quick { display: grid; gap: 8px; }
+.console-groups label { font-size: 14px; white-space: nowrap; padding: 0 4px; }
+.console-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+/* (a very narrow phone: the four groups two by two, so their names never squeeze or wrap) */
+@media (max-width: 359px) {
+  .console-groups { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---- What was typed, and the answers ---- */
+.console-log { container-type: inline-size; display: grid; gap: 10px; min-width: 0; font-size: var(--console-size); line-height: 1.45; }
+.console-entry { display: grid; gap: 6px; min-width: 0; }
+.console-entry + .console-entry { padding-top: 8px; border-top: 1px solid rgba(var(--hi-rgb), .1); }
+.console-cmd {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; min-height: 40px; margin: 0; padding: 4px 0; border: 0; background: none;
+  color: var(--bright); font: 500 var(--console-size)/1.35 var(--f-mono, ui-monospace, monospace); text-align: left; overflow-wrap: anywhere;
+}
+button.console-cmd:active { background: rgba(var(--hi-rgb), .08); border-radius: 8px; }
+.console-prompt { color: var(--hi); font-weight: 700; white-space: nowrap; }
+.console-answer { min-height: 0; }
+.console-p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.console-p.muted { font-size: max(13px, calc(var(--console-size) - 1px)); }
+.console-pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: var(--console-size)/1.45 var(--f-mono, ui-monospace, monospace); color: var(--text); }
+.console-h {
+  margin: 8px 0 0; padding-bottom: 4px; border-bottom: 1px solid rgba(var(--hi-rgb), .22);
+  color: var(--hi); font: 700 calc(var(--console-size) + 1px)/1.3 var(--f-display); overflow-wrap: anywhere;
+}
+/* facts: what it is, and its value, in two columns */
+.console-kv { display: grid; grid-template-columns: fit-content(42%) minmax(0, 1fr); gap: 6px 14px; margin: 0; }
+.console-kv dt { color: var(--lilac); font-weight: 600; overflow-wrap: anywhere; }
+.console-kv dd { margin: 0; color: var(--bright); overflow-wrap: anywhere; white-space: pre-wrap; }
+
+/* tables: a table where there's room, each row stacked (its values under the column names) where there isn't */
+.console-table { min-width: 0; }
+.console-table table { width: 100%; border-collapse: collapse; }
+.console-table th { padding: 4px 8px 6px; border-bottom: 1px solid rgba(var(--hi-rgb), .25); color: var(--soft); font: 700 12px/1.3 var(--f-body); letter-spacing: .08em; text-transform: uppercase; text-align: left; white-space: nowrap; }
+.console-table td { padding: 6px 8px; border-bottom: 1px solid rgba(var(--hi-rgb), .08); vertical-align: top; color: var(--bright); overflow-wrap: anywhere; }
+.console-table .console-c-id { color: var(--muted); font-family: var(--f-mono, ui-monospace, monospace); white-space: nowrap; }
+@container (max-width: 559px) {
+  .console-table table, .console-table tbody, .console-table tr, .console-table td { display: block; }
+  .console-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .console-table tr { display: grid; gap: 2px; margin-bottom: 8px; padding: 8px 12px; border-radius: 14px; border: 1px solid rgba(var(--hi-rgb), .14); background: rgba(var(--panel-rgb), .75); }
+  .console-table td { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; padding: 2px 0; border: 0; }
+  .console-table td::before { content: attr(data-k); padding-top: .2em; color: var(--muted); font: 600 12px/1.3 var(--f-body); letter-spacing: .06em; text-transform: uppercase; }
+  .console-table td:empty { display: none; }
+  .console-table .console-c-id { white-space: normal; }
+}
+
+/* help: the command and its example (a tap puts either on the line), what it does under them */
+.console-help { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.console-help li { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; min-width: 0; }
+.console-help li > span { flex: 1 1 100%; color: var(--text); overflow-wrap: anywhere; }
+.console-name, .console-ex {
+  min-height: 40px; padding: 0 4px; margin-left: -4px; border: 0; border-radius: 8px; background: none; text-align: left;
+  font: 700 var(--console-size)/1.3 var(--f-mono, ui-monospace, monospace); color: var(--hi); overflow-wrap: anywhere;
+}
+.console-ex { margin-left: 0; font-weight: 500; color: var(--ok); }
+.console-name:active, .console-ex:active { background: rgba(var(--hi-rgb), .1); }
+@container (min-width: 640px) {
+  .console-help li { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) minmax(0, 14em); }
+  .console-help li > .console-name { grid-column: 1; grid-row: 1; }
+  .console-help li > span { grid-column: 2; grid-row: 1; }
+  .console-help li > .console-ex { grid-column: 3; grid-row: 1; }
+}
+
+/* the log: time and part, the message under them */
+.console-logs { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.console-logs li { display: flex; flex-wrap: wrap; gap: 0 10px; min-width: 0; }
+.console-logs li > span:last-child { flex: 1 1 100%; overflow-wrap: anywhere; }
+.console-logs .console-time { color: var(--muted); font-family: var(--f-mono, ui-monospace, monospace); }
+.console-logs li.warn, .console-logs li.warn b { color: var(--warn); }
+
+/* why terminals don't open here, and how to reach them */
+.console-note { display: grid; gap: 8px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(var(--warn-rgb), .3); background: rgba(var(--warn-rgb), .06); }
+.console-note .btn { justify-self: start; }
+.console-copy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.console-copy code { flex: 1 1 200px; min-width: 0; padding: 10px 12px; border-radius: 10px; background: rgba(var(--deep-rgb), .9); color: var(--bright); font: 14px/1.4 var(--f-mono, ui-monospace, monospace); overflow-wrap: anywhere; user-select: all; -webkit-user-select: all; }
+
+/* ---- The line and the extra keys, at the bottom ---- */
+.console-dock { position: sticky; bottom: -28px; z-index: 2; display: grid; gap: 8px; margin: 0 -16px -28px; padding: 6px 16px 12px; background: var(--void); }
+.console-dock::before { content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 14px; background: linear-gradient(to top, var(--void), transparent); pointer-events: none; }
+.console-sugg { display: flex; flex-wrap: wrap; gap: 6px; }
+.console-sugg .chip { min-height: 40px; padding: 0 14px; font-family: var(--f-mono, ui-monospace, monospace); }
+.console-line { display: grid; gap: 6px; }
+.console-ask { color: var(--warn); font: 600 14px/1.35 var(--f-body); overflow-wrap: anywhere; }
+.console-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+.console-input { font-family: var(--f-mono, ui-monospace, monospace); font-size: 16px; }
+.console-run { width: 52px; padding: 0; border-radius: 50%; }
+.console-run.console-busy { opacity: .5; }
+.console-cancel { padding: 0 12px; }
+/* (Desk's extra keys: while you type on the Nova line, and always on a terminal) */
+.console-keys { display: none; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.console-dock:focus-within .console-keys, .console-on-term .console-keys { display: grid; }
+.console-keys button {
+  min-width: 0; min-height: 40px; padding: 0 2px; border-radius: 10px; border: 1px solid rgba(var(--hi-rgb), .2); background: rgba(var(--panel-rgb), .85);
+  color: var(--text); font: 600 15px/1 var(--f-mono, ui-monospace, monospace); white-space: nowrap;
+}
+.console-keys button:active { background: rgba(var(--hi-rgb), .16); }
+.console-keys button[aria-pressed="true"] { border-color: var(--hi); background: rgba(var(--hi-rgb), .22); color: var(--bright); }
+@media (min-width: 560px) { .console-keys { grid-template-columns: repeat(12, minmax(0, 1fr)); } }
+
+/* ---- A terminal ---- */
+.console-term { position: relative; display: grid; gap: 6px; min-width: 0; }
+.console-hint { margin: 0; font-size: 13px; }
+.console-screen { min-width: 0; padding: 8px; border-radius: 12px; border: 1px solid rgba(var(--hi-rgb), .16); background: rgba(var(--deep-rgb), .96); --ct-bg: var(--deep); cursor: text; }
+.console-cap { position: absolute; left: 10px; bottom: 10px; width: 2px; height: 2px; padding: 0; border: 0; opacity: 0; resize: none; overflow: hidden; font-size: 16px; caret-color: transparent; color: transparent; background: none; pointer-events: none; }
+.ct { color: var(--text); font: 400 var(--console-size)/var(--console-lh) var(--f-mono, ui-monospace, monospace); font-variant-ligatures: none; }
+.ct-measure { position: absolute; left: 0; top: 0; visibility: hidden; white-space: pre; pointer-events: none; }
+.ct-line { min-height: var(--console-lh); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ct-row { height: var(--console-lh); white-space: pre; }
+.ct-alt .ct-back { display: none; }
+.ct-f0 { color: color-mix(in srgb, var(--deep) 75%, var(--text)); } .ct-f1 { color: var(--bad); } .ct-f2 { color: var(--ok); } .ct-f3 { color: var(--gold); }
+.ct-f4 { color: var(--lilac); } .ct-f5 { color: var(--hi); } .ct-f6 { color: var(--soft); } .ct-f7 { color: var(--text); }
+.ct-f8 { color: var(--muted); } .ct-f9 { color: color-mix(in srgb, var(--bad) 70%, white); } .ct-f10 { color: color-mix(in srgb, var(--ok) 70%, white); } .ct-f11 { color: color-mix(in srgb, var(--gold) 70%, white); }
+.ct-f12 { color: color-mix(in srgb, var(--lilac) 70%, white); } .ct-f13 { color: color-mix(in srgb, var(--hi) 70%, white); } .ct-f14 { color: color-mix(in srgb, var(--soft) 70%, white); } .ct-f15 { color: var(--bright); }
+.ct-b0 { background: color-mix(in srgb, var(--deep) 75%, black); } .ct-b1 { background: var(--bad); } .ct-b2 { background: var(--ok); } .ct-b3 { background: var(--gold); }
+.ct-b4 { background: var(--lilac); } .ct-b5 { background: var(--hi); } .ct-b6 { background: var(--soft); } .ct-b7 { background: var(--text); }
+.ct-b8 { background: var(--muted); } .ct-b9 { background: color-mix(in srgb, var(--bad) 70%, white); } .ct-b10 { background: color-mix(in srgb, var(--ok) 70%, white); } .ct-b11 { background: color-mix(in srgb, var(--gold) 70%, white); }
+.ct-b12 { background: color-mix(in srgb, var(--lilac) 70%, white); } .ct-b13 { background: color-mix(in srgb, var(--hi) 70%, white); } .ct-b14 { background: color-mix(in srgb, var(--soft) 70%, white); } .ct-b15 { background: var(--bright); }
+.ct-fi { color: var(--ct-bg, var(--void)); } .ct-bi { background: var(--text); }
+.ct-bo { font-weight: 700; } .ct-di { opacity: .6; } .ct-it { font-style: italic; } .ct-un { text-decoration: underline; } .ct-st { text-decoration: line-through; } .ct-hi { color: transparent; }
+.ct-cur { background: var(--hi); color: var(--void); }
+.ct-cur.ct-cur-off { background: none; color: inherit; box-shadow: inset 0 0 0 1px var(--hi); }
