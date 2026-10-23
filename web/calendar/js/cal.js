@@ -754,6 +754,8 @@ function stripHtml() {
   return `<div class="strip" aria-label="This month">${items.sort((a, b) => a.d.localeCompare(b.d)).map((x) => x.html).join("")}</div>`;
 }
 
+// (data-content-card: a card's title is what's on it, not a button's name: it may wrap, the Fixer reads it as
+// text, src/fixer/strict.ts, the user, 23 Oct 2026; it's still a button to press and to the keyboard)
 function rowHtml(e) {
   const where = e.type === "booking" ? e.item.phone || e.item.email || "" : e.item.location || "";
   const sub = [
@@ -767,14 +769,14 @@ function rowHtml(e) {
   ].filter(Boolean).join(" · ");
   if (e.type === "day") {
     const p = presets().get(e.item.preset);
-    return `<li><button type="button" class="row-item day themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><time class="ico-time"><span class="kind-pill">${esc(p.label)}</span></time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
+    return `<li><button type="button" class="row-item day themed" data-content-card style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><time class="ico-time"><span class="kind-pill">${esc(p.label)}</span></time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
   }
   const when = e.allDay ? "All day" : `${fmtTime(e.start)}<br>${fmtTime(e.end)}`;
   const art = e.type === "event" && !e.ro;
   // Quests and bookings have no picture: their symbol sits in its place, so every row's times line up
   // (and what it is, in a word in a pill, where a boxed symbol was: "Quest", "Booking", "Recording")
   const lead = art ? `<span class="art" data-art-note="${esc(e.item.id)}" data-date="${e.date}"></span>` : `<span class="row-sym"><span class="kind-pill">${esc(kindWord(e))}</span></span>`;
-  return `<li><button type="button" class="row-item note has-art${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${lead}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
+  return `<li><button type="button" class="row-item note has-art${e.ro ? " ro" : ""}" data-content-card data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${lead}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
 }
 // What a card is, in a word ("Quest", "Studio booking", "Recording", "Note card")
 const kindWord = (e) => (e.type === "booking" ? "Booking" : SYMBOL_WORDS[symbolOf(e)] || "Note card");
@@ -824,7 +826,10 @@ function daySummary(d, list) {
 // (data-os-skip: the page bar leaves the chosen day's list alone, it scrolls in itself on a phone: paged,
 // its height changed under the month as pages turned, the days grew and shrank with it and their cards were
 // left fitted to the other size, cut, 22 Oct 2026)
-function dayPlanHtml(d, withRows = true) {
+// (side: beside Day view on a computer, where its cards are paged by the page bar, /shared/onescreen.js, when
+// they don't all fit: it had a scroll bar and its last card cut off at the bottom, 23 Oct 2026; the day's
+// name, moon and + buttons stay on every page)
+function dayPlanHtml(d, withRows = true, side = false) {
   // On a phone the chosen day sits below the month: it's drawn with the sky, a moment after the month
   if (!skyDrawn && phone()) return `<section class="dayplan" data-os-skip aria-label="${dayLabel(d)}"></section>`;
   const list = onDay(entries(d, d), d);
@@ -846,11 +851,11 @@ function dayPlanHtml(d, withRows = true) {
   const specials = sky
     .map((x) => `<div class="sky-row"><span>${esc(x.title)}</span><button type="button" data-make-day="${esc(JSON.stringify({ date: d, ...x }))}">Make it a day card</button></div>`)
     .join("");
-  return `<section class="dayplan" data-os-skip aria-label="${dayLabel(d)}">
-    <div class="dp-head"><div><span class="dp-kicker">${d === today() ? "Today" : WD_LONG[weekday(d)]}</span><h3>${dayLabel(d)}</h3>${moon}</div>
+  return `<section class="dayplan" ${side ? "data-os-nofill" : "data-os-skip"} aria-label="${dayLabel(d)}">
+    <div class="dp-head"${side ? " data-os-pin" : ""}><div><span class="dp-kicker">${d === today() ? "Today" : WD_LONG[weekday(d)]}</span><h3>${dayLabel(d)}</h3>${moon}</div>
       <div class="dp-add"><button type="button" data-add="${d}">+ Note card</button><button type="button" data-add-day="${d}">+ Day card</button></div></div>
     ${daySummary(d, list)}${banners}${specials}${
-      !withRows ? "" : rest.length ? `<ul class="rows">${rest.map(rowHtml).join("")}</ul>` : `<p class="empty">No note cards. Tap + Note card, or a time in Day view.</p>`
+      !withRows ? "" : rest.length ? (side ? rest.map((e) => `<ul class="rows">${rowHtml(e)}</ul>`).join("") : `<ul class="rows">${rest.map(rowHtml).join("")}</ul>`) : `<p class="empty">No note cards. Tap + Note card, or a time in Day view.</p>`
     }</section>`;
 }
 
@@ -985,6 +990,12 @@ function layoutColumn(evs) {
       e.col = c;
     }
     for (const e of group) e.cols = cols.length;
+    // (each card wider into the columns to its right that are free all the while it's on: a long card beside
+    // a run of short ones isn't left a quarter of the day's width)
+    for (const e of group) {
+      e.span = 1;
+      for (let c = e.col + 1; c < cols.length && !group.some((o) => o.col === c && o.start < e.end && o.end > e.start); c++) e.span++;
+    }
     placed.push(...group);
     group = [];
     groupEnd = "";
@@ -1016,22 +1027,47 @@ function drawTimeGrid(n) {
       .filter((e) => !e.allDay && e.start.slice(0, 10) <= d && e.end.slice(0, 10) >= d && e.end > `${d}T00:00`)
       .map((e) => ({ ...e, s: e.start < `${d}T00:00` ? `${d}T00:00` : e.start, en: e.end > `${d}T23:59` ? `${d}T24:00` : e.end })),
   );
-  // The hours shown: 08:00 to 20:00, and more when a card (or, today, the time now) is outside them
+  // Each part in minutes from its day's start (0 to 1440)
+  const spans = days.map((d, i) => parts[i].map((e) => ({ e, m0: minutesBetween(`${d}T00:00`, e.s), m1: minutesBetween(`${d}T00:00`, e.en) })));
+  const nowM = days.includes(t) ? minutesBetween(`${t}T00:00`, now) : -1;
+  // A card is never shorter than a line of its words: one shorter in time is drawn that tall, and the cards
+  // it then reaches sit beside it, as cards at the same time do (23 Oct 2026, the user's week: 22:23–22:25
+  // and 22:25–22:27 were drawn one on top of the other, 18px slivers with no words). How many minutes that
+  // is depends on the hours' height, which depends on the hours shown: worked out again until it settles.
+  const LINE_PX = 18;
+  const shortest = (hh) => Math.max(15, Math.ceil(((LINE_PX + 2) / hh) * 60));
+  const fmtH = (h) => `${pad(h)}:00`;
+  let minM = shortest(hourHeight());
   let h0 = 8;
   let h1 = 20;
-  days.forEach((d, i) => {
-    for (const e of parts[i]) {
-      h0 = Math.min(h0, Math.floor(minutesBetween(`${d}T00:00`, e.s) / 60));
-      h1 = Math.max(h1, Math.ceil(minutesBetween(`${d}T00:00`, e.en) / 60));
+  let H = 12;
+  let shown = [];
+  const place = () => {
+    shown = spans.map((list) =>
+      list.map((x) => {
+        let v1 = Math.max(x.m1, x.m0 + minM);
+        let v0 = x.m0;
+        if (v1 > 1440) [v0, v1] = [Math.min(x.m0, 1440 - minM), 1440];
+        return { ...x, v0, v1 };
+      }),
+    );
+    // The hours shown: 08:00 to 20:00, and more so every card (as tall as it's drawn) and, today, the time now
+    // are inside them: a card at 22:27 has its hour, 22:00 to 23:00, and the grid ends with "23:00"
+    h0 = 8;
+    h1 = 20;
+    for (const list of shown) for (const x of list) {
+      h0 = Math.min(h0, Math.floor(x.v0 / 60));
+      h1 = Math.max(h1, Math.ceil(x.v1 / 60));
     }
-  });
-  if (days.includes(t)) {
-    h0 = Math.min(h0, Number(now.slice(11, 13)));
-    h1 = Math.max(h1, Number(now.slice(11, 13)) + 1);
-  }
-  h0 = Math.max(0, h0);
-  h1 = Math.min(24, h1);
-  const H = h1 - h0;
+    if (nowM >= 0) {
+      h0 = Math.min(h0, Math.floor(nowM / 60));
+      h1 = Math.max(h1, Math.floor(nowM / 60) + 1);
+    }
+    h0 = Math.max(0, h0);
+    h1 = Math.min(24, h1);
+    H = h1 - h0;
+  };
+  place();
   gridH0 = h0;
   // (in hours from the top of the grid; each hour is var(--hh) tall)
   const at = (d, stamp) => (minutesBetween(`${d}T00:00`, stamp) / 60 - h0).toFixed(3);
@@ -1040,40 +1076,63 @@ function drawTimeGrid(n) {
     .map((d) => `<button type="button" class="tg-day${d === t ? " today" : ""}" data-goto="${d}"><small>${WD[weekday(d)]}</small><b${phone() ? "" : ' class="tg-word"'}>${phone() ? Number(d.slice(8)) : ORD[Number(d.slice(8))]}</b>${moonMark(d, 12)}</button>`)
     .join("");
   const alldayCols = days.map((d) => `<div>${onDay(all, d).filter((e) => e.allDay).map(pillHtml).join("")}</div>`).join("");
-  const hours = Array.from({ length: H }, (_, i) => `<div class="hour"><span>${pad(h0 + i)}:00</span></div>`).join("");
-  const cols = days
-    .map((d, i) => {
-      const evs = parts[i];
-      const placed = layoutColumn(evs.map((e) => ({ ...e, start: e.s, end: e.en, orig: e })));
-      const blocks = placed
-        .map((p) => {
-          const top = `calc(var(--hh) * ${at(d, p.start)})`;
-          const height = `max(18px, calc(var(--hh) * ${(Math.max(15, minutesBetween(p.start, p.end)) / 60).toFixed(3)} - 2px))`;
-          const w = 100 / p.cols;
-          const e = p.orig;
-          return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="top:${top};height:${height};left:calc(${p.col * w}% + 2px);width:calc(${w}% - 4px)" tabindex="0" role="button" aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${esc(titleOf(e))}</strong><small>${fmtTime(e.start)}–${fmtTime(e.end)}${e.item.location ? ` · ${esc(e.item.location)}` : ""}</small>${whatOf(e) && whatOf(e) !== e.item.location ? `<em class="ev-what">${esc(whatOf(e))}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
-        })
-        .join("");
-      const line = d === t ? `<div class="now-line" style="top:calc(var(--hh) * ${at(d, now)})"></div>` : "";
-      // (each day tinted by its cards' kinds, by how many of each, as in the month)
-      // (and, like the month, left to fit its own cards: a narrow card's title is meant to go onto more lines)
-      return `<div class="col${d === t ? " today" : ""}${weekday(d) % 6 === 0 ? " weekend" : ""}" data-date="${d}" data-from="${h0}" data-hours="${H}" data-rules="off" style="height:calc(var(--hh) * ${H})${evs.length ? `;--mix: ${kindTint(evs)}` : ""}">${blocks}${line}</div>`;
-    })
-    .join("");
+  // The hours, each named, and the hour the grid ends at named at its foot (it ended at 22:00's line with a
+  // card at 22:27 under it, and looked cut off, 23 Oct 2026); the days' columns with their cards
+  const body = () => {
+    const hours = `<div class="hours">${Array.from({ length: H }, (_, i) => `<div class="hour"><span>${fmtH(h0 + i)}</span></div>`).join("")}<span class="hour-end" aria-hidden="true">${fmtH(h1)}</span></div>`;
+    const cols = days
+      .map((d, i) => {
+        const evs = parts[i];
+        // (laid out by the room each card takes, as drawn: cards that touch sit side by side)
+        const key = (m) => String(m).padStart(4, "0");
+        const placed = layoutColumn(shown[i].map((x) => ({ start: key(x.v0), end: key(x.v1), x })));
+        const blocks = placed
+          .map((p) => {
+            const { e, v0, v1 } = p.x;
+            const top = `calc(var(--hh) * ${(v0 / 60 - h0).toFixed(3)})`;
+            const height = `max(18px, calc(var(--hh) * ${((v1 - v0) / 60).toFixed(3)} - 2px))`;
+            const w = 100 / p.cols;
+            // (no wider than a card is easy to read, --ev-max: Day view's one column is the whole grid wide, and
+            // a card stretched across it had its words floating in the middle, 23 Oct 2026, the user: "horrible
+            // stretched ui elements"; cards at the same time sit side by side from the left, as in the week)
+            const left = `calc(min(${(p.col * w).toFixed(4)}%, ${p.col} * var(--ev-max, 100vw)) + 2px)`;
+            const width = `calc(min(${(w * p.span).toFixed(4)}%, ${p.span} * var(--ev-max, 100vw)) - 4px)`;
+            const what = whatOf(e) && whatOf(e) !== e.item.location ? whatOf(e) : "";
+            return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="--ev-top:${top};top:var(--ev-top);height:${height};left:${left};width:${width}" tabindex="0" role="button" data-content-card aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${esc(titleOf(e))}</strong><small>${fmtTime(e.start)}–${fmtTime(e.end)}${e.item.location ? ` · ${esc(e.item.location)}` : ""}</small>${what ? `<em class="ev-what">${esc(what)}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
+          })
+          .join("");
+        const line = d === t ? `<div class="now-line" style="top:calc(var(--hh) * ${at(d, now)})"></div>` : "";
+        // (each day tinted by its cards' kinds, by how many of each, as in the month)
+        // (and, like the month, left to fit its own cards: a narrow card's title is meant to go onto more lines)
+        return `<div class="col${d === t ? " today" : ""}${weekday(d) % 6 === 0 ? " weekend" : ""}" data-date="${d}" data-from="${h0}" data-hours="${H}" data-rules="off" style="height:calc(var(--hh) * ${H})${evs.length ? `;--mix: ${kindTint(evs)}` : ""}">${blocks}${line}</div>`;
+      })
+      .join("");
+    return hours + cols;
+  };
   const grid = `<div class="tg" style="--cols:${n};--hh:${hourHeight()}px">
     <div class="tg-head" style="grid-column:1/-1;display:grid;grid-template-columns:inherit"><span></span>${head}<div class="allday">${alldayCols}</div></div>
-    <div class="hours">${hours}</div>${cols}</div>`;
-  // Day view: the day in a few sentences beside it on a wider screen (its day cards, its special days,
-  // the moon, adding a card), above it in a line or two on a narrower one
+    ${body()}</div>`;
+  // Day view: the day beside it on a wider screen (its day cards, its special days, the moon, adding a card,
+  // its cards in a list, in pages when they don't all fit), above it in a line or two on a narrower one
   view.innerHTML = n === 1 ? `<div class="dayview">${dayAside(first)}${grid}</div>` : grid;
-  // (beside the day, its cards in a list with what each is for, when they fit; else just the words about it)
-  const side = view.querySelector(".dv-side");
-  if (side && side.scrollHeight > side.clientHeight + 1) side.innerHTML = dayPlanHtml(first, false);
+  const side = view.querySelector(".dv-side > .dayplan");
+  if (side) adoptSide(side);
   // The hours share out the room left under the days' names
   const tg = view.querySelector(".tg");
   // (less the room kept clear under the phone's round + button)
-  gridHh = Math.max(10, (tg.clientHeight - (parseFloat(getComputedStyle(tg).paddingBottom) || 0) - tg.querySelector(".tg-head").offsetHeight - 10) / H);
-  tg.style.setProperty("--hh", `${gridHh}px`);
+  const room = () => tg.clientHeight - (parseFloat(getComputedStyle(tg).paddingBottom) || 0) - tg.querySelector(".tg-head").offsetHeight - 10;
+  for (let pass = 0; ; pass++) {
+    gridHh = Math.max(10, room() / H);
+    tg.style.setProperty("--hh", `${gridHh}px`);
+    const want = shortest(gridHh);
+    if (want === minM || pass >= 3) break;
+    // (the shortest card's height in minutes changed with the hours' height: placed again)
+    minM = want;
+    place();
+    gridH0 = h0;
+    for (const old of tg.querySelectorAll(":scope > .hours, :scope > .col")) old.remove();
+    tg.insertAdjacentHTML("beforeend", body());
+  }
   // (short hours: every other hour named, so the names never crowd each other)
   tg.classList.toggle("sparse", gridHh < 24);
   // Cards squeezed narrow (several at once, or a phone's week) show just their title, wrapped,
@@ -1100,29 +1159,82 @@ function drawAgenda(days, when) {
     .join("");
   view.innerHTML = `<div class="list agenda" data-os-nofill>${rows ? `<ul class="rows">${rows}</ul>` : `<p class="empty">Nothing ${when}. Tap + to add a note card.</p>`}</div>`;
 }
+// (the page bar comes with /shared/fit.js, a moment after the Calendar on its first opening)
+function adoptSide(side, tries = 0) {
+  if (!side.isConnected) return;
+  if (window.NovaOneScreen) window.NovaOneScreen.adopt(side);
+  else if (tries < 20) setTimeout(() => adoptSide(side, tries + 1), 250);
+}
+// Simple look: a card shows its title, always (23 Oct 2026, the user's week had blocks with no words in them:
+// a title that didn't fit on one line was taken away). In turn, until it fits:
+//   1. on one line;
+//   2. a little smaller, down to 11px (no smaller: it must still read);
+//   3. its words onto as many lines as the card has room for (never cut through a word unless one word is
+//      wider than the card);
+//   4. the card a little taller, into the free room under it in its column;
+//   5. still no room: as many whole lines as fit, ending "…" (.ev-clamp), or for a card thinner than a word
+//      its colour and the symbol of what it's about (.bare). Either opens out to its whole title while it's pointed at or has the
+//      keyboard's focus (simple.css), and a tap opens it, its whole title at the top; it's read aloud whole.
+// Its other lines (the time, what it's for) each show whole on one line, or not at all.
 function fitCard(el) {
   // (on a touch screen a short card is at least 32px to tap, where the room under it is free)
   if (el.offsetHeight < 32 && matchMedia("(pointer: coarse)").matches) {
-    const top = el.offsetTop, l = el.offsetLeft, r = l + el.offsetWidth;
-    let room = el.parentElement.clientHeight - top;
-    for (const o of el.parentElement.querySelectorAll(":scope > .ev")) if (o !== el && o.offsetTop > top && o.offsetLeft < r && o.offsetLeft + o.offsetWidth > l) room = Math.min(room, o.offsetTop - top - 2);
-    // (nor under the round + button, where it floats over the hours)
-    const add = $("add").getBoundingClientRect(), me = el.getBoundingClientRect();
-    if (add.width && add.left < me.right && add.right > me.left && add.bottom > me.top) room = Math.min(room, add.top - me.top - 2);
-    if (room > el.offsetHeight) el.style.setProperty("height", `${Math.min(32, room)}px`);
+    const r = roomUnder(el);
+    if (r > el.offsetHeight) el.style.setProperty("height", `${Math.min(32, r)}px`);
   }
-  const lines = [...el.querySelectorAll(":scope > :is(strong, small, .ev-what)")];
-  el.classList.remove("bare");
-  for (const l of lines) l.classList.remove("ev-off");
-  const bottom = el.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(el).paddingBottom) || 0) + 1;
-  for (const l of lines) if (l.scrollWidth > l.clientWidth + 1 || l.getBoundingClientRect().bottom > bottom) l.classList.add("ev-off");
-  const bare = !lines[0] || lines[0].classList.contains("ev-off");
+  const title = el.querySelector(":scope > strong");
+  const lines = [...el.querySelectorAll(":scope > :is(small, .ev-what)")];
+  el.classList.remove("bare", "ev-wrap", "ev-small", "ev-clamp", "ev-up");
+  for (const l of [title, ...lines]) if (l) l.classList.remove("ev-off");
+  if (!title) return;
+  const inner = () => el.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(el).paddingBottom) || 0) + 1;
+  const fits = () => title.scrollWidth <= title.clientWidth + 1 && title.getBoundingClientRect().bottom <= inner();
+  // (a short card shows its title and time side by side: the title alone when it needs the room)
+  if (!fits() && el.classList.contains("short")) for (const l of lines) l.classList.add("ev-off");
+  if (!fits()) el.classList.add("ev-small");
+  // (its words onto more lines: the title alone in the card, not side by side with the time)
+  if (!fits()) el.classList.add("ev-wrap"), el.classList.remove("short");
+  if (!fits()) {
+    const need = Math.ceil(title.getBoundingClientRect().bottom - inner()) + 2;
+    const r = roomUnder(el);
+    if (need > 0 && r >= el.offsetHeight + need) el.style.setProperty("height", `${el.offsetHeight + need}px`), el.classList.remove("short");
+  }
+  const bare = !fits() && title.getBoundingClientRect().width < 30;
   el.classList.toggle("bare", bare);
-  if (bare) el.title = el.getAttribute("aria-label") || "";
+  // (a card thinner than a word shows the symbol of what it's about, so it's never an empty sliver)
+  let sym = el.querySelector(":scope > .ev-sym");
+  if (bare && !sym && presets().icon(el.dataset.kind, "", "")) {
+    sym = document.createElement("i");
+    sym.className = "ev-sym";
+    sym.setAttribute("aria-hidden", "true");
+    sym.innerHTML = presets().icon(el.dataset.kind, "", "");
+    el.prepend(sym);
+  }
+  // (still more words than room, even so: as many lines as there's room for, ending "…")
+  const clamp = !bare && !fits();
+  el.classList.toggle("ev-clamp", clamp);
+  if (clamp) el.style.setProperty("--lines", String(Math.max(1, Math.floor((inner() - title.getBoundingClientRect().top) / (parseFloat(getComputedStyle(title).lineHeight) || 13)))));
+  if (bare || clamp) el.title = el.getAttribute("aria-label") || "";
   else el.removeAttribute("title");
+  // (one in the lower half of its day opens out upwards, from its foot, so all of it stays in the grid)
+  const up = (bare || clamp) && el.offsetTop + el.offsetHeight / 2 > el.parentElement.clientHeight / 2;
+  el.classList.toggle("ev-up", up);
+  if (up) el.style.setProperty("--ev-bottom", `${el.parentElement.clientHeight - el.offsetTop - el.offsetHeight}px`);
+  const bottom = inner();
+  for (const l of lines) if (!l.classList.contains("ev-off") && (l.scrollWidth > l.clientWidth + 1 || l.getBoundingClientRect().bottom > bottom)) l.classList.add("ev-off");
+}
+// The free room under a card in its column, to the next card beside or under it (or the column's foot)
+function roomUnder(el) {
+  const top = el.offsetTop, l = el.offsetLeft, r = l + el.offsetWidth;
+  let room = el.parentElement.clientHeight - top;
+  for (const o of el.parentElement.querySelectorAll(":scope > .ev")) if (o !== el && o.offsetTop > top && o.offsetLeft < r && o.offsetLeft + o.offsetWidth > l) room = Math.min(room, o.offsetTop - top - 2);
+  // (nor under the round + button, where it floats over the hours)
+  const add = $("add").getBoundingClientRect(), me = el.getBoundingClientRect();
+  if (add.width && add.left < me.right && add.right > me.left && add.bottom > me.top) room = Math.min(room, add.top - me.top - 2);
+  return room;
 }
 function dayAside(d) {
-  if (matchMedia("(min-width: 900px)").matches) return `<div class="dv-side">${dayPlanHtml(d)}</div>`;
+  if (matchMedia("(min-width: 900px)").matches) return `<div class="dv-side">${dayPlanHtml(d, true, true)}</div>`;
   return `<div class="dv-sum">${daySummary(d, onDay(entries(d, d), d))}</div>`;
 }
 

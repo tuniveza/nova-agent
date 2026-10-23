@@ -861,3 +861,27 @@ html.embed .bar { padding-top: 4px !important; }
   body:has(.month > .dayplan) .add-btn { display: none !important; }
 }
 
+
+/* ---- Week and Day, made to fit (23 Oct 2026, the user: "fix these horrible stretched ui elements and make it
+   all fit on one screen") ---- */
+/* (Day view: a card no wider than reads well, cal.js --ev-max; cards at the same time side by side from the
+   left, as in the week. Its words follow Options' alignment, centred by default, now in a card, not in the
+   middle of a bar the grid's width) */
+.dayview > .tg { --ev-max: 460px; }
+/* (the hour the grid ends at, named at its foot: the last card's hour is plainly inside the grid) */
+.tg .hours > .hour-end { position: absolute; right: 6px; bottom: 1px; line-height: 1; font-size: 10.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
+.tg.sparse .hours > .hour:nth-last-child(2) > span { visibility: hidden; }
+/* (beside Day view: the day's cards slimmer, a line or two each, so more fit on a page; what doesn't fit goes
+   onto the next page, /shared/onescreen.js's page bar, never a scroll bar or a card cut off at the foot) */
+@media (min-width: 900px) {
+  .dv-side > .dayplan { padding: 12px 14px !important; }
+  .dv-side > .dayplan > * + * { margin-top: 8px; }
+  /* (each card its own list here, so a page can end between any two: cal.js dayPlanHtml) */
+  .dv-side > .dayplan > .rows + .rows { margin-top: 5px; }
+  .dv-side .row-item.note.has-art { grid-template-columns: 62px 40px minmax(0, 1fr); min-height: 0; gap: 8px; padding-right: 10px; }
+  .dv-side .row-item .art, .dv-side .row-item .row-sym { width: 62px; min-height: 40px; }
+  .dv-side .row-item time { font-size: 11px; }
+  .dv-side .row-item strong { font-size: 12.5px; line-height: 1.25; }
+  .dv-side .row-item small { font-size: 11px; line-height: 1.2; }
+  .dv-side .row-item.day { padding-block: 6px; }
+}
