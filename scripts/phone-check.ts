@@ -56,15 +56,17 @@ async function catchWrites(ctx: BrowserContext, writes: any[]) {
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(res) });
   });
 }
+const signedOut = (page: Page) => page.getByText(/Sign in to carry on|Sign in to see this/).count().catch(() => 0);
 async function look(page: Page, where: string) {
   const st = ((await page.evaluate(measureStrict).catch(() => [])) as any[]).filter((x) => x.rule !== "works");
   const us = (await page.evaluate(measureUsable).catch(() => [])) as any[];
   for (const x of [...st, ...us].slice(0, 5)) fail(where, `[${x.rule}] ${String(x.what).slice(0, 60)}: ${String(x.why).slice(0, 80)}`);
-  const signedOut = await page.locator("text=Sign in to carry on, text=Sign in to see this").count().catch(() => 0);
-  if (signedOut) fail(where, "shows Sign in (the check's sign-in ended?)");
+  if (await signedOut(page)) fail(where, "shows Sign in (the check's sign-in ended?)");
 }
 
-const s: any = await (await looks("start")).json();
+// (only one looks session exists at a time: when the Fixer's own hourly check starts one, ours ends, so a screen
+// that comes up signed out gets a new session and another try)
+let s: any = await (await looks("start")).json();
 const browser = await ({ webkit, chromium, firefox }[engine]).launch();
 try {
   for (const [name, dev] of PROFILES[engine]) {
@@ -81,7 +83,17 @@ try {
     page.on("pageerror", (e) => fail(where(at), `page error: ${e.message.slice(0, 120)}`));
     let shooting = false; // (WebKit: Playwright's screenshot adds a <style> of its own, which the page's CSP reports)
     page.on("console", (m) => { if (!shooting && m.type() === "error" && !/status of (401|403|404|503)|favicon|Service Worker/i.test(m.text())) fail(where(at), m.text().slice(0, 160)); });
-    const go = async (h: string, wait = 3500) => { at = h; await page.goto(`${base}/phone/#${h}`, { waitUntil: "load" }); await page.waitForTimeout(wait); };
+    const go = async (h: string, wait = 3500) => {
+      at = h;
+      await page.goto(`${base}/phone/#${h}`, { waitUntil: "load" });
+      await page.waitForTimeout(wait);
+      if (!(await signedOut(page))) return;
+      console.log(`  (signed in again at #${h}: the session was taken, by the Fixer's hourly check most likely)`);
+      s = await (await looks("start")).json();
+      await ctx.addCookies([{ name: s.cookie, value: s.token, url: base }]);
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(wait);
+    };
     console.log(`${engine} · ${name}`);
     // the bar's sections, and More's screens
     await go("today");
