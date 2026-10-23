@@ -1,61 +1,34 @@
-// Nova on a phone: More. Every other place in Nova (each opens its phone section, or the computer version
-// until it has one), and the settings: the theme, and the computer version.
+// Nova Phone: More. Every place in Nova as its Nova tile (the same tiles as Nova Desk's dock), grouped as the
+// studio knows them, and the look (themes). A place not yet made for the phone shows its tile faded,
+// "Coming next" under it, and isn't a link (never a link to nowhere).
 (() => {
   "use strict";
-  const { section, esc, icon, computerLink } = window.NovaPhone;
-  // Every place in the computer's Nova Agent, in its order (phone: the section here that does it, if any)
-  const PLACES = [
-    { name: "Invoicer", place: "/invoicer/", phone: "money" },
-    { name: "Portal", place: "/portal/", phone: "today" },
-    { name: "Agent", place: "/agent/", phone: "agent" },
-    { name: "Calendar", place: "/calendar/", phone: "calendar" },
-    { name: "Notes", place: "/notes/", phone: "notes" },
-    { name: "Board", place: "/board/" },
-    { name: "Index", place: "/app/memory/" },
-    { name: "Quests", place: "/quests/", phone: "quests" },
-    { name: "Fixer", place: "/fixer/" },
-    { name: "Computer", place: "/computer/" },
-    { name: "Observatory", place: "/observatory/" },
-    { name: "Console", place: "/console/" },
-    { name: "Lossless", place: "/lossless/" },
+  const N = window.NovaPhone;
+  const { esc } = N;
+  // [address, name, tile]
+  const GROUPS = [
+    ["Studio", [["inbox", "Inbox", "portal"], ["inbox/approvals", "Approvals", "portal"], ["calendar", "Calendar", "calendar"], ["clients", "Clients", "portal"], ["money", "Money", "invoicer"]]],
+    ["Outreach", [["outreach", "Campaigns", "portal"], ["outreach/one", "One-to-one", "portal"], ["outreach/social", "Social", "portal"], ["outreach/funnel", "Funnel", "portal"]]],
+    ["Plans", [["agent", "Agent", "chat"], ["agent/plan", "Today's plan", "missions"], ["agent/missions", "Missions", "missions"], ["quests", "Quests", "quests"], ["notes", "Notes", "notes"], ["board", "Board", "board"], ["index", "Index", "index"]]],
+    ["Helpers", [["observatory", "Observatory", "observatory"], ["console", "Console", "console"], ["lossless", "Lossless", "lossless"], ["help", "Help", "manual"]]],
+    ["You", [["you", "Your profile", "portal"], ["inbox/alert/phone", "Notifications", "portal"]]],
+    ["Admin", [["crew", "The crew", "portal"], ["google", "Google", "portal"], ["computer", "Computer", "computer"], ["tests", "Test stuff", "portal"], ["fixer", "Fixer", "fixer"], ["visualizer", "Visualizer", "visualizer"]]],
   ];
-  // (which app this phone opens: shared/which-app.js reads it on Nova Agent's page)
-  const always = () => { try { return localStorage.getItem("nova-app") === "computer"; } catch (e) { return false; } };
-  section({
+  N.section({
     id: "more",
     name: "More",
-    title: "More",
-    draw(page) {
-      const built = (p) => p.phone && window.NovaPhone.has(p.phone);
-      const rows = PLACES.map((p) => built(p)
-        ? `<li><a class="row" href="#${p.phone}"><span class="row-lead">${icon(p.phone)}</span><span class="row-main"><strong>${esc(p.name)}</strong></span><span class="row-end">${icon("next")}</span></a></li>`
-        : `<li><a class="row" href="${computerLink(p.place)}"><span class="row-lead">${icon("open")}</span><span class="row-main"><strong>${esc(p.name)}</strong><small>Opens in the computer version</small></span></a></li>`).join("");
-      const themes = (window.NovaThemes?.list || []).map((t) => `<button type="button" class="swatch" data-theme-id="${esc(t.id)}" aria-pressed="${t.id === window.NovaThemes.current()}"><span class="swatch-dot" data-swatch="${esc(t.id)}"></span>${esc(t.name)}</button>`).join("");
-      page.innerHTML = `<h2 class="h">Everything in Nova</h2><ul class="rows">${rows}</ul>
-        <h2 class="h">Theme</h2><div class="swatches">${themes}</div>
-        <h2 class="h">This app</h2>
-        <div class="card"><p>This is Nova for phones. The computer version has everything, laid out for a big screen.</p>
-          ${always() ? `<p><strong>This phone is set to open the computer version.</strong></p>` : ""}</div>
-        <div class="stack">
-          <a class="btn wide" href="${computerLink()}">${icon("open")} Computer version</a>
-          ${always() ? `<button type="button" class="btn main wide" data-app="phone">Always use this phone app</button>` : `<button type="button" class="btn wide" data-app="computer">Always use the computer version</button>`}
-        </div>`;
-      // (each swatch shows its theme's colours: set here, the page's rules allow no style written inside it)
-      for (const t of window.NovaThemes?.list || []) {
-        const dot = page.querySelector(`[data-swatch="${CSS.escape(t.id)}"]`);
-        if (dot) dot.style.setProperty("background", t.preview);
-      }
+    draw(box) {
+      const tile = ([to, name, p]) => (N.has(to.split("/")[0])
+        ? `<a class="tile" href="#${to}">${window.NovaTile(p)}<span>${esc(name)}</span></a>`
+        : `<div class="tile soon" aria-label="${esc(name)}: coming next">${window.NovaTile(p)}<span>${esc(name)}</span><small>Coming next</small></div>`);
+      const groups = GROUPS.map(([g, items]) => `<h3 class="h">${g}</h3><div class="tiles">${items.map(tile).join("")}</div>`).join("");
+      const themes = (window.NovaThemes?.list || []).map((t) => `<button type="button" class="swatch" data-theme-id="${esc(t.id)}" aria-pressed="${t.id === window.NovaThemes.current()}"><i data-swatch="${esc(t.id)}"></i>${esc(t.name)}</button>`).join("");
+      box.innerHTML = `${groups}<h3 class="h">Look</h3><div class="swatch-grid">${themes}</div>
+        <p class="muted small">Nova Phone. Add it to your Home Screen for notifications and a full-screen app: on an iPhone, Share → Add to Home Screen; on Android, ⋮ → Add to Home screen.</p>`;
+      for (const t of window.NovaThemes?.list || []) box.querySelector(`[data-swatch="${CSS.escape(t.id)}"]`)?.style.setProperty("background", t.preview);
     },
   });
   document.addEventListener("click", (e) => {
-    const pick = e.target.closest("button[data-app]");
-    if (pick) {
-      try {
-        if (pick.dataset.app === "computer") { localStorage.setItem("nova-app", "computer"); location.href = computerLink(); }
-        else { localStorage.removeItem("nova-app"); sessionStorage.removeItem("nova-app"); window.NovaPhone.show(); }
-      } catch (err) { /* (no storage: nothing to remember) */ }
-      return;
-    }
     const sw = e.target.closest(".swatch[data-theme-id]");
     if (!sw) return;
     window.NovaThemes.set(sw.dataset.themeId);

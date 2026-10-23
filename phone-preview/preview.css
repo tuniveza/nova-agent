@@ -1,0 +1,12 @@
+/* The phone preview's frame: on a computer, the app in a phone-sized frame with a word about what it is; on a
+   phone, the app itself, full screen. */
+.preview-note { display: none; }
+@media (min-width: 700px) and (min-height: 640px) {
+  html, body { height: 100%; }
+  body { display: grid; place-items: center; gap: 14px; padding: 24px 16px; background: radial-gradient(80% 60% at 50% 0%, #1c1129, #06040d 70%); overflow: auto; }
+  .preview-note { display: block; max-width: 390px; margin: 0; color: #b997b5; font: 500 14px/1.45 "Saira", system-ui, sans-serif; text-align: center; }
+  .preview-note b { color: #f6ecff; }
+  .app { width: 390px; height: min(844px, calc(100vh - 110px)); border-radius: 46px; border: 10px solid #1a1422; box-shadow: 0 30px 80px -30px #000, 0 0 0 1px rgba(255, 95, 168, .18); }
+  .sheet { max-width: 370px; }
+  .toast { max-width: 340px; }
+}

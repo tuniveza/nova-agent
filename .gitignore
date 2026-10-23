@@ -35,3 +35,4 @@ screenshots/
 # (names, paths, folder trees, screenshots): local only
 scripts/observatory/projects.config.json
 web/observatory/media/
+.phone-check/

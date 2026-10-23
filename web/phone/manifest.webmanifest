@@ -1,8 +1,8 @@
 {
   "id": "/phone/",
-  "name": "Nova",
-  "short_name": "Nova",
-  "description": "Nova on a phone: Agent, Today and the Inbox, Calendar, Notes and Money, made for touch.",
+  "name": "Nova Phone",
+  "short_name": "Nova Phone",
+  "description": "Nova Phone, the mobile version of Nova: the studio's Agent, Today, Inbox, Calendar, Notes, Quests and Money, made for the phone.",
   "start_url": "/phone/",
   "scope": "/phone/",
   "display": "standalone",

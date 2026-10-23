@@ -6,7 +6,7 @@
 <meta charset="utf-8">
 <script src="/shared/carry-over.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<title>Nova Agent</title>
+<title>Nova Desk</title>
 <meta name="theme-color" content="#06040D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2805,7 +2805,7 @@
       // (window.history: this page has a "history" of its own, the conversation's)
       if (location.pathname !== path) window.history.replaceState(window.history.state, '', path + (place ? '' : location.search) + location.hash);
     } catch {}
-    document.title = place ? `${name} · ${place[1] ? GROUP_NAMES[place[1]] + ' · ' : ''}Nova Agent` : 'Nova Agent';
+    document.title = place ? `${name} · ${place[1] ? GROUP_NAMES[place[1]] + ' · ' : ''}Nova Desk` : 'Nova Desk';
   }
 
   function openInside(href, name) {

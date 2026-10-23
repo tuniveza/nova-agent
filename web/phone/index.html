@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en-GB" data-app="phone">
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nova</title>
+<title>Nova Phone</title>
 <meta name="theme-color" content="#06040D">
 <link rel="icon" href="/agent/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/agent/apple-touch-icon.png">
@@ -11,19 +11,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Nova">
-<!-- Nova on a phone (23 Oct 2026, the user: a separate web app for each platform; this is the phone's, the
-     computer's is Nova Agent at /agent/). The same server, sign-in, data and themes; its own plain, touch-first
-     layout: one section at a time, a bar of sections at the bottom, nothing fitted or shrunk to the screen. -->
+<meta name="apple-mobile-web-app-title" content="Nova Phone">
+<!-- Nova Phone, the mobile version (23 Oct 2026, the user: a separate web app for each platform, every place
+     made for the phone; Nova Desk, the computer version, is /agent/). The same server, sign-in, data and themes. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Saira:wght@300..700&display=swap">
 <link rel="stylesheet" href="/shared/themes.css">
 <link rel="stylesheet" href="/phone/phone.css">
 <script src="/shared/themes.js"></script>
+<script src="/phone/tiles.js" defer></script>
 <script src="/phone/phone.js" defer></script>
-<script src="/phone/agent.js" defer></script>
-<script src="/phone/calendar.js" type="module"></script>
 <script src="/phone/today.js" defer></script>
+<script src="/phone/inbox.js" defer></script>
+<script src="/phone/calendar.js" type="module"></script>
+<script src="/phone/agent.js" defer></script>
 <script src="/phone/notes.js" defer></script>
 <script src="/phone/quests.js" type="module"></script>
 <script src="/phone/money.js" defer></script>
@@ -32,10 +33,14 @@
 <body>
 <div class="app">
   <header class="top">
-    <h1 class="top-title" id="title">Nova</h1>
+    <div class="top-side" id="top-left"></div>
+    <h1 class="top-title" id="title">Nova Phone</h1>
+    <div class="top-side" id="top-right"></div>
   </header>
-  <main class="page" id="page" tabindex="-1" aria-live="polite"></main>
-  <nav class="bar" id="bar" aria-label="Sections"></nav>
+  <main class="page" id="page" tabindex="-1"></main>
+  <nav class="tabs" id="tabs" aria-label="Sections"></nav>
 </div>
+<dialog class="sheet" id="sheet"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>

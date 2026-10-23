@@ -1,8 +1,8 @@
 {
   "id": "/agent/",
-  "name": "Nova Agent",
-  "short_name": "Nova Agent",
-  "description": "The studio's one app: Nova Agent, Missions and Quests, with Portal, Calendar, Notes, Index, Observatory and Lossless inside it.",
+  "name": "Nova Desk",
+  "short_name": "Nova Desk",
+  "description": "Nova Desk, the studio's computer app: Nova Agent, Missions and Quests, with Portal, Calendar, Notes, Index, Observatory and Lossless inside it.",
   "start_url": "/agent/",
   "scope": "/",
   "display": "standalone",
