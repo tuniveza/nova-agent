@@ -11,6 +11,8 @@
   const $ = (id) => document.getElementById(id);
   const page = $("page"), tabs = $("tabs"), title = $("title"), left = $("top-left"), right = $("top-right"), sheet = $("sheet"), toastEl = $("toast");
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  // The address after "#", decoded (a stray "%" can't break it)
+  const hashText = () => { const h = location.hash.slice(1); try { return decodeURIComponent(h); } catch (e) { return h; } };
   const store = { get: (k) => { try { return localStorage.getItem(k); } catch (err) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (err) {} } };
   const stored = (k, d) => { try { return JSON.parse(store.get(k)) ?? d; } catch (err) { return d; } };
 
@@ -136,7 +138,7 @@
   const seen = {};
   const seenAlert = () => Number(store.get("nova-seen-alert")) || 0;
   let alertTop = 0, campaignsN = 0, oneN = 0;
-  const onAlerts = () => { const [id, part] = decodeURIComponent(location.hash.slice(1)).split("/"); return id === "inbox" && /^alerts?$/.test(part || ""); };
+  const onAlerts = () => { const [id, part] = hashText().split("/"); return id === "inbox" && /^alerts?$/.test(part || ""); };
   function alertsSeen() {
     if (!alertTop) return;
     if (alertTop > seenAlert()) store.set("nova-seen-alert", String(alertTop));
@@ -282,7 +284,7 @@
   // Where we are: #calendar, #calendar/card/abc (the screen and what's after it)
   function current() {
     // (anything after "?" is for the place to read, e.g. #money?filter=overdue)
-    const [id, ...rest] = decodeURIComponent(location.hash.slice(1).split("?")[0]).split("/");
+    const [id, ...rest] = hashText().split("?")[0].split("/");
     return sections.has(id) || FILES[id] ? { id, rest } : { id: "today", rest: [] };
   }
   // The tile that's lit: the place you're in (Portal's parts light Portal; anything else lights Nova)
@@ -567,7 +569,7 @@
   queueMicrotask(show);
 
   window.NovaPhone = {
-    section, has: (id) => sections.has(id) || !!FILES[id], show, css, badge, api, post, esc, icon, row, list, field, toggle, choices, empty, oops, skeleton,
+    section, has: (id) => sections.has(id) || !!FILES[id], show, css, hash: hashText, badge, api, post, esc, icon, row, list, field, toggle, choices, empty, oops, skeleton,
     toast, confirm, choose, form, busy, today, localStamp, asDate, ago, money, initials, signInCard, paint,
     // Nova Phone as a whole (the shell): sound(kind) plays one of Nova Phone's calm sounds when sounds are on;
     // look: the theme for Nova Phone and Nova Desk (look.js); options()/setOption(k, v): Nova Phone's own

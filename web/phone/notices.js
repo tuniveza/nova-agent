@@ -37,7 +37,8 @@
       if (p === "/app" || (p.startsWith("/app/") && !p.startsWith("/app/memory"))) p = `/portal/${p.slice(5).replace(/^\//, "")}`;
       const q = u.searchParams, id = (k) => encodeURIComponent(q.get(k) || "");
       if (p.startsWith("/phone")) return u.hash || "#today";
-      if (p.startsWith("/invoicer")) return q.get("invoice") ? `#money/invoice/${id("invoice")}` : "#money";
+      // (any Invoicer address, job and all: Money reads Desk's own ?invoice=&do=… form)
+      if (p.startsWith("/invoicer")) return `#money/${u.search}`;
       if (p.startsWith("/calendar")) { const d = q.get("day") || q.get("date") || ""; return /^\d{4}-\d\d-\d\d$/.test(d) ? `#calendar/day/${d}` : "#calendar"; }
       if (p.startsWith("/notes")) return q.get("note") ? `#notes/${id("note")}` : "#notes";
       if (p.startsWith("/quests")) return "#quests";

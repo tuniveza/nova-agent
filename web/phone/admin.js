@@ -47,7 +47,7 @@
   });
   // (a place's live box, to draw again in place: a step forward, a sync's progress)
   const live = { google: null, tests: null, booking: null };
-  const onScreen = (id) => decodeURIComponent(location.hash.slice(1)).split("/")[0] === id;
+  const onScreen = (id) => window.NovaPhone.hash().split("/")[0] === id;
   // A pause that waits while the app is hidden (no timers working in the background)
   const wait = (t) => new Promise((resolve) => { const go = () => (document.hidden ? document.addEventListener("visibilitychange", go, { once: true }) : setTimeout(resolve, t)); go(); });
 

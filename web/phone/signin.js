@@ -177,7 +177,7 @@
   // ---- The session watch (Portal's): an admin may switch someone off; signing out elsewhere ends it ----
   const EVERY = 45000;
   const watch = { timer: 0, was: false, role: "" };
-  const here = () => decodeURIComponent(location.hash.slice(1));
+  const here = () => window.NovaPhone.hash();
   async function check() {
     if (document.hidden || /^(signin|join)(\/|$)/.test(here())) return;
     let res;

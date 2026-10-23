@@ -144,7 +144,7 @@
       const s = d.summary || {};
       const rows = [];
       if (s.owed) rows.push({ main: `Owed: ${plural(s.owed.count || 0, "invoice")}`, side: money(s.owed.pence), href: "#money" });
-      if (s.overdue) rows.push({ main: `Overdue: ${plural(s.overdue.count || 0, "invoice")}`, side: money(s.overdue.pence), href: "#money", pill: s.overdue.count ? "To chase" : "" });
+      if (s.overdue) rows.push({ main: `Overdue: ${plural(s.overdue.count || 0, "invoice")}`, side: money(s.overdue.pence), href: "#money?filter=overdue", pill: s.overdue.count ? "To chase" : "" });
       if (s.month) rows.push({ main: "In this month", side: money(s.month.inPence), href: "#money" });
       if (s.month) rows.push({ main: "Out this month", side: money(s.month.outPence), href: "#money" });
       const waiting = (s.waitingApproval || 0) + (s.unconfirmedExpenses || 0);
@@ -376,7 +376,7 @@
         <div class="sums">
           <a class="sum" href="#inbox"><b data-sum="enq">–</b><span>New enquiries</span></a>
           <a class="sum" href="#calendar"><b data-sum="cal">–</b><span>On today</span></a>
-          <a class="sum" href="#money" data-sum-box="money"><b data-sum="money">–</b><span>Overdue</span></a>
+          <a class="sum" href="#money?filter=overdue" data-sum-box="money"><b data-sum="money">–</b><span>Overdue</span></a>
         </div>
         <div class="chips portal-parts">${[["inbox", "Inbox"], ["inbox/approvals", "Approvals"], ["clients", "Clients"], ["bookings", "Booking tools"], ["outreach", "Campaigns"], ["outreach/social", "Social"], ["outreach/funnel", "Funnel"], ["inbox/alerts", "Alerts"], ["bot", "Website bot"], ["you", "You"]].map(([to, n]) => `<a class="chip" href="#${to}">${n}</a>`).join("")}</div>
         <div class="today-tiles">

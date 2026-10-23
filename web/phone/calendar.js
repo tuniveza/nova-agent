@@ -213,14 +213,14 @@ function status() {
 const statusHtml = () => { const t = statusText(); return `<p class="cal-status" data-cal-status role="status"${t ? "" : " hidden"}>${esc(t)}</p>`; };
 
 // ---- Kept up to date: every 30 s while the Calendar or Today is in sight, on coming back, online again, signed in ----
-const placeId = () => decodeURIComponent(location.hash.slice(1)).split("/")[0] || "today";
+const placeId = () => window.NovaPhone.hash().split("/")[0] || "today";
 const here = () => ["calendar", "today"].includes(placeId());
 function editing() {
   const sheet = document.getElementById("sheet");
   if (sheet && sheet.open) return true;
   const page = document.getElementById("page");
   if (page && page.querySelector("form.dirty, input:focus, textarea:focus, select:focus")) return true;
-  const [id, what] = decodeURIComponent(location.hash.slice(1)).split("/");
+  const [id, what] = window.NovaPhone.hash().split("/");
   return id === "calendar" && ["new", "newday", "edit", "dup"].includes(what);
 }
 let drawnAt = 0;

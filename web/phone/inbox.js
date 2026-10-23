@@ -109,7 +109,7 @@
       // (Portal itself, from a notification: what came in is in Alerts)
       return "#inbox/alerts";
     }
-    if (p.startsWith("/invoicer/")) return has(q.get("invoice") ? `#money/invoice/${encodeURIComponent(q.get("invoice"))}` : "#money");
+    if (p.startsWith("/invoicer/")) return has(`#money/${u.search}`);
     const own = /^\/(calendar|quests|notes|board|fixer|computer|console|observatory|memory)\//.exec(p);
     if (own) return has(`#${own[1] === "memory" ? "index" : own[1]}`);
     if (/^\/(invoice|pay|book|booking)\//.test(p)) return { out: u.href };
@@ -905,7 +905,7 @@
     setTimeout(() => b.classList.add("going"), d.urgent ? 30000 : 7000);
     setTimeout(() => b.remove(), d.urgent ? 30600 : 7600);
   }
-  const here = () => { const [id, ...rest] = decodeURIComponent(location.hash.slice(1)).split("/"); return { id: id || "today", rest }; };
+  const here = () => { const [id, ...rest] = window.NovaPhone.hash().split("/"); return { id: id || "today", rest }; };
   const busyWriting = () => document.querySelector("#page input:focus, #page textarea:focus, #page select:focus, #page form.dirty, .sheet[open]");
   function onPush(d) {
     countsAt = 0;
