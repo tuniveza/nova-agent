@@ -1,0 +1,99 @@
+/* Nova Phone: the Manual (manual.js). One column; every chapter a card; tables read as cards (each cell with its
+   column's name above it); code wraps (never a box that scrolls sideways); the theme's colours only, each app's
+   own colour as a small mark (its edge, its symbol). */
+.manual-glyph { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: color-mix(in srgb, var(--c, var(--hi)) 18%, transparent); color: var(--c, var(--hi)); font: 700 20px/1 var(--f-display); }
+.manual-big { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: rgba(var(--hi-rgb), .14); color: var(--c, var(--hi)); font: 700 30px/1 var(--f-display); }
+.manual-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; box-shadow: inset 4px 0 0 var(--c, var(--hi)), 0 10px 30px -18px rgba(0, 0, 0, .9); }
+.manual-hero > .btn { grid-column: 1 / -1; }
+.manual-hero p { margin: 0 0 8px; }
+.manual-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0 !important; }
+.manual-pills .pill { white-space: normal; }
+.manual-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; margin: 0 4px; font-size: 14px; color: var(--muted); }
+.manual-crumbs a { display: inline-flex; align-items: center; min-height: 40px; color: var(--hi); }
+.manual-crumbs b { font-weight: 600; color: var(--bright); }
+.manual-tabs .chip { text-decoration: none; }
+.manual-where { color: var(--muted); font-size: 13px; line-height: 1.4; }
+.manual-app .row-main b { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.manual-fresh { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+.manual-note { margin: 0 4px; }
+.manual-note code, .manual-prose code, .manual-meta code { font-family: var(--f-mono, ui-monospace, monospace); font-size: 14px; padding: 1px 5px; border-radius: 6px; background: rgba(var(--deep-rgb), .8); overflow-wrap: anywhere; }
+
+/* The search */
+.manual-search .input { padding-left: 16px; }
+.manual-hit mark { background: rgba(var(--hi-rgb), .3); color: var(--bright); border-radius: 4px; padding: 0 2px; }
+
+/* "On this page": a slim bar that stays at the top while you read */
+.manual-toc { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 48px; margin: 0; padding: 6px 14px; border-radius: 0 0 16px 16px; border: 1px solid rgba(var(--hi-rgb), .2); border-top: 0; background: rgb(var(--panel-rgb)); color: var(--text); text-align: left; box-shadow: 0 8px 18px -12px rgba(0, 0, 0, .9); }
+.manual-toc span { color: var(--hi); font: 700 12px/1.3 var(--f-body); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.manual-toc b { min-width: 0; color: var(--bright); font-weight: 600; font-size: 15px; line-height: 1.3; overflow-wrap: anywhere; }
+.manual-toc small { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+/* A chapter and its words */
+.manual-chapter { scroll-margin-top: 60px; }
+.manual-chapter > h3 { margin: 0 0 10px; font: 700 19px/1.3 var(--f-display); color: var(--bright); }
+.manual-prose { font-size: 16px; line-height: 1.6; }
+.manual-prose > :first-child { margin-top: 0; } .manual-prose > :last-child { margin-bottom: 0; }
+.manual-prose p { margin: 0 0 12px; }
+.manual-prose h4 { scroll-margin-top: 60px; margin: 18px 0 6px; font: 700 16px/1.35 var(--f-body); color: var(--soft); }
+.manual-prose ul, .manual-prose ol { margin: 0 0 12px; padding-left: 22px; }
+.manual-prose li { margin: 4px 0; }
+.manual-prose strong, .manual-prose b { color: var(--bright); }
+.manual-prose blockquote { margin: 0 0 12px; padding: 8px 14px; border-left: 3px solid rgba(var(--hi-rgb), .5); border-radius: 0 12px 12px 0; background: rgba(var(--hi-rgb), .06); color: var(--soft); }
+.manual-prose a { color: var(--hi); text-decoration: underline; text-underline-offset: 2px; }
+.manual-table, .manual-table tbody, .manual-table tr, .manual-table td, .manual-table th { display: block; }
+.manual-table { margin: 0 0 12px; border-collapse: collapse; }
+.manual-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.manual-table tr { padding: 10px 0; border-top: 1px solid rgba(var(--hi-rgb), .14); }
+.manual-table tr:first-child { border-top: 0; padding-top: 0; }
+.manual-table td { padding: 2px 0; overflow-wrap: anywhere; }
+.manual-table td:first-child { color: var(--bright); font-weight: 600; }
+.manual-table td:empty { display: none; }
+.manual-table td[data-label]::before { content: attr(data-label); display: block; color: var(--muted); font: 600 12px/1.4 var(--f-body); letter-spacing: .06em; text-transform: uppercase; }
+.manual-code { position: relative; margin: 0 0 12px; }
+.manual-code pre, .manual-more pre { margin: 0; padding: 12px 14px; border-radius: 12px; background: rgba(var(--deep-rgb), .9); border: 1px solid rgba(var(--hi-rgb), .12); font: 13px/1.5 var(--f-mono, ui-monospace, monospace); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
+.manual-code pre { padding-top: 46px; }
+.manual-code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.manual-copy { position: absolute; top: 4px; right: 4px; min-width: 64px; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid rgba(var(--hi-rgb), .3); background: rgba(var(--panel-rgb), .95); color: var(--hi); font: 700 14px/1 var(--f-body); white-space: nowrap; }
+
+/* Changes, by day */
+.manual-day { margin-top: 14px; }
+.manual-commit { display: grid; gap: 6px; padding: 12px 14px 12px 16px; box-shadow: inset 4px 0 0 var(--c, var(--hi)); scroll-margin-top: 60px; }
+.manual-commit > b { color: var(--bright); font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.manual-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; color: var(--muted); font-size: 14px; }
+.manual-tag { display: inline-flex; align-items: center; min-height: 40px; padding: 0 10px; background: color-mix(in srgb, var(--c, var(--hi)) 18%, transparent); color: var(--bright); white-space: normal; }
+.manual-more summary { display: flex; align-items: center; min-height: 40px; color: var(--hi); font-size: 14px; font-weight: 600; cursor: pointer; }
+.manual-more pre { margin-top: 4px; }
+
+/* What's new */
+.manual-wip p { margin: 0 0 10px; }
+.manual-files { display: flex; flex-wrap: wrap; gap: 6px; }
+.manual-file { display: inline-grid; padding: 6px 10px; border-radius: 10px; background: rgba(var(--deep-rgb), .8); font: 13px/1.35 var(--f-mono, ui-monospace, monospace); overflow-wrap: anywhere; max-width: 100%; }
+.manual-file small { color: var(--muted); font: 12px/1.3 var(--f-body); }
+.manual-file[data-state="D"] { text-decoration: line-through; color: var(--muted); }
+
+/* Before and after */
+.manual-pg { flex-direction: column; gap: 0; min-height: 60px; padding: 6px 16px; box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--c, var(--hi)) 70%, transparent); }
+.manual-pg small { color: var(--muted); font: 600 12px/1.3 var(--f-body); }
+.manual-pg b { font-weight: 700; }
+
+/* All addresses */
+.manual-addr { display: grid; gap: 6px; padding: 14px 16px; }
+.manual-addr > b { color: var(--bright); }
+.manual-addr > .muted { font-size: 14px; }
+.manual-url { display: block; padding: 8px 10px; border-radius: 10px; background: rgba(var(--deep-rgb), .85); font: 13px/1.45 var(--f-mono, ui-monospace, monospace); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--soft); }
+.manual-addr .btns { margin-top: 4px; }
+
+.manual-flash { animation: manual-flash 1.2s ease-out 1; }
+@keyframes manual-flash { 0% { box-shadow: 0 0 0 3px var(--hi); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .manual-flash { animation: none; } }
+
+/* A phone on its side: short, so the bar and the big symbols slim down */
+@media (max-height: 500px) {
+  .manual-big { width: 44px; height: 44px; font-size: 24px; }
+  .manual-toc { min-height: 44px; }
+}
+/* A small phone: the big symbols smaller, so the words get the room */
+@media (max-width: 379px) {
+  .manual-big { width: 44px; height: 44px; font-size: 24px; }
+  .manual-hero { gap: 12px; }
+}
