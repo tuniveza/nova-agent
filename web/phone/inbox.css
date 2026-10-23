@@ -1,0 +1,78 @@
+/* Nova Phone: Inbox's own parts (inbox.js). Theme variables only; everything else is phone.css's. */
+
+/* The four parts along the top: side by side, onto a second line on a narrow phone (a name never wraps) */
+.inbox-parts { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 16px; background: rgba(var(--deep-rgb), .8); border: 1px solid rgba(var(--hi-rgb), .16); }
+.inbox-parts .seg-a { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 0 10px; }
+.inbox-n { min-width: 20px; padding: 1px 6px; border-radius: 10px; background: var(--hi); color: var(--on-hi); font: 700 12px/18px var(--f-body); text-align: center; }
+
+/* A row with its own button beside it: the row opens the thing, the button does the rest */
+.inbox-li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; }
+.inbox-li > .row { min-width: 0; }
+.inbox-more { display: grid; place-items: center; width: 48px; min-height: 64px; padding: 0; border: 0; border-left: 1px solid rgba(var(--hi-rgb), .1); background: none; color: var(--hi); }
+.inbox-more:active { background: rgba(var(--hi-rgb), .12); }
+.inbox-del { color: var(--muted); }
+
+/* What a row says under its title */
+.row-main .inbox-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.row-main .pill { font-size: 12px; color: var(--soft); }
+.row-main .pill.bad { color: var(--bad); } .row-main .pill.ok { color: var(--ok); } .row-main .pill.warn { color: var(--warn); }
+.row-main .inbox-foot { font-size: 13px; }
+.row-main .inbox-why { font-size: 13px; color: var(--warn); }
+.row.inbox-unseen { box-shadow: inset 4px 0 0 var(--hi); }
+.row.inbox-unseen .row-main b::after { content: " · new"; color: var(--hi); font-weight: 700; font-size: 13px; }
+
+/* Sheets and small headings */
+.inbox-sheet-h { margin: 0 0 8px; font: 600 14px/1.3 var(--f-body); color: var(--soft); }
+.inbox-move .chip, .inbox-modes .chip { flex: 1 1 auto; justify-content: center; }
+.inbox-gap { margin-top: 12px !important; }
+.inbox-under { margin: -6px 4px 0; }
+
+/* The conversation: links tappable, the page a visitor wrote from, "Did it send?" */
+.say .pre a, .say.note a { color: var(--hi); text-decoration: underline; overflow-wrap: anywhere; }
+.say.me .pre a { color: var(--bright); }
+.inbox-page { margin: 0 0 4px !important; font-size: 13px; overflow-wrap: anywhere; }
+.inbox-ask { max-width: 100%; justify-self: stretch; }
+.inbox-ask .field { margin: 0 0 10px; }
+.inbox-ask .btns { margin-top: 8px; }
+
+/* This phone's notifications card in Alerts */
+.inbox-phone { display: block; color: var(--text); }
+
+/* Acuity's own check of a booking */
+.inbox-verify { display: grid; gap: 2px; margin: 0 0 10px !important; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(var(--hi-rgb), .2); background: rgba(var(--deep-rgb), .5); font-size: 14px; }
+.inbox-verify b { color: var(--bright); }
+.inbox-verify.real { border-color: rgba(var(--ok-rgb), .45); } .inbox-verify.real b { color: var(--ok); }
+.inbox-verify.cancelled { border-color: rgba(var(--bad-rgb), .45); } .inbox-verify.cancelled b { color: var(--bad); }
+.inbox-verify.missing, .inbox-verify.unknown { border-color: rgba(var(--warn-rgb), .45); color: var(--warn); }
+.inbox-verify.checking { color: var(--muted); }
+
+/* The approval a notification pointed at */
+.inbox-picked { border-color: var(--hi) !important; box-shadow: 0 0 0 2px rgba(var(--hi-rgb), .35); }
+.kicker .pill { margin-left: 4px; letter-spacing: 0; text-transform: none; vertical-align: 1px; }
+
+/* A notification arriving while Nova Phone is open: a banner dropping from the top (tap for Alerts) */
+.inbox-banner {
+  position: fixed; z-index: 60; top: max(8px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 12px;
+  width: calc(100% - 24px); max-width: 600px; padding: 14px 16px; border-radius: 18px; border: 1px solid rgba(var(--hi-rgb), .45);
+  background: var(--deep); color: var(--text); text-align: left; font: inherit; box-shadow: 0 18px 40px -14px #000;
+  animation: inbox-drop .25s ease-out; transition: opacity .5s, transform .5s;
+}
+.inbox-banner > svg.i { color: var(--hi); margin-top: 2px; }
+.inbox-banner > span { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.inbox-banner b { color: var(--bright); line-height: 1.3; }
+.inbox-banner span span { color: var(--muted); font-size: 14px; line-height: 1.4; }
+.inbox-banner small { color: var(--hi); font-size: 13px; }
+.inbox-banner.going { opacity: 0; transform: translate(-50%, -20px); }
+@keyframes inbox-drop { from { opacity: 0; transform: translate(-50%, -24px); } }
+@media (prefers-reduced-motion: reduce) { .inbox-banner { animation: none; transition: none; } }
+
+/* An enquiry's facts: two side by side where there's room, one under another on a narrow phone */
+.inbox-facts { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 10px 14px; }
+
+/* Rows of buttons a little tighter, so two fit side by side on a narrow phone (their words still never wrap) */
+.inbox-tight > .btn { padding: 0 12px; gap: 6px; }
+/* Move to: four across, two by two on the narrowest phones */
+.inbox-move { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.inbox-move .chip { padding: 0 10px; }
+@media (max-width: 359px) { .inbox-move { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
