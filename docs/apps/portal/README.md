@@ -146,7 +146,7 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
   <tr>
     <td width="33%" valign="top"><img src="media/studio-calendar-day.jpg" alt="Thursday picked: 56% full, a clash warning, a tight changeover warning, and two free slots" width="100%"><br><sub><b>A day</b>: how full it is, a clash, a tight changeover, and free slots.</sub></td>
     <td width="33%" valign="top"><img src="media/studio-quests.jpg" alt="Quests: the quest in progress, a repeating pulse, and today's plan" width="100%"><br><sub><b>Quests</b> from Nova Agent: what's on now and today's plan.</sub></td>
-    <td width="33%" valign="top"><img src="media/studio-missions.jpg" alt="Missions with progress rings, deadlines and an at-risk count" width="100%"><br><sub><b>Missions</b>: progress, deadlines and anything at risk.</sub></td>
+    <td width="33%" valign="top"></td>
   </tr>
   <tr>
     <td width="33%" valign="top"><img src="media/studio-alerts.jpg" alt="A booking alert with a green panel: Real booking, confirmed in Acuity" width="100%"><br><sub><b>Alerts</b>: every booking is checked with Acuity itself.</sub></td>
@@ -197,7 +197,7 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
 | **Clients** | Everyone who has booked or enquired: their sessions, money (deposits, invoiced, owed) and marketing consent with its date and source. Admins can import Acuity's spreadsheet; Agent can look people up. |
 | **Money** | Invoices (sent only after an admin's Approve), payments and expenses. See [Money](#money). |
 | **Calendar** | Every booking in Acuity's diary, as a month you can swipe, with Calendar's cards and planned quests alongside. See [the smart calendar](#the-smart-calendar). |
-| **Quests** | Nova Agent's plan, synced from the VPS: the quest on now, repeating pulses, today, Missions with progress rings, and every quest. Taps (Start, Done, +15 min, Not now, Skip, Pause) go straight back to Nova Agent. |
+| **Quests** | Nova Agent's plan, synced from the VPS: the quest on now, repeating pulses, today, and every quest. Taps (Start, Done, +15 min, Not now, Skip, Pause) go straight back to Nova Agent. |
 | **Approvals** | Booking changes Agent proposed. Nothing changes in Acuity until an admin presses Approve. |
 | **Campaigns** | Email newsletters to fans and clients who opted in, sent by the studio's own mail server (a few a minute, each with its own unsubscribe link) once an admin approves them. Below them, **one-to-one emails**: a personal email to one person (a venue, label, brand or other business at its work address; a studio client; someone who wrote in). Agent or anyone in the team writes one; Nova Bot checks the person may be emailed (never anyone who said no; a client only about their own booking unless they said yes to studio news; no personal Gmail-style addresses as "business") and adds a footer with a "don't email me again" link (`/no-thanks`). Nothing is sent until an admin presses Approve (twice), and it goes exactly as approved, once. Someone who replies "no thanks" can be recorded under the list. Nova Bot's `src/outreach.js`, migration `0028_outreach.sql`. |
 | **Alerts** | Every notification that reached a phone, newest first, each one slim line (its kind, its title, how long ago) in as many columns as fit, so a screen holds most of them; tap one to open it in place with its exact time, every detail, the Acuity check and its Call/Email buttons. An auto-delete switch. |
@@ -294,7 +294,7 @@ Outreach → **Funnel**, or **Add prospects**). Nova Bot does the work (`src/fun
   "Not found". Tests are labelled as tests, so nothing fake can pass for a booking.
 - **Push notifications that work with the app closed** (Nova Bot's `src/push.js`, and `web/portal/sw.js`; phones that installed Portal from `/app/` keep `/app/sw.js`).
   New enquiries, bookings (with every detail from Acuity's private calendar feed), and
-  alerts from Nova Agent, Quest and Mission. Android gets rich notifications
+  alerts from Nova Agent and Quests. Android gets rich notifications
   with their own buzz; iPhones get the plain version, so nothing is ever lost.
 - **Pings.** With Portal open, an alert rings out with a bright ping (a different one for
   each kind) and drops a banner from the top.
@@ -396,7 +396,7 @@ Setting it up: invoices are emailed through the studio's own mail server (`MAIL_
 
 Portal → **Test stuff** (in Admin; admins only) lists things that look like tests or copies, so they can be cleared in a few taps. Today shows a quiet line ("3 things look like tests · look") when there are any, and the tab has a count of the likely ones.
 
-- **Where it looks:** on Nova Bot, enquiries, website chats, chat bookings (and their booking jobs), clients, Index pages, shared notes, and drafts that haven't gone anywhere (social posts, one-to-one emails, invoices, expenses). On the VPS (Nova Agent), quests, missions, calendar notes, Fixer jobs and Agent's files. If Nova Agent can't be reached, Nova Bot's list still shows, and it says Nova Agent's part isn't checked.
+- **Where it looks:** on Nova Bot, enquiries, website chats, chat bookings (and their booking jobs), clients, Index pages, shared notes, and drafts that haven't gone anywhere (social posts, one-to-one emails, invoices, expenses). On the VPS (Nova Agent), quests, calendar notes, Fixer jobs and Agent's files. If Nova Agent can't be reached, Nova Bot's list still shows, and it says Nova Agent's part isn't checked.
 - **Why it thinks so,** in words on each card: a staff member's own email or a TV and film phone number (07700 900…) used as a customer; test, rude or joke words, or a name from the studio's own tests (the list is `src/tidy-words.js` in Nova Bot and `src/tidy-words.ts` here: change both); keyboard mashing; the same first message in several chats minutes apart; Claude's test chats; chat bookings that never reached Acuity; Index pages whose chat is gone; the same facts, note, draft or file twice (the newest stays); copies of a quest (the one in progress stays); quests seconds long, made and finished within minutes (reminder tests); Fixer fixes for a problem that's gone or was fixed another way. One strong reason, or two weaker ones, makes it **Likely a test**; one weaker one makes it **Maybe**. A real client (sessions, money, consent, invoices) is never listed unless a strong sign says so, and then only as Maybe, and it can't be deleted here.
 - **Each card:** what it is and where, when it was made and by whom, the reasons, what goes with it (a test chat's bookings, enquiry and Index pages: **Delete these too** is ticked), and **Delete**, **Not a test** and **Open**.
 - **Delete all likely:** pressed twice; the second press says how many. Esc cancels.

@@ -16,7 +16,6 @@ Everything is centred and easy to read: Console sits in a centred column, with b
 | `whoami` / `version` | Who's signed in; which version of Nova Agent this is |
 | `now` (or `plans`) | What's on now and what's next |
 | `quests` | Your quests. Also: `quests add "Mix the EP" --minutes 45`, then `quests start`, `done`, `skip` or `snooze <id>`. The first 8 letters of an id are enough |
-| `missions` | Your missions. Also: `missions new "Release the EP by December"` and `missions show <id>` |
 | `calendar today` / `calendar week` | What's on the calendar. Also: `calendar add "Engineer in" 2026-10-20 14:00` |
 | `notes` | Your shared notes. Also: `notes open <id>` and `notes new` |
 | `board` | Your boards. Also: `board open` |
@@ -27,7 +26,7 @@ Everything is centred and easy to read: Console sits in a centred column, with b
 | `lossless` | Opens Lossless audio |
 | `music on` / `off` / `next` / `seed` | The ambient music |
 | `theme list` / `theme pulsar` / `theme own` | The look |
-| `open <app>` | Opens an app or panel: portal, calendar, notes, board, index, lossless, visualizer, observatory, fixer, agent, quests, missions, manual |
+| `open <app>` | Opens an app or panel: portal, calendar, notes, board, index, lossless, visualizer, observatory, fixer, agent, quests, manual |
 | `agent "what's on today?"` (or `ask`) | Asks Agent, and shows the answer here |
 | `computer` (or `desk`) | The VPS: Nova Bot and Nova Agent, versions, Nova Agent's link, VPS memory, disk, services, last data copy and backup, the timed jobs (admins) |
 | `deploy status` | What's live where: Nova Bot and Nova Agent on the VPS |
