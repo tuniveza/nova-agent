@@ -1,0 +1,72 @@
+/* Nova Phone: the admin places (admin.js): Google, Test stuff, Referrals, Links, Test booking. The theme's colours only. */
+.admin-big { font-size: 19px; }
+.admin-hint { margin: 0 4px; }
+.admin-note { color: var(--soft); }
+
+/* ---- Google: the setup steps, what to copy, each part ---- */
+.admin-step { display: grid; gap: 12px; }
+.admin-step > * { margin: 0; }
+.admin-step .card-title { scroll-margin-top: 12px; }
+.admin-copy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(var(--hi-rgb), .18); background: rgba(var(--deep-rgb), .7); }
+.admin-copy code { flex: 1 1 12em; min-width: 0; font-family: var(--f-mono); font-size: 14px; line-height: 1.4; color: var(--bright); overflow-wrap: anywhere; }
+.admin-copy-btn { min-height: 44px; padding: 0 16px; }
+.admin-key { margin-top: 4px; }
+.admin-parts { display: grid; gap: 0; padding: 6px 12px; }
+.admin-part { display: grid; gap: 6px; padding: 12px 0; }
+.admin-part + .admin-part { border-top: 1px solid rgba(var(--hi-rgb), .1); }
+.admin-part > p { margin: 0 4px; }
+.admin-part .chip { justify-self: start; }
+.admin-part .chip svg.i { width: 18px; height: 18px; }
+.admin-part .switch > span { min-width: 0; }
+
+/* ---- Test stuff ---- */
+.admin-ts { display: grid; gap: 8px; }
+.admin-ts > * { margin: 0; }
+.admin-ts[data-conf="likely"] { border-color: rgba(var(--warn-rgb), .35); }
+.admin-ts-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.admin-ts-title { margin: 0; font: 700 17px/1.35 var(--f-display); color: var(--bright); overflow-wrap: anywhere; }
+.admin-why { font-size: 14px; }
+.admin-why ul, .admin-linked ul { margin: 4px 0 0; padding-left: 20px; color: var(--text); }
+.admin-why li + li, .admin-linked li + li { margin-top: 2px; }
+.admin-why li.strong { color: var(--bright); font-weight: 600; }
+.admin-linked { display: grid; gap: 8px; padding: 10px 12px; border-radius: 14px; background: rgba(var(--deep-rgb), .55); font-size: 14px; }
+.admin-linked > * { margin: 0; }
+.admin-undo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; border-color: rgba(var(--ok-rgb), .35); }
+.admin-undo p { flex: 1 1 12em; margin: 0; }
+/* a line with a button: the button drops under the words when there's no room beside them */
+.admin-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px 12px 16px; }
+.admin-line > div { flex: 1 1 12em; min-width: 0; display: grid; gap: 2px; overflow-wrap: anywhere; }
+.admin-line b { font-weight: 600; color: var(--bright); line-height: 1.35; }
+.admin-line span { color: var(--muted); font-size: 14px; }
+.admin-line .btn { min-height: 44px; padding: 0 16px; }
+
+/* ---- Links ---- */
+.admin-link { display: flex; align-items: flex-start; gap: 6px; padding: 12px 6px 12px 16px; }
+.admin-link-main { flex: 1 1 auto; min-width: 0; display: grid; gap: 4px; overflow-wrap: anywhere; }
+.admin-link-main b { font-weight: 600; color: var(--bright); line-height: 1.35; }
+.admin-url { font-family: var(--f-mono); font-size: 13px; line-height: 1.4; color: var(--hi); overflow-wrap: anywhere; word-break: break-word; }
+code.admin-url { color: var(--soft); }
+.admin-link[data-s="down"] { box-shadow: inset 4px 0 0 var(--bad); }
+.admin-link[data-s="down"] .admin-state { color: var(--bad); }
+.admin-link[data-s="up"] .admin-state { color: var(--ok); }
+.admin-state { color: var(--muted); }
+.admin-edit { flex: none; min-height: 44px; width: 44px; padding: 0; }
+
+/* ---- Test booking: each step, passed or not, in words and a mark ---- */
+.admin-steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.admin-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 2px 10px; padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(var(--hi-rgb), .16); background: rgba(var(--panel-rgb), .9); }
+.admin-steps li > b { color: var(--bright); font-weight: 600; }
+.admin-steps li > span:not(.admin-mark) { grid-column: 2; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.admin-mark { grid-row: span 2; font-size: 18px; line-height: 1.3; text-align: center; color: var(--muted); }
+.admin-steps li[data-s="pass"] .admin-mark { color: var(--ok); }
+.admin-steps li[data-s="fail"] { border-color: rgba(var(--bad-rgb), .5); }
+.admin-steps li[data-s="fail"] .admin-mark { color: var(--bad); }
+.admin-mail { max-width: 100%; color: var(--text); }
+.admin-place .switch > span small { display: block; font-weight: 400; font-size: 13px; }
+/* (the choice of two as buttons: no button frame of their own) */
+.admin-place .seg-a { width: 100%; border: 0; }
+.admin-place .seg-a:not([aria-selected="true"]) { background: none; }
+/* (Referrals' four figures: two by two on a phone held upright, four in a row when there's room) */
+.admin-sums { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 560px) { .admin-sums { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.admin-sums .sum b { white-space: normal; }

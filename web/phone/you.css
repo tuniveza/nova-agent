@@ -1,0 +1,24 @@
+/* Nova Phone: You, the crew, and signing in (you.js, signin.js). The theme's colours only. */
+
+/* ---- Signing in, setting up, joining ---- */
+.signin-head .card-title { font-size: 24px; }
+.signin-note { margin: 0 4px; }
+/* (a hidden box with the email, so the phone's password keeper saves the right sign-in) */
+.signin-user { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); opacity: 0; pointer-events: none; }
+
+/* ---- A profile ---- */
+.you-card .planet { width: 120px; height: 120px; }
+.you-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 6px 0 4px; }
+.you-me { background: rgba(var(--hi-rgb), .3); color: var(--bright); }
+/* the world's name and what it's like: room kept for two lines, so nothing jumps when it comes */
+.you-cap { display: grid; gap: 2px; min-height: 2.9em; margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.you-world { color: var(--soft); font-weight: 700; font-size: 15px; }
+.you-facts { margin-top: 0; }
+.you-mono { font-family: var(--f-mono); font-size: 14px; overflow-wrap: anywhere; }
+.you-hint { margin: 0 4px; }
+.you-status { margin: 0; color: var(--bright); }
+
+/* ---- How it works: a dot for each part (the words say the same) ---- */
+.you-dot { display: block; width: 14px; height: 14px; border-radius: 50%; background: rgba(var(--muted-rgb), .55); box-shadow: 0 0 0 4px rgba(var(--muted-rgb), .14); }
+.you-dot[data-s="on"] { background: var(--ok); box-shadow: 0 0 0 4px rgba(var(--ok-rgb), .18); }
+.you-dot[data-s="partly"] { background: var(--warn); box-shadow: 0 0 0 4px rgba(var(--warn-rgb), .18); }
