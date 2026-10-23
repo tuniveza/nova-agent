@@ -260,8 +260,9 @@
     // holds back everything waiting for that, the service worker included)
     if (document.readyState !== "complete") return addEventListener("load", loadRest, { once: true });
     rested = true;
-    // (the session watch, signin.js: run, not just fetched, so being signed out elsewhere is noticed)
+    // (the session watch, signin.js, and the reminders, notices.js: run, not just fetched)
     load("signin.js").catch(() => {});
+    load("notices.js").catch(() => {});
     const files = [...new Set(Object.values(FILES).flat())];
     const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 200));
     // (fetched, not run: the service worker keeps each by its fingerprint, so opening a place later runs it from the
@@ -278,11 +279,12 @@
 
   // Where we are: #calendar, #calendar/card/abc (the screen and what's after it)
   function current() {
-    const [id, ...rest] = decodeURIComponent(location.hash.slice(1)).split("/");
+    // (anything after "?" is for the place to read, e.g. #money?filter=overdue)
+    const [id, ...rest] = decodeURIComponent(location.hash.slice(1).split("?")[0]).split("/");
     return sections.has(id) || FILES[id] ? { id, rest } : { id: "today", rest: [] };
   }
   // The tile that's lit: the place you're in (Portal's parts light Portal; anything else lights Nova)
-  const PORTAL = ["today", "inbox", "clients", "outreach", "you", "crew", "google", "tests", "admin", "signin", "join"];
+  const PORTAL = ["today", "inbox", "clients", "outreach", "you", "crew", "google", "tests", "admin", "signin", "join", "bookings", "bot"];
   const OWN = ["money", "agent", "calendar", "notes", "board", "index", "quests", "fixer", "computer", "observatory", "console", "help", "visualizer"];
   function mark() {
     const { id, rest } = current();
@@ -540,6 +542,15 @@
 
   // The service worker: Nova's files kept on the phone between visits (fetched again only when they change)
   if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).catch(() => {}));
+
+  // Opened from the Home Screen: notifications tapped later open Nova Phone (the service worker asks "nova-home")
+  if (matchMedia("(display-mode: standalone)").matches || navigator.standalone) caches?.open("nova-home").then((c) => c.put("/home", new Response("phone"))).catch(() => {});
+  // A tapped notification that opened Nova Phone (/phone/?open=<Nova's address>): that place
+  const opened = new URLSearchParams(location.search).get("open");
+  if (opened) {
+    history.replaceState(null, "", location.pathname + location.hash);
+    load("notices.js").then(() => { location.hash = (window.NovaPhone.place && window.NovaPhone.place(opened)) || "#inbox/alerts"; }).catch(() => (location.hash = "#inbox/alerts"));
+  }
 
   // The bar now, then the screen asked for (its code loads first)
   drawTiles();

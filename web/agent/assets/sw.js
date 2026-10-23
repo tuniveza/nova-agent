@@ -259,6 +259,14 @@ self.addEventListener("notificationclick", (event) => {
         if (portal) return (url && portal.navigate ? portal.navigate(portalAppUrl(url)).catch(() => portal) : Promise.resolve(portal)).then((w) => (w || portal).focus());
         return self.clients.openWindow(portalAppUrl(url || "/portal/"));
       }
+      // Nova Phone (/phone/): open there when it's open, or when it's this phone's Home Screen app; it turns
+      // Nova's address into its own place (notices.js)
+      const phone = windows.find((w) => new URL(w.url).pathname.startsWith("/phone/"));
+      if (phone && (!url || url.startsWith("/"))) {
+        if (url) phone.postMessage({ type: "nova-open", url });
+        return phone.focus();
+      }
+      if (home === "phone") return self.clients.openWindow(url && url.startsWith("/") ? "/phone/?open=" + encodeURIComponent(url) : "/phone/");
       // Nova Agent already open: bring it to the front, on the right panel
       const open = windows.find((w) => new URL(w.url).pathname === "/agent/");
       if (open && (!url || url.startsWith("/"))) {

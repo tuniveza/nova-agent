@@ -10,7 +10,7 @@
   const { esc, icon, row, list, choices, toast, confirm, post } = N;
   // [address, name, tile]
   const GROUPS = [
-    ["Studio", [["inbox", "Inbox", "portal"], ["inbox/alerts", "Alerts", "portal"], ["inbox/approvals", "Approvals", "portal"], ["calendar", "Calendar", "calendar"], ["clients", "Clients", "portal"], ["money", "Money", "invoicer"]]],
+    ["Studio", [["inbox", "Inbox", "portal"], ["inbox/alerts", "Alerts", "portal"], ["inbox/approvals", "Approvals", "portal"], ["calendar", "Calendar", "calendar"], ["clients", "Clients", "portal"], ["money", "Money", "invoicer"], ["bookings", "Booking tools", "calendar"], ["bot", "Website bot", "portal"]]],
     ["Outreach", [["outreach", "Campaigns", "portal"], ["outreach/one", "One-to-one", "portal"], ["outreach/social", "Social", "portal"], ["outreach/funnel", "Funnel", "portal"]]],
     ["Plans", [["agent", "Agent", "chat"], ["agent/plan", "Today's plan", "missions"], ["agent/missions", "Missions", "missions"], ["quests", "Quests", "quests"], ["notes", "Notes", "notes"], ["board", "Board", "board"], ["index", "Index", "index"]]],
     ["Helpers", [["observatory", "Observatory", "observatory"], ["console", "Console", "console"], ["lossless", "Lossless", "lossless"], ["help", "Manual", "manual"], ["visualizer", "Nova", "visualizer"]]],
