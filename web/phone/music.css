@@ -1,0 +1,12 @@
+/* Nova Phone: Today in music (music.js) */
+.music-art { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; background: rgba(var(--hi-rgb), .12); }
+.music-none { display: grid; place-items: center; color: var(--hi); }
+.music-none svg.i { width: 20px; height: 20px; }
+.music-big { width: 160px; height: 160px; border-radius: 18px; object-fit: cover; margin: 0 auto 12px; }
+.music-song { text-align: center; }
+.music-quote { margin: 0; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px 14px; align-items: center; }
+.music-quote blockquote { margin: 0; font: 600 17px/1.45 var(--f-body); color: var(--bright); overflow-wrap: anywhere; }
+.music-quote figcaption { grid-column: 1 / -1; }
+.music-face { position: relative; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: rgba(var(--hi-rgb), .18); color: var(--soft); font: 700 18px/1 var(--f-display); }
+.music-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.music-src { margin: 0 4px; }

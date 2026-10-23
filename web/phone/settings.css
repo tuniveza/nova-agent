@@ -1,0 +1,51 @@
+/* Nova Phone: Settings (settings.js). The theme's colours only; phone.css's parts first. */
+.settings-status { display: grid; gap: 10px; }
+.settings-line { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+.settings-line > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.settings-line svg.i { width: 16px; height: 16px; color: var(--hi); }
+.settings-news { margin: 0; font-size: 14px; color: var(--text); }
+.settings-news b { color: var(--soft); font-weight: 600; }
+.settings-more { justify-self: start; min-height: 44px; padding: 0 4px; }
+.settings-hint { margin: -6px 4px 0; }
+.settings-switches { gap: 8px; }
+/* the themes: round orbs in each theme's own colours, the name under it */
+.settings-look { display: grid; gap: 14px; }
+.settings-look > p { margin: 0; }
+.settings-orbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px 6px; }
+.settings-orb { display: grid; justify-items: center; align-content: start; gap: 6px; min-height: 76px; padding: 6px 2px; border: 0; border-radius: 16px; background: none; color: var(--text); font: 600 13px/1.25 var(--f-body); text-align: center; overflow-wrap: anywhere; }
+.settings-orb:active { background: rgba(var(--hi-rgb), .1); }
+.settings-orb-dot { width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 30% 26%, var(--ob, var(--hi)) 0%, var(--oa, var(--accent)) 42%, var(--oc, var(--accent-3)) 74%, var(--od, var(--void)) 100%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), 0 6px 16px -8px var(--oa, var(--accent)); }
+.settings-orb[aria-checked="true"] { color: var(--bright); }
+.settings-orb[aria-checked="true"] .settings-orb-dot { box-shadow: 0 0 0 3px var(--void), 0 0 0 5px var(--hi), 0 6px 16px -8px var(--oa, var(--accent)); }
+.settings-custom { display: grid; grid-template-columns: 80px minmax(0, 1fr); align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(var(--hi-rgb), .12); }
+.settings-sliders { display: grid; gap: 10px; min-width: 0; }
+/* sliders: a 44px place to put your thumb, the track showing what it does */
+.settings-slider { display: grid; gap: 4px; min-width: 0; }
+.settings-slider > span { display: flex; justify-content: space-between; gap: 10px; font: 600 14px/1.3 var(--f-body); color: var(--soft); }
+.settings-slider output { color: var(--muted); font-weight: 500; }
+.settings-slider input[type="range"] { width: 100%; height: 44px; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; }
+.settings-slider input[type="range"]::-webkit-slider-runnable-track { height: 10px; border-radius: 5px; background: var(--track, linear-gradient(90deg, var(--accent), var(--hi))); }
+.settings-slider input[type="range"]::-moz-range-track { height: 10px; border-radius: 5px; background: var(--track, linear-gradient(90deg, var(--accent), var(--hi))); }
+.settings-slider input[type="range"]::-webkit-slider-thumb { width: 26px; height: 26px; margin-top: -8px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--void), 0 2px 6px rgba(0, 0, 0, .5); -webkit-appearance: none; appearance: none; }
+.settings-slider input[type="range"]::-moz-range-thumb { width: 26px; height: 26px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--void), 0 2px 6px rgba(0, 0, 0, .5); }
+/* music */
+.settings-music { display: grid; gap: 14px; }
+.settings-music > p { margin: 0; }
+.settings-seed { display: grid; gap: 2px; }
+.settings-seed b { font: 700 20px/1.3 var(--f-mono, ui-monospace, monospace); letter-spacing: .08em; color: var(--bright); overflow-wrap: anywhere; }
+.settings-code { display: grid; gap: 10px; }
+/* Apps and links */
+details.settings-links > summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; font-weight: 700; color: var(--bright); cursor: pointer; overflow-wrap: anywhere; }
+details.settings-links > summary::-webkit-details-marker { display: none; }
+details.settings-links[open] > summary { margin-bottom: 10px; }
+.settings-link-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.settings-link-list > li { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid rgba(var(--hi-rgb), .1); overflow-wrap: anywhere; }
+.settings-link-list > li:first-child { border-top: 0; }
+.settings-link-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.settings-link-top b { color: var(--bright); margin-right: 4px; }
+.settings-link-url { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+.settings-link-url a, .settings-link-url code { min-width: 0; overflow-wrap: anywhere; word-break: break-all; }
+.settings-link-url code { font: 13px/1.4 var(--f-mono, ui-monospace, monospace); color: var(--muted); }
+/* install */
+.settings-steps { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 8px; line-height: 1.5; }
+.settings-steps b { color: var(--bright); }

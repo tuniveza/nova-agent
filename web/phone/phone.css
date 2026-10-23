@@ -434,11 +434,6 @@ button.sum { border: 1px solid rgba(var(--hi-rgb), .14); font: inherit; cursor: 
 .sticky-dot { display: block; width: 22px; height: 22px; border-radius: 6px; background: #FFC069; }
 .board-img, .shot img { width: 100%; height: auto; border-radius: 12px; }
 .shot { margin: 0; display: grid; gap: 8px; }
-/* console: what was typed and what came back */
-.console { display: grid; gap: 6px; padding: 14px; border-radius: 16px; background: rgba(0, 0, 0, .45); border: 1px solid rgba(var(--hi-rgb), .14); font: 14px/1.5 var(--f-mono, ui-monospace, monospace); min-height: 40vh; overflow-wrap: anywhere; }
-.console p { margin: 0; }
-.console .cmd { color: var(--hi); }
-.console .out { color: var(--text); }
 .input.mono { font-family: var(--f-mono, ui-monospace, monospace); }
 
 /* the tile drawings' colours (tiles.js: Nova Desk's drawings, their inline styles as classes) */
@@ -513,3 +508,43 @@ button.sum { border: 1px solid rgba(var(--hi-rgb), .14); font: inherit; cursor: 
 .nt-row.names-off .nt { padding-top: 0; align-content: center; }
 .nt-row.names-off .nt :is(.nt-name, .nt-short) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .nt-row.names-off .nt > .pico { place-items: center; padding: 0; }
+
+/* ---- Nova Phone as a whole (the shell, 23 Oct 2026) ---- */
+/* your planet on the More button, a tap from every main screen (More opens on your card) */
+.more-btn { position: relative; }
+.top-me { position: absolute; right: 4px; bottom: 4px; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 0 2px var(--void); background: rgba(var(--hi-rgb), .2); }
+/* a number on a tile in More, as on the Nova tiles */
+.tile { position: relative; }
+.tile .tab-badge { top: 0; right: calc(50% - 40px); }
+.row-end .tab-badge, .row-lead .tab-badge { position: static; display: inline-block; box-shadow: none; }
+/* Settings → Text size: larger words in the page (the title bar and the Nova tiles keep their size) */
+html[data-size="large"] .page-in { zoom: 1.12; }
+/* Settings → Animations off: nothing slides or fades in */
+html[data-motion="calm"] .sheet[open], html[data-motion="calm"] .page-in { animation: none; }
+html[data-motion="calm"] *, html[data-motion="calm"] *::before, html[data-motion="calm"] *::after { transition-duration: 0s !important; }
+/* Settings → Starfield off, or the battery saver on: the sky without its stars */
+html[data-stars="off"] .app::before, html.nova-saver .app::before { display: none; }
+html.nova-saver .skel i { animation: none; }
+/* a toast with a button in it (Undo): the words, then the button on the same line, onto the next if it's long */
+.toast.has-action { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; padding: 8px 8px 8px 20px; }
+.toast-action { flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: rgba(var(--void-rgb), .12); color: inherit; font: 700 15px/1 var(--f-body); white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+.toast-action:active { background: rgba(var(--void-rgb), .22); }
+/* voice commands (voice.js): the microphone, glowing while it listens */
+.voice-ring { justify-self: center; display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; color: var(--hi); background: rgba(var(--hi-rgb), .1); box-shadow: 0 0 0 1px rgba(var(--hi-rgb), .3); }
+.voice-ring svg.i { width: 34px; height: 34px; }
+.voice-ring.on { background: rgba(var(--hi-rgb), .22); box-shadow: 0 0 0 6px rgba(var(--hi-rgb), .14), 0 0 0 1px var(--hi); }
+.voice-ring.thinking { opacity: .7; }
+.voice-heard { margin: 0; text-align: center; color: var(--bright); font-weight: 600; overflow-wrap: anywhere; }
+.voice-answer { margin: 0; padding: 14px 16px; border-radius: 16px; background: rgba(var(--panel-2-rgb), .9); line-height: 1.5; overflow-wrap: anywhere; }
+.voice-help { margin: 0; text-align: center; }
+/* More: your card first, the places as tiles or as a list saying what each is for */
+.more-me .more-planet { width: 96px; height: 96px; }
+.more-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 4px 0 6px; }
+.more-world { margin: 0 0 4px; }
+.more-view { margin-top: 4px; }
+.more-soon { opacity: .55; }
+.more-status { margin: 0 4px; text-align: center; }
+.more-acts { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 8px; }
+.more-act { display: grid; justify-items: center; align-content: center; gap: 6px; min-height: 72px; padding: 8px 4px; border-radius: 16px; border: 1px solid rgba(var(--hi-rgb), .22); background: rgba(var(--hi-rgb), .08); color: var(--bright); font: 600 13px/1.2 var(--f-body); text-align: center; overflow-wrap: anywhere; }
+.more-act svg.i { color: var(--hi); }
+.more-act:active { background: rgba(var(--hi-rgb), .18); }

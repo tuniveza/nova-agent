@@ -11,6 +11,34 @@
   const $ = (id) => document.getElementById(id);
   const page = $("page"), tabs = $("tabs"), title = $("title"), left = $("top-left"), right = $("top-right"), sheet = $("sheet"), toastEl = $("toast");
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch (err) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (err) {} } };
+  const stored = (k, d) => { try { return JSON.parse(store.get(k)) ?? d; } catch (err) { return d; } };
+
+  // ---- Nova Phone's own settings on this device ("nova-phone-options"; the ones Nova Desk has too stay in its
+  // own keys, so both apps agree): start: where Nova Phone opens ("last" where you left off, "today");
+  // more: More as tiles or as a list that says what each place is for ----
+  const OPT = "nova-phone-options";
+  const OPT_DEFAULTS = { start: "last", more: "tiles" };
+  const options = () => ({ ...OPT_DEFAULTS, ...stored(OPT, {}) });
+  function setOption(k, v) {
+    const o = { ...options(), [k]: v };
+    store.set(OPT, JSON.stringify(o));
+    dispatchEvent(new CustomEvent("novaphoneoptions", { detail: o }));
+    return o;
+  }
+  // Opened again with no place in the address (from the Home Screen, after signing in): back where you left off,
+  // as Nova Desk does (remember.js), unless Settings says to open on Today
+  if (location.hash.length <= 1 && options().start === "last") {
+    const last = store.get("nova-phone-last");
+    if (last && last !== "today") history.replaceState(null, "", `#${last}`);
+  }
+  // (a page that lists its own files, like the preview, has Nova's shared files beside it too)
+  const LIVE = !!document.querySelector('script[src="/phone/phone.js"]');
+  const asset = (path) => (LIVE ? path : path.split("/").pop());
+  // The browser's own offer to install (Android, computers): kept for Settings → Install
+  let installOffer = null;
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installOffer = e; dispatchEvent(new CustomEvent("novaphoneinstall")); });
+  addEventListener("appinstalled", () => { installOffer = null; dispatchEvent(new CustomEvent("novaphoneinstall")); });
 
   // ---- Icons: 24px line drawings in the text's colour ----
   const ICONS = {
@@ -33,6 +61,11 @@
     book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     cog: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>', play: '<path d="M7 4v16l13-8z"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    // (Nova Phone as a whole: voice, music, sounds, install, links, the look)
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>', music: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+    sound: '<path d="M4 10v4h3l5 4V6L7 10z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>', download: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-1-.8-1.4-.8-2.3 0-.9.7-1.6 1.6-1.6H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7" r="1.2"/>',
+    out: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>', battery: '<rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M7 10v4"/>',
   };
   const icon = (name, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.more}</svg>`;
 
@@ -56,9 +89,13 @@
     // (once the rest of its file has run: it may draw with things defined further down)
     if (current().id === def.id) queueMicrotask(show);
   }
+  // (Portal's tile: everything waiting in Portal, as Nova Desk's More badge adds them up: new enquiries, unseen
+  // alerts, approvals, campaigns and one-to-one emails, social posts, the funnel)
+  const PORTAL_BADGES = ["inbox", "inbox/alerts", "inbox/approvals", "outreach", "outreach/social", "outreach/funnel"];
+  const badgeOf = (to) => (to === "today" ? PORTAL_BADGES.reduce((a, k) => a + (badges[k] || 0), 0) : badges[to] || 0);
   function tileHtml([to, name, p], tall) {
     const art = p && window.NovaTile ? window.NovaTile(p) : `<span class="pico nova-pico" aria-hidden="true"><img src="${window.NovaMark || "/agent/icon.svg"}" alt=""></span>`;
-    const n = to === "today" ? badges.inbox : badges[to];
+    const n = badgeOf(to);
     return `<a class="nt${tall ? " tall" : ""}" href="#${to}" data-to="${to}" aria-label="${esc(name)}">${art}<span class="nt-name" aria-hidden="true">${esc(name)}</span>${SHORT[name] ? `<span class="nt-short" aria-hidden="true">${SHORT[name]}</span>` : ""}${n ? `<b class="tab-badge">${n > 99 ? "99+" : n}</b>` : ""}</a>`;
   }
   function drawTiles() {
@@ -82,11 +119,90 @@
   document.fonts?.ready.then(fitTiles);
   // (and again once the real font is in: measured with the stand-in font, the names looked too wide)
   document.fonts?.addEventListener?.("loadingdone", () => requestAnimationFrame(fitTiles));
+  // (several badges arriving together redraw the tiles once)
+  let tilesSoon = false;
   function badge(id, n) {
     if ((badges[id] || 0) === (n || 0)) return;
     badges[id] = n || 0;
-    drawTiles();
+    if (tilesSoon) return;
+    tilesSoon = true;
+    queueMicrotask(() => { tilesSoon = false; drawTiles(); dispatchEvent(new CustomEvent("novaphonebadges", { detail: { ...badges } })); });
   }
+
+  // ---- Badges from what the places fetch anyway (portal.md G1): each answer below sets its tile's number as it
+  // arrives, and shell.js asks only for the ones nobody has fetched for a few minutes (one at a time, only while
+  // Nova Phone is on screen). The same counts as Nova Desk's Portal (app.js, social.js, funnel.js, money.js,
+  // teststuff.js). [address, which answers count (none filtered away), what it sets]
+  const seen = {};
+  const seenAlert = () => Number(store.get("nova-seen-alert")) || 0;
+  let alertTop = 0, campaignsN = 0, oneN = 0;
+  const onAlerts = () => { const [id, part] = decodeURIComponent(location.hash.slice(1)).split("/"); return id === "inbox" && /^alerts?$/.test(part || ""); };
+  function alertsSeen() {
+    if (!alertTop) return;
+    if (alertTop > seenAlert()) store.set("nova-seen-alert", String(alertTop));
+    badge("inbox/alerts", 0);
+  }
+  const unfiltered = (u, ok = []) => { const s = u.searchParams.get("status"); return !s || ["all", ...ok].includes(s); };
+  const COUNTS = [
+    ["/app/api/booking-actions", (u) => unfiltered(u, ["pending"]), (d) => badge("inbox/approvals", (d.actions || []).filter((a) => a.status === "pending").length)],
+    ["/app/api/campaigns", (u) => unfiltered(u, ["waiting", "pending_approval"]), (d) => { campaignsN = (d.campaigns || []).filter((c) => c.status === "pending_approval").length; badge("outreach", campaignsN + oneN); }],
+    ["/app/api/outreach", (u) => unfiltered(u, ["pending_approval", "waiting"]), (d) => { oneN = (d.outreach || []).filter((o) => o.status === "pending_approval").length; badge("outreach/one", oneN); badge("outreach", campaignsN + oneN); }],
+    ["/app/api/social", () => true, (d) => badge("outreach/social", (d.posts || []).filter((p) => p.status === "pending_approval" || p.status === "manual").length)],
+    ["/app/api/funnel", () => true, (d) => badge("outreach/funnel", d.canDecide ? (d.prospects || []).filter((p) => p.step === "approve").length : 0)],
+    ["/app/api/money", () => true, (d) => { const s = d.summary; if (s) badge("money", (d.canDecide ? s.waitingApproval || 0 : 0) + ((s.overdue && s.overdue.count) || 0)); }],
+    ["/quests/state", (u) => !u.searchParams.get("who"), (d) => {
+      const day = String(d.now || "").slice(0, 10);
+      if (day) badge("quests", (d.quests || []).filter((q) => (q.status === "todo" || q.status === "doing") && q.start && String(q.start).startsWith(day)).length);
+    }],
+    ["/app/api/notifications", () => true, (d) => {
+      const list = d.notifications || [];
+      alertTop = list.reduce((m, n) => Math.max(m, Number(n.id) || 0), 0);
+      if (onAlerts()) return alertsSeen();
+      badge("inbox/alerts", list.filter((n) => Number(n.id) > seenAlert()).length);
+    }],
+    ["/app/api/tidy", () => true, (d) => badge("tests", (d.items || []).filter((i) => i.confidence === "likely" || i.likely === true).length)],
+  ];
+  // Who's signed in, kept on this device for the planet in the title bar and More's card (only what's shown)
+  const ME = "nova-phone-me";
+  function keepMe(d) {
+    const s = d && (d.staff || d.user);
+    if (!s || !s.id) return;
+    const me = { id: s.id, display_name: s.display_name || "", role: s.role || "staff", email: s.email || "", created_at: s.created_at || "", planet: s.planet ? { name: s.planet.name || "", description: s.planet.description || "" } : null, at: Date.now() };
+    const was = stored(ME, null);
+    store.set(ME, JSON.stringify(me));
+    if (!was || was.id !== me.id) paintMe();
+    // (Colour from my planet: the planet's colours come with who you are)
+    const c = s.planet && s.planet.colors;
+    if (c && c.glow) {
+      const pal = { seed: s.planet_seed || s.id, glow: c.glow, streak: c.streak || c.base || c.glow, light: c.light, base: c.base, sky: c.sky, nebula0: c.nebula0, nebula2: c.nebula2 };
+      if (store.get("nova-look-planet") !== JSON.stringify(pal)) { store.set("nova-look-planet", JSON.stringify(pal)); window.NovaPhoneLook?.apply(); }
+    }
+  }
+  const me = () => stored(ME, null);
+  function watch(path, method, data) {
+    if (method && method !== "GET") return;
+    let u;
+    try { u = new URL(path, location.origin); } catch (err) { return; }
+    if (u.pathname === "/auth/me") return keepMe(data);
+    for (const [at, ok, fn] of COUNTS) {
+      if (u.pathname !== at || !ok(u)) continue;
+      seen[at] = Date.now();
+      try { fn(data || {}); } catch (err) {}
+    }
+  }
+  // The planet in the title bar's More button (your planet + name, a tap away from every main screen)
+  function paintMe() {
+    const m = me(), btn = left.querySelector("a.more-btn");
+    if (!btn) return;
+    let img = btn.querySelector(".top-me");
+    if (!m) return img && img.remove();
+    const src = `/staff/${encodeURIComponent(m.id)}/planet.svg?size=64`;
+    if (img && img.getAttribute("src") === src) return;
+    if (!img) { img = document.createElement("img"); img.className = "top-me"; img.alt = ""; img.width = 20; img.height = 20; img.decoding = "async"; btn.append(img); }
+    img.src = src;
+  }
+  // (a planet that can't be drawn, as in the preview, isn't shown at all)
+  document.addEventListener("error", (e) => { if (e.target && e.target.classList && e.target.classList.contains("top-me")) e.target.hidden = true; }, true);
   // Each place's code, run when it's first opened (ns CLAUDE.md 2e: what's needed first comes first), and the
   // rest fetched quietly once the first screen is up, so a tap on a tile is still quick. "*": a module. Today also
   // shows Inbox's rows, the Calendar and Quests.
@@ -96,6 +212,8 @@
     google: ["admin.js"], tests: ["admin.js"], computer: ["computer.js"], fixer: ["fixer.js"], visualizer: ["visualizer.js"],
     index: ["memory.js"], board: ["board.js"], help: ["manual.js"], observatory: ["observatory.js"], console: ["console.js"], more: ["more.js"],
     lossless: ["lossless.js"], bookings: ["bookings.js"], bot: ["bot.js"],
+    // (Nova Phone as a whole: its settings, and Today in music)
+    settings: ["settings.js"], music: ["music.js"],
   };
   // (its name and tile in the title bar while it comes)
   const NAMES = {
@@ -104,6 +222,7 @@
     computer: "Computer:computer", tests: "Test stuff:portal", fixer: "Fixer:fixer", visualizer: "Nova:visualizer", index: "Index:index", board: "Board:board",
     help: "Manual:manual", observatory: "Observatory:observatory", console: "Console:console", more: "More",
     lossless: "Lossless:lossless", bookings: "Booking tools:calendar", bot: "Website bot:portal",
+    settings: "Settings", music: "Today in music",
   };
   const loading = new Map();
   function load(f) {
@@ -167,6 +286,40 @@
     for (const a of tabs.querySelectorAll(".nt")) (a.dataset.to === to ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   }
 
+  // ---- Where you've been (Nova Desk's navigation panel's History, and remember.js): the newest 20 places, and
+  // the one to open again next time (a form being written isn't somewhere to come back to: its place is) ----
+  const HIST = "nova-phone-history";
+  function remember(key, bar) {
+    const parts = key.replace(/\/+$/, "").split("/");
+    const to = parts.some((p) => /^(new|edit)$/.test(p)) ? parts[0] : parts.join("/");
+    store.set("nova-phone-last", to);
+    const h = stored(HIST, []).filter((x) => x && x.to !== to);
+    h.unshift({ to, title: String(bar.title || ""), tile: bar.tile || "", t: Date.now() });
+    store.set(HIST, JSON.stringify(h.slice(0, 20)));
+  }
+  // ---- What you've been doing, newest first (Nova Desk's status line's "Lately"), on this device ----
+  const ACT = "nova-phone-activity";
+  function activity(text) {
+    if (!text) return stored(ACT, []);
+    const a = stored(ACT, []);
+    if (a[0] && a[0].text === text && Date.now() - a[0].t < 60000) return a;
+    const where = (NAMES[current().id] || "").split(":")[0];
+    a.unshift({ t: Date.now(), text: String(text), where });
+    store.set(ACT, JSON.stringify(a.slice(0, 40)));
+    return a;
+  }
+  // ---- Nova Phone as a whole (shell.js), once the first screen is up: the badges' light check, updates, who
+  // you are, the time you've been here, sounds and music when they're on ----
+  let shellStarted = false;
+  function afterFirst() {
+    if (shellStarted) return;
+    shellStarted = true;
+    const go = () => { if (!window.NovaPhoneLook) load("look.js").catch(() => {}); load("shell.js").catch(() => { shellStarted = false; }); };
+    if (document.readyState === "complete") setTimeout(go, 300);
+    else addEventListener("load", () => setTimeout(go, 300), { once: true });
+  }
+  const sound = (kind) => (window.NovaPhoneSound ? window.NovaPhoneSound.play(kind) : false);
+
   let drawn = "", drawing = 0;
   async function show() {
     const { id, rest } = current();
@@ -212,7 +365,10 @@
     if (token !== drawing) return;
     page.replaceChildren(box);
     head(bar);
+    remember(key, bar);
+    if (onAlerts()) alertsSeen();
     loadRest();
+    afterFirst();
     if (typeof s.bottom === "function" ? s.bottom(rest) : s.bottom) page.scrollTop = page.scrollHeight;
     else if (fresh) page.scrollTop = 0;
   }
@@ -221,7 +377,8 @@
     title.innerHTML = `${tile && window.NovaTile ? window.NovaTile(tile) : ""}${esc(t)}`;
     document.title = t === "Nova Phone" ? t : `${t} · Nova Phone`;
     // (Back on a screen inside another; on a main screen, More: every place and the look)
-    left.innerHTML = back ? `<a class="icon-btn" href="${esc(back)}" aria-label="Back">${icon("back")}</a>` : `<a class="icon-btn${current().id === "more" ? " lit" : ""}" href="#more" aria-label="More: every place, and the look">${icon("more")}</a>`;
+    left.innerHTML = back ? `<a class="icon-btn" href="${esc(back)}" aria-label="Back">${icon("back")}</a>` : `<a class="icon-btn more-btn${current().id === "more" ? " lit" : ""}" href="#more" aria-label="More: you, every place, settings and the look">${icon("more")}</a>`;
+    if (!back) paintMe();
     right.innerHTML = action ? (action.href ? `<a class="icon-btn lit" href="${esc(action.href)}" aria-label="${esc(action.label)}">${icon(action.icon || "plus")}</a>` : `<button type="button" class="icon-btn lit" aria-label="${esc(action.label)}">${icon(action.icon || "plus")}</button>`) : "";
     if (action && action.run) right.querySelector("button").addEventListener("click", action.run);
   }
@@ -243,9 +400,14 @@
     } catch (e) {
       throw Object.assign(new Error(navigator.onLine === false ? "You're offline" : "Couldn't reach Nova"), { offline: true });
     }
-    if (res.status === 401 || res.status === 403) throw Object.assign(new Error("Sign in first"), { signIn: true });
+    if (res.status === 401 || res.status === 403) {
+      if (res.status === 401 && String(path).startsWith("/auth/me")) { store.set(ME, ""); paintMe(); }
+      throw Object.assign(new Error("Sign in first"), { signIn: true });
+    }
     const data = res.headers.get("content-type")?.includes("json") ? await res.json().catch(() => null) : await res.text();
     if (!res.ok) throw Object.assign(new Error((data && (data.error || data.message)) || `Something went wrong (${res.status})`), { status: res.status, data });
+    // (the tiles' numbers, and who you are, from what was fetched anyway)
+    if (data && typeof data === "object") watch(path, (rest.method || "GET").toUpperCase(), data);
     return data;
   }
   const post = (path, body, headers) => api(path, { method: "POST", body: JSON.stringify(body || {}), headers });
@@ -293,12 +455,28 @@
 
   // A toast: a word that comes and goes
   let toastTimer = 0;
-  function toast(text, bad = false) {
+  // toast(text, bad, { action: "Undo", run }): with a button inside it that runs fn and hides the toast (it stays
+  // up about 6.5 s so there's time to press it)
+  function toast(text, bad = false, extra = null) {
+    // (a sound for it, when sounds are on: something done, sent, deleted or gone wrong; and it goes on the list
+    // of what you've been doing)
+    sound(bad ? "error" : /\b(sent|posted|emailed|shared)\b/i.test(text) ? "send" : /\b(deleted|removed)\b/i.test(text) ? "remove" : "done");
+    if (!bad) activity(text);
     toastEl.textContent = text;
     toastEl.classList.toggle("bad", bad);
+    const act = extra && extra.action && typeof extra.run === "function";
+    toastEl.classList.toggle("has-action", !!act);
+    if (act) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "toast-action";
+      b.textContent = extra.action;
+      b.addEventListener("click", () => { clearTimeout(toastTimer); toastEl.hidden = true; try { extra.run(); } catch (err) { console.warn("Nova Phone:", err); } });
+      toastEl.append(b);
+    }
     toastEl.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => (toastEl.hidden = true), bad ? 4500 : 2600);
+    toastTimer = setTimeout(() => (toastEl.hidden = true), act ? 6500 : bad ? 4500 : 2600);
   }
   // A sheet from the bottom. confirm(): resolves true or false. choose(): the chosen value, or null.
   function openSheet(html, wire) {
@@ -366,5 +544,14 @@
   window.NovaPhone = {
     section, has: (id) => sections.has(id) || !!FILES[id], show, css, badge, api, post, esc, icon, row, list, field, toggle, choices, empty, oops, skeleton,
     toast, confirm, choose, form, busy, today, localStamp, asDate, ago, money, initials, signInCard, paint,
+    // Nova Phone as a whole (the shell): sound(kind) plays one of Nova Phone's calm sounds when sounds are on;
+    // look: the theme for Nova Phone and Nova Desk (look.js); options()/setOption(k, v): Nova Phone's own
+    // settings; badges(): every tile's number; history(): the places you've been; activity(text?): what you've
+    // been doing (adds one); me(): who's signed in, as last seen; refresh(): everything again; voice(): say what
+    // to do; script(file): a file of Nova Phone's, run once; asset(path): one of Nova's shared files
+    sound, get look() { return window.NovaPhoneLook || null; }, options, setOption, badges: () => ({ ...badges, today: badgeOf("today") }),
+    history: () => stored(HIST, []), activity, me, script: load, count: (path, data) => watch(path, "GET", data), seen: () => ({ ...seen }), asset, installOffer: () => installOffer, clearInstallOffer: () => (installOffer = null),
+    refresh: () => (window.NovaPhoneShell ? window.NovaPhoneShell.refresh() : ((drawn = ""), show())),
+    voice: () => load("voice.js").then(() => window.NovaPhoneVoice.open()),
   };
 })();
