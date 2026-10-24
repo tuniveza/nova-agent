@@ -119,6 +119,8 @@
     booking: { list: "booking-actions", one: null, act: (id, a) => `booking-actions/${id}/${a}` },
   };
   const PORTAL = { enquiries: "enquiries", chats: "conversations", conversations: "conversations", clients: "clients", money: "money", campaigns: "campaigns", outreach: "outreach", social: "social", approvals: "booking-actions", tests: "tidy", alerts: "notifications" };
+  // The Fixer, switched off (24 Oct 2026): see the fixer command; true again once FIXER_ON=1 is on the server
+  const FIXER_ON = false;
   // Desk's apps, as Nova Phone's places (and the phone's own other places)
   const APPS = { invoicer: "money", portal: "today", calendar: "calendar", notes: "notes", board: "board", index: "index", lossless: "lossless", visualizer: "visualizer", observatory: "observatory", fixer: "fixer", console: "console", agent: "agent", quests: "quests", manual: "help" };
   const MORE_PLACES = { nova: "visualizer", today: "today", inbox: "inbox", clients: "clients", outreach: "outreach", money: "money", computer: "computer", google: "google", tests: "tests", crew: "crew", you: "you", more: "more", help: "help" };
@@ -310,11 +312,15 @@
       },
     },
 
+    // Fixer off (24 Oct 2026, the user: "just disable it entirely in all aspects for now it's a waste of time"):
+    // "fixer" only says so (nothing checked, nothing asked of the server). FIXER_ON = true puts it all back,
+    // with the help and usage below, once FIXER_ON=1 is on the server again.
     fixer: {
-      help: "The Fixer: status, check now, jobs (admins)",
-      usage: "fixer [status | check | jobs]",
-      subs: ["status", "check", "jobs"],
+      help: FIXER_ON ? "The Fixer: status, check now, jobs (admins)" : "The Fixer: switched off for now",
+      usage: FIXER_ON ? "fixer [status | check | jobs]" : "fixer",
+      subs: FIXER_ON ? ["status", "check", "jobs"] : [],
       async run(ctx, [sub = "status"]) {
+        if (!FIXER_ON) return void ctx.print("The Fixer is switched off for now: it doesn't check anything.");
         adminOnly(ctx);
         sub = sub.toLowerCase();
         if (sub === "check") {
@@ -417,7 +423,7 @@
         adminOnly(ctx);
         sub = sub.toLowerCase();
         if (sub === "invite") return ctx.open("crew");
-        if (sub === "pages") { ctx.open("more"); return ctx.ok("Opened More: Admin has the crew, Google, Computer, Test stuff and the Fixer."); }
+        if (sub === "pages") { ctx.open("more"); return ctx.ok("Opened More: Admin has the crew, Google, Computer and Test stuff."); }
         const r = await ctx.api("/staff");
         const list = firstList(r);
         ctx.table(list.map((p) => ({ id: p.id, name: p.display_name || p.name, role: p.role, state: p.status })), ["id", "name", "role", "state"]);
@@ -683,7 +689,7 @@
     calendar: "calendar week", notes: "notes list", board: "board list", agent: 'agent "what\'s on today?"', ask: 'ask "who booked last week?"', index: "index search pricing", open: "open board",
     enquiries: "enquiries", chats: "chats", clients: "clients", money: "money", campaigns: "campaigns", outreach: "outreach", social: "social", approvals: "approvals", alerts: "alerts", tests: "tests",
     portal: "portal enquiries", approve: "approve campaign 12", reject: "reject social 7",
-    google: "google sync calendar", fixer: "fixer jobs", lossless: "lossless start", music: "music next", theme: "theme pulsar", logs: "logs 20",
+    google: "google sync calendar", fixer: FIXER_ON ? "fixer jobs" : "fixer", lossless: "lossless start", music: "music next", theme: "theme pulsar", logs: "logs 20",
     computer: "computer", deploy: "deploy status", backup: "backup", vps: "vps", shell: "shell", admin: "admin crew", clear: "clear", history: "history",
   };
   const ALIASES = { "?": "help", h: "help", q: "quests", quest: "quests", task: "quests", tasks: "quests", cal: "calendar", note: "notes", boards: "board", enquiry: "enquiries", inbox: "enquiries", chat: "chats", conversations: "chats", client: "clients", invoices: "money", campaign: "campaigns", posts: "social", server: "computer", desk: "computer", cls: "clear", ls: "help", find: "search", ver: "version", terminal: "shell", ssh: "vps" };

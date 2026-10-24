@@ -12,10 +12,9 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110..125,700..900&family=Saira:wght@400..700&family=Source+Code+Pro:wght@400;600&display=swap">
   <link rel="stylesheet" href="/shared/themes.css">
   <link rel="stylesheet" href="/shared/tools.css">
-  <link rel="stylesheet" href="fixer.css">
+  <link rel="stylesheet" href="off.css">
   <!-- Every button's look (buttons.css; body.nb-plain: plain buttons join in) -->
   <link rel="stylesheet" href="/shared/buttons.css">
-  <link rel="stylesheet" href="/shared/scrollbars.css"><!-- Scrollbars: easy to grab, in the theme's colours -->
   <link rel="stylesheet" href="/shared/fit.css"><script src="/shared/fit.js" defer></script><!-- Fit on screen: nothing floats past the edge -->
   <script src="/shared/spectrum.js"></script>
   <script src="/shared/themes.js"></script>
@@ -23,39 +22,24 @@
 <link rel="stylesheet" href="/shared/simple.css"><link rel="stylesheet" href="/shared/onescreen.css"><!-- (here from the start, not added later by fit.js: nothing moves when they arrive) -->
 </head>
 <body class="nb-plain nb-tool">
-<!-- The Fixer, from the ground up (16 Oct 2026): four strict rules, never compromised, checked on
-     all of Nova Agent every 30 minutes (src/fixer/strict.ts). One screen: only the list scrolls. -->
-<main>
-  <header class="top">
-    <h1 class="nt-title">Fixer</h1>
-    <p class="nt-sub" id="sub">Checks all of Nova Agent every 30 minutes against four rules.</p>
-  </header>
-
-  <section class="rules" id="rules" aria-label="The four rules"></section>
-
-  <div class="bar">
-    <p class="when" id="when">–</p>
-    <button type="button" id="auto" aria-pressed="true">Auto-fix: On</button>
-    <button type="button" id="check" class="primary">Check now</button>
-  </div>
-
-  <div class="filters" role="group" aria-label="Show">
-    <div class="seg" id="f-kind">
-      <button type="button" data-kind="all" aria-pressed="true">All</button>
-      <button type="button" data-kind="phone" aria-pressed="false">Phones</button>
-      <button type="button" data-kind="tablet" aria-pressed="false">Tablets</button>
-      <button type="button" data-kind="computer" aria-pressed="false">Computers</button>
+<!-- Fixer off (24 Oct 2026, the user: "you can turn the fixer off it's irrelevant at the moment and not very usable
+     … in fact just disable it entirely in all aspects for now it's a waste of time"). The Fixer's own page is kept
+     as on.html; this one says it's off, so an old link or bookmark isn't a dead end. Home goes back to Nova Desk
+     (Nova Phone on a phone). Auto-fix (/shared/rules.js) isn't the Fixer's checks and still runs: its switch
+     for this device stays here, as it was on the Fixer's page. -->
+<main class="off">
+  <section class="nt-card off-card" aria-labelledby="off-title">
+    <span class="nt-kicker">Backend</span>
+    <h1 class="nt-title" id="off-title">Fixer</h1>
+    <p class="off-say"><b>The Fixer is switched off for now.</b></p>
+    <p class="nt-sub">It doesn't check any screens, take pictures or sign in while it's off.</p>
+    <div class="off-do">
+      <a class="btn primary" id="home" href="/agent/" target="_top">Home</a>
     </div>
-  </div>
-
-  <section class="list" id="list" aria-live="polite"></section>
+    <p class="off-auto"><span>Every screen still tidies its own layout as it draws (Auto-fix), on this device:</span>
+      <button type="button" id="auto" aria-pressed="true">Auto-fix: On</button></p>
+  </section>
 </main>
-
-<dialog class="shot" id="shot">
-  <div class="shot-head"><p id="shot-title"></p><button type="button" id="shot-close" aria-label="Close">✕</button></div>
-  <div class="shot-body"><img id="shot-img" alt=""></div>
-</dialog>
-
-<script src="app.js"></script>
+<script src="off.js"></script>
 </body>
 </html>

@@ -48,11 +48,27 @@
     try { if (on) localStorage.removeItem("nova-rules"); else localStorage.setItem("nova-rules", "off"); } catch (e) {}
   }
 
+  // Fixer off (24 Oct 2026, the user: "you can turn the fixer off it's irrelevant at the moment and not very usable
+  // … in fact just disable it entirely in all aspects for now it's a waste of time"): #fixer says it's off, with
+  // Home, and keeps Auto-fix's switch (that's every screen's own tidying, not the Fixer's checks). Nothing is
+  // fetched or checked. With FIXER_ON=1 on the server again, this goes back to true (and Backend, More and
+  // Console get their Fixer back: the places marked "Fixer off (24 Oct 2026)").
+  const FIXER_ON = false;
+  function drawOff(box) {
+    box.innerHTML = `${empty({ icon: "check", title: "The Fixer is switched off for now", text: "It doesn't check any screens, take pictures or sign in while it's off." })}
+      <a class="btn main wide" href="#today">${icon("today")} Home</a>
+      <label class="switch"><span>Auto-fix on this device<small class="fx-auto-words" data-auto-words></small></span><input type="checkbox" role="switch" data-auto${autoOn() ? " checked" : ""}></label>`;
+    const words = () => (box.querySelector("[data-auto-words]").textContent = autoOn() ? "On: every Nova Desk screen in this browser tidies what would be cut off or wrap as it draws." : "Off on this device only. Nova Desk screens open here show things as they are.");
+    words();
+    box.querySelector("[data-auto]").addEventListener("change", (e) => { setAuto(e.target.checked); toast(e.target.checked ? "Auto-fix is on on this device" : "Auto-fix is off on this device"); words(); });
+  }
+
   N.section({
     id: "fixer", name: "Fixer", tile: "fixer",
     async draw(box) {
       await N.css("fixer.css");
       stop();
+      if (!FIXER_ON) return drawOff(box);
       let s;
       try { s = await get("/fixer-api/state"); } catch (err) {
         if (err.signIn) throw err;

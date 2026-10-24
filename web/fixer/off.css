@@ -1,0 +1,18 @@
+/* The Fixer, switched off (24 Oct 2026): one calm card in the middle of the screen that says so, with Home.
+   One screen at every size: the card shrinks with the window and its words wrap; buttons stay on one line.
+   The sky and card come from /shared/tools.css, the buttons from /shared/buttons.css, every colour a theme token. */
+html, body { height: 100%; margin: 0; overflow: hidden; }
+main.off { box-sizing: border-box; height: 100%; display: grid; place-items: center; padding: 16px; }
+.off-card { width: min(520px, 100%); max-height: 100%; display: grid; justify-items: center; gap: 10px; padding: 22px 20px; text-align: center; }
+.off-card .nt-title { white-space: nowrap; }
+.off-say { margin: 0; font-size: 17px; line-height: 1.4; }
+.off-card .nt-sub { margin: 0; }
+.off-do { display: flex; justify-content: center; gap: 10px; margin-top: 4px; }
+.off-do .btn { min-height: 44px; min-width: 120px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; text-decoration: none; }
+.off-auto { margin: 6px 0 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+.off-auto button { font: inherit; font-size: 13px; min-height: 40px; white-space: nowrap; cursor: pointer; }
+@media (max-height: 420px) {
+  main.off { padding: 8px 16px; }
+  .off-card { gap: 6px; padding: 12px 16px; }
+  .off-say { font-size: 15px; }
+}

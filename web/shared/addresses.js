@@ -23,7 +23,8 @@
         { name: "Console", path: "/console/", what: "Nova commands, typed. (Terminals only open through a private connection.)" },
         { name: "Observatory", path: "/observatory/", what: "Every project, its code and the star map." },
         { name: "Lossless", path: "/lossless/", what: "Lossless audio rooms: listen together at full quality." },
-        { name: "Fixer", path: "/fixer/", what: "Hourly checks, and fixes that wait for an admin's Approve.", admin: true },
+        // (Fixer off, 24 Oct 2026, the user: "just disable it entirely in all aspects for now": its page says so)
+        { name: "Fixer", path: "/fixer/", what: "Switched off for now: the page says so, with Home.", admin: true },
       ],
     },
     {

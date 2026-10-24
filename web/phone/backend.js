@@ -8,7 +8,8 @@
   const { esc, row, list } = N;
   // [address, name, tile, what it's for]
   const PLACES = [
-    ["fixer", "Fixer", "fixer", "Every screen checked against the four rules"],
+    // Fixer off (24 Oct 2026, the user: "just disable it entirely in all aspects for now"): back with FIXER_ON=1
+    // ["fixer", "Fixer", "fixer", "Every screen checked against the four rules"],
     ["computer", "Computer", "computer", "The server live: its sessions, files, programs and how busy it is"],
     ["observatory", "Observatory", "observatory", "Every project, its lines of code and pictures"],
     ["console", "Console", "console", "Type commands for all of Nova"],

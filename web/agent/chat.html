@@ -1169,7 +1169,10 @@
     <div class="suite-groups">
       <div class="suite-group tools backend" data-group="backend" aria-label="Backend">
         <div class="suite-grid">
+          <!-- Fixer off (24 Oct 2026, the user: "just disable it entirely in all aspects for now it's a waste of time"):
+               its tile is put aside here; with FIXER_ON=1 on the server, put it back (/fixer/ says it's off meanwhile).
           <div class="bk-tile"><a class="suite-app" href="/fixer/" data-inside="/fixer/" aria-describedby="bk-d-fixer"><span class="pico" data-p="fixer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-fixer"/></svg></span><b>Fixer</b></a><small id="bk-d-fixer">Every screen checked against the four rules</small></div>
+          -->
           <div class="bk-tile"><a class="suite-app" href="/computer/" data-inside="/computer/" aria-describedby="bk-d-computer"><span class="pico" data-p="computer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-computer"/></svg></span><b>Computer</b></a><small id="bk-d-computer">The VPS live: its Claude sessions, Claude Code, how busy it is, and Nova (admins)</small></div>
           <div class="bk-tile"><a class="suite-app" href="/observatory/" data-inside="/observatory/" aria-describedby="bk-d-observatory"><span class="pico" data-p="observatory" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-observatory"/></svg></span><b>Observatory</b></a><small id="bk-d-observatory">Every project, lines of code and the star map</small></div>
           <div class="bk-tile"><a class="suite-app" href="/console/" data-inside="/console/" aria-describedby="bk-d-console"><span class="pico" data-p="console" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-console"/></svg></span><b>Console</b></a><small id="bk-d-console">Type commands for all of Nova Agent; terminals and the VPS on the studio PC</small></div>
@@ -2683,6 +2686,9 @@
       const path = base.endsWith('/') ? base : base + '/';
       if ((url.pathname === base || url.pathname.startsWith(path)) && (!best || base.length > best.dataset.inside.length)) best = a;
     }
+    // (Fixer off, 24 Oct 2026: its tile is put aside, but an old link or bookmark to /fixer/ still opens its page,
+    // which says it's switched off, with Home)
+    if (!best && (placeOf(url.href) || [])[0] === 'fixer') { openInside(url.pathname + url.search + url.hash, 'Fixer'); return true; }
     if (!best) return false;
     openInside(url.pathname + url.search + url.hash, best.querySelector('b').textContent);
     return true;

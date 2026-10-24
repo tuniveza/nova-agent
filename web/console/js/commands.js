@@ -121,6 +121,8 @@ export const PORTAL = {
   alerts: "notifications",
 };
 
+// The Fixer, switched off (24 Oct 2026): see the fixer command; true again once FIXER_ON=1 is on the server
+const FIXER_ON = false;
 export const APPS = { invoicer: "/invoicer/", portal: "/portal/", calendar: "/calendar/", notes: "/notes/", board: "/board/", index: "/app/memory/", lossless: "/lossless/", visualizer: "/visualizer", observatory: "/observatory/", fixer: "/fixer/", console: "/console/", agent: "pane:chat", quests: "pane:quests", manual: "manual" };
 
 const P = (path) => "/app/api/" + path;
@@ -321,11 +323,15 @@ export const COMMANDS = {
     },
   },
 
+  // Fixer off (24 Oct 2026, the user: "just disable it entirely in all aspects for now it's a waste of time"):
+  // "fixer" only says so (nothing checked, nothing asked of the server). FIXER_ON = true puts it all back,
+  // with the help and usage below, once FIXER_ON=1 is on the server again.
   fixer: {
-    help: "The Fixer: status, check now, jobs (admins)",
-    usage: "fixer [status | check | jobs]",
-    subs: ["status", "check", "jobs"],
+    help: FIXER_ON ? "The Fixer: status, check now, jobs (admins)" : "The Fixer: switched off for now",
+    usage: FIXER_ON ? "fixer [status | check | jobs]" : "fixer",
+    subs: FIXER_ON ? ["status", "check", "jobs"] : [],
     async run(ctx, [sub = "status"]) {
+      if (!FIXER_ON) return void ctx.print("The Fixer is switched off for now: it doesn't check anything.");
       adminOnly(ctx);
       if (sub === "check") {
         await ctx.api("/actions/fixer/check", { method: "POST", body: {} });
@@ -702,7 +708,7 @@ export const EXAMPLES = {
   calendar: "calendar week", notes: "notes list", board: "board list", agent: 'agent "what\'s on today?"', ask: 'ask "who booked last week?"', index: "index search pricing", open: "open board",
   enquiries: "enquiries", chats: "chats", clients: "clients", money: "money", campaigns: "campaigns", outreach: "outreach", social: "social", approvals: "approvals", alerts: "alerts", tests: "tests",
   portal: "portal enquiries", approve: "approve campaign 12", reject: "reject social 7",
-  google: "google sync calendar", fixer: "fixer jobs", lossless: "lossless start", music: "music next", theme: "theme pulsar", logs: "logs 20",
+  google: "google sync calendar", fixer: FIXER_ON ? "fixer jobs" : "fixer", lossless: "lossless start", music: "music next", theme: "theme pulsar", logs: "logs 20",
   computer: "computer", deploy: "deploy status", backup: "backup", vps: "vps", shell: "shell", admin: "admin crew", clear: "clear", history: "history",
 };
 // "quests list" → "list" (the part after the command's own name in its usage line)
