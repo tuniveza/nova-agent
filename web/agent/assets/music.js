@@ -86,14 +86,18 @@
     const box = document.createElement("section");
     box.className = "mworld cpanel";
     box.setAttribute("aria-label", "Today in music");
+    // (each card's second line, the song, the chart or the figure, is what's on the card, not a button's name:
+    // data-content-card, so it wraps onto a second line rather than being squeezed or slid sideways; its small
+    // name above stays on one line, music.css. 24 Oct 2026, the user: "can shared/rules.js just be smartly
+    // integrated back into the base code for all of this")
     box.innerHTML = `
       <h4 class="mw-title">Today in music</h4>
       <div class="mw-row">
-        <button type="button" class="mw-card" data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art></span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
-        <button type="button" class="mw-card" data-mw="genres" data-sfx="open"><span class="mw-pic mw-mosaic">${D.genres.slice(0, 3).map((g) => `<img alt="" loading="lazy" src="${cover(g.cover)}" title="${esc(g.name)}" onerror="this.parentElement.hidden = true">`).join("")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
-        <button type="button" class="mw-card" data-mw="gear" data-sfx="open"><span class="mw-pic">${gearPic(gear)}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
-        <button type="button" class="mw-card" data-mw="song" data-sfx="open"><span class="mw-pic">${art(cover(song.cover))}${ico("song")}</span><span class="mw-k">Song of the day</span><span class="mw-line">${esc(song.title)} · ${esc(song.artist)}</span></button>
-        <button type="button" class="mw-card" data-mw="money" data-sfx="open"><span class="mw-pic"><img class="mw-art" alt="" loading="lazy" src="/music-world/photo/Record_shop?v=5" onerror="this.parentElement.hidden = true"></span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
+        <button type="button" class="mw-card" data-content-card data-mw="top" data-sfx="open"><span class="mw-pic" data-top-art></span><span class="mw-k">Top 10 worldwide</span><span class="mw-line">${esc(topLine())}</span></button>
+        <button type="button" class="mw-card" data-content-card data-mw="genres" data-sfx="open"><span class="mw-pic mw-mosaic">${D.genres.slice(0, 3).map((g) => `<img alt="" loading="lazy" src="${cover(g.cover)}" title="${esc(g.name)}" onerror="this.parentElement.hidden = true">`).join("")}</span><span class="mw-k">Popular genres</span><span class="mw-line">${esc(D.genres.slice(0, 3).map((g) => g.name).join(" · "))}</span></button>
+        <button type="button" class="mw-card" data-content-card data-mw="gear" data-sfx="open"><span class="mw-pic">${gearPic(gear)}</span><span class="mw-k">Budget gear</span><span class="mw-line">${esc(gear.name)}: ${esc(gear.does.toLowerCase())}</span></button>
+        <button type="button" class="mw-card" data-content-card data-mw="song" data-sfx="open"><span class="mw-pic">${art(cover(song.cover))}${ico("song")}</span><span class="mw-k">Song of the day</span><span class="mw-line">${esc(song.title)} · ${esc(song.artist)}</span></button>
+        <button type="button" class="mw-card" data-content-card data-mw="money" data-sfx="open"><span class="mw-pic"><img class="mw-art" alt="" loading="lazy" src="/music-world/photo/Record_shop?v=5" onerror="this.parentElement.hidden = true"></span><span class="mw-k">Music industry</span><span class="mw-line">${esc(D.revenue.headline)} in 2025, up 6.4%</span></button>
       </div>
       <figure class="mw-quote">
         <span class="mw-face"><img alt="" loading="lazy" src="/music-world/photo/${encodeURIComponent(quote.wiki)}"><b aria-hidden="true">${esc(initials(quote.who))}</b></span>

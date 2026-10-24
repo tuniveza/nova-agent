@@ -128,6 +128,32 @@
   /* (the smallest screens, a flip phone's cover screen: the names alone, each tile's line about it still read
      out with it) */
   @media (max-height: 360px) and (max-width: 600px) { #backend .suite-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } #backend .bk-tile > small { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); padding: 0; } }
+  /* The Panels window's tiles the same way as the Backend's (24 Oct 2026, built in from /shared/rules.js; the user:
+     "can shared/rules.js just be smartly integrated back into the base code for all of this"): each tile is the
+     panel's link (its icon and name, on one line) with its line about it under it, beside the link rather than in it,
+     so those words wrap like any words instead of the name being squeezed and slid sideways. The whole tile is
+     still the tap target, and it looks as it always did (the tile's frame, the panel that's open, where you are).
+     The dock's copy of these tiles is the links alone, their lines as the hover text (below, #suite-body). */
+  #suite .bk-tile { position: relative; display: grid; justify-items: center; align-content: start; gap: 6px; padding: 16px 12px; border-radius: 18px; text-align: center;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 50%, transparent); animation: app-in .45s cubic-bezier(.2,.8,.2,1) both;
+    transition: transform .2s, border-color .2s, box-shadow .2s; }
+  #suite .bk-tile:nth-child(2) { animation-delay: .04s; } #suite .bk-tile:nth-child(3) { animation-delay: .08s; } #suite .bk-tile:nth-child(4) { animation-delay: .12s; } #suite .bk-tile:nth-child(n+5) { animation-delay: .16s; }
+  #suite .suite-group.tools .bk-tile { background: color-mix(in srgb, var(--void) 35%, transparent); }
+  #suite .bk-tile:hover { transform: translateY(-3px); border-color: var(--line-strong); box-shadow: 0 16px 40px -20px var(--hi); }
+  #suite .bk-tile:has(> a:focus-visible) { outline: 2px solid var(--hi); outline-offset: 2px; }
+  #suite .bk-tile:active { scale: .97; }
+  #suite .bk-tile:has(> a.here) { border-color: color-mix(in srgb, var(--hi) 55%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--hi) 30%, transparent), 0 0 30px -14px var(--hi); }
+  #suite .bk-tile:has(> a.here.away) { border-color: var(--line); box-shadow: none; }
+  #suite .bk-tile:has(> a.open) { border-color: color-mix(in srgb, var(--hi) 55%, transparent); background: color-mix(in srgb, var(--hi) 14%, transparent); box-shadow: 0 0 30px -14px var(--hi); }
+  #suite .bk-tile > a.suite-app { position: static; display: grid; justify-items: center; gap: 6px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; animation: none; transform: none; outline: none; }
+  #suite .bk-tile > a.suite-app::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 18px; }
+  #suite .bk-tile > a.suite-app.open::after { border-radius: 18px; }
+  /* (the press is the whole tile's: the link itself never scales, or its tap area would shrink to it mid-tap) */
+  #suite .bk-tile > a.suite-app:is(:hover, :active, :focus) { scale: none; transform: none; }
+  #suite .bk-tile > a.suite-app b { white-space: nowrap; }
+  #suite .bk-tile > small { font-size: 12.5px; line-height: 1.35; color: var(--muted); overflow-wrap: break-word; }
+  @media (prefers-reduced-motion: reduce) { #suite .bk-tile { animation: none; transition: none; } #suite .bk-tile:hover { transform: none; } }
+  @media (hover: none) { #suite .bk-tile:hover { transform: none; } }
   .suite-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
   /* Centred text (on unless switched off): in the Panels window a short row of tiles sits in the middle */
   @media (min-width: 600px) { :root[data-centred] #suite .suite-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 230px)); justify-content: center; } }
@@ -1124,30 +1150,30 @@
       <!-- Invoicer: on its own, in no group, first (the left end of the navigation panel) -->
       <div class="suite-group tools solo" data-group="solo" aria-label="Invoicer">
         <div class="suite-grid">
-          <a class="suite-app" href="/invoicer/" data-inside="/invoicer/"><span class="pico" data-p="invoicer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-invoicer"/></svg></span><b>Invoicer</b><small>Invoices at each stage (deposit, balance, overdue, paid), branded, with the email to send</small></a>
+          <div class="bk-tile"><a class="suite-app" href="/invoicer/" data-inside="/invoicer/" aria-describedby="su-d-invoicer"><span class="pico" data-p="invoicer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-invoicer"/></svg></span><b>Invoicer</b></a><small id="su-d-invoicer">Invoices at each stage (deposit, balance, overdue, paid), branded, with the email to send</small></div>
         </div>
       </div>
       <div class="suite-group apps">
         <h4>Apps</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/portal/" data-inside="/portal/"><span class="pico" data-p="portal" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-portal"/></svg></span><b>Portal</b><small>Enquiries, conversations, bookings, alerts, Ask NovaBot, your planet and the team</small></a>
-          <a class="suite-app here" href="/agent/"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span><b>Nova Agent</b><small>You're here: the conversation, Quests, Acuity helper</small></a>
-          <a class="suite-app" href="/calendar/" data-inside="/calendar/"><span class="pico" data-p="calendar" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-calendar"/></svg></span><b>Calendar</b><small>The one Nova Agent plans into</small></a>
-          <a class="suite-app" href="/notes/" data-inside="/notes/"><span class="pico" data-p="notes" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-notes"/></svg></span><b>Notes</b><small>Notes and documents, Google Docs export</small></a>
-          <a class="suite-app" href="/board/" data-inside="/board/"><span class="pico" data-p="board" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-board"/></svg></span><b>Board</b><small>A table to lay notes, the calendar, Agent's answers, pictures and links out on</small></a>
+          <div class="bk-tile"><a class="suite-app" href="/portal/" data-inside="/portal/" aria-describedby="su-d-portal"><span class="pico" data-p="portal" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-portal"/></svg></span><b>Portal</b></a><small id="su-d-portal">Enquiries, conversations, bookings, alerts, Ask NovaBot, your planet and the team</small></div>
+          <div class="bk-tile"><a class="suite-app here" href="/agent/" aria-describedby="su-d-nova-agent"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span><b>Nova Agent</b></a><small id="su-d-nova-agent">You're here: the conversation, Quests, Acuity helper</small></div>
+          <div class="bk-tile"><a class="suite-app" href="/calendar/" data-inside="/calendar/" aria-describedby="su-d-calendar"><span class="pico" data-p="calendar" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-calendar"/></svg></span><b>Calendar</b></a><small id="su-d-calendar">The one Nova Agent plans into</small></div>
+          <div class="bk-tile"><a class="suite-app" href="/notes/" data-inside="/notes/" aria-describedby="su-d-notes"><span class="pico" data-p="notes" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-notes"/></svg></span><b>Notes</b></a><small id="su-d-notes">Notes and documents, Google Docs export</small></div>
+          <div class="bk-tile"><a class="suite-app" href="/board/" data-inside="/board/" aria-describedby="su-d-board"><span class="pico" data-p="board" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-board"/></svg></span><b>Board</b></a><small id="su-d-board">A table to lay notes, the calendar, Agent's answers, pictures and links out on</small></div>
         </div>
       </div>
       <div class="suite-group tools tasks">
         <h4>Plans</h4>
         <div class="suite-grid">
-          <a class="suite-app" href="/quests/" data-inside="/quests/"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span><b>Quests</b><small>Every quest: add in your own words, Focus, List, Board, Today</small></a>
+          <div class="bk-tile"><a class="suite-app" href="/quests/" data-inside="/quests/" aria-describedby="su-d-quests"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span><b>Quests</b></a><small id="su-d-quests">Every quest: add in your own words, Focus, List, Board, Today</small></div>
         </div>
       </div>
       <!-- Lossless and Nova: on their own, in no group, at the right end of the navigation panel -->
       <div class="suite-group tools solo end" data-group="end" aria-label="Lossless and Nova (Lossless: in the Panels window only)">
         <div class="suite-grid">
-          <a class="suite-app" href="/lossless/" data-inside="/lossless/"><span class="pico" data-p="lossless" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-lossless"/></svg></span><b>Lossless</b><small>Raw PCM between two devices, anywhere</small></a>
-          <a class="suite-app" href="/visualizer" data-inside="/visualizer"><span class="pico" data-p="visualizer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-visualizer"/></svg></span><b>Nova</b><small>Watch Nova's browser helper work, live: every step, what it remembers, what it sees</small></a>
+          <div class="bk-tile"><a class="suite-app" href="/lossless/" data-inside="/lossless/" aria-describedby="su-d-lossless"><span class="pico" data-p="lossless" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-lossless"/></svg></span><b>Lossless</b></a><small id="su-d-lossless">Raw PCM between two devices, anywhere</small></div>
+          <div class="bk-tile"><a class="suite-app" href="/visualizer" data-inside="/visualizer" aria-describedby="su-d-nova"><span class="pico" data-p="visualizer" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-visualizer"/></svg></span><b>Nova</b></a><small id="su-d-nova">Watch Nova's browser helper work, live: every step, what it remembers, what it sees</small></div>
         </div>
       </div>
     </div>
@@ -2520,12 +2546,21 @@
   // ---- The Nova Agent section at the bottom of the page: the launcher's groups and tiles ----
   // An app's short name for the bar: "Notes" is "Notes" there
   const shortName = (name) => String(name || '').replace(/^Nova /, '');
-  $('suite-body').append($('suite').querySelector('.suite-groups').cloneNode(true));
+  // (the Panels window's tiles are each a link with its line about it beside it, .bk-tile: here each tile is the
+  // link alone, as the dock has always had it, its line about it kept for the hover text)
+  const dockGroups = $('suite').querySelector('.suite-groups').cloneNode(true);
+  for (const t of dockGroups.querySelectorAll('.bk-tile')) {
+    const a = t.querySelector('a.suite-app'), about = t.querySelector('small');
+    a.dataset.about = about ? about.textContent : '';
+    a.removeAttribute('aria-describedby');
+    t.replaceWith(a);
+  }
+  $('suite-body').append(dockGroups);
   // The row only has room for names, so each tile's description shows on hover (with the full
   // name, "Notes"); the bar itself keeps its short labels (Notes), like the phone's bar
   for (const a of document.querySelectorAll('#suite-body .suite-app')) {
     const b = a.querySelector('b');
-    a.title = `${b.textContent}: ${a.querySelector('small').textContent}`;
+    a.title = a.dataset.about ? `${b.textContent}: ${a.dataset.about}` : b.textContent;
     a.setAttribute('aria-label', b.textContent);
     b.textContent = shortName(b.textContent);
   }

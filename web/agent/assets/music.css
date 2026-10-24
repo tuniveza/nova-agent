@@ -265,3 +265,19 @@
   @keyframes mw-fade-in { from { opacity: 0; } to { opacity: 1; } }
 }
 
+
+/* Built in from /shared/rules.js (24 Oct 2026, the user: "can shared/rules.js just be smartly integrated back
+   into the base code for all of this"). Each card's small name (Song of the day, Top 10 worldwide…) is a name:
+   it stays on one line. Its second line is what's on the card (the song, the chart, the figure: music.js marks the
+   card data-content-card), so it wraps onto a second line rather than being squeezed smaller or slid sideways in
+   its own little scroller, and room is kept for two lines, so a card never grows when its words arrive
+   ("Loading the charts…", then the chart). Every word shows: no "…". */
+.mw-k { white-space: nowrap; }
+.cpanel .mw-card > .mw-line { min-height: 2.6em; overflow-wrap: break-word; }
+/* (five cards in a row only just fit their names, "TOP 10 WORLDWIDE" the longest: until the row has the width,
+   the names' letters sit a little closer, and on a touch screen, with their bigger 11px names, the cards' sides
+   a little slimmer too, so every name keeps to one line inside its card) */
+@container (min-width: 620px) and (max-width: 700px) { .mw-k { letter-spacing: .04em; } }
+@media (pointer: coarse) {
+  @container (min-width: 620px) and (max-width: 780px) { .mw-k { letter-spacing: 0; } .mw-card { padding-inline: 4px; } }
+}

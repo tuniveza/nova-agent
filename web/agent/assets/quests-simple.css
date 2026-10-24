@@ -25,3 +25,8 @@ html:where([data-room="computer"]) body #view-today > .now-card .now-title { mar
 html:where([data-room="computer"]) body #view-today > .now-card .now-meta { font-size: 12px; }
 html:where([data-room="computer"]) body #view-today > .now-card .now-from { margin-top: 4px; }
 html:where([data-room="computer"]) body #view-today > .now-card .bar { height: 3px; margin: 7px 0 !important; }
+/* The day's name ("Saturday 24 October") is a heading: it stays on one line (built in from /shared/rules.js, 24 Oct
+   2026, the user: "can shared/rules.js just be smartly integrated back into the base code for all of this"). Sized
+   by the Quests panel's width (#quests-panel is the "quests" container, glow.css), so the longest one, "Wednesday
+   30 September", fits even a narrow panel: 15px where there's room, never under 11px. */
+html:where([data-room="computer"]) body #view-today > .day-head h3 { white-space: nowrap; font-size: clamp(11px, 6.2cqi, 15px) !important; }
