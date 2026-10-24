@@ -447,12 +447,26 @@
     const offline = err && err.offline;
     return `<div class="empty oops">${icon(offline ? "globe" : "refresh")}<b>${offline ? "No connection" : "That didn't load"}</b><span>${esc(offline ? "Check your signal, then try again." : err?.message || "")}</span>${again ? `<button type="button" class="btn" data-again>${icon("refresh")} Try again</button>` : ""}</div>`;
   }
-  // A list row: { href | button (data-* string), lead (html), title, text, end (html), edge colour, cls }
+  // A list row: { href | button (data-* string), lead (html), title, text, end (html), edge colour, cls, card }
+  // (card: the title is content, a quest's, a note card's, a note's or a booking's own words, not a button's
+  // name, so it wraps rather than hides: data-content-card, as Calendar's note cards on Nova Desk)
+  // (24 Oct 2026, the user: "can shared/rules.js just be smartly integrated back into the base code for all
+  // of this". A row's link or button holds only its name, so the name stays on one line like any button's
+  // words; what the row is for (its text, its html) sits beside it, under the name, and wraps like any reading.
+  // The link or button still covers the whole row (.row-go::after in phone.css): a tap anywhere on the row
+  // opens it, as before, and a screen reader hears the name, then what it's for.)
+  let rowN = 0;
   function row(r) {
-    const inner = `${r.lead !== undefined ? `<span class="row-lead${r.dot ? " dot" : ""}">${r.lead}</span>` : `<span class="row-lead">${icon(r.icon || "next")}</span>`}<span class="row-main"><b>${esc(r.title)}</b>${r.text ? `<span>${esc(r.text)}</span>` : ""}${r.html || ""}</span><span class="row-end">${r.end ?? ""}${r.href ? icon("next") : ""}</span>`;
+    const go = r.href || r.button;
+    const about = go && r.text ? `rw-${++rowN}` : "";
+    const named = (r.title ? "" : r.text ? ` aria-label="${esc(r.text)}"` : "") + (r.card ? " data-content-card" : "");
+    const name = `<b>${esc(r.title)}</b>`;
+    const control = r.href ? `<a class="row-go" href="${esc(r.href)}"${about ? ` aria-describedby="${about}"` : ""}${named}>${name}</a>`
+      : r.button ? `<button type="button" class="row-go" ${r.button}${about ? ` aria-describedby="${about}"` : ""}${named}>${name}</button>` : name;
+    const inner = `${r.lead !== undefined ? `<span class="row-lead${r.dot ? " dot" : ""}">${r.lead}</span>` : `<span class="row-lead">${icon(r.icon || "next")}</span>`}<span class="row-main">${control}${r.text ? `<span${about ? ` id="${about}"` : ""}>${esc(r.text)}</span>` : ""}${r.html || ""}</span><span class="row-end">${r.end ?? ""}${r.href ? icon("next") : ""}</span>`;
     const style = r.color ? ` data-c="${esc(r.color)}"` : "";
-    const cls = `row${r.color ? " edge" : ""}${r.cls ? ` ${r.cls}` : ""}`;
-    return `<li>${r.href ? `<a class="${cls}" href="${esc(r.href)}"${style}>${inner}</a>` : r.button ? `<button type="button" class="${cls}" ${r.button}${style}>${inner}</button>` : `<div class="${cls}"${style}>${inner}</div>`}</li>`;
+    const cls = `row${go ? " tap" : ""}${r.color ? " edge" : ""}${r.cls ? ` ${r.cls}` : ""}`;
+    return `<li><div class="${cls}"${style}>${inner}</div></li>`;
   }
   const list = (rows) => `<ul class="list">${rows.join("")}</ul>`;
   // (a row's colour, from data-c, set the only way the page's rules allow: in the script, not written inside)

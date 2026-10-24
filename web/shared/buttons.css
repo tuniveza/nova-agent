@@ -270,8 +270,10 @@
 .theme-list.has-spectrum { display: block; }
 .look-themes .spectrum { flex: 1 1 100%; }
 .spectrum { display: grid; gap: 12px; width: 100%; min-width: 0; }
-/* The themes as round orbs, in rainbow order */
-.spectrum-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px 4px; }
+/* The themes as round orbs, in rainbow order. (A theme's name is its button's words: one line, never "SOLAR /
+   FLARE" on two, and 11px or more so it can be read; each column has room for the longest, "Solar Flare".
+   24 Oct 2026, the user: "can shared/rules.js just be smartly integrated back into the base code for all of this") */
+.spectrum-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px 4px; }
 .spectrum-swatch {
   display: grid; justify-items: center; align-content: start; gap: 6px; min-width: 0;
   padding: 8px 2px 7px; border-radius: 16px; border: 1px solid transparent; background: none;
@@ -284,8 +286,8 @@
   transition: box-shadow 0.25s ease, scale 0.2s var(--nb-ease);
 }
 .spectrum-name {
-  max-width: 100%; font-family: var(--f-mono, ui-monospace, monospace); font-size: 9.5px; font-weight: 600;
-  letter-spacing: 0.08em; line-height: 1.2; text-transform: uppercase; text-align: center; overflow-wrap: anywhere;
+  max-width: 100%; font-family: var(--f-mono, ui-monospace, monospace); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.04em; line-height: 1.2; text-transform: uppercase; text-align: center; white-space: nowrap;
 }
 @media (hover: hover) {
 .spectrum-swatch:hover { color: var(--text, #EBD3E7); background: color-mix(in srgb, var(--text, #EBD3E7) 5%, transparent); }
@@ -308,7 +310,7 @@
   padding: 8px 14px 8px 6px; border-radius: 18px; border: 1px solid var(--line, rgb(255 255 255 / 0.14));
   background: color-mix(in srgb, var(--panel-2, #241640) 35%, transparent);
 }
-.spectrum-custom .spectrum-swatch { min-width: 62px; }
+.spectrum-custom .spectrum-swatch { min-width: 84px; }
 .spectrum-sliders { display: grid; gap: 6px; min-width: 0; }
 .spectrum-slider {
   display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 10px; min-width: 0; margin: 0;
@@ -340,7 +342,7 @@
 .spectrum-slider input[type="range"]:focus { border-color: transparent; box-shadow: none; }
 .spectrum-slider input[type="range"]:focus-visible { outline: 2px solid color-mix(in srgb, var(--hi, #FF5FA8) 85%, #FFFFFF); outline-offset: 2px; border-radius: 999px; }
 @media (max-width: 420px) {
-  .spectrum-grid { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
+  .spectrum-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
   .spectrum-custom { grid-template-columns: minmax(0, 1fr); justify-items: stretch; padding: 8px 12px 10px; }
   .spectrum-custom .spectrum-swatch { justify-self: center; }
   .spectrum-slider { grid-template-columns: 70px minmax(0, 1fr); }

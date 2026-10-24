@@ -232,7 +232,7 @@
   }
   function suiteRow(i) {
     const href = i.kind === "quest" ? (i.id ? `#quests/quest/${encodeURIComponent(i.id)}` : "#quests") : "#calendar";
-    return row({ href, color: i.kind === "quest" ? "gold" : "violet", lead: i.time ? esc(i.time).replace("–", "<br>") : "All<br>day", title: i.title || "", text: [i.kind === "quest" ? "Quest" : i.kind === "day" ? "Calendar · day" : "Calendar", i.sub].filter(Boolean).join(" · ") });
+    return row({ href, card: true, color: i.kind === "quest" ? "gold" : "violet", lead: i.time ? esc(i.time).replace("–", "<br>") : "All<br>day", title: i.title || "", text: [i.kind === "quest" ? "Quest" : i.kind === "day" ? "Calendar · day" : "Calendar", i.sub].filter(Boolean).join(" · ") });
   }
   // One booking: its time, who, the session, what they told the form, and what to do
   function card(b) {

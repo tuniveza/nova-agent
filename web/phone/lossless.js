@@ -975,7 +975,8 @@
           <p>Keep Nova Phone open during the call: the screen stays on, and if the phone pauses the sound (a phone call, another app) it asks you to tap to resume.</p>
         </section>
         <details class="card lossless-daw">
-          <summary>Using this with Logic Pro (or any DAW) via BlackHole</summary>
+          <summary>Logic Pro or any DAW</summary>
+          <p>Using this with Logic Pro (or any DAW) via BlackHole, on a Mac:</p>
           <ol>
             <li>Use <b>Chrome or Edge</b> on the Mac. Safari can't choose an output device.</li>
             <li>Install two free BlackHole drivers from <a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">existential.audio</a>: <b>BlackHole 2ch</b> and <b>BlackHole 16ch</b>. You need one for each direction, otherwise their audio loops straight back to them.</li>

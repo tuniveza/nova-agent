@@ -532,7 +532,7 @@ function entryRow(e, { onNow = false, day } = {}) {
   return row({
     href: `#calendar/card/${enc(keyOf(e))}/${e.date}`, color: e.color,
     lead: `<span class="cal-lead${art ? " art" : ""}"${art ? ` data-art-note="${esc(it.id)}" data-date="${e.date}" data-w="160" data-h="160"` : ""}>${times}</span>`,
-    title: titleOf(e), text: subLine(e),
+    title: titleOf(e), text: subLine(e), card: true,
     html: notes && notes !== it.location ? `<span class="cal-what">${esc(notes)}</span>` : "",
     end: onNow ? '<span class="pill ok">On now</span>' : "",
   });

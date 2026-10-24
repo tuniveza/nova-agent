@@ -142,7 +142,8 @@
         <fieldset class="field"><legend>Sort by</legend><div class="seg">${SORTS.map(([v, l]) => `<label><input type="radio" name="sort" value="${v}"${v === state.sort ? " checked" : ""}>${l}</label>`).join("")}</div></fieldset></form>
       <h3 class="h" data-obs-count></h3><div class="page-in" data-obs-decks></div>
       <p class="muted small obs-end">Observatory · part of Nova Agent · Novacane Studios<br>Scanned ${esc(when(D.generatedAt))} · refresh with <code>npm run build</code> (or <code>npm run scan</code> for numbers only), on the computer.</p>
-      ${list([`<li><a class="row" href="#help/addresses"><span class="row-lead">${icon("globe")}</span><span class="row-main"><b>All links</b><span>Every Nova address, in the Manual</span></span><span class="row-end">${icon("next")}</span></a></li>`])}`;
+      ${list([N.row({ href: "#help/addresses", icon: "globe", title: "All links", text: "Every Nova address, in the Manual" })])}`;
+    // (All links: row() keeps its name alone in the link, one line, and what it's for under it; the user (24 Oct 2026): "can shared/rules.js just be smartly integrated back into the base code for all of this")
     widths(box);
     const form = box.querySelector("[data-obs-find]");
     let timer = 0;

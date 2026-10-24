@@ -163,6 +163,18 @@ svg.i { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor;
   padding: 12px 14px 12px 16px; border: 0; background: none; color: var(--text); text-align: left; font: inherit;
 }
 a.row:active, button.row:active { background: rgba(var(--hi-rgb), .1); }
+/* (24 Oct 2026, the user: "can shared/rules.js just be smartly integrated back into the base code for all of
+   this". A row from row() in phone.js: its link or button holds just the name, which stays on one line; what
+   it's for sits under it and wraps. The link's ::after covers the whole row, so a tap anywhere opens it.) */
+.row.tap { position: relative; }
+/* (its own box 32px tall or more, as anything to tap is, its name at the bottom of it; the 10px over the name is
+   taken back from the row's padding above, so the row looks just as before) */
+.row-go { display: flex; align-items: flex-end; min-width: 0; min-height: 32px; margin-top: -10px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; -webkit-tap-highlight-color: transparent; }
+.row-go > b { min-width: 0; }
+.row-go::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.row-go:focus-visible { outline: none; }
+.row.tap:has(.row-go:focus-visible) { outline: 2px solid var(--hi); outline-offset: -2px; border-radius: 12px; }
+.row.tap:active, .row.tap:has(.row-go:active) { background: rgba(var(--hi-rgb), .1); }
 .row-lead { display: grid; place-items: center; min-width: 44px; color: var(--hi); text-align: center; font: 700 14px/1.15 var(--f-body); }
 .row-lead.dot::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--c, var(--hi)); }
 .row-lead .av { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(var(--hi-rgb), .16); color: var(--soft); font: 700 16px/1 var(--f-display); }
@@ -235,9 +247,12 @@ select.input { padding-right: 44px; background-image: linear-gradient(45deg, tra
 .seg label { position: relative; display: grid; place-items: center; min-height: 44px; padding: 0 6px; border-radius: 12px; font: 600 15px/1.2 var(--f-body); color: var(--muted); text-align: center; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
 .seg label:has(input:checked) { background: rgba(var(--hi-rgb), .22); color: var(--bright); }
-.swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+/* (a theme's name is a button's words: one line, so a swatch is wide enough for "Solar Flare" beside its dot.
+   24 Oct 2026, the user: "can shared/rules.js just be smartly integrated back into the base code") */
+.swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap: 8px; }
 .swatch { position: relative; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px; border-radius: 14px; border: 1px solid rgba(var(--hi-rgb), .16); background: rgba(var(--deep-rgb), .6); font: 600 15px/1.2 var(--f-body); color: var(--text); text-align: left; }
 .swatch input { position: absolute; opacity: 0; pointer-events: none; }
+.swatch { white-space: nowrap; }
 .swatch i { width: 20px; height: 20px; flex: none; border-radius: 50%; background: var(--c, var(--hi)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
 .swatch:has(input:checked), .swatch[aria-pressed="true"] { border-color: var(--hi); background: rgba(var(--hi-rgb), .16); color: var(--bright); }
 .form-said { min-height: 1.5em; margin: -4px 4px 0; color: var(--muted); font-size: 14px; }
@@ -391,9 +406,13 @@ a.sum:active { filter: brightness(1.15); }
 .pico[data-p="manual"] { --own: var(--app-manual); }
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 /* a tile with its name under it, in a grid (More) */
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 14px 8px; }
+/* (a tile's name is its button's words: one line. Each tile has room for the longest, "Notifications" and
+   "Booking tools", rather than squeezing them onto two lines. 24 Oct 2026, the user: "can shared/rules.js just
+   be smartly integrated back into the base code for all of this") */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 14px 8px; }
 .tile { display: grid; justify-items: center; align-content: start; gap: 8px; padding: 6px 2px; border-radius: 18px; color: var(--text); text-align: center; font: 600 13px/1.25 var(--f-body); overflow-wrap: anywhere; }
 .tile .pico { width: 60px; height: 60px; border-radius: 18px; }
+.tile > span { white-space: nowrap; }
 .tile:active { background: rgba(var(--hi-rgb), .1); }
 .tile.soon { opacity: .45; }
 .tile.soon small { color: var(--muted); font-size: 11px; font-weight: 500; }

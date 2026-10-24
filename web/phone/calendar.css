@@ -210,6 +210,10 @@ a.cal-banner:active { filter: brightness(1.12); }
 .cal-views .row-main { gap: 0; }
 .cal-views .row-main b { font-size: 15px; line-height: 1.3; }
 .cal-views .row-main span { font-size: 13px; line-height: 1.35; }
+/* (a row's link holds its name in a box 32px tall, 10px of it over the name: these rows keep 10px above it,
+   so the link stays inside its list; the row is just as tall. 24 Oct 2026, the user: "can shared/rules.js just
+   be smartly integrated back into the base code for all of this") */
+.cal-views .row.tap { padding-top: 10px; padding-bottom: 4px; }
 .cal-views .row-end svg.i { width: 16px; height: 16px; }
 .cal-views .cal-lead { width: 46px; min-height: 42px; padding: 3px 2px; border-radius: 10px; font-size: 13px; line-height: 1.15; }
 .cal-views .cal-lead small { font-size: 12px; }

@@ -69,7 +69,10 @@
         rows: list.slice(0, 4).map(({ b, at }) => ({ main: bookingName(b), side: hhmm(at), href: `#bookings/${now}` })),
         more: list.length > 4 ? { text: `+${list.length - 4} more today`, href: `#bookings/${now}` } : null,
         empty: "Nothing booked today.",
-        foot: `<a class="today-foot" href="#bookings">${icon("calendar")}<span>Booking tools · week at a glance and free slots</span></a>`,
+        // (24 Oct 2026, the user: "can shared/rules.js just be smartly integrated back into the base code": the
+        // link's words are its name, on one line; what it's for under it, outside the link, wrapping like reading.
+        // The link still covers the whole line, so a tap anywhere on it opens Booking tools.)
+        foot: `<div class="today-foot"><a href="#bookings" aria-describedby="today-foot-bk">${icon("calendar")}<span>Booking tools</span></a><small id="today-foot-bk">Week at a glance and free slots</small></div>`,
       };
     } },
     { id: "enquiries", name: "Enquiries", href: "#inbox", rows: 4, async fill() {
@@ -232,8 +235,11 @@
   ];
 
   // ---- Drawing a tile ----
+  // (a row's words are what's in it, an enquiry's first words, an alert, a booking: content, not a button's name,
+  // so they wrap rather than hide, like Calendar's note cards: data-content-card. 24 Oct 2026, the user: "can
+  // shared/rules.js just be smartly integrated back into the base code for all of this".)
   function rowHtml(r, t) {
-    return `<li><a class="today-row" href="${esc(r.href || t.href)}"><span class="today-main">${esc(r.main)}${r.pill ? ` <span class="pill warn">${esc(r.pill)}</span>` : ""}</span>${r.side ? `<span class="today-side">${esc(r.side)}</span>` : ""}</a></li>`;
+    return `<li><a class="today-row" data-content-card href="${esc(r.href || t.href)}"><span class="today-main">${esc(r.main)}${r.pill ? ` <span class="pill warn">${esc(r.pill)}</span>` : ""}</span>${r.side ? `<span class="today-side">${esc(r.side)}</span>` : ""}</a></li>`;
   }
   const head = (t, n) => `<a class="today-head" href="${esc(t.href)}"><span class="today-name">${esc(t.name)}</span>${n ? `<b class="pill">${esc(n)}</b>` : ""}<span class="today-open">Open ${icon("next")}</span></a>`;
   function inner(t, s) {
@@ -337,7 +343,7 @@
       return `${calHead}<div class="today-say">${say.map((x) => (/^\s*</.test(x) ? x : `<p>${x}</p>`)).join("")}</div>
         ${special || moon ? `<p class="today-sky">${special ? `<span>${icon("star")}${special}</span>` : ""}${moon ? `<span>${icon("moon")}${moon}</span>` : ""}</p>` : ""}
         ${list.length ? N.list(list.map(N.cal.row)) : `<a class="btn wide" href="#calendar/new/${d}">${icon("plus")} Add a note card</a>`}
-        ${meet.length ? `<ul class="today-rows">${meet.map((e) => `<li><a class="today-row today-meetrow" href="${esc(e.item.meetUrl)}" target="_blank" rel="noopener"><span class="today-main">${icon("play")} Join on Meet ↗<small>${esc(e.item.title || "")}${e.allDay ? "" : ` · ${esc(e.start.slice(11, 16))}`}</small></span></a></li>`).join("")}</ul>` : ""}`;
+        ${meet.length ? `<ul class="today-rows">${meet.map((e) => `<li><a class="today-row today-meetrow" data-content-card href="${esc(e.item.meetUrl)}" target="_blank" rel="noopener"><span class="today-main">${icon("play")} Join on Meet ↗<small>${esc(e.item.title || "")}${e.allDay ? "" : ` · ${esc(e.start.slice(11, 16))}`}</small></span></a></li>`).join("")}</ul>` : ""}`;
     }
     // (Calendar's code isn't here, or its cards didn't load: Nova's and Google Calendar's events from Nova Bot)
     if (s.done && google.done && google.v) {

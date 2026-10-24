@@ -1,5 +1,6 @@
 /* Nova Phone: the admin places (admin.js): Google, Test stuff, Referrals, Links, Test booking. The theme's colours only. */
 .admin-big { font-size: 19px; }
+.admin-under { margin-top: -4px !important; overflow-wrap: anywhere; }
 .admin-hint { margin: 0 4px; }
 .admin-note { color: var(--soft); }
 

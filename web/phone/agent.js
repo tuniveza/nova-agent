@@ -239,8 +239,9 @@
   let messages = null, histAt = 0, waiting = false, waitKind = "", typed = "", paged = store.get("nova-phone/chat-pages", "pages") !== "all", pageAt = -1;
   const acts = new Map(); // "message:action" → the action, for its card
   const known = new Map(); // file id → file card
+  // (each suggestion is something to say, a message's words, so it wraps like one: card in row(); the user (24 Oct 2026): "can shared/rules.js just be smartly integrated back into the base code for all of this")
   const SUGGEST = ["What should I do now?", "What's left to do today?", "I'm out tonight from 7 to 11", "What's on this week?", "Add a note card for Friday at 2pm: mix review", "Make 31 October a Halloween day card", "What's booked in Acuity tomorrow?", "How are you doing?"];
-  const welcome = () => `<li class="agent-welcome card"><p class="kicker">✦ Nova Agent</p><h2 class="card-title">Hey, I'm Nova Agent</h2><p>Tell me what needs doing and I'll plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's Acuity bookings.</p>${list(SUGGEST.map((t) => row({ button: `data-say="${esc(t)}"`, icon: "send", title: t })))}</li>`;
+  const welcome = () => `<li class="agent-welcome card"><p class="kicker">✦ Nova Agent</p><h2 class="card-title">Hey, I'm Nova Agent</h2><p>Tell me what needs doing and I'll plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's Acuity bookings.</p>${list(SUGGEST.map((t) => row({ button: `data-say="${esc(t)}"`, icon: "send", title: t, card: true })))}</li>`;
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const pad = (n) => String(n).padStart(2, "0");
   // "Friday 9 October 2026" in a reply → 2026-10-09
@@ -891,7 +892,7 @@
     out.sort((x, y) => x.start.localeCompare(y.start) || x.title.localeCompare(y.title));
     if (!out.length) return "";
     const shown = out.slice(0, 8), more = out.length - shown.length;
-    return `<h3 class="h">Also coming up</h3>${list(shown.map((e) => row({ href: `#calendar/day/${e.date}`, lead: `${esc(shortDay(e.date))}<br>${e.allDay ? "All day" : hm(e.start)}`, title: e.title, text: `▦ Calendar · ⏰ ${remindWords(e.reminders[0])}${e.reminders.length > 1 ? ` +${e.reminders.length - 1}` : ""}${e.location ? ` · ${e.location}` : ""}` })))}${more ? `<a class="btn quiet wide" href="#calendar/day/${shown[shown.length - 1].date}">${more} more in Calendar</a>` : ""}`;
+    return `<h3 class="h">Also coming up</h3>${list(shown.map((e) => row({ href: `#calendar/day/${e.date}`, card: true, lead: `${esc(shortDay(e.date))}<br>${e.allDay ? "All day" : hm(e.start)}`, title: e.title, text: `▦ Calendar · ⏰ ${remindWords(e.reminders[0])}${e.reminders.length > 1 ? ` +${e.reminders.length - 1}` : ""}${e.location ? ` · ${e.location}` : ""}` })))}${more ? `<a class="btn quiet wide" href="#calendar/day/${shown[shown.length - 1].date}">${more} more in Calendar</a>` : ""}`;
   }
   // Reminders on this phone: pop-ups here while Nova Phone is open, notifications when it isn't
   function remindersCard() {

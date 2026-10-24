@@ -75,8 +75,9 @@
     const { box, g } = live.google;
     const status = g.status || {};
     const steps = g.steps || [];
-    const top = g.sandbox ? "Test copy of Nova Bot: Google is stood in for here." : g.connected ? `Connected as ${g.account} ✓` : g.hasKey ? "Key saved ✓ · One step left: Connect Google." : "Not set up yet. It takes about 5 minutes, one step at a time.";
-    let html = `<div class="card"><p class="kicker">Google</p><h2 class="card-title admin-big">${esc(top)}</h2>
+    // (the heading short, one line, as a heading's words are; the rest of what it says under it. the user (24 Oct 2026): "can shared/rules.js just be smartly integrated back into the base code for all of this")
+    const [top, under] = g.sandbox ? ["Test copy", "Test copy of Nova Bot: Google is stood in for here."] : g.connected ? ["Connected ✓", `As ${g.account}`] : g.hasKey ? ["Key saved ✓", "One step left: Connect Google."] : ["Not set up yet", "It takes about 5 minutes, one step at a time."];
+    let html = `<div class="card"><p class="kicker">Google</p><h2 class="card-title admin-big">${esc(top)}</h2><p class="admin-under">${esc(under)}</p>
       ${g.connected && g.needsReconnect ? `<p class="warn">Google stopped Nova Agent's connection, so nothing is syncing. Press Connect again (about a minute).</p><button type="button" class="btn main wide" data-g="connect">Connect again</button>` : ""}
       ${g.connected && (g.missing || []).length ? `<p class="warn small">Connect again to switch on: ${esc(g.missing.join(", "))}.</p>${g.needsReconnect ? "" : '<button type="button" class="btn wide" data-g="connect">Connect again</button>'}` : ""}
       ${g.connected ? `<div class="btns two"><button type="button" class="btn" data-g="steps">${gs.showSteps ? "Hide the setup steps" : "Show the setup steps"}</button><button type="button" class="btn quiet" data-g="disconnect">Disconnect</button></div>` : ""}</div>`;
@@ -241,7 +242,8 @@
     if (!["all", "likely", "maybe", ...kinds].includes(ts.filter)) ts.filter = "all";
     const shown = (i) => ts.filter === "all" || ts.filter === (i.confidence === "likely" ? "likely" : "maybe") || ts.filter === i.kindName;
     const deletable = likely.filter((i) => !i.locked);
-    const summary = !all.length ? "Nothing looks like a test. All clean ✦" : `${plural(likely.length, "thing looks", "things look")} like a test, and ${maybe.length} might.`;
+    // (the heading short, one line; the rest under it. the user (24 Oct 2026): "can shared/rules.js just be smartly integrated back into the base code for all of this")
+    const [summary, summaryMore] = !all.length ? ["All clean ✦", "Nothing looks like a test."] : [`${plural(likely.length, "looks like a test", "look like a test")}`, `And ${maybe.length} might.`];
     const problems = [botProblem && !bot ? `Nova Bot's list couldn't load: ${botProblem}` : "", pcProblem].filter(Boolean);
     const chip = (v, l, n) => `<button type="button" class="chip" data-filter="${esc(v)}" aria-pressed="${ts.filter === v}">${esc(l)} <span class="n">${n}</span></button>`;
     const card = (i) => {
@@ -261,7 +263,7 @@
     const line = (title, text, end) => `<li class="admin-line"><div><b>${esc(title)}</b><span>${esc(text)}</span></div>${end}</li>`;
     const lShown = likely.filter(shown), mShown = maybe.filter(shown);
     box.innerHTML = `<div class="admin-place page-in">
-      <div class="card"><p class="kicker">Test stuff</p><h2 class="card-title admin-big">${esc(summary)}</h2>${problems.map((t) => `<p class="small warn">${esc(t)}</p>`).join("")}
+      <div class="card"><p class="kicker">Test stuff</p><h2 class="card-title admin-big">${esc(summary)}</h2><p class="admin-under">${esc(summaryMore)}</p>${problems.map((t) => `<p class="small warn">${esc(t)}</p>`).join("")}
         <p class="muted small">Things that look like tests or copies, and why. Deleting keeps a copy for 30 days: Put back brings it back.</p></div>
       ${ts.undo && Date.now() - ts.undo.at < 600000 ? `<div class="card admin-undo" role="status"><p>${esc(ts.undo.text)}</p>${ts.undo.list.length ? '<button type="button" class="btn" data-undo>Put back</button>' : ""}</div>` : ""}
       ${all.length ? `<div class="chips">${chip("all", "All", all.length)}${chip("likely", "Likely", likely.length)}${chip("maybe", "Maybe", maybe.length)}${kinds.map((k) => chip(k, k, all.filter((i) => i.kindName === k).length)).join("")}</div>` : ""}

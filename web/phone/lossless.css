@@ -47,6 +47,9 @@
 
 .lossless-notes p { font-size: 15px; line-height: 1.55; }
 .lossless-notes code, .lossless-daw code { font-family: var(--f-mono, ui-monospace, monospace); font-size: 14px; padding: 1px 5px; border-radius: 6px; background: rgba(var(--deep-rgb), .8); overflow-wrap: anywhere; }
+/* (24 Oct 2026: the heading is short, one line; what it's for is the first line under it. The user: "can
+   shared/rules.js just be smartly integrated back into the base code for all of this") */
+.lossless-daw > p { margin: 0 0 10px; color: var(--muted); font-size: 15px; line-height: 1.45; }
 .lossless-daw ol { margin: 0; padding-left: 22px; line-height: 1.55; font-size: 15px; }
 .lossless-daw li { margin-bottom: 8px; }
 .lossless-daw li::marker { color: var(--hi); font-weight: 700; }

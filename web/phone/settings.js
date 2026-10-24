@@ -74,7 +74,8 @@
           ${themes.some((t) => t.id === "custom") ? `<div class="settings-custom">${orb(themes.find((t) => t.id === "custom"), look)}<div class="settings-sliders">
             <label class="settings-slider"><span>Hue</span><input type="range" min="0" max="359" step="1" name="hue" data-sfx="none" aria-label="Custom theme: hue"></label>
             <label class="settings-slider"><span>Vividness</span><input type="range" min="0" max="100" step="1" name="vivid" data-sfx="none" aria-label="Custom theme: vividness"></label></div></div>` : ""}
-          ${toggle({ label: "Colour everything from my planet", name: "planet", checked: look.planet })}
+          ${toggle({ label: "Colour from my planet", name: "planet", checked: look.planet })}
+          <p class="small muted settings-hint">Colours everything from your planet, on Nova Phone and Nova Desk.</p>
         </div>
         ${choices({ label: "Text size", name: "size", value: o.size === "large" ? "large" : "normal", options: [["normal", "Normal"], ["large", "Large"]] })}
         <div class="btns settings-switches">${toggle({ label: "Animations", name: "motion", checked: o.motion !== false })}${toggle({ label: "Starfield", name: "stars", checked: o.stars !== false })}</div>
@@ -112,7 +113,8 @@
         <h3 class="h">Nova Phone</h3>
         <button type="button" class="btn main wide" data-s="refresh">${icon("refresh")} Refresh everything</button>
         ${list([
-          row({ href: "#settings/install", lead: icon("download"), title: "Install or remove Nova Phone", text: "On your Home Screen, full screen, with notifications" }),
+          // (the name short enough for one line; "Nova Phone" moves into what it's for. the user (24 Oct 2026): "can shared/rules.js just be smartly integrated back into the base code for all of this")
+          row({ href: "#settings/install", lead: icon("download"), title: "Install or remove", text: "Nova Phone on your Home Screen, full screen, with notifications" }),
           row({ href: "#settings/links", lead: icon("link"), title: "Apps and links", text: "Every place, every address and its check, what's changed" }),
         ])}
         <button type="button" class="btn quiet wide" data-s="reset">Reset these settings</button>`;
