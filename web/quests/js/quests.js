@@ -171,10 +171,52 @@ function render() {
   $("opt-phone").setAttribute("aria-pressed", String(Boolean(state.rhythm?.phonePush)));
   renderStreak();
   renderTags();
+  renderNow();
   if (view === "focus") renderFocus();
   else if (view === "board") renderBoard();
   else if (view === "today") renderToday();
   else renderList();
+}
+
+// The quest on now (or up next) on its own card above every view, with its buttons (it was on Nova
+// Desk's own Quests until 24 Oct 2026). It wears its mode's colour (quest-modes.css), and its bar fills
+// as the time passes (the minute's redraw below).
+const clock = (s) => (s ? s.slice(11, s.length > 16 && !s.endsWith(":00") ? 19 : 16) : "");
+const dayMin = (s) => +s.slice(11, 13) * 60 + +s.slice(14, 16) + (+s.slice(17, 19) || 0) / 60;
+function renderNow() {
+  const box = $("now");
+  const cur = state.current;
+  const q = cur || state.next?.[0];
+  box.hidden = !q;
+  if (!q) return void (box.innerHTML = "");
+  const mode = q.mode || (q.status === "done" ? "done" : q.status === "doing" ? "working" : "waiting");
+  const t = today();
+  const sameDay = q.start?.startsWith(`${t.y}-${String(t.m).padStart(2, "0")}-${String(t.d).padStart(2, "0")}`);
+  let kicker, time;
+  if (cur) {
+    kicker = cur.status === "doing" ? "In progress" : "Happening now";
+    time = `${clock(cur.start)}–${clock(cur.end)}`;
+  } else {
+    kicker = "Up next";
+    const leave = q.travelMinutes && q.travelStart;
+    time = `${sameDay ? "" : `${when(q.start).replace(/ \d\d:\d\d$/, "")} · `}${clock(leave || q.start)}${leave ? ` (leave) · starts ${clock(q.start)}` : ""}`;
+  }
+  const pct = cur && cur.start && cur.end && sameDay ? Math.max(0, Math.min(100, ((t.h * 60 + t.min - dayMin(cur.start)) / Math.max(1, dayMin(cur.end) - dayMin(cur.start))) * 100)) : 0;
+  const b = [];
+  if (q.status === "todo") b.push(`<button type="button" class="btn primary" data-now="start">▶ Start</button>`);
+  if (q.status !== "done") b.push(`<button type="button" class="btn${q.status === "todo" ? "" : " primary"}" data-now="done" data-sfx="done">✓ ${q.ongoing ? "Session done" : "Done"}</button>`);
+  if (q.ongoing && q.status !== "done") b.push(`<button type="button" class="btn" data-now="finish">End quest</button>`);
+  if (q.status === "doing") b.push(`<button type="button" class="btn" data-now="snooze" data-min="15">+15 min</button>`);
+  if (q.status === "todo") b.push(`<button type="button" class="btn" data-now="snooze" data-min="60">Not now</button>`, `<button type="button" class="btn ghost" data-now="skip">Skip</button>`);
+  if (q.status !== "done" && q.status !== "skipped") b.push(`<button type="button" class="btn ghost" data-now="phones" title="Which phones get its reminders">📱 ${q.phones?.length ? `${q.phones.length} phone${q.phones.length === 1 ? "" : "s"}` : "Owner"}</button>`);
+  box.innerHTML = `<article class="now-card qm-${esc(mode)}" data-id="${esc(q.id)}">
+    <p class="now-kicker"><span>✦ Quest · ${kicker}</span>${Modes ? Modes.chip(mode, { "data-mode": q.id }) : ""}</p>
+    <h2 class="now-title"><button type="button" class="now-open" aria-label="${esc(q.title)}: open the details">${esc(q.title)}</button></h2>
+    <p class="now-meta">${esc(time)} · ${esc(mins(q.minutes || 0))}${q.location ? ` · at ${esc(q.location)}` : ""}</p>
+    ${q.from ? `<p class="now-from"><span class="now-tag">✎ ${esc(q.from)}</span></p>` : ""}
+    ${cur ? `<div class="now-bar" role="progressbar" aria-label="How far through" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct.toFixed(0)}"><i style="width:${pct.toFixed(0)}%"></i></div>` : ""}
+    <div class="now-btns">${b.join("")}</div>
+  </article>`;
 }
 
 function renderStreak() {
@@ -706,6 +748,32 @@ document.addEventListener("click", async (e) => {
     const id = modeChip.dataset.mode;
     const picked = await Modes.pick(modeChip, byId(id)?.mode);
     if (picked) await setMode(id, picked);
+    return;
+  }
+  // The quest on now's card
+  const nowCard = t.closest(".now-card");
+  if (nowCard) {
+    const id = nowCard.dataset.id;
+    const q = byId(id) || (state.current?.id === id ? state.current : state.next?.find((x) => x.id === id));
+    if (!q) return;
+    if (t.closest(".now-open")) return openEditor(q);
+    const n = t.closest("[data-now]");
+    if (!n) return;
+    const what = n.dataset.now;
+    if (what === "done" && byId(id)) return toggleDone(id);
+    if (what === "phones") {
+      if (!Modes) return;
+      const phones = await Modes.pickPhones(n, q.phones || []);
+      if (phones) await change(id, { phones });
+      return load();
+    }
+    n.disabled = true;
+    try {
+      await act(id, what, what === "snooze" ? { minutes: Number(n.dataset.min) || 15 } : {});
+      say(what === "snooze" ? `${q.title}: ${n.textContent.trim()}` : `${q.title}: ${n.textContent.replace(/^[^\w]+/, "").trim()}`);
+    } finally {
+      load();
+    }
     return;
   }
   const li = t.closest("li.q");

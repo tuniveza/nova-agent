@@ -384,8 +384,6 @@
   #view-today > .day-head { flex-wrap: wrap; gap: 8px; }
   #view-today > .day-head > div:first-child { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
   #view-today > .day-head h3 { order: -1; font-size: 18px; }
-  #view-today > .now-card { padding: 10px 14px; }
-  #view-today > .now-card .now-title { font-size: 16px; }
   #view-today > .subpanel { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
   /* An app opened inside Nova Agent takes the chat's place; the panels stay below it to switch */
   /* Its title panel is Nova Agent's header above (/shared/topbar.css: one slim bar, not two), then
@@ -622,12 +620,6 @@
   .stat b { display: block; font-family: var(--f-display); font-stretch: 112%; font-size: 17px; color: #fff; }
   .stat.warn b { color: var(--warn, #FFB86B); }
 
-  .now-card { position: relative; margin: 0 0 18px; padding: 16px 18px; border-radius: 20px; border: 1px solid transparent;
-    background: linear-gradient(color-mix(in srgb, var(--panel-2) 92%, transparent), color-mix(in srgb, var(--panel-2) 92%, transparent)) padding-box, var(--edge) border-box;
-    box-shadow: 0 20px 50px -30px var(--accent), 0 0 40px -24px var(--hi); }
-  .now-kicker { font-family: var(--f-mono); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--hi); }
-  .now-title { margin: 4px 0 2px; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 20px; color: #fff; }
-  .now-meta { font-size: 13px; color: var(--muted); }
   .bar { height: 6px; margin: 12px 0; border-radius: 6px; background: color-mix(in srgb, var(--void) 60%, transparent); overflow: hidden; }
   .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--hi), var(--lilac)); border-radius: 6px; box-shadow: 0 0 12px var(--hi); transition: width .6s ease; }
   .row-btns { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -654,8 +646,6 @@
   .stats { gap: 6px; }
   .stat { padding: 4px 10px; display: flex; align-items: baseline; gap: 6px; border-radius: 12px; }
   .stat b { display: inline; font-size: 15px; }
-  .now-card { margin-bottom: 12px; padding: 12px 16px; }
-  .now-card .bar { margin: 8px 0; }
   .subtabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
   .subtabs button { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
   .subtabs button b { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--hi) 22%, transparent); color: var(--soft); font-size: 10.5px; }
@@ -672,7 +662,6 @@
   .suggest .chip { padding: 5px 11px; font-size: 12.5px; }
 
   /* ===== Quests: unmistakable, and alive ===== */
-  @property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
   @property --p { syntax: "<number>"; inherits: false; initial-value: 0; }
   .tl-card.quest { position: relative; overflow: hidden; padding: 12px 16px; border-left: 0;
     background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)) padding-box,
@@ -686,7 +675,7 @@
   .tl-card.quest.risk { background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)) padding-box, linear-gradient(135deg, var(--warn, #FFB86B), color-mix(in srgb, var(--warn, #FFB86B) 30%, transparent)) border-box; }
   /* Each quest wears its mode's colour (Waiting, Soon, Working On It...: /shared/quest-modes.css,
      tinted toward the theme): the card, its edge, its glow and its title */
-  .tl-card.quest.qm-tinted, .now-card.qm-tinted {
+  .tl-card.quest.qm-tinted {
     background:
       radial-gradient(130% 140% at 0% 0%, color-mix(in oklab, var(--qm) 30%, transparent), transparent 65%) padding-box,
       linear-gradient(120deg, color-mix(in oklab, var(--qm) 18%, var(--panel)), color-mix(in oklab, var(--qm) 6%, var(--panel))) padding-box,
@@ -694,23 +683,13 @@
     border: 1px solid transparent; box-shadow: 0 14px 34px -22px var(--qm); }
   .tl-card.quest.qm-tinted::before { background: linear-gradient(180deg, var(--qm), color-mix(in oklab, var(--qm) 55%, var(--lilac)), var(--qm)); background-size: 100% 200%; }
   .tl-card.quest.qm-tinted.doing { box-shadow: 0 0 0 1px var(--qm), 0 0 30px -8px var(--qm); }
-  .tl-card.quest.qm-tinted .tl-title, .now-card.qm-tinted .now-title { color: color-mix(in oklab, var(--qm) 30%, #fff); }
-  .now-card.qm-tinted .now-kicker { color: color-mix(in oklab, var(--qm) 70%, #fff); }
+  .tl-card.quest.qm-tinted .tl-title { color: color-mix(in oklab, var(--qm) 30%, #fff); }
   .q-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .q-tag, .m-tag, .risk-tag, .m-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
   .q-tag { color: var(--on-accent); background: linear-gradient(120deg, var(--hi), var(--accent-2), var(--hi)); background-size: 200% 100%; box-shadow: 0 4px 14px -6px var(--hi); animation: tag-flow 4s linear infinite; }
   .m-tag { color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent); background: color-mix(in srgb, var(--gold) 10%, transparent); letter-spacing: .08em; }
   .risk-tag { color: var(--warn, #FFB86B); border: 1px solid rgba(var(--warn-rgb, 255, 184, 107), .53); animation: risk-pulse 1.6s ease-in-out infinite; }
   .tl-card.quest .tl-title { font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 16.5px; letter-spacing: .01em; }
-  .now-kicker { animation: tag-glow 2.4s ease-in-out infinite; }
-  /* The current quest glows and breathes, with a light sweeping round its edge */
-  .now-card { animation: quest-in .5s cubic-bezier(.2,.8,.2,1) both, now-breathe 3s ease-in-out infinite; }
-  .now-card::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1.5px; pointer-events: none;
-    background: conic-gradient(from var(--sweep), transparent 0deg, var(--hi) 50deg, var(--lilac) 90deg, transparent 140deg);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-    animation: sweep 4s linear infinite; }
-  @keyframes now-breathe { 50% { box-shadow: 0 20px 50px -30px var(--accent), 0 0 56px -18px var(--hi); } }
-  .now-title { font-size: 22px !important; }
   .ring { animation: ring-fill 1.4s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes ring-fill { from { --p: 0; } }
   @keyframes quest-in { from { opacity: 0; transform: translateY(12px) scale(.98); } }
@@ -718,9 +697,7 @@
   @keyframes quest-shine { 0%, 70% { transform: translateX(-100%); } 85%, 100% { transform: translateX(100%); } }
   @keyframes quest-breathe { 50% { box-shadow: 0 0 0 1px var(--hi), 0 0 44px -4px var(--hi); } }
   @keyframes tag-flow { to { background-position: 200% 0; } }
-  @keyframes tag-glow { 50% { text-shadow: 0 0 14px var(--hi); filter: brightness(1.25); } }
   @keyframes risk-pulse { 50% { box-shadow: 0 0 14px -2px var(--warn, #FFB86B); } }
-  @keyframes sweep { to { --sweep: 360deg; } }
   .tl-meta { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
   .tl-meta .chip-m { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .06em; background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--soft); }
   .tl-card .row-btns { margin-top: 8px; }
@@ -2224,18 +2201,9 @@
     let html = `<div class="day-head"><div><div class="day-sub">TODAY · up ${r.wake} · sleep ${r.sleep}${r.paceLimits === false ? ' · <span style="color:var(--warn, #FFB86B)">⚡ pace limits off</span>' : ''}</div><h3>${escH(dayLong(today)).replace(/^(\w+)/, '<span>$1</span>')}</h3></div>
       <div class="stats"><div class="stat"><b>${quests.length}</b>quests</div><div class="stat"><b>${(plannedMin / 60).toFixed(1)}h</b>planned</div><div class="stat"><b>${done}</b>done</div>${atRisk ? `<div class="stat warn"><b>${atRisk}</b>at risk</div>` : ''}</div></div>`;
 
-    const cur = st.current;
-    // The quest on the big card (on now, or up next)
-    const nowId = cur ? cur.id : st.next[0] ? st.next[0].id : '';
-    if (cur) {
-      const pct = cur.start && cur.end ? Math.max(0, Math.min(100, ((nowM - mins(cur.start)) / Math.max(1, mins(cur.end) - mins(cur.start))) * 100)) : 0;
-      html += `<div class="now-card${modeTint(cur)}"><div class="now-kicker">✦ Quest · ${cur.status === 'doing' ? 'In progress' : 'Happening now'} ${modeChip(cur)}</div><div class="now-title">${escH(cur.title)}</div>
-        <div class="now-meta">${hhmm(cur.start)}–${hhmm(cur.end)} · ${dur(cur)}${cur.location ? ` · at ${escH(cur.location)}` : ''}</div>${cur.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(cur.from)}</span></div>` : `<div class="now-from">${sourceTags(cur)}</div>`}
-        <div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div>${questButtons(cur)}</div>`;
-    } else if (st.next[0]) {
-      const n = st.next[0];
-      html += `<div class="now-card${modeTint(n)}"><div class="now-kicker">✦ Quest · Up next ${modeChip(n)}</div><div class="now-title">${escH(n.title)}</div><div class="now-meta">${n.start.startsWith(today) ? '' : escH(dayLong(n.start.slice(0, 10))) + ' · '}${hhmm(n.travelStart && n.travelMinutes ? n.travelStart : n.start)}${n.travelMinutes ? ` (leave) · starts ${hhmm(n.start)}` : ''} · ${dur(n)}</div>${n.from ? `<div class="now-from"><span class="m-tag">✎ ${escH(n.from)}</span></div>` : `<div class="now-from">${sourceTags(n)}</div>`}<div style="margin-top:10px">${questButtons(n)}</div></div>`;
-    }
+    // (the quest on now, or up next, has its own card in Quests, /quests/: moved there on 24 Oct 2026, the user;
+    // here it's the first row of Ahead, open)
+    const nowId = st.current ? st.current.id : st.next[0] ? st.next[0].id : '';
 
     // One timeline row (a quest, blocked time or a calendar card). Compact rows show just the time
     // and title, so the whole day fits: tap one to open its details and buttons (tap again to fold)
@@ -2287,9 +2255,8 @@
     if (todayTab === 'ahead') {
       if (!ahead.length) panel = `<div class="empty">${items.length ? 'All done for today ✦' : 'Nothing planned today.<br>Say what you need to get done, and I’ll fit it in.'}</div>`;
       else {
-        // The quest already on the card above is a folded row here; the one after it is open
-        const open = Math.max(0, ahead.findIndex((it) => !(it.kind === 'quest' && it.q.id === nowId)));
-        panel = `<div class="timeline">${ahead.map((it, i) => (i === 0 && mins(it.start) > nowM ? '<div class="now-line"></div>' : '') + row(it, i !== open, i === open && cur && i > 0 && it.kind === 'quest' ? 'Up next' : '')).join('')}</div>`;
+        // The first row is open: the quest on now, or the next one
+        panel = `<div class="timeline">${ahead.map((it, i) => (i === 0 && mins(it.start) > nowM ? '<div class="now-line"></div>' : '') + row(it, i !== 0)).join('')}</div>`;
       }
     } else if (todayTab === 'done') {
       panel = `<div class="timeline">${finished.map((it) => row(it, true)).join('')}</div>`;
