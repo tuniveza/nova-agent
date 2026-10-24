@@ -18,8 +18,14 @@ const $ = (id) => document.getElementById(id);
   link.href = "css/extras.css";
   document.head.appendChild(link);
   // …and the cosmic makeover last, so it has the final say
+  // (a copy added at the end, the first taken away once the copy is in: moved, it was gone until it came back from
+  // the network, and the page jumped as the bar and the days lost its sizes for a moment, 24 Oct 2026)
   const cosmos = document.querySelector('link[href="css/cosmos.css"]');
-  if (cosmos) document.head.appendChild(cosmos);
+  if (cosmos) {
+    const last = cosmos.cloneNode();
+    last.onload = last.onerror = () => cosmos.remove();
+    document.head.appendChild(last);
+  }
 }
 const view = $("view");
 const sfx = (n) => window.NovaSfx && window.NovaSfx.play && window.NovaSfx.play(n);
@@ -246,11 +252,14 @@ function entries(from, to) {
 const titleOf = (e) => (e.type === "booking" ? [e.item.session, e.item.name].filter(Boolean).join(" · ") || "Booking" : e.item.title || (e.type === "day" ? presets().get(e.item.preset).label : "(No title)"));
 const onDay = (list, d) => list.filter((e) => e.start.slice(0, 10) <= d && e.end.slice(0, 10) >= d && !(e.end.slice(0, 10) === d && e.end.slice(11) === "00:00" && e.start.slice(0, 10) < d));
 
-// (Simple look, a very short Calendar: its views as lists of cards, drawAgenda)
-const short = () => document.documentElement.dataset.ui !== "rich" && matchMedia("(max-height: 360px)").matches;
+// (Simple look, a very short Calendar: its views as lists of cards, drawAgenda. On a computer under 430px tall
+// too: there the hours squeezed every card to a sliver and the month's days to "More in Day view", 24 Oct 2026.
+// html.cal-short, set as each view is drawn, gives simple.css the same answer)
+const short = () => document.documentElement.dataset.ui !== "rich" && matchMedia(document.documentElement.dataset.form === "desktop" ? "(max-height: 429px)" : "(max-height: 360px)").matches;
 
 // ---- Drawing ----
 function render() {
+  document.documentElement.classList.toggle("cal-short", short());
   document.querySelectorAll(".views button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === prefs.view)));
   $("title-text").textContent = titleText();
   if (prefs.view === "month") drawMonth();
@@ -450,7 +459,7 @@ function infoLine(e) {
   // (a quest's striped card already says it's a quest: no "QUEST:" in front of its title here)
   const title = titleOf(e).replace(/^quest:\s*/i, "");
   // (on a phone just the title: its time is in the chosen day's list under the month)
-  return `<span class="di${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(SYMBOL_WORDS[symbolOf(e)] || "")}: ${esc(titleOf(e))}"><span class="di-in">${e.allDay || phone() ? "" : `<b>${fmtTime(e.start)}</b> `}<span class="di-t">${esc(title)}</span></span></span>`;
+  return `<span class="di${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(SYMBOL_WORDS[symbolOf(e)] || "")}: ${esc(titleOf(e))}${e.allDay ? "" : `, ${fmtTime(e.start)}–${fmtTime(e.end)}`}"><span class="di-in">${e.allDay || phone() ? "" : `<b>${fmtTime(e.start)}</b> `}<span class="di-t">${esc(title)}</span></span></span>`;
 }
 // (data-guard="off": this fits itself; /shared/onescreen.js's last-resort shrinking leaves it alone, as the
 // two fought over it, 22 Oct 2026)
@@ -881,6 +890,37 @@ function listEntries() {
   return entries(cursor, listAt.end).filter((e) => e.date >= cursor || e.end.slice(0, 10) >= cursor);
 }
 const shortDay = (d) => `${Number(d.slice(8))} ${MONTHS[Number(d.slice(5, 7)) - 1].slice(0, 3)}${d.slice(0, 4) !== today().slice(0, 4) ? ` ${d.slice(0, 4)}` : ""}`;
+// One page of [day, card] rows in the box (its columns, cosmos.css .list.paged), from row `from`, each day's name
+// (head) over its first card on the page, until the box is full; gives the first row left for the next page
+// (the List, and the short Calendar's cards, drawAgenda)
+function fillPage(box, rows, from, head, rowFor) {
+  const over = () => box.scrollWidth > box.clientWidth + 1 || box.scrollHeight > box.clientHeight + 1;
+  box.innerHTML = "";
+  let day = "";
+  let ul = null;
+  for (let i = from; i < rows.length; i++) {
+    const [d, e] = rows[i];
+    let group = null;
+    if (d !== day) {
+      group = document.createElement("section");
+      group.className = "lg";
+      const more = i === from && i > 0 && rows[i - 1][0] === d;
+      group.innerHTML = `${head ? `<h4>${head(d, more)}</h4>` : ""}<ul class="rows"></ul>`;
+      box.append(group);
+      ul = group.lastElementChild;
+      day = d;
+    }
+    const tpl = document.createElement("template");
+    tpl.innerHTML = rowFor(e, d);
+    ul.append(tpl.content.firstElementChild);
+    if (i > from && over()) {
+      if (group) group.remove();
+      else ul.lastElementChild.remove();
+      return i;
+    }
+  }
+  return rows.length;
+}
 function drawList() {
   if (listAt.cursor !== cursor || listAt.query !== query) listAt = { cursor, query, until: "", page: 0, last: false, pages: 1, end: "" };
   listAt.end = query ? "" : listAt.until || addDays(cursor, 59);
@@ -906,34 +946,9 @@ function drawList() {
     return;
   }
   // A page: as many cards as fit, each day's name over its first card on the page
-  const over = () => box.scrollWidth > box.clientWidth + 1 || box.scrollHeight > box.clientHeight + 1;
-  const fill = (from) => {
-    box.innerHTML = "";
-    let day = "";
-    let ul = null;
-    for (let i = from; i < rows.length; i++) {
-      const [d, e] = rows[i];
-      let group = null;
-      if (d !== day) {
-        group = document.createElement("section");
-        group.className = "lg";
-        const more = i === from && i > 0 && rows[i - 1][0] === d;
-        group.innerHTML = `<h4>${d === today() ? "Today · " : ""}${dayLabel(d)}${d.slice(0, 4) !== today().slice(0, 4) ? ` ${d.slice(0, 4)}` : ""}${more ? " · continued" : ""}</h4><ul class="rows"></ul>`;
-        box.append(group);
-        ul = group.lastElementChild;
-        day = d;
-      }
-      const tpl = document.createElement("template");
-      tpl.innerHTML = rowHtml(e);
-      ul.append(tpl.content.firstElementChild);
-      if (i > from && over()) {
-        if (group) group.remove();
-        else ul.lastElementChild.remove();
-        return i;
-      }
-    }
-    return rows.length;
-  };
+  // (a short Calendar: each card a line, its times side by side, "08:45–10:45", not one over the other)
+  const rowFor = short() ? (e) => rowHtml(e).replace(/<time>([^<]*)<br>([^<]*)<\/time>/, '<time class="ag-when">$1–$2</time>') : rowHtml;
+  const fill = (from) => fillPage(box, rows, from, (d, more) => `${d === today() ? "Today · " : ""}${dayLabel(d)}${d.slice(0, 4) !== today().slice(0, 4) ? ` ${d.slice(0, 4)}` : ""}${more ? " · continued" : ""}`, rowFor);
   const starts = [0];
   for (let next = fill(0); next < rows.length; next = fill(next)) starts.push(next);
   listAt.pages = starts.length;
@@ -1009,6 +1024,16 @@ function layoutColumn(evs) {
   }
   flush();
   return placed;
+}
+// A card's time window, plainly on the card (24 Oct 2026, the user: "make the time-window of the note card be
+// more noticable on the actual note card so it doesn't look like just a blank gradient square"): a chip in the
+// card's time colour on a darker patch, at the start of its title's first line, so it shows wherever the title
+// does, even on a card a line tall (fitCard fits the two together). Too narrow for it on one line, it breaks
+// after the dash ("11:00–" over "12:00"), never through a time.
+// (a card with room for a single line of its words, too narrow for both times and its title, shows when it
+// starts, "12:45": .ev-t-start, fitCard; the whole window is in its tooltip, read aloud and in it when it opens)
+function timeChip(e, from = e.start) {
+  return `<span class="ev-time" aria-hidden="true"><span class="ev-t0">${fmtTime(from)}</span><span class="ev-t1">–${fmtTime(e.end)}</span></span>`;
 }
 function drawTimeGrid(n) {
   // (Simple look on a very short Calendar, as simple.css: no room for hours, so the cards as a list, each with
@@ -1122,7 +1147,7 @@ function drawTimeGrid(n) {
             const left = `calc(min(${(p.col * w).toFixed(4)}%, ${p.col} * var(--ev-max, 100vw)) + 2px)`;
             const width = `calc(min(${(w * p.span).toFixed(4)}%, ${p.span} * var(--ev-max, 100vw)) - 4px)`;
             const what = whatOf(e) && whatOf(e) !== e.item.location ? whatOf(e) : "";
-            return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="--ev-top:${top};top:var(--ev-top);height:${height};left:${left};width:${width}" tabindex="0" role="button" data-content-card aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${esc(titleOf(e))}</strong><small>${fmtTime(e.start)}–${fmtTime(e.end)}${e.item.location ? ` · ${esc(e.item.location)}` : ""}</small>${what ? `<em class="ev-what">${esc(what)}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
+            return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="--ev-top:${top};top:var(--ev-top);height:${height};left:${left};width:${width}" tabindex="0" role="button" data-content-card aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${timeChip(e)} ${esc(titleOf(e))}</strong>${e.item.location ? `<small>${esc(e.item.location)}</small>` : ""}${what ? `<em class="ev-what">${esc(what)}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
           })
           .join("");
         const line = d === t ? `<div class="now-line" style="top:calc(var(--hh) * ${at(d, now)})"></div>` : "";
@@ -1160,29 +1185,107 @@ function drawTimeGrid(n) {
   }
   // (short hours: every other hour named, so the names never crowd each other)
   tg.classList.toggle("sparse", gridHh < 24);
+  fitCards(tg);
+}
+// (the grid drawn again whenever its size changes, and its cards looked over once more a moment after they're drawn
+// and when the fonts are in: a card fitted before its fonts or the page had settled was left with its title on one
+// line, cut through a word, "17:30–19:30 Busy · Session: M", 24 Oct 2026; never a loop: fitting a card doesn't change
+// the grid's size, drawing it again gives the same size, and only a card whose title is cut is fitted again)
+let gridSeen = null;
+function fitCards(tg, onlyCut = false) {
+  if (!tg.isConnected) return;
+  if (!onlyCut) {
+    gridSeen?.disconnect();
+    let size = `${tg.clientWidth}x${tg.clientHeight}`;
+    gridSeen = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      const now = `${tg.clientWidth}x${tg.clientHeight}`;
+      if (now === size || !tg.isConnected) return;
+      size = now;
+      // (its hours share out the new room too: drawn again, the new grid the same size, so no more than once)
+      requestAnimationFrame(() => tg.isConnected && !drag && $("sheet").hidden && render());
+    }) : null;
+    gridSeen?.observe(tg);
+    setTimeout(() => fitCards(tg, true), 600);
+    // (fonts still coming: once more when they're in)
+    if (document.fonts && document.fonts.status !== "loaded") document.fonts.ready.then(() => requestAnimationFrame(() => fitCards(tg, true)));
+  }
+  if (onlyCut) {
+    if (document.documentElement.dataset.ui === "rich" || drag) return;
+    // (looked over from the boxes' own sizes, no style or box reads a card: reads only, unless one is cut)
+    const cards = [...tg.querySelectorAll(".col .ev")];
+    const first = cards.find((el) => el.firstElementChild);
+    const lh = first ? parseFloat(getComputedStyle(first.querySelector(":scope > strong") || first).lineHeight) || 13 : 13;
+    for (const el of cards.filter((el) => titleCut(el, lh))) fitCard(el);
+    return;
+  }
   // Cards squeezed narrow (several at once, or a phone's week) show just their title, wrapped,
   // so it can still be read; too thin even for that, just their colour (tap one to read it)
-  for (const el of view.querySelectorAll(".col .ev")) {
-    el.classList.toggle("slim", el.offsetWidth < 76);
-    el.classList.toggle("thin", el.offsetWidth < 30);
+  // (every card measured first, then each one set: one layout for them all, not one a card)
+  const evs = [...tg.querySelectorAll(".col .ev")];
+  const sizes = evs.map((el) => [el.offsetWidth, el.clientHeight]);
+  evs.forEach((el, i) => {
+    const [w, h] = sizes[i];
+    el.classList.toggle("slim", w < 76);
+    el.classList.toggle("thin", w < 30);
     // As many lines of its title as fit its height (a short card can't show six)
-    if (el.classList.contains("slim")) el.style.setProperty("--lines", String(Math.max(1, Math.floor((el.clientHeight - 4) / 12.6))));
+    if (w < 76) el.style.setProperty("--lines", String(Math.max(1, Math.floor((h - 4) / 12.6))));
     // (a short card: its title and time on one line)
-    el.classList.toggle("short", el.clientHeight < 34);
-  }
+    el.classList.toggle("short", h < 34);
+  });
   // (Simple look: each of a card's lines whole on one line, or not there; a card too small for even its
   // title is just its colour, its words on hover and read aloud: never cut short or broken up)
-  if (document.documentElement.dataset.ui !== "rich") for (const el of view.querySelectorAll(".col .ev")) fitCard(el);
+  if (document.documentElement.dataset.ui !== "rich") for (const el of tg.querySelectorAll(".col .ev")) fitCard(el);
 }
+// A card's title cut without its "…": wider than its line, or half a line or more under the card's foot (a letter's
+// box stands a little taller than its line, so less than that is no cut)
+function titleCut(el, lh = 13) {
+  const t = el.querySelector(":scope > strong");
+  if (!t || !t.offsetHeight || el.classList.contains("bare") || el.classList.contains("ev-clamp")) return false;
+  // (its foot: the card's height less its padding, 1–3px)
+  return t.scrollWidth > t.clientWidth + 1 || t.offsetTop + t.offsetHeight - (el.clientHeight - 1) > lh / 2;
+}
+// A short Calendar's cards (24 Oct 2026, the user, at a short Nova Desk: "can you optimize and make compact the
+// short height nova desk - nova calender this looks stupid"; it was a stack of full-width bars, four to a page):
+// as the List does it, in as many columns as fit, each day's name over its cards, each card a slim row with its
+// time window in a chip and its title beside it; a page at a time, ‹ › beside them turning the pages and, past
+// the first or the last, the week (month, day) before or after.
+let agAt = { key: "", page: 0, toLast: false };
 function drawAgenda(days, when) {
   const all = entries(days[0], days[days.length - 1]);
   const many = days.length > 1;
-  // (each row whole by itself, its day and start in its first column, so a page of a row or two is never a
-  // day's name alone)
-  const rows = days
-    .flatMap((d) => onDay(all, d).map((e) => rowHtml(e).replace(/<time[^>]*>[\s\S]*?<\/time>/, `<time class="ag-when">${many ? `<b>${WD[weekday(d)]} ${Number(d.slice(8))}</b>` : ""}${e.allDay || e.type === "day" ? "All day" : fmtTime(e.start > `${d}T00:00` ? e.start : `${d}T00:00`)}</time>`)))
-    .join("");
-  view.innerHTML = `<div class="list agenda" data-os-nofill>${rows ? `<ul class="rows">${rows}</ul>` : `<p class="empty">Nothing ${when}. Tap + to add a note card.</p>`}</div>`;
+  const key = `${prefs.view}:${days[0]}:${days.length}`;
+  const rows = days.flatMap((d) => onDay(all, d).map((e) => [d, e]));
+  // (opened afresh: the page with today on it, when today's in it; else the first, or the last coming back)
+  const fresh = agAt.key !== key;
+  if (fresh) agAt = { key, page: agAt.toLast ? Infinity : 0, toLast: false };
+  const aim = fresh && !Number.isFinite(agAt.page) ? -1 : fresh && days.includes(today()) ? rows.findIndex(([d]) => d >= today()) : -1;
+  const rowFor = (e, d) => rowHtml(e).replace(/<time[^>]*>[\s\S]*?<\/time>/, `<time class="ag-when">${e.allDay || e.type === "day" ? "All day" : `${fmtTime(e.start > `${d}T00:00` ? e.start : `${d}T00:00`)}–${fmtTime(e.end)}`}</time>`);
+  const head = many ? (d, more) => `${d === today() ? "Today · " : ""}${WD[weekday(d)]} ${shortDay(d)}${more ? " · continued" : ""}` : null;
+  view.innerHTML = `<div class="list paged agenda"><div class="lp"></div><nav class="list-pager" aria-label="Pages"><button type="button" data-ag-step="-1" aria-label="Earlier">‹</button><span></span><button type="button" data-ag-step="1" aria-label="Later">›</button></nav></div>`;
+  const box = view.querySelector(".lp");
+  if (!rows.length) {
+    box.innerHTML = `<p class="empty">Nothing ${when}. Tap + to add a note card.</p>`;
+    agAt.pages = 1;
+    agAt.page = 0;
+    return;
+  }
+  const starts = [0];
+  for (let next = fillPage(box, rows, 0, head, rowFor); next < rows.length; next = fillPage(box, rows, next, head, rowFor)) starts.push(next);
+  agAt.pages = starts.length;
+  if (aim > 0) agAt.page = starts.filter((i) => i <= aim).length - 1;
+  agAt.page = Math.max(0, Math.min(agAt.page, starts.length - 1));
+  fillPage(box, rows, starts[agAt.page], head, rowFor);
+  view.querySelector(".list-pager > span").textContent = starts.length > 1 ? `${agAt.page + 1} / ${starts.length}` : "";
+}
+// ‹ and › beside the short Calendar's cards: a page, else the week (month, day) before or after
+function agStep(dir) {
+  if (dir > 0 && agAt.page < agAt.pages - 1) agAt.page++;
+  else if (dir < 0 && agAt.page > 0) agAt.page--;
+  else {
+    agAt.toLast = dir < 0;
+    return step(dir);
+  }
+  render();
 }
 // (the page bar comes with /shared/fit.js, a moment after the Calendar on its first opening)
 function adoptSide(side, tries = 0) {
@@ -1195,7 +1298,7 @@ function adoptSide(side, tries = 0) {
 //   1. on one line;
 //   2. a little smaller, down to 11px (no smaller: it must still read);
 //   3. its words onto as many lines as the card has room for (never cut through a word unless one word is
-//      wider than the card);
+//      wider than the card), then the card's edges and lines a little closer (.ev-tight) for one more line;
 //   4. the card a little taller, into the free room under it in its column;
 //   5. still no room: as many whole lines as fit, ending "…" (.ev-clamp), or for a card thinner than a word
 //      its colour and the symbol of what it's about (.bare). Either opens out to its whole title while it's pointed at or has the
@@ -1209,7 +1312,7 @@ function fitCard(el) {
   }
   const title = el.querySelector(":scope > strong");
   const lines = [...el.querySelectorAll(":scope > :is(small, .ev-what)")];
-  el.classList.remove("bare", "ev-wrap", "ev-small", "ev-clamp", "ev-up");
+  el.classList.remove("bare", "ev-wrap", "ev-small", "ev-tight", "ev-clamp", "ev-up", "ev-t-start");
   for (const l of [title, ...lines]) if (l) l.classList.remove("ev-off");
   if (!title) return;
   const inner = () => el.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(el).paddingBottom) || 0) + 1;
@@ -1219,10 +1322,20 @@ function fitCard(el) {
   if (!fits()) el.classList.add("ev-small");
   // (its words onto more lines: the title alone in the card, not side by side with the time)
   if (!fits()) el.classList.add("ev-wrap"), el.classList.remove("short");
+  // (its edges and lines a little closer, so its time and title take one more line before any is cut short: a card
+  // 30px tall had room for two lines of words, and showed one, 24 Oct 2026)
+  if (!fits()) el.classList.add("ev-tight");
   if (!fits()) {
     const need = Math.ceil(title.getBoundingClientRect().bottom - inner()) + 2;
     const r = roomUnder(el);
     if (need > 0 && r >= el.offsetHeight + need) el.style.setProperty("height", `${el.offsetHeight + need}px`), el.classList.remove("short");
+    // (not room for all of it: as many more whole lines as there's room for, so its time window and the start of its
+    // title both show, 24 Oct 2026)
+    else if (need > 0) {
+      const lh = parseFloat(getComputedStyle(title).lineHeight) || 13;
+      const more = Math.floor((r - el.offsetHeight) / lh) * lh;
+      if (more >= lh) el.style.setProperty("height", `${Math.ceil(el.offsetHeight + more)}px`), el.classList.remove("short");
+    }
   }
   const bare = !fits() && title.getBoundingClientRect().width < 30;
   el.classList.toggle("bare", bare);
@@ -1238,7 +1351,11 @@ function fitCard(el) {
   // (still more words than room, even so: as many lines as there's room for, ending "…")
   const clamp = !bare && !fits();
   el.classList.toggle("ev-clamp", clamp);
-  if (clamp) el.style.setProperty("--lines", String(Math.max(1, Math.floor((inner() - title.getBoundingClientRect().top) / (parseFloat(getComputedStyle(title).lineHeight) || 13)))));
+  const lineCount = Math.max(1, Math.floor((inner() - title.getBoundingClientRect().top) / (parseFloat(getComputedStyle(title).lineHeight) || 13)));
+  if (clamp) el.style.setProperty("--lines", String(lineCount));
+  // (one line, and its time window doesn't fit on it whole: when it starts, so the line isn't a time cut in two)
+  const chip = title.querySelector(":scope > .ev-time");
+  if (clamp && lineCount === 1 && chip && (chip.getClientRects().length > 1 || chip.getBoundingClientRect().right > title.getBoundingClientRect().right + 1)) el.classList.add("ev-t-start");
   if (bare || clamp) el.title = el.getAttribute("aria-label") || "";
   else el.removeAttribute("title");
   // (one in the lower half of its day opens out upwards, from its foot, so all of it stays in the grid)
@@ -1389,6 +1506,8 @@ view.addEventListener("click", (e) => {
   if (justDragged) return;
   const turn = e.target.closest("[data-list-step]");
   if (turn) return step(Number(turn.dataset.listStep));
+  const page = e.target.closest("[data-ag-step]");
+  if (page) return agStep(Number(page.dataset.agStep));
   const add = e.target.closest("[data-add]");
   if (add) return openNew({ date: add.dataset.add });
   const addDay = e.target.closest("[data-add-day]");
@@ -1466,6 +1585,12 @@ function moveDrag(x, y) {
     const len = Math.max(15, minutesBetween(drag.start, drag.end) + dMin);
     drag.el.style.height = `${(len / 60) * hh - 2}px`;
   } else drag.el.style.transform = `translate(${dDay * drag.colW}px, ${(dMin / 60) * hh}px)`;
+  // (its time chip says where it's going as it moves)
+  const [t0, t1] = drag.el.querySelectorAll(".ev-time > span");
+  if (t0 && t1) {
+    t0.textContent = fmtTime(drag.resize ? drag.start : addMinutes(drag.start, dMin + dDay * 1440));
+    t1.textContent = `–${fmtTime(addMinutes(drag.end, dMin + (drag.resize ? 0 : dDay * 1440)))}`;
+  }
 }
 function endDrag() {
   if (!drag) return;

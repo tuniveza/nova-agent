@@ -914,11 +914,11 @@ html.embed .bar { padding-top: 4px !important; }
   .dv-side .dp-info p + p { margin-top: 2px; }
   /* (each card: its times, its title, and under the title what it is and where it's from; ".view … .dayplan"
      outranks Simple's rows for a narrow list, simple.css) */
-  .view .dv-side > .dayplan .row-item.note.has-art { grid-template-columns: 38px minmax(0, 1fr) !important; grid-template-areas: "time title" "time meta";
+  .view .dv-side > .dayplan .row-item.note.has-art { grid-template-columns: 44px minmax(0, 1fr) !important; grid-template-areas: "time title" "time meta";
     column-gap: 8px !important; row-gap: 1px; align-items: center; padding: 4px 9px !important; min-height: 0 !important; border-radius: 10px; }
-  .view .dv-side > .dayplan .row-item.note.has-art:has(> .row-sym) { grid-template-columns: 38px auto minmax(0, 1fr) !important; grid-template-areas: "time title title" "time kind meta"; }
+  .view .dv-side > .dayplan .row-item.note.has-art:has(> .row-sym) { grid-template-columns: 44px auto minmax(0, 1fr) !important; grid-template-areas: "time title title" "time kind meta"; }
   /* (Rich look: a note card's picture a little chip where the others say what they are; Simple shows none) */
-  html[data-ui="rich"] .view .dv-side > .dayplan .row-item.note.has-art:has(> .art) { grid-template-columns: 38px auto minmax(0, 1fr) !important; grid-template-areas: "time title title" "time kind meta"; }
+  html[data-ui="rich"] .view .dv-side > .dayplan .row-item.note.has-art:has(> .art) { grid-template-columns: 44px auto minmax(0, 1fr) !important; grid-template-areas: "time title title" "time kind meta"; }
   .view .dv-side > .dayplan .row-item.note.has-art > span:last-child { display: contents; }
   .dv-side .row-item.note > time { grid-area: time; font-size: 11px; line-height: 1.25; }
   .dv-side .row-item.note strong { grid-area: title; font-size: 12.5px; line-height: 1.25; }
@@ -927,3 +927,37 @@ html.embed .bar { padding-top: 4px !important; }
   .view .dv-side > .dayplan .row-item.note > .art { grid-area: kind; width: 30px !important; height: 16px; min-height: 0 !important; border-radius: 4px; -webkit-mask: none; mask: none; }
   .dv-side .kind-pill { padding: 0 6px; font-size: 11px; line-height: 1.3; }
 }
+
+/* ---- A card's time window, plainly on the card (24 Oct 2026, the user: "make the time-window of the note card be
+   more noticable on the actual note card so it doesn't look like just a blank gradient square"). Everywhere a card
+   shows (Week, Day, Month, the List, the day's list beside Day view, a short Calendar's cards) its times sit in a
+   chip: the card's time colour (--ktime: a note card in the theme's pink, a quest cyan, a booking gold) on a
+   darker patch of the card, bold, 11px or more, so it reads against any card's gradient. ---- */
+/* (Week and Day: at the start of the title's first line, cal.js timeChip, so it shows wherever the title does,
+   even on a card one line tall; too narrow for one line, it breaks between its two times) */
+.ev .ev-time { font-size: 11px; font-weight: 800; letter-spacing: 0; font-variant-numeric: tabular-nums; font-style: normal; color: var(--ktime, #fff); text-shadow: none; }
+/* (its two times each a piece of the patch, a line tall: the patch never stands taller than the line, so a card a
+   line tall holds it whole, and a narrow card's chip breaks between them, "12:45" over "–13:05") */
+.ev .ev-time > span { display: inline-block; vertical-align: top; line-height: 13px; padding: 1px 0; margin-block: -1px; background: rgb(0 0 0 / .38); }
+/* (its margin takes back its padding: it never makes its line taller than the title's, which cal.js fitCard counts
+   lines by; a line made taller pushed the title's last line 2px past the card's foot) */
+.ev .ev-time > .ev-t0 { padding-left: 4px; border-radius: 5px 0 0 5px; }
+.ev .ev-time > .ev-t1 { padding-right: 4px; border-radius: 0 5px 5px 0; margin-right: 2px; }
+.ev.ev-t-start .ev-time > .ev-t0 { padding-right: 4px; border-radius: 5px; margin-right: 2px; }
+.ev[data-kind] .ev-time { font-weight: 800; }
+/* (the Month: each card's start, its whole window in its tooltip; the patch drawn round it, a shadow, taking no room,
+   so the month's fitting has no more to do than before. Its end too, on a wide day, made the first screen ~200ms
+   slower to fit, 24 Oct 2026) */
+.grid.textual .di b { border-radius: 3px; background: rgb(0 0 0 / .32); font-variant-numeric: tabular-nums; text-shadow: none;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / .32); }
+/* (the List and the day's list: the start over the end, in a chip of the time column's width) */
+.row-item.note > time { justify-self: stretch; align-self: center; padding: 3px 2px; border-radius: 8px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums;
+  background: rgb(0 0 0 / .3); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ktime, #fff) 26%, transparent); text-shadow: none; }
+.row-item.note > time.ag-when { padding: 2px 6px; border-radius: 6px; white-space: nowrap; }
+/* (the bar never gives up its height to the page under it) */
+.cal > .bar { flex: none; }
+/* (a one-line card too narrow for both its times and its title: when it starts, cal.js fitCard) */
+.ev.ev-t-start .ev-time > .ev-t1 { display: none; }
+.ev.ev-t-start:not(.dragging):is(:hover, :focus-visible) .ev-time > .ev-t1 { display: inline-block; }
+.ev.slim .ev-time > .ev-t0 { padding-left: 2px; }
+.ev.slim .ev-time > .ev-t1, .ev.slim.ev-t-start .ev-time > .ev-t0 { padding-right: 2px; }

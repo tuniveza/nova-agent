@@ -29,6 +29,10 @@
   // CALM_MS (never the moment you click a button between two boxes, so the page doesn't jump about);
   // and a page that's a form you fill while watching it (the Invoicer: <html data-bars-stay>) keeps
   // them where they are.
+  // Still (24 Oct 2026, the user: "the entire nova desk resizing … when doing various actions like input"): on a
+  // computer, or a tablet on its side, working never changes the desk's size. The bars fade where they are
+  // (html.top-still / html.nav-still: no slide) and keep their room; nothing else moves, and when you stop they
+  // fade back. Auto's going away once the mouse has gone (and Hidden) still gives the panel their room.
   const MODES = ["work", "shown", "auto", "hidden"];
   const NAMES = { work: "Shown, away while you work", shown: "Always shown", auto: "Auto", hidden: "Hidden" };
   // (new keys: the new default for everyone, also on a device that had picked another before)
@@ -45,6 +49,8 @@
   const DOCKED = matchMedia("(max-width: 760px), (max-height: 480px) and (pointer: coarse)");
   const HIDE_AFTER = 1500, EDGE = 12, NEAR = 60, CALM_MS = 2500;
   const viewing = () => main.classList.contains("viewing");
+  // (the computer form, or a tablet on its side: the desk keeps its size while you work, 24 Oct 2026)
+  const desk = () => /^(desktop|tablet-side)$/.test(root.dataset.form || "desktop");
   const topEl = document.querySelector(".shell > .topbar");
   const stripEl = document.getElementById("suite-home");
   const tabEl = document.getElementById("tabbar");
@@ -99,7 +105,7 @@
     const el = b.el();
     const wasAway = b.state === "away";
     b.state = "in";
-    root.classList.remove(`${b.cls}-going`);
+    root.classList.remove(`${b.cls}-going`, `${b.cls}-still`);
     if (!wasAway || STILL.matches || !el) { root.classList.remove(`${b.cls}-away`); return; }
     // It slides in at once, over the edge of the content (still out of the rows, in the same place
     // it will sit), and only then takes its row back: the content shrinks once, after the slide,
@@ -125,9 +131,11 @@
     b.state = "going";
     if (over) { root.classList.add(`${b.cls}-going`); b.state = "away"; return; }
     const el = b.el();
+    // (state stays "going": show() brings it straight back, nothing to re-fit. On a computer it fades where it
+    // is, without sliding, so not even the bar moves; with less motion asked for too, 24 Oct 2026)
+    if (keepRow) { root.classList.toggle(`${b.cls}-still`, desk()); root.classList.add(`${b.cls}-going`); return; }
     if (STILL.matches || !el) { root.classList.add(`${b.cls}-going`, `${b.cls}-away`); b.state = "away"; return; }
     root.classList.add(`${b.cls}-going`);
-    if (keepRow) return; // (state stays "going": show() brings it straight back, nothing to re-fit)
     // Its slide done: give up the row (the panel grows once)
     let done = false;
     const away = () => {
@@ -231,7 +239,11 @@
     if (on === working) return;
     working = on;
     // (Auto too: away while you work, back when you stop, as well as when the mouse has gone)
-    for (const b of [bars.top, bars.nav]) if (b.mode === "work" || b.mode === "auto") (on ? hide(b, hands) : show(b));
+    // (a computer, or a tablet on its side, 24 Oct 2026, the user: "fix all the usability bugs like the entire
+    // nova desk resizing and or changing it's size when doing various actions like input": there they only fade
+    // where they are and keep their room, so nothing on the desk changes size or moves while you type or when
+    // you stop)
+    for (const b of [bars.top, bars.nav]) if (b.mode === "work" || b.mode === "auto") (on ? hide(b, hands || desk()) : show(b));
   }
   const editable = (el) => !!el && (el.isContentEditable || /^(TEXTAREA|SELECT)$/.test(el.tagName) || (el.tagName === "INPUT" && !/^(button|submit|reset|checkbox|radio|range|color|file|image)$/i.test(el.type || "")));
   const inBars = (el) => !!el && el.ownerDocument === document && !!((topEl && topEl.contains(el)) || (stripEl && stripEl.contains(el)) || (tabEl && tabEl.contains(el)));

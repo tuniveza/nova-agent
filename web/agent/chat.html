@@ -786,6 +786,50 @@
   .cue-bits span { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 10px; color: var(--soft); background: color-mix(in srgb, var(--panel-2) 60%, transparent); }
   .composer[data-kind] textarea { border-color: color-mix(in srgb, var(--cue) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cue) 12%, transparent); }
   .composer[data-kind] .send { background: linear-gradient(120deg, color-mix(in srgb, var(--cue) 70%, var(--accent)), var(--accent-2)); }
+  /* ===== Nova Agent, centred and still (24 Oct 2026, the user: "can you center the nova agent look", and "fix all
+     the usability bugs like the entire nova desk resizing and or changing it's size when doing various actions
+     like input") =====
+     The message box sits in the middle of the chat, with Send inside its right end (one click, as before). Send
+     holds every word it can say (Add quest, Ask, Block it…) out of sight, so it's always as wide as the longest
+     and neither it nor the box changes size as the kind changes. The cue's row (✦ QUEST · One task…) is always
+     kept, one line, so it coming or going never moves the conversation.
+     The box keeps its one-line room too: a longer message grows the box upward, over the bottom of the
+     conversation, instead of pushing the conversation up and shrinking it (and back down when it's shorter). */
+  .chat > .composer { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 28px 46px; align-items: end; row-gap: 6px; --send-w: 0px; }
+  :where(html[data-room="phone"]) .chat > .composer { grid-template-rows: 28px 44px; }
+  .chat > .composer > .cue { grid-row: 1; grid-column: 1; justify-content: center; flex-wrap: wrap; height: 28px; overflow: hidden; animation: none; }
+  /* (the welcome, before the first message, keeps all the room it had: it fits itself to it, music.js, and with
+     the cue's row taken from it a tablet's welcome no longer fitted, so it and the page cutter, onescreen.js,
+     resized it in turn for ever, a layout loop, 24 Oct 2026. There the cue sits on its own little pill just above
+     the box, over the welcome's bottom edge, and nothing moves when it comes or goes) */
+  .chat:has(> .log > .welcome:not([hidden])) > .composer { grid-template-rows: 0 46px; row-gap: 0; }
+  :where(html[data-room="phone"]) .chat:has(> .log > .welcome:not([hidden])) > .composer { grid-template-rows: 0 44px; }
+  .chat:has(> .log > .welcome:not([hidden])) > .composer > .cue { align-self: end; justify-self: center; width: fit-content; max-width: 100%; box-sizing: border-box; margin-bottom: 4px; padding: 0 12px 0 2px; position: relative; z-index: 3;
+    border-radius: 999px; background: color-mix(in srgb, var(--void) 82%, transparent); }
+  .chat > .composer > textarea { grid-row: 2; grid-column: 1; align-self: end; position: relative; z-index: 1; min-width: 0; padding-right: calc(var(--send-w) + 16px);
+    background-color: color-mix(in srgb, var(--void) 94%, var(--panel, #1c1129)); }
+  /* (centred words stay centred in the box: the same room on its left) */
+  html[data-align="center"] .chat > .composer > textarea { padding-left: calc(var(--send-w) + 16px); }
+  .chat > .composer > .send { grid-row: 2; grid-column: 1; justify-self: end; align-self: end; position: relative; z-index: 2; margin: 0 5px 5px 0; height: 36px; padding: 0 14px; display: inline-grid; place-items: center; white-space: nowrap; }
+  .send > span { grid-area: 1 / 1; }
+  .send > .send-fit { display: grid; visibility: hidden; }
+  .send > .send-fit > i { grid-area: 1 / 1; font-style: normal; }
+  :where(html[data-room="phone"]) .chat > .composer > .send { height: 34px; padding: 0 12px; }
+  /* (a short conversation sits in the middle of the room, not stuck to its top; a long one is in pages. Two
+     springs, one above and one below, that share the room left over and are nothing when there's none, so a long
+     one starts at the top and is never cut; every engine has them, Safari 16.4 too, unlike "safe center". Their
+     negative margins take back the gap the log puts beside each.) */
+  .chat > .log:not(:has(> .welcome:not([hidden])))::before, .chat > .log:not(:has(> .welcome:not([hidden])))::after { content: ""; flex: 1 1 0; min-height: 0; pointer-events: none; }
+  .chat > .log:not(:has(> .welcome:not([hidden])))::before { margin-bottom: calc(-1 * var(--log-gap, 14px)); }
+  .chat > .log:not(:has(> .welcome:not([hidden])))::after { margin-top: calc(-1 * var(--log-gap, 14px)); }
+  :where(html[data-room="phone"]) .chat > .log { --log-gap: 10px; }
+  /* One page bar: a reply cut into pages by /shared/onescreen.js is turned with the conversation's own bar
+     (chatpages.js), so onescreen's bar in the log stays out of sight (before the first message, the welcome
+     keeps onescreen's bar: there's no conversation bar then) */
+  #log:has(> .msg) > .os-pager { display: none !important; }
+  .chat-pager .cp-where { white-space: nowrap; }
+  :where(html[data-room="computer"]) .chat-pager .cp-where { min-width: 25ch; }
+  .chat-pager .cp-mode { min-width: 7ch; }
 
   .t-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .06em; color: var(--c, var(--soft)); border: 1px solid color-mix(in srgb, var(--c, var(--soft)) 50%, transparent); background: color-mix(in srgb, var(--c, var(--soft)) 10%, transparent); }
   .t-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--soft)); }
@@ -1309,15 +1353,35 @@
     add('📍', (t.match(/\b(?:at|to) the (?:gym|studio|shop|shops|park|office|venue|station|airport|bank|doctor'?s|dentist|post office|library)\b/) || [])[0]);
     return bits.slice(0, 6);
   }
+  // Send's words (24 Oct 2026): it holds every word it can say out of sight (.send-fit), so it's always the width
+  // of the longest, and the box's room for it (--send-w) is set once it's drawn (again only if its size changes:
+  // the fonts arriving, a smaller window)
+  const sendSay = (() => {
+    const s = $('send');
+    if (!s) return () => {};
+    s.innerHTML = `<span class="send-say">${esc(s.textContent)}</span><span class="send-fit" aria-hidden="true">${[...new Set(Object.values(KINDS).map((k) => k.send))].map((t) => `<i>${esc(t)}</i>`).join('')}</span>`;
+    const say = s.querySelector('.send-say');
+    const room = () => { const w = `${Math.ceil(s.getBoundingClientRect().width)}px`; if ($('composer').style.getPropertyValue('--send-w') !== w) $('composer').style.setProperty('--send-w', w); };
+    new ResizeObserver(room).observe(s);
+    return (t) => { if (say.textContent !== t) say.textContent = t; };
+  })();
   function showCue(el, box, text, fixedKind) {
     const c = classify(text);
-    if (!c) { el.hidden = true; if (box) delete box.dataset.kind; if (box === $('composer')) $('send').textContent = 'Send'; return; }
+    if (!c) { el.hidden = true; if (box) delete box.dataset.kind; if (box === $('composer')) sendSay('Send'); return; }
     const k = fixedKind ? { ...c, ...KINDS[fixedKind], kind: fixedKind } : c;
     el.hidden = false;
     el.style.setProperty('--cue', k.colour);
     if (box) { box.dataset.kind = k.kind; box.style.setProperty('--cue', k.colour); }
     el.innerHTML = `<span class="cue-type"><i>${k.icon}</i>${k.label}</span><span class="cue-hint">${k.hint}</span>${k.bits.length ? `<span class="cue-bits">${k.bits.map((b) => `<span>${esc(b)}</span>`).join('')}</span>` : ''}`;
-    if (box === $('composer')) $('send').textContent = k.send;
+    // (the message box's cue is one line, its row kept: what doesn't fit on it is left off, the details
+    // first, then the hint, never cut through, 24 Oct 2026)
+    if (box === $('composer')) {
+      const bits = el.querySelector('.cue-bits');
+      while (bits && bits.lastElementChild && el.scrollHeight > el.clientHeight + 1) bits.lastElementChild.remove();
+      if (bits && !bits.childElementCount) bits.remove();
+      if (el.scrollHeight > el.clientHeight + 1) el.querySelector('.cue-hint')?.remove();
+      sendSay(k.send);
+    }
   }
 
   // ---- Files Nova Agent wrote: cards, the Files list, the viewer ----

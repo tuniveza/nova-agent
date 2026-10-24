@@ -21,10 +21,15 @@ html.top-going .shell > .topbar, html.nav-going .main > .suite-home, html.nav-go
   transition: transform var(--bar-out) var(--bar-out-ease), opacity var(--bar-out) ease; }
 html.top-going .shell > .topbar { transform: translateY(calc(-100% - 16px)); }
 html.nav-going .main > .suite-home, html.nav-going .shell > .tabbar { transform: translateY(calc(100% + 16px)); }
+/* (a computer while you work, 24 Oct 2026, the user: "the entire nova desk resizing … when doing various actions
+   like input": the bars only fade where they are, keeping their room, so nothing on the desk moves or changes size) */
+html.top-still.top-going .shell > .topbar, html.nav-still.nav-going .main > .suite-home, html.nav-still.nav-going .shell > .tabbar { transform: none; }
 
 /* Away: out of the rows (the content takes the room) */
 html.top-away:where([data-room="computer"]) .shell { grid-template-rows: minmax(0, 1fr); }
-html.top-away:where([data-room="computer"]) .shell > .topbar { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 14px; right: 14px; z-index: 30; }
+/* (body in each: medallion.css's html.nv-medal-on .shell > .topbar { position: relative } came later and won, so an
+   away top panel kept a row of its own and the whole desk was squashed under it, to 123px with a panel open, 24 Oct 2026) */
+html.top-away:where([data-room="computer"]) body .shell > .topbar { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 14px; right: 14px; z-index: 30; }
 html.nav-away:where([data-room="computer"]) .main { grid-template-rows: minmax(0, 1fr); }
 html.nav-away:where([data-room="computer"]) .main > #suite-home { position: fixed; left: 0; right: 0; margin-inline: auto; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 20; }
 html.top-away:where([data-room="phone"]) .shell, html.top-away:where([data-room="phone"]) .shell:has(> .main.viewing) { grid-template-rows: minmax(0, 1fr) auto; }
@@ -132,7 +137,9 @@ dialog.rhythm:not([open])::backdrop, dialog.more-sheet:not([open])::backdrop { o
     radial-gradient(circle at 63% 22%, #fff 0 .8px, transparent 1.4px), radial-gradient(circle at 81% 64%, #fff 0 .6px, transparent 1.2px),
     radial-gradient(circle at 92% 18%, #fff 0 .5px, transparent 1.1px), radial-gradient(circle at 25% 60%, var(--soft) 0 .5px, transparent 1.1px);
   background-size: 260px 100%; }
-#suite-home::after { content: ""; position: absolute; z-index: -1; right: 1.5%; top: 50%; width: 140px; height: 140px; translate: 0 -50%; rotate: -14deg; pointer-events: none; opacity: .04;
+/* (the sigil, turned, is about 1.21 × its size from corner to corner: never taller than the dock that way, or it
+   stuck 4px out under a short dock and the desk scrolled up 4px when a box in a panel was clicked into, 24 Oct 2026) */
+#suite-home::after { content: ""; position: absolute; z-index: -1; right: 1.5%; top: 50%; width: auto; height: min(140px, calc(100% / 1.22)); aspect-ratio: 1; translate: 0 -50%; rotate: -14deg; pointer-events: none; opacity: .04;
   background: var(--hi);
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148' fill='none' stroke='%23000' stroke-width='30' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M365.2 179.5A133.3 133.3 0 0 1 179.5 365.2M146.8 332.5A133.3 133.3 0 0 1 332.5 146.8M148 364 246.7 196M262.7 206.7 276 309.3M292 316 364 148' fill='none' stroke='%23000' stroke-width='30' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }

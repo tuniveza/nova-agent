@@ -49,7 +49,9 @@ html:not([data-ui="rich"]) .month .grid > .cell { container: day / inline-size !
 /* ---- A day with room (a computer): its cards in words, never smaller than 10px; when they don't all fit at
    that size the Calendar's fitter steps the rest out ("More in Day view") rather than shrinking them to 8px ---- */
 html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo { font-size: max(10px, var(--di-fs, 11px)) !important; }
-html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo :is(.di-also, .di-t, b) { font-size: inherit !important; }
+html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo :is(.di-also, .di-t) { font-size: inherit !important; }
+/* (its time never under 11px, the least that reads, 24 Oct 2026: it's what the user looks for on a card) */
+html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo b { font-size: max(11px, var(--di-fs, 11px)) !important; }
 html:not([data-ui="rich"]) .month .grid.textual > .cell > :is(.skychip, .daycard) { font-size: max(10px, var(--chip-fs, 10px)) !important; }
 
 /* ---- Week and Day: a card always shows its title (23 Oct 2026, the user's week had blocks with no words: a
@@ -64,6 +66,8 @@ html:not([data-ui="rich"]) .col .ev > :is(strong, small, .ev-what) {
 }
 html:not([data-ui="rich"]) .col .ev.ev-wrap > strong { white-space: normal !important; overflow: visible !important; overflow-wrap: anywhere !important; }
 html:not([data-ui="rich"]) .col .ev:is(.ev-small, .slim) > strong { font-size: 11px !important; line-height: 1.2 !important; }
+html:not([data-ui="rich"]) .col .ev.ev-tight { padding: 1px 3px !important; }
+html:not([data-ui="rich"]) .col .ev.ev-tight > strong { line-height: 1.15 !important; }
 html:not([data-ui="rich"]) .col .ev.ev-clamp > strong {
   display: -webkit-box !important; -webkit-box-orient: vertical !important; overflow: visible clip !important;
   -webkit-line-clamp: var(--lines, 1) !important; line-clamp: var(--lines, 1) !important;
@@ -99,25 +103,64 @@ html:not([data-ui="rich"]) .col .ev:is(.ev-clamp, .bare):not(.dragging):is(:hove
   }
   html:not([data-ui="rich"]) .bar .add-btn > span { display: none !important; }
   html:not([data-ui="rich"]) .bar .add-btn svg { width: 20px !important; height: 20px !important; }
-  /* (and no room kept for the floating + under the list) */
-  html:not([data-ui="rich"]) .view > .list.paged { padding: 4px 8px !important; }
-  html:not([data-ui="rich"]) .list-pager { padding-top: 4px !important; }
-  /* (the list's rows as slim as they can be read and tapped) */
-  html:not([data-ui="rich"]) .list.agenda .row-item { padding: 3px 8px !important; min-height: 34px !important; }
-  html:not([data-ui="rich"]) .list.agenda .row-item small { display: none !important; }
   /* (the page bar a little slimmer, the pages the room) */
   html:not([data-ui="rich"]) :is(.view, .list.agenda) > .os-pager button { height: 32px !important; min-height: 32px !important; }
 }
 
-/* ---- The cards as a list: Month, Week and Day on a very short Calendar, Week on an upright phone ---- */
-/* (Month, Week and Day as a list of their cards, each row its day, start and title, cal.js drawAgenda: no hours
-   to fit; its padding not !important: onescreen keeps the page bar's room in it) */
-html:not([data-ui="rich"]) .view > .list.agenda { padding: 2px 8px; width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin: 0 !important; }
-html:not([data-ui="rich"]) .list.agenda .rows { gap: 4px !important; }
-html:not([data-ui="rich"]) .list.agenda .row-item { grid-template-columns: 56px minmax(0, 1fr) !important; padding: 6px 10px !important; min-height: 44px !important; gap: 8px !important; }
-html:not([data-ui="rich"]) .list.agenda .row-item :is(.art, .row-sym) { display: none !important; }
-html:not([data-ui="rich"]) .list.agenda .ag-when { font-size: 11px !important; line-height: 1.15 !important; white-space: nowrap !important; }
-html:not([data-ui="rich"]) .list.agenda .ag-when b { display: block; color: var(--bright, #fff); }
+/* ---- A short Calendar (html.cal-short, cal.js short(): 360px tall or less, or a computer's Calendar under 430px,
+   24 Oct 2026, the user: "optimize and make compact the short height nova desk - nova calender"): the List's rows
+   slim, a line or two each, their times on one line (cal.js drawList), what they're for left to the card when it
+   opens; Month, Week and Day as the cards below (drawAgenda) ---- */
+/* (no room kept for the floating + under the list) */
+html.cal-short:not([data-ui="rich"]) .view > .list.paged { padding: 4px 8px !important; }
+html.cal-short:not([data-ui="rich"]) .list-pager { padding-top: 4px !important; }
+html.cal-short:not([data-ui="rich"]) .list.paged:not(.agenda) .row-item.note.has-art { grid-template-columns: auto minmax(0, 1fr) !important; padding: 4px 8px !important; min-height: 0 !important; gap: 8px !important; }
+html.cal-short:not([data-ui="rich"]) .list.paged:not(.agenda) .row-item.note.has-art:has(> .row-sym) { grid-template-columns: auto auto minmax(0, 1fr) !important; }
+html.cal-short:not([data-ui="rich"]) .list.paged:not(.agenda) .row-item.note.has-art > .art { display: none !important; }
+html.cal-short:not([data-ui="rich"]) .list.paged:not(.agenda) .row-item.note.has-art > .row-sym { width: auto !important; min-height: 0 !important; }
+html.cal-short:not([data-ui="rich"]) .list.paged .row-item small { display: none !important; }
+html.cal-short:not([data-ui="rich"]) .list.paged:not(.agenda) .row-item.has-art > span:last-child { padding-block: 2px !important; }
+html.cal-short:not([data-ui="rich"]) .list.paged .row-item strong { font-size: 12.5px; line-height: 1.25; }
+html.cal-short:not([data-ui="rich"]) .list.paged .row-item.note > time { font-size: 11px; line-height: 1.2; }
+html.cal-short:not([data-ui="rich"]) .list.paged .lg { margin-bottom: 6px !important; }
+html.cal-short:not([data-ui="rich"]) .list.paged .lg h4 { margin: 0 0 3px !important; padding: 2px 8px !important; font-size: 11px !important; line-height: 1.3 !important; }
+html.cal-short:not([data-ui="rich"]) .list.paged .rows > li { margin-bottom: 3px !important; }
+/* (short and wide, a short computer window or a phone on its side: the List's and the cards' Earlier and Later
+   beside them, in a slim column at the right, not a row under them: the height is what there's least of) */
+@media (min-width: 600px) {
+  html.cal-short:not([data-ui="rich"]) .view > .list.paged { flex-direction: row !important; gap: 8px; }
+  html.cal-short:not([data-ui="rich"]) .list.paged > .list-pager { flex-direction: column; justify-content: center; gap: 4px; padding: 0 0 0 8px !important;
+    border-top: 0; border-left: 1px solid color-mix(in oklab, var(--hi, #FF5FA8) 25%, transparent); }
+  html.cal-short:not([data-ui="rich"]) .list.paged > .list-pager button { height: 30px; padding: 0 10px; }
+  html.cal-short:not([data-ui="rich"]) .list.paged > .list-pager > span { font-size: 11px; }
+  html.cal-short:not([data-ui="rich"]):is([data-form^="phone"], [data-form^="tablet"]) .list.paged > .list-pager button { height: 36px; min-width: 40px; }
+}
+/* (the bar slim on a short computer window, where a pointer needs no finger-sized buttons: one row, all of it in
+   sight) */
+html.cal-short[data-form="desktop"]:not([data-ui="rich"]) .bar { padding-top: 3px !important; padding-bottom: 3px !important; gap: 4px !important; }
+html.cal-short[data-form="desktop"]:not([data-ui="rich"]) .bar :is(.icon-btn, .add-btn) { width: 30px !important; height: 30px !important; min-width: 30px !important; min-height: 30px !important; }
+html.cal-short[data-form="desktop"]:not([data-ui="rich"]) .bar :is(.chip, .title, .views > button) { min-height: 30px !important; height: 30px !important; }
+html.cal-short[data-form="desktop"]:not([data-ui="rich"]) .bar .title { font-size: 16px !important; }
+html.cal-short[data-form="desktop"]:not([data-ui="rich"]) .bar .add-btn { position: static !important; padding: 0 !important; justify-content: center !important; border-radius: 10px !important; box-shadow: none !important; }
+html.cal-short[data-form="desktop"]:not([data-ui="rich"]) .bar .add-btn > span { display: none !important; }
+
+/* ---- A short Calendar's cards: Month, Week and Day on a very short Calendar, Week on an upright phone (cal.js
+   drawAgenda, 24 Oct 2026, the user: "optimize and make compact the short height nova desk - nova calender"): as
+   the List, in as many columns as fit, each day's name over its cards, each card a slim row: its time window in a
+   chip, its title beside it (onto a second line rather than cut) ---- */
+html:not([data-ui="rich"]) .list.agenda > .lp { column-width: 220px; column-gap: 10px; }
+html:not([data-ui="rich"]) .list.agenda .lg { margin: 0 0 6px; }
+html:not([data-ui="rich"]) .list.agenda .lg h4 { margin: 0 0 3px; padding: 2px 8px; font-size: 11px; line-height: 1.3; letter-spacing: .06em; border-radius: 7px;
+  -webkit-backdrop-filter: none; backdrop-filter: none; }
+html:not([data-ui="rich"]) .list.agenda .rows > li { margin-bottom: 3px; }
+html:not([data-ui="rich"]) .view .list.agenda .row-item { display: flex !important; align-items: center !important; gap: 7px !important; padding: 3px 7px !important; min-height: 30px !important; border-radius: 9px !important; }
+html:not([data-ui="rich"]) .view .list.agenda .row-item :is(.art, .row-sym) { display: none !important; }
+html:not([data-ui="rich"]) .view .list.agenda .row-item > span { flex: 1 1 auto; min-width: 0; padding-block: 0 !important; }
+html:not([data-ui="rich"]) .view .list.agenda .row-item strong { font-size: 12px; line-height: 1.25; }
+html:not([data-ui="rich"]) .view .list.agenda .row-item > .ag-when { flex: none; font-size: 11px !important; line-height: 1.3 !important; }
+/* (an upright phone: a finger's room on every card) */
+html:not([data-ui="rich"])[data-form^="phone"] .view .list.agenda .row-item { min-height: 40px !important; }
+html:not([data-ui="rich"])[data-form="phone-up"] .list-pager button { min-height: 40px; min-width: 44px; }
 
 /* ---- List rows (the List, a phone's day plan, search): by the room the list has, not the screen. Narrow: the
    picture steps aside, a card with a kind word (a quest, a booking, Nova Agent's plan) keeps it in a slim first
@@ -129,3 +172,4 @@ html:not([data-ui="rich"]) .rows { container: rows / inline-size; }
   html:not([data-ui="rich"]) .row-item.note.has-art:has(> .row-sym) { grid-template-columns: auto 54px minmax(0, 1fr) !important; padding-left: 8px !important; }
   html:not([data-ui="rich"]) .row-item.note.has-art > .row-sym { width: auto !important; min-height: 0 !important; }
 }
+html.cal-short[data-form="desktop"]:not([data-ui="rich"]) .bar .views { padding: 1px !important; }
