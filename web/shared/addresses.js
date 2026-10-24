@@ -55,8 +55,7 @@
         { name: "Admin pages", path: "/admin", what: "The admin pages (you sign in through Portal).", admin: true },
         { name: "Status, as data", path: "/status.json", what: "The status page for outside watchdogs, like UptimeRobot.", admin: true },
         { name: "Google's return address", path: "/admin/google/callback", what: "Google sends you back here after Connect Google. It goes under Authorised redirect URIs in Google Cloud.", admin: true },
-        { name: "Acuity's booking notices", path: "/acuity/webhook", what: "Acuity tells Nova about new, moved and cancelled bookings here (Integrations → Webhooks; the key goes on the end).", admin: true },
-        { name: "Acuity's emails", path: "/acuity/email", what: "For the Google email script, if it's ever set up (the key goes on the end).", admin: true },
+        { name: "Stripe's payment notices", path: "/stripe/webhook", what: "Stripe tells Nova here when a booking's deposit is paid or its checkout runs out. It goes in Stripe under Developers → Webhooks.", admin: true },
       ],
     },
   ];

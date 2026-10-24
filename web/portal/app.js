@@ -86,7 +86,7 @@
       }
       const trail = part.match(/[.,!?;:)]+$/);
       const url = trail ? part.slice(0, -trail[0].length) : part;
-      const a = el("a", "", /acuityscheduling|\/(book\?|pay\/|booking\/)/.test(url) ? "Booking link" : /calendar\.google\.com|google\.com\/calendar/.test(url) ? "Google Calendar" : url.replace(/^https?:\/\//, ""));
+      const a = el("a", "", /\/(book\?|book\/|pay\/|booking\/)/.test(url) ? "Booking link" : /calendar\.google\.com|google\.com\/calendar/.test(url) ? "Google Calendar" : url.replace(/^https?:\/\//, ""));
       a.href = url;
       a.target = "_blank";
       a.rel = "noopener";
@@ -449,13 +449,15 @@
   // One calendar: the Calendar panel has everything, the studio's bookings too. Inside Nova Agent it
   // opens in Nova Agent's viewer; Portal on its own opens Nova Agent with Calendar showing.
   // (Portal's own bookings month, /portal/?view=calendar, still works: the starting tab, voice.)
-  function openCalendar() {
+  // (with a day, "2026-10-22": Calendar opens on that day)
+  function openCalendar(day) {
+    const at = "/calendar/" + (typeof day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(day) ? "?day=" + day : "");
     try {
-      if (window.parent !== window && window.parent.NovaAgent && window.parent.NovaAgent.open && window.parent.NovaAgent.open("/calendar/")) return;
+      if (window.parent !== window && window.parent.NovaAgent && window.parent.NovaAgent.open && window.parent.NovaAgent.open(at)) return;
     } catch (err) {}
-    location.href = "/agent/?open=%2Fcalendar%2F";
+    location.href = "/agent/?open=" + encodeURIComponent(at);
   }
-  $("cal-open-panel").addEventListener("click", openCalendar);
+  $("cal-open-panel").addEventListener("click", () => openCalendar());
   // Booking tools: Portal's own bookings month (this week at a glance, free slots), one tap away
   const openBookingTools = () => window.PortalPage && window.PortalPage.go("/portal/?view=calendar", { replace: true });
   $("nav-booking-tools").addEventListener("click", openBookingTools);
@@ -1005,9 +1007,8 @@
   setInterval(() => !document.hidden && running && onView("enquiries") && !threadId && loadEnquiries(), 20000);
 
   // ===== Approvals: booking changes waiting for an admin =====
-  // Agent (and Portal's staff chat) can only PROPOSE a booking change: a new booking, a move, a
-  // cancel, new details, or a blocked time added or removed. Nothing happens in Acuity until an
-  // admin presses Approve here (or on the proposal's card under Agent's reply), with their own
+  // A booking change waits here as a PROPOSAL: a new booking, a move, a cancel, new details, or a
+  // blocked time added or removed. Nothing happens until an admin presses Approve here (or on the proposal's card under Agent's reply), with their own
   // sign-in; Nova Bot checks that again and runs it once. Everyone signed in can look; canDecide
   // (from Nova Bot) says whether this person can decide. Waiting ones come first, then the recent
   // decided ones with what became of them. ?view=approvals&action=<id> points at one.
@@ -1018,9 +1019,9 @@
   const PROPOSERS = { agent: "Nova Agent", "staff-chat": "Portal's staff chat" };
   // The simple fields each kind can have changed before it's approved
   const APPROVAL_FIELDS = {
-    create: [["start", "When (UK time)", "when"], ["firstName", "First name"], ["lastName", "Last name"], ["email", "Email", "email"], ["phone", "Phone"], ["notes", "Notes", "long"], ["notifyClient", "Acuity emails the client", "tick"]],
-    reschedule: [["start", "New time (UK time)", "when"], ["notifyClient", "Acuity emails the client", "tick"]],
-    cancel: [["note", "Cancel note", "long"], ["notifyClient", "Acuity emails the client", "tick"]],
+    create: [["start", "When (UK time)", "when"], ["firstName", "First name"], ["lastName", "Last name"], ["email", "Email", "email"], ["phone", "Phone"], ["notes", "Notes", "long"], ["notifyClient", "Email the client", "tick"]],
+    reschedule: [["start", "New time (UK time)", "when"], ["notifyClient", "Email the client", "tick"]],
+    cancel: [["note", "Cancel note", "long"], ["notifyClient", "Email the client", "tick"]],
     update: [["firstName", "First name"], ["lastName", "Last name"], ["email", "Email", "email"], ["phone", "Phone"], ["notes", "Notes", "long"]],
     block_add: [["start", "From (UK time)", "when"], ["end", "Until (UK time)", "when"], ["notes", "Notes", "long"]],
     block_remove: [],
@@ -1048,7 +1049,7 @@
     setBadge("approvals-badge", pending.length);
     syncCounts();
     if (currentView !== "approvals") return;
-    setText("approvals-hint", data.canDecide ? "Booking changes Nova Agent proposed. Nothing changes in Acuity until you approve it." : "Booking changes Nova Agent proposed. An admin approves these; nothing changes in Acuity until then.");
+    setText("approvals-hint", data.canDecide ? "Booking changes waiting for an admin. Nothing changes until you approve it." : "Booking changes waiting for an admin. Nothing changes until an admin approves it.");
     const decided = actions
       .filter((a) => a.status !== "pending")
       .sort((a, b) => String(b.decidedAt || b.createdAt).localeCompare(String(a.decidedAt || a.createdAt)))
@@ -1083,8 +1084,8 @@
     if (a.reason) card.appendChild(el("p", "appr-why", "Why: " + a.reason));
     // What became of it
     const by = a.decidedByName ? " by " + a.decidedByName : "";
-    if (a.status === "executed") card.appendChild(el("p", "appr-result ok", "Done in Acuity · approved" + by + (a.executedAt ? " · " + when(a.executedAt) : "")));
-    if (a.status === "approved") card.appendChild(el("p", "appr-result", "Approved" + by + " · going through to Acuity…"));
+    if (a.status === "executed") card.appendChild(el("p", "appr-result ok", "Done · approved" + by + (a.executedAt ? " · " + when(a.executedAt) : "")));
+    if (a.status === "approved") card.appendChild(el("p", "appr-result", "Approved" + by + " · going through…"));
     if (a.status === "failed") card.appendChild(el("p", "appr-result bad", "Didn't go through: " + String(a.error || "unknown reason").replace(/\.$/, "") + ". Approved" + by + "; nothing else was changed."));
     if (a.status === "rejected") card.appendChild(el("p", "appr-result", "Rejected" + by + (a.decidedAt ? " · " + when(a.decidedAt) : "") + ". Nothing was changed."));
     if (a.status !== "pending") return card;
@@ -1183,7 +1184,7 @@
       const data = await api("booking-actions/" + path, { body });
       const a = data.action || {};
       approvalEditing = null;
-      if (path === "approve") toast(a.status === "executed" ? "Done in Acuity" : a.status === "failed" ? "Didn't go through: " + (a.error || "see the card") : "Approved");
+      if (path === "approve") toast(a.status === "executed" ? "Done" : a.status === "failed" ? "Didn't go through: " + (a.error || "see the card") : "Approved");
       else toast(path === "edit" ? "Saved: still waiting for approval" : "Rejected: nothing was changed");
     } catch (err) {
       if (err.message === "signed out") return;
@@ -2028,14 +2029,14 @@
   });
 
   // ===== Clients: the studio's client list =====
-  // Everyone who's booked through Acuity, sent an enquiry, been imported from Acuity's spreadsheets
-  // or added by hand. Nova Bot keeps the list (one card per person: same email, else same phone,
+  // Everyone who's booked a session, sent an enquiry, been imported from a spreadsheet or added
+  // by hand. Nova Bot keeps the list (one card per person: same email, else same phone,
   // else same name). Search and filters up top; tapping a card opens that client's page
   // (?view=clients&client=<id>, so Back returns to the list): contact and notes, money in pounds,
   // marketing consent and its history, and their sessions. Marketing consent is NO for everyone
   // until someone records a yes with where it came from and when; every change is kept, with who.
-  // Admins also get "Sync with Acuity now" (Acuity's calendar feed) and "Import from Acuity"
-  // (Acuity's appointments or clients spreadsheet). Money is pounds as text ("120.00"); times UK.
+  // Admins also get "Sync now" (the studio's bookings and enquiries) and "Import a spreadsheet"
+  // (an appointments or clients CSV). Money is pounds as text ("120.00"); times UK.
   let clientFilter = "all"; // all | owing | lapsed | enquiry
   let clientSearch = "";
   let clientSearchTimer = 0;
@@ -2043,8 +2044,8 @@
   let clientOpen = null; // the open client's latest data ({ client, sessions, consentLog }), or null
   let consentAsking = false; // the consent switch is waiting for where the yes came from, and when
   let importText = ""; // the chosen file's text
-  const CLIENT_SOURCES = { booking: "Booked through Acuity", enquiry: "Sent an enquiry", import: "Imported from Acuity", staff: "Added by hand" };
-  const SESSION_SOURCES = { feed: "from Acuity's calendar", webhook: "from Acuity", import: "imported" };
+  const CLIENT_SOURCES = { booking: "Booked a session", acuity: "Booked a session", nova: "Booked a session", enquiry: "Sent an enquiry", import: "Imported", staff: "Added by hand" };
+  const SESSION_SOURCES = { feed: "from the booking calendar", webhook: "from a booking", import: "imported" };
   const isAdminHere = () => Boolean(window.PortalPage && window.PortalPage.isAdmin && window.PortalPage.isAdmin());
   const openClientId = () => {
     const id = Number(new URLSearchParams(location.search).get("client"));
@@ -2119,7 +2120,7 @@
     if (clientFilter === "owing") return "Nobody owes anything.";
     if (clientFilter === "lapsed") return "Everyone who booked before then has booked again since.";
     if (clientFilter === "enquiry") return "No clients from enquiries only.";
-    return isAdminHere() ? "No clients yet. Sync with Acuity now, or import Acuity's spreadsheet." : "No clients yet. They appear here as people book and send enquiries.";
+    return isAdminHere() ? "No clients yet. Press Sync now, or import a spreadsheet." : "No clients yet. They appear here as people book and send enquiries.";
   }
 
   // Their marketing consent as a badge
@@ -2495,7 +2496,7 @@
     }
   });
 
-  // Admins: sync with Acuity's calendar feed now
+  // Admins: sync from the studio's bookings and enquiries now
   $("clients-sync").addEventListener("click", async () => {
     const b = $("clients-sync");
     b.disabled = true;
@@ -2510,7 +2511,7 @@
       if (err.message !== "signed out") toast("Couldn't sync: " + err.message);
     } finally {
       b.disabled = false;
-      b.textContent = "Sync with Acuity now";
+      b.textContent = "Sync now";
     }
   });
 
@@ -2720,7 +2721,7 @@
     }
   });
 
-  // Admins: import Acuity's appointments or clients spreadsheet (a chosen file, or pasted)
+  // Admins: import an appointments or clients spreadsheet (a chosen file, or pasted)
   $("clients-import-open").addEventListener("click", () => {
     const on = $("clients-import").hidden;
     $("clients-import").hidden = !on;
@@ -2735,7 +2736,7 @@
     const file = $("import-file").files[0];
     importText = "";
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) return showImport([el("p", "error", "That file is too big (over 20 MB). Export a shorter date range from Acuity.")]);
+    if (file.size > 20 * 1024 * 1024) return showImport([el("p", "error", "That file is too big (over 20 MB). Use a shorter date range.")]);
     const reader = new FileReader();
     reader.onload = () => {
       importText = String(reader.result || "");
@@ -2764,7 +2765,7 @@
       const c = r.clients || {};
       const s = r.sessions || {};
       const lines = [
-        el("p", "cl-done", (r.kind === "clients" ? "Acuity's client list" : "Acuity's appointments") + " imported."),
+        el("p", "cl-done", (r.kind === "clients" ? "The client list" : "The appointments") + " imported."),
         el("p", "", "Clients: " + (c.added || 0) + " new, " + (c.updated || 0) + " updated." + (r.kind === "clients" ? "" : " Sessions: " + (s.added || 0) + " new, " + (s.updated || 0) + " updated.")),
       ];
       if (r.skipped) lines.push(el("p", "hint cl-small", r.skipped + (r.skipped === 1 ? " line was" : " lines were") + " skipped."));
@@ -3584,7 +3585,7 @@
   $("chats-back").addEventListener("click", loadChats);
 
   // ===== Calendar =====
-  // Every booking in Acuity's diary, as a month you can swipe through. Tap a
+  // Every booking in the studio's booking calendar, as a month you can swipe through. Tap a
   // day to see its bookings with every detail, and call or email from there.
 
   // The bookings (loaded once, then refreshed when the tab opens)
@@ -3644,7 +3645,7 @@
       const data = await api("calendar");
       // The feed isn't set up
       if (!data.setUp) {
-        calProblem = "The Acuity calendar feed isn't set up yet.";
+        calProblem = "The booking calendar isn't connected. An admin connects it in Portal → Google.";
         drawDay();
         return;
       }
@@ -4007,7 +4008,7 @@
     // Price, phone, email and any form answers, coloured
     const lines = [b.price && "Price: " + b.price, b.phone && "Phone: " + b.phone, b.email && "Email: " + b.email, ...(b.extra || []).map(([l, v]) => l + ": " + v)].filter(Boolean);
     if (lines.length) card.appendChild(richDetails(lines.join("\n")));
-    // Buttons: call, email, open in Acuity
+    // Buttons: call, email, open it (Google Calendar, or Calendar on that day)
     const actions = el("div", "actions");
     if (b.phone) {
       const call = el("a", "btn small", "Call");
@@ -4019,10 +4020,17 @@
       email.href = "mailto:" + encodeURIComponent(b.email);
       actions.appendChild(email);
     }
-    // A booking made with Nova Bot's own system opens in Google Calendar; anything else in Acuity
-    const acuity = el("a", "btn small ghost", b.link ? "Open in Google Calendar" : "Open in Acuity");
-    Object.assign(acuity, { href: b.link || "https://secure.acuityscheduling.com/appointments.php", target: "_blank", rel: "noopener" });
-    actions.appendChild(acuity);
+    // A booking with its Google Calendar event opens there; one without opens Calendar on its day
+    if (b.link) {
+      const google = el("a", "btn small ghost", "Open in Google Calendar");
+      Object.assign(google, { href: b.link, target: "_blank", rel: "noopener" });
+      actions.appendChild(google);
+    } else {
+      const inCalendar = el("button", "btn small ghost", "Open in Calendar");
+      inCalendar.type = "button";
+      inCalendar.addEventListener("click", () => openCalendar(dayKey(b.from)));
+      actions.appendChild(inCalendar);
+    }
     card.appendChild(actions);
     // Hand it back
     return card;
@@ -4411,7 +4419,7 @@
   }
 
   // The label for each kind of alert
-  const KIND_LABELS = { booking: "Booking · Acuity", "nova-booking": "Booking · Nova", enquiry: "Enquiry", quest: "Quest", agent: "Nova Agent", health: "Acuity connection", test: "Test", other: "Alert" };
+  const KIND_LABELS = { booking: "Booking", "nova-booking": "Booking", enquiry: "Enquiry", quest: "Quest", agent: "Nova Agent", health: "Connection", test: "Test", other: "Alert" };
 
   // "Tue 6 Oct 2026 · 21:02:40" (UK time, to the second)
   function exactTime(iso) {
@@ -4435,48 +4443,6 @@
   function setTimeText(node, iso) {
     const text = window.NovaOptions && window.NovaOptions.get().times === "ago" ? ago(iso) : exactTime(iso) + " · " + ago(iso);
     if (node.textContent !== text) node.textContent = text;
-  }
-
-  // What Acuity said about each booking (asked once per visit), and the answers that came back
-  const verified = new Map();
-  const verifiedAnswer = new Map();
-  // A panel that checks the booking with Acuity when it comes into view
-  function verifyPanel(id) {
-    const box = el("div", "verify checking");
-    box.append(el("p", "verify-title", "Checking with Acuity…"), el("div", "verify-lines"));
-    // Fill it in with what Acuity says
-    const fill = (r) => {
-      box.className = "verify " + r.status;
-      const icon = { real: "✓ ", cancelled: "✕ ", missing: "⚠ " }[r.status] || "";
-      box.querySelector(".verify-title").textContent = icon + r.title;
-      box.querySelector(".verify-lines").replaceChildren(...(r.lines || []).map((line) => el("span", "", line)));
-    };
-    // Already known: shown straight away (no "Checking…" every time the list is refreshed)
-    if (verifiedAnswer.has(id)) {
-      fill(verifiedAnswer.get(id));
-      return box;
-    }
-    const check = () => {
-      if (!verified.has(id))
-        verified.set(
-          id,
-          api("verify-booking?id=" + encodeURIComponent(id))
-            .catch((err) => ({ status: "unknown", title: err.message, lines: [] }))
-            .then((r) => (verifiedAnswer.set(id, r), r))
-        );
-      verified.get(id).then(fill);
-    };
-    // Only ask Acuity about bookings that are actually on screen
-    if ("IntersectionObserver" in window) {
-      const seen = new IntersectionObserver((entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          seen.disconnect();
-          check();
-        }
-      });
-      seen.observe(box);
-    } else check();
-    return box;
   }
 
   // Changing how times show (in Options) redraws the Alerts straight away
@@ -4526,11 +4492,9 @@
     card.append(line);
     // Then every detail (coloured), and how many phones it reached
     card.append(remove, el("span", "alert-kind " + kind, KIND_LABELS[kind] || "Alert"), top, exact, richDetails(n.body), el("p", "card-foot", `Alert #${n.id} · delivered to ${n.phones} ${n.phones === 1 ? "phone" : "phones"}`));
-    // A booking in Acuity: check it with Acuity itself, so a real booking can't be mistaken for a test or a fake
-    if (kind === "booking" && n.appointmentId) card.insertBefore(verifyPanel(n.appointmentId), exact.nextSibling);
     // A test: say plainly that it isn't a real booking
     if (kind === "test") card.insertBefore(el("p", "verify unknown", "A test notification: not a real booking or enquiry."), exact.nextSibling);
-    // The latest from Acuity's email about this booking (if one has come through)
+    // The latest details about this booking (if any have come through)
     if (n.email) card.appendChild(emailPanel(n.email));
     // A row of buttons
     const actions = el("div", "actions");
@@ -4542,16 +4506,20 @@
       // No buttons: the card is the whole message
       return card;
     }
-    // Enquiry alerts open the Enquiries tab; booking alerts open Acuity; invoice alerts (an invoice,
+    // Enquiry alerts open the Enquiries tab; booking alerts open Google Calendar (or Calendar); invoice alerts (an invoice,
     // reminder or receipt to approve) open the Invoicer on that invoice (19 Oct 2026: older ones still
     // say /portal/?view=money&invoice=N)
     const invoiceAt = /^\/invoicer\//.test(n.url) ? n.url : /[?&]view=money\b/.test(n.url) ? "/invoicer/" + (/[?&]invoice=(\d+)/.test(n.url) ? "?invoice=" + n.url.match(/[?&]invoice=(\d+)/)[1] : "") : "";
     const inHere = /^\/(app|portal)\//.test(n.url) && !invoiceAt;
-    const open = el(inHere || invoiceAt ? "button" : "a", "btn small", invoiceAt ? "Open in Invoicer" : inHere ? "Open enquiry" : /acuityscheduling/.test(n.url) ? "Open in Acuity" : "Open in Google Calendar");
+    const inGoogle = /calendar\.google\.com|google\.com\/calendar/.test(n.url || "");
+    const inCalendar = !invoiceAt && !inHere && !inGoogle && (kind === "booking" || kind === "nova-booking");
+    const open = el(inHere || invoiceAt || inCalendar ? "button" : "a", "btn small", invoiceAt ? "Open in Invoicer" : inHere ? "Open enquiry" : inGoogle ? "Open in Google Calendar" : inCalendar ? "Open in Calendar" : "Open link");
     if (invoiceAt) open.addEventListener("click", () => (window.NovaAgent && window.NovaAgent.open ? window.NovaAgent.open(invoiceAt) : window.parent !== window && window.parent.NovaAgent ? window.parent.NovaAgent.open(invoiceAt) : (location.href = "/agent/?open=" + encodeURIComponent(invoiceAt))));
     // An enquiry: switch tabs when tapped
     else if (inHere) open.addEventListener("click", () => window.PortalPage.go("/portal/?view=enquiries", { replace: true }));
-    // A booking: a link to Acuity, opened outside the app
+    // A booking without its Google Calendar event: Calendar, where the studio's bookings show
+    else if (inCalendar) open.addEventListener("click", () => openCalendar());
+    // A booking in Google Calendar (or another link): opened outside the app
     else Object.assign(open, { href: n.url, target: "_blank", rel: "noopener" });
     // Add it to the row
     actions.appendChild(open);
@@ -4588,14 +4556,14 @@
     return card;
   }
 
-  // The "From Acuity" box on a booking alert (its calendar or its email)
+  // The "latest details" box on a booking alert (from the booking calendar, or an email)
   function emailPanel(email) {
     // The box
     const box = el("div", "email-panel");
     // What kind of email it was, in plain words
     const kind = { scheduled: "booking", rescheduled: "move", canceled: "cancellation" }[email.kind] || "update";
     // Its heading: where the details came from, and when
-    const head = email.source === "booking" ? "Booking now" : email.source === "calendar" ? "From Acuity's calendar" : "From Acuity's " + kind + " email";
+    const head = email.source === "booking" ? "Booking now" : email.source === "calendar" ? "From the booking calendar" : "From the " + kind + " email";
     box.appendChild(el("p", "email-head", head + " · " + when(email.at)));
     // Every detail, unless the alert's own text above already shows exactly the same
     if (!email.same) box.appendChild(richDetails(email.lines.join("\n")));

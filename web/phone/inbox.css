@@ -40,13 +40,9 @@
 /* This phone's notifications card in Alerts */
 .inbox-phone { display: block; color: var(--text); }
 
-/* Acuity's own check of a booking */
+/* The "a test notification" note on an alert */
 .inbox-verify { display: grid; gap: 2px; margin: 0 0 10px !important; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(var(--hi-rgb), .2); background: rgba(var(--deep-rgb), .5); font-size: 14px; }
-.inbox-verify b { color: var(--bright); }
-.inbox-verify.real { border-color: rgba(var(--ok-rgb), .45); } .inbox-verify.real b { color: var(--ok); }
-.inbox-verify.cancelled { border-color: rgba(var(--bad-rgb), .45); } .inbox-verify.cancelled b { color: var(--bad); }
-.inbox-verify.missing, .inbox-verify.unknown { border-color: rgba(var(--warn-rgb), .45); color: var(--warn); }
-.inbox-verify.checking { color: var(--muted); }
+.inbox-verify.unknown { border-color: rgba(var(--warn-rgb), .45); color: var(--warn); }
 
 /* The approval a notification pointed at */
 .inbox-picked { border-color: var(--hi) !important; box-shadow: 0 0 0 2px rgba(var(--hi-rgb), .35); }

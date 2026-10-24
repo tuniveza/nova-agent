@@ -7,8 +7,8 @@
 //               approve, edit or discard, saved replies, don't contact, and a booking link to copy or email
 //   Chats       the website's visitors talking to NovaBot: needs a person / done (from the list too), read with
 //               the page each message came from and tappable links, take over, answer, hand back
-//   Alerts      everything that reached the studio's phones: unseen count, the exact time, what kind, Acuity's
-//               check, its latest email, open where it points, delete one or all, how long they're kept;
+//   Alerts      everything that reached the studio's phones: unseen count, the exact time, what kind,
+//               its latest email, open where it points, delete one or all, how long they're kept;
 //               notifications on this phone (on, off, a test, the ping and banner while Nova Phone is open)
 //   Approvals   booking changes Nova Agent proposed: change them first, approve, reject, and what became of them
 // And while Nova Phone is open: a notification arriving pings, drops a banner and refreshes what's on screen;
@@ -141,7 +141,7 @@
       if (i % 2 === 0) return esc(part);
       const trail = (part.match(/[.,!?;:)]+$/) || [""])[0];
       const url = trail ? part.slice(0, -trail.length) : part;
-      const name = /acuityscheduling|\/(book\?|pay\/|booking\/)/.test(url) ? "Booking link" : /calendar\.google\.com|google\.com\/calendar/.test(url) ? "Google Calendar" : url.replace(/^https?:\/\//, "");
+      const name = /\/(book\?|pay\/|booking\/)/.test(url) ? "Booking link" : /calendar\.google\.com|google\.com\/calendar/.test(url) ? "Google Calendar" : url.replace(/^https?:\/\//, "");
       return `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a>${esc(trail)}`;
     }).join("");
   }
@@ -182,7 +182,7 @@
       end: esc(N.ago(e.created_at)),
     });
   }
-  const KIND = { booking: "Booking · Acuity", "nova-booking": "Booking · Nova", enquiry: "Enquiry", quest: "Quest", mission: "Quest", agent: "Nova Agent", health: "Acuity connection", test: "Test", other: "Alert" };
+  const KIND = { booking: "Booking", "nova-booking": "Booking", enquiry: "Enquiry", quest: "Quest", mission: "Quest", agent: "Nova Agent", health: "Booking system", test: "Test", other: "Alert" };
   const kindName = (n) => KIND[n.kind] || "Alert";
   // (Today maps rows with (n, index): the "seen" mark is passed only from here)
   const alertRow = (n) => alertRowSeen(n, seenAlert());
@@ -723,7 +723,7 @@
     if (enq) btns.push(`<a class="btn main" href="#inbox/enquiry/${esc(enq)}">Open enquiry</a>`);
     else if (!NOVA_SOURCES.some((p) => String(n.title || "").startsWith(p)) && n.url) {
       const to = placeFor(n.url);
-      if (typeof to === "object") btns.push(`<a class="btn main" href="${esc(to.out)}" target="_blank" rel="noopener">${/acuityscheduling/.test(to.out) ? "Open in Acuity" : /calendar\.google|google\.com\/calendar/.test(to.out) ? "Open in Google Calendar" : "Open it"}</a>`);
+      if (typeof to === "object") btns.push(`<a class="btn main" href="${esc(to.out)}" target="_blank" rel="noopener">${/calendar\.google|google\.com\/calendar/.test(to.out) ? "Open in Google Calendar" : "Open it"}</a>`);
       else if (to.startsWith("#money")) btns.push(`<a class="btn main" href="${esc(to)}">Open in Invoicer</a>`);
       else if (to === "#inbox/alerts" && (n.kind === "enquiry" || c.email)) btns.push(`<button type="button" class="btn main" data-find="${esc(c.email || c.name || "")}">Open enquiry</button>`);
       else if (to !== "#inbox/alerts") btns.push(`<a class="btn main" href="${esc(to)}">${to.startsWith("#inbox/enquiry") || to === "#inbox" ? "Open enquiry" : to.startsWith("#inbox/approvals") ? "Open in Approvals" : to.startsWith("#inbox/chat") ? "Read conversation" : "Open it"}</a>`);
@@ -732,24 +732,15 @@
     if (c.phone) btns.push(`<a class="btn" href="tel:${esc(String(c.phone).replace(/[^0-9+]/g, ""))}">${icon("phone")} Call</a>`);
     if (n.email && n.email.gmail) btns.push(`<a class="btn" href="${esc(n.email.gmail)}" target="_blank" rel="noopener">Open in Gmail</a>`);
     const em = n.email;
-    const emHead = em ? `${em.source === "booking" ? "Booking now" : em.source === "calendar" ? "From Acuity's calendar" : `From Acuity's ${{ scheduled: "booking", rescheduled: "move", canceled: "cancellation" }[em.kind] || "update"} email`}${em.at ? ` · ${when(em.at)}` : ""}` : "";
+    const emHead = em ? `${em.source === "booking" ? "Booking now" : em.source === "calendar" ? "From the booking calendar" : `From the ${{ scheduled: "booking", rescheduled: "move", canceled: "cancellation" }[em.kind] || "update"} email`}${em.at ? ` · ${when(em.at)}` : ""}` : "";
     box.innerHTML = `<div class="card"><p class="kicker">${esc(kindName(n))}</p><h2 class="card-title">${esc(n.title || "Alert")}</h2>
         <p class="muted small">${esc(exactTime(n.created_at))}</p>
         ${n.kind === "test" ? `<p class="inbox-verify unknown">A test notification: not a real booking or enquiry.</p>` : ""}
-        <div id="verify"></div>
         ${n.body ? `<p class="pre">${linkify(n.body)}</p>` : ""}
         <p class="small muted">Alert #${esc(n.id)} · delivered to ${Number(n.phones) || 0} ${n.phones === 1 ? "phone" : "phones"}</p></div>
       ${em ? `<div class="card"><p class="kicker">${esc(emHead)}</p>${em.same ? `<p class="small muted">The same as above.</p>` : `<p class="pre">${esc((em.lines || []).join("\n"))}</p>`}</div>` : ""}
       ${btns.length ? `<div class="btns two">${btns.join("")}</div>` : ""}
       <button type="button" class="btn danger wide" data-del-one>${icon("trash")} Delete this alert</button>`;
-    // A booking in Acuity: checked with Acuity itself, so a real booking can't be mistaken for a test or a fake
-    if (n.kind === "booking" && n.appointmentId) {
-      const v = box.querySelector("#verify");
-      v.innerHTML = `<p class="inbox-verify checking">Checking with Acuity…</p>`;
-      api(`${A}verify-booking?id=${encodeURIComponent(n.appointmentId)}`).catch((err) => ({ status: "unknown", title: err.message, lines: [] })).then((x) => {
-        v.innerHTML = `<div class="inbox-verify ${esc(x.status || "unknown")}"><b>${{ real: "✓ ", cancelled: "✕ ", missing: "⚠ " }[x.status] || ""}${esc(x.title || "")}</b>${(x.lines || []).map((l) => `<span>${esc(l)}</span>`).join("")}</div>`;
-      });
-    }
     box.querySelector("[data-find]")?.addEventListener("click", (ev) => { searchFor = ev.currentTarget.dataset.find; location.hash = "#inbox/box/all"; });
     box.querySelector("[data-del-one]").addEventListener("click", (ev) => busy(ev.currentTarget, "Deleting…", async () => { try { await send(`${A}notifications/delete`, { id: Number(n.id) }); toast("Alert deleted"); location.hash = "#inbox/alerts"; } catch (err) { fail(err); } }));
   }
@@ -953,14 +944,14 @@
   // (the keys checked once, a little after the first screen is up)
   setTimeout(() => renewPush(), 4000);
 
-  // ================= Approvals: booking changes Nova Agent proposed =================
+  // ================= Approvals: booking changes waiting for an admin =================
   const APPROVAL_KINDS = { create: "New booking", reschedule: "Move a booking", cancel: "Cancel a booking", update: "Booking details", block_add: "Block off time", block_remove: "Unblock time" };
   const APPROVAL_STATUS = { pending: ["warn", "Waiting"], approved: ["", "Approved"], executed: ["ok", "Done"], failed: ["bad", "Didn't go through"], rejected: ["bad", "Rejected"] };
   const PROPOSERS = { agent: "Nova Agent", "staff-chat": "Portal's staff chat" };
   const APPROVAL_FIELDS = {
-    create: [["start", "When (UK time)", "when"], ["firstName", "First name"], ["lastName", "Last name"], ["email", "Email", "email"], ["phone", "Phone"], ["notes", "Notes", "long"], ["notifyClient", "Acuity emails the client", "tick"]],
-    reschedule: [["start", "New time (UK time)", "when"], ["notifyClient", "Acuity emails the client", "tick"]],
-    cancel: [["note", "Cancel note", "long"], ["notifyClient", "Acuity emails the client", "tick"]],
+    create: [["start", "When (UK time)", "when"], ["firstName", "First name"], ["lastName", "Last name"], ["email", "Email", "email"], ["phone", "Phone"], ["notes", "Notes", "long"], ["notifyClient", "Email the client", "tick"]],
+    reschedule: [["start", "New time (UK time)", "when"], ["notifyClient", "Email the client", "tick"]],
+    cancel: [["note", "Cancel note", "long"], ["notifyClient", "Email the client", "tick"]],
     update: [["firstName", "First name"], ["lastName", "Last name"], ["email", "Email", "email"], ["phone", "Phone"], ["notes", "Notes", "long"]],
     block_add: [["start", "From (UK time)", "when"], ["end", "Until (UK time)", "when"], ["notes", "Notes", "long"]],
     block_remove: [],
@@ -975,8 +966,8 @@
     const card = (a) => {
       const [tone, word] = APPROVAL_STATUS[a.status] || ["bad", a.status];
       const by = a.decidedByName ? ` by ${a.decidedByName}` : "";
-      const result = a.status === "executed" ? `<p class="small ok">Done in Acuity · approved${esc(by)}${a.executedAt ? ` · ${esc(when(a.executedAt))}` : ""}</p>${a.result && a.result.note ? `<p class="small muted">${esc(a.result.note)}</p>` : ""}`
-        : a.status === "approved" ? `<p class="small">Approved${esc(by)} · going through to Acuity…</p>`
+      const result = a.status === "executed" ? `<p class="small ok">Done · approved${esc(by)}${a.executedAt ? ` · ${esc(when(a.executedAt))}` : ""}</p>${a.result && a.result.note ? `<p class="small muted">${esc(a.result.note)}</p>` : ""}`
+        : a.status === "approved" ? `<p class="small">Approved${esc(by)} · going through…</p>`
         : a.status === "failed" ? `<p class="small bad">Didn't go through: ${esc(String(a.error || "unknown reason").replace(/\.$/, ""))}. Approved${esc(by)}; nothing else was changed.</p>`
         : a.status === "rejected" ? `<p class="small">Rejected${esc(by)}${a.decidedAt ? ` · ${esc(when(a.decidedAt))}` : ""}. Nothing was changed.</p>` : "";
       const fields = APPROVAL_FIELDS[a.kind] || [];
@@ -989,14 +980,14 @@
         ${a.status === "pending" ? (r.canDecide ? `<div class="btns two inbox-tight"><button type="button" class="btn main" data-act="approve" data-id="${esc(a.id)}">${icon("check")} Approve</button>${fields.length ? `<button type="button" class="btn" data-act="edit" data-id="${esc(a.id)}">${icon("edit")} Change first</button>` : ""}<button type="button" class="btn danger" data-act="reject" data-id="${esc(a.id)}">Reject</button></div>` : `<p class="small muted">An admin approves these.</p>`) : ""}
         ${err ? `<p class="small bad" role="alert">${esc(err)}</p>` : ""}</div>`;
     };
-    box.innerHTML = `${partTabs("approvals")}<p class="muted small">${r.canDecide ? "Booking changes Nova Agent proposed. Nothing changes in Acuity until you approve it." : "Booking changes Nova Agent proposed. An admin approves these (signed in, in this phone's browser); nothing changes in Acuity until then."}</p>
+    box.innerHTML = `${partTabs("approvals")}<p class="muted small">${r.canDecide ? "Booking changes waiting for an admin. Nothing changes until you approve it." : "Booking changes waiting for an admin. Nothing changes until an admin approves it (signed in, in this phone's browser)."}</p>
       ${waiting.length ? waiting.map(card).join("") : empty({ icon: "check", title: "Nothing waiting for approval" })}
       ${decided.length ? `<h3 class="h">Decided</h3>${decided.map(card).join("")}` : ""}`;
     const redo = () => drawApprovals(box, picked, ui).catch((err) => toast(err.message, true));
     box.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async () => {
       const how = b.dataset.act, a = acts.find((x) => String(x.id) === b.dataset.id);
       if (how === "edit") return editApproval(a, redo);
-      if (!(await confirm({ title: how === "approve" ? "Approve this change?" : "Reject this change?", text: how === "approve" ? "It's made in Acuity straight away." : "Nothing is changed in Acuity.", ok: how === "approve" ? "Approve" : "Reject", danger: how === "reject" }))) return;
+      if (!(await confirm({ title: how === "approve" ? "Approve this change?" : "Reject this change?", text: how === "approve" ? "It's made straight away." : "Nothing is changed.", ok: how === "approve" ? "Approve" : "Reject", danger: how === "reject" }))) return;
       await busy(b, "…", () => decide(a, how, { id: a.id }, redo));
     }));
     if (picked) requestAnimationFrame(() => box.querySelector(".inbox-picked")?.scrollIntoView({ block: "center" }));
@@ -1007,7 +998,7 @@
     try {
       const d = await send(`${A}booking-actions/${path}`, body);
       const x = d.action || {};
-      if (path === "approve") toast(x.status === "executed" ? "Done in Acuity" : x.status === "failed" ? `Didn't go through: ${x.error || "see the card"}` : "Approved", x.status === "failed");
+      if (path === "approve") toast(x.status === "executed" ? "Done" : x.status === "failed" ? `Didn't go through: ${x.error || "see the card"}` : "Approved", x.status === "failed");
       else toast(path === "edit" ? "Saved: still waiting for approval" : "Rejected: nothing was changed");
     } catch (err) {
       if (err.signIn) return fail(err);

@@ -21,7 +21,7 @@
     const link = (url) => {
       const trail = url.match(/[.,!?;:)]+$/);
       const u = trail ? url.slice(0, -trail[0].length) : url;
-      const name = /acuityscheduling|\/(book\?|pay\/|booking\/)/.test(u) ? "Booking link" : /calendar\.google\.com|google\.com\/calendar/.test(u) ? "Google Calendar" : u.replace(/^https?:\/\//, "");
+      const name = /\/(book\?|pay\/|booking\/)/.test(u) ? "Booking link" : /calendar\.google\.com|google\.com\/calendar/.test(u) ? "Google Calendar" : u.replace(/^https?:\/\//, "");
       return `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(name)}</a>${trail ? esc(trail[0]) : ""}`;
     };
     return String(text || "").split("\n").filter((l, i, all) => l.trim() || (i && all[i - 1].trim())).map((line) => `<p>${line.split(/(https?:\/\/[^\s<>"']+)/).map((part, i) => (i % 2 ? link(part) : esc(part).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>"))).join("")}</p>`).join("");

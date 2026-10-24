@@ -1,4 +1,4 @@
-// The phone preview: made-up bookings in Acuity's diary (Booking tools, Today's tiles). No real people.
+// The phone preview: made-up bookings in the studio's diary (Booking tools, Today's tiles). No real people.
 (() => {
   "use strict";
   const pad = (n) => String(n).padStart(2, "0");

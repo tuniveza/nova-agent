@@ -36,9 +36,9 @@ describe("All addresses", () => {
     expect(staff).toContain("Nova Agent");
     expect(staff).toContain("Status");
     expect(staff).not.toContain("Fixer");
-    expect(staff).not.toContain("Acuity's booking notices");
+    expect(staff).not.toContain("Stripe's payment notices");
     expect(staff).not.toContain("Google's return address");
-    expect(admins).toEqual(expect.arrayContaining(["Fixer", "Acuity's booking notices", "Google's return address", "Status, as data"]));
+    expect(admins).toEqual(expect.arrayContaining(["Fixer", "Stripe's payment notices", "Google's return address", "Status, as data"]));
     expect(A.list(false).some((g: any) => g.admin)).toBe(false);
   });
 

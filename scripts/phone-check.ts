@@ -59,9 +59,8 @@ async function catchWrites(ctx: BrowserContext, writes: any[]) {
   });
 }
 // Answers the server is meant to give, each with its reason (ns CLAUDE.md 2f: only these, never a whole kind)
-const KNOWN: [RegExp, number, string][] = [
-  [/\/admin\/test-booking\/acuity\/state$/, 502, "Acuity's API refuses this account (not on its Powerhouse plan); the screen says so in words"],
-];
+// (none at the moment: the old booking system's test, the only one that had one, has gone from Nova Phone)
+const KNOWN: [RegExp, number, string][] = [];
 const known = (m: any) => { const u = m.location()?.url || ""; return KNOWN.some(([re, code]) => re.test(u) && m.text().includes(`status of ${code}`)); };
 const signedOut = (page: Page) => page.getByText(/Sign in to carry on|Sign in to see this/).count().catch(() => 0);
 async function look(page: Page, where: string) {

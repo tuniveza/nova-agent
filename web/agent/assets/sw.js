@@ -186,7 +186,7 @@ const BUZZ = {
 };
 
 // Where a notification goes: a panel's address (/portal/#nova, /app/memory/...) opens inside
-// Nova Agent; Portal's old address (/app/) is Portal; other sites (Acuity) open as they are
+// Nova Agent; Portal's old address (/app/) is Portal; other sites (Google Calendar) open as they are
 function panelUrl(url) {
   let u = String(url || "/");
   if (u === "/app" || (u.startsWith("/app/") && !u.startsWith("/app/memory"))) u = "/portal/" + u.slice(5).replace(/^\//, "");

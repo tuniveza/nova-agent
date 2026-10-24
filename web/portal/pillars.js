@@ -78,7 +78,7 @@
     { name: "Clients & Money", glyph: "£", badges: ["money-badge"], items: [
       { name: "Clients", glyph: "☺", at: "clients", run: tab("clients") },
       { name: "Add a client", glyph: "+", run: press("clients", "#clients-add") },
-      { name: "Sync with Acuity", glyph: "↻", admin: true, run: press("clients", "#clients-sync") },
+      { name: "Sync clients", glyph: "↻", admin: true, run: press("clients", "#clients-sync") },
       { name: "Import clients", glyph: "⇣", admin: true, run: press("clients", "#clients-import-open") },
       // (a phone number given, its contact found: the phone's contacts, Google Contacts or a contact card)
       { name: "Import from contacts", glyph: "☎", run: () => {
@@ -204,7 +204,7 @@
   const ICON_OF = {
     Inbox: "inbox", Today: "home", Enquiries: "mail", Conversations: "chat", Alerts: "bell", "Saved replies": "note", "Website bot": "spark", Notifications: "ring",
     Bookings: "calendar", Calendar: "calendar", "Booking tools": "tools", Approvals: "check", "Ask about this week": "spark", "Booking link": "link", "Test booking": "flag",
-    "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync with Acuity": "sync", "Import clients": "import", "Import from contacts": "phone", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt",
+    "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync clients": "sync", "Import clients": "import", "Import from contacts": "phone", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt",
     Outreach: "megaphone", Campaigns: "megaphone", "Write a campaign": "pen", "One-to-one email": "send", "Don't email again": "block", Social: "camera", "Write a post": "pen", "Fan sign-up link": "link", "Ads Manager": "out", Funnel: "funnel", "Add prospects": "import",
     "Plans & Nova": "star", Quests: "star", "Everyone's quests": "team", "Nova Agent": "agent", "Ask Nova": "ask", Voice: "mic", "Hands-free": "ear",
     You: "user", "Your profile": "user", "Re-roll planet": "planet", "Edit your name": "pen", "Change email": "at", "Change password": "key", "All addresses": "map", "How it works": "gear", "Sign out": "exit",

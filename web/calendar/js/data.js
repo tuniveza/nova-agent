@@ -200,7 +200,7 @@ async function migrate() {
   }
 }
 
-// Studio bookings (read-only): Acuity's diary, or Nova Bot's own bookings
+// Studio bookings (read-only): Nova Bot's own bookings
 export async function bookings() {
   try {
     const r = await request("GET", "/app/api/calendar");

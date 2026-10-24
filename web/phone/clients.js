@@ -6,15 +6,15 @@
 // client by hand (from this phone's contacts where the phone allows it); Import from contacts: a phone number
 // looked up in the studio's Google Contacts, people chosen from this phone's contacts (Android's Chrome; iPhones
 // don't offer it), or contact cards (.vcf, how an iPhone shares a contact), each shown to check before Add;
-// admins sync with Acuity and import Acuity's spreadsheets.
+// admins sync now (the studio's bookings and enquiries) and import a spreadsheet (CSV).
 // Addresses: #clients, #clients/<id>, #clients/new, #clients/contacts, #clients/import.
 (() => {
   "use strict";
   const N = window.NovaPhone;
   const { esc, icon, row, list, field, empty, api, post, toast, form: sheetForm, busy, initials } = N;
   const A = "/app/api/clients";
-  const CLIENT_SOURCES = { booking: "Booked through Acuity", acuity: "Booked through Acuity", enquiry: "Sent an enquiry", import: "Imported from Acuity", staff: "Added by hand" };
-  const SESSION_SOURCES = { feed: "from Acuity's calendar", webhook: "from Acuity", import: "imported" };
+  const CLIENT_SOURCES = { booking: "Booked a session", acuity: "Booked a session", nova: "Booked a session", enquiry: "Sent an enquiry", import: "Imported", staff: "Added by hand" };
+  const SESSION_SOURCES = { feed: "from the booking calendar", webhook: "from a booking", nova: "from a booking", import: "imported" };
   // "Sat 1 Aug 2026" (and ", 14:00" with the time), UK time, as on Nova Desk
   function ukDay(iso, withTime) {
     if (!iso) return "";
@@ -60,7 +60,7 @@
         ${filter === "lapsed" ? field({ label: "Not booked since", name: "since", type: "date", value: since, attrs: `max="${ukToday()}"` }) : ""}
         <p class="muted small" role="status">${esc(countWords(cs, total))}</p>
         ${cs.length ? list(cs.map(clientRow)) : empty({ icon: "user", title: emptyWords() })}
-        <div class="btns two clients-tools"><a class="btn" href="#clients/contacts">${icon("user")} Import from contacts</a>${isAdmin() ? `<button type="button" class="btn" data-sync>${icon("refresh")} Sync with Acuity now</button><a class="btn" href="#clients/import">${icon("book")} Import from Acuity</a>` : ""}</div>`;
+        <div class="btns two clients-tools"><a class="btn" href="#clients/contacts">${icon("user")} Import from contacts</a>${isAdmin() ? `<button type="button" class="btn" data-sync>${icon("refresh")} Sync now</button><a class="btn" href="#clients/import">${icon("book")} Import a spreadsheet</a>` : ""}</div>`;
       box.querySelector("[data-client-search]").addEventListener("submit", (e) => { e.preventDefault(); search = e.target.elements.q.value.trim(); N.show(); });
       box.querySelectorAll("[data-f]").forEach((b) => b.addEventListener("click", () => { filter = b.dataset.f; N.show(); }));
       box.querySelector("[name=since]")?.addEventListener("change", (e) => { if (e.target.value) { since = e.target.value; N.show(); } });
@@ -89,7 +89,7 @@
     if (filter === "owing") return "Nobody owes anything.";
     if (filter === "lapsed") return "Everyone who booked before then has booked again since.";
     if (filter === "enquiry") return "No clients from enquiries only.";
-    return isAdmin() ? "No clients yet. Sync with Acuity now, or import Acuity's spreadsheet." : "No clients yet. They appear here as people book and send enquiries.";
+    return isAdmin() ? "No clients yet. Sync now, or import a spreadsheet." : "No clients yet. They appear here as people book and send enquiries.";
   }
   function clientRow(c) {
     const booked = [c.lastBooked ? `Last booked ${ukDay(c.lastBooked)}` : "Not booked yet", c.nextBooked ? `Next ${ukDay(c.nextBooked, true)}` : "", c.sessionCount ? `${c.sessionCount} session${c.sessionCount === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
@@ -327,15 +327,15 @@
   }
   addEventListener("hashchange", () => { if (!location.hash.startsWith("#clients/contacts")) found = null; });
 
-  // ---- Import from Acuity (admins): the appointments or clients spreadsheet, chosen or pasted ----
+  // ---- Import a spreadsheet (admins): a clients or appointments CSV, chosen or pasted ----
   function drawImport(box, ui) {
     ui.back("#clients");
-    ui.title("Import from Acuity");
-    if (!isAdmin()) { box.innerHTML = empty({ icon: "user", title: "Importing is for admins", text: "Ask an admin to import Acuity's spreadsheet.", action: `<a class="btn" href="#clients">All clients</a>` }); return; }
+    ui.title("Import a spreadsheet");
+    if (!isAdmin()) { box.innerHTML = empty({ icon: "user", title: "Importing is for admins", text: "Ask an admin to import the spreadsheet.", action: `<a class="btn" href="#clients">All clients</a>` }); return; }
     let chosen = "";
     box.innerHTML = `<div class="card"><ol class="clients-steps">
-        <li>In Acuity, open Reports → Export and download the appointments CSV.</li>
-        <li>For everyone on Acuity's client list too, open Clients → Export (Import/Export) and download that CSV as well.</li>
+        <li>A clients spreadsheet (CSV): a Name (or First Name and Last Name) column, and Email or Phone.</li>
+        <li>Or an appointments spreadsheet (CSV): a Start Time column, and a name or Email.</li>
         <li>Choose a file below (or paste what's in it) and press Import. One file at a time; importing the same file again changes nothing.</li></ol></div>
       <form class="form" data-imp novalidate>
         <label class="btn wide clients-file">${icon("book")} Choose the CSV file<input class="sr" type="file" accept=".csv,text/csv,text/plain" data-file></label>
@@ -350,7 +350,7 @@
       const file = e.target.files[0];
       chosen = "";
       if (!file) return;
-      if (file.size > 20 * 1024 * 1024) { note.textContent = "That file is too big (over 20 MB). Export a shorter date range from Acuity."; note.classList.add("bad"); return; }
+      if (file.size > 20 * 1024 * 1024) { note.textContent = "That file is too big (over 20 MB). Split it into smaller files."; note.classList.add("bad"); return; }
       file.text().then((t) => { chosen = t; note.classList.remove("bad"); note.textContent = `Chosen: ${file.name} (${Math.max(0, t.split(/\r?\n/).filter((l) => l.trim()).length - 1)} lines). Press Import.`; }, () => { note.textContent = "Couldn't read that file."; note.classList.add("bad"); });
     });
     f.elements.csv.addEventListener("input", () => { if (chosen) { chosen = ""; note.textContent = ""; } });
@@ -364,7 +364,7 @@
           const r = await post(`${A}/import`, { csv });
           const c = r.clients || {}, s = r.sessions || {};
           const problems = (r.problems || []).map((p) => (typeof p === "string" ? p : `${p.line ? `Line ${p.line}: ` : ""}${p.problem || p.error || p.message || JSON.stringify(p)}`));
-          out.innerHTML = `<div class="card"><p class="ok"><b>${r.kind === "clients" ? "Acuity's client list" : "Acuity's appointments"} imported.</b></p>
+          out.innerHTML = `<div class="card"><p class="ok"><b>${r.kind === "clients" ? "The client list" : "The appointments"} imported.</b></p>
             <p>Clients: ${c.added || 0} new, ${c.updated || 0} updated.${r.kind === "clients" ? "" : ` Sessions: ${s.added || 0} new, ${s.updated || 0} updated.`}</p>
             ${r.skipped ? `<p class="muted small">${r.skipped}${r.skipped === 1 ? " line was" : " lines were"} skipped.</p>` : ""}
             ${problems.length ? `<ul class="clients-log">${problems.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}

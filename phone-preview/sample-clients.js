@@ -1,5 +1,5 @@
 // The phone preview: made-up clients (no real people), with every Clients address: the list and its filters,
-// one client, adding (a duplicate refused), changes, consent, sync, Acuity's spreadsheet and Google Contacts.
+// one client, adding (a duplicate refused), changes, consent, sync, a spreadsheet import and Google Contacts.
 (() => {
   "use strict";
   const pad = (n) => String(n).padStart(2, "0");

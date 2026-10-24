@@ -172,7 +172,7 @@ function conversationBody(chatId) {
   return { messages: msgs, chat: chatId, live: { mode: "staff", staffId: "crew-1", staffName: "Penelope", since: iso(11, 10, 0), visitorAt: iso(11, 10, 2) } };
 }
 
-// ----- Calendar (Acuity feed) -----
+// ----- Calendar (the studio's bookings) -----
 const SESSIONS_NAMES = [
   "Deluxe Vocal Recording, Comping, Tuning, Mixing and Mastering Package (two 6-hour days)",
   "Hourly studio hire",
@@ -244,7 +244,7 @@ const ACTIONS = A_STATUS.map((status, i) => {
     decidedAt: status === "pending" ? null : iso(11, 9 + i, 30),
     decidedByName: status === "pending" ? null : ME_NAME,
     executedAt: status === "executed" ? iso(11, 9 + i, 31) : null,
-    error: status === "failed" ? "Acuity said the time is no longer available because another booking (" + LONGWORD + ") took it at the same moment." : null,
+    error: status === "failed" ? "The time is no longer available because another booking (" + LONGWORD + ") took it at the same moment." : null,
   };
 });
 
@@ -508,7 +508,7 @@ const NOTIFICATIONS = A_KINDS.map((kind, i) => {
     : kind === "mission" ? "Mission: Finish the EP by 1 December is at risk (2 quests behind)"
     : kind === "agent" ? "Nova Agent: " + (i % 2 ? "I drafted a reply to " + p.name + " — approve it in Enquiries" : LONGWORD2)
     : kind === "enquiry" ? "New enquiry from " + p.name
-    : kind === "health" ? "Acuity connection: the calendar feed hasn't answered for 3 hours"
+    : kind === "health" ? "Connection: the booking calendar hasn't answered for 3 hours"
     : kind === "test" ? "Test notification"
     : kind === "other" ? "Something happened: " + LONGWORD
     : "New booking: " + p.name + " — " + SESSIONS_NAMES[i % SESSIONS_NAMES.length];
@@ -520,7 +520,7 @@ const NOTIFICATIONS = A_KINDS.map((kind, i) => {
     body: SESSIONS_NAMES[i % SESSIONS_NAMES.length] + "\nThursday, 22 October 2026, 18:30–23:00\nName: " + p.name + "\nEmail: " + p.email + "\nPhone: " + (p.phone || "none") + "\nPrice: £540.00\nNotes: " + PARA(1) + "\n" + LONGWORD,
     phones: i % 4,
     appointmentId: kind === "booking" ? 1200000 + i : null,
-    url: kind === "enquiry" ? "/portal/?view=enquiries" : kind === "nova-booking" ? "https://calendar.google.com/calendar/event?eid=" + LONGWORD : "https://secure.acuityscheduling.com/appointments.php?id=" + (1200000 + i),
+    url: kind === "enquiry" ? "/portal/?view=enquiries" : kind === "nova-booking" ? "https://calendar.google.com/calendar/event?eid=" + LONGWORD : kind === "booking" ? "" : LONG_URL + "&n=" + i,
     contact: { email: kind === "test" ? "" : p.email, phone: p.phone },
     email:
       kind === "booking"
@@ -559,7 +559,7 @@ const CREW = [
 const SERVICES = [
   { id: "email", name: "Email to customers and fans", tech: "The studio's own mail server (on the VPS)", ready: true, detail: "Sends from hello@" + LONGWORD.toLowerCase() + ".co.uk. " + PARA(1), last: iso(11, 9), test: true },
   { id: "push", name: "Phone notifications", tech: "Web Push (VAPID)", ready: true, detail: "3 phones subscribed.", last: iso(11, 10) },
-  { id: "acuity", name: "Bookings", tech: "Acuity Scheduling API + calendar feed", ready: "partly", detail: "The calendar feed works; the API key is missing, so approvals can't change bookings yet." },
+  { id: "bookings", name: "Bookings", tech: "Nova's own booking page + Google Calendar", ready: "partly", detail: "Bookings show in Google Calendar; Stripe isn't connected, so deposits can't be taken yet." },
   { id: "google", name: "Google Calendar, Gmail and Docs", tech: "Google OAuth", ready: false, detail: "Not connected yet." },
   { id: "ai", name: "Nova Agent and NovaBot", tech: "Claude", ready: true, detail: "Answers questions and drafts replies." },
   { id: "voice", name: "Voice", tech: "Speech to text " + LONGWORD, ready: "partly", detail: "" },
@@ -569,11 +569,11 @@ const SERVICES = [
 function linksBody() {
   const items = (n, g) =>
     Array.from({ length: n }, (_, i) => ({
-      name: i === 0 ? "Portal " + LONGWORD : ["Agent", "Calendar", "Notes", "Index", "Website", "Booking page", "Admin", "Health check", "Webhook endpoint for Acuity"][i % 9] + " (" + g + ")",
+      name: i === 0 ? "Portal " + LONGWORD : ["Agent", "Calendar", "Notes", "Index", "Website", "Booking page", "Admin", "Health check", "Webhook endpoint for Stripe"][i % 9] + " (" + g + ")",
       kind: ["live", "machine", "testing", "local", "planned"][i % 5],
       check: { state: ["up", "down", "unchecked"][i % 3], label: i % 3 === 1 ? "Down: 502 Bad Gateway after 30 s " + LONGWORD : undefined },
       note: i % 2 ? PARA(1) : "",
-      url: i % 5 === 1 ? "/app/api/webhooks/acuity/" + LONGWORD : LONG_URL + "&i=" + i,
+      url: i % 5 === 1 ? "/stripe/webhook/" + LONGWORD : LONG_URL + "&i=" + i,
     }));
   return {
     checkedAt: iso(11, 9, 30),
@@ -715,7 +715,7 @@ function googleBody() {
   const parts = [
     ["calendar", "Calendar", "Nova's Calendar and Google Calendar, both ways.", true, true],
     ["calendarPlan", "Quests and music time in Google Calendar", "Also put Nova Agent's plan into the Novacane Studio calendar.", false, true],
-    ["bookings", "Bookings in Google Calendar", "Copies of Acuity's bookings (they're still booked in Acuity).", true, true],
+    ["bookings", "Bookings in Google Calendar", "The studio's bookings as events in its Google Calendar.", true, true],
     ["send", "Send approved emails from Gmail", "Replies, one-to-one emails, invoices and reminders go from the studio's Gmail, so they're in its Sent folder.", true, true],
     ["replies", "Customers' replies into Enquiries", "Replies to those emails land back in the right enquiry.", true, true],
     ["contacts", "Clients in Google Contacts", "Under a \"Novacane clients\" label, both ways.", true, false],
@@ -842,11 +842,6 @@ export function portalMock(pathWithQuery, method = "GET") {
   if (hit) return clientBody(Number(hit[1]));
   if (path === "quests") return questsBody();
   if (path === "notifications") return { notifications: NOTIFICATIONS, autoDeleteDays: 7, choices: [1, 3, 7, 14, 30, 90] };
-  if (path === "verify-booking") {
-    const id = Number(query.get("id")) || 0;
-    const status = ["real", "cancelled", "missing"][id % 3];
-    return { status, title: status === "real" ? "Real booking in Acuity" : status === "cancelled" ? "Cancelled in Acuity" : "Not found in Acuity", lines: ["Appointment #" + id, "Thursday, 22 October 2026, 18:30–23:00", "Booked by " + PEOPLE[0].name, "Paid: £150.00 of £540.00", "Notes: " + LONGWORD] };
-  }
   if (path === "push/key") return { publicKey: "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U" };
   return null;
 }

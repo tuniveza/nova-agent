@@ -11,7 +11,7 @@
 
   const apps = [
     { id: "agent", name: "Nova Agent", colour: "#FF5FA8", glyph: "✦", where: "Online for everyone, on the studio's server", repo: "na", shared: "",
-      links: [["Open Nova Agent", "https://nova.novacane.co.uk/agent/"]], tagline: "Your planner, your Nova Agent and the studio's hands in Acuity.",
+      links: [["Open Nova Agent", "https://nova.novacane.co.uk/agent/"]], tagline: "Your planner, your Nova Agent and the studio's bookings.",
       intro: "<p>Talk to it, give it a goal, and it plans your days. Every other part of the suite is a panel inside it.</p>",
       guide: [
         ch("at-a-glance-0", "At a glance", table(["", ""], [["<strong>Agent</strong>", "Claude, with tools for quests, the calendar and its own status"], ["<strong>Missions and Quests</strong>", "Goals broken into quests, planned hour by hour"], ["<strong>Panels</strong>", "Portal, Calendar, Notes, Index and the rest, inside it"]])),
@@ -88,7 +88,7 @@
         git: { branch: "main", commits: 640, dirty: 3, remote: "https://github.com/example/nova-agent", last: { hash: "a1b2c3d", subject: "Agent: a shorter answer for yes-or-no questions", date: ago(5) } },
         media: { captured: ago(24 * 6), mode: "page", shots: [{ file: "shot-1.jpg", caption: "Live view" }, { file: "shot-2.jpg", caption: "Further down" }], video: "video.mp4", poster: "shot-1.jpg", note: null } },
       { id: "sample-bot", name: "Nova Bot", tagline: "The website chat, Portal and the studio's data", path: "/home/sample/an/pj/ns/nb/novacane-worker", category: "Nova Agent", theme: "pulsar", status: "active",
-        kind: "Cloudflare Worker", stack: ["Workers", "D1", "Durable Objects", "Stripe", "Resend", "Acuity", "MailerLite"], goal: "Answer the website, keep the bookings and enquiries, and send the email.",
+        kind: "Cloudflare Worker", stack: ["Workers", "D1", "Durable Objects", "Stripe", "Resend", "Google Calendar", "MailerLite"], goal: "Answer the website, keep the bookings and enquiries, and send the email.",
         stats: { files: 610, bytes: 3.6e7, lines: 64000, disk: 6.1e8, newest: ago(30), newestFile: "src/index.js", langs: langs(48000, 8000, 6000, 2000) }, tree: tree.slice(0, 2),
         git: { branch: "main", commits: 900, dirty: 0, last: { hash: "f1e2d3c", subject: "Inbox: side by side", date: ago(30) } },
         related: [{ label: "Open-source edition", path: "/home/sample/an/pj/ns/nb/novabot-public", disk: 2.9e8 }, { label: "Backup", path: "/home/sample/an/pj/ns/nb/backup-1", disk: 2.2e7 }],

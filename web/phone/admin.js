@@ -509,35 +509,27 @@
     });
   }
 
-  // ---- Test booking: a pretend booking through Acuity (what customers use today) or Nova's own system ----
+  // ---- Test booking: a pretend booking through the studio's own booking system (Nova Bot's
+  // /admin/test-booking/{state,times,run,remove}: Google Calendar, Gmail and Stripe) ----
   const TB = "/admin/test-booking/";
   const STEPS = [["slot", "Slot found"], ["booking", "Booking created"], ["payment", "Payment"], ["email", "Confirmation email"], ["calendar", "Calendar event"], ["alerts", "Alerts"]];
   const MARK = { pass: "✓", fail: "✗", skip: "–", waiting: "…" };
   const MARK_WORD = { pass: "passed", fail: "failed", skip: "skipped", waiting: "waiting" };
-  const tb = { tab: "", nova: null, acuity: null, aProblem: "", nResult: null, aTest: null, aTimer: 0, nForm: {}, aForm: {}, removeMsg: "" };
+  const tb = { nova: null, nResult: null, nForm: {}, removeMsg: "" };
   async function drawBooking(box, ui) {
     ui.back("#admin");
     ui.title("Test booking");
-    const r = await asAdmin(box, api(`${TB}state`), api(`${TB}acuity/state`));
+    const r = await asAdmin(box, api(`${TB}state`));
     if (!r) return;
-    const [n, a] = r.rest;
+    const [n] = r.rest;
     tb.me = r.me;
     tb.nova = n instanceof Error ? { problem: n.message } : n;
-    tb.acuity = a instanceof Error ? null : a;
-    tb.aProblem = a instanceof Error ? (/powerhouse|refused|\b40[13]\b/i.test(a.message) ? "This needs Acuity's Powerhouse plan (it includes Acuity's API), which this account doesn't have. Until then, to check real bookings work: book the cheapest session on the website yourself, check the phone alert and Portal's Calendar, then cancel and refund it in Acuity." : a.message) : "";
-    const system = tb.nova?.facts?.system || tb.acuity?.system || "acuity";
-    if (!tb.tab) tb.tab = system === "nova" ? "nova" : "acuity";
     // (a quiet slot about four weeks ahead, picked for you)
     if (tb.nova?.quiet && !tb.nForm.date) Object.assign(tb.nForm, { date: tb.nova.quiet.date, time: tb.nova.quiet.time });
-    if (tb.acuity?.quiet && !tb.aForm.date) Object.assign(tb.aForm, { date: tb.acuity.quiet.date, time: tb.acuity.quiet.time });
     tb.nForm.session = tb.nForm.session || tb.nova?.session;
-    tb.aForm.session = tb.aForm.session || tb.acuity?.session;
     live.booking = { box };
-    const running = (tb.acuity?.tests || []).find((t) => !t.done);
-    if (running) tb.aTest = running;
-    await Promise.all([novaTimes(), acuityTimes()]);
+    await novaTimes();
     drawTb(true);
-    if (tb.aTest && !tb.aTest.done) watchAcuity();
   }
   async function novaTimes() {
     const f = tb.nForm, ready = Boolean(tb.nova?.facts && (tb.nova.facts.sandbox || tb.nova.facts.google));
@@ -550,17 +542,6 @@
       if (!tb.nTimes.list.includes(f.time)) f.time = tb.nTimes.list[tb.nTimes.list.length - 1] || "";
     } catch (err) { tb.nTimes.said = err.message; }
   }
-  async function acuityTimes() {
-    const f = tb.aForm;
-    tb.aTimes = { list: [], said: "" };
-    if (!tb.acuity || !f.date || !f.session) { tb.aTimes.said = "Pick a day"; return; }
-    try {
-      const d = await api(`${TB}acuity/times?session=${encodeURIComponent(f.session)}&date=${encodeURIComponent(f.date)}`);
-      tb.aTimes.list = d.times || [];
-      if (!tb.aTimes.list.length) tb.aTimes.said = "Nothing free that day";
-      if (!tb.aTimes.list.some((t) => t.value === f.time)) f.time = tb.aTimes.list[tb.aTimes.list.length - 1]?.value || "";
-    } catch (err) { tb.aTimes.said = err.message; }
-  }
   const stepsHtml = (steps) => `<ol class="admin-steps">${steps.map((s) => `<li data-s="${esc(s.status)}"><span class="admin-mark" role="img" aria-label="${MARK_WORD[s.status] || "waiting"}">${MARK[s.status] || "…"}</span><b>${esc(s.label)}</b>${s.detail ? `<span>${esc(s.detail)}</span>` : ""}</li>`).join("")}</ol>`;
   const sessionField = (name, sessions, value) => field({ label: "Session", name, type: "select", value, options: (sessions || []).map((t) => [t.id, `${t.name} (${t.price})`]) });
   const timeField = (name, times, value, said) => field({ label: "Start (UK time)", name, type: "select", value, options: times.length ? times.map((t) => (typeof t === "string" ? [t, t] : [t.value, t.label])) : [["", said || "…"]] });
@@ -568,29 +549,14 @@
   function drawTb(first = false) {
     if (!live.booking || (!first && !live.booking.box.isConnected)) return;
     const { box } = live.booking;
-    const nf = tb.nova?.facts || {}, system = nf.system || tb.acuity?.system || "acuity";
+    const nf = tb.nova?.facts || {};
     const novaReady = Boolean(nf.sandbox || nf.google);
-    const tab = (id, label) => `<button type="button" role="tab" class="seg-a" data-tab="${id}" aria-selected="${tb.tab === id}">${label}${system === id ? " · LIVE" : ""}</button>`;
-    let html = `<div class="seg" role="tablist">${tab("acuity", "Acuity")}${tab("nova", "Nova's own")}</div>`;
-    if (tb.tab === "acuity") {
-      const a = tb.acuity, t = tb.aTest;
-      html += `<div class="card"><p class="kicker">Acuity · what customers book with</p><p class="small">Makes a real booking in Acuity as staff, named “Nova TEST booking”: no payment, and Acuity emails nobody. Then it checks Nova Bot hears about it, the staff alert and Portal's Calendar, and cancels it in Acuity by itself (15 minutes at most). One at a time.</p>
-        <p class="small${a ? "" : " warn"}">${esc(a ? (a.system === "nova" ? "Customers book with Nova's own system now, so Acuity isn't live." : `Customers book with Acuity now. Payment isn't part of this test: Acuity takes it on its own page.${a.feed ? "" : " (Acuity's calendar feed isn't set up, so the Calendar check is skipped.)"}`) : tb.aProblem || "Checking Acuity…")}</p></div>`;
-      if (a) {
-        html += `<form class="form" data-aform novalidate>${sessionField("session", a.sessions, tb.aForm.session)}<div class="two-up">${field({ label: "Day", name: "date", type: "date", value: tb.aForm.date || "" })}${timeField("time", tb.aTimes.list, tb.aForm.time, tb.aTimes.said)}</div>
-          <p class="muted small">${a.quiet ? "A quiet time about four weeks ahead is picked for you; change it if you like." : "Couldn't find a free time in the next few weeks: pick a day."}</p>
-          <label class="switch"><span>Send the alert to my own phones <small class="muted">(nobody else's)</small></span><input type="checkbox" role="switch" name="alert"${tb.aForm.alert ? " checked" : ""}></label>
-          <p class="muted small">While it runs, that time is taken in Acuity, so a customer can't book it for those few minutes. If Acuity is set to email the studio about new bookings, that email still comes.</p>
-          <p class="form-said bad" data-err role="alert"></p><button class="btn main wide" type="submit"${t && !t.done ? " disabled" : ""}>Run Acuity test booking</button></form>`;
-        if (t) html += `<h3 class="h">Result · ${t.done ? (t.ok ? '<span class="ok">passed</span>' : '<span class="bad">something needs a look</span>') : "running…"}</h3>${stepsHtml(t.steps || [])}${!t.cancelled && !t.done ? '<button type="button" class="btn wide" data-acancel>Cancel it now</button>' : ""}${t.alert ? `<div class="card"><p class="kicker">Alert (preview)</p><p class="pre small"><b>${esc(t.alert.title)}</b>\n\n${esc(t.alert.body)}</p></div>` : ""}`;
-        const past = (a.tests || []).filter((x) => x.done && x.id !== t?.id);
-        if (past.length) html += `<h3 class="h">Earlier Acuity tests today</h3>${list(past.map((x) => row({ icon: x.ok ? "check" : "refresh", title: `#${x.id} · ${x.session}`, text: [x.when, x.ok ? "passed" : "needed a look", x.cancelled ? "cancelled" : ""].filter(Boolean).join(" · ") })))}`;
-      }
-    } else {
+    let html = "";
+    {
       const n = tb.nova, res = tb.nResult;
       const fake = nf.stripe === "test" ? "Stripe's test mode and test card: no real money" : nf.stripe === "live-only" ? "Only a live Stripe key is set, so Stripe won't be contacted: the payment is simulated" : "No Stripe test key, so Stripe won't be contacted: the payment is simulated";
-      html += `<div class="card"><p class="kicker">Nova's own booking system · Google Calendar, Gmail and Stripe</p><p class="small">Check the booking flow still works, end to end, without anyone paying. A test booking is marked TEST everywhere, uses made-up details, never emails or alerts a client or other staff, isn't counted, doesn't block customers' times unless you choose, and removes itself after 24 hours.</p>
-        <p class="small${n.problem || !novaReady ? " warn" : ""}">${esc(n.problem || `${nf.system === "nova" ? "This is the live booking system. " : "Not live yet: customers book with Acuity (test that under Acuity). "}${nf.sandbox ? "Sandbox: Google and email work offline. " : nf.google ? "" : "Google isn't connected, so this test can't run yet (Admin → Google). "}Up to ${nf.max ?? "a few"} test bookings at once.`)}</p></div>`;
+      html += `<div class="card"><p class="kicker">The studio's booking system · Google Calendar, Gmail and Stripe</p><p class="small">Check the booking flow still works, end to end, without anyone paying. A test booking is marked TEST everywhere, uses made-up details, never emails or alerts a client or other staff, isn't counted, doesn't block customers' times unless you choose, and removes itself after 24 hours.</p>
+        <p class="small${n.problem || !novaReady ? " warn" : ""}">${esc(n.problem || `${nf.system === "nova" ? "This is the live booking system. " : "Not live yet: customers don't book with it yet. "}${nf.sandbox ? "Sandbox: Google and email work offline. " : nf.google ? "" : "Google isn't connected, so this test can't run yet (Admin → Google). "}Up to ${nf.max ?? "a few"} test bookings at once.`)}</p></div>`;
       if (!n.problem) {
         html += `<form class="form" data-nform novalidate>${sessionField("session", n.sessions, tb.nForm.session)}<div class="two-up">${field({ label: "Day", name: "date", type: "date", value: tb.nForm.date || "" })}${timeField("time", tb.nTimes.list, tb.nForm.time, tb.nTimes.said)}</div>
           <p class="muted small">${n.quiet ? "A quiet slot about four weeks ahead is picked for you; change it if you like." : novaReady ? "Couldn't find a quiet slot: pick a day." : ""}</p>
@@ -612,40 +578,14 @@
     wireTb(box);
   }
   function wireTb(box) {
-    box.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { tb.tab = b.dataset.tab; drawTb(); }));
-    const af = box.querySelector("[data-aform]"), nf = box.querySelector("[data-nform]");
+    const nf = box.querySelector("[data-nform]");
     const keep = (form, into) => { const x = form.elements; into.session = x.session.value; into.date = x.date.value; into.time = x.time.value; if (x.alert) into.alert = x.alert.checked; if (x.email) into.email = x.email.checked; if (x.block) into.block = x.block.checked; if (x.payment) into.payment = x.payment.value || "skip"; };
-    af?.addEventListener("change", async (e) => {
-      const was = { ...tb.aForm };
-      keep(af, tb.aForm);
-      if (e.target.name === "session" || e.target.name === "date") {
-        if (e.target.name === "session") { try { tb.acuity = await api(`${TB}acuity/state?session=${encodeURIComponent(tb.aForm.session)}`); if (tb.acuity.quiet) Object.assign(tb.aForm, { date: tb.acuity.quiet.date, time: tb.acuity.quiet.time }); } catch (err) { toast(err.message, true); } }
-        if (was.date !== tb.aForm.date || was.session !== tb.aForm.session) { await acuityTimes(); drawTb(); }
-      }
-    });
     nf?.addEventListener("change", async (e) => {
       keep(nf, tb.nForm);
       if (e.target.name === "session") { try { tb.nova = await api(`${TB}state?session=${encodeURIComponent(tb.nForm.session)}`); if (tb.nova.quiet) Object.assign(tb.nForm, { date: tb.nova.quiet.date, time: tb.nova.quiet.time }); } catch (err) { toast(err.message, true); } }
       if (e.target.name === "session" || e.target.name === "date") await novaTimes();
       if (["session", "date", "payment"].includes(e.target.name)) drawTb();
     });
-    af?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      keep(af, tb.aForm);
-      const err = af.querySelector("[data-err]");
-      if (!tb.aForm.time) { err.textContent = "Pick a start time first."; return; }
-      err.textContent = "";
-      tb.aTest = { steps: [{ label: "Booking in Acuity and waiting for it to tell Nova Bot (up to half a minute)…", status: "waiting" }] };
-      await busy(af.querySelector("[type=submit]"), "Booking in Acuity…", async () => {
-        try { tb.aTest = (await post(`${TB}acuity/run`, { session: Number(tb.aForm.session), datetime: tb.aForm.time, alertMe: Boolean(tb.aForm.alert) })).test; } catch (x) { tb.aTest = x.data?.test || { done: true, ok: false, steps: [{ label: "Couldn't run it", status: "fail", detail: x.message }] }; }
-      });
-      drawTb();
-      if (!tb.aTest.done) watchAcuity();
-    });
-    box.querySelector("[data-acancel]")?.addEventListener("click", (e) => busy(e.currentTarget, "Cancelling…", async () => {
-      try { tb.aTest = (await post(`${TB}acuity/cancel`, { id: tb.aTest.id })).test; } catch (err) { toast(err.message, true); }
-      drawTb();
-    }));
     nf?.addEventListener("submit", async (e) => {
       e.preventDefault();
       keep(nf, tb.nForm);
@@ -676,18 +616,5 @@
       await novaTimes();
       drawTb();
     });
-  }
-  // A running Acuity test: looked at every few seconds while it's on screen (Nova Bot finishes it either way)
-  async function watchAcuity() {
-    if (tb.watching) return;
-    tb.watching = true;
-    while (tb.aTest && !tb.aTest.done && tb.aTest.id) {
-      await wait(4000);
-      if (!onScreen("admin") || !live.booking?.box.isConnected) break;
-      try { tb.aTest = (await post(`${TB}acuity/check`, { id: tb.aTest.id })).test; } catch (err) { await wait(8000); }
-      drawTb();
-    }
-    tb.watching = false;
-    if (tb.aTest?.done && live.booking?.box.isConnected) { await acuityTimes(); drawTb(); }
   }
 })();

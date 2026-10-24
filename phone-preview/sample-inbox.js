@@ -48,19 +48,19 @@
   let alerts = [
     { id: 15, kind: "test", title: "Test notification", body: "If you can read this, notifications work.", url: "/portal/", phones: 2, created_at: iso(5), contact: {}, email: null, appointmentId: null },
     { id: 14, kind: "enquiry", title: "New enquiry from Maya Rose", body: "Booking a vocal day\nHi! I'd love to book a full vocal day next month.", url: "/portal/", phones: 2, created_at: iso(42), contact: { name: "Maya Rose", email: "maya@example.com", phone: "07700 900123" }, email: null, appointmentId: null },
-    { id: 13, kind: "booking", title: "New booking: Kai Bennett", body: "Mixing session\nThu 2pm–5pm\nkai@example.com", url: "https://secure.acuityscheduling.com/appointments.php?id=9001", phones: 2, created_at: iso(120), contact: { name: "Kai Bennett", email: "kai@example.com", phone: "0161 496 0000" }, email: { source: "email", kind: "rescheduled", at: iso(100), lines: ["Mixing session", "Fri 11am–2pm", "kai@example.com"], same: false, gmail: "https://mail.google.com/mail/u/0/#inbox/abc" }, appointmentId: 9001 },
+    { id: 13, kind: "nova-booking", title: "New booking: Kai Bennett", body: "Mixing session\nThu 2pm–5pm\nkai@example.com", url: "https://calendar.google.com/calendar/event?eid=kai9001", phones: 2, created_at: iso(120), contact: { name: "Kai Bennett", email: "kai@example.com", phone: "0161 496 0000" }, email: { source: "email", kind: "rescheduled", at: iso(100), lines: ["Mixing session", "Fri 11am–2pm", "kai@example.com"], same: false, gmail: "https://mail.google.com/mail/u/0/#inbox/abc" }, appointmentId: 9001 },
     { id: 12, kind: "nova-booking", title: "NovaBot booked: Riley Chen", body: "Voiceover · Tue 10:00", url: "https://calendar.google.com/calendar/event?eid=abc", phones: 1, created_at: iso(400), contact: { name: "Riley Chen", email: "riley@example.com" }, email: { source: "booking", at: iso(390), lines: ["Voiceover · Tue 10:00"], same: true }, appointmentId: "n77" },
     { id: 11, kind: "quest", title: "Quest: Finish the Lowlands mix notes", body: "Starting in 10 minutes", url: "/portal/#nova", phones: 1, created_at: iso(600), contact: {}, email: null, appointmentId: null },
     { id: 10, kind: "other", title: "Invoice NS-0031 to approve", body: "Kai Bennett · £120.00", url: "/invoicer/?invoice=31", phones: 2, created_at: iso(900), contact: {}, email: null, appointmentId: null },
-    { id: 9, kind: "health", title: "Nova Bot can't reach Acuity", body: "Bookings may not show for a while.", url: "/portal/", phones: 2, created_at: iso(3000), contact: {}, email: null, appointmentId: null },
+    { id: 9, kind: "health", title: "Nova Bot can't reach the booking calendar", body: "Bookings may not show for a while.", url: "/portal/", phones: 2, created_at: iso(3000), contact: {}, email: null, appointmentId: null },
   ];
   let autoDays = 7;
   const actions = [
-    { id: 7, kind: "reschedule", status: "pending", summary: "Move Kai Bennett's mixing session from Thu 14:00 to Fri 11:00 (Acuity emails them)", payload: { appointmentId: 9001, start: ahead(2, 11), notifyClient: true }, reason: "Kai asked to move it in their reply", proposedBy: "agent", createdAt: iso(60) },
-    { id: 8, kind: "create", status: "pending", summary: "Book Maya Rose (maya@example.com) for Vocal day on Sat 14 Nov 10:00 (Acuity emails the client)", payload: { start: ahead(9, 10), firstName: "Maya", lastName: "Rose", email: "maya@example.com", phone: "07700 900123", notes: "Three songs", notifyClient: true }, reason: "", proposedBy: "staff-chat", createdAt: iso(30) },
+    { id: 7, kind: "reschedule", status: "pending", summary: "Move Kai Bennett's mixing session from Thu 14:00 to Fri 11:00 (emails them)", payload: { appointmentId: 9001, start: ahead(2, 11), notifyClient: true }, reason: "Kai asked to move it in their reply", proposedBy: "agent", createdAt: iso(60) },
+    { id: 8, kind: "create", status: "pending", summary: "Book Maya Rose (maya@example.com) for Vocal day on Sat 14 Nov 10:00 (emails the client)", payload: { start: ahead(9, 10), firstName: "Maya", lastName: "Rose", email: "maya@example.com", phone: "07700 900123", notes: "Three songs", notifyClient: true }, reason: "", proposedBy: "staff-chat", createdAt: iso(30) },
     { id: 9, kind: "block_add", status: "pending", summary: "Block off Mon 09:00–13:00 in Studio A (\"Piano tuning\")", payload: { start: ahead(5, 9), end: ahead(5, 13), notes: "Piano tuning" }, reason: "", proposedBy: "agent", createdAt: iso(20) },
-    { id: 5, kind: "cancel", status: "executed", summary: "Cancel Sam Ortiz's podcast on Wed 15:00", payload: {}, proposedBy: "agent", createdAt: iso(3000), decidedByName: "Jordan", decidedAt: iso(2900), executedAt: iso(2899), result: { note: "Queued for Nova Agent: it makes the change on Acuity's pages within a few minutes." } },
-    { id: 4, kind: "update", status: "failed", summary: "Change Riley Chen's phone number", payload: {}, proposedBy: "agent", createdAt: iso(4000), decidedByName: "Ava", decidedAt: iso(3990), error: "Acuity said the booking is locked." },
+    { id: 5, kind: "cancel", status: "executed", summary: "Cancel Sam Ortiz's podcast on Wed 15:00", payload: {}, proposedBy: "agent", createdAt: iso(3000), decidedByName: "Jordan", decidedAt: iso(2900), executedAt: iso(2899), result: { note: "Cancelled, and its calendar event removed." } },
+    { id: 4, kind: "update", status: "failed", summary: "Change Riley Chen's phone number", payload: {}, proposedBy: "agent", createdAt: iso(4000), decidedByName: "Ava", decidedAt: iso(3990), error: "The booking has already started." },
     { id: 3, kind: "block_remove", status: "rejected", summary: "Remove the blocked-off time Sat 10:00–12:00", payload: {}, proposedBy: "agent", createdAt: iso(5000), decidedByName: "Jordan", decidedAt: iso(4990) },
   ];
   const find = (id) => enquiries.find((e) => e.id === Number(id));
@@ -95,7 +95,6 @@
         return { conversations: all, needsPerson: all.filter((c) => c.ticket === "needs-person").length };
       }
       if (r === "notifications") return { notifications: alerts, autoDeleteDays: autoDays, choices: [1, 3, 7, 14, 30] };
-      if (r === "verify-booking") return { status: "real", title: "Real booking: confirmed in Acuity", lines: [`Acuity #${u.searchParams.get("id")} · Studio A`, "Kai Bennett · kai@example.com", "Mixing session · Fri 6 Nov, 11:00", "Booked Mon 2 Nov, 20:14", "Deposit £40.00 of £150.00 paid"] };
       if (r === "booking-actions") return { actions: u.searchParams.get("status") === "all" ? actions : actions.filter((a) => a.status === "pending"), canDecide: true };
       if (r === "push/key") return { publicKey: "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U" };
       return undefined;
@@ -143,7 +142,7 @@
     if (r === "booking-actions/approve") {
       if (b.payload) act.payload = b.payload;
       // (the block-off time "fails" in the preview, to show what a refusal looks like)
-      Object.assign(act, act.kind === "block_add" ? { status: "failed", error: "Acuity says that time overlaps a booking." } : { status: "executed", executedAt: iso(0) }, { decidedByName: me.name, decidedAt: iso(0) });
+      Object.assign(act, act.kind === "block_add" ? { status: "failed", error: "That time overlaps a booking." } : { status: "executed", executedAt: iso(0) }, { decidedByName: me.name, decidedAt: iso(0) });
       return { ok: true, action: act };
     }
     if (r === "booking-actions/reject") { Object.assign(act, { status: "rejected", decidedByName: me.name, decidedAt: iso(0) }); return { ok: true, action: act }; }

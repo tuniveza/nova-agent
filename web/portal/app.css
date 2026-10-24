@@ -301,7 +301,7 @@ main {
   cursor: pointer; font-size: 20px; line-height: 1;
 }
 .card.has-delete .card-top { padding-right: 44px; }
-/* The "From Acuity's email" box on a booking alert */
+/* The "latest details" box on a booking alert */
 .email-panel {
   margin-top: 12px; padding: 10px 12px;
   border: 1px solid var(--line); border-left: 3px solid var(--hi); border-radius: 14px;
@@ -344,7 +344,7 @@ main {
 /* Nova Agent and Quest alerts: the card's edge in their colour */
 .nova-alert.quest { --card-edge: linear-gradient(135deg, rgba(var(--hi-rgb), 0.75), rgba(var(--lilac-rgb), 0.35) 55%, rgba(var(--hi-rgb), 0.3)); }
 .nova-alert.agent { --card-edge: linear-gradient(135deg, rgba(var(--lilac-rgb), 0.6), rgba(var(--accent-2-rgb), 0.35) 55%, rgba(var(--accent-rgb), 0.4)); }
-/* The check against Acuity on a booking alert: is it a real booking? */
+/* A note on an alert card (a test notification says it isn't a real booking) */
 .verify {
   --v: var(--muted);
   margin: 12px 0 0; color: var(--muted); font-size: 14px; padding: 11px 13px;

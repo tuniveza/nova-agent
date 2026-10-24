@@ -2104,7 +2104,13 @@ function openBooking(id) {
   setKind("event");
   $("sheet-title").textContent = "Studio booking";
   form.querySelectorAll("input, select, textarea, .chips button, .colors button, .wd button").forEach((el) => (el.disabled = true));
-  $("readonly").textContent = "A booking from the studio's diary. Change it in Acuity (or Portal → Calendar).";
+  $("readonly").textContent = "A booking from the studio's bookings. It's read-only here.";
+  // Its Google Calendar event, where it can be looked at in full
+  if (/^https:\/\//.test(String(b.link || ""))) {
+    const open = document.createElement("a");
+    Object.assign(open, { href: b.link, target: "_blank", rel: "noopener", textContent: "Open in Google Calendar" });
+    $("readonly").append(" ", open);
+  }
   $("readonly").hidden = false;
   $("save").hidden = true;
   $("actions").hidden = true;

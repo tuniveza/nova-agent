@@ -111,7 +111,7 @@
     } },
     { id: "calendar", name: "Bookings", href: "#bookings", rows: 4, async fill() {
       const d = await get("calendar");
-      if (!d.setUp) return { big: "Not set up", small: "Acuity's calendar link isn't set", rows: [], empty: "" };
+      if (!d.setUp) return { big: "Not set up", small: "The booking calendar isn't connected", rows: [], empty: "" };
       const now = Date.now();
       const next = (d.bookings || []).map((b) => ({ b, at: when(b.start) })).filter((x) => x.at && x.at.getTime() >= now - 3600000).sort((a, z) => a.at - z.at);
       const todayN = next.filter((x) => dayKey(x.at) === dayKey(new Date())).length;

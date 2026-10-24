@@ -839,7 +839,7 @@ function drawCard(box, key, date, ui) {
     ${it.meet && meetOk(it.meetUrl) ? `<a class="btn wide" href="${esc(it.meetUrl)}" target="_blank" rel="noopener">${icon("play")} Join the call</a>` : ""}
     ${mine ? `<div class="btns two"><a class="btn main" href="#calendar/edit/${enc(it.id)}/${e.date}">${icon("edit")} Change</a>${e.type === "event" ? `<button type="button" class="btn" data-cal-move>${icon("clock")} Move</button>` : ""}</div>
       <div class="btns two"><a class="btn" href="#calendar/dup/${enc(it.id)}/${e.date}">${icon("plus")} Duplicate</a><button type="button" class="btn danger" data-cal-del>${icon("trash")} Delete</button></div>` : ""}
-    ${e.type === "booking" ? '<p class="muted small">A booking from the studio\'s diary. Change it in Acuity.</p>'
+    ${e.type === "booking" ? `<p class="muted small">A booking from the studio's bookings. It's read-only here.</p>${/^https:\/\//.test(it.link || "") ? `<a class="btn wide" href="${esc(it.link)}" target="_blank" rel="noopener">${icon("calendar")} Open in Google Calendar</a>` : ""}`
       : e.ro ? `<p class="muted small">Part of Nova Agent's plan. Change it in Quests, or ask Nova Agent.</p><div class="btns two"><a class="btn" href="#quests">${icon("quests")} Quests</a><a class="btn" href="#agent">${icon("agent")} Ask Nova Agent</a></div>` : ""}`;
   decorate(box);
   const del = box.querySelector("[data-cal-del]");

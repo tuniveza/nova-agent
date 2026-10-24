@@ -148,7 +148,7 @@
     block: { icon: "⛔", label: "Blocked time", hint: "Quests move out of the way", send: "Block it" },
     update: { icon: "✓", label: "Quest update", hint: "Marks a quest done, started, skipped or moved", send: "Update" },
     calendar: { icon: "▦", label: "Calendar card", hint: "A note card or day card in Calendar", send: "Add it" },
-    studio: { icon: "♫", label: "Studio bookings", hint: "Looks at Acuity (read-only)", send: "Check" },
+    studio: { icon: "♫", label: "Studio bookings", hint: "Looks at the studio's bookings (read-only)", send: "Check" },
     ask: { icon: "?", label: "Question", hint: "Nova Agent answers, using your plan", send: "Ask" },
     chat: { icon: "✦", label: "Nova Agent", hint: "Just talking to Nova Agent", send: "Send" },
   };
@@ -159,7 +159,7 @@
     block: /\b(?:i'?m|i am|we'?re|i'?ll be)\s+(?:out|away|busy|off|ill|sick|at a|at the|travell?ing|on holiday)\b|\bblock(?:ing)?\s+(?:out|off)\b|\bcan'?t\s+(?:do|make)\b|\brunning late\b|\boff sick\b|\bday off\b|\bunavailable\b/,
     update: /^(?:done|finished|completed|started|starting|skip|skipped|snooze)\b|\bi(?:'ve| have)?\s+(?:just\s+)?(?:done|finished|completed|started)\s+(?:the|my|it|that)\b|\bmark\b.*\b(?:done|complete|finished)\b|\bnot now\b|\bpush (?:it|that) back\b/,
     calendar: /\b(?:note card|day card|calendar|birthday|anniversary)\b/,
-    studio: /\b(?:acuity|bookings?|booked|appointments?|who'?s in)\b/,
+    studio: /\b(?:bookings?|booked|appointments?|who'?s in)\b/,
     goal: /\b(?:schedule|strategy|strategies|plan(?:ned|ning)? out|roadmap|campaign|challenge|launch|release|releases|goal|mission|project|deadline|catch up|fallen behind|behind on|by (?:the )?end of|months?|content|following|grow|course|exam|marathon|business|album|ep|tour)\b/g,
     ask: /^(?:what|when|where|why|how|should|can|could|would|is|are|do|does|did|which|who|any)\b/,
     quest: /\b(?:remind me to|i need to|i have to|i'?ve got to|i must|add (?:a )?(?:quest|task)|to-?do|task)\b|^(?:call|text|email|ring|buy|book|send|write|record|mix|master|finish|clean|go|pick up|collect|pay|post|film|edit|practi[cs]e|upload|bounce|tidy|cook|read|study|revise|train|run)\b/,
@@ -240,8 +240,8 @@
   const acts = new Map(); // "message:action" → the action, for its card
   const known = new Map(); // file id → file card
   // (each suggestion is something to say, a message's words, so it wraps like one: card in row(); the user (24 Oct 2026): "can shared/rules.js just be smartly integrated back into the base code for all of this")
-  const SUGGEST = ["What should I do now?", "What's left to do today?", "I'm out tonight from 7 to 11", "What's on this week?", "Add a note card for Friday at 2pm: mix review", "Make 31 October a Halloween day card", "What's booked in Acuity tomorrow?", "How are you doing?"];
-  const welcome = () => `<li class="agent-welcome card"><p class="kicker">✦ Nova Agent</p><h2 class="card-title">Hey, I'm Nova Agent</h2><p>Tell me what needs doing and I'll plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's Acuity bookings.</p>${list(SUGGEST.map((t) => row({ button: `data-say="${esc(t)}"`, icon: "send", title: t, card: true })))}</li>`;
+  const SUGGEST = ["What should I do now?", "What's left to do today?", "I'm out tonight from 7 to 11", "What's on this week?", "Add a note card for Friday at 2pm: mix review", "Make 31 October a Halloween day card", "What's booked tomorrow?", "How are you doing?"];
+  const welcome = () => `<li class="agent-welcome card"><p class="kicker">✦ Nova Agent</p><h2 class="card-title">Hey, I'm Nova Agent</h2><p>Tell me what needs doing and I'll plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's bookings.</p>${list(SUGGEST.map((t) => row({ button: `data-say="${esc(t)}"`, icon: "send", title: t, card: true })))}</li>`;
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const pad = (n) => String(n).padStart(2, "0");
   // "Friday 9 October 2026" in a reply → 2026-10-09
@@ -258,7 +258,7 @@
     if (a.kind === "outreach") return a.outreach?.id ? `#outreach/one/${encodeURIComponent(a.outreach.id)}` : "#outreach/one";
     if (a.kind === "social") return "#outreach/social";
     if (/\b(?:note card|day card)\b/i.test(t)) { const d = dateIn(t); return d ? `#calendar/day/${d}` : "#calendar"; }
-    if (/^Looked at (?:Acuity bookings|free times|blocked times)/.test(t)) { const d = dateIn(t); return d ? `#calendar/day/${d}` : "#calendar"; }
+    if (/^Looked at (?:the studio's bookings|Acuity bookings|free times|blocked times)/.test(t)) { const d = dateIn(t); return d ? `#calendar/day/${d}` : "#calendar"; }
     if (/\binvoice\b/i.test(t)) return "#money";
     if (/\bexpense\b/i.test(t)) return "#money/expenses";
     if (/^(?:Mission “|Re-planned “|Removed mission)/.test(t)) return "#agent/plan";
@@ -469,7 +469,8 @@
       }));
       check();
     },
-    // A booking change Nova Agent proposed: it happens in Acuity when an admin presses Approve
+    // A booking change waiting for an admin (old saved chats: Nova Agent no longer proposes them):
+    // it happens only when an admin presses Approve
     booking(el, a0) {
       const a = { ...a0.booking };
       el.innerHTML = `<p class="agent-tag">Booking change · waiting for an admin</p><p class="agent-subj">${esc(a.summary || "")}</p>${a.reason ? `<p class="agent-to">Why: ${esc(a.reason)}</p>` : ""}<p class="agent-state">Checking…</p><div class="agent-btns"><button type="button" class="agent-mini main" data-ok hidden>✓ Approve</button><button type="button" class="agent-mini" data-edit hidden>✎ Edit</button><button type="button" class="agent-mini danger" data-no hidden>✕ Reject</button><a class="agent-mini" href="#inbox/approvals">Open in Approvals</a></div>`;
@@ -479,7 +480,7 @@
       const buttons = (on) => { ok.hidden = no.hidden = !on; ed.hidden = !on || !(BOOKING_FIELDS[a.kind] || []).length; };
       async function check() {
         let t;
-        try { t = await peek(path); } catch (err) { buttons(false); return stateLine(el, err.signIn ? "An admin approves this in Portal → Approvals. Nothing changes in Acuity until then." : err.message || "Open it in Approvals to approve it."); }
+        try { t = await peek(path); } catch (err) { buttons(false); return stateLine(el, err.signIn ? "An admin approves this in Portal → Approvals. Nothing changes until then." : err.message || "Open it in Approvals to approve it."); }
         const now = (t.actions || []).find((x) => x.id === a.id);
         buttons(false);
         if (!now) return stateLine(el, "Open it in Approvals to see where it’s up to.");
@@ -487,13 +488,13 @@
         canDecide = !!t.canDecide;
         el.querySelector(".agent-subj").textContent = a.summary || "";
         const tag = el.querySelector(".agent-tag");
-        if (a.status === "executed") { tag.textContent = "Booking change · done"; return stateLine(el, `Done in Acuity ✓${a.decidedByName ? ` · approved by ${a.decidedByName}` : ""}`, "ok"); }
-        if (a.status === "approved") return stateLine(el, "Approved · going through to Acuity…");
+        if (a.status === "executed") { tag.textContent = "Booking change · done"; return stateLine(el, `Done ✓${a.decidedByName ? ` · approved by ${a.decidedByName}` : ""}`, "ok"); }
+        if (a.status === "approved") return stateLine(el, "Approved · going through…");
         if (a.status === "failed") { tag.textContent = "Booking change · didn’t go through"; return stateLine(el, `Didn’t go through: ${String(a.error || "unknown reason").replace(/\.$/, "")}. Nothing else was changed.`, "bad"); }
         if (a.status === "rejected") { tag.textContent = "Booking change · rejected"; return stateLine(el, `Rejected${a.decidedByName ? ` by ${a.decidedByName}` : ""}. Nothing was changed.`); }
-        if (!canDecide) return stateLine(el, "Waiting for an admin to approve it in Portal → Approvals. Nothing changes in Acuity until then.");
+        if (!canDecide) return stateLine(el, "Waiting for an admin to approve it in Portal → Approvals. Nothing changes until then.");
         buttons(true);
-        stateLine(el, "Not done yet. Check it, then approve it to make the change in Acuity.");
+        stateLine(el, "Not done yet. Check it, then approve it to make the change.");
       }
       async function decide(how, body, doing, btn) {
         await busy(btn, doing, async () => {
@@ -504,7 +505,7 @@
         });
       }
       ok.addEventListener("click", () => decide("approve", { id: a.id }, "Approving…", ok));
-      no.addEventListener("click", async () => { if (await confirm({ title: "Reject this booking change?", text: "Nothing changes in Acuity.", ok: "Reject it", danger: true })) decide("reject", { id: a.id }, "Rejecting…", no); });
+      no.addEventListener("click", async () => { if (await confirm({ title: "Reject this booking change?", text: "Nothing changes.", ok: "Reject it", danger: true })) decide("reject", { id: a.id }, "Rejecting…", no); });
       ed.addEventListener("click", async () => {
         const v = await editBooking(a, canDecide);
         if (v) decide(v.how, { id: a.id, payload: v.payload }, v.how === "approve" ? "Approving…" : "Saving…", v.how === "approve" ? ok : ed);
@@ -594,9 +595,9 @@
   };
   // The simple fields each kind of booking change can have changed before it's approved
   const BOOKING_FIELDS = {
-    create: [["start", "When (UK)", "when"], ["firstName", "First name"], ["lastName", "Last name"], ["email", "Email"], ["phone", "Phone"], ["notes", "Notes", "long"], ["notifyClient", "Acuity emails the client", "tick"]],
-    reschedule: [["start", "New time (UK)", "when"], ["notifyClient", "Acuity emails the client", "tick"]],
-    cancel: [["note", "Cancel note", "long"], ["notifyClient", "Acuity emails the client", "tick"]],
+    create: [["start", "When (UK)", "when"], ["firstName", "First name"], ["lastName", "Last name"], ["email", "Email"], ["phone", "Phone"], ["notes", "Notes", "long"], ["notifyClient", "Email the client", "tick"]],
+    reschedule: [["start", "New time (UK)", "when"], ["notifyClient", "Email the client", "tick"]],
+    cancel: [["note", "Cancel note", "long"], ["notifyClient", "Email the client", "tick"]],
     update: [["firstName", "First name"], ["lastName", "Last name"], ["email", "Email"], ["phone", "Phone"], ["notes", "Notes", "long"]],
     block_add: [["start", "From (UK)", "when"], ["end", "Until (UK)", "when"], ["notes", "Notes", "long"]],
     block_remove: [],

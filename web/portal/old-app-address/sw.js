@@ -62,7 +62,7 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   // Put the notification away
   event.notification.close();
-  // Where this notification should take him (Portal, or Acuity for bookings)
+  // Where this notification should take him (Portal, or Google Calendar for bookings)
   const url = portalUrl(event.notification.data?.url);
   // Keep the doorman awake until the right screen is open
   event.waitUntil(
@@ -75,7 +75,7 @@ self.addEventListener("notificationclick", (event) => {
         open.postMessage({ type: "nova-open", url });
         return open.focus();
       }
-      // Otherwise open Nova Agent there (another site, like Acuity, opens as it is)
+      // Otherwise open Nova Agent there (another site, like Google Calendar, opens as it is)
       return self.clients.openWindow(local ? "/agent/?open=" + encodeURIComponent(url) : url);
     })
   );

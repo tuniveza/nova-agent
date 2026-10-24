@@ -1,12 +1,12 @@
-// Nova Phone: Booking tools (Nova Desk's Portal → Bookings month, app.js "the smart calendar"). Acuity's diary
-// (or Nova Bot's own booking system: the same feed) made for the phone:
+// Nova Phone: Booking tools (Nova Desk's Portal → Bookings month, app.js "the smart calendar"). The studio's
+// bookings (Nova Bot's own booking system: /book, Stripe deposits, the studio's Google Calendar) made for the phone:
 //   - this week at a glance: sessions, hours booked and how full, session value, the busiest day, the next free
 //     hour and clashes, and Ask Nova about this week;
 //   - the month, each day glowing by how full it is ("full" when nearly all opening hours are booked), a dot in
 //     each session's colour, a lilac one when Calendar or Quests have something; a tap picks the day;
 //   - the picked day: how full (a meter), clashes and tight changeovers, its free stretches (a tap asks NovaBot
 //     for a booking link for that time), All / Bookings / Quests / Notes, Ask Nova about this day, and each
-//     booking with its form answers, Call, Email and Open in Acuity (or Google Calendar for Nova's own);
+//     booking with its form answers, Call, Email and Open in Google Calendar (or Open in Calendar on that day);
 //     a day with nothing offers the next booking.
 // Opening hours are NovaBot's: 10am to 11pm, every day. Times are UK time, as on Nova Desk.
 // Addresses: #bookings, #bookings/<day>, #bookings/<day>/<YYYY-MM> (that month shown, the day still picked).
@@ -45,9 +45,9 @@
       api("/app/api/quests").catch((e) => { if (e.signIn) throw e; return null; }),
     ]);
     if (c.error) problem = c.error.message || "The diary didn't load.";
-    else if (!c.setUp) { setUp = false; problem = "The Acuity calendar feed isn't set up yet."; bookings = []; }
+    else if (!c.setUp) { setUp = false; problem = "The booking calendar isn't connected yet."; bookings = []; }
     else { setUp = true; problem = ""; bookings = (c.bookings || []).map((b) => ({ ...b, from: feedDate(b.start), to: feedDate(b.end) })).filter((b) => b.from).map((b) => ({ ...b, key: dayKey(b.from), fromMin: ukMinutes(b.from), toMin: b.to ? ukMinutes(b.to) || 24 * 60 : null })); loaded = true; }
-    // (each day's bookings found once, not worked out again for every day of the month: Acuity's diary can hold thousands)
+    // (each day's bookings found once, not worked out again for every day of the month: the diary can hold thousands)
     byDay = new Map();
     for (const b of bookings.slice().sort((x, z) => x.from - z.from)) { if (!byDay.has(b.key)) byDay.set(b.key, []); byDay.get(b.key).push(b); }
     plan = q && q.state ? q.state : plan;
@@ -218,7 +218,7 @@
     const suiteList = () => (suite.length ? list(suite.map(suiteRow)) : "");
     const cards = () => f.list.map(card).join("");
     if (filter === "quests" || filter === "notes") parts.push(suite.length ? suiteList() : empty({ icon: filter === "quests" ? "quests" : "notes", title: filter === "quests" ? "No quests this day." : "No Calendar cards this day." }));
-    else if (!f.list.length && problem) parts.push(`${empty({ icon: "calendar", title: problem, text: setUp ? "" : "Bookings show here once an admin sets Acuity's calendar link." })}${suiteList()}`);
+    else if (!f.list.length && problem) parts.push(`${empty({ icon: "calendar", title: problem, text: setUp ? "" : "Bookings show here once an admin connects Google (Google, in More)." })}${suiteList()}`);
     else if (!f.list.length && !loaded) parts.push(N.skeleton(2));
     else if (filter === "bookings" && !f.list.length) parts.push(empty({ icon: "calendar", title: "No bookings this day." }));
     else if (filter === "bookings") parts.push(cards());
@@ -243,7 +243,7 @@
         <h3 class="card-title">${esc(b.name || "Booking")}</h3>
         ${b.session ? `<p class="muted">${esc(b.session)}</p>` : ""}
         ${lines.length ? `<div class="facts">${lines.map(([l, v]) => `<div class="fact"><span>${esc(l)}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
-        <div class="btns two bookings-acts">${tel ? `<a class="btn" href="tel:${esc(tel)}">${icon("phone")} Call</a>` : ""}${b.email ? `<a class="btn" href="mailto:${esc(b.email)}">${icon("mail")} Email</a>` : ""}<a class="btn" href="${esc(b.link || "https://secure.acuityscheduling.com/appointments.php")}" target="_blank" rel="noopener">${b.link ? "Open in Google Calendar" : "Open in Acuity"}</a></div>
+        <div class="btns two bookings-acts">${tel ? `<a class="btn" href="tel:${esc(tel)}">${icon("phone")} Call</a>` : ""}${b.email ? `<a class="btn" href="mailto:${esc(b.email)}">${icon("mail")} Email</a>` : ""}${b.link ? `<a class="btn" href="${esc(b.link)}" target="_blank" rel="noopener">Open in Google Calendar</a>` : `<a class="btn" href="#calendar/day/${esc(b.key)}">Open in Calendar</a>`}</div>
       </article>`;
   }
 })();

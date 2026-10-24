@@ -885,14 +885,14 @@
         <div class="welcome" id="welcome">
           <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark"/></svg>
           <h3>Hey, I'm Nova Agent</h3>
-          <p>Tell me what you need to get done and I'll plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's Acuity bookings.</p>
+          <p>Tell me what you need to get done and I'll plan your days hour by hour, and keep you on track. I can also run Calendar and check the studio's bookings.</p>
           <div class="suggest">
             <button type="button" class="chip">What should I do now?</button>
             <button type="button" class="chip">I'm out tonight from 7 to 11</button>
             <button type="button" class="chip">What's on this week?</button>
             <button type="button" class="chip">Add a note card for Friday at 2pm: mix review</button>
             <button type="button" class="chip">Make 31 October a Halloween day card</button>
-            <button type="button" class="chip">What's booked in Acuity tomorrow?</button>
+            <button type="button" class="chip">What's booked tomorrow?</button>
             <button type="button" class="chip">How are you doing?</button>
           </div>
         </div>
@@ -993,7 +993,7 @@
         <h4>Apps</h4>
         <div class="suite-grid">
           <div class="bk-tile"><a class="suite-app" href="/portal/" data-inside="/portal/" aria-describedby="su-d-portal"><span class="pico" data-p="portal" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-portal"/></svg></span><b>Portal</b></a><small id="su-d-portal">Enquiries, conversations, bookings, alerts, Ask NovaBot, your planet and the team</small></div>
-          <div class="bk-tile"><a class="suite-app here" href="/agent/" aria-describedby="su-d-nova-agent"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span><b>Nova Agent</b></a><small id="su-d-nova-agent">You're here: the conversation, Quests, Acuity helper</small></div>
+          <div class="bk-tile"><a class="suite-app here" href="/agent/" aria-describedby="su-d-nova-agent"><span class="pico" data-p="chat" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-chat"/></svg></span><b>Nova Agent</b></a><small id="su-d-nova-agent">You're here: the conversation and Quests</small></div>
           <div class="bk-tile"><a class="suite-app" href="/calendar/" data-inside="/calendar/" aria-describedby="su-d-calendar"><span class="pico" data-p="calendar" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-calendar"/></svg></span><b>Calendar</b></a><small id="su-d-calendar">The one Nova Agent plans into</small></div>
           <div class="bk-tile"><a class="suite-app" href="/notes/" data-inside="/notes/" aria-describedby="su-d-notes"><span class="pico" data-p="notes" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-notes"/></svg></span><b>Notes</b></a><small id="su-d-notes">Notes and documents, Google Docs export</small></div>
           <div class="bk-tile"><a class="suite-app" href="/board/" data-inside="/board/" aria-describedby="su-d-board"><span class="pico" data-p="board" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-board"/></svg></span><b>Board</b></a><small id="su-d-board">A table to lay notes, the calendar, Agent's answers, pictures and links out on</small></div>
@@ -1127,7 +1127,7 @@
     block: { icon: '⛔', label: 'Blocked time', hint: 'Quests move out of the way', send: 'Block it', colour: 'var(--bad, #FF8A8A)' },
     update: { icon: '✓', label: 'Quest update', hint: 'Marks a quest done, started, skipped or moved', send: 'Update', colour: 'var(--ok, #5CFFC0)' },
     calendar: { icon: '▦', label: 'Calendar card', hint: 'A note card or day card in Calendar', send: 'Add it', colour: 'var(--app-calendar, #9DB4FF)' },
-    studio: { icon: '♫', label: 'Studio bookings', hint: 'Looks at Acuity (read-only)', send: 'Check', colour: 'var(--warn, #FFB86B)' },
+    studio: { icon: '♫', label: 'Studio bookings', hint: 'Looks at the studio\'s bookings (read-only)', send: 'Check', colour: 'var(--warn, #FFB86B)' },
     ask: { icon: '?', label: 'Question', hint: 'Nova Agent answers, using your plan', send: 'Ask', colour: 'var(--soft)' },
     chat: { icon: '✦', label: 'Nova Agent', hint: 'Just talking to Nova Agent', send: 'Send', colour: 'var(--muted)' },
   };
@@ -1138,7 +1138,7 @@
     block: /\b(?:i'?m|i am|we'?re|i'?ll be)\s+(?:out|away|busy|off|ill|sick|at a|at the|travell?ing|on holiday)\b|\bblock(?:ing)?\s+(?:out|off)\b|\bcan'?t\s+(?:do|make)\b|\brunning late\b|\boff sick\b|\bday off\b|\bunavailable\b/,
     update: /^(?:done|finished|completed|started|starting|skip|skipped|snooze)\b|\bi(?:'ve| have)?\s+(?:just\s+)?(?:done|finished|completed|started)\s+(?:the|my|it|that)\b|\bmark\b.*\b(?:done|complete|finished)\b|\bnot now\b|\bpush (?:it|that) back\b/,
     calendar: /\b(?:note card|day card|calendar|birthday|anniversary)\b/,
-    studio: /\b(?:acuity|bookings?|booked|appointments?|who'?s in)\b/,
+    studio: /\b(?:bookings?|booked|appointments?|who'?s in)\b/,
     goal: /\b(?:schedule|strategy|strategies|plan(?:ned|ning)? out|roadmap|campaign|challenge|launch|release|releases|goal|project|deadline|catch up|fallen behind|behind on|by (?:the )?end of|months?|content|following|grow|course|exam|marathon|business|album|ep|tour)\b/g,
     ask: /^(?:what|when|where|why|how|should|can|could|would|is|are|do|does|did|which|who|any)\b/,
     quest: /\b(?:remind me to|i need to|i have to|i'?ve got to|i must|add (?:a )?(?:quest|task)|to-?do|task)\b|^(?:call|text|email|ring|buy|book|send|write|record|mix|master|finish|clean|go|pick up|collect|pay|post|film|edit|practi[cs]e|upload|bounce|tidy|cook|read|study|revise|train|run)\b/,
@@ -1414,8 +1414,8 @@
   }
 
   // ===== Proposed booking changes =====
-  // Agent can only propose. A change happens in Acuity when an admin presses Approve here (or in
-  // Portal → Approvals): that's their own Portal sign-in in this browser (online at /agent/),
+  // (Cards from older chats: Nova Agent no longer proposes booking changes.) A change happens only
+  // when an admin presses Approve here (or in Portal → Approvals): that's their own Portal sign-in in this browser (online at /agent/),
   // never Agent's key. On the studio computer's own page there's no admin browser sign-in, so
   // the card links to the proposal in Portal instead.
   const ukLocal = (iso) => {
@@ -1427,9 +1427,9 @@
   };
   // The simple fields each kind can have changed before it's approved
   const BOOKING_FIELDS = {
-    create: [['start', 'When (UK)', 'when'], ['firstName', 'First name'], ['lastName', 'Last name'], ['email', 'Email'], ['phone', 'Phone'], ['notes', 'Notes', 'long'], ['notifyClient', 'Acuity emails the client', 'tick']],
-    reschedule: [['start', 'New time (UK)', 'when'], ['notifyClient', 'Acuity emails the client', 'tick']],
-    cancel: [['note', 'Cancel note', 'long'], ['notifyClient', 'Acuity emails the client', 'tick']],
+    create: [['start', 'When (UK)', 'when'], ['firstName', 'First name'], ['lastName', 'Last name'], ['email', 'Email'], ['phone', 'Phone'], ['notes', 'Notes', 'long'], ['notifyClient', 'Email the client', 'tick']],
+    reschedule: [['start', 'New time (UK)', 'when'], ['notifyClient', 'Email the client', 'tick']],
+    cancel: [['note', 'Cancel note', 'long'], ['notifyClient', 'Email the client', 'tick']],
     update: [['firstName', 'First name'], ['lastName', 'Last name'], ['email', 'Email'], ['phone', 'Phone'], ['notes', 'Notes', 'long']],
     block_add: [['start', 'From (UK)', 'when'], ['end', 'Until (UK)', 'when'], ['notes', 'Notes', 'long']],
     block_remove: [],
@@ -1481,7 +1481,7 @@
     async function check() {
       let r;
       try { r = await fetch('/app/api/booking-actions?status=all', { cache: 'no-store', credentials: 'same-origin' }); } catch { r = null; }
-      if (!r || r.status === 401 || r.status === 403) { buttons(false); return say('An admin approves this in Portal → Approvals. Nothing changes in Acuity until then.'); }
+      if (!r || r.status === 401 || r.status === 403) { buttons(false); return say('An admin approves this in Portal → Approvals. Nothing changes until then.'); }
       const t = await r.json().catch(() => null);
       if (!t || !r.ok) { buttons(false); return say(t && t.error ? t.error : 'Open it in Portal to approve it.'); }
       const now = (t.actions || []).find((x) => x.id === a.id);
@@ -1492,13 +1492,13 @@
       const tag = card.querySelector('.dtag');
       buttons(false);
       box.hidden = true;
-      if (a.status === 'executed') { tag.textContent = 'Booking change · done'; return say('Done in Acuity ✓' + (a.decidedByName ? ' · approved by ' + a.decidedByName : ''), 'sent'); }
-      if (a.status === 'approved') return say('Approved · going through to Acuity…');
+      if (a.status === 'executed') { tag.textContent = 'Booking change · done'; return say('Done ✓' + (a.decidedByName ? ' · approved by ' + a.decidedByName : ''), 'sent'); }
+      if (a.status === 'approved') return say('Approved · going through…');
       if (a.status === 'failed') { tag.textContent = 'Booking change · didn’t go through'; return say('Didn’t go through: ' + String(a.error || 'unknown reason').replace(/\.$/, '') + '. Nothing else was changed.', 'failed'); }
       if (a.status === 'rejected') { tag.textContent = 'Booking change · rejected'; return say('Rejected' + (a.decidedByName ? ' by ' + a.decidedByName : '') + '. Nothing was changed.'); }
-      if (!t.canDecide) return say('Waiting for an admin to approve it in Portal → Approvals. Nothing changes in Acuity until then.');
+      if (!t.canDecide) return say('Waiting for an admin to approve it in Portal → Approvals. Nothing changes until then.');
       buttons(true);
-      say('Not done yet. Check it, then approve it to make the change in Acuity.');
+      say('Not done yet. Check it, then approve it to make the change.');
     }
     async function decide(path, body, doing) {
       for (const b of [ok, edit, no]) b.disabled = true;

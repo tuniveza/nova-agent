@@ -34,7 +34,7 @@ describe("one screen, nothing scrolling the page", () => {
 
   it("Lossless, the Visualizer and the Fixer: one screen, their cards or the open tab scroll inside themselves", () => {
     expect(read("../web/lossless/public/lossless/index.html")).toContain("main > .grid { grid-template-columns: repeat(4, minmax(0, 1fr));");
-    expect(read("../web/agent/page.html")).toContain("body > main { overflow: hidden; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr));");
+    expect(read("../web/agent/page.html")).toContain("body > main { overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1.4fr);");
     expect(read("../web/fixer/fixer.css")).toContain(".list { min-height: 0; overflow-y: auto;");
   });
 

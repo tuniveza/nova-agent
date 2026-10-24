@@ -18,8 +18,6 @@
   :root {
     --input: var(--lilac);
     --task: color-mix(in srgb, var(--hi) 45%, var(--lilac));
-    --resolve: var(--gold);
-    --cache: var(--ok);
     --llm: var(--hi);
     --browser: color-mix(in srgb, var(--ok) 55%, var(--gold));
     --error: var(--bad);
@@ -58,7 +56,7 @@
 
   main {
     display: grid;
-    grid-template-columns: 290px minmax(0, 1fr) minmax(0, 1.1fr);
+    grid-template-columns: 290px minmax(0, 1fr);
     gap: 14px; padding: 0 20px 24px; align-items: start;
   }
   @media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr); } }
@@ -85,9 +83,6 @@
   }
   .node.error { --c: var(--error); }
   .arrow { text-align: center; color: var(--muted); font-family: var(--f-mono); font-size: 11px; line-height: 22px; }
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .pair-arrows { display: grid; grid-template-columns: 1fr 1fr; text-align: center; color: var(--muted); font-family: var(--f-mono); font-size: 11px; line-height: 22px; }
-  .or { text-align: center; font-size: 11px; color: var(--muted); margin: 2px 0; }
 
   /* Timeline */
   .timeline { max-height: calc(100vh - 230px); max-height: calc(100dvh - 230px); min-height: 300px; overflow-y: auto; padding: 8px 0; }
@@ -107,30 +102,7 @@
   .row .link:hover { color: var(--soft); }
   pre { margin: 6px 0 2px; max-height: 360px; }
 
-  /* Browser view + memory */
-  .right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-  .shot { padding: 14px; }
-  .shot img { width: 100%; border-radius: 12px; border: 1px solid var(--line); display: block; }
-  .shot .caption { margin-top: 10px; font-size: 12.5px; color: var(--muted); }
-  .shot img[hidden] + .caption { padding: 22px 14px; border-radius: 16px; border: 1px dashed var(--line); margin-top: 0; text-align: center; }
-  .memory { padding: 0 0 6px; overflow-x: hidden; }
-  .memory table { width: 100%; table-layout: fixed; }
-  .memory td code { overflow-wrap: anywhere; }
-  /* (narrow: each remembered element is a small card, its parts one under another, never sliding
-     sideways; 15 Oct 2026) */
-  @media (max-width: 900px) {
-    .memory table, .memory tbody, .memory tr, .memory td { display: block; width: auto; }
-    .memory tr:first-child:has(th) { display: none; }
-    .memory tr { margin: 6px 8px; padding: 6px 8px; border-radius: 12px; border: 1px solid var(--line); }
-    .memory td { padding: 2px 0; border: 0; }
-    .memory td[data-label]::before { content: attr(data-label) " "; color: var(--muted); font-size: 11px; letter-spacing: .04em; }
-  }
-  .memory .empty { margin: 14px; }
-  td code { font-size: 11.5px; padding: 0 5px; }
-  td:nth-child(3) { font-family: var(--f-mono); color: var(--bright); white-space: nowrap; }
-  td:nth-child(4) { color: var(--muted); font-size: 12px; }
-
-  /* One screen, the page never scrolls: the heading and the four numbers stay put, the three
+  /* One screen, the page never scrolls: the heading and the four numbers stay put, the two
      columns fill the rest and each card scrolls inside itself. Narrower, the cards' area scrolls
      inside its own box. */
   html, body { height: 100%; }
@@ -139,16 +111,14 @@
   body > main { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-bottom: 12px; }
   @media (min-width: 1101px) and (min-height: 480px) {
     body > main { align-items: stretch; overflow: hidden; }
-    body > main > section.nt-card, body > main > .right > section.nt-card { display: flex; flex-direction: column; min-height: 0; }
-    body > main > section.nt-card > :not(h2), body > main > .right > section.nt-card > :not(h2) { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
-    body > main > .right { display: grid; grid-template-rows: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; min-height: 0; }
+    body > main > section.nt-card { display: flex; flex-direction: column; min-height: 0; }
+    body > main > section.nt-card > :not(h2) { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
     .timeline { max-height: none; min-height: 0; }
   }
-  /* Narrower than three columns: the four cards share the height, one above another, each
+  /* Narrower than two columns: the two cards share the height, one above the other, each
      scrolling inside itself (the page and its main box stay put) */
   @media (max-width: 1100px) {
-    body > main { overflow: hidden; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); align-items: stretch; }
-    body > main > .right { display: contents; }
+    body > main { overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1.4fr); align-items: stretch; }
     body > main section.nt-card { display: flex; flex-direction: column; min-height: 0; }
     body > main section.nt-card > :not(h2) { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
     body > main section > h2.nt-h { padding: 8px 14px 6px; }
@@ -164,12 +134,12 @@
     body > .counters { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 8px; }
     body > .counters > span { padding: 6px 6px; font-size: 11px; letter-spacing: .04em; }
     body > .counters b { font-size: 16px; }
-    body > main .anatomy, body > main .shot { padding: 6px 10px; }
+    body > main .anatomy { padding: 6px 10px; }
     body > main .timeline { padding: 2px 0; }
   }
-  /* A short phone: the four cards two by two */
+  /* A short phone: the two cards side by side */
   @media (max-width: 640px) and (max-height: 700px) {
-    body > main { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    body > main { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 8px; }
   }
   /* Phones: snug padding, two numbers a row, the steps table scrolls inside its own box */
   @media (max-width: 640px) {
@@ -179,9 +149,6 @@
     .counters { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px 8px; }
     .counters b { font-size: 18px; }
     main { gap: 10px; padding: 0 8px 12px; }
-    .pair { grid-template-columns: 1fr; }
-    .pair-arrows { display: none; }
-    section:has(table) { overflow-x: auto; }
     .row { grid-template-columns: 54px 64px minmax(0, 1fr); padding: 6px 10px; margin: 0 2px; }
   }
   /* A short screen (a phone held sideways, or a small phone's panel): the heading is one slim row
@@ -204,9 +171,9 @@
   @media (max-height: 500px) and (max-width: 640px) {
     body > .counters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
-  /* A phone held sideways: the four cards side by side, each scrolling inside itself */
+  /* A phone held sideways: the two cards side by side, each scrolling inside itself */
   @media (max-height: 500px) and (min-width: 641px) {
-    body > main { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 8px; padding: 6px 8px 8px; }
+    body > main { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); grid-template-rows: minmax(0, 1fr); gap: 8px; padding: 6px 8px 8px; }
   }
   /* Cards narrower than a step's three columns (side by side, or two by two on a phone): the time
      and the tag on one line, the words under them at the card's full width */
@@ -214,10 +181,8 @@
     .row { grid-template-columns: auto auto minmax(0, 1fr); gap: 2px 8px; padding: 4px 8px; margin: 0; }
     .row .msg, .row .more, .row > pre { grid-column: 1 / -1; }
     body > main section > h2.nt-h { font-size: 12px; letter-spacing: .1em; }
-    .pair { grid-template-columns: 1fr; }
-    .pair-arrows { display: none; }
   }
-  /* A very short, narrow frame (a small phone with bigger text): the four cards are one row you
+  /* A very short, narrow frame (a small phone with bigger text): the two cards are one row you
      slide sideways, each the full height left, rather than four slivers */
   @media (max-height: 320px) and (max-width: 640px) {
     body > main { grid-auto-flow: column; grid-template-columns: none; grid-template-rows: minmax(0, 1fr); grid-auto-columns: 86%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-width: none; }
@@ -250,16 +215,14 @@ html.embed body > header.nt-card > .who { display: none; }
   <span id="status" class="status">connecting…</span>
   <span class="spacer"></span>
   <div class="actions">
-    <span id="task-buttons" style="display: contents"></span>
-    <button id="forget" title="Delete the selector cache so you can watch the AI re-find everything">Wipe memory</button>
     <button id="clear" title="Clears this page's list only">Clear steps</button>
   </div>
 </header>
 
 <div class="counters">
-  <span><b id="n-hits">0</b>found from memory</span>
+  <span><b id="n-steps">0</b>steps</span>
   <span><b id="n-llm">0</b>AI calls</span>
-  <span><b id="n-heals">0</b>healed</span>
+  <span><b id="n-warns">0</b>warnings</span>
   <span><b id="n-errors">0</b>failures</span>
 </div>
 
@@ -269,38 +232,22 @@ html.embed body > header.nt-card > .who { display: none; }
     <div class="anatomy">
       <div class="node" data-part="input" style="--c: var(--input)">
         <div class="title">Input <span class="count"></span></div>
-        <p>A request arrives: from these buttons now, from Nova Bot over HTTP later.</p>
+        <p>A request arrives: a chat message, a tap in a panel, or news from Nova Bot.</p>
       </div>
       <div class="arrow">↓</div>
       <div class="node" data-part="task" style="--c: var(--task)">
         <div class="title">Task <span class="count"></span></div>
-        <p>Plain step-by-step code: "open the calendar, find the 3pm booking". It says <i>what</i> it wants, never <i>how</i> to find it.</p>
-      </div>
-      <div class="arrow">↓ "where is the … ?"</div>
-      <div class="node" data-part="resolve" style="--c: var(--resolve)">
-        <div class="title">Finder · resolve() <span class="count"></span></div>
-        <p>Turns a description into one real element on the page.</p>
-      </div>
-      <div class="pair-arrows"><span>↓ 1st</span><span>↓ if memory fails</span></div>
-      <div class="pair">
-        <div class="node" data-part="cache" style="--c: var(--cache)">
-          <div class="title">Memory <span class="count"></span></div>
-          <p>selectors.json: where things were last time. Instant and free.</p>
-        </div>
-        <div class="node" data-part="llm" style="--c: var(--llm)">
-          <div class="title">AI · Claude <span class="count"></span></div>
-          <p>Reads the page's structure and points at the element. Its answer is checked, then remembered.</p>
-        </div>
-      </div>
-      <div class="pair-arrows"><span>↘</span><span>↙</span></div>
-      <div class="node" data-part="browser" style="--c: var(--browser)">
-        <div class="title">Browser · Playwright <span class="count"></span></div>
-        <p>A real Chromium that opens pages, clicks and types at a human pace, and takes the screenshots on the right.</p>
+        <p>The work itself: planning quests, reading the studio's bookings, drafting, syncing.</p>
       </div>
       <div class="arrow">↓</div>
-      <div class="node" data-part="acuity" style="--c: var(--muted)">
-        <div class="title">Acuity Scheduling</div>
-        <p>The real website, logged in with your saved session.</p>
+      <div class="node" data-part="llm" style="--c: var(--llm)">
+        <div class="title">AI · Claude <span class="count"></span></div>
+        <p>Thinks and answers. A step's link shows what was sent and received.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="node" data-part="browser" style="--c: var(--browser)">
+        <div class="title">Browser · Playwright <span class="count"></span></div>
+        <p>Opens public web pages for Agent and reads them.</p>
       </div>
     </div>
   </section>
@@ -308,31 +255,18 @@ html.embed body > header.nt-card > .who { display: none; }
   <section class="nt-card">
     <h2 class="nt-h">Steps, live</h2>
     <div id="timeline" class="timeline">
-      <div class="empty nt-empty" id="empty">Nothing yet. Press <b>Check login</b> to watch the agent work.</div>
+      <div class="empty nt-empty" id="empty">Every step Nova Agent takes, live. Nothing yet: ask Agent something to watch it work.</div>
     </div>
   </section>
 
-  <div class="right">
-    <section class="nt-card">
-      <h2 class="nt-h">What the browser sees</h2>
-      <div class="shot">
-        <img id="shot" alt="" hidden>
-        <div id="shot-caption" class="caption">Screenshots appear here as the agent works. Elements it finds get a red outline.</div>
-      </div>
-    </section>
-    <section class="nt-card">
-      <h2 class="nt-h">Memory (selector cache)</h2>
-      <div class="memory" id="memory"></div>
-    </section>
-  </div>
 </main>
 
 <script>
-  const PART_LABELS = { input: "input", task: "task", resolve: "finder", cache: "memory", llm: "AI", browser: "browser" };
-  const PART_COLORS = { input: "--input", task: "--task", resolve: "--resolve", cache: "--cache", llm: "--llm", browser: "--browser" };
+  const PART_LABELS = { input: "input", task: "task", llm: "AI", browser: "browser" };
+  const PART_COLORS = { input: "--input", task: "--task", llm: "--llm", browser: "--browser" };
 
   const timeline = document.getElementById("timeline");
-  const counts = { hits: 0, llm: 0, heals: 0, errors: 0 };
+  const counts = { steps: 0, llm: 0, warns: 0, errors: 0 };
   const perPart = {};
 
   // --- live connection ---
@@ -356,20 +290,12 @@ html.embed body > header.nt-card > .who { display: none; }
 
   function showEvent(event) {
     document.getElementById("empty")?.remove();
-    if (event.image) {
-      showScreenshot(event.image, event.message, event.time);
-      addRow(event, true);
-    } else {
-      addRow(event, false);
-    }
+    addRow(event);
     lightUp(event);
     updateCounters(event);
-    if (event.part === "cache" || (event.part === "resolve" && event.level === "ok") || event.part === "input") {
-      loadMemory();
-    }
   }
 
-  function addRow(event, isScreenshot) {
+  function addRow(event) {
     const nearBottom = timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < 60;
 
     const row = document.createElement("div");
@@ -382,19 +308,15 @@ html.embed body > header.nt-card > .who { display: none; }
 
     const chip = document.createElement("span");
     chip.className = "chip nt-chip";
-    chip.style.setProperty("--c", `var(${PART_COLORS[event.part]})`);
+    chip.style.setProperty("--c", `var(${PART_COLORS[event.part] || "--muted"})`);
     chip.textContent = PART_LABELS[event.part] || event.part;
 
     const msg = document.createElement("span");
     msg.className = "msg";
-    msg.textContent = isScreenshot ? `📷 ${event.message}` : event.message;
+    msg.textContent = event.message;
 
     row.append(time, chip, msg);
 
-    if (isScreenshot) {
-      const link = makeLink("show", () => showScreenshot(event.image, event.message, event.time));
-      msg.append(" ", link);
-    }
     if (event.data !== undefined) {
       const more = document.createElement("div");
       more.className = "more";
@@ -426,18 +348,10 @@ html.embed body > header.nt-card > .who { display: none; }
     return link;
   }
 
-  function showScreenshot(src, caption, time) {
-    const img = document.getElementById("shot");
-    img.src = src;
-    img.hidden = false;
-    document.getElementById("shot-caption").textContent = `${new Date(time).toLocaleTimeString("en-GB", { timeZone: "Europe/London" })} · ${caption}`;
-  }
-
   // Briefly highlight the part of the diagram that's working.
   const timers = {};
   function lightUp(event) {
-    const parts = event.part === "browser" ? ["browser", "acuity"] : [event.part];
-    for (const part of parts) {
+    for (const part of [event.part]) {
       const node = document.querySelector(`.node[data-part="${part}"]`);
       if (!node) continue;
       node.classList.add("active");
@@ -451,9 +365,9 @@ html.embed body > header.nt-card > .who { display: none; }
   }
 
   function updateCounters(event) {
-    if (event.part === "cache" && event.level === "ok") counts.hits++;
+    if (event.part) counts.steps++;
     if (event.part === "llm" && event.level === "start") counts.llm++;
-    if (event.part === "resolve" && event.level === "ok") counts.heals++;
+    if (event.level === "warn") counts.warns++;
     if (event.level === "error") counts.errors++;
     for (const [name, value] of Object.entries(counts)) {
       document.getElementById(`n-${name}`).textContent = value;
@@ -468,85 +382,12 @@ html.embed body > header.nt-card > .who { display: none; }
     updateCounters({});
   }
 
-  // --- memory table ---
-
-  async function loadMemory() {
-    const answer = await fetch("/cache").then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
-    const box = document.getElementById("memory");
-    // (only real remembered elements: an answer that isn't one, like "sign in", shows as empty, never
-    // as "undefined" or "Invalid Date")
-    const cache = answer && typeof answer === "object" && !Array.isArray(answer) ? answer : {};
-    const keys = Object.keys(cache).filter((k) => cache[k] && typeof cache[k] === "object" && (cache[k].role || cache[k].name)).sort();
-    if (keys.length === 0) {
-      box.innerHTML = '<div class="empty nt-empty">Empty. The AI will find elements and remember them here.</div>';
-      return;
-    }
-    const table = document.createElement("table");
-    table.innerHTML = "<tr><th>Key</th><th>How to find it</th><th>Used</th><th>Learned</th></tr>";
-    for (const key of keys) {
-      const entry = cache[key];
-      const tr = document.createElement("tr");
-      const when = entry.healedAt ? new Date(entry.healedAt) : null;
-      const cells = [
-        key,
-        `${entry.role || "element"}${entry.name ? ` "${entry.name}"` : ""}${entry.nth ? ` #${entry.nth}` : ""}`,
-        `${Number(entry.hits) || 0}×`,
-        when && !isNaN(when.getTime()) ? when.toLocaleString("en-GB", { timeZone: "Europe/London" }) : "—",
-      ];
-      const labels = ["Key", "How to find it", "Used", "Learned"];
-      cells.forEach((text, i) => {
-        const td = document.createElement("td");
-        td.dataset.label = labels[i];
-        if (i < 2) { const code = document.createElement("code"); code.textContent = text; td.append(code); }
-        else td.textContent = text;
-        tr.append(td);
-      });
-      table.append(tr);
-    }
-    box.replaceChildren(table);
-  }
-
-  // --- buttons ---
-
-  async function post(path) {
-    const buttons = document.querySelectorAll("header button[data-task], #forget");
-    buttons.forEach((b) => (b.disabled = true));
-    try {
-      await fetch(path, { method: "POST", headers: { "X-Nova-Visualizer": "1" } });
-    } finally {
-      buttons.forEach((b) => (b.disabled = false));
-    }
-  }
-
-  // One button per task the server offers.
-  async function loadTaskButtons() {
-    // (Online, with the studio PC off, there's no list: then no buttons)
-    const list = await fetch("/tasks").then((r) => r.json()).catch(() => []);
-    const tasks = Array.isArray(list) ? list : [];
-    const box = document.getElementById("task-buttons");
-    tasks.forEach((task, i) => {
-      const button = document.createElement("button");
-      button.textContent = task.label;
-      button.dataset.task = task.id;
-      if (i === 0) button.className = "primary";
-      button.onclick = () => post(`/actions/run/${task.id}`);
-      box.append(button);
-    });
-  }
-  document.getElementById("forget").onclick = async () => {
-    if (confirm("Wipe the agent's memory? It will use the AI to find every element again next time.")) {
-      await post("/actions/forget");
-      loadMemory();
-    }
-  };
   document.getElementById("clear").onclick = () => {
     resetView();
     timeline.innerHTML = '<div class="empty nt-empty" id="empty">Cleared.</div>';
   };
 
   connect();
-  loadMemory();
-  loadTaskButtons();
 </script>
 <script src="/shared/sfx.js"></script>
 <script src="/shared/manual.js" defer></script>

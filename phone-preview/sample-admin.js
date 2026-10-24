@@ -114,16 +114,6 @@
   // ---- Test booking ----
   const sessions = [{ id: 1, name: "Rehearsal (2 hours)", price: "£50" }, { id: 2, name: "Vocal session (3 hours)", price: "£120" }];
   let testBookings = [{ id: 31, status: "booked", when: `${day(28)} 10:00`, session: "Rehearsal (2 hours)", paid: "payment bypassed: test", blocks: false, created_uk: "Yesterday 15:12" }];
-  const acuitySessions = [{ id: 11, name: "Rehearsal (2 hours)", price: "£50" }, { id: 12, name: "Vocal session (3 hours)", price: "£120" }];
-  const aTests = [{ id: 5, when: "Thu 20 Nov 10:00", session: "Rehearsal (2 hours)", madeAt: iso(200), done: true, ok: true, cancelled: true, steps: [{ label: "Booked in Acuity", status: "pass", detail: "#5" }], alert: null }];
-  let checks = 0;
-  const aSteps = (n) => [
-    { label: "Booked in Acuity", status: "pass", detail: "Appointment #6, as “Nova TEST booking”" },
-    { label: "Nova Bot heard about it", status: n > 0 ? "pass" : "waiting", detail: n > 0 ? "Acuity's message came in 4 s" : "" },
-    { label: "Staff alert", status: n > 1 ? "pass" : "waiting", detail: n > 1 ? "Sent to your phones only" : "" },
-    { label: "Portal's Calendar", status: n > 1 ? "pass" : "waiting", detail: "" },
-    { label: "Cancelled in Acuity", status: n > 2 ? "pass" : "waiting", detail: "" },
-  ];
 
   (window.NovaSampleExtra = window.NovaSampleExtra || []).push((u, method, body) => {
     const p = u.pathname;
@@ -150,7 +140,7 @@
     if (p === "/app/api/links") return links;
     if (p === "/admin/links" && method === "POST") { try { const raw = JSON.parse(body.get("json")); links.groups = raw.groups.map((gr) => ({ ...gr, items: gr.items.map((i) => ({ ...i, check: { state: "unchecked", label: "Checked next time" } })) })); } catch (e) {} return {}; }
     if (p === "/admin/codes" && method === "POST") return {};
-    if (p === "/admin/test-booking/state") return { facts: { system: "acuity", google: true, sandbox: false, stripe: "live-only", keepHours: 24, max: 3 }, sessions, session: Number(u.searchParams.get("session")) || 1, quiet: { date: day(28), time: "10:00" }, bookings: testBookings };
+    if (p === "/admin/test-booking/state") return { facts: { system: "nova", google: true, sandbox: false, stripe: "live-only", keepHours: 24, max: 3 }, sessions, session: Number(u.searchParams.get("session")) || 1, quiet: { date: day(28), time: "10:00" }, bookings: testBookings };
     if (p === "/admin/test-booking/times") return { times: ["09:00", "10:00", "13:00", "16:00"] };
     if (p === "/admin/test-booking/run") {
       const b = { id: 32 + testBookings.length, status: "booked", when: `${body.date} ${body.time}`, session: sessions.find((s) => s.id === body.session)?.name || "", paid: body.payment === "fake" ? "£25 (simulated)" : "payment bypassed: test", blocks: body.blockSlot, created_uk: "Just now" };
@@ -159,16 +149,6 @@
         email: { subject: "TEST · Your booking at Novacane Studios", to: body.emailMe ? "jordan@example.com" : "", html: "<h1>You're booked in</h1><p>Hi TEST,</p><p>See you on the day. Bring your own headphones if you like.</p>" }, alert: body.alertMe ? { title: "TEST booking", body: "TEST Booking · Rehearsal (2 hours)\nWhen: in four weeks" } : null, bookings: testBookings };
     }
     if (p === "/admin/test-booking/remove") { const n = testBookings.length; testBookings = []; return { ok: true, removed: n, kept: [], bookings: [] }; }
-    if (p === "/admin/test-booking/acuity/state") return { system: "acuity", feed: true, sessions: acuitySessions, session: Number(u.searchParams.get("session")) || 11, quiet: { date: day(27), time: `${day(27)}T10:00:00+0000` }, tests: aTests };
-    if (p === "/admin/test-booking/acuity/times") { const d = u.searchParams.get("date"); return { times: ["09:00", "10:00", "14:00"].map((t) => ({ label: t, value: `${d}T${t}:00+0000` })) }; }
-    if (p === "/admin/test-booking/acuity/run") { checks = 0; const t = { id: 6, when: body.datetime, session: acuitySessions.find((s) => s.id === body.session)?.name || "", madeAt: new Date().toISOString(), done: false, ok: false, cancelled: false, steps: aSteps(0), alert: null }; aTests.unshift(t); return { test: t }; }
-    if (p === "/admin/test-booking/acuity/check" || p === "/admin/test-booking/acuity/cancel") {
-      const t = aTests.find((x) => x.id === body.id);
-      if (!t) return out(404, "That test booking isn't here any more.");
-      checks = p.endsWith("cancel") ? 3 : checks + 1;
-      Object.assign(t, { steps: aSteps(checks), done: checks >= 3, ok: checks >= 3, cancelled: checks >= 3, alert: checks > 1 ? { title: "New booking (TEST)", body: "Nova TEST booking · Rehearsal (2 hours)" } : null });
-      return { test: t };
-    }
     return undefined;
   });
 })();

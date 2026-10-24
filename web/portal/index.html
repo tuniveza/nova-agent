@@ -423,7 +423,7 @@
       <div id="chat-list" class="list" aria-busy="true"><div class="skeleton short"></div><div class="skeleton short"></div><div class="skeleton short"></div></div>
     </section>
 
-    <!-- Calendar: every booking in Acuity's diary -->
+    <!-- Calendar: every booking in the studio's booking calendar -->
     <!-- Booking tools (19 Oct 2026: "Calendar" is only ever the Calendar panel; this is Portal's own month) -->
     <section id="view-calendar" class="view" hidden>
       <div class="view-head">
@@ -431,7 +431,7 @@
         <!-- One calendar: the Calendar panel has everything (the studio's bookings too) -->
         <button id="cal-open-panel" class="chip" type="button">Open the Calendar panel</button>
       </div>
-      <p class="hint">The studio's bookings from Acuity, with this week at a glance. Calendar's note cards and quests show here too.</p>
+      <p class="hint">The studio's bookings, with this week at a glance. Calendar's note cards and quests show here too.</p>
       <!-- The smart part: this week at a glance (drawn by app.js) -->
       <div id="cal-smart" class="cal-smart"></div>
       <div class="cal">
@@ -456,12 +456,12 @@
       <div id="cal-day-list" class="list"></div>
     </section>
 
-    <!-- Approvals: booking changes Agent proposed, waiting for an admin (nothing changes in Acuity until one approves) -->
+    <!-- Approvals: booking changes waiting for an admin (nothing changes until one approves) -->
     <section id="view-approvals" class="view" hidden>
       <div class="view-head">
         <h2>Approvals</h2>
       </div>
-      <p class="hint" id="approvals-hint">Booking changes Nova Agent proposed. Nothing changes in Acuity until an admin approves it.</p>
+      <p class="hint" id="approvals-hint">Booking changes waiting for an admin. Nothing changes until an admin approves it.</p>
       <div id="approvals-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
     </section>
 
@@ -711,10 +711,10 @@
       <div id="google-body" class="gg-body" aria-live="polite"><div class="skeleton"></div></div>
     </section>
 
-    <!-- Clients: everyone who's booked through Acuity, sent an enquiry, been imported from Acuity's
-         spreadsheets or added by hand (Nova Bot's client list). Search, filters, a client's page
+    <!-- Clients: everyone who's booked a session, sent an enquiry, been imported from a spreadsheet
+         or added by hand (Nova Bot's client list). Search, filters, a client's page
          (sessions, contact, notes, money in pounds, marketing consent and its history); admins
-         also sync with Acuity and import Acuity's spreadsheets. -->
+         also sync from the studio's bookings and import a spreadsheet. -->
     <section id="view-clients" class="view cl" hidden>
       <div class="view-head">
         <h2 id="clients-title">Clients</h2>
@@ -737,8 +737,8 @@
         <div class="settings-row cl-actions">
           <button id="clients-add" class="chip" type="button" aria-expanded="false">Add a client</button>
           <button id="clients-contacts-open" class="chip" type="button" aria-expanded="false" aria-controls="clients-contacts">Import from contacts</button>
-          <button id="clients-sync" class="chip admin-only" type="button" hidden>Sync with Acuity now</button>
-          <button id="clients-import-open" class="chip admin-only" type="button" aria-expanded="false" aria-controls="clients-import" hidden>Import from Acuity</button>
+          <button id="clients-sync" class="chip admin-only" type="button" hidden>Sync now</button>
+          <button id="clients-import-open" class="chip admin-only" type="button" aria-expanded="false" aria-controls="clients-import" hidden>Import a spreadsheet</button>
         </div>
         <!-- Add a client by hand (anyone signed in) -->
         <form id="clients-add-form" class="card cl-form" autocomplete="off" hidden>
@@ -772,12 +772,12 @@
             <button id="contacts-cancel" class="btn small ghost" type="button">Close</button>
           </div>
         </form>
-        <!-- Import from Acuity (admins): Acuity's appointments or clients spreadsheet (CSV) -->
+        <!-- Import a spreadsheet (admins): an appointments or clients spreadsheet (CSV) -->
         <form id="clients-import" class="card cl-form" autocomplete="off" hidden>
-          <h3 class="card-title">Import from Acuity</h3>
+          <h3 class="card-title">Import a spreadsheet</h3>
           <ol class="cl-steps">
-            <li>In Acuity, open Reports → Export and download the appointments CSV.</li>
-            <li>For everyone on Acuity's client list too, open Clients → Export (Import/Export) and download that CSV as well.</li>
+            <li>A clients list (CSV): a Name column (or First Name and Last Name), and Email or Phone.</li>
+            <li>An appointments list (CSV): the same, plus a Start Time column. Old booking-system exports work.</li>
             <li>Choose a file below (or paste what's in it) and press Import. One file at a time; importing the same file again changes nothing.</li>
           </ol>
           <label class="cl-field"><span>The CSV file</span><input id="import-file" type="file" accept=".csv,text/csv,text/plain"></label>
@@ -1317,7 +1317,7 @@
         <button id="sheet-copy" class="btn ghost" type="button">Copy</button>
         <a id="sheet-email" class="btn" href="#">Email it to them</a>
       </div>
-      <p class="hint">Opens the booking calendar on that session with their name and phone filled in. They pick a time and pay, and it goes into Acuity.</p>
+      <p class="hint">Opens the booking page on that session with their name and phone filled in. They pick a time and pay the deposit.</p>
     </div>
     <p id="sheet-error" class="error" role="alert"></p>
     <button id="sheet-close" class="btn ghost" type="button">Close</button>
@@ -1414,7 +1414,7 @@
         <svg class="suite-badge" viewBox="0 0 512 512" aria-hidden="true"><use href="#i-mark-a"/></svg>
         <div class="suite-words">
           <strong class="suite-name">Nova Agent</strong>
-          <p>The conversation, Quests, Acuity helper, and every panel. It runs on the studio's server, so it's always on.</p>
+          <p>The conversation, Quests, and every panel. It runs on the studio's server, so it's always on.</p>
         </div>
         <a class="btn small ghost suite-open" href="https://nova.novacane.co.uk/agent/" target="_blank" rel="noopener" aria-label="Open Nova Agent">Open</a>
       </li>
