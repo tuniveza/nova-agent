@@ -8,6 +8,14 @@
 //   POST /actions/fixer/check              check now
 //
 // Admins only (src/fixer/routes.ts actorFor: the studio PC's own page, or an admin online).
+//
+// Switched off (24 Oct 2026, the user: "you can turn the fixer off it's irrelevant at the moment and not
+// very usable … in fact just disable it entirely in all aspects for now it's a waste of time"): it starts
+// only with FIXER_ON=1 in the service's environment. Off, nothing is scheduled, nothing is checked or
+// photographed, and the looks account's session is never taken by it; its addresses answer "The Fixer
+// is switched off for now". (The deploy checks' own use of the looks session and measureStrict in
+// src/fixer/strict.ts aren't the Fixer and carry on.) The places that opened it are marked
+// "Fixer off (24 Oct 2026)" in web/: put them back with the switch.
 
 import { existsSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -25,6 +33,10 @@ import { STRICT_RULES, STRICT_SIZES, freshShotsDir, strictCounts, strictProblems
 export const STRICT_EVERY_MIN = 30;
 const HISTORY = (24 * 60) / STRICT_EVERY_MIN; // (a day of runs)
 const RUN_LIMIT_MS = 4.5 * 60_000;
+
+// The one switch: on only with FIXER_ON=1
+export const fixerOn = (env: Record<string, string | undefined> = process.env) => env.FIXER_ON === "1";
+export const FIXER_OFF = "The Fixer is switched off for now.";
 
 export type StrictSummary = { at: string; counts: Record<StrictRule, number>; screens: number; ms: number; error?: string };
 export type StrictStore = { last: (StrictRun & { id: string }) | null; history: StrictSummary[]; error?: string };
@@ -154,7 +166,12 @@ async function looksSession(action: "start" | "end"): Promise<{ token: string; c
 let strict: StrictFixer | null = null;
 export const currentStrictFixer = () => strict;
 
-export function startStrictFixer(): StrictFixer {
+export function startStrictFixer(on = fixerOn()): StrictFixer | null {
+  if (!on) {
+    strict = null;
+    console.log("Fixer: switched off for now (FIXER_ON=1 turns it on again)");
+    return null;
+  }
   const dataDir = config.paths.dataDir;
   const put = retireOldFixer(dataDir);
   if (put) trace("task", "info", `Fixer: started again from the ground up; what it had before is kept in ${put}`);
@@ -177,7 +194,11 @@ export function startStrictFixer(): StrictFixer {
 export function registerStrictRoutes(app: Hono, fixer: () => StrictFixer | null): void {
   const guard = (c: any): StrictFixer | Response => {
     if (!actorFor(c.req.raw)) return c.json({ ok: false, message: "The Fixer is for admins." }, 403);
-    return fixer() || c.json({ ok: false, message: "The Fixer isn't running." }, 503);
+    const f = fixer();
+    if (f) return f;
+    // Switched off (24 Oct 2026): a calm answer, not an error
+    if (!fixerOn()) return c.json({ ok: false, off: true, message: FIXER_OFF }, 200, { "Cache-Control": "no-store" });
+    return c.json({ ok: false, message: "The Fixer isn't running." }, 503);
   };
   app.get("/fixer-api/state", (c) => {
     const f = guard(c);

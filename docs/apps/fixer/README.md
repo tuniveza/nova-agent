@@ -1,9 +1,12 @@
 # Fixer
 
+**Switched off for now (24 October 2026).** The user: "you can turn the fixer off it's irrelevant at the moment and not very usable … in fact just disable it entirely in all aspects for now it's a waste of time". It doesn't check any screens, take pictures or sign in as the looks account. `/fixer/` (and Nova Phone's Fixer) says it's off, with **Home**, and keeps **Auto-fix: On / Off** for the device. It's gone from the Backend on Nova Desk and Nova Phone, Console's `fixer` only says it's off, and Computer's line says "switched off for now". Auto-fix itself (`web/shared/rules.js`) still runs on every screen. Everything below is how it works when it's on.
+
 Nova Agent's caretaker, started again from the ground up on 16 October 2026. It checks all of Nova Agent against **three strict rules that are never compromised**, every 5 minutes, and shows what breaks them.
 
 ## What's new
 
+- **Switched off (24 October 2026).** It starts only with `FIXER_ON=1` in Nova Agent's environment on the server: nothing is scheduled, checked or photographed, and its addresses answer "The Fixer is switched off for now". The Fixer's own page is kept as `web/fixer/on.html`. To switch it back on: `FIXER_ON=1`, `on.html` back as `index.html`, and the places marked "Fixer off (24 Oct 2026)" in `web/` put back.
 - **From the ground up.** Everything the Fixer did before is off: no hourly checks, no looks, edges or buttons checks, no fixer quests, no fixes prepared by Claude Code, nothing waiting for Approve. What it had saved is kept aside on the server (`data/fixer-before-2026-10-16.json`), never deleted.
 - **Three rules, every 5 minutes.** On the server, every 5 minutes, it opens Nova Agent and every app, plan, tool and helper at phone, tablet and computer sizes, and checks them against the three rules below.
 - **Extremely thin or short windows too.** It also checks a 280px-wide window and a 320px-tall one. On a window that small, the navigation panel becomes one row of tiles that scrolls sideways inside itself. Each name shrinks to fit, and if it still can't fit it keeps its first few letters, at least one. The whole name stays the tile's tooltip.

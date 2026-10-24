@@ -7,7 +7,7 @@ import { Hono } from "hono";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser, Page } from "playwright";
 import { linksOnScreen, measureStrict, strictCounts, strictProblems, type StrictRun } from "../src/fixer/strict";
-import { StrictFixer, registerStrictRoutes, retireOldFixer } from "../src/fixer/strict-service";
+import { FIXER_OFF, StrictFixer, fixerOn, registerStrictRoutes, retireOldFixer, startStrictFixer } from "../src/fixer/strict-service";
 
 let browser: Browser;
 let page: Page;
@@ -228,5 +228,36 @@ describe("the service", () => {
     expect((await relayed("/fixer-api/shots/20261016-100000/agent-360x640.png")).status).toBe(200);
     expect((await relayed("/fixer-api/shots/..%2F..%2Fsecrets/agent-360x640.png")).status).toBe(404);
     expect((await app.fetch(new Request("http://online.nova-agent.invalid/fixer-api/state", { headers: { "x-nova-online": "Bo", "x-nova-online-role": "staff" } }))).status).toBe(403);
+  });
+});
+
+// Switched off (24 Oct 2026, the user: "just disable it entirely in all aspects for now it's a waste of time")
+describe("switched off", () => {
+  it("is off unless FIXER_ON=1", () => {
+    expect(fixerOn({})).toBe(false);
+    expect(fixerOn({ FIXER_ON: "0" })).toBe(false);
+    expect(fixerOn({ FIXER_ON: "1" })).toBe(true);
+  });
+  it("off, nothing starts: no Fixer, so nothing is scheduled, checked or signed in", () => {
+    expect(startStrictFixer(false)).toBeNull();
+  });
+  it("off, its addresses answer calmly that it's switched off (and stay for admins)", async () => {
+    const was = process.env.FIXER_ON;
+    delete process.env.FIXER_ON;
+    try {
+      const app = new Hono();
+      registerStrictRoutes(app, () => null);
+      expect((await app.request("http://x/fixer-api/state")).status).toBe(403);
+      const admin = { "x-nova-online": "Ada", "x-nova-online-role": "admin" };
+      const relayed = (path: string, init: RequestInit = {}) => app.fetch(new Request(`http://online.nova-agent.invalid${path}`, { ...init, headers: { ...admin, ...(init.headers || {}) } }));
+      for (const [path, init] of [["/fixer-api/state", {}], ["/fixer-api/shots/20261016-100000/agent-360x640.png", {}], ["/actions/fixer/check", { method: "POST" }]] as const) {
+        const res = await relayed(path, init);
+        expect(res.status, path).toBe(200);
+        expect(await res.json(), path).toEqual({ ok: false, off: true, message: FIXER_OFF });
+      }
+    } finally {
+      if (was === undefined) delete process.env.FIXER_ON;
+      else process.env.FIXER_ON = was;
+    }
   });
 });

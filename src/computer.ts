@@ -18,7 +18,7 @@ import type { Hono } from "hono";
 import { config } from "./config";
 import { actorFor } from "./fixer/routes";
 import { claudeProblem, fixerPaths } from "./fixer/service";
-import { currentStrictFixer } from "./fixer/strict-service";
+import { currentStrictFixer, fixerOn } from "./fixer/strict-service";
 import { DiskSizes, listFolder, PathError, ProcSampler, readImage, readTextFile } from "./computer-explore";
 
 // ================= Secrets never leave =================
@@ -180,7 +180,7 @@ export interface ComputerDeps {
   deskUrl: string;
   deskToken: string;
   secrets: () => string[];
-  fixer: () => { needsYou: number; lastCheck: string | null; looksAt: string | null; looksFailed: number; claude: string } | null;
+  fixer: () => { needsYou: number; lastCheck: string | null; looksAt: string | null; looksFailed: number; claude: string; off?: boolean } | null;
   claudeProblem: () => string;
   sampler: Sampler;
 }
@@ -432,10 +432,11 @@ export function realDeps(): ComputerDeps {
     deskUrl: "http://127.0.0.1:8788/status",
     deskToken: config.agentNovaKey ? createHmac("sha256", config.agentNovaKey).update("desk-status").digest("hex") : "",
     secrets: () => secretValues(),
-    // The Fixer (the three strict rules, every 5 minutes): when it last looked, and how many problems
+    // The Fixer (the strict rules, every 30 minutes): when it last looked, and how many problems. Switched off
+    // since 24 Oct 2026 (FIXER_ON=1 turns it on): then it only says so (off), and Computer shows no Open button
     fixer: () => {
       const f = currentStrictFixer();
-      if (!f) return null;
+      if (!f) return fixerOn() ? null : { needsYou: 0, lastCheck: null, looksAt: null, looksFailed: 0, claude: "", off: true };
       try {
         const s = f.state();
         return { needsYou: 0, lastCheck: s.last?.at || null, looksAt: s.last?.at || null, looksFailed: s.problems.length, claude: "" };

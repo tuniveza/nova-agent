@@ -233,7 +233,8 @@ serveFolder("/phone", "phone/", "Nova Phone is missing from web/phone.");
 // Lossless audio: the page only; its signalling and relay setup are Nova Bot's (/lossless/ws, /lossless/ice)
 serveFolder("/lossless", "lossless/public/lossless/", "Lossless audio is missing from web/lossless.");
 serveFolder("/app/memory", "index/", "Index is missing from web/index.");
-// The Fixer: the three strict rules, checked on all of Nova Agent every 5 minutes (src/fixer/strict-service.ts)
+// The Fixer: the strict rules, checked on all of Nova Agent every 30 minutes (src/fixer/strict-service.ts).
+// Switched off since 24 Oct 2026 (FIXER_ON=1 turns it on): /fixer/ is then a page that says so, with Home
 serveFolder("/fixer", "fixer/", "The Fixer is missing from web/fixer.");
 registerStrictRoutes(app, currentStrictFixer);
 // Invoices as PDF files: Nova Bot draws the page, this prints it (src/pdf.ts)
@@ -822,8 +823,10 @@ startPortalSync();
 void whoAmI().catch(() => {});
 // Online: Nova Bot passes staff members' requests to this server over a link the PC opens (src/relay.ts)
 startRelay(app.fetch);
-// The Fixer, from the ground up (16 Oct 2026): only the three strict rules, every 5 minutes. The old
-// Fixer (hourly checks, quests, prepared fixes) isn't started any more; its data is kept aside.
+// The Fixer, from the ground up (16 Oct 2026): only the strict rules, every 30 minutes. The old
+// Fixer (hourly checks, quests, prepared fixes, src/fixer/service.ts) isn't started any more; its data is
+// kept aside. Switched off on 24 Oct 2026 (the user: "just disable it entirely in all aspects for now"):
+// this starts nothing unless FIXER_ON=1 (src/fixer/strict-service.ts).
 startStrictFixer();
 // The watchdog: every 5 minutes, is Nova Bot's status page still all clear? (src/watchdog.ts)
 startWatchdog();
