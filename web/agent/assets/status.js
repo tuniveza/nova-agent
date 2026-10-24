@@ -101,7 +101,10 @@
   const viewer = $("viewer");
   const inPanel = () => Boolean(viewer && !viewer.hidden && $("main") && $("main").classList.contains("viewing"));
   function place() {
-    const box = PHONE.matches ? $("tabbar") : $("suite-home");
+    // (a computer's window made short or narrow, the compact dock, navpanel.js "strip": the line is a slim
+    // line of its own under it, in the frame, 24 Oct 2026)
+    const strip = document.documentElement.dataset.nav === "strip";
+    const box = strip ? null : PHONE.matches ? $("tabbar") : $("suite-home");
     line.classList.toggle("sl-in-panel", inPanel());
     if (box && line.parentElement !== box) box.append(line);
     else if (!box && line.parentElement !== shell) shell.append(line);
@@ -113,7 +116,8 @@
   if (viewer) new MutationObserver(place).observe(viewer, { attributes: true, attributeFilter: ["hidden"] });
   // The phone's bar redraws itself now and then: keep the line in it (when no panel is open)
   const barNow = $("tabbar");
-  if (barNow) new MutationObserver(() => PHONE.matches && !barNow.contains(line) && barNow.append(line)).observe(barNow, { childList: true });
+  if (barNow) new MutationObserver(() => PHONE.matches && document.documentElement.dataset.nav !== "strip" && !barNow.contains(line) && barNow.append(line)).observe(barNow, { childList: true });
+  new MutationObserver(place).observe(document.documentElement, { attributes: true, attributeFilter: ["data-nav"] });
 
 
   // The date ("Mon 12 Oct") and the clock ("5:45 pm"); with the date switched off, the clock keeps
@@ -171,14 +175,59 @@
     }
   }
   const SQUEEZE = [".sl-ver", ".sl-left", ".sl-sess", ".sl-date", ".sl-act", ".sl-news"];
-  function squeeze() {
-    for (const s of SQUEEZE) line.querySelector(s).classList.remove("sl-squeezed");
-    for (const s of SQUEEZE) {
-      if (line.scrollWidth <= line.clientWidth + 1) break;
-      line.querySelector(s).classList.add("sl-squeezed");
+  // (a computer, in the dock or the compact dock: the date stays until the rest have gone, 24 Oct 2026, the user:
+  // keep "the name, the app title, Live, date and time as long as possible"; the open place's section, after its
+  // name, goes just before the date, its name staying)
+  const SQUEEZE_DESK = [".sl-ver", ".sl-sess", ".sl-left", ".sl-news", ".sl-act", ".sl-where .nw-sub", ".sl-date"];
+  // On a computer (the dock, or the compact dock) a part steps aside by adding up: every part's width read once, in
+  // one go, then the least needed ones taken away until the rest fit the line's room; a part that doesn't fit is
+  // gone (display: none), never laid out past an edge (the line's left half is packed towards your name, so what
+  // doesn't fit there would reach past the LEFT end, which a scroll width never counts). Looked at again only when
+  // the line's width, a part's words, the fonts or the screen's form change: the clock ticking over, its figures
+  // one width, changes nothing, so nothing is measured (24 Oct 2026, speed).
+  const PARTS = ":scope > .sl-side > *, :scope > .sl-item, :scope > .sl-me";
+  let room = 0, fitKey = "";
+  function squeeze(force) {
+    const root = document.documentElement;
+    const desk = /^(dock|strip)$/.test(root.dataset.nav || "");
+    if (!desk) {
+      fitKey = "";
+      for (const s of SQUEEZE) line.querySelector(s).classList.remove("sl-squeezed");
+      for (const s of SQUEEZE) {
+        if (line.scrollWidth <= line.clientWidth + 1) break;
+        line.querySelector(s).classList.add("sl-squeezed");
+      }
+      return;
     }
+    if (!room) return; // (not on screen: the bars away, or the line not placed yet)
+    const parts = [...line.querySelectorAll(PARTS)];
+    const key = `${room}|${parts.map((p) => p.textContent.length).join(",")}|${line.dataset.hide || ""}|${root.dataset.form || ""}|${root.dataset.nav}|${document.fonts ? document.fonts.status : ""}`;
+    if (!force && key === fitKey) return;
+    fitKey = key;
+    const aside = SQUEEZE_DESK.map((s) => line.querySelector(s)).filter((el) => el && el.classList.contains("sl-squeezed"));
+    for (const el of aside) el.classList.remove("sl-squeezed");
+    const width = new Map(parts.map((el) => [el, el.getBoundingClientRect().width]));
+    let total = 0;
+    for (const w of width.values()) total += w;
+    const drop = [];
+    for (const s of SQUEEZE_DESK) {
+      if (total <= room + 0.5) break;
+      const el = line.querySelector(s);
+      if (!el) continue;
+      const w = width.has(el) ? width.get(el) : el.getBoundingClientRect().width;
+      if (w) { drop.push(el); total -= w; }
+    }
+    for (const el of drop) el.classList.add("sl-squeezed");
   }
-  if (typeof ResizeObserver === "function") new ResizeObserver(() => squeeze()).observe(line);
+  // (the line's room from the observer itself, its content box: reading it costs nothing)
+  if (typeof ResizeObserver === "function") new ResizeObserver((e) => { room = Math.floor(e[e.length - 1].contentRect.width); squeeze(); }).observe(line);
+  // (and when its words change or the fonts come in: the same width can hold wider words; one look a frame at most.
+  // Its parts' classes and styles, which the fitting itself changes, aren't watched)
+  let squeezeQueued = false, squeezeForce = false;
+  const queueSqueeze = (force) => { squeezeForce = squeezeForce || force === true; if (!squeezeQueued) { squeezeQueued = true; requestAnimationFrame(() => { squeezeQueued = false; const f = squeezeForce; squeezeForce = false; squeeze(f); }); } };
+  new MutationObserver(() => queueSqueeze()).observe(line, { childList: true, characterData: true, subtree: true });
+  if (document.fonts) { document.fonts.addEventListener("loadingdone", () => queueSqueeze(true)); if (document.fonts.ready) document.fonts.ready.then(() => queueSqueeze(true)); }
+  new MutationObserver(() => queueSqueeze()).observe(document.documentElement, { attributes: true, attributeFilter: ["data-nav", "data-form"] });
   addEventListener("resize", () => { const k = shownKey; shownKey = null; news(k); drawActivity(); squeeze(); });
 
   // Activity: the latest two in the line, the list on a tap

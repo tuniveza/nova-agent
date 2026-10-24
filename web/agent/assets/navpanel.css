@@ -59,12 +59,32 @@
 }
 #nav-panel[data-where="dock"] .nav-btn { height: 26px; padding: 0 9px; font-size: 11.5px; }
 #nav-panel[data-where="dock"] .nav-btn svg { width: 15px; height: 15px; }
-#nav-panel[data-where="dock"] .nav-gap { flex: none; width: 64px; }
-#nav-panel[data-where="dock"] .nav-where { max-width: 18ch; font-size: 11.5px; }
 #nav-panel[data-where="dock"].icons .nav-words { display: none; }
 #nav-panel[data-where="dock"].icons .nav-btn { padding: 0 7px; }
-#nav-panel[data-where="dock"].icons .nav-where { max-width: 12ch; }
-#nav-panel:not([data-where="dock"]) .nav-gap { display: none; }
+#nav-panel .nav-gap { display: none; }
+/* (24 Oct 2026, the user: "put the back and forward buttons in the center underneath the nova handle but between
+   them is the home button … reload on the left next to the back button … history on the right of the forward
+   button"): one tight row in the middle, Reload · Back · Home · Forward · History, Home right under the handle.
+   The four round Home are one width (the widest's), so Home is the row's exact middle, and the row is the
+   dock's exact middle, as the handle is. The fine line under the row runs the dock's width (on the icons' top
+   edge: the row is only as wide as its buttons now). The open place's name is on the status bar
+   (navpanel.js placeWhere). On a phone the row stays as it was. */
+#nav-panel[data-where="dock"] {
+  display: grid; grid-template-columns: minmax(max-content, 1fr) minmax(max-content, 1fr) max-content minmax(max-content, 1fr) minmax(max-content, 1fr);
+  width: fit-content; max-width: 100%; margin: 0 auto; border-bottom: 0;
+}
+#nav-panel[data-where="dock"] > .nav-btn { grid-row: 1; }
+#nav-panel[data-where="dock"] > [data-nav="reload"] { grid-column: 1; }
+#nav-panel[data-where="dock"] > [data-nav="back"] { grid-column: 2; }
+#nav-panel[data-where="dock"] > [data-nav="home"] { grid-column: 3; }
+#nav-panel[data-where="dock"] > [data-nav="forward"] { grid-column: 4; }
+#nav-panel[data-where="dock"] > [data-nav="list"] { grid-column: 5; }
+html[data-nav="dock"] #suite-home > #nav-panel + * + .suite-body, html[data-nav="dock"] #suite-home > #nav-panel + .suite-body { border-top: 1px solid color-mix(in srgb, var(--line, #fff3) 70%, transparent); }
+/* The open place's name on the dock's status bar: one of its parts, in the words' soft pink */
+.status-line .sl-where .nav-where { white-space: nowrap; color: var(--soft, #FFD1EA); font-weight: 600; }
+/* (its section, after the name, in the line's quieter colour: it steps aside when the bar is short of room) */
+.status-line .sl-where .nw-sub { color: var(--muted, #b9a9c9); font-weight: 500; }
+.status-line .sl-where:has(> .nav-where:empty) { display: none; }
 /* A phone or tablet upright: under the open panel, inside its frame's own space, clear of the handle above the
    title panel (the handle stands about 15px up from it) */
 html[data-nav="panel"] #viewer:not([hidden]) { grid-template-rows: minmax(0, 1fr) auto !important; }
@@ -75,3 +95,115 @@ html[data-nav="panel"] #viewer > #nav-panel { grid-row: 2; margin: 6px auto 18px
 #nav-panel[data-where="title"] .nav-btn { height: 32px; min-width: 32px; padding: 0 6px; }
 /* (nothing to go back to from the Agent's own page in a panel's frame: hidden with the frame) */
 #viewer[hidden] > #nav-panel { display: none; }
+
+/* ---- A computer's window (or a tablet on its side) made short or narrow: the compact Nova dock (navpanel.js
+   "strip", 24 Oct 2026, the user: "can you put them on an icon bar and place all the navigation on it like we do
+   with the nova dock just compact"). Not the phone's bar with every place behind Apps: a computer is still a
+   computer (ns CLAUDE.md 2c). One slim bar at the bottom, in the Nova tiles' own colours, as wide as what's on
+   it and in the middle: Reload · Back · Home · Forward · History, then every place (Invoicer, Portal, Agent,
+   Calendar, Notes, Board, Quests, Nova) as a small icon with its name under it. When the window is tight the
+   buttons' names go first, then the places' names (each still its label and tooltip), then every button a
+   little smaller (32px, still easy to point at), all on the one row (navpanel.js fitStrip): Nova's bars never
+   wrap onto a second row (shared/rules.js). The status line is a slim line of its own under the bar when the
+   window has the height (status.js), and steps aside on a short window, as it did. */
+html[data-nav="strip"]:not([data-ui="rich"]) body div.shell > nav#tabbar.tabbar {
+  display: flex !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: center !important; gap: 0 6px !important;
+  grid-row: 3 !important; grid-template-columns: none !important; grid-template-areas: none !important;
+  justify-self: center !important; align-self: end !important; width: fit-content !important; max-width: 100% !important; min-width: 0 !important;
+  height: auto !important; min-height: 0 !important; margin: 0 auto !important; padding: 3px 8px !important; box-sizing: border-box !important; overflow-x: clip !important; overflow-y: visible !important;
+  border-radius: 16px !important;
+}
+html[data-nav="strip"] #tabbar > #nav-panel[data-where="strip"] {
+  display: flex; flex: none; align-items: center; gap: 2px; width: auto; max-width: none; margin: 0; padding: 0 6px 0 0;
+  border: 0; border-right: 1px solid color-mix(in srgb, var(--line, #fff3) 80%, transparent); border-radius: 0; background: none; box-shadow: none;
+}
+#nav-panel[data-where="strip"] :is(.nav-where, .nav-gap) { display: none !important; }
+#nav-panel[data-where="strip"] > [data-nav="reload"] { order: 1; }
+#nav-panel[data-where="strip"] > [data-nav="back"] { order: 2; }
+#nav-panel[data-where="strip"] > [data-nav="home"] { order: 3; }
+#nav-panel[data-where="strip"] > [data-nav="forward"] { order: 4; }
+#nav-panel[data-where="strip"] > [data-nav="list"] { order: 5; }
+#nav-panel[data-where="strip"] .nav-btn { height: 34px !important; min-width: 34px !important; padding: 0 8px !important; font-size: 11.5px !important; flex: none !important; }
+#nav-panel[data-where="strip"] .nav-btn svg { width: 16px; height: 16px; }
+#tabbar:is([data-fit="nav-icons"], [data-fit="icons"], [data-fit="tiny"]) > #nav-panel .nav-words { display: none; }
+#tabbar:is([data-fit="nav-icons"], [data-fit="icons"], [data-fit="tiny"]) > #nav-panel .nav-btn { padding: 0 6px !important; }
+#tabbar[data-fit="tiny"] > #nav-panel .nav-btn { height: 32px !important; min-width: 32px !important; padding: 0 4px !important; }
+/* the places: one row of small tiles, each group told apart by a fine line, no group names */
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar > .tg-row { display: flex !important; flex: none !important; flex-wrap: nowrap !important; align-items: center !important; gap: 0 !important; width: auto !important; overflow: visible !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup { display: flex !important; flex: none !important; width: auto !important; margin: 0 !important; padding: 0 0 0 5px !important; margin-left: 5px !important; border-left: 1px solid color-mix(in srgb, var(--line, #fff3) 80%, transparent) !important; border-right: 0 !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup:first-child { margin-left: 0 !important; padding-left: 0 !important; border-left: 0 !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tg-label { display: none !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tg-items { display: flex !important; flex-wrap: nowrap !important; gap: 2px !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup[data-group] button {
+  display: grid !important; justify-items: center !important; align-content: center !important; gap: 1px !important; flex: none !important;
+  width: auto !important; min-width: 44px !important; height: 40px !important; min-height: 40px !important; padding: 2px 5px !important; border-radius: 10px !important;
+}
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar button > .t-ico { position: static !important; inset: auto !important; width: 20px !important; height: 20px !important; margin: 0 !important; padding: 0 !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar button > .t-ico > :is(svg, img) { width: 100% !important; height: 100% !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar button > span:last-child {
+  position: static !important; width: auto !important; height: auto !important; clip: auto !important; overflow: visible !important; max-width: none !important;
+  font-size: 10px !important; line-height: 1.1 !important; white-space: nowrap !important;
+}
+/* (tight: the places as icons, their names still their labels and tooltips) */
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar:is([data-fit="icons"], [data-fit="tiny"]) .tgroup[data-group] button { min-width: 34px !important; height: 34px !important; min-height: 34px !important; padding: 0 4px !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar[data-fit="tiny"] .tgroup[data-group] button { min-width: 32px !important; height: 32px !important; min-height: 32px !important; padding: 0 3px !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar[data-fit="tiny"] .tgroup { margin-left: 3px !important; padding-left: 3px !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar:is([data-fit="icons"], [data-fit="tiny"]) button > span:last-child { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; padding: 0 !important; }
+/* the status line, when there's height for it: a slim line of its own under the bar, just its words in the
+   middle (no box of its own), its least needed parts stepping aside as in the dock */
+@media (min-height: 481px) {
+  html[data-nav="strip"]:not([data-ui="rich"])[data-room="phone"] body div.shell { grid-template-rows: auto minmax(0, 1fr) auto auto !important; }
+}
+html[data-nav="strip"] body div.shell > .status-line {
+  grid-row: 4; display: flex !important; grid-template-columns: none !important; justify-content: center !important; gap: 0;
+  width: auto; min-width: 0; height: auto; min-height: 26px; margin: 0; padding: 0 8px; border: 0; border-radius: 0; background: none; font-size: 11px;
+}
+html[data-nav="strip"] body div.shell > .status-line > .sl-side { flex: 1 1 auto; min-width: 0; }
+html[data-nav="strip"] body div.shell > .status-line > .sl-side-l { justify-content: flex-end !important; }
+html[data-nav="strip"] body div.shell > .status-line > .sl-side-r { justify-content: flex-start !important; flex-shrink: 0; border-left: 0 !important; }
+html[data-nav="strip"] body div.shell > .status-line > :is(.sl-me, .sl-side > *) { flex: none; }
+html[data-nav="strip"] body div.shell > .status-line .sl-words { display: inline-block; }
+@media (max-height: 480px) { html[data-nav="strip"] body div.shell > .status-line { display: none !important; } }
+/* (touch, a tablet on its side: every button 40px or more to tap) */
+html.is-touch[data-nav="strip"] #nav-panel[data-where="strip"] .nav-btn { height: 40px !important; min-width: 40px !important; }
+html.is-touch[data-nav="strip"]:not([data-ui="rich"]) body #tabbar:is([data-fit="icons"], [data-fit="tiny"]) .tgroup[data-group] button { min-width: 40px !important; height: 40px !important; min-height: 40px !important; }
+/* The compact dock in the dock's own colours (bar.css #suite-home: nebula light in the theme's colours over the
+   panel colour, the glowing edge), not the phone tiles' near-black; its buttons and places plain, as in the dock
+   (no bubble behind each one), lighting up when pointed at */
+html[data-nav="strip"]:not([data-ui="rich"]) body div.shell > nav#tabbar.tabbar {
+  border: 1px solid transparent !important;
+  background:
+    radial-gradient(55% 150% at 0% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%) padding-box,
+    radial-gradient(45% 170% at 100% 100%, color-mix(in srgb, var(--accent-2) 30%, transparent), transparent 64%) padding-box,
+    radial-gradient(35% 120% at 58% 130%, color-mix(in srgb, var(--hi) 16%, transparent), transparent 70%) padding-box,
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--void) 90%, transparent)) padding-box,
+    var(--edge-glow) border-box !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07) !important;
+}
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar > #nav-panel .nav-btn {
+  display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; gap: 5px !important;
+  width: auto !important; min-height: 0 !important; border: 1px solid transparent !important; border-radius: 999px !important;
+  background: transparent !important; box-shadow: none !important; color: var(--text, #EDE6F7) !important;
+}
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar > #nav-panel .nav-btn::before, html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar > #nav-panel .nav-btn::after { display: none !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar > #nav-panel .nav-btn:is(:hover, :focus-visible):not(:disabled) { background: color-mix(in srgb, var(--hi, #FF5FA8) 16%, transparent) !important; border-color: color-mix(in srgb, var(--hi, #FF5FA8) 40%, transparent) !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup[data-group] button { background: transparent !important; box-shadow: none !important; border: 1px solid transparent !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup[data-group] button::before { display: none !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup[data-group] button:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--hi, #FF5FA8) 14%, transparent) !important; border-color: color-mix(in srgb, var(--hi, #FF5FA8) 35%, transparent) !important; }
+/* (the drawer handle right over Home, as in the dock: navpanel.js fitStrip says where Home is) */
+html[data-nav="strip"] body div.shell > #tabbar > .dock-handle { left: var(--strip-home, 50%) !important; }
+/* (the status line under it: its words only, no box of its own) */
+html[data-nav="strip"] body div.shell > .status-line.status-line { border: 0 !important; background: none !important; box-shadow: none !important; }
+html[data-nav="strip"] body div.shell > .status-line.status-line::before, html[data-nav="strip"] body div.shell > .status-line.status-line::after { display: none !important; }
+/* (the tightest: gaps and padding trimmed so every button keeps 32px on a 480px window, with no shrinking) */
+html[data-nav="strip"]:not([data-ui="rich"]) body div.shell > nav#tabbar.tabbar[data-fit="tiny"] { padding: 3px 4px !important; gap: 0 4px !important; }
+html[data-nav="strip"] #tabbar[data-fit="tiny"] > #nav-panel { gap: 0; padding-right: 4px; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar[data-fit="tiny"] .tg-items { gap: 0 !important; }
+/* (no Apps button on it: every place is on the bar itself) */
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar > #nav-panel .nav-btn[data-nav="apps"] { display: none !important; }
+/* (nor the phone tiles' glossy bubble over each place: the open one keeps its little underline) */
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup[data-group] button:not([aria-current="page"])::after { display: none !important; }
+html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup[data-group] button[aria-current="page"]::after { box-shadow: none !important; }
+/* (its handle stays on the bar's own top edge: on a narrow window bar.js lifts the handle to the top panel, as on a
+   phone, which put it 10px above the top of the screen) */
+html[data-nav="strip"] body div.shell > #tabbar > .dock-handle { --dock-lift: 0px !important; }

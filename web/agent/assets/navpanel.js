@@ -51,10 +51,13 @@
     try { const u = new URL(href, location.origin); if (u.origin === location.origin) href = u.pathname + u.search + u.hash; } catch (err) {}
     return { href, name, sub };
   }
-  const label = (e) => {
-    const sub = String(e.sub || "").replace(/\s*[·|–-]\s*Nova.*$/i, "").trim();
-    return sub && sub.toLowerCase() !== e.name.toLowerCase() ? `${e.name} · ${sub}` : e.name;
+  // (the place's name and its section, once each: a section's page title often carries the panel's own name too,
+  // "The crew · Portal", which made "Portal · The crew · Portal", 24 Oct 2026)
+  const section = (e) => {
+    const low = String(e.name || "").trim().toLowerCase();
+    return String(e.sub || "").replace(/\s*[·|–-]\s*Nova.*$/i, "").split(/\s+[·|–-]\s+/).map((x) => x.trim()).filter((x) => x && x.toLowerCase() !== low).join(" · ");
   };
+  const label = (e) => { const sub = section(e); return sub ? `${e.name} · ${sub}` : e.name; };
 
   function note() {
     const h = here();
@@ -127,11 +130,13 @@
   nav.setAttribute("aria-label", "Navigation");
   nav.setAttribute("data-one-row", "");
   const button = (k, words, title) => `<button type="button" class="nav-btn" data-nav="${k}" title="${title}" aria-label="${title}" data-sfx="tab"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg><span class="nav-words">${words}</span></button>`;
+  // (in the dock the buttons are laid out Reload · Back · Home · Forward · History, Home right under the dock's
+  // handle, by navpanel.css alone: the order here is the phone's, which stays as it was)
   nav.innerHTML =
     button("back", "Back", "Back (Alt+←)") +
     button("forward", "Forward", "Forward (Alt+→)") +
     button("home", "Home", "Home: Nova Agent's page") +
-    // (in the dock: room in the middle for the dock's handle, which sits on its top edge)
+    // (the old room in the middle for the dock's handle: unused since 24 Oct 2026, Home sits under it now)
     `<span class="nav-gap" aria-hidden="true"></span>` +
     button("reload", "Reload", "Reload what's open") +
     button("list", "History", "Where you've been lately").replace('data-nav="list"', 'data-nav="list" aria-haspopup="menu" aria-expanded="false"') +
@@ -145,15 +150,26 @@
   menu.hidden = true;
   document.body.append(menu);
   const btn = (k) => nav.querySelector(`[data-nav="${k}"]`);
+  // (the open place's name: in this row, or on the dock's status bar, placeWhere below)
+  const whereEl = nav.querySelector(".nav-where");
 
   function draw() {
     btn("back").disabled = at <= 0;
     btn("forward").disabled = at >= list.length - 1;
     btn("home").disabled = viewer.hidden;
     const cur = list[at];
-    const where = nav.querySelector(".nav-where");
+    const where = whereEl;
     const text = cur ? label(cur) : "";
-    if (where.textContent !== text) where.textContent = text;
+    // (the name, then its section in a part of its own: on a computer's status bar the section steps aside when
+    // the bar is short of room, status.js, so the name is never cut short with "…")
+    if (where.textContent !== text) {
+      const sub = cur ? section(cur) : "";
+      const n = document.createElement("span");
+      n.className = "nw-name";
+      n.textContent = cur ? cur.name : "";
+      where.replaceChildren(n);
+      if (sub) { const t = document.createElement("span"); t.className = "nw-sub"; t.textContent = ` · ${sub}`; where.append(t); }
+    }
     where.title = text;
     if (!menu.hidden) drawMenu();
   }
@@ -263,31 +279,137 @@
     const room = root.dataset.room || (matchMedia("(min-width: 981px) and (min-height: 481px)").matches ? "computer" : "phone");
     const left = document.querySelector(".shell > .topbar .top-side.left");
     let where;
-    if (simple() && room === "phone") { where = "bar"; if (nav.parentElement !== shell) shell.append(nav); }
+    // (a computer's window, or a tablet on its side, made short or narrow: still a computer, never the phone's
+    // bar with everything behind Apps (24 Oct 2026, the user: "when I resize the height of the browser window it
+    // goes into this blackish minimalist mobile phone ui instead of all the apps being inside of Apps can you put
+    // them on an icon bar and place all the navigation on it like we do with the nova dock just compact"): the
+    // Nova tiles as one compact bar, every place on it, with this row at its front (navpanel.css "strip")
+    const tiles = $("tabbar");
+    const desk = root.dataset.form === "desktop" || root.dataset.form === "tablet-side";
+    if (simple() && room === "phone" && desk && tiles) { where = "strip"; if (nav.parentElement !== tiles || tiles.firstElementChild !== nav) tiles.prepend(nav); }
+    else if (simple() && room === "phone") { where = "bar"; if (nav.parentElement !== shell) shell.append(nav); }
     else if (short() && left) { where = "title"; if (nav.parentElement !== left) left.append(nav); }
     else if (room === "computer" && suite && getComputedStyle(suite).display !== "none") { where = "dock"; if (nav.parentElement !== suite || suite.firstElementChild !== nav) suite.prepend(nav); }
     else { where = "panel"; if (nav.parentElement !== viewer) viewer.append(nav); }
     nav.dataset.where = where;
     root.dataset.nav = where;
+    placeWhere();
     fitDock();
+    fitStrip();
   }
+  // The compact bar fits its window, giving up room in the suite's order (ns CLAUDE.md 2c.3): first the
+  // navigation buttons' names (their icons stay, the names still their labels), then the places' names (the
+  // same: their icons stay), then every button a little smaller; always one row (shared/rules.js keeps Nova's
+  // bars to one). Never behind a button. (Looked at again only when the window's width changes, or the fonts
+  // come in.)
+  const FITS = ["names", "nav-icons", "icons", "tiny"];
+  let stripKey = "";
+  function fitStrip() {
+    const bar = $("tabbar");
+    if (nav.dataset.where !== "strip" || !bar) { if (bar && bar.dataset.fit) { delete bar.dataset.fit; bar.style.removeProperty("--strip-home"); } stripKey = ""; return; }
+    const row = bar.querySelector(":scope > .tg-row");
+    const key = `${shell.clientWidth}|${row ? row.childElementCount : 0}|${document.fonts ? document.fonts.status : ""}`;
+    if (key === stripKey) return;
+    stripKey = key;
+    // (measured at its own size: the page's guard may have drawn it smaller while it was still too wide)
+    if (bar.style.zoom) bar.style.removeProperty("zoom");
+    for (const f of FITS) {
+      bar.dataset.fit = f;
+      // (nothing reaches past the bar's ends)
+      if (!row || bar.scrollWidth <= bar.clientWidth + 1) break;
+    }
+    placeHandle();
+  }
+  // (the drawer handle on the bar's top edge right over Home, as in the dock: looked at again when the bar's own
+  // size changes, its places' names coming in; it only moves the handle, so nothing else is laid out again)
+  function placeHandle() {
+    const bar = $("tabbar");
+    if (nav.dataset.where !== "strip" || !bar) return;
+    const h = btn("home");
+    const hr = h.getBoundingClientRect(), br = bar.getBoundingClientRect();
+    const x = `${Math.round(hr.left + hr.width / 2 - br.left - bar.clientLeft)}px`;
+    if (bar.style.getPropertyValue("--strip-home") !== x) bar.style.setProperty("--strip-home", x);
+  }
+  if ("ResizeObserver" in window) {
+    new ResizeObserver(() => requestAnimationFrame(fitStrip)).observe(shell);
+    const tilesBar = $("tabbar");
+    if (tilesBar) new ResizeObserver(() => requestAnimationFrame(placeHandle)).observe(tilesBar);
+  }
+  // (and when the places on the bar are drawn again, phone.js: their names may need a different fit)
+  {
+    const tilesBar = $("tabbar");
+    const row = tilesBar && tilesBar.querySelector(":scope > .tg-row");
+    if (row) new MutationObserver(() => { stripKey = ""; requestAnimationFrame(fitStrip); }).observe(row, { childList: true });
+  }
+  // The open place's name ("Nova Agent", "Invoicer", "Portal · Inbox"): in the dock it's on the status bar, just
+  // after your name (24 Oct 2026, the user: "the title of app can go on the status bar"), as one of its parts,
+  // with a little pin like the others' icons; everywhere else it stays at the end of this row, as before.
+  // (the status bar's own fitting, medallion.js, keeps its right half on screen: the title's half)
+  const slot = document.createElement("span");
+  slot.className = "sl-item sl-where";
+  slot.title = "Where you are";
+  slot.innerHTML = '<svg class="sl-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-6-5.4-6-10a6 6 0 0 1 12 0c0 4.6-6 10-6 10z"/><circle cx="12" cy="10.5" r="2.2"/></svg>';
+  function placeWhere() {
+    const line = $("status-line");
+    if (nav.dataset.where === "dock" && line && suite && suite.contains(line)) {
+      // (the right half of the bar, made by medallion.js, which loads after this: until then, nothing moves)
+      const side = line.querySelector(":scope > .sl-side-r");
+      const box = side || (line.querySelector(".sl-me") ? null : line);
+      if (!box) return;
+      if (whereEl.parentElement !== slot) slot.append(whereEl);
+      if (side) { if (side.firstElementChild !== slot) side.prepend(slot); }
+      else if (slot.parentElement !== line) line.insertBefore(slot, line.querySelector(".sl-date"));
+    } else {
+      if (whereEl.parentElement !== nav) nav.append(whereEl);
+      if (slot.isConnected) slot.remove();
+    }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => placeWhere());
   // (in a narrow dock the buttons go to their icons, their names still their labels; back to their names
   // when the dock is wide again: on Nova Agent's own page it's the whole width, round a panel it's narrower)
+  // (what the buttons need with their names is measured only while their names show, and kept: going to the icons
+  // and back is then decided by adding up, with nothing hidden and shown again just to measure; measured afresh when
+  // the fonts come in. The room is the dock's width, from its observer, so reading it costs nothing)
+  let wordsNeed = 0, dockRoom = 0;
   function fitDock() {
-    if (nav.dataset.where !== "dock") return nav.classList.remove("icons");
-    nav.classList.remove("icons");
-    // (what its buttons need side by side, against the room the dock's row has)
+    if (nav.dataset.where !== "dock") { if (nav.classList.contains("icons")) nav.classList.remove("icons"); return; }
+    if (!dockRoom) return; // (the dock not on screen)
     const cs = getComputedStyle(nav);
-    const kids = [...nav.children].filter((k) => getComputedStyle(k).display !== "none");
-    const need = kids.reduce((n, k) => n + k.getBoundingClientRect().width, 0) + parseFloat(cs.columnGap || "0") * Math.max(0, kids.length - 1);
-    const room = nav.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    if (need > room - 2) nav.classList.add("icons");
+    const pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    if (!wordsNeed) {
+      if (nav.classList.contains("icons")) nav.classList.remove("icons");
+      const kids = [...nav.children].filter((k) => k.getBoundingClientRect().width > 0);
+      wordsNeed = kids.reduce((n, k) => n + k.getBoundingClientRect().width, 0) + parseFloat(cs.columnGap || "0") * Math.max(0, kids.length - 1);
+    }
+    const icons = wordsNeed > dockRoom - pad - 2;
+    if (icons !== nav.classList.contains("icons")) nav.classList.toggle("icons", icons);
   }
   if (suite && "ResizeObserver" in window) {
     let w = 0;
-    new ResizeObserver(() => { const now = Math.round(suite.clientWidth); if (now !== w) { w = now; requestAnimationFrame(fitDock); } }).observe(suite);
+    new ResizeObserver((e) => { const now = Math.round(e[e.length - 1].contentRect.width); if (now !== w) { w = dockRoom = now; requestAnimationFrame(fitDock); } }).observe(suite);
   }
   place();
+  // (the helper's medallion beside the dock from the first moment the page shows: medallion.js places it while the
+  // page is still hidden, when the dock counts as not there, so it was drawn in the corner and then jumped to the
+  // dock's side; here, just as the page is shown and before that's drawn, it's put where medallion.js will put it,
+  // its own sum: 12px left of the dock, level with its bottom)
+  if (suite && "MutationObserver" in window) {
+    const helper = () => {
+      const m = document.querySelector("nova-manual[floating]");
+      if (!m || nav.dataset.where !== "dock" || getComputedStyle(document.body).visibility === "hidden") return false;
+      const r = suite.getBoundingClientRect();
+      if (r.height > 0 && r.left >= 16 + 58 + 12) {
+        m.style.setProperty("--nm-side", `${Math.round(r.left - 58 - 12)}px`);
+        m.style.setProperty("--nm-bottom", `${Math.max(18, Math.round(innerHeight - r.bottom + 8))}px`);
+      }
+      return true;
+    };
+    const shown = new MutationObserver(() => { if (helper()) shown.disconnect(); });
+    shown.observe(document.body, { attributes: true, attributeFilter: ["style"] });
+    setTimeout(() => shown.disconnect(), 10000);
+  }
+  // (once the fonts are in, the buttons' real widths: names or icons decided again)
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => requestAnimationFrame(() => { wordsNeed = 0; fitDock(); stripKey = ""; fitStrip(); }));
   if (window.NovaForm && window.NovaForm.on) window.NovaForm.on(place);
   new MutationObserver(() => requestAnimationFrame(place)).observe(root, { attributes: true, attributeFilter: ["data-ui", "data-room", "data-form"] });
   addEventListener("resize", () => requestAnimationFrame(place));
