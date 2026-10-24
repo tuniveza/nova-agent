@@ -235,7 +235,10 @@ function history(repo, paths = [], joined = "") {
       const [hash, date, subject, body] = c.split("\x1f");
       const notes = (body || "").split("\n").filter((l) => l.trim() && !/^co-authored-by:/i.test(l)).join("\n").trim();
       return { hash, date, subject: portalName(subject.trim()), body: portalName(notes.slice(0, 900)) };
-    });
+    })
+    // (Acuity's gone from Nova, 24 Oct 2026: its old changes aren't shown; the user: "there should be nothing
+    // relating to acuity anymore in the nova desk and nova phone")
+    .filter((c) => !/acuity/i.test(c.subject + c.body));
   commits.sort((a, b) => b.date.localeCompare(a.date));
   commits.splice(MAX_COMMITS);
   const count = (args) => Number(git(repo, ["rev-list", "--count", ...args]).trim()) || 0;
