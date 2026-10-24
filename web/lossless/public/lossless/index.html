@@ -33,6 +33,7 @@
     .controls select { grid-column: 1 / -1; width: 100%; }
     .field { margin-top: 14px; }
     .field select { width: 100%; }
+    .field-hint { margin: 4px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
     .card-first .field:first-child, .devices .field:first-of-type { margin-top: 0; }
     /* What's happening: a word in the display font, coloured by how it's going */
     #status { font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: var(--bright); }
@@ -142,12 +143,16 @@
       <section class="nt-card devices">
         <h2 class="nt-h">Sound devices</h2>
         <div class="field">
-          <label class="nt-label" for="input">Input (what you send)</label>
-          <select id="input"><option value="">Default microphone</option></select>
+          <!-- (each field's name in a word, what it's for in a line under the box: a long name went onto two lines,
+               24 Oct 2026, the user: "can shared/rules.js just be smartly integrated back into the base code") -->
+          <label class="nt-label" for="input">Input</label>
+          <select id="input" aria-describedby="input-hint"><option value="">Default microphone</option></select>
+          <p class="field-hint" id="input-hint">What you send</p>
         </div>
         <div class="field">
-          <label class="nt-label" for="output">Output (where their audio plays)</label>
-          <select id="output"><option value="">Default output</option></select>
+          <label class="nt-label" for="output">Output</label>
+          <select id="output" aria-describedby="output-hint"><option value="">Default output</option></select>
+          <p class="field-hint" id="output-hint">Where their audio plays</p>
         </div>
         <div class="field">
           <label class="nt-label" for="channels">Channels</label>
@@ -158,7 +163,8 @@
         </div>
         <p id="routing" class="note warnbox" hidden></p>
         <details>
-          <summary>Using this with Logic Pro (or any DAW) via BlackHole</summary>
+          <!-- (a short name that stays on one line; the rest is in the steps, 24 Oct 2026) -->
+          <summary title="Using this with Logic Pro (or any DAW) via BlackHole">Logic Pro / DAW setup</summary>
           <ol>
             <li>Use <strong>Chrome or Edge</strong> on the Mac. Safari can't choose an output device.</li>
             <li>Install two free BlackHole drivers from <a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">existential.audio</a>: <strong>BlackHole 2ch</strong> and <strong>BlackHole 16ch</strong>. You need one for each direction, otherwise their audio loops straight back to them.</li>

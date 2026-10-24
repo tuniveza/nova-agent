@@ -120,7 +120,10 @@ html.embed main { padding-top: 12px; }
 .deploys { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .deploys li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: baseline; font-size: 13.5px; }
 .deploys .repo { font-family: var(--f-mono); font-size: 11px; color: var(--hi); white-space: nowrap; }
-.deploys .subj { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+/* (a deploy's subject is content: it wraps onto more lines rather than being cut with "…", 24 Oct 2026, the
+   user: "can shared/rules.js just be smartly integrated back into the base code"; the Fixer's own fixer used to
+   shrink it instead. A path or a long word with no spaces breaks too, so it never sticks out sideways) */
+.deploys .subj { white-space: normal; overflow-wrap: anywhere; line-height: 1.35; color: var(--text); }
 .deploys time { font-family: var(--f-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
 .fixer-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 40%, transparent); font-size: 14px; }
 .fixer-row .grow { flex: 1 1 200px; min-width: 0; }

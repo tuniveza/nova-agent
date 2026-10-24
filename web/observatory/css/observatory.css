@@ -169,13 +169,19 @@ a { color: var(--hi); }
   font-family: var(--f-mono); font-size: 11.5px; color: var(--soft);
 }
 .path svg { width: 15px; height: 15px; flex: none; color: var(--hi); }
-.path span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+/* (the folder's path wraps onto a second line rather than being cut with "…": a path has no spaces, so it breaks
+   anywhere; 24 Oct 2026, the user: "can shared/rules.js just be smartly integrated back into the base code". Nova's shared fixer used to shrink it instead) */
+.path span { flex: 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; text-align: left; }
 .copy { flex: none; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border-radius: 8px; border: 1px solid var(--line); background: none; cursor: pointer; color: var(--muted); transition: color .2s, border-color .2s; }
 .copy:hover { color: #fff; border-color: var(--line-strong); }
 .copy svg { width: 14px; height: 14px; color: currentColor; }
-.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.fig { min-width: 0; }
-.fig b { display: block; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* (the four numbers in a row, each as wide as it needs: a number on one line, never cut with "…", sized to the deck's
+   width (a container query: cqi of the deck's words side), never under 11px, and when the four don't fit side by
+   side the last goes onto a second row instead of running into its neighbour; 24 Oct 2026, the user: "can
+   shared/rules.js just be smartly integrated back into the base code") */
+.figures { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 10px; }
+.fig { min-width: 0; flex: 0 1 auto; }
+.fig b { display: block; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: clamp(11px, 4.8cqi, 14px); color: #fff; white-space: nowrap; }
 .fig span { display: block; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
 .deck-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
 .deck-foot b { color: var(--text); font-weight: 500; }
@@ -359,7 +365,7 @@ html.embed .stats { margin-top: 14px; }
   .deck-body { padding: 10px 12px; min-width: 0; gap: 2px; }
   .deck-goal, .deck .chips, .deck .path, .deck .figures, .deck .lang-bar { display: none; }
   .deck-name { font-size: 16px; margin: 0; }
-  .deck-tag { margin: 2px 0 6px; font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .deck-tag { margin: 2px 0 6px; font-size: 13px; } /* (all of the tagline: it wraps, never cut after two lines, 24 Oct 2026) */
   .deck-foot { font-size: 11px; padding-top: 4px; border-top: 0; }
   .starmap-wrap { display: none; }
   .pill.s-live i { animation: none; }
@@ -427,14 +433,15 @@ html.embed .stats { margin-top: 14px; }
   .play-hint { width: 30px; height: 30px; right: 8px; bottom: 8px; }
   .deck-body { gap: 8px; padding: 12px 14px 12px; }
   .deck-name { font-size: 16px; }
-  .deck-tag { margin-top: -4px; font-size: 12.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .deck-tag { margin-top: -4px; font-size: 12.5px; } /* (all of the tagline: it wraps, never cut after two lines, 24 Oct 2026) */
   .deck-goal { font-size: 12.5px; line-height: 1.45; -webkit-line-clamp: 2; color: color-mix(in srgb, var(--text) 85%, transparent); }
-  .deck .chips { flex-wrap: nowrap; overflow: hidden; mask: linear-gradient(90deg, #000 88%, transparent); -webkit-mask: linear-gradient(90deg, #000 88%, transparent); }
+  /* (the tools wrap onto a second row rather than running off under a fade at the deck's edge, 24 Oct 2026) */
+  .deck .chips { flex-wrap: wrap; }
   .chip { padding: 2px 8px; font-size: 10px; }
   .path { padding: 5px 8px; font-size: 11px; border-radius: 10px; }
   .copy { width: 22px; height: 22px; }
   .figures { gap: 4px; }
-  .fig b { font-size: 13px; }
+  .fig b { font-size: clamp(11px, 4.8cqi, 13px); }
   .fig span { font-size: 8.5px; }
   .deck .lang-bar { height: 4px; }
   .deck-foot { padding-top: 7px; font-size: 10px; }
@@ -536,12 +543,10 @@ html.embed .stats { margin-top: 14px; }
     .lang-key, .deck .chips { display: none; }
     .foot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   }
-  .fig b { font-size: 12.5px; }
-  /* The footer of a deck: one line each side, cut short with … (the details have it in full) */
-  .deck-foot { flex-wrap: nowrap; }
-  .deck-foot > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .deck-foot > span:first-child { flex: 0 1 auto; }
-  .deck-foot > span + span { flex: 0 1000 auto; }
+  .fig b { font-size: clamp(11px, 4.8cqi, 12.5px); }
+  /* The footer of a deck: when it changed (and its commits) on the left, what it is on the right; either goes onto
+     another line rather than being cut short with "…" (24 Oct 2026, the user: "can shared/rules.js just be smartly integrated back into the base code") */
+  .deck-foot > span { min-width: 0; overflow-wrap: anywhere; }
 
   /* The star map: its own panel, filling the column; the drawing grows to fit it */
   .starmap-wrap { margin: 0 !important; min-height: 0; display: flex; flex-direction: column; }
@@ -692,7 +697,9 @@ html[data-form^="phone"] .hero .themes, html[data-form^="phone"] .hero-lede, htm
    picture at the left; the header and search stay on every page, index.html data-os-pin) */
 @media (max-height: 560px) {
   .stats { display: none !important; }
-  .decks { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 8px; }
+  /* (each deck at least 312px wide, so its whole tagline, no longer cut after two lines, keeps to two lines in the
+     short row of decks: 24 Oct 2026) */
+  .decks { grid-template-columns: repeat(auto-fill, minmax(min(100%, 312px), 1fr)); gap: 8px; }
   .deck { flex-direction: row; align-items: stretch; border-radius: 16px; box-shadow: none; }
   .deck:hover, .deck:focus-visible { transform: none; }
   .deck-media { flex: none; width: 92px; aspect-ratio: auto !important; min-height: 84px; }
@@ -702,7 +709,8 @@ html[data-form^="phone"] .hero .themes, html[data-form^="phone"] .hero-lede, htm
   .deck-body { padding: 8px 12px; min-width: 0; gap: 2px; }
   .deck-goal, .deck .chips, .deck .path, .deck .figures, .deck .lang-bar { display: none; }
   .deck-name { font-size: 15px; margin: 0; }
-  .deck-tag { margin: 2px 0 4px; font-size: 12.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .deck-tag { margin: 2px 0 4px; font-size: 12.5px; } /* (all of the tagline: it wraps, never cut after two lines; a deck that
+     grows goes onto the next page, 24 Oct 2026) */
   .deck-foot { font-size: 11px; padding-top: 2px; border-top: 0; }
   .deck-foot > span:last-child { display: none; }
 }

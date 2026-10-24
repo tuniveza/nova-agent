@@ -12,6 +12,17 @@ html:not([data-ui="rich"]) .bar { display: flex !important; flex-wrap: wrap !imp
 html:not([data-ui="rich"]) .bar > :is(.nav, .tools) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; justify-content: center !important; gap: 6px !important; min-width: 0 !important; }
 html:not([data-ui="rich"]) .bar :is(.icon-btn, .add-btn) { width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important; }
 html:not([data-ui="rich"]) .bar :is(.chip, .title, .views > button) { min-height: 40px !important; }
+/* (the + for a new note card: just its icon in its 40px square, its name "Note card" hidden there, still read out
+   from its label, where before the name spilled out past the square and, at 800x700, off the side of the page; on a
+   bar with room, 1000px or wider, a container query, the button grows to hold its name: 24 Oct 2026, the user:
+   "can shared/rules.js just be smartly integrated back into the base code". A short Calendar keeps the slim icon
+   below) */
+html:not([data-ui="rich"]) .bar { container: cal-bar / inline-size; }
+html:not([data-ui="rich"]) .bar .add-btn > span { display: none !important; }
+@container cal-bar (min-width: 1000px) {
+  html:not([data-ui="rich"]) .bar > .tools .add-btn { width: auto !important; padding: 0 14px 0 10px !important; gap: 6px !important; white-space: nowrap; }
+  html:not([data-ui="rich"]) .bar > .tools .add-btn > span { display: inline !important; }
+}
 
 /* ---- On a phone (Nova Agent's phone room): this month's special days (the strip) make way, each is a gold bar in
    its own day and in that day's plan; the weeks are lower (48px), their days holding bars not words, so more of
