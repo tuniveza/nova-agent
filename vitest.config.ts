@@ -9,7 +9,7 @@ export default defineConfig({
     env: {
       NOVA_WORKER_URL: "https://worker.test",
       AGENT_NOVA_KEY: "test-key",
-      ACUITY_TIMEZONE: "Europe/London",
+      STUDIO_TIMEZONE: "Europe/London",
     },
     isolate: true,
     pool: "forks",

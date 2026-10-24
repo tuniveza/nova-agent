@@ -4,8 +4,8 @@
 
 # Nova Agent
 
-**Your planner, your Agent and the studio's hands in Acuity, on the studio's VPS.**<br>
-Talk to it, give it a goal, and it plans your days to the second. It also works Acuity's admin pages for Novacane Studios.
+**Your planner and your Agent, on the studio's VPS.**<br>
+Talk to it, give it a goal, and it plans your days to the second, around the studio's bookings at Novacane Studios.
 
 [![Node 22](https://img.shields.io/badge/Node-22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
@@ -45,9 +45,9 @@ for the Backend.
 
 Behind Agent sits a planner: tell it a goal and it plans it straight into **Quests**,
 fitted around your sleep, your calendar and your travel, with reminders and
-check-ins as you go. And behind that sits the job it started with: a careful, self-healing
-browser helper that does what [Acuity Scheduling](https://acuityscheduling.com)'s API can't,
-for [Nova Bot](https://github.com/tuniveza/nova-bot).
+check-ins as you go, around the studio's bookings (Nova Bot's own booking system:
+[Nova Bot](https://github.com/tuniveza/nova-bot)'s /book page, Stripe deposits, and the studio's
+Google Calendar).
 
 All the pictures here come from a separate sample copy with made-up quests and people.
 
@@ -55,15 +55,15 @@ All the pictures here come from a separate sample copy with made-up quests and p
 
 | | |
 |---|---|
-| **Agent** | Claude, with tools for quests, Calendar, Acuity (read-only) and its own status |
+| **Agent** | Claude, with tools for quests, Calendar, the studio's bookings (read-only) and its own status |
 | **Quests** | Goals broken into quests, planned hour by hour (to the second), re-planned on every change |
 | **Reminders** | Pop-ups, check-ins, a morning plan and evening wrap-up, chimes, system notifications and your phone |
 | **Calendar** | Built in, saving to Nova Agent, so Agent and the calendar always agree |
 | **Panels** | Portal, Calendar, Notes, Index, Observatory and Lossless audio, inside Nova Agent or in their own window |
 | **Online** | The same Portal, Index, Calendar and Notes at Nova Bot's address (`/portal/` and so on), for the phones |
 | **Index** | Reads what Nova Agent remembers before it replies, and learns after |
-| **Acuity helper** | Changes session types, prices and paid status for Nova Bot, safely, healing itself when pages change |
-| **Visualizer** | Every step the Acuity helper takes, live |
+| **Bookings** | The studio's bookings from Nova Bot, as busy time for Quests and music time |
+| **Visualizer** | Every step Nova Agent takes, live |
 
 ## See it work
 
@@ -110,9 +110,9 @@ Index (`/app/memory/`) and the push helper that phones which installed Portal st
 Agent (`src/chat.ts`) is Claude with tools. Ask it what to do next ("What should I
 do now?" gives one clear recommendation), plan a big goal into quests, block out an evening ("I'm out tonight
 from 7 to 11"), push your day back ("I'm running late"), add or change Calendar note
-cards and day cards ("make 31 October a Halloween day card"), look at the studio's Acuity
-bookings, check the Acuity login, research anything on the web (with links to where it came
-from), look at any public webpage (it opens it in a browser of its own, never the Acuity one,
+cards and day cards ("make 31 October a Halloween day card"), look at the studio's
+bookings, research anything on the web (with links to where it came
+from), look at any public webpage (it opens it in a browser of its own, never signed in anywhere,
 and sees a screenshot and the page's contents), or ask how Nova Agent is doing. Whatever it changes shows
 up as a little chip under its reply, and Quests redraws straight away.
 
@@ -499,40 +499,23 @@ Index itself opens inside Nova Agent from the rail, through Nova Agent's own key
 you can browse and edit the studio's and staff memory there, while approvals of customers'
 facts stay behind a Portal sign-in. Without `AGENT_NOVA_KEY`, memory is simply switched off.
 
-### The Acuity helper
+### The studio's bookings
 
-The job Nova Agent was built for. It drives Acuity's admin pages in a real Chromium, the way a
-person would, for the jobs Acuity's API can't do.
+Bookings are Nova Bot's own: customers book on its `/book` page and pay a Stripe deposit, and
+each booking goes on the studio's Google Calendar. Nova Agent only reads them.
 
-- **Jobs from Nova Bot** (`src/jobs.ts`): it waits on the worker for jobs and picks each one up
-  within about a second. Today that's `change` jobs (staff asked in Portal to change a
-  booking's session type, price or paid status); it does them in Acuity, checks the result and
-  reports back to staff phones. Customer bookings go through Acuity's own booking page, so the
-  deposit is always paid first; `book` jobs are still understood here.
-- **Logs itself in** and saves the session; logs back in when it expires.
-- **Self-healing element finder** (`src/heal/`): every task says *what* it wants ("the Cancel
-  Appointment button"), never *how* to find it. `resolve()` tries the selector memory first
-  (instant and free), then asks Claude, checks the answer against the page, and remembers it.
-- **Appointment actions** (`src/acuity/`) from the command line: list, search, book, cancel,
-  edit and reschedule.
-- **Safety first**: a dry-run mode that stops before every final click, a second layer that
-  refuses any change-making request, exact-match rules for cancel and edit, and a read-only
-  healthcheck every morning. See [Safety](#safety).
+- **Busy time for Quests** (`src/quests/bookings.ts`): the next few weeks of bookings, read from
+  Nova Bot's bookings feed every 10 minutes and as soon as Nova Bot says they changed. Quests and
+  music time are planned around them. Only times and session types are kept on disk.
+- **Agent** can say what's booked (`studio_bookings`, read-only). It can't book, move or cancel:
+  bookings are made on `/book` and changed in Portal or the studio's Google Calendar.
+- **Checking in** (`src/jobs.ts`): Nova Agent waits on the worker for news (quest taps from
+  Portal, a booking change) and picks it up within about a second.
 
 ### The visualizer
 
-<table>
-  <tr>
-    <td width="50%"><img src="docs/media/visualizer.jpg" alt="Visualizer: anatomy, live steps, what the browser sees and the selector memory" width="100%"><br><sub>Anatomy, live steps, what the browser sees and the selector memory.</sub></td>
-    <td width="50%"><img src="docs/media/visualizer-memory.jpg" alt="Visualizer: the selector memory table" width="100%"><br><sub>Where the agent last found each element, and how often.</sub></td>
-  </tr>
-</table>
-
-`/visualizer` shows the Acuity helper at work: its anatomy, every step in plain English, what
-the browser sees, and its memory. Its buttons only ever run read-only tasks (check the login,
-the next 7 or last 30 days, a read-only tour, the healthcheck), and **Wipe memory** lets you
-watch it heal again. These screenshots are of an idle visualizer: at work it shows real
-Acuity pages and client names, which is why Nova Agent only ever listens on `127.0.0.1`.
+`/visualizer` shows every step Nova Agent takes, live, in plain English. It shows client names
+and the AI's prompts, which is why Nova Agent only ever listens on `127.0.0.1`.
 
 ### An app for your launcher
 
@@ -552,27 +535,19 @@ flowchart LR
     UI --> Q
     Chat <-->|reads before, learns after| NI[Index<br/>on Nova Bot's worker]
     Q -->|plan, reminders| Phone[your phone]
-    S[Staff in Portal] --> NB[Nova Bot Worker]
-    NB -->|queues jobs| J[(agent_jobs)]
-    NA[Acuity helper] -->|"any jobs?" long-poll| J
-    NA --> R[resolve&#40;&#41;] -->|1st| M[(Selector memory)]
-    R -->|if memory fails| Claude
-    NA --> B[Playwright Chromium] --> A[Acuity admin pages]
-    NA -->|result| NB
+    NA[Nova Agent] -->|"anything new?" long-poll| NB[Nova Bot Worker]
+    NB -->|the studio's bookings| NA
+    NB --- G[Google Calendar]
 ```
 
 - **No open ports.** Nova Agent only listens on `127.0.0.1` and only calls out to the worker,
   so it runs on any always-on computer.
 - **Limits.** `BOOKINGS_PER_VISITOR_PER_DAY` (default 2) is sent to the worker each time Nova
   Agent checks in.
-- **Notes on Acuity's real pages** (addresses, buttons, forms, and the safety finding that
-  cancelling is a plain GET) are in [docs/acuity-ui-notes.md](docs/acuity-ui-notes.md). Read it
-  before changing cancel, book or edit.
 
 ## Run it locally
 
-You need Node 22 or newer. Acuity is only needed for the Acuity helper, and only with an
-account you're allowed to automate.
+You need Node 22 or newer.
 
 ```sh
 git clone --recurse-submodules https://github.com/tuniveza/nova-agent.git
@@ -581,52 +556,38 @@ npm install
 npx playwright install chromium
 cp .env.example .env      # then fill it in
 npm run visualizer        # http://localhost:4545/agent/
-npm run login             # for the Acuity helper: log in once in a visible browser window
-npm start                 # should say "Logged in to Acuity"
 ```
 
-Agent and its quest planning need `ANTHROPIC_API_KEY` in `.env` (Claude also powers the
-self-healing element finder). Jobs, phone alerts, the phones' Quests sync and Index memory need
+Agent and its quest planning need `ANTHROPIC_API_KEY` in `.env`. The studio's bookings, phone alerts, the phones' Quests sync and Index memory need
 `AGENT_NOVA_KEY`; without it they're simply off. To bring the calendar up to date with its own
 repo: `git submodule update --remote calendar`.
 
 Observatory, Notes and Index open inside Nova Agent when their repos sit next
 to this one (`../no`, `../nn`, `../ni`).
 
-`DRY_RUN=true` is the default in `.env.example`, so book, cancel and edit stop before the
-final click until you decide otherwise.
-
 ### A second copy with sample data
 
 `NOVA_DATA_DIR` points Nova Agent at another data folder, so a preview or a screenshots copy
-never touches the real quests, calendar or Acuity session:
+never touches the real quests or calendar:
 
 ```sh
-NOVA_DATA_DIR=/tmp/nova-sample AGENT_NOVA_KEY= DRY_RUN=true VISUALIZER_PORT=4547 npm run visualizer
+NOVA_DATA_DIR=/tmp/nova-sample AGENT_NOVA_KEY= VISUALIZER_PORT=4547 npm run visualizer
 ```
 
-With `AGENT_NOVA_KEY` empty it won't collect jobs, read memory or send phone alerts.
+With `AGENT_NOVA_KEY` empty it won't read the studio's bookings or memory, or send phone alerts.
 
 ### Commands
 
 | Command | What it does |
 |---|---|
-| `npm run visualizer` | Nova Agent itself: Agent and plan at http://localhost:4545, reminders, the phones' Quests sync, the daily healthcheck and job collection (`npm run service` is the same) |
-| `npm start` | Checks the Acuity login; logs in automatically if the session expired |
-| `npm run login` | Opens a visible browser so you can log in to Acuity by hand |
-| `npm run list` | Appointments for the next 7 days |
-| `npm run list -- 2026-09-01 2026-09-30` | Appointments between two dates |
-| `npm run search -- name=Kai` | Search; also `type=`, `email=`, `phone=`, `from=`, `to=` (default: today to 60 days ahead) |
-| `npm run book -- "type=..." date=... time=... first=... last=... email=...` | Book (stops before the final click if `DRY_RUN=true`) |
-| `npm run cancel -- date=... time=... "name=..." [notify=no]` | Cancel (same safety) |
-| `npm run edit -- date=... time=... "name=..." [phone= email= first= last= type= notes= newdate= newtime=]` | Edit and/or reschedule (same safety) |
-| `npm run healthcheck` | Read-only check that every Acuity page and button can still be found |
+| `npm run visualizer` | Nova Agent itself: Agent and plan at http://localhost:4545, reminders, the phones' Quests sync, the studio's bookings and checking in with Nova Bot (`npm start` and `npm run service` are the same) |
+| `npm test` | The tests (Vitest) |
 | `npm run typecheck` | Checks the code for type errors |
 
 ### Running it all the time
 
 `deploy/agent-nova.service` is a systemd **user** service that runs Nova Agent (the page,
-reminders, the daily healthcheck and job collection), starts when you log in, and restarts if
+reminders, the studio's bookings and checking in with Nova Bot), starts when you log in, and restarts if
 it crashes. Edit its `WorkingDirectory` to where you cloned the repo, then:
 
 ```sh
@@ -638,9 +599,7 @@ systemctl --user restart agent-nova     # after changing .env or code
 loginctl enable-linger $USER            # keep it running when logged out
 ```
 
-On a server with no screen, `npm run login` won't work; with `ACUITY_EMAIL` and
-`ACUITY_PASSWORD` set, the agent logs itself in instead. View it through an SSH tunnel:
-`ssh -L 4545:localhost:4545 your-server`.
+On a server, view it through an SSH tunnel: `ssh -L 4545:localhost:4545 your-server`.
 
 ## Configuration
 
@@ -649,49 +608,33 @@ Names only here; never commit `.env`.
 
 | Name | Default | What it's for |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | – | Agent (and the quest planning it does) and the AI element finder |
+| `ANTHROPIC_API_KEY` | – | Agent (and the quest planning it does) |
 | `NOVA_MODEL` | `claude-opus-5-5` | The Claude model name |
-| `NOVA_WORKER_URL` | Novacane's worker | Nova Bot's worker: jobs, alerts, the phones' Quests sync and Index |
-| `AGENT_NOVA_KEY` | – | Must match the worker's `AGENT_NOVA_KEY` secret; blank = no jobs, phone alerts, Quests sync or memory |
+| `NOVA_WORKER_URL` | Novacane's worker | Nova Bot's worker: the studio's bookings, alerts, the phones' Quests sync and Index |
+| `AGENT_NOVA_KEY` | – | Must match the worker's `AGENT_NOVA_KEY` secret; blank = no bookings, phone alerts, Quests sync or memory |
 | `NOVA_STAFF_ID` | *(found by itself)* | Only to force who Nova Agent works for. Without it, Nova Agent picks the studio's first Portal admin, and anyone can switch it to themselves with **Connect as me** on the Nova Agent badge (kept in `data/staff.json`) |
 | `NOVA_DATA_DIR` | `data/` | Where everything is kept; point a second copy somewhere else |
-| `ACUITY_EMAIL`, `ACUITY_PASSWORD` | – | Automatic re-login |
-| `ACUITY_ADMIN_URL` | Acuity's appointments page | The page used to check the login |
-| `ACUITY_TIMEZONE` | `Europe/London` | The business's timezone; "today" is worked out in it |
+| `STUDIO_TIMEZONE` | `Europe/London` | The studio's timezone; "today" and timed jobs are worked out in it |
 | `JOBS_EVERY_SECONDS` | `10` | How long to wait before asking again if the worker answers at once |
-| `ACTION_PAUSE_MS` | `150` | Longest human-like pause before each click or typed box (0 = flat out) |
-| `BOOKINGS_PER_VISITOR_PER_DAY` | `2` | A number, or `unlimited` |
-| `HEALTHCHECK_CRON` | `0 6 * * *` | When the read-only healthcheck runs (UK time) |
+| `BOOKINGS_PER_VISITOR_PER_DAY` | `2` | How many sessions Nova Bot may book for one visitor a day: a number, or `unlimited` |
 | `VISUALIZER_PORT` | `4545` | Nova Agent's page |
-| `HEADLESS` | `true` | Show the browser or not |
-| `DRY_RUN` | `true` | Stop before every final click (the status pill says **Rehearsal**) |
-| `NOTIFY_CLIENTS` | `true` | Tick Acuity's "Send email to client" when cancelling |
 
 Your rhythm (wake, sleep, buffers, breaks, the daily cap, reminders, check-ins, briefings, phone
 alerts and pace limits) is set in Quests with the sun-over-the-horizon button, or by asking Agent.
 
 Everything Nova Agent writes at run time goes in `data/` (or `NOVA_DATA_DIR`), which git
-ignores: quests (`quests.json`), the calendar (`calendar.json`), the saved Acuity
-session (`session.json`, which works like a password), the selector memory, the healthcheck
-result, screenshots, daily logs (`logs/<date>.jsonl`, which include client names) and
+ignores: quests (`quests.json`), the calendar (`calendar.json`), the copy of the studio's
+bookings (`bookings.json`: times and session types only, no names), screenshots, daily logs (`logs/<date>.jsonl`, which include client names) and
 `alerts.log`.
 
 ## Safety
 
-- **Dry run** (`DRY_RUN=true`): book, cancel and edit stop before the final click. As a second
-  layer, the browser refuses any request that could change something in Acuity. Acuity's
-  cancel is a plain GET, so this also blocks anything carrying Acuity's `__csrf_magic` change
-  token.
-- **The healthcheck** always runs with that second layer on, even when live.
-- **Cancel and edit** need an exact date and time match (and the client's name if given). If
-  more than one appointment matches, the agent refuses.
-- **Agent is read-only in Acuity**: it can look at bookings and check the login, never book,
-  move or cancel.
+- **Agent is read-only for bookings**: it can look at them, never book, move or cancel. A
+  booking job Nova Bot still sends is reported back as not done.
 - **The page's buttons** only work from the page itself (a custom header other websites can't
   send), and Nova Agent only listens on this computer.
-- **Alerts** (login problems, failed healthchecks) go to the console, `data/alerts.log`, and
-  staff phones through the worker when `AGENT_NOVA_KEY` is set. Repeats are held back for six
-  hours.
+- **Alerts** go to the console, `data/alerts.log`, and staff phones through the worker when
+  `AGENT_NOVA_KEY` is set. Repeats are held back for six hours.
 
 ## Tests
 
@@ -709,23 +652,8 @@ dependencies, travel, buffers, breaks, the daily cap, blocked time and at-risk f
 `npx tsx test/planner.test.ts` checks quests far ahead (quests due months away are planned,
 a quest that can only happen on one day isn't crowded out by big work due later, and days off
 stay free).
-`npm run typecheck` checks the types, and `npm run healthcheck` is a read-only check against
-the real Acuity pages. The worker side of the job queue is covered by Nova Bot's tests
-(`test/agent-nova.spec.js`).
-
-To try each Acuity action by hand, make a test booking in Acuity under a made-up name with
-your own email, then run (with `DRY_RUN=true` first to rehearse):
-
-```sh
-npm run edit -- date=2026-10-31 time=17:00 "name=Dana Hollis" phone=07700900789 "notes=Test note from Nova Agent"
-npm run edit -- date=2026-10-31 time=17:00 "name=Dana Hollis" newdate=2026-11-04 newtime=14:00
-npm run book -- "type=Voiceover Recording with Engineer - 1 hour" date=2026-11-05 time=15:00 first=Agent last=Test email=you@example.com
-npm run cancel -- date=2026-11-05 time=15:00 "name=Agent Test"
-npm run cancel -- date=2026-11-04 time=14:00 "name=Dana Hollis"
-```
-
-Each one ends with ✓ or ✗. The visualizer's **Read-only tour** shows the AI element finder at
-work: the first run heals each element and saves it, the second comes straight from memory.
+`npm run typecheck` checks the types. The worker side (the bookings feed and the check-in) is
+covered by Nova Bot's tests (`test/agent-nova.spec.js`).
 
 ## Project layout
 
@@ -735,7 +663,8 @@ src/visualizer/chat.html  the main page: Nova Agent rail, Agent, Today, Calendar
 src/visualizer/page.html  the visualizer
 src/visualizer/app/       the installable app: manifest, service worker, icons, sfx.js (sound effects)
 src/visualizer/calendar-sync.js  makes Calendar save to Nova Agent
-src/chat.ts               Agent: Claude with quest, calendar, Acuity (read-only), web and status tools
+src/chat.ts               Agent: Claude with quest, calendar, studio bookings (read-only), web and status tools
+src/studio-bookings.ts    the studio's bookings, read from Nova Bot's bookings feed
 src/web.ts                web research and seeing webpages (public pages only, in a browser of its own)
 src/memory.ts             Index: what the suite remembers, read before replies, learned after
 src/config.ts             every setting, read once from .env
@@ -750,15 +679,10 @@ src/quests/portalsync.ts     the plan to the phones (Portal), and their taps bac
 src/quests/actions.ts     everything Agent and the page can do with them
 src/calendar/store.ts     Calendar's data (calendar.json, with a revision per save)
 src/calendar/page.ts      saves from the calendar page, merged with changes made elsewhere
-src/index.ts              command-line entry point for the Acuity helper
-src/browser.ts            Chromium, the saved session and the change-blocking safety layer
-src/tasks.ts              the tasks (check login, list, search, book, cancel, edit)
-src/jobs.ts               collecting jobs from Nova Bot's worker and reporting results
-src/healthcheck.ts        the daily read-only healthcheck
+src/quests/bookings.ts    the studio's bookings as busy time for Quests (bookings.json)
+src/jobs.ts               checking in with Nova Bot's worker (quest taps, booking changes)
 src/alerts.ts             alerts to the console, alerts.log and staff phones
 src/llm.ts                the Claude client (JSON answers)
-src/heal/                 resolve() and the selector memory
-src/acuity/               Acuity pages: login, list, book, cancel, edit, targets, types
 src/trace.ts              every step, for the console, logs and visualizer
 test/harness.ts           the simulated clock for `npm test`
 test/*.spec.ts            reminders, deliveries, taps from the phones, clock changes
@@ -774,7 +698,6 @@ src/signin.ts             signing in to Nova Bot as a person, for Portal
 scripts/                  the manual builder; scripts/observatory/ scans and captures your projects
 docs/apps/<panel>/        each panel's guide and pictures
 deploy/agent-nova.service systemd user service
-docs/acuity-ui-notes.md   what Acuity's real admin pages look like
 docs/media/               README images
 ```
 

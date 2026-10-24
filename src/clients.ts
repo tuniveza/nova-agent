@@ -1,7 +1,7 @@
 // The studio's client list, for Agent (read-only).
 //
-// The list lives on Nova Bot's worker (its clients table: everyone who booked through Acuity, sent
-// an enquiry, was imported from Acuity's spreadsheets or added by hand in Portal → Clients). Agent
+// The list lives on Nova Bot's worker (its clients table: everyone who booked a session, sent
+// an enquiry, was imported from a spreadsheet or added by hand in Portal → Clients). Agent
 // reads it with Nova Agent's key (AGENT_NOVA_KEY), at:
 //   POST /nova-agent/clients/find     { search }  -> clients matching a name, email or phone (max 20)
 //   POST /nova-agent/clients/history  { id }      -> one client and their sessions
@@ -34,7 +34,7 @@ export interface ClientSummary {
 }
 export interface ClientSession {
   id: number;
-  acuityId: number | null;
+  acuityId: number | null; // (Nova Bot's field: the session's number in the old booking system, for older sessions; not shown)
   session: string | null;
   start: string;
   end: string | null;
@@ -182,7 +182,7 @@ export function historyText(h: { client: ClientSummary; sessions: ClientSession[
     lines.push(`Sessions (${sessions.length}, newest first, UK time):`);
     for (const s of sessions)
       lines.push(
-        [ukDateTime(s.start), s.session || "Session", s.price ? (Number.isFinite(Number(s.price)) ? (Number(s.price) > 0 ? pounds(s.price) : "") : s.price) : "", s.status === "cancelled" ? "CANCELLED" : "", s.acuityId ? `Acuity #${s.acuityId}` : ""].filter(Boolean).join(" · "),
+        [ukDateTime(s.start), s.session || "Session", s.price ? (Number.isFinite(Number(s.price)) ? (Number(s.price) > 0 ? pounds(s.price) : "") : s.price) : "", s.status === "cancelled" ? "CANCELLED" : ""].filter(Boolean).join(" · "),
       );
   }
   return lines.join("\n");

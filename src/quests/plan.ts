@@ -1,8 +1,8 @@
 // Re-planning: run the planner over everything open, save the times, and show
 // the plan in Calendar (each planned quest, each blocked time and each day's
 // music time becomes a note card there, kept in step
-// automatically). Taken time is the calendar, blocked time, and (with
-// ACUITY_SOURCE=api) the studio's bookings and Acuity's blocked times (bookings.ts).
+// automatically). Taken time is the calendar, blocked time, and the studio's bookings
+// (Nova Bot's own booking system, through its bookings feed: bookings.ts).
 // Each person's quests are planned in their own time: their own rhythm (or the main one), their
 // own blocked times and music time, around the studio's shared calendar and bookings. One
 // person's quests never take another person's time.

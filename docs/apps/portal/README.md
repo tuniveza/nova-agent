@@ -149,7 +149,7 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
     <td width="33%" valign="top"></td>
   </tr>
   <tr>
-    <td width="33%" valign="top"><img src="media/studio-alerts.jpg" alt="A booking alert with a green panel: Real booking, confirmed in Acuity" width="100%"><br><sub><b>Alerts</b>: every booking is checked with Acuity itself.</sub></td>
+    <td width="33%" valign="top"><img src="media/studio-alerts.jpg" alt="A booking alert opened in place, with its details" width="100%"><br><sub><b>Alerts</b>: every booking, with its details.</sub></td>
     <td width="33%" valign="top"><img src="media/studio-suite.jpg" alt="The Nova Agent sheet listing the panels" width="100%"><br><sub><b>The Nova Agent sheet</b>: every app, one tap away.</sub></td>
     <td width="33%" valign="top"><img src="media/studio-links.jpg" alt="All links: live addresses with an up or down check for each" width="100%"><br><sub><b>🔒 All links</b>, each checked as you open it.</sub></td>
   </tr>
@@ -194,13 +194,13 @@ The address follows the tab, so a reload or a link lands in the same place: `/po
 |---|---|
 | **Enquiries** | Every enquiry NovaBot took, sorted like a ticket inbox: New, Open, Waiting on them, Done and Spam (one press moves it; likely spam lands in Spam by itself, with the reason, and nothing is ever deleted). Who's on it, a label, search, and the team's saved replies for routine questions. Email, call, make a booking link with the customer's details filled in, read the chat it came from. Details: Nova Bot's README-ENQUIRIES.md. |
 | **Chats** | What customers asked NovaBot on the website (kept for 90 days). Mark a chat **Needs a person** (you're put on it) or **Done**, and filter by either, so follow-ups don't get lost. Open a chat to answer the visitor yourself: see [Live chat](#live-chat). |
-| **Clients** | Everyone who has booked or enquired: their sessions, money (deposits, invoiced, owed) and marketing consent with its date and source. Admins can import Acuity's spreadsheet; Agent can look people up. |
+| **Clients** | Everyone who has booked or enquired: their sessions, money (deposits, invoiced, owed) and marketing consent with its date and source. Admins can sync it now and import a spreadsheet; Agent can look people up. |
 | **Money** | Invoices (sent only after an admin's Approve), payments and expenses. See [Money](#money). |
-| **Calendar** | Every booking in Acuity's diary, as a month you can swipe, with Calendar's cards and planned quests alongside. See [the smart calendar](#the-smart-calendar). |
+| **Calendar** | Every one of the studio's bookings, as a month you can swipe, with Calendar's cards and planned quests alongside. See [the smart calendar](#the-smart-calendar). |
 | **Quests** | Nova Agent's plan, synced from the VPS: the quest on now, repeating pulses, today, and every quest. Taps (Start, Done, +15 min, Not now, Skip, Pause) go straight back to Nova Agent. |
-| **Approvals** | Booking changes Agent proposed. Nothing changes in Acuity until an admin presses Approve. |
+| **Approvals** | Booking changes waiting for an admin. Nothing changes until an admin presses Approve. |
 | **Campaigns** | Email newsletters to fans and clients who opted in, sent by the studio's own mail server (a few a minute, each with its own unsubscribe link) once an admin approves them. Below them, **one-to-one emails**: a personal email to one person (a venue, label, brand or other business at its work address; a studio client; someone who wrote in). Agent or anyone in the team writes one; Nova Bot checks the person may be emailed (never anyone who said no; a client only about their own booking unless they said yes to studio news; no personal Gmail-style addresses as "business") and adds a footer with a "don't email me again" link (`/no-thanks`). Nothing is sent until an admin presses Approve (twice), and it goes exactly as approved, once. Someone who replies "no thanks" can be recorded under the list. Nova Bot's `src/outreach.js`, migration `0028_outreach.sql`. |
-| **Alerts** | Every notification that reached a phone, newest first, each one slim line (its kind, its title, how long ago) in as many columns as fit, so a screen holds most of them; tap one to open it in place with its exact time, every detail, the Acuity check and its Call/Email buttons. An auto-delete switch. |
+| **Alerts** | Every notification that reached a phone, newest first, each one slim line (its kind, its title, how long ago) in as many columns as fit, so a screen holds most of them; tap one to open it in place with its exact time, every detail and its Call/Email buttons. An auto-delete switch. |
 | **Social** | Facebook and Instagram posts. Write one (or let Agent draft it), add pictures and videos, pick a time; an admin approves it and Nova Bot posts it. See [Social](#social). |
 | **Test stuff** | (Admin) Things that look like tests or copies, with why, and Delete (into a 30-day bin) or Not a test. See [Test stuff](#test-stuff). |
 | **NovaBot** | Two chats. **Ask Nova** answers questions about the studio's bookings, enquiries and alerts (Nova Bot's `src/studio-ask.js`). **NovaBot · bookings** is NovaBot with the booking tools, talking to you as staff: get a link for a client, find, move, cancel or change a booking. Every change shows a summary and waits for a yes. |
@@ -289,11 +289,9 @@ Outreach → **Funnel**, or **Add prospects**). Nova Bot does the work (`src/fun
 
 ## Features
 
-- **Real-booking checks.** A booking alert asks Acuity about that booking as it comes into
-  view: "✓ Real booking: confirmed in Acuity", with the deposit paid, or "Cancelled" or
-  "Not found". Tests are labelled as tests, so nothing fake can pass for a booking.
+- **Tests are labelled as tests** on booking alerts, so nothing fake can pass for a booking.
 - **Push notifications that work with the app closed** (Nova Bot's `src/push.js`, and `web/portal/sw.js`; phones that installed Portal from `/app/` keep `/app/sw.js`).
-  New enquiries, bookings (with every detail from Acuity's private calendar feed), and
+  New enquiries, bookings (with every detail from the booking), and
   alerts from Nova Agent and Quests. Android gets rich notifications
   with their own buzz; iPhones get the plain version, so nothing is ever lost.
 - **Pings.** With Portal open, an alert rings out with a bright ping (a different one for
@@ -337,7 +335,7 @@ Outreach → **Funnel**, or **Add prospects**). Nova Bot does the work (`src/fun
 </p>
 
 <p align="center">
-  <img src="media/studio-desktop.jpg" alt="Portal on a desktop: tabs in a side rail, and alerts in two columns, including a booking checked in Acuity and a Quest alert" width="100%"><br>
+  <img src="media/studio-desktop.jpg" alt="Portal on a desktop: tabs in a side rail, and alerts in two columns, including a booking and a Quest alert" width="100%"><br>
   <sub>On a desktop, the tabs become a side rail and lists go two-up.</sub>
 </p>
 
@@ -347,11 +345,9 @@ Outreach → **Funnel**, or **Add prospects**). Nova Bot does the work (`src/fun
 <p align="center"><img src="media/studio-ask-nova.jpg" alt="Ask Nova giving a rundown of the week: sessions, hours, a clash, a tight changeover and free time" width="360"></p>
 </details>
 
-**Behind the scenes:** Acuity's API can't change a booking's session type, price or paid
-status, so those changes are queued for [Nova Agent](https://github.com/tuniveza/nova-agent),
-the browser helper on the VPS, which does them in Acuity's admin pages and
-reports back (`src/agent-nova.js`). Every day at 06:00 UK time the Worker checks it can
-still reach Acuity's API and alerts staff phones if not (`src/health.js`).
+**Behind the scenes:** bookings are Nova Bot's own: customers book on its `/book` page and pay
+a Stripe deposit, and each booking is put on the studio's Google Calendar. [Nova Agent](https://github.com/tuniveza/nova-agent)
+reads them (`/nova-agent/bookings-feed`) to plan quests around them; it never changes a booking.
 
 ## The planets
 
@@ -397,7 +393,7 @@ Setting it up: invoices are emailed through the studio's own mail server (`MAIL_
 Portal → **Test stuff** (in Admin; admins only) lists things that look like tests or copies, so they can be cleared in a few taps. Today shows a quiet line ("3 things look like tests · look") when there are any, and the tab has a count of the likely ones.
 
 - **Where it looks:** on Nova Bot, enquiries, website chats, chat bookings (and their booking jobs), clients, Index pages, shared notes, and drafts that haven't gone anywhere (social posts, one-to-one emails, invoices, expenses). On the VPS (Nova Agent), quests, calendar notes, Fixer jobs and Agent's files. If Nova Agent can't be reached, Nova Bot's list still shows, and it says Nova Agent's part isn't checked.
-- **Why it thinks so,** in words on each card: a staff member's own email or a TV and film phone number (07700 900…) used as a customer; test, rude or joke words, or a name from the studio's own tests (the list is `src/tidy-words.js` in Nova Bot and `src/tidy-words.ts` here: change both); keyboard mashing; the same first message in several chats minutes apart; Claude's test chats; chat bookings that never reached Acuity; Index pages whose chat is gone; the same facts, note, draft or file twice (the newest stays); copies of a quest (the one in progress stays); quests seconds long, made and finished within minutes (reminder tests); Fixer fixes for a problem that's gone or was fixed another way. One strong reason, or two weaker ones, makes it **Likely a test**; one weaker one makes it **Maybe**. A real client (sessions, money, consent, invoices) is never listed unless a strong sign says so, and then only as Maybe, and it can't be deleted here.
+- **Why it thinks so,** in words on each card: a staff member's own email or a TV and film phone number (07700 900…) used as a customer; test, rude or joke words, or a name from the studio's own tests (the list is `src/tidy-words.js` in Nova Bot and `src/tidy-words.ts` here: change both); keyboard mashing; the same first message in several chats minutes apart; Claude's test chats; chat bookings that never went through; Index pages whose chat is gone; the same facts, note, draft or file twice (the newest stays); copies of a quest (the one in progress stays); quests seconds long, made and finished within minutes (reminder tests); Fixer fixes for a problem that's gone or was fixed another way. One strong reason, or two weaker ones, makes it **Likely a test**; one weaker one makes it **Maybe**. A real client (sessions, money, consent, invoices) is never listed unless a strong sign says so, and then only as Maybe, and it can't be deleted here.
 - **Each card:** what it is and where, when it was made and by whom, the reasons, what goes with it (a test chat's bookings, enquiry and Index pages: **Delete these too** is ticked), and **Delete**, **Not a test** and **Open**.
 - **Delete all likely:** pressed twice; the second press says how many. Esc cancels.
 - **Safe:** everything deleted can be put back for 30 days (**Put back** right after, or under **Recently deleted**). Index pages go through Index's own bin; shared notes and expenses are deleted the way their apps do it, so every copy follows; quests, calendar notes and files go through their own delete, so the calendar's sync tells Nova Bot too. A Fixer job is only cleared (the Fixer's Reject), so it can't come back. **Not a test** is remembered (under **Marked as real**, with Undo). Every delete and put-back is logged with ids and kinds only.
@@ -421,7 +417,7 @@ A connection made before a feature existed shows **Connect again to switch on: �
 
 **What's kept in step** (each has a switch, how it last went in plain words, and **Sync now**):
 - **Calendar, both ways.** Nova's Calendar events and day cards go into a "Novacane Studio" calendar in Google (made on the first sync); events from the studio's own Google Calendar come into Nova's Calendar, and so count as busy time for quests. A change or a deletion on either side is made on the other (the later change wins). Every 5 minutes.
-  - **Bookings in Google Calendar:** copies of Acuity's bookings (60 days ahead). Bookings are only ever made, moved or cancelled in Acuity: nothing books from Google.
+  - **Bookings in Google Calendar:** each of the studio's bookings is an event on the studio's Google Calendar, put there by Nova Bot's booking system.
   - **Quests and music time in Google Calendar** (off unless switched on): Nova Agent's plan too.
 - **Send approved emails from Gmail.** Enquiry replies, one-to-one emails, invoices and their reminders go from the studio's Gmail once an admin has approved them (so they're in its Sent folder), each joining its own thread. On the VPS the studio's own mail server sends them first and Gmail is the backup; with Gmail off or saying no, the mail server sends them. Campaigns always go through the mail server (with their own unsubscribe links).
 - **Customers' replies into Enquiries.** Every hour, replies to those emails (and emails from people with open enquiries) land in the right enquiry as their reply, without the quoted email under it, and the enquiry goes back to Open; a reply about a one-to-one email or an invoice starts a new enquiry. Gmail is only read, never changed.

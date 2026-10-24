@@ -4,8 +4,8 @@
 //     Anthropic's servers), for the chat
 //   - sourcesIn(): the pages Claude actually searched up or read in a reply,
 //     so a plan's research only ever cites real pages
-//   - lookAt(): open any public webpage in a browser of its own (never the
-//     Acuity session), and return what it looks like (a screenshot) and what's
+//   - lookAt(): open any public webpage in a browser of its own (never
+//     signed in anywhere), and return what it looks like (a screenshot) and what's
 //     on it (the page's text structure), for Claude to see
 
 import { lookup } from "node:dns/promises";

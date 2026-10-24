@@ -74,7 +74,7 @@
     {
       "id": "agent-nova",
       "name": "Nova Agent",
-      "tagline": "The hands that work Acuity's admin pages",
+      "tagline": "The studio's one app: chat, Quests and every panel",
       "path": "../nova-agent",
       "category": "Nova Agent",
       "theme": "solar",
@@ -82,21 +82,18 @@
       "stack": [
         "Node 22",
         "TypeScript",
-        "Playwright",
         "Hono",
         "node-cron",
         "Claude API"
       ],
       "status": "live",
-      "goal": "Browser automation for Acuity Scheduling. It does the booking work Acuity's API can't: changing session type, price or paid status for staff, plus booking, cancelling and editing from the command line. It picks up jobs from the Nova Bot worker within about a second.",
-      "vision": "A tireless studio assistant that can drive the booking system like a person would, while healing its own broken selectors and reporting back to staff phones.",
+      "goal": "The studio's one app (Nova Desk and Nova Phone): Agent, Quests, Calendar, Notes and every panel. It reads the studio's bookings from Nova Bot and plans quests around them.",
+      "vision": "A tireless studio assistant that plans everyone's days around the studio's bookings and reports back to staff phones.",
       "features": [
-        "Logs itself in and saves the session; logs back in when it expires",
-        "AI element finder that heals broken selectors and caches the fix",
-        "List, search, book, cancel, edit and reschedule appointments, with a dry-run safety layer",
-        "Collects jobs from the Nova Bot worker queue and sends results as push notifications",
-        "Daily 06:00 healthcheck with alerts",
-        "Live visualizer: Anatomy, Steps and What the browser sees"
+        "Agent: chat with tools for quests, Calendar, the studio's bookings (read-only), clients and drafts",
+        "Quests planned hour by hour around the studio's bookings",
+        "Checks in with the Nova Bot worker within about a second (quest taps, booking changes)",
+        "Live visualizer: every step Nova Agent takes"
       ],
       "run": "Runs as the agent-nova systemd user service; visualizer on http://127.0.0.1:4545",
       "capture": {
@@ -120,7 +117,6 @@
         "D1",
         "Workers AI",
         "Claude API",
-        "Acuity",
         "Google Calendar API",
         "Gmail API",
         "Stripe",
@@ -128,14 +124,14 @@
         "Vitest"
       ],
       "status": "active",
-      "goal": "The AI chat assistant for Novacane Studios, a recording studio in London. It sits on the studio's website as a chat widget, answers from Claude, finds free Acuity times and opens a booking card where the visitor pays the deposit to book. It also serves Portal, the staff app. Its own booking system (Google Calendar, Gmail and Stripe) is built and waiting behind a switch.",
+      "goal": "The AI chat assistant for Novacane Studios, a recording studio in London. It sits on the studio's website as a chat widget, answers from Claude, finds free times and opens a booking card where the visitor pays the deposit to book. It also serves Portal, the staff app. Bookings are its own (Google Calendar, Gmail and Stripe).",
       "vision": "A front desk that never closes: visitors get real answers and real bookings, and staff run enquiries, chats and bookings from their phones.",
       "features": [
         "Themed chat widget with optional voice; Claude answers with every link checked",
-        "Free Acuity times, booking links and an in-chat booking card (deposit first)",
+        "Free times, booking links and an in-chat booking card (deposit first)",
         "Portal staff app: enquiries, customer chats, bookings by chat, push alerts",
         "Enquiries, referral codes and a password-protected admin page",
-        "Behind a switch (off by default): its own booking page, Google Calendar diary, Gmail emails and Stripe deposits",
+        "Its own booking page, Google Calendar diary, Gmail emails and Stripe deposits",
         "352 Vitest tests, covering both booking systems and the switch"
       ],
       "run": "npm run sandbox (wrangler dev --env sandbox) → http://localhost:8787",
@@ -164,7 +160,7 @@
         "Android"
       ],
       "status": "active",
-      "goal": "A members' app for the studio with membership tiers (Base Syndicate, Pro Engineer, Elite) and a booking calendar that follows the studio's real bookings live through Nova Bot's /club/busy feed (from Acuity, or Google Calendar when the switch is on Nova).",
+      "goal": "A members' app for the studio with membership tiers (Base Syndicate, Pro Engineer, Elite) and a booking calendar that follows the studio's real bookings live through Nova Bot's /club/busy feed (from the studio's Google Calendar).",
       "vision": "Booking as astronomy: a full moon means the day is wide open, a new moon means it's fully booked, and each day is drawn as an orbit you drag a session along.",
       "features": [
         "CosmicCalendar: a month where each day is a moon",

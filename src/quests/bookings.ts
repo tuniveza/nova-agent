@@ -1,22 +1,21 @@
 // The studio's bookings as busy time for Quests (and music time).
 //
-// With ACUITY_SOURCE=api or feed, Nova Agent keeps a copy of what's in Acuity for the next few
-// weeks in data/bookings.json: each booking (not the cancelled ones) and each time blocked off in
-// Acuity counts as taken time, so quests and music time are planned around sessions. With "api"
-// it's read through Acuity's API; with "feed" from Acuity's private calendar feed (on Nova Bot),
-// which has the bookings but no blocked times and no cancelled bookings. The copy is
-// refreshed every 10 minutes, and as soon as Nova Bot says something changed in Acuity (its
-// answer to "any jobs?" carries bookingsChanged, the time of Acuity's last change; see jobs.ts),
-// then everything is re-planned. So a booking made in Acuity shows here within about a minute.
+// Nova Agent keeps a copy of the studio's bookings for the next few weeks in data/bookings.json,
+// read from Nova Bot's bookings feed (studio-bookings.ts: Nova Bot's own booking system, the
+// bookings on the studio's Google Calendar). Each booking counts as taken time, so quests and
+// music time are planned around sessions. The copy is refreshed every 10 minutes, and as soon as
+// Nova Bot says the bookings changed (its answer to "any jobs?" carries bookingsChanged, the time
+// of the last change; see jobs.ts), then everything is re-planned. So a new booking shows here
+// within about a minute.
 //
-// Only what the planner needs is kept: ids, times, the session type and whether it's cancelled.
+// Only what the planner needs is kept: ids, times and the session type.
 // No names, emails or phone numbers are written to disk.
 //
-// If Acuity (or Nova Bot) can't be reached, the last copy is kept and the trace says so. The
+// If Nova Bot can't be reached, the last copy is kept and the trace says so. The
 // plan never fails because of it: replan() only ever reads this file.
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { listAppointments, listBlocks, listFeedBookings } from "../acuity-api";
+import { listStudioBookings } from "../studio-bookings";
 import { config } from "../config";
 import { trace } from "../trace";
 import { currentMusic, nowMinutes, replan } from "./plan";
@@ -25,12 +24,13 @@ import { fromMin, type Busy, type MusicSlot } from "./scheduler";
 import { readStamp } from "./store";
 
 export interface BookingsCopy {
-  fetchedAt: string; // when it was last read from Acuity (UTC ISO; "" = never)
+  fetchedAt: string; // when it was last read from Nova Bot (UTC ISO; "" = never)
   from: string; // the UK dates it covers
   to: string;
-  seen: string; // the last "changed in Acuity" time it was refreshed for (UTC ISO)
-  appointments: { id: number; start: string; end: string; type: string; canceled: boolean }[];
-  blocks: { id: number; start: string; end: string }[];
+  seen: string; // the last "bookings changed" time it was refreshed for (UTC ISO)
+  appointments: { id: number | string; start: string; end: string; type: string; canceled: boolean }[];
+  // (older copies also held times blocked off in the old booking system: still read, never written)
+  blocks: { id: number | string; start: string; end: string }[];
 }
 
 const file = `${config.paths.dataDir}bookings.json`;
@@ -38,9 +38,6 @@ const EVERY_MS = 10 * 60 * 1000;
 // One day back (a session still going) to 22 days ahead (music time looks 21 days ahead)
 const DAYS_BACK = 1;
 const DAYS_AHEAD = 22;
-
-// Bookings are read for Quests with Acuity's API or its calendar feed (not the browser)
-const readsBookings = () => config.acuitySource === "api" || config.acuitySource === "feed";
 
 const empty = (): BookingsCopy => ({ fetchedAt: "", from: "", to: "", seen: "", appointments: [], blocks: [] });
 let copy: BookingsCopy | null = null;
@@ -75,7 +72,7 @@ function writeBookings(next: BookingsCopy): void {
   copy = next;
 }
 
-// Bookings (not cancelled) and Acuity's blocked times, as the planner's UK wall-clock times
+// Bookings (not cancelled), as the planner's UK wall-clock times
 export function bookingsBusy(): Busy[] {
   const c = readBookings();
   const busy: Busy[] = [];
@@ -89,17 +86,17 @@ export function bookingsBusy(): Busy[] {
     }
   };
   for (const a of c.appointments) if (!a.canceled) add(a.start, a.end, `Studio booking · ${a.type || "session"}`);
-  for (const b of c.blocks) add(b.start, b.end, "Blocked in Acuity");
+  for (const b of c.blocks) add(b.start, b.end, "Blocked off");
   return busy;
 }
 
-// The last "changed in Acuity" time Nova Agent has caught up with (sent with each "any jobs?")
+// The last "bookings changed" time Nova Agent has caught up with (sent with each "any jobs?")
 export function bookingsSeen(): string {
   readBookings();
   return seen;
 }
 
-// Nova Bot's answer said when Acuity last changed: if that's newer than what we've seen,
+// Nova Bot's answer said when the bookings last changed: if that's newer than what we've seen,
 // fetch the bookings again and re-plan. (Noted as seen straight away, so the worker's wait
 // isn't cut short again and again; if the fetch fails the 10-minute refresh catches up.)
 export function bookingsChanged(changed: unknown): Promise<boolean> | null {
@@ -109,9 +106,8 @@ export function bookingsChanged(changed: unknown): Promise<boolean> | null {
   const was = Date.parse(bookingsSeen());
   if (Number.isFinite(was) && at <= was) return null;
   seen = changed;
-  if (!readsBookings()) return null; // (browser mode: bookings aren't read this way)
-  trace("input", "info", "Bookings changed in Acuity: refreshing them and re-planning");
-  return refreshBookings("a change in Acuity");
+  trace("input", "info", "The studio's bookings changed: refreshing them and re-planning");
+  return refreshBookings("a booking change");
 }
 
 // Wait for a refresh under way (tests, and anything that needs the fresh copy)
@@ -119,10 +115,10 @@ export const bookingsIdle = async (): Promise<void> => {
   if (running) await running;
 };
 
-// Read the next few weeks from Acuity, keep the copy, and re-plan if anything changed.
+// Read the next few weeks from Nova Bot, keep the copy, and re-plan if anything changed.
 // Never throws: a problem is said in the trace and the last copy is kept.
 export function refreshBookings(why = "the regular refresh"): Promise<boolean> {
-  if (!readsBookings() || !config.agentNovaKey) return Promise.resolve(false);
+  if (!config.agentNovaKey) return Promise.resolve(false);
   if (running) return running;
   running = (async () => {
     try {
@@ -142,18 +138,15 @@ async function refresh(why: string): Promise<boolean> {
   const before = readBookings();
   let next: BookingsCopy;
   try {
-    // The calendar feed has the bookings only (never cancelled ones, never blocked times)
-    const [appointments, blocks] =
-      config.acuitySource === "feed"
-        ? [(await listFeedBookings(from, to)).map((a) => ({ ...a, canceled: false })), []]
-        : await Promise.all([listAppointments(from, to), listBlocks(from, to)]);
+    // The feed has the bookings that stand (never cancelled ones)
+    const appointments = await listStudioBookings(from, to);
     next = {
       fetchedAt: new Date().toISOString(),
       from,
       to,
       seen,
-      appointments: appointments.map((a) => ({ id: a.id, start: a.start, end: a.end, type: String(a.type ?? "").slice(0, 120), canceled: a.canceled === true })),
-      blocks: blocks.map((b) => ({ id: b.id, start: b.start, end: b.end })),
+      appointments: appointments.map((a) => ({ id: a.id, start: a.start, end: a.end, type: String(a.type ?? "").slice(0, 120), canceled: false })),
+      blocks: [],
     };
   } catch (error) {
     const problem = (error as Error).message.replace(/\.?$/, ".");
@@ -171,7 +164,7 @@ async function refresh(why: string): Promise<boolean> {
     copy = next;
   }
   if (sameBusy && before.fetchedAt) return true;
-  trace("task", "info", `Studio bookings refreshed (${why}): ${next.appointments.filter((a) => !a.canceled).length} booking(s), ${next.blocks.length} blocked time(s) ${from} to ${to}. Re-planning.`);
+  trace("task", "info", `Studio bookings refreshed (${why}): ${next.appointments.length} booking(s) ${from} to ${to}. Re-planning.`);
   // Music time today and tomorrow before and after, to say (once, calmly) if a booking moved it
   const musicBefore = currentMusic();
   try {
@@ -200,7 +193,6 @@ function tellMusicMoves(before: MusicSlot[], after: MusicSlot[], today: number):
 
 // Every 10 minutes (and once now), in the background
 export function startBookingRefresh(): void {
-  if (!readsBookings()) return;
   if (!config.agentNovaKey) {
     console.log("Not reading studio bookings for Quests: set AGENT_NOVA_KEY in .env.");
     return;

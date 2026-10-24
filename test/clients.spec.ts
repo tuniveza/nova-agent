@@ -1,12 +1,9 @@
-// Quest 2 and bookings from Acuity's calendar feed: ACUITY_SOURCE=feed (studio_bookings and the
-// bookings that are busy time for Quests come from /nova-agent/bookings-feed, never the browser or
-// Acuity's API), and Agent's read-only client tools (src/clients.ts, clientTools in src/chat.ts).
-// Nova Bot is pretend throughout.  Run: npm test
-import { mkdtempSync, readFileSync } from "node:fs";
+// Quest 2: Agent's read-only client tools (src/clients.ts, clientTools in src/chat.ts). (The
+// studio's bookings are in bookings.spec.ts.) Nova Bot is pretend throughout.  Run: npm test
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { boot, shutdown } from "./harness";
 
 const summary = (over: Record<string, unknown> = {}) => ({
   id: 7,
@@ -25,127 +22,6 @@ const summary = (over: Record<string, unknown> = {}) => ({
   createdAt: "2026-01-01T10:00:00.000Z",
   updatedAt: "2026-06-20T13:00:00.000Z",
   ...over,
-});
-
-describe("Agent with ACUITY_SOURCE=feed (Acuity plans without the API)", () => {
-  let seen: { path: string; headers: Record<string, string>; body: any }[] = [];
-  let feed: () => Response;
-  const browser = { listTask: vi.fn(), checkLogin: vi.fn() };
-
-  beforeEach(() => {
-    process.env.NOVA_DATA_DIR = mkdtempSync(join(tmpdir(), "nova-feed-"));
-    process.env.ACUITY_SOURCE = "feed";
-    vi.resetModules();
-    seen = [];
-    feed = () => Response.json({ appointments: [{ id: 9001, start: "2026-10-31T17:00:00.000Z", end: "2026-10-31T19:00:00.000Z", type: "Rap Package", name: "Dana Hollis" }] });
-    browser.listTask.mockReset().mockRejectedValue(new Error("the browser must not open"));
-    browser.checkLogin.mockReset().mockRejectedValue(new Error("the browser must not open"));
-    vi.doMock("../src/tasks", async (orig) => ({ ...(await orig<typeof import("../src/tasks")>()), listTask: browser.listTask, checkLogin: browser.checkLogin }));
-    vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
-      const path = new URL(url).pathname;
-      const body = init.body ? JSON.parse(String(init.body)) : null;
-      seen.push({ path, headers: (init.headers || {}) as Record<string, string>, body });
-      if (path === "/nova-agent/bookings-feed") return feed();
-      return Response.json({ error: "Not found" }, { status: 404 });
-    });
-    vi.spyOn(console, "log").mockImplementation(() => {});
-  });
-  afterEach(() => {
-    vi.doUnmock("../src/tasks");
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-    delete process.env.ACUITY_SOURCE;
-  });
-
-  it("offers studio_bookings only: no API tools, no propose_booking_change, no login check", async () => {
-    const { studioTools } = await import("../src/chat");
-    expect(studioTools([]).map((t: any) => t.name)).toEqual(["studio_bookings"]);
-  });
-
-  it("studio_bookings reads /nova-agent/bookings-feed with Nova Agent's key and never the browser", async () => {
-    const { studioTools } = await import("../src/chat");
-    const said = await (studioTools([]).find((t: any) => t.name === "studio_bookings") as any).run({ from: "2026-10-31", to: "2026-11-01" });
-    expect(said).toContain("#9001");
-    expect(said).toContain("Sat 31 Oct, 17:00"); // UK time (GMT after the clocks go back)
-    expect(said).toContain("Rap Package");
-    expect(said).toContain("Dana Hollis");
-    expect(seen).toEqual([{ path: "/nova-agent/bookings-feed", headers: expect.objectContaining({ Authorization: "Bearer test-key" }), body: { from: "2026-10-31", to: "2026-11-01" } }]);
-    expect(browser.listTask).not.toHaveBeenCalled();
-    expect(browser.checkLogin).not.toHaveBeenCalled();
-  });
-
-  it("says plainly when the feed isn't set up or can't be read", async () => {
-    const { studioTools } = await import("../src/chat");
-    const run = () => (studioTools([]).find((t: any) => t.name === "studio_bookings") as any).run({ from: "2026-10-31", to: "2026-11-01" });
-    feed = () => Response.json({ error: "Acuity's calendar feed isn't set up (ACUITY_CALENDAR_URL)." }, { status: 409 });
-    expect(await run()).toMatch(/Couldn't read Acuity's calendar feed just now: Acuity's calendar feed isn't set up/);
-    feed = () => Response.json({ error: "Acuity's calendar feed couldn't be read: timed out", unreachable: true }, { status: 503 });
-    expect(await run()).toMatch(/couldn't be read: timed out/);
-    expect(browser.listTask).not.toHaveBeenCalled();
-  });
-});
-
-// The pretend worker for the planner: /next, the calendar feed and notify (anything else is a 404,
-// and recorded, so a call to Acuity's API shows up)
-function feedWorker() {
-  const w = { appointments: [] as any[], changed: null as string | null, calls: [] as { path: string; body: any }[], pings: [] as any[] };
-  vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
-    const path = new URL(url).pathname;
-    const body = init.body ? JSON.parse(String(init.body)) : null;
-    w.calls.push({ path, body });
-    if (path === "/nova-agent/notify") {
-      w.pings.push(body);
-      return Response.json({ ok: true, phones: 1 });
-    }
-    if (path === "/nova-agent/next") return Response.json({ job: null, bookingsChanged: w.changed });
-    if (path === "/nova-agent/bookings-feed") return Response.json({ appointments: w.appointments });
-    return Response.json({ error: "Not found" }, { status: 404 });
-  });
-  return w;
-}
-const feedBooking = (id: number, start: string, end: string) => ({ id, start, end, type: "Recording", name: "Sam Client" });
-
-describe("Bookings from the calendar feed are busy time for Quests", () => {
-  afterEach(() => {
-    shutdown();
-    delete process.env.ACUITY_SOURCE;
-  });
-
-  it("a refresh reads the feed (not Acuity's API), keeps no names on disk, and quests go around the bookings", async () => {
-    process.env.ACUITY_SOURCE = "feed";
-    const nova = await boot("2026-10-07T09:00"); // a Wednesday, BST
-    nova.setQuests({ quests: [{ id: "mix", title: "Mix the EP", minutes: 60 }] });
-    nova.plan.replan();
-    expect(nova.quest("mix").start).toBe("2026-10-07T09:00");
-
-    const worker = feedWorker();
-    worker.appointments = [feedBooking(1, "2026-10-07T08:00:00.000Z", "2026-10-07T12:00:00.000Z")]; // 09:00–13:00 UK
-    const bookings = await import("../src/quests/bookings");
-    expect(await bookings.refreshBookings()).toBe(true);
-
-    expect(worker.calls.map((c) => c.path)).toEqual(["/nova-agent/bookings-feed"]);
-    expect(worker.calls[0].body).toEqual({ from: "2026-10-06", to: "2026-10-29" });
-    expect(nova.quest("mix").start).toBe("2026-10-07T13:00");
-    const onDisk = readFileSync(join(process.env.NOVA_DATA_DIR!, "bookings.json"), "utf8");
-    expect(JSON.parse(onDisk).appointments).toEqual([{ id: 1, start: "2026-10-07T08:00:00.000Z", end: "2026-10-07T12:00:00.000Z", type: "Recording", canceled: false }]);
-    expect(onDisk).not.toMatch(/Sam Client/);
-  });
-
-  it("the bookings-changed signal refreshes from the feed and re-plans", async () => {
-    process.env.ACUITY_SOURCE = "feed";
-    const nova = await boot("2026-10-07T09:00");
-    nova.setQuests({ quests: [{ id: "mix", title: "Mix the EP", minutes: 60 }] });
-    nova.plan.replan();
-    const worker = feedWorker();
-    worker.appointments = [feedBooking(2, "2026-10-07T08:00:00.000Z", "2026-10-07T10:00:00.000Z")]; // 09:00–11:00 UK
-    worker.changed = "2026-10-07T08:01:00.000Z";
-    const jobs = await import("../src/jobs");
-    const bookings = await import("../src/quests/bookings");
-    await jobs.checkForJob();
-    await bookings.bookingsIdle();
-    expect(worker.calls.map((c) => c.path)).toEqual(["/nova-agent/next", "/nova-agent/bookings-feed"]);
-    expect(nova.quest("mix").start).toBe("2026-10-07T11:00");
-  });
 });
 
 describe("Agent's client tools (read-only)", () => {
@@ -187,7 +63,7 @@ describe("Agent's client tools (read-only)", () => {
     return clientTools(actions).find((t: any) => t.name === name) as any;
   };
 
-  it("are the four read-only tools, whatever ACUITY_SOURCE says", async () => {
+  it("are the four read-only tools", async () => {
     const { clientTools } = await import("../src/chat");
     expect(clientTools([]).map((t: any) => t.name)).toEqual(["client_find", "client_history", "clients_owing", "clients_not_booked_since"]);
   });
@@ -206,8 +82,8 @@ describe("Agent's client tools (read-only)", () => {
     const said = await (await tool("client_history", actions)).run({ id: 7 });
     expect(seen.map((s) => [s.path, s.body])).toEqual([["/nova-agent/clients/history", { id: 7 }]]);
     const lines = said.split("\n");
-    expect(lines[2]).toBe("Sat 27 Jun 2026, 14:00 · Mixing · £40.00 · CANCELLED · Acuity #9002");
-    expect(lines[3]).toBe("Sat 20 Jun 2026, 14:00 · Rap Package · £60.00 · Acuity #9001");
+    expect(lines[2]).toBe("Sat 27 Jun 2026, 14:00 · Mixing · £40.00 · CANCELLED");
+    expect(lines[3]).toBe("Sat 20 Jun 2026, 14:00 · Rap Package · £60.00");
     // The action line says the id, not the person
     expect(actions[0].text).not.toMatch(/Dana/);
   });

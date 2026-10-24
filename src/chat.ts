@@ -4,13 +4,8 @@
 // answers as Nova Agent, with tools to:
 //   - read, add, change and remove Calendar note cards and day cards
 //     (calendar/store.ts; the calendar on the page refreshes when it changes)
-//   - look at the studio's Acuity bookings, free times, blocked times, session types and
-//     clients through Acuity's API on Nova Bot (acuity-api.ts; ACUITY_SOURCE=api, the default),
-//     and PROPOSE a booking change, which happens only when an admin approves it in Portal →
-//     Approvals (no tool here can approve). With ACUITY_SOURCE=feed (Acuity plans without the
-//     API): the bookings from Acuity's calendar feed on Nova Bot, read-only. With
-//     ACUITY_SOURCE=browser: the bookings and the Acuity login through the same browser tasks
-//     as the visualizer, read-only, as before
+//   - look at the studio's bookings (Nova Bot's own booking system, through its bookings feed:
+//     studio-bookings.ts), read-only
 //   - look up the studio's clients (clients.ts, read-only): find one, their session history, who
 //     owes money, who hasn't booked since a date
 //   - email campaigns to opted-in fans and clients (campaigns.ts): suggest ideas, DRAFT and edit
@@ -40,12 +35,11 @@ import { EVENT_EXTRAS, extrasInWords, extrasToNote } from "./calendar/chatFields
 import { config } from "./config";
 import { getClient } from "./llm";
 import { learnFrom, memoryFor } from "./memory";
-import { checkLogin, describeAppointments, listTask } from "./tasks";
 import { getRecentEvents, trace } from "./trace";
 import { lookAt, lookResult, webTools } from "./web";
 import { fileCard, FILE_TYPES, findFile, listFiles, readFileText, removeFile, saveFile, sizeText } from "./files";
 import { draftReply, listEnquiries, readEnquiry, savedReplies, sortEnquiry, threadText, type DraftCard } from "./enquiries";
-import { actionLine, appointmentsText, availability, BOOKING_KINDS, feedBookingsText, findClients, listActions, listAppointments, listBlocks, listFeedBookings, proposeChange, sessionTypes, ukWhen, type BookingAction, type BookingKind } from "./acuity-api";
+import { bookingsText, listStudioBookings } from "./studio-bookings";
 import { commentLine, contextText as socialContextText, createSocialDraft, draftCommentReply, editSocialDraft, listSocialComments, listSocialPosts, PLATFORMS, postLine, postStatsText, POST_STATUSES, readSocialPost, socialContext } from "./social";
 import { AUDIENCES, campaignContext, campaignLine, CAMPAIGN_STATUSES, contextText, createDraft, editDraft, listCampaigns, readCampaign, resultsText, ukToUtc, type Audiences, type CampaignCard, type CampaignChanges } from "./campaigns";
 import { draftOutreach, editOutreach, listOutreach, outreachLine, OUTREACH_STATUSES, type Outreach, type OutreachFields } from "./outreach";
@@ -76,7 +70,7 @@ export interface ChatAction {
   text: string;
   file?: ReturnType<typeof fileCard>; // for "file": the card to preview and download it
   draft?: DraftCard; // for "draft": a reply to an enquiry, waiting for a person's Approve & send
-  booking?: BookingAction; // for "booking": a proposed booking change, waiting for an admin's Approve
+  booking?: Record<string, unknown>; // for "booking": a booking change proposed in an older chat (Agent no longer proposes them)
   campaign?: CampaignCard; // for "campaign": an email campaign draft, waiting for an admin's Approve
   outreach?: Outreach; // for "outreach": a one-to-one email, waiting for an admin's Approve
   url?: string; // for "social": where it is in Portal → Social
@@ -149,234 +143,33 @@ How to work:
 - Keep replies short and warm, in UK English. Use simple Markdown (bold, short lists) when it helps. Never invent bookings or calendar entries: only report what the tools return.`;
 }
 
-// What Agent can do with Acuity bookings, for the system prompt (it depends on ACUITY_SOURCE)
+// What Agent can do with the studio's bookings, for the system prompt
 function bookingsPrompt(): string {
-  if (config.acuitySource === "feed")
-    return "- The studio's Acuity bookings, from Acuity's calendar feed: what's booked between two dates (studio_bookings: time, session type and client; cancelled bookings aren't in the feed, and it has no prices, paid status or blocked times). Bookings also count as busy time in the quest plan. This is read-only: you can't book, move or cancel Acuity appointments from this chat (the studio's Acuity plan has no API for it). If someone asks, say so and suggest Acuity itself.";
-  if (config.acuitySource === "browser")
-    return "- The studio's Acuity bookings: look at what's booked between two dates, and check that you're still logged in to Acuity. This is read-only for now: you can't book, move or cancel Acuity appointments from this chat yet. If someone asks, say so and suggest Portal or Acuity.";
-  return `- The studio's Acuity bookings (through Acuity's API): what's booked between two dates (studio_bookings), free start times for a session type on a day (studio_availability), times blocked off (studio_blocked_times), the session types (studio_session_types) and clients (studio_clients). Bookings also count as busy time in the quest plan.
-- Booking changes: you can only PROPOSE them (propose_booking_change: create, reschedule, cancel or update a booking, add or remove a blocked time). Nothing changes in Acuity until an admin approves it in Portal → Approvals (or on the card under your reply). You can't approve, and nobody can approve through you. Check first (the booking, free times, the session type), then propose, then say plainly: "I've proposed it; an admin needs to approve it in Portal → Approvals." Never say it's booked, moved or cancelled until booking_actions shows it as executed. booking_actions lists the proposals and what became of them.`;
+  return "- The studio's bookings (Nova Bot's own booking system: customers book and pay a deposit on the /book page, and each booking is on the studio's Google Calendar): what's booked between two dates (studio_bookings: time, session type and client). Bookings also count as busy time in the quest plan. This is read-only: you can't book, move or cancel a booking from this chat. If someone wants to book, give them the booking page (/book on Nova Bot's site). To change or cancel one, staff do it in Portal (Portal → Calendar shows every booking, and NovaBot in Portal's chat can find a booking and check a change), or in the studio's Google Calendar.";
 }
 
-// The Acuity tools: through the API on Nova Bot (ACUITY_SOURCE=api, the default), or the
-// background browser as before (ACUITY_SOURCE=browser). None of them can approve or change anything.
+// The studio's bookings, read-only (studio-bookings.ts: Nova Bot's bookings feed). Nothing here
+// can book, change, cancel or approve anything.
 export function studioTools(actions: ChatAction[]) {
   const did = (kind: ChatAction["kind"], text: string) => {
     actions.push({ kind, text });
     trace("input", "ok", `Chat: ${text}`);
   };
-  if (config.acuitySource === "browser") {
-    return [
-      betaZodTool({
-        name: "studio_bookings",
-        description: "Read the studio's Acuity appointments between two dates (read-only; opens Acuity's admin pages in the background browser, so it takes a little while). Keep ranges short (up to about a month).",
-        inputSchema: z.object({ from: DATE, to: DATE }),
-        run: async ({ from, to }) => {
-          did("looked", `Looked at Acuity bookings, ${longDate(from)} – ${longDate(to)}`);
-          try {
-            return describeAppointments(await listTask(from, to));
-          } catch (error) {
-            return `Couldn't read Acuity just now: ${(error as Error).message}`;
-          }
-        },
-      }),
-      betaZodTool({
-        name: "check_acuity_login",
-        description: "Check Nova Agent is still logged in to Acuity's admin pages.",
-        inputSchema: z.object({}),
-        run: async () => {
-          did("looked", "Checked the Acuity login");
-          try {
-            return await checkLogin();
-          } catch (error) {
-            return `Login check failed: ${(error as Error).message}`;
-          }
-        },
-      }),
-    ];
-  }
-  const failed = (error: unknown) => `Couldn't reach Acuity just now: ${(error as Error).message}`;
-  // Acuity's calendar feed (plans without the API): the bookings only, read-only. The API tools and
-  // propose_booking_change aren't offered (they need Acuity's API).
-  if (config.acuitySource === "feed") {
-    return [
-      betaZodTool({
-        name: "studio_bookings",
-        description: "Read the studio's Acuity bookings between two UK dates (inclusive, up to 62 days), from Acuity's calendar feed: time (UK), session type and client. Cancelled bookings aren't in the feed. Read-only.",
-        inputSchema: z.object({ from: DATE, to: DATE }),
-        run: async ({ from, to }) => {
-          did("looked", `Looked at Acuity bookings, ${longDate(from)} – ${longDate(to)}`);
-          try {
-            return feedBookingsText(await listFeedBookings(from, to));
-          } catch (error) {
-            return `Couldn't read Acuity's calendar feed just now: ${(error as Error).message}`;
-          }
-        },
-      }),
-    ];
-  }
-  const WHEN = z.string().describe('UK wall-clock "YYYY-MM-DDTHH:MM", or a UTC ISO time');
   return [
     betaZodTool({
       name: "studio_bookings",
-      description: "Read the studio's Acuity bookings between two UK dates (inclusive, up to 62 days): time, session type, client, price and paid, notes, cancelled or not. Read-only.",
+      description: "Read the studio's bookings between two UK dates (inclusive, up to 62 days): time (UK), session type and client. Read-only.",
       inputSchema: z.object({ from: DATE, to: DATE }),
       run: async ({ from, to }) => {
-        did("looked", `Looked at Acuity bookings, ${longDate(from)} – ${longDate(to)}`);
+        did("looked", `Looked at the studio's bookings, ${longDate(from)} – ${longDate(to)}`);
         try {
-          return appointmentsText(await listAppointments(from, to));
+          return bookingsText(await listStudioBookings(from, to));
         } catch (error) {
-          return failed(error);
-        }
-      },
-    }),
-    betaZodTool({
-      name: "studio_availability",
-      description: "Free start times in Acuity for one session type (its id, from studio_session_types) on one UK date.",
-      inputSchema: z.object({ type_id: z.number().int().positive(), date: DATE }),
-      run: async ({ type_id, date }) => {
-        did("looked", `Looked at free times, ${longDate(date)}`);
-        try {
-          const times = await availability(type_id, date);
-          return times.length ? `Free start times on ${longDate(date)} (UK): ${times.map((t) => t.label).join(", ")}` : `No free times on ${longDate(date)} for that session type.`;
-        } catch (error) {
-          return failed(error);
-        }
-      },
-    }),
-    betaZodTool({
-      name: "studio_blocked_times",
-      description: "Times blocked off in Acuity between two UK dates (inclusive), with their ids (needed to remove one).",
-      inputSchema: z.object({ from: DATE, to: DATE }),
-      run: async ({ from, to }) => {
-        did("looked", `Looked at blocked times, ${longDate(from)} – ${longDate(to)}`);
-        try {
-          const blocks = await listBlocks(from, to);
-          return blocks.length ? blocks.map((b) => `#${b.id} · ${ukWhen(b.start)} – ${ukWhen(b.end)}${b.calendar ? ` · ${b.calendar}` : ""}${b.notes ? ` · ${b.notes}` : ""}`).join("\n") : "Nothing blocked off then.";
-        } catch (error) {
-          return failed(error);
-        }
-      },
-    }),
-    betaZodTool({
-      name: "studio_session_types",
-      description: "The studio's session types in Acuity: id, name, price, length in minutes, and whether it's active or private.",
-      inputSchema: z.object({}),
-      run: async () => {
-        try {
-          const types = await sessionTypes();
-          return types.length ? types.map((t) => `${t.id} · ${t.name} · £${t.price} · ${t.duration} min${t.active ? "" : " · inactive"}${t.private ? " · private" : ""}`).join("\n") : "No session types.";
-        } catch (error) {
-          return failed(error);
-        }
-      },
-    }),
-    betaZodTool({
-      name: "studio_clients",
-      description: "Find the studio's clients in Acuity by name, email or phone (up to 25).",
-      inputSchema: z.object({ search: z.string().min(2).max(100) }),
-      run: async ({ search }) => {
-        did("looked", "Looked up clients in Acuity");
-        try {
-          const clients = await findClients(search);
-          return clients.length ? JSON.stringify(clients) : `No clients matching “${search}”.`;
-        } catch (error) {
-          return failed(error);
-        }
-      },
-    }),
-    betaZodTool({
-      name: "propose_booking_change",
-      description:
-        "PROPOSE a change to Acuity: it is NOT done. It waits for an admin to approve it in Portal → Approvals. Kinds and what each needs: create (type_id, start, first_name, last_name, email; phone, notes optional), reschedule (appointment_id, start), cancel (appointment_id; notes = a cancel note), update (appointment_id and the fields that change: first_name, last_name, email, phone, notes), block_add (start, end; notes, calendar_id optional), block_remove (block_id). notify_client (default true) says whether Acuity emails the client. Always give the reason.",
-      inputSchema: z.object({
-        kind: z.enum(BOOKING_KINDS),
-        reason: z.string().min(3).max(500).describe("Why: who asked, and for what"),
-        appointment_id: z.number().int().positive().optional(),
-        type_id: z.number().int().positive().optional(),
-        start: WHEN.optional(),
-        end: WHEN.optional(),
-        first_name: z.string().max(60).optional(),
-        last_name: z.string().max(60).optional(),
-        email: z.string().max(200).optional(),
-        phone: z.string().max(40).optional(),
-        notes: z.string().max(2000).optional(),
-        notify_client: z.boolean().optional(),
-        block_id: z.number().int().positive().optional(),
-        calendar_id: z.number().int().positive().optional(),
-      }),
-      run: async (i) => {
-        const built = bookingPayload(i);
-        if (typeof built === "string") return built;
-        let action: BookingAction;
-        try {
-          action = await proposeChange(i.kind, built, i.reason);
-        } catch (error) {
-          return `Couldn't propose it: ${(error as Error).message} Nothing has changed.`;
-        }
-        actions.push({ kind: "booking", text: `Proposed: ${action.summary} (waiting for an admin)`, booking: action });
-        trace("input", "ok", `Chat: proposed booking change #${action.id} (${action.kind}), waiting for an admin`);
-        return `Proposal #${action.id} saved, NOT done: “${action.summary}”. Nothing has changed in Acuity. An admin must approve it in Portal → Approvals (${action.portalUrl}) or on the card under your reply; tell them that.`;
-      },
-    }),
-    betaZodTool({
-      name: "booking_actions",
-      description: "The proposed booking changes and what became of them (pending, approved, executed, failed, rejected). Read-only.",
-      inputSchema: z.object({ status: z.enum(["pending", "all"]).optional().describe("pending (default) or all") }),
-      run: async ({ status }) => {
-        try {
-          const list = await listActions(status ?? "pending");
-          return list.length ? list.map(actionLine).join("\n") : status === "all" ? "No proposals yet." : "Nothing waiting for approval.";
-        } catch (error) {
-          return `Couldn't read the proposals: ${(error as Error).message}`;
+          return `Couldn't read the studio's bookings just now: ${(error as Error).message}`;
         }
       },
     }),
   ];
-}
-
-// What each kind of proposal needs (Nova Bot checks it all again; this catches the obvious early)
-type ProposalInput = {
-  kind: BookingKind;
-  appointment_id?: number;
-  type_id?: number;
-  start?: string;
-  end?: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  phone?: string;
-  notes?: string;
-  notify_client?: boolean;
-  block_id?: number;
-  calendar_id?: number;
-};
-export function bookingPayload(i: ProposalInput): Record<string, unknown> | string {
-  const need = (fields: (keyof ProposalInput)[]) => {
-    const missing = fields.filter((f) => i[f] === undefined || i[f] === "");
-    return missing.length ? `A ${i.kind} needs ${missing.join(", ")}. Nothing was proposed.` : null;
-  };
-  const some = (o: Record<string, unknown>) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
-  const notifyClient = i.notify_client ?? true;
-  switch (i.kind) {
-    case "create":
-      return need(["type_id", "start", "first_name", "last_name", "email"]) ?? some({ typeId: i.type_id, start: i.start, firstName: i.first_name, lastName: i.last_name, email: i.email, phone: i.phone, notes: i.notes, notifyClient });
-    case "reschedule":
-      return need(["appointment_id", "start"]) ?? { appointmentId: i.appointment_id, start: i.start, notifyClient };
-    case "cancel":
-      return need(["appointment_id"]) ?? some({ appointmentId: i.appointment_id, notifyClient, note: i.notes });
-    case "update": {
-      const missing = need(["appointment_id"]);
-      if (missing) return missing;
-      const changes = some({ firstName: i.first_name, lastName: i.last_name, email: i.email, phone: i.phone, notes: i.notes });
-      return Object.keys(changes).length ? { appointmentId: i.appointment_id, ...changes } : "An update needs at least one field to change. Nothing was proposed.";
-    }
-    case "block_add":
-      return need(["start", "end"]) ?? some({ start: i.start, end: i.end, notes: i.notes, calendarId: i.calendar_id });
-    case "block_remove":
-      return need(["block_id"]) ?? { blockId: i.block_id };
-  }
 }
 
 function tools(actions: ChatAction[], person: Person = localPerson()) {
@@ -499,7 +292,7 @@ function tools(actions: ChatAction[], person: Person = localPerson()) {
         return `Removed day card “${day.title}”.`;
       },
     }),
-    // The studio's Acuity bookings (API or browser, as ACUITY_SOURCE says)
+    // The studio's bookings (read-only)
     ...studioTools(actions),
     betaZodTool({
       name: "page_look",
@@ -526,9 +319,8 @@ function tools(actions: ChatAction[], person: Person = localPerson()) {
           .slice(-8)
           .map((e) => `${e.time} ${e.level}: ${e.message}`);
         return JSON.stringify({
-          mode: config.dryRun ? "rehearsal (DRY_RUN on: never clicks final confirm buttons)" : "live",
+          mode: "live",
           connected_to_nova_bot: Boolean(config.agentNovaKey),
-          browser: config.headless ? "hidden" : "visible",
           model: config.novaModel || DEFAULT_MODEL,
           calendar: { note_cards: cal.notes.length, day_cards: cal.days.length },
           recent_activity: recent,

@@ -1,62 +1,23 @@
-// Collecting jobs from Novabot.
+// Checking in with Nova Bot.
 //
-// Novabot's worker queues two kinds of job for Nova Agent:
-//   - "book":   a customer asked Novabot to book a session for them
-//   - "change": staff asked (in Portal) to change a booking's session type,
-//               price or paid status, which Acuity's API can't do
-// Nova Agent keeps asking the worker "any jobs for me?" (also saying
-// whether it's live or rehearsing, so Novabot only offers to book while it's
-// live), does the job in Acuity's admin pages, and reports back; the worker
-// then sends staff phones a notification with the result.
+// Nova Agent keeps asking Nova Bot's worker "anything for me?" (POST /nova-agent/next). Each
+// answer can carry:
+//   - questActions: taps in Portal's Quests tab, applied here (quests/portalsync.ts)
+//   - bookingsChanged: when the studio's bookings last changed. Each "any jobs?" also says when
+//     Nova Agent last caught up (bookingsSeen); when the answer is newer, the bookings are read
+//     again and Quests re-planned (quests/bookings.ts), so a new booking shows in Nova Agent
+//     within about a minute.
+//   - job: Nova Agent no longer books or changes bookings itself (the studio's bookings are Nova
+//     Bot's own now, made on its /book page and kept on the studio's Google Calendar). A job that
+//     still arrives is reported back as not done, so staff hear about it and nothing changes.
 //
 // Nova Agent only ever calls out to the worker, so it can run on any
 // computer: nothing on the internet needs to reach it.
-//
-// Each "any jobs?" also says when Nova Agent last caught up with Acuity
-// (bookingsSeen), and the answer says when Acuity last changed
-// (bookingsChanged, from Acuity's webhook). When that's newer, the studio's
-// bookings are read again and Quests re-planned (quests/bookings.ts), so a
-// booking made in Acuity shows in Nova Agent within about a minute.
 
 import { applyQuestTaps } from "./quests/portalsync";
 import { bookingsChanged, bookingsSeen } from "./quests/bookings";
-import { z } from "zod";
-import type { ActionResult } from "./acuity/types";
 import { config } from "./config";
-import { bookTask, extrasTask } from "./tasks";
 import { trace } from "./trace";
-
-// What a job from the worker must look like. Anything else is refused.
-const ChangeJob = z.object({
-  id: z.number().int(),
-  kind: z.literal("change"),
-  appointmentId: z.number().int().positive(),
-  clientName: z.string().min(1).max(200),
-  changes: z
-    .object({
-      type: z.string().max(150).optional(),
-      price: z.string().regex(/^\d{1,5}(\.\d{1,2})?$/).optional(),
-      paid: z.boolean().optional(),
-    })
-    .strict(),
-});
-
-const BookJob = z.object({
-  id: z.number().int(),
-  kind: z.literal("book"),
-  clientName: z.string().min(1).max(200),
-  details: z.object({
-    type: z.string().min(1).max(200),
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    time: z.string().regex(/^\d{2}:\d{2}$/),
-    firstName: z.string().min(1).max(60),
-    lastName: z.string().min(1).max(60),
-    email: z.string().email().max(200),
-    phone: z.string().max(40).optional(),
-  }),
-});
-
-const Job = z.discriminatedUnion("kind", [ChangeJob, BookJob]);
 
 // How long the worker may hold each "any jobs?" call open (its limit is 20)
 const WAIT_SECONDS = 20;
@@ -66,18 +27,16 @@ let lastProblem = "";
 
 export function startCollectingJobs(): void {
   if (!config.agentNovaKey) {
-    console.log("Not collecting jobs from Novabot: set AGENT_NOVA_KEY in .env (the same as the worker's secret).");
+    console.log("Not checking in with Nova Bot: set AGENT_NOVA_KEY in .env (the same as the worker's secret).");
     return;
   }
-  console.log(`Collecting jobs from ${config.workerUrl} (waiting up to ${WAIT_SECONDS}s per call for a job)`);
+  console.log(`Checking in with ${config.workerUrl} (waiting up to ${WAIT_SECONDS}s per call)`);
   void collectForever();
 }
 
-// Ask for a job, do it, ask again. The worker holds each "any jobs?" call open
-// until a job comes in (up to WAIT_SECONDS), so a booking starts within about
-// a second of being queued. If the worker answers straight away with nothing
-// (an older worker that doesn't wait, or a problem), pause JOBS_EVERY_SECONDS
-// before asking again so it isn't asked non-stop.
+// Ask, act, ask again. The worker holds each call open until there's news (up to
+// WAIT_SECONDS). If it answers straight away with nothing, pause before asking again so it
+// isn't asked non-stop.
 async function collectForever(): Promise<never> {
   for (;;) {
     const started = Date.now();
@@ -93,21 +52,22 @@ export async function checkForJob(): Promise<"job" | "none" | "problem"> {
   try {
     const { job, questActions, bookingsChanged: changed } = (await callWorker(
       "/nova-agent/next",
-      { dryRun: config.dryRun, bookingsPerVisitor: config.bookingsPerVisitorPerDay, wait: WAIT_SECONDS, bookingsSeen: bookingsSeen() },
+      // dryRun: true tells Nova Bot not to hand Nova Agent any booking to make (it can't any more)
+      { dryRun: true, bookingsPerVisitor: config.bookingsPerVisitorPerDay, wait: WAIT_SECONDS, bookingsSeen: bookingsSeen() },
       (WAIT_SECONDS + 15) * 1000,
     )) as { job: unknown; questActions?: unknown; bookingsChanged?: unknown };
     lastProblem = "";
-    // Taps from Portal's Quests tab come along with the job check
+    // Taps from Portal's Quests tab come along with the check-in
     applyQuestTaps(questActions);
-    // Something changed in Acuity: read the bookings again and re-plan (in the background)
+    // The studio's bookings changed: read them again and re-plan (in the background)
     void bookingsChanged(changed);
     if (!job) return "none";
-    await doJob(job);
+    await turnDown(job);
     return "job";
   } catch (error) {
     // Say so once, not every time
     const problem = (error as Error).message;
-    if (problem !== lastProblem) trace("input", "warn", `Couldn't check Novabot for jobs: ${problem}`);
+    if (problem !== lastProblem) trace("input", "warn", `Couldn't check in with Nova Bot: ${problem}`);
     lastProblem = problem;
     return "problem";
   } finally {
@@ -117,40 +77,16 @@ export async function checkForJob(): Promise<"job" | "none" | "problem"> {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function doJob(raw: unknown): Promise<void> {
-  const parsed = Job.safeParse(raw);
-  if (!parsed.success) {
-    const id = (raw as { id?: unknown })?.id;
-    trace("input", "error", "Novabot sent a job Nova Agent doesn't understand; refused", raw);
-    if (typeof id === "number") await report(id, { ok: false, dryRun: false, message: "Nova Agent didn't understand this job, so nothing was changed." });
-    return;
-  }
-
-  const job = parsed.data;
-  let result: ActionResult;
+// A booking job (from before the studio's own booking system): say it wasn't done
+async function turnDown(raw: unknown): Promise<void> {
+  const id = (raw as { id?: unknown })?.id;
+  trace("input", "warn", "Nova Bot sent a booking job; Nova Agent doesn't make or change bookings any more, so nothing was changed", raw);
+  if (typeof id !== "number") return;
+  const message = "Nothing was changed: Nova Agent doesn't make or change bookings any more. Make or change it in Portal → Calendar or the studio's Google Calendar.";
   try {
-    if (job.kind === "book") {
-      trace("input", "start", `Job #${job.id} from Novabot: book ${job.details.type} for ${job.clientName} on ${job.details.date} at ${job.details.time}`, job.details);
-      result = await bookTask(job.details);
-    } else {
-      trace("input", "start", `Job #${job.id} from Portal: change ${job.clientName}'s booking #${job.appointmentId}`, job.changes);
-      result = await extrasTask(String(job.appointmentId), job.clientName, job.changes);
-    }
+    await callWorker("/nova-agent/result", { id, ok: false, message });
   } catch (error) {
-    result = { ok: false, dryRun: false, message: `${(error as Error).message} Nothing was changed.` };
-  }
-  await report(job.id, result);
-}
-
-// Tell the worker how it went. A dry run counts as "not done", so staff
-// aren't told something changed when it didn't.
-async function report(id: number, result: ActionResult): Promise<void> {
-  const message = result.dryRun ? `Rehearsal only (Nova Agent's DRY_RUN is on), so nothing was changed. ${result.message}` : result.message;
-  try {
-    await callWorker("/nova-agent/result", { id, ok: result.ok && !result.dryRun, message });
-    trace("input", result.ok && !result.dryRun ? "ok" : "warn", `Reported job #${id} back to Novabot: ${message}`);
-  } catch (error) {
-    trace("input", "error", `Couldn't report job #${id} back to Novabot: ${(error as Error).message}`);
+    trace("input", "error", `Couldn't report job #${id} back to Nova Bot: ${(error as Error).message}`);
   }
 }
 

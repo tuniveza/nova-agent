@@ -2,14 +2,14 @@
 //
 //   /             the chat: talk to Nova Agent, with Calendar beside it
 //   /calendar/    Calendar (the ../../calendar folder), saving to Nova Agent
-//   /visualizer   every step the agent takes, live: what it's looking for, what
-//                 it remembered, what it asked the AI, what the browser saw
+//   /visualizer   every step Nova Agent takes, live (what it was asked, what it asked the AI,
+//                 what it did)
 //
 //   npm run visualizer      then open http://localhost:4545
 //
 // While it runs, it also:
-//   - runs the daily read-only healthcheck (HEALTHCHECK_CRON, default 06:00 UK)
-//   - collects jobs from Novabot every minute (jobs.ts)
+//   - checks in with Nova Bot (jobs.ts): quest taps from Portal, and when the bookings changed
+//   - keeps the studio's bookings as busy time for Quests (quests/bookings.ts)
 // so this is the process to keep running (npm run service does the same).
 //
 // It only listens on this computer (127.0.0.1), because the steps include
@@ -27,13 +27,9 @@ import { sweepWriteBlocked } from "../fixer/sweep-guard";
 import { streamSSE } from "hono/streaming";
 import cron from "node-cron";
 import { config } from "../config";
-import { addDays, today } from "../acuity/list";
-import { readCache } from "../heal/cache";
-import { runHealthcheck } from "../healthcheck";
 import { startCollectingJobs } from "../jobs";
 import { startRelay } from "../relay";
 import { startWatchdog } from "../watchdog";
-import { checkLogin, describeAppointments, listTask, readOnlyTour } from "../tasks";
 import { getRecentEvents, onTrace, trace } from "../trace";
 import { calendarEvents, readCalendar } from "../calendar/store";
 import { saveFromPage } from "../calendar/page";
@@ -79,22 +75,6 @@ const calendarRoot = web("calendar/");
 const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".json": "application/json", ".webmanifest": "application/manifest+json",
-};
-
-// The tasks the page's buttons can start (the page builds a button for
-// each one). All of them are read-only.
-const TASKS: Record<string, { label: string; run: () => Promise<string> }> = {
-  "check-login": { label: "Check login", run: checkLogin },
-  "next-7-days": {
-    label: "Next 7 days",
-    run: async () => describeAppointments(await listTask(today(), addDays(today(), 6))),
-  },
-  "last-30-days": {
-    label: "Last 30 days",
-    run: async () => describeAppointments(await listTask(addDays(today(), -30), today())),
-  },
-  tour: { label: "Read-only tour", run: readOnlyTour },
-  healthcheck: { label: "Health check", run: async () => (await runHealthcheck()).summary },
 };
 
 const app = new Hono();
@@ -483,7 +463,7 @@ app.get("/calendar-api/events", (c) =>
 
 // How Nova Agent is set up (for the chat page's status pill)
 app.get("/status", (c) =>
-  c.json({ live: !config.dryRun, connected: Boolean(config.agentNovaKey), model: config.novaModel || "claude-opus-5-5" }),
+  c.json({ live: true, connected: Boolean(config.agentNovaKey), model: config.novaModel || "claude-opus-5-5" }),
 );
 
 // ---- Quests ----
@@ -741,49 +721,9 @@ app.get("/events", (c) =>
   }),
 );
 
-// What's in the selector cache (the agent's memory) right now.
-app.get("/cache", (c) => c.json(readCache()));
-
-app.get("/tasks", (c) =>
-  c.json(Object.entries(TASKS).map(([id, task]) => ({ id, label: task.label }))),
-);
-
-app.post("/actions/run/:id", async (c) => {
-  const task = TASKS[c.req.param("id")];
-  if (!task) return c.json({ ok: false, message: "Unknown task" }, 404);
-
-  trace("input", "start", `You asked for: ${task.label}`);
-  try {
-    const message = await task.run();
-    trace("input", "ok", `Result: ${message}`);
-    return c.json({ ok: true, message });
-  } catch (error) {
-    const message = (error as Error).message;
-    trace("input", "error", `Result: failed (${message})`);
-    return c.json({ ok: false, message }, 500);
-  }
-});
-
-// Wipe the agent's memory, so you can watch it re-learn everything with the AI.
-app.post("/actions/forget", (c) => {
-  rmSync(config.paths.selectors, { force: true });
-  trace("cache", "warn", "Memory wiped: every element will be looked up with the AI again");
-  return c.json({ ok: true, message: "Memory wiped" });
-});
-
 serve({ fetch: app.fetch, hostname: "127.0.0.1", port: config.visualizerPort }, () => {
   console.log(`Nova Agent${config.onServer ? " (on the server)" : ""}: http://localhost:${config.visualizerPort}  (Agent)  ·  /calendar/  ·  /visualizer`);
 });
-
-// The daily healthcheck. It waits its turn in the task queue like any task.
-cron.schedule(
-  config.healthcheckSchedule,
-  () => {
-    runHealthcheck().catch((error) => trace("task", "error", `Healthcheck crashed: ${(error as Error).message}`));
-  },
-  { timezone: config.timezone },
-);
-console.log(`Daily healthcheck scheduled: "${config.healthcheckSchedule}" (${config.timezone})`);
 
 // Every night at 3:15: this computer's files into Google Drive's Backups (when Google is connected)
 cron.schedule(
@@ -816,7 +756,7 @@ try {
 }
 startQuestReminders();
 startPulses();
-// The studio's bookings as busy time for Quests (ACUITY_SOURCE=api): now, every 10 minutes, and on a change in Acuity
+// The studio's bookings as busy time for Quests: now, every 10 minutes, and when Nova Bot says they changed
 startBookingRefresh();
 startPortalSync();
 // Who Nova Agent works for on this PC (owner of everything ownerless): asked once now

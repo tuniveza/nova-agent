@@ -10,7 +10,7 @@
 # To keep it running even when you're logged out: loginctl enable-linger $USER
 
 [Unit]
-Description=Nova Agent (Acuity browser helper for Novabot)
+Description=Nova Agent (the studio's one app, for Nova Bot)
 After=network-online.target
 
 [Service]

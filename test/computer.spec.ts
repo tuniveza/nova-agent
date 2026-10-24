@@ -65,7 +65,7 @@ describe("Computer: secrets never leave", () => {
     expect(redact(text)).toBe(text);
   });
   it("finds secret values only under secret-looking names", () => {
-    expect(secretValues({ ANTHROPIC_API_KEY: "sk-123456", NOVA_MODEL: "claude-opus", ACUITY_PASSWORD: "hunter22", SHORT_KEY: "abc" })).toEqual(["sk-123456", "hunter22"]);
+    expect(secretValues({ ANTHROPIC_API_KEY: "sk-123456", NOVA_MODEL: "claude-opus", MAIL_PASSWORD: "hunter22", SHORT_KEY: "abc" })).toEqual(["sk-123456", "hunter22"]);
   });
 });
 
