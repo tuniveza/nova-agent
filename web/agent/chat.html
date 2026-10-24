@@ -357,34 +357,21 @@
     font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; cursor: pointer; white-space: nowrap; }
   .ico { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
-  /* Main: fits the screen (no scrolling). Agent | Quests, with the panels along the bottom */
+  /* Main: fits the screen (no scrolling). Agent, with the panels along the bottom (Quests is its own panel) */
   .main { width: min(100%, 1800px); justify-self: center; min-height: 0; overflow: hidden; display: grid; gap: 12px;
-    grid-template-columns: minmax(380px, 1fr) minmax(270px, .55fr); grid-template-rows: minmax(0, 1fr) auto;
-    grid-template-areas: "chat quests" "suite suite"; }
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "chat" "suite"; }
   .main > * { min-height: 0; min-width: 0; }
-  .main > .chat { grid-area: chat; } .main > #quests-panel { grid-area: quests; }
+  .main > .chat { grid-area: chat; }
   .main > .suite-home { grid-area: suite; min-height: min-content; }
   .main > .viewer { grid-area: 1 / 1 / 2 / -1; }
-  .board { min-width: 0; } .board > * { min-width: 0; }
   /* The side columns: the name and buttons on top, the contents below (scrolling inside if there's a lot) */
-  .side { display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 22px; overflow: hidden; }
-  .side-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--void) 25%, transparent); }
-  .side > .view { min-height: 0; overflow-y: auto; padding: 12px 14px; }
-  .side .empty { padding: 14px; }
-  .strip-tools { display: flex; gap: 6px; }
-  .strip-btn { justify-content: center; padding: 7px 12px; }
-  .side-head > .strip-btn { max-width: 100%; min-width: 0; white-space: normal; } /* (a very narrow screen: wraps rather than running off the side) */
+  .strip-btn { justify-content: center; padding: 7px 12px; } /* (a very narrow screen: wraps rather than running off the side) */
   /* The panels strip: the apps in their four groups, edge to edge. Its name is there for screen
      readers only (no box on the left), and it's the same bar whatever is open: only its size changes. */
   .strip { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); border-radius: 22px; overflow: hidden; }
   .strip-side { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   /* Quests: the day, what's on now or next, then the day's list (which scrolls inside if long) */
-  #view-today { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
-  #view-today > * { flex: none; margin: 0; }
-  #view-today > .day-head { flex-wrap: wrap; gap: 8px; }
-  #view-today > .day-head > div:first-child { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
-  #view-today > .day-head h3 { order: -1; font-size: 18px; }
-  #view-today > .subpanel { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
   /* An app opened inside Nova Agent takes the chat's place; the panels stay below it to switch */
   /* Its title panel is Nova Agent's header above (/shared/topbar.css: one slim bar, not two), then
      the panel in its own box */
@@ -392,7 +379,7 @@
   .viewer[hidden] { display: none; }
   .viewer > .viewer-body { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; border-radius: 24px; overflow: hidden; }
   .viewer-body > iframe { grid-area: 1 / 1 / 2 / 2; }
-  .main.viewing > .chat, .main.viewing > .board { display: none; }
+  .main.viewing > .chat { display: none; }
   /* The title panel's back (←): a drawn arrow, not a letter (a font's arrow sits off the middle), in the
      exact middle of its button both ways (22 Oct 2026) */
   .viewer-back { display: grid; place-items: center; padding: 0; font-size: 17px; line-height: 1; }
@@ -600,59 +587,15 @@
   .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
   .calendar iframe { width: 100%; height: 100%; border: 0; background: var(--void); }
 
-
   /* ===== The plan board: Today, Calendar ===== */
-  .board { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; min-width: 0; border-radius: 24px; overflow: hidden; }
   .board-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
   .seg { display: flex; gap: 4px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 45%, transparent); }
   .seg button { border: 0; padding: 6px 14px; border-radius: 999px; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
   .spacer { flex: 1; }
-  .view { min-height: 0; overflow-y: auto; padding: 16px 18px 28px; scrollbar-width: thin; scrollbar-color: var(--accent-2) transparent; }
-  .view.cal { padding: 0; overflow: hidden; }
-  .view.cal iframe { width: 100%; height: 100%; border: 0; background: var(--void); }
-
-  .day-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-  .day-head h3 { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: 22px; line-height: 1.1; color: #fff; }
-  .day-head h3 span { color: var(--hi); }
-  .day-sub { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; color: var(--muted); }
-  .stats { display: flex; gap: 8px; flex-wrap: wrap; }
-  .stat { padding: 6px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 55%, transparent); font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
-  .stat b { display: block; font-family: var(--f-display); font-stretch: 112%; font-size: 17px; color: #fff; }
-  .stat.warn b { color: var(--warn, #FFB86B); }
-
-  .bar { height: 6px; margin: 12px 0; border-radius: 6px; background: color-mix(in srgb, var(--void) 60%, transparent); overflow: hidden; }
-  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--hi), var(--lilac)); border-radius: 6px; box-shadow: 0 0 12px var(--hi); transition: width .6s ease; }
   .row-btns { display: flex; gap: 6px; flex-wrap: wrap; }
   .mini { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; cursor: pointer; }
 
-  .timeline { position: relative; display: grid; gap: 8px; margin-left: 4px; }
-  .tl-item { position: relative; display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 12px; align-items: start; }
-  .tl-time { padding-top: 10px; font-family: var(--f-mono); font-size: 12px; color: var(--soft); text-align: right; line-height: 1.25; }
-  .tl-time small { display: block; color: var(--muted); font-size: 10.5px; }
-  .tl-card { padding: 10px 14px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 75%, transparent); border-left: 3px solid var(--hi); }
-  .tl-card.busy { border-left-color: var(--muted); background: color-mix(in srgb, var(--void) 35%, transparent); }
-  .tl-card.block { border-left-color: #E5484D; background: color-mix(in srgb, #E5484D 8%, transparent); }
-  .tl-card.done { opacity: .55; }
-  .tl-card.done .tl-title { text-decoration: line-through; text-decoration-color: var(--hi); }
-  .tl-card.doing { box-shadow: 0 0 0 1px var(--hi), 0 0 24px -8px var(--hi); }
-  .tl-card.risk { border-left-color: var(--warn, #FFB86B); }
-  .tl-item.past .tl-card:not(.done):not(.doing) { opacity: .7; }
-  .tl-title { font-weight: 600; color: #fff; }
-  .tl-card { min-width: 0; overflow-wrap: anywhere; }
-
   /* ===== Fit on one screen: compact headers, one-click sub-tabs ===== */
-  .day-head { margin-bottom: 10px; align-items: center; }
-  .day-head h3 { font-size: 20px; }
-  .stats { gap: 6px; }
-  .stat { padding: 4px 10px; display: flex; align-items: baseline; gap: 6px; border-radius: 12px; }
-  .stat b { display: inline; font-size: 15px; }
-  .subtabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
-  .subtabs button { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
-  .subtabs button b { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--hi) 22%, transparent); color: var(--soft); font-size: 10.5px; }
-  .subtabs button[aria-selected="true"] b { background: color-mix(in srgb, #fff 25%, transparent); color: #fff; }
-  .subpanel { animation: quest-in .3s ease both; }
-  .tl-card.quest { padding: 10px 14px; }
-  .q-tags { margin-bottom: 4px; }
   /* The chat's welcome, smaller, so the suggestions and the box fit */
   .welcome { padding: 10px 6px; gap: 8px; }
   .welcome .mark { width: 58px; height: 58px; border-radius: 16px; }
@@ -663,34 +606,9 @@
 
   /* ===== Quests: unmistakable, and alive ===== */
   @property --p { syntax: "<number>"; inherits: false; initial-value: 0; }
-  .tl-card.quest { position: relative; overflow: hidden; padding: 12px 16px; border-left: 0;
-    background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)) padding-box,
-      linear-gradient(135deg, var(--hi), color-mix(in srgb, var(--lilac) 60%, transparent) 45%, color-mix(in srgb, var(--hi) 35%, transparent)) border-box;
-    border: 1px solid transparent; box-shadow: 0 14px 34px -24px var(--hi); animation: quest-in .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 60ms); transition: transform .2s, box-shadow .2s; }
-  .tl-card.quest::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, var(--hi), var(--lilac), var(--hi)); background-size: 100% 200%; animation: quest-flow 3s linear infinite; }
-  .tl-card.quest::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 40%, color-mix(in srgb, #fff 9%, transparent) 50%, transparent 60%); transform: translateX(-100%); animation: quest-shine 6s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 400ms + 1s); }
-  .tl-card.quest:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -22px var(--hi); }
-  .tl-card.quest.done { animation: none; opacity: .55; } .tl-card.quest.done::before, .tl-card.quest.done::after { animation: none; }
-  .tl-card.quest.doing { box-shadow: 0 0 0 1px var(--hi), 0 0 30px -6px var(--hi); animation: quest-in .5s both, quest-breathe 2.4s ease-in-out infinite; }
-  .tl-card.quest.risk { background: linear-gradient(color-mix(in srgb, var(--panel) 82%, transparent), color-mix(in srgb, var(--panel) 82%, transparent)) padding-box, linear-gradient(135deg, var(--warn, #FFB86B), color-mix(in srgb, var(--warn, #FFB86B) 30%, transparent)) border-box; }
   /* Each quest wears its mode's colour (Waiting, Soon, Working On It...: /shared/quest-modes.css,
      tinted toward the theme): the card, its edge, its glow and its title */
-  .tl-card.quest.qm-tinted {
-    background:
-      radial-gradient(130% 140% at 0% 0%, color-mix(in oklab, var(--qm) 30%, transparent), transparent 65%) padding-box,
-      linear-gradient(120deg, color-mix(in oklab, var(--qm) 18%, var(--panel)), color-mix(in oklab, var(--qm) 6%, var(--panel))) padding-box,
-      linear-gradient(135deg, var(--qm), color-mix(in oklab, var(--qm) 30%, transparent)) border-box;
-    border: 1px solid transparent; box-shadow: 0 14px 34px -22px var(--qm); }
-  .tl-card.quest.qm-tinted::before { background: linear-gradient(180deg, var(--qm), color-mix(in oklab, var(--qm) 55%, var(--lilac)), var(--qm)); background-size: 100% 200%; }
-  .tl-card.quest.qm-tinted.doing { box-shadow: 0 0 0 1px var(--qm), 0 0 30px -8px var(--qm); }
-  .tl-card.quest.qm-tinted .tl-title { color: color-mix(in oklab, var(--qm) 30%, #fff); }
-  .q-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-  .q-tag, .m-tag, .risk-tag, .m-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
-  .q-tag { color: var(--on-accent); background: linear-gradient(120deg, var(--hi), var(--accent-2), var(--hi)); background-size: 200% 100%; box-shadow: 0 4px 14px -6px var(--hi); animation: tag-flow 4s linear infinite; }
-  .m-tag { color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent); background: color-mix(in srgb, var(--gold) 10%, transparent); letter-spacing: .08em; }
-  .risk-tag { color: var(--warn, #FFB86B); border: 1px solid rgba(var(--warn-rgb, 255, 184, 107), .53); animation: risk-pulse 1.6s ease-in-out infinite; }
-  .tl-card.quest .tl-title { font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: 16.5px; letter-spacing: .01em; }
-  .ring { animation: ring-fill 1.4s cubic-bezier(.2,.8,.2,1) both; }
+  .m-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
   @keyframes ring-fill { from { --p: 0; } }
   @keyframes quest-in { from { opacity: 0; transform: translateY(12px) scale(.98); } }
   @keyframes quest-flow { to { background-position: 0 200%, 200% 0; } }
@@ -698,40 +616,12 @@
   @keyframes quest-breathe { 50% { box-shadow: 0 0 0 1px var(--hi), 0 0 44px -4px var(--hi); } }
   @keyframes tag-flow { to { background-position: 200% 0; } }
   @keyframes risk-pulse { 50% { box-shadow: 0 0 14px -2px var(--warn, #FFB86B); } }
-  .tl-meta { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
-  .tl-meta .chip-m { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .06em; background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--soft); }
-  .tl-card .row-btns { margin-top: 8px; }
-  .prio { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
-  .prio.critical { color: var(--bad, #FF8A8A); } .prio.high { color: var(--warn, #FFB86B); } .prio.normal { color: var(--lilac); } .prio.low { color: var(--muted); }
-  .now-line { position: relative; height: 0; margin: 2px 0 2px 74px; border-top: 2px solid var(--hi); box-shadow: 0 0 10px var(--hi); }
-  .now-line::before { content: "NOW"; position: absolute; left: -74px; top: -8px; width: 62px; text-align: right; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .2em; color: var(--hi); }
   .empty { padding: 24px; border-radius: 18px; border: 1px dashed var(--line); text-align: center; color: var(--muted); }
   .section-h { margin: 22px 0 10px; font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: var(--muted); }
-  .upcoming { display: grid; gap: 10px; }
-  .up-day { padding: 10px 14px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 55%, transparent); }
-  .up-day h4 { margin: 0 0 6px; font-family: var(--f-display); font-stretch: 110%; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--soft); }
-  .up-day li { font-size: 13px; color: var(--text); list-style: none; }
-  .up-day ul { margin: 0; padding: 0; display: grid; gap: 3px; }
-  .up-day time { display: inline-block; width: 48px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
-  .up-day .src, .upcoming .src { color: var(--muted); font-size: 11.5px; }
   /* Also coming up: Calendar's note cards with reminders this week, quiet under the plan */
-  .also { margin-top: 14px; padding: 10px 12px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 45%, transparent); }
-  .also h4 { margin: 0 0 6px; font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
-  .also ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
-  .also-row { width: 100%; min-width: 0; display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px; align-items: center; padding: 6px 4px; border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
-  .also-row:hover, .also-row:focus-visible { background: color-mix(in srgb, var(--hi) 8%, transparent); }
-  .also-when { display: grid; font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
-  .also-when b { font-size: 12px; font-weight: 600; color: var(--soft); }
-  .also-what { min-width: 0; display: grid; gap: 3px; }
-  .also-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
-  .also-what small { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); font-size: 11.5px; }
-  .also-what .m-tag { padding: 1px 8px; font-size: 9px; }
-  .also-more { margin-top: 6px; padding: 4px 8px; border: 0; background: none; color: var(--muted); font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
   .field input, .field select { width: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--void) 65%, transparent); color: var(--text); font: inherit; }
   .field input:focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 20%, transparent); }
-  .ring { --p: 0; flex: none; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-mono); font-size: 12px; font-weight: 600; color: #fff;
-    background: radial-gradient(closest-side, var(--deep) 76%, transparent 78% 100%), conic-gradient(var(--hi) calc(var(--p) * 1%), color-mix(in srgb, var(--line) 80%, transparent) 0); box-shadow: 0 0 18px -6px var(--hi); }
   .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .badge { padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
   .badge.warn { border-color: rgba(var(--warn-rgb, 255, 184, 107), .53); color: var(--warn, #FFB86B); }
@@ -762,21 +652,14 @@
   .rh { display: grid; gap: 14px; padding: 20px; border-radius: 24px; border: 1px solid transparent; background: linear-gradient(var(--deep), var(--deep)) padding-box, var(--edge) border-box; box-shadow: 0 40px 120px -30px #000; }
   .rh h3 { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 900; text-transform: uppercase; font-size: 18px; color: #fff; }
   .rh p { margin: 0; font-size: 13px; color: var(--muted); }
-  .rh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   .field { display: grid; gap: 5px; }
   .field span { font-family: var(--f-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
   .checks { display: grid; gap: 8px; }
   .checks label { display: flex; gap: 10px; align-items: center; font-size: 14px; cursor: pointer; }
   .checks input { width: 17px; height: 17px; accent-color: var(--accent); }
-  .rh-foot { display: flex; justify-content: flex-end; gap: 8px; }
   .busy-dots { display: inline-flex; gap: 4px; } .busy-dots span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: orbit 1.2s ease-in-out infinite; }
   .busy-dots span:nth-child(2) { animation-delay: .15s; } .busy-dots span:nth-child(3) { animation-delay: .3s; }
-  .days-off { display: flex; flex-wrap: wrap; gap: 6px; }
-  .days-off label { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; cursor: pointer; }
-  .days-off label:has(input:checked) { border-color: var(--hi); background: color-mix(in srgb, var(--hi) 14%, transparent); }
-  .days-off input { accent-color: var(--hi); }
   /* Centred text (on unless switched off): the tick boxes, the days off and the buttons sit in the middle */
-  :root[data-centred] :is(.checks label, .days-off, .rh-foot) { justify-content: center; }
   /* ===== The type cue: what you're typing will become, live, with what was picked out of it ===== */
   .composer { flex-wrap: wrap; }
   .cue { --cue: var(--hi); flex: 1 0 100%; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; animation: cue-in .2s ease-out both; }
@@ -837,15 +720,13 @@
   .t-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .06em; color: var(--c, var(--soft)); border: 1px solid color-mix(in srgb, var(--c, var(--soft)) 50%, transparent); background: color-mix(in srgb, var(--c, var(--soft)) 10%, transparent); }
   .t-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--soft)); }
 
-
   /* Shorter screens: the chat's welcome drops its big mark so the suggestions fit */
   @media (max-height: 940px) { .welcome .mark { display: none; } .welcome h3 { font-size: 17px; } }
   html, body { overflow-x: clip; }
   /* Phones and very short windows can't fit it all: there it stacks and scrolls (the chat first) */
-  :where(html[data-room="phone"]) .main { overflow-y: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: max-content; grid-template-areas: "chat" "quests" "suite"; }
+  :where(html[data-room="phone"]) .main { overflow-y: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: max-content; grid-template-areas: "chat" "suite"; }
   :where(html[data-room="phone"]) .chat { height: 72dvh; }
   :where(html[data-room="phone"]) .viewer { height: 80dvh; }
-  :where(html[data-room="phone"]) .side > .view, :where(html[data-room="phone"]) #view-today, :where(html[data-room="phone"]) #view-today > .subpanel { overflow: visible; }
   :where(html[data-room="phone"]) .strip { grid-template-columns: minmax(0, 1fr); }
   :where(html[data-room="phone"]) .suite-home .suite-groups { flex-direction: column; }
   :where(html[data-room="phone"]) .suite-home .suite-grid { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
@@ -855,10 +736,6 @@
   :where(html[data-room="phone"]) .kicker { display: none; }
   :where(html[data-room="phone"]) .board-head { padding: 8px; gap: 4px; }
   :where(html[data-room="phone"]) .seg button { padding: 6px 10px; letter-spacing: .08em; }
-  :where(html[data-room="phone"]) .view { padding: 14px 12px 24px; }
-  :where(html[data-room="phone"]) .tl-item { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
-  :where(html[data-room="phone"]) .now-line { margin-left: 52px; }
-  :where(html[data-room="phone"]) .now-line::before { left: -52px; width: 44px; letter-spacing: .1em; }
   :where(html[data-room="phone"]) .toasts { right: 12px; left: 12px; bottom: 12px; width: auto; }
   /* A phone, calm (16 Oct 2026): the newest two notices, smaller, and the rest behind "N more" */
   :where(html[data-room="phone"]) .toasts:not(.all) > .toast:nth-last-child(n+3) { display: none; }
@@ -885,7 +762,6 @@
 <link rel="stylesheet" href="/agent/navpanel.css"><!-- Back, Forward, Home, Reload, History: navpanel.js -->
 <link rel="stylesheet" href="/agent/simple.css"><!-- The Simple design (the default): on a phone one title row, the page, one bar + Apps -->
 <link rel="stylesheet" href="/agent/glow.css">
-<link rel="stylesheet" href="/shared/quest-modes.css">
 <link rel="stylesheet" href="/shared/install.css">
 <link rel="stylesheet" href="/agent/music.css">
 <link rel="stylesheet" href="/agent/touch.css">
@@ -896,7 +772,6 @@
 <link rel="stylesheet" href="/shared/topbar.css"><!-- One top bar for Nova Agent and every open panel -->
 <link rel="stylesheet" href="/agent/phone-room.css"><!-- A phone: room for the panel (last, so it decides) -->
 <link rel="stylesheet" href="/agent/medallion.css"><!-- The top panel's planet medallion and its bubble buttons -->
-<link rel="stylesheet" href="/agent/quests-simple.css"><!-- Quests, simpler on a laptop or desktop -->
 <script src="/shared/spectrum.js"></script>
 <script src="/shared/look.js"></script>
 <link rel="stylesheet" href="/shared/simple.css"><link rel="stylesheet" href="/shared/onescreen.css"><!-- (here from the start, not added later by fit.js: nothing moves when they arrive) -->
@@ -1028,22 +903,6 @@
         <textarea id="input" rows="1" placeholder="Message Nova Agent…" aria-label="Message Nova Agent" maxlength="4000"></textarea>
         <button type="submit" class="send" id="send">Send</button>
       </form>
-    </section>
-
-    <section class="board side glass" id="quests-panel" aria-labelledby="quests-title" data-sfx-theme="quests">
-      <div class="side-head">
-        <h2 class="sec-title" id="quests-title"><span class="pico sec-ico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span> Quests</h2>
-        <div class="strip-tools">
-          <button type="button" class="icon-btn" id="btn-quests-open" title="Open Quests: every quest, Focus, Board" aria-label="Open Quests"><svg class="ico"><use href="#i-open"/></svg></button>
-          <button type="button" class="icon-btn" id="btn-calendar" title="Open Calendar" aria-label="Open Calendar"><svg class="ico"><use href="#i-cal"/></svg></button>
-          <button type="button" class="icon-btn" id="btn-replan" title="Re-plan everything from now" aria-label="Re-plan everything from now"><svg class="ico"><use href="#i-replan"/></svg></button>
-          <button type="button" class="icon-btn" id="btn-bell" title="Turn on pop-up reminders" aria-label="Turn on pop-up reminders"><svg class="ico"><use href="#i-bell"/></svg></button>
-          <button type="button" class="icon-btn" id="btn-rhythm" title="Your daily rhythm: when you wake, work and sleep" aria-label="Your daily rhythm"><svg class="ico"><use href="#i-rhythm"/></svg></button>
-          <!-- Yours, or everyone's (admins and the studio computer) -->
-          <button type="button" class="mini who-btn" id="btn-who" hidden aria-pressed="false" title="Showing your quests: tap for everyone’s">Mine</button>
-        </div>
-      </div>
-      <div class="view" id="view-today"></div>
     </section>
 
     <!-- The panels strip (filled from the launcher's tiles, so the two never drift apart) -->
@@ -1186,39 +1045,6 @@
     </div>
   </div>
 </dialog>
-<dialog class="rhythm" id="rhythm">
-  <form class="rh" id="rhythm-form" method="dialog">
-    <h3>✦ Your daily rhythm</h3>
-    <p>The planner fits quests around these, and re-plans the moment you save.</p>
-    <div class="rh-grid">
-      <label class="field"><span>Get up</span><input type="time" name="wake"></label>
-      <label class="field"><span>Go to sleep</span><input type="time" name="sleep"></label>
-      <label class="field"><span>Start-up (min)</span><input type="number" name="startUpMinutes" min="0" max="240"></label>
-      <label class="field"><span>Wind-down (min)</span><input type="number" name="windDownMinutes" min="0" max="240"></label>
-      <label class="field"><span>Buffer between (min)</span><input type="number" name="bufferMinutes" min="0" max="60"></label>
-      <label class="field"><span>Break after (min)</span><input type="number" name="breakAfterMinutes" min="30" max="480"></label>
-      <label class="field"><span>Break length (min)</span><input type="number" name="breakMinutes" min="0" max="120"></label>
-      <label class="field"><span>Max quest hours / day</span><input type="number" name="maxQuestHoursPerDay" min="1" max="18"></label>
-      <label class="field"><span>Remind before (min)</span><input type="number" name="remindMinutesBefore" min="0" max="120"></label>
-      <label class="field"><span>Plan ahead (days)</span><input type="number" name="horizonDays" min="3" max="90"></label>
-    </div>
-    <label class="field"><span>Home base (for travel)</span><input type="text" name="homeBase"></label>
-    <div class="checks">
-      <label><input type="checkbox" name="checkIns"> Check in when a quest should be finished</label>
-      <label><input type="checkbox" name="dailyBriefing"> Morning plan and evening wrap-up</label>
-      <label><input type="checkbox" name="phonePush"> Also send reminders to the staff phones</label>
-      <label><input type="checkbox" name="paceLimits"> <span><b>Pace limits</b> (safety): quests start a few minutes ahead, on 5-minute marks, with buffers and breaks. Off: right away, to the second, back to back.</span></label>
-    </div>
-    <div class="field"><span>Days off (no quests at all)</span>
-      <div class="days-off" id="days-off"><label><input type="checkbox" data-dayoff="1"> Mon</label><label><input type="checkbox" data-dayoff="2"> Tue</label><label><input type="checkbox" data-dayoff="3"> Wed</label><label><input type="checkbox" data-dayoff="4"> Thu</label><label><input type="checkbox" data-dayoff="5"> Fri</label><label><input type="checkbox" data-dayoff="6"> Sat</label><label><input type="checkbox" data-dayoff="0"> Sun</label></div>
-    </div>
-    <div class="rh-foot">
-      <button type="button" class="btn" id="rhythm-cancel">Cancel</button>
-      <button type="submit" class="btn primary">Save &amp; re-plan</button>
-    </div>
-  </form>
-</dialog>
-<script src="/shared/quest-modes.js"></script>
 <script src="/shared/sfx.js"></script>
 <script src="/shared/ambient.js"></script>
 <script src="/shared/badge.js" defer></script>
@@ -1238,7 +1064,6 @@
 <script src="/agent/music.js"></script>
 <script src="/agent/remember.js" defer></script>
 <script src="/agent/chatpages.js"></script>
-<script src="/agent/plans.js"></script>
 <script src="/agent/filelinks.js"></script>
 <script>
 (function () {
@@ -2052,6 +1877,8 @@
   });
 
   // ===================== NOVA QUESTS =====================
+  // (Quests' own section moved into Quests, /quests/, on 24 Oct 2026, the user: "get that quests section off this
+  // area of the nova desk and put it into quests". Here: the plan, kept for the pop-up notices' buttons.)
   let st = null;
   // Nova Agent not answering (restarting, stopped) is said, not swallowed
   const api = (path, body) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Nova-Visualizer': '1' }, body: JSON.stringify(body || {}) })
@@ -2060,302 +1887,25 @@
       toast({ title: 'Not saved', message: 'Nova Agent isn’t answering (it may be restarting). Try again in a moment.' });
       return { ok: false, message: 'Nova Agent isn’t answering.', unanswered: true };
     });
-  const hhmm = (s) => (s ? s.slice(11, s.length > 16 ? 19 : 16) : '');
-  // "30 s", "2 min 30 s", "1 h 30 min", "3 days 4 h"; ongoing: "∞ · 30 min a day"
-  function dur(q) {
-    const secs = Math.round(q.minutes * 60);
-    let t;
-    if (secs < 60) t = `${secs} s`;
-    else {
-      const m = Math.floor(secs / 60), sr = secs % 60;
-      if (m < 60) t = sr ? `${m} min ${sr} s` : `${m} min`;
-      else {
-        const h = Math.floor(m / 60), mm = m % 60;
-        if (h < 48) t = mm ? `${h} h ${mm} min` : `${h} h`;
-        else { const d = Math.floor(h / 24), hh = h % 24; t = hh ? `${d} days ${hh} h` : `${d} days`; }
-      }
-    }
-    if (!q.ongoing) return t;
-    const every = q.every === 'interval' ? `every ${dur({ minutes: q.everyMinutes })}` : q.every === 'week' ? 'a week' : q.every === 'weekday' ? 'each weekday' : 'a day';
-    return `∞ · ${t} ${every}${q.sessions ? ` · ${q.sessions} done` : ''}${q.deadline ? ` · until ${q.deadline.slice(11, 16)}` : ''}`;
-  }
-  const dayLong = (ymd) => new Date(ymd + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-  const mins = (s) => { const [d, t] = s.split('T'); const [y, mo, da] = d.split('-').map(Number); const [h, mi] = t.split(':').map(Number); return Date.UTC(y, mo - 1, da, h, mi) / 60000; };
   const escH = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  let calNotes = [];
-  // Calendar's own repeat rules (/calendar/js/recur.js), so a repeating note card shows each time it
-  // happens in "Also coming up"; until they've loaded (or if they can't), one-off cards still show
-  let calTimes = null;
-  import('/calendar/js/recur.js').then((m) => { calTimes = m.occurrences; if (st && st.now) renderToday(true); }).catch(() => {});
-
-  // The plan, fetched again whenever anything changes (live, see "Live" below). It's only drawn
-  // again when something in it is different, never while a quest's mode or phones menu is open
-  // (it waits for the menu to close), and a hiccup keeps the last good plan on screen.
-  let planKey = '', planWait = null, lastLoad = 0;
-  const menuOpen = () => Boolean(document.querySelector('.qm-menu:not([hidden])'));
-  // Whose quests: your own (the default), or everyone's (admins, and the studio
-  // computer): the button next to the rhythm, remembered in this browser
-  let questWho = 'mine';
-  try { if (localStorage.getItem('nova-agent/quests-who') === 'everyone') questWho = 'everyone'; } catch (e) {}
-  function drawWho() {
-    const b = $('btn-who');
-    if (!b || !st) return;
-    b.hidden = !st.canSeeEveryone;
-    const all = st.scope === 'everyone';
-    b.textContent = all ? 'Everyone’s' : 'Mine';
-    b.setAttribute('aria-pressed', String(all));
-    b.title = all ? 'Showing everyone’s quests: tap for just yours' : 'Showing your quests: tap for everyone’s';
-  }
-  $('btn-who').addEventListener('click', () => {
-    questWho = questWho === 'everyone' ? 'mine' : 'everyone';
-    try { localStorage.setItem('nova-agent/quests-who', questWho); } catch (e) {}
-    loadPlan();
-  });
-  // Someone else's (in the everyone view): their name on it
-  const whose = (x) => (st && st.person && x && x.owner && x.owner !== st.person.id ? `${x.ownerName || x.owner}’s` : '');
-
-  // `quiet` (the live refreshes): only when something changed. Otherwise (after a tap here) always.
-  async function loadPlan(quiet = false) {
-    quiet = quiet === true;
-    clearTimeout(planWait);
-    if (menuOpen()) { planWait = setTimeout(() => loadPlan(quiet), 600); return; }
-    lastLoad = Date.now();
-    try {
-      const [state, cal] = await Promise.all([fetch(questWho === 'everyone' ? '/quests/state?who=everyone' : '/quests/state', { cache: 'no-store' }).then((r) => r.json()), fetch('/calendar-api/data', { cache: 'no-store' }).then((r) => r.json())]);
-      if (menuOpen()) { planWait = setTimeout(() => loadPlan(quiet), 600); return; }
-      // The same plan (to the minute, for the now-line and progress): nothing to draw
-      const key = JSON.stringify([{ ...state, now: String(state.now).slice(0, 16) }, cal.notes || []]);
-      st = state;
-      drawWho();
-      calNotes = (cal.notes || []).filter((n) => !/^(quest|block|mile|music)-/.test(n.id));
-      if (quiet && key === planKey) return;
-      planKey = key;
-      renderToday(quiet);
-    } catch (e) {
-      if (!planKey) $('view-today').innerHTML = '<div class="empty">Couldn’t load the plan.</div>';
-    }
+  // The plan, fetched again whenever anything changes (live, see "Live" below); a hiccup keeps the last one
+  async function loadPlan() {
+    try { st = await fetch('/quests/state', { cache: 'no-store' }).then((r) => r.json()); } catch (e) {}
   }
 
-  // How a quest is going (Waiting, Soon, Working On It...): a coloured chip, tap to change (quest-modes.js)
-  const modeOf = (q) => q.mode || (q.status === 'done' ? 'done' : q.status === 'doing' ? 'working' : 'waiting');
-  const modeChip = (q) => (window.NovaQuestModes ? NovaQuestModes.chip(modeOf(q), { 'data-qmode': q.id }) : '');
-  // The whole card wears the mode's colour (quest-modes.css + the .qm-tinted rules below)
-  const modeTint = (q) => ` qm-tinted qm-${modeOf(q)}`;
-
-  function questButtons(q) {
-    const b = [];
-    if (q.status === 'todo') b.push(`<button class="mini go" data-q="${q.id}" data-a="start">▶ Start</button>`);
-    if (q.status !== 'done') b.push(`<button class="mini" data-q="${q.id}" data-a="done">✓ ${q.ongoing ? 'Session done' : 'Done'}</button>`);
-    if (q.ongoing && q.status !== 'done') b.push(`<button class="mini" data-q="${q.id}" data-a="finish">End quest</button>`);
-    if (q.status === 'doing') b.push(`<button class="mini" data-q="${q.id}" data-a="snooze" data-m="15">+15 min</button>`);
-    if (q.status === 'todo') b.push(`<button class="mini" data-q="${q.id}" data-a="snooze" data-m="60">Not now</button>`, `<button class="mini" data-q="${q.id}" data-a="skip">Skip</button>`);
-    if (q.status === 'done' || q.status === 'skipped') b.push(`<button class="mini" data-q="${q.id}" data-a="reopen">Undo</button>`);
-    // Which phones get its reminders (the owner's unless some are picked)
-    if (q.status !== 'done' && q.status !== 'skipped') b.push(`<button class="mini" data-qphones="${q.id}" data-chosen="${escH((q.phones || []).join(','))}" title="Which phones get its reminders">📱 ${q.phones && q.phones.length ? `${q.phones.length} phone${q.phones.length === 1 ? '' : 's'}` : 'Owner'}</button>`);
-    return `<div class="row-btns">${b.join('')}</div>`;
-  }
-
-  // Where each quest came from (where it was made ✎ "Notes · Studio plan", or ✧ Agent): /agent/plans.js
-  const SRC_ICON = { notes: '✎', from: '✎', agent: '✧', person: '◎' };
-  const sourceList = (q) => {
-    const list = window.NovaPlans ? NovaPlans.sources(q) : [];
-    return whose(q) ? [...list, { kind: 'person', label: whose(q) }] : list;
-  };
-  const sourceTags = (q) => sourceList(q).map((s) => `<span class="m-tag">${SRC_ICON[s.kind]} ${escH(s.label)}</span>`).join('');
-  const sourceText = (q) => { const l = sourceList(q); return l.length ? `<small class="src"> · ${l.map((s) => escH(s.label)).join(' · ')}</small>` : ''; };
-
-  let todayTab = 'ahead';
-  document.addEventListener('click', (e) => {
-    const sub = e.target.closest('[data-sub]');
-    if (!sub) return;
-    todayTab = sub.dataset.sub;
-    renderToday();
-  });
-  // Quests' compact rows that are open (kept open when the plan refreshes)
-  const openRows = new Set();
-  document.getElementById('view-today').addEventListener('click', (e) => {
-    const card = e.target.closest('.tl-card.compact');
-    if (!card || e.target.closest('button, a, input, select')) return;
-    const key = card.dataset.row;
-    if (openRows.has(key)) openRows.delete(key); else openRows.add(key);
-    card.classList.toggle('open', openRows.has(key));
-    if (window.NovaSfx) window.NovaSfx.play(card.classList.contains('open') ? 'open' : 'close', undefined, card);
-  });
-  // `quiet`: a live refresh (the cards don't play their entrance again)
-  function renderToday(quiet = false) {
-    $('view-today').classList.toggle('quiet', quiet === true);
-    const today = st.now.slice(0, 10);
-    const nowM = mins(st.now);
-    const items = [];
-    let questIndex = 0; // for the cards' staggered entrance
-    for (const q of st.quests) if (q.start && q.start.startsWith(today) && q.status !== 'skipped') items.push({ kind: 'quest', start: q.start, end: q.end, q });
-    for (const b of st.blocks) if (b.start.slice(0, 10) <= today && b.end.slice(0, 10) >= today) items.push({ kind: 'block', start: b.start, end: b.end, b });
-    for (const n of calNotes) if (n.start.slice(0, 10) <= today && n.end.slice(0, 10) >= today) items.push({ kind: 'busy', start: n.start, end: n.end, n });
-    items.sort((a, b) => a.start.localeCompare(b.start));
-    const quests = items.filter((i) => i.kind === 'quest');
-    const plannedMin = quests.reduce((n, i) => n + i.q.minutes, 0);
-    const done = quests.filter((i) => i.q.status === 'done').length;
-    const atRisk = st.quests.filter((q) => q.atRisk && q.status !== 'done' && q.status !== 'skipped').length;
-    const r = st.rhythm;
-
-    let html = `<div class="day-head"><div><div class="day-sub">TODAY · up ${r.wake} · sleep ${r.sleep}${r.paceLimits === false ? ' · <span style="color:var(--warn, #FFB86B)">⚡ pace limits off</span>' : ''}</div><h3>${escH(dayLong(today)).replace(/^(\w+)/, '<span>$1</span>')}</h3></div>
-      <div class="stats"><div class="stat"><b>${quests.length}</b>quests</div><div class="stat"><b>${(plannedMin / 60).toFixed(1)}h</b>planned</div><div class="stat"><b>${done}</b>done</div>${atRisk ? `<div class="stat warn"><b>${atRisk}</b>at risk</div>` : ''}</div></div>`;
-
-    // (the quest on now, or up next, has its own card in Quests, /quests/: moved there on 24 Oct 2026, the user;
-    // here it's the first row of Ahead, open)
-    const nowId = st.current ? st.current.id : st.next[0] ? st.next[0].id : '';
-
-    // One timeline row (a quest, blocked time or a calendar card). Compact rows show just the time
-    // and title, so the whole day fits: tap one to open its details and buttons (tap again to fold)
-    const row = (it, compact = false, label = '') => {
-      let html = '';
-      const past = mins(it.end) <= nowM;
-      const key = `${it.kind}:${(it.q || it.b || it.n || {}).id || it.start}`;
-      const fold = compact ? ` compact${openRows.has(key) ? ' open' : ''}" data-row="${escH(key)}` : '';
-      if (it.kind === 'quest') {
-        const q = it.q;
-        html += `<div class="tl-item${past ? ' past' : ''}${q.id === nowId ? ' is-now' : ''}"><div class="tl-time">${hhmm(q.start)}<small>${hhmm(q.end)}</small></div>
-          <div class="tl-card quest ${q.status}${q.atRisk ? ' risk' : ''}${q.ongoing ? ' ongoing' : ''}${modeTint(q)}${fold}" style="--i:${questIndex++}">
-          ${label ? `<div class="tl-label">${label}</div>` : ''}<div class="q-tags"><span class="q-tag">${q.ongoing ? '∞ Quest · repeat' : '✦ Quest'}</span>${modeChip(q)}${sourceTags(q)}${q.atRisk ? '<span class="risk-tag">⚠ At risk</span>' : ''}</div>
-          <div class="tl-title">${escH(q.title)}</div>
-          <div class="tl-meta"><span class="prio ${q.priority}">${q.priority}</span> · ${dur(q)}${q.location ? ` · at ${escH(q.location)}` : ''}${q.travelMinutes ? ` · leave ${hhmm(q.travelStart)} (${q.travelMinutes} min travel)` : ''}${q.deadline && !q.ongoing ? ` · due ${escH(q.deadline.replace('T', ' '))}` : ''}</div>
-          ${q.status === 'done' ? '' : questButtons(q)}</div></div>`;
-      } else if (it.kind === 'block') {
-        html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card block${fold}"><div class="tl-title">Busy · ${escH(it.b.reason)}</div><div class="tl-meta">Blocked out · Agent · <button class="mini" data-unblock="${it.b.id}">Unblock</button></div></div></div>`;
-      } else {
-        html += `<div class="tl-item${past ? ' past' : ''}"><div class="tl-time">${hhmm(it.start)}<small>${hhmm(it.end)}</small></div><div class="tl-card busy${fold}"><div class="tl-title">${escH(it.n.title || 'Note card')}</div><div class="tl-meta">From Calendar</div></div></div>`;
-      }
-      return html;
-    };
-    const isDone = (it) => (it.kind === 'quest' ? it.q.status === 'done' : mins(it.end) <= nowM);
-    const ahead = items.filter((it) => !isDone(it));
-    const finished = items.filter(isDone);
-
-    // The next few days
-    const days = {};
-    for (const q of st.quests) {
-      if (!q.start || q.start.slice(0, 10) <= today || q.status === 'skipped') continue;
-      (days[q.start.slice(0, 10)] = days[q.start.slice(0, 10)] || []).push(q);
-    }
-    const keys = Object.keys(days).sort().slice(0, 6);
-    const pulses = st.pulses || [];
-
-    // Everything else is one click away, in small tabs (so Today fits on one screen)
-    const subs = [
-      ['ahead', 'Ahead', ahead.length],
-      ['done', 'Done', finished.length],
-      ['coming', 'Coming up', keys.reduce((n, k) => n + days[k].length, 0)],
-      ['pulses', 'Pulses', pulses.length],
-      ['unplanned', 'Needs a slot', st.unplanned.length],
-    ].filter(([id, , n]) => n || id === 'ahead');
-    if (!subs.some(([id]) => id === todayTab)) todayTab = 'ahead';
-    html += `<div class="subtabs" role="tablist">${subs.map(([id, label, n]) => `<button type="button" role="tab" data-sub="${id}" aria-selected="${id === todayTab}">${label}<b>${n}</b></button>`).join('')}</div>`;
-
-    let panel = '';
-    if (todayTab === 'ahead') {
-      if (!ahead.length) panel = `<div class="empty">${items.length ? 'All done for today ✦' : 'Nothing planned today.<br>Say what you need to get done, and I’ll fit it in.'}</div>`;
-      else {
-        // The first row is open: the quest on now, or the next one
-        panel = `<div class="timeline">${ahead.map((it, i) => (i === 0 && mins(it.start) > nowM ? '<div class="now-line"></div>' : '') + row(it, i !== 0)).join('')}</div>`;
-      }
-    } else if (todayTab === 'done') {
-      panel = `<div class="timeline">${finished.map((it) => row(it, true)).join('')}</div>`;
-    } else if (todayTab === 'coming') {
-      panel = `<div class="upcoming">${keys.map((k) => `<div class="up-day"><h4>${escH(dayLong(k))}</h4><ul>${days[k].sort((a, b) => a.start.localeCompare(b.start)).map((q) => `<li><time>${hhmm(q.start)}</time>${q.atRisk ? '⚠ ' : ''}${escH(q.title)}${sourceText(q)}</li>`).join('')}</ul></div>`).join('')}</div>`;
-    } else if (todayTab === 'pulses') {
-      panel = `<div class="upcoming"><div class="up-day"><ul>${pulses.map((q) => `<li>\u221E ${escH(q.title)} \u00B7 ${dur(q)}${sourceText(q)} <button class="mini" data-q="${q.id}" data-a="finish">Stop</button></li>`).join('')}</ul></div></div>`;
-    } else if (todayTab === 'unplanned') {
-      panel = `<div class="upcoming"><div class="up-day"><ul>${st.unplanned.map((q) => `<li>⚠ ${escH(q.title)} · ${dur(q)}${sourceText(q)} ${modeChip(q)}</li>`).join('')}</ul></div></div>`;
-    }
-    html += `<div class="subpanel">${panel}</div>`;
-    html += alsoComingUp();
-    $('view-today').innerHTML = html;
-  }
-
-  // Also coming up: Calendar's note cards with reminders in the next 7 days (UK time), quietly
-  // under the plan. Tap one: Calendar opens on that day
-  function alsoComingUp() {
-    if (!window.NovaPlans) return '';
-    const list = NovaPlans.comingUp(calNotes, st.now, calTimes, 7);
-    if (!list.length) return '';
-    const shown = list.slice(0, 8);
-    const more = list.length - shown.length;
-    return `<section class="also" aria-label="Also coming up"><h4>Also coming up</h4><ul>${shown.map((e) => `<li><button type="button" class="also-row" data-calday="${escH(e.date)}" title="Open Calendar on ${escH(dayLong(e.date))}"><span class="also-when">${escH(shortDay(e.date))}<b>${e.allDay ? 'All day' : hhmm(e.start)}</b></span><span class="also-what"><span class="also-title">${escH(e.title)}</span><small><span class="m-tag">▦ Calendar</span> ⏰ ${escH(NovaPlans.remindWords(e.reminders[0]))}${e.reminders.length > 1 ? ` +${e.reminders.length - 1}` : ''}${e.location ? ` · ${escH(e.location)}` : ''}</small></span></button></li>`).join('')}</ul>${more ? `<button type="button" class="also-more" data-calday="${escH(shown[shown.length - 1].date)}">${more} more in Calendar</button>` : ''}</section>`;
-  }
-  document.getElementById('view-today').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-calday]');
-    if (!b || !window.NovaAgent) return;
-    window.NovaAgent.open(NovaPlans.calendarDay(b.dataset.calday));
-  });
-
-  const shortDay = (s) => new Date(s.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
-
-  // Buttons anywhere on the page
+  // A notice's buttons (Done, +15 min, Start…)
   document.addEventListener('click', async (e) => {
-    // A quest's mode chip: pick how it's going
-    const mc = e.target.closest('[data-qmode]');
-    if (mc && window.NovaQuestModes) {
-      e.stopPropagation();
-      const current = [...mc.classList].find((c) => c.startsWith('qm-') && c !== 'qm-chip');
-      const mode = await NovaQuestModes.pick(mc, current ? current.slice(3) : 'waiting');
-      if (!mode) return;
-      const res = await api(`/actions/quests/${mc.dataset.qmode}`, { action: 'mode', mode });
-      if (!res.ok) toast({ title: 'That didn’t work', message: res.message });
-      return loadPlan();
-    }
-    // Which phones get a quest's reminders
-    const pb = e.target.closest('[data-qphones]');
-    if (pb && window.NovaQuestModes) {
-      e.stopPropagation();
-      const phones = await NovaQuestModes.pickPhones(pb, pb.dataset.chosen ? pb.dataset.chosen.split(',') : []);
-      if (!phones) return;
-      const res = await api(`/actions/quests/${pb.dataset.qphones}`, { changes: { phones } });
-      if (!res.ok) toast({ title: 'That didn’t work', message: res.message });
-      return loadPlan();
-    }
     const qb = e.target.closest('[data-q][data-a]');
-    if (qb) {
-      qb.disabled = true;
-      const res = await api(`/actions/quests/${qb.dataset.q}`, { action: qb.dataset.a, minutes: Number(qb.dataset.m) || undefined });
-      if (!res.ok) toast({ title: 'That didn’t work', message: res.message });
-      const t = qb.closest('.toast'); if (t) t.remove();
-      return loadPlan();
-    }
-    const ub = e.target.closest('[data-unblock]');
-    if (ub) { await api('/actions/blocks', { remove: true, id: ub.dataset.unblock }); return loadPlan(); }
+    if (!qb) return;
+    qb.disabled = true;
+    const res = await api(`/actions/quests/${qb.dataset.q}`, { action: qb.dataset.a, minutes: Number(qb.dataset.m) || undefined });
+    if (!res.ok) toast({ title: 'That didn’t work', message: res.message });
+    const t = qb.closest('.toast'); if (t) t.remove();
+    loadPlan();
   });
 
   // Calendar opens like its Nova Agent tile does (inside Nova Agent, or in a window)
   const openCalendar = () => document.querySelector('#suite-body a.suite-app[href="/calendar/"]').click();
-  $('btn-calendar').addEventListener('click', openCalendar);
-  $('btn-quests-open').addEventListener('click', () => document.querySelector('#suite-body a.suite-app[href="/quests/"]').click());
-
-  $('btn-replan').addEventListener('click', async () => {
-    const res = await api('/actions/replan');
-    toast({ title: 'Re-planned ✦', message: res.ok ? `${res.result.atRisk} quest${res.result.atRisk === 1 ? '' : 's'} at risk.` : res.message });
-    loadPlan();
-  });
-
-  // Rhythm settings
-  const rf = $('rhythm-form');
-  // (the plan not loaded yet, or no rhythm saved yet: the form opens with what's in it)
-  $('btn-rhythm').addEventListener('click', () => {
-    const rhythm = (st && st.rhythm) || {};
-    for (const [k, v] of Object.entries(rhythm)) { const f = rf.elements[k]; if (!f) continue; if (f.type === 'checkbox') f.checked = v; else f.value = v; }
-    for (const b of document.querySelectorAll('[data-dayoff]')) b.checked = (rhythm.daysOff || []).includes(Number(b.dataset.dayoff));
-    $('rhythm').showModal();
-  });
-  $('rhythm-cancel').addEventListener('click', () => $('rhythm').close());
-  rf.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const body = {};
-    for (const f of rf.elements) { if (!f.name) continue; body[f.name] = f.type === 'checkbox' ? f.checked : f.type === 'number' ? Number(f.value) : f.value; }
-    body.daysOff = [...document.querySelectorAll('[data-dayoff]')].filter((b) => b.checked).map((b) => Number(b.dataset.dayoff));
-    const res = await api('/actions/rhythm', body);
-    $('rhythm').close();
-    toast({ title: res.ok ? 'Rhythm saved ✦' : 'Couldn’t save', message: res.ok ? 'Everything has been re-planned around it.' : res.message });
-    loadPlan();
-  });
 
   // Pop-up reminders: on the page, as a system notification, with a bright ping (a different one for each kind)
   let audio = null;
@@ -2459,38 +2009,23 @@
       else try { const sys = new Notification(n.title, opts); sys.onclick = () => { window.focus(); sys.close(); }; } catch (e) {}
     }
   }
-  function bellState() {
-    const on = 'Notification' in window && Notification.permission === 'granted';
-    $('btn-bell').style.color = on ? 'var(--hi)' : '';
-    $('btn-bell').title = on ? 'Pop-up reminders are on' : 'Turn on pop-up reminders';
-  }
-  $('btn-bell').addEventListener('click', async () => {
-    if (!('Notification' in window)) return toast({ title: 'Not available', message: 'This browser can’t show system pop-ups; reminders still appear here.' });
-    const p = await Notification.requestPermission();
-    bellState();
-    if (p === 'granted') { chime('bright'); toast({ title: 'Pop-up reminders on ✦', message: 'You’ll get a pop-up before each quest and a check-in when it should be done, even with this tab in the background.' }); }
-    // (turned down, now or before: say how to turn them on, instead of nothing happening)
-    else toast({ title: 'Pop-ups are off in this browser', message: 'Allow notifications for this site in the browser’s settings (the padlock or ⓘ by the address), then press the bell again. Reminders still appear here meanwhile.' });
-  });
-  bellState();
+  // (pop-up reminders are switched on in Quests: Options → Pop-up reminders; this page pops them up)
 
-  // Live: re-draw when the plan changes; pop up reminders as they come
-  // A change made anywhere (Notes, Portal, Agent, another tab, a reminder) shows here in about a
-  // second: the stream says something changed, and the plan is fetched again (drawn only if it's
-  // different). If the stream is down, it asks every 10 seconds instead while the page is in view,
-  // and always on coming back to the page.
+  // Live: pop up reminders as they come, and keep the plan fresh for their buttons. A change made
+  // anywhere (Notes, Portal, Agent, another tab, a reminder) arrives on the stream; the plan is fetched
+  // again then, and on coming back to the page.
   let liveT = null, questStream = null;
-  const refresh = (wait = 250) => { clearTimeout(liveT); liveT = setTimeout(() => loadPlan(true), wait); };
+  const refresh = (wait = 250) => { clearTimeout(liveT); liveT = setTimeout(loadPlan, wait); };
   function listen() {
     try {
       const es = new EventSource('/quests/events');
       questStream = es;
-      es.addEventListener('open', () => { if (planKey) refresh(); }); // (again) caught up after a gap
+      es.addEventListener('open', () => refresh()); // (again) caught up after a gap
       es.addEventListener('changed', () => refresh());
       es.addEventListener('notice', (e) => {
         let n = null;
         try { n = JSON.parse(e.data); } catch (err) { return; }
-        // Pulses (quick repeats): one ticking card and a short ping each beat, nothing else redrawn
+        // Pulses (quick repeats): one ticking card and a short ping each beat
         if (n.kind === 'pulse') return pulse(n);
         notice(n);
         refresh(0);
@@ -2500,15 +2035,7 @@
     } catch (e) {}
   }
   listen();
-  try { new EventSource('/calendar-api/events').addEventListener('change', () => refresh()); } catch (e) {}
-  setInterval(() => {
-    if (document.visibilityState !== 'visible') return;
-    const live = questStream && questStream.readyState === 1;
-    // Every 10 s without the stream; with it, once a minute (the now-line and progress move)
-    if (!live || Date.now() - lastLoad > 55000) refresh(0);
-  }, 10000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(0); });
-  window.addEventListener('focus', () => refresh(0));
 
   // ---- The Nova Agent section at the bottom of the page: the launcher's groups and tiles ----
   // An app's short name for the bar: "Notes" is "Notes" there
@@ -2732,7 +2259,7 @@
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; $('install').hidden = false; });
   window.addEventListener('appinstalled', () => { $('install').hidden = true; toast({ title: 'Nova Agent installed \u2726', message: 'It\u2019s in your app launcher now.' }); });
   $('install').addEventListener('click', async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; $('install').hidden = true; });
-  // Launcher shortcuts: ?view=calendar opens Calendar (Quests is always on screen)
+  // Launcher shortcuts: ?view=calendar opens Calendar
   if (new URLSearchParams(location.search).get('view') === 'calendar') openCalendar();
   // Opened at a panel's address: that panel, inside (the address is tidied back to Nova Agent's own)
   // (Agent and the Manual have places too: /agent/apps/agent, /agent/helpers/manual; any other old Agent
@@ -2766,15 +2293,14 @@
   const css = document.createElement('style');
   css.textContent = '.pc-note{margin:10px;padding:12px 14px;border-radius:16px;border:1px dashed var(--line,#5a3d6e);color:var(--muted,#b997b5);font-size:13.5px;line-height:1.45;text-align:center}.pc-note button{margin-top:8px}';
   document.head.appendChild(css);
+  // (at the top of the conversation: Quests' own section, where it used to be, moved into Quests on 24 Oct 2026)
   function notes(text) {
-    for (const id of ['quests-panel']) {
-      const panel = $(id);
-      if (!panel) continue;
-      let note = panel.querySelector('.pc-note');
-      if (!text) { if (note) note.remove(); continue; }
-      if (!note) { note = document.createElement('div'); note.className = 'pc-note'; note.setAttribute('role', 'status'); panel.insertBefore(note, panel.children[1] || null); }
-      note.textContent = text;
-    }
+    const log = $('log');
+    if (!log) return;
+    let note = log.querySelector(':scope > .pc-note');
+    if (!text) { if (note) note.remove(); return; }
+    if (!note) { note = document.createElement('div'); note.className = 'pc-note'; note.setAttribute('role', 'status'); log.prepend(note); }
+    note.textContent = text;
   }
   function show(next) {
     if (next === state) return;
@@ -2784,7 +2310,7 @@
       input.disabled = true;
       send.disabled = true;
       input.placeholder = words[next];
-      notes(next === 'off' ? 'Quests live on the studio computer, which is off right now. They’ll be back when it is.' : words.out + '.');
+      notes(next === 'off' ? 'Nova Agent and Quests live on the studio computer, which is off right now. They’ll be back when it is.' : words.out + '.');
       $('status-text').textContent = next === 'off' ? 'PC off' : 'Signed out';
       $('status').title = next === 'off' ? 'The studio computer is off or offline' : 'Not signed in';
       return;

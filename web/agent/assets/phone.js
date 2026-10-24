@@ -277,7 +277,7 @@
     const pane = a.dataset.pane;
     if (pane === 'quests') { open('/quests/'); return; } // (old links to today's plan: Quests, on Today)
     if (PHONE.matches) { setPane('chat'); sfx('open'); return; }
-    const box = $(pane === 'chat' ? 'main' : 'quests-panel');
+    const box = pane === 'chat' ? $('main') : null;
     if (box) {
       box.scrollIntoView({ behavior: STILL.matches ? 'auto' : 'smooth', block: 'nearest' });
       box.animate && !STILL.matches && box.animate([{ boxShadow: '0 0 0 0 transparent' }, { boxShadow: '0 0 0 3px var(--hi), 0 0 40px -6px var(--hi)' }, { boxShadow: '0 0 0 0 transparent' }], { duration: 1100 });
@@ -434,7 +434,7 @@
     sheet.close();
     if (act === 'reload-panel') { const r = $('viewer-reload'); if (r) r.click(); return; }
     if (act === 'panel-settings') { const p = window.NovaSettings && window.NovaSettings.panel(); if (p) p.open(); return; }
-    if (act === 'rhythm') { const r = $('btn-rhythm'); if (r) r.click(); return; }
+    if (act === 'rhythm') { if (window.NovaAgent) window.NovaAgent.open('/quests/?rhythm=1'); return; } // (your rhythm is in Quests: 24 Oct 2026)
     if (act === 'sfx') { const s = $('sfx-btn'); if (s) s.click(); return; }
     if (act === 'music') { const m = $('music-btn'); if (m) m.click(); return; }
     if (act === 'bar') { if (window.NovaBar) window.NovaBar.next(); return; }

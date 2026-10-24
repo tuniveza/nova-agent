@@ -26,6 +26,8 @@ const Modes = window.NovaQuestModes;
 const MODE_NAME = (m) => (Modes ? Modes.name(m) : m);
 
 let state = null; // the last /quests/state
+let calNotes = []; // Calendar's note cards (Nova's own copies in Calendar left out), for Today
+let calTimes = null; // Calendar's repeat rules, once they've loaded (for "Also coming up")
 let who = saved("who", "mine");
 const START_VIEWS = ["today", "focus", "list", "board"];
 let start = saved("start", "today"); // which view Quests opens in (Options → Opens in), Today unless changed
@@ -91,9 +93,36 @@ function live() {
     };
   } catch {}
 }
+// Calendar's note cards, for Today (when you're busy, and "Also coming up"); again whenever Calendar changes
+async function loadCal() {
+  try {
+    const res = await fetch("/calendar-api/data", { cache: "no-store", headers: { Accept: "application/json" } });
+    if (!res.ok) return;
+    calNotes = ((await res.json()).notes || []).filter((n) => n && n.id && !/^(quest|block|mile|music)-/.test(n.id));
+    render();
+  } catch {}
+}
+function liveCal() {
+  import("/calendar/js/recur.js")
+    .then((m) => {
+      calTimes = m.occurrences;
+      render();
+    })
+    .catch(() => {});
+  try {
+    new EventSource("/calendar-api/events").addEventListener("change", () => loadCal());
+  } catch {}
+}
+// Another panel, opened in Nova Desk (or in this window, when Quests is open on its own)
+function openPanel(path) {
+  try {
+    if (window.top !== window && window.top.NovaAgent?.open) return window.top.NovaAgent.open(path);
+  } catch {}
+  location.href = path;
+}
 // Back to the page after a while: fresh again
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") load();
+  if (document.visibilityState === "visible") load(), loadCal();
   else flushDeletes();
 });
 window.addEventListener("pagehide", flushDeletes);
@@ -171,11 +200,36 @@ function render() {
   $("opt-phone").setAttribute("aria-pressed", String(Boolean(state.rhythm?.phonePush)));
   renderStreak();
   renderTags();
+  renderDayLine();
   renderNow();
   if (view === "focus") renderFocus();
   else if (view === "board") renderBoard();
   else if (view === "today") renderToday();
   else renderList();
+}
+
+// Today in one line: when you're up, how many quests, how long, how many done or at risk (and pace
+// limits, when they're off). Each bit keeps its words together; the line wraps between them.
+function renderDayLine() {
+  const box = $("day-line");
+  const r = state.rhythm || {};
+  const day = todayStamp().slice(0, 10);
+  const all = quests();
+  const qs = all.filter((q) => q.start?.startsWith(day) && q.status !== "skipped");
+  const planned = qs.reduce((n, q) => n + (q.minutes || 0), 0);
+  const risk = all.filter((q) => q.atRisk && q.status !== "done" && q.status !== "skipped").length;
+  const bits = [
+    "<b>Today</b>",
+    r.wake && `up ${esc(r.wake)}`,
+    r.sleep && `sleep ${esc(r.sleep)}`,
+    `<b>${qs.length}</b> quest${qs.length === 1 ? "" : "s"}`,
+    `<b>${(planned / 60).toFixed(1)} h</b> planned`,
+    `<b>${qs.filter((q) => q.status === "done").length}</b> done`,
+    risk && `<b class="warn">${risk} at risk</b>`,
+    r.paceLimits === false && `<span class="warn">⚡ pace limits off</span>`,
+  ].filter(Boolean);
+  box.innerHTML = bits.map((b) => `<span>${b}</span>`).join("");
+  box.hidden = false;
 }
 
 // The quest on now (or up next) on its own card above every view, with its buttons (it was on Nova
@@ -210,10 +264,8 @@ function renderNow() {
   if (q.status === "todo") b.push(`<button type="button" class="btn" data-now="snooze" data-min="60">Not now</button>`, `<button type="button" class="btn ghost" data-now="skip">Skip</button>`);
   if (q.status !== "done" && q.status !== "skipped") b.push(`<button type="button" class="btn ghost" data-now="phones" title="Which phones get its reminders">📱 ${q.phones?.length ? `${q.phones.length} phone${q.phones.length === 1 ? "" : "s"}` : "Owner"}</button>`);
   box.innerHTML = `<article class="now-card qm-${esc(mode)}" data-id="${esc(q.id)}">
-    <p class="now-kicker"><span>✦ Quest · ${kicker}</span>${Modes ? Modes.chip(mode, { "data-mode": q.id }) : ""}</p>
     <h2 class="now-title"><button type="button" class="now-open" aria-label="${esc(q.title)}: open the details">${esc(q.title)}</button></h2>
-    <p class="now-meta">${esc(time)} · ${esc(mins(q.minutes || 0))}${q.location ? ` · at ${esc(q.location)}` : ""}</p>
-    ${q.from ? `<p class="now-from"><span class="now-tag">✎ ${esc(q.from)}</span></p>` : ""}
+    <p class="now-meta"><span class="now-kicker">✦ ${kicker}</span>${Modes ? Modes.chip(mode, { "data-mode": q.id }) : ""}<span>${esc(time)} · ${esc(mins(q.minutes || 0))}${q.location ? ` · at ${esc(q.location)}` : ""}</span>${q.from ? `<span class="now-tag">✎ ${esc(q.from)}</span>` : ""}</p>
     ${cur ? `<div class="now-bar" role="progressbar" aria-label="How far through" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct.toFixed(0)}"><i style="width:${pct.toFixed(0)}%"></i></div>` : ""}
     <div class="now-btns">${b.join("")}</div>
   </article>`;
@@ -313,8 +365,13 @@ function renderBoard() {
     .join("")}</div>`;
 }
 
+// Today: each day hour by hour: its quests, Nova's blocked time (Unblock) and Calendar's note cards (tap: Calendar
+// on that day); then the quests without a time, the pulses (Stop) and Calendar's cards with reminders coming up
+// (all from Nova Desk's own Quests, 24 Oct 2026)
+const onDay = (x, day) => x.start && x.end && x.start.slice(0, 10) <= day && x.end.slice(0, 10) >= day;
 function renderToday() {
-  const { list, unplaced } = days(shown());
+  const pulses = new Set((state.pulses || []).map((q) => q.id));
+  const { list, unplaced } = days(shown().filter((q) => !pulses.has(q.id)));
   const t = today();
   const dayName = (d) => {
     const [y, m, dd] = d.split("-").map(Number);
@@ -324,24 +381,45 @@ function renderToday() {
     return words === "Today" || words === "Tomorrow" ? `${words} <small>${long}</small>` : long;
   };
   const now = todayStamp();
+  // (a block or card that runs over midnight shows its times on its first day, "all day" on the days after)
+  const times = (x, day) => (x.start.slice(0, 10) === day ? `${esc(x.start.slice(11, 16))}${x.end.slice(0, 10) === day ? `<small>${esc(x.end.slice(11, 16))}</small>` : ""}` : "<small>all day</small>");
+  const slot = (day) => (it) => {
+    if (it.q) {
+      const q = it.q;
+      const s = q.start || q.fixedStart;
+      const nowLine = q.start && q.start <= now && q.end > now;
+      return `<li class="slot${nowLine ? " is-now" : ""}${q.status === "done" ? " done" : ""}" data-id="${esc(q.id)}"><span class="slot-time">${esc(s.slice(11, 16))}${q.end ? `<small>${esc(q.end.slice(11, 16))}</small>` : ""}</span><ul class="qs">${row(q, { drag: false, noWhen: true })}</ul></li>`;
+    }
+    if (it.b) return `<li class="slot other${it.b.end <= now ? " done" : ""}"><span class="slot-time">${times(it.b, day)}</span><div class="busy"><b>Busy · ${esc(it.b.reason || "Blocked out")}</b><span>Blocked out: quests move round it · <button type="button" class="link-btn" data-unblock="${esc(it.b.id)}">Unblock</button></span></div></li>`;
+    return `<li class="slot other${it.n.end <= now ? " done" : ""}"><span class="slot-time">${times(it.n, day)}</span><button type="button" class="busy cal" data-calday="${esc(day)}" title="Open Calendar on this day"><b>${esc(it.n.title || "Note card")}</b><span>From Calendar</span></button></li>`;
+  };
+  const dayItems = (day, qs) =>
+    [
+      ...qs.map((q) => ({ at: q.start || q.fixedStart, q })),
+      ...(calm ? [] : (state.blocks || []).filter((b) => onDay(b, day)).map((b) => ({ at: b.start.slice(0, 10) === day ? b.start : `${day}T00:00`, b }))),
+      ...(calm ? [] : calNotes.filter((n) => onDay(n, day)).map((n) => ({ at: n.start.slice(0, 10) === day ? n.start : `${day}T00:00`, n }))),
+    ].sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  const pulseList = (state.pulses || []).filter((q) => matches(q, query) && (!tag || (q.tags || []).includes(tag)));
+  const soon = window.NovaPlans && !calm ? NovaPlans.comingUp(calNotes, state.now, calTimes, 7) : [];
   $("view-today").innerHTML =
     list
       .slice(0, calm ? 1 : 8)
-      .map(
-        ({ day, quests: qs }) => `<section class="day" aria-labelledby="d-${day}">
+      .map(({ day, quests: qs }) => {
+        const items = dayItems(day, qs);
+        return `<section class="day" aria-labelledby="d-${day}">
       <h2 class="g-head" id="d-${day}">${dayName(day)}</h2>
-      ${qs.length ? `<ol class="timeline">${qs
-        .map((q) => {
-          const s = q.start || q.fixedStart;
-          const nowLine = q.start && q.start <= now && q.end > now;
-          return `<li class="slot${nowLine ? " is-now" : ""}${q.status === "done" ? " done" : ""}" data-id="${esc(q.id)}"><span class="slot-time">${esc(s.slice(11, 16))}${q.end ? `<small>${esc(q.end.slice(11, 16))}</small>` : ""}</span><ul class="qs">${row(q, { drag: false, noWhen: true })}</ul></li>`;
-        })
-        .join("")}</ol>` : `<p class="day-free">Nothing planned.${day === list[0].day ? " A calm day so far." : ""}</p>`}
-    </section>`,
-      )
+      ${items.length ? `<ol class="timeline">${items.map(slot(day)).join("")}</ol>` : `<p class="day-free">Nothing planned.${day === list[0].day ? " A calm day so far." : ""}</p>`}
+    </section>`;
+      })
       .join("") +
     (unplaced.length && !calm
       ? `<section class="day" aria-labelledby="d-unplaced"><h2 class="g-head" id="d-unplaced">Not given a time yet <small>${unplaced.length}</small></h2><p class="day-free">Nova plans these into free time by itself. <button type="button" class="link-btn" data-replan>Plan them now</button></p><ul class="qs">${unplaced.map((q) => row(q, { drag: false })).join("")}</ul></section>`
+      : "") +
+    (pulseList.length && !calm
+      ? `<section class="day" aria-labelledby="d-pulses"><h2 class="g-head" id="d-pulses">Pulses <small>${pulseList.length}</small></h2><p class="day-free">Quick repeats on their own timer, outside the plan.</p><ul class="qs">${pulseList.map((q) => `<li class="pulse"><span class="pulse-what"><b>∞ ${esc(q.title)}</b><small>${esc(repeatWords(q))}</small></span><button type="button" class="btn ghost" data-stop="${esc(q.id)}">Stop</button></li>`).join("")}</ul></section>`
+      : "") +
+    (soon.length
+      ? `<section class="day" aria-labelledby="d-also"><h2 class="g-head" id="d-also">Also coming up <small>${soon.length}</small></h2><p class="day-free">Calendar's cards with reminders, the next 7 days.</p><ul class="qs">${soon.slice(0, 8).map((e) => `<li><button type="button" class="busy cal" data-calday="${esc(e.date)}" title="Open Calendar on this day"><b>${esc(e.title)}</b><span>${esc(when(e.allDay ? e.date : e.start.slice(0, 16)))}${e.allDay ? " · all day" : ""} · ${esc(NovaPlans.remindWords(e.reminders[0]))}</span></button></li>`).join("")}</ul>${soon.length > 8 ? `<p class="day-free">${soon.length - 8} more in Calendar.</p>` : ""}</section>`
       : "");
 }
 
@@ -714,6 +792,50 @@ $("opt-keys").addEventListener("click", () => {
 });
 $("keys-close").addEventListener("click", () => $("keys").close());
 
+// Calendar, and your daily rhythm (the planner fits quests around it; saving re-plans everything)
+$("cal-btn").addEventListener("click", () => openPanel("/calendar/"));
+const rf = $("rhythm-form");
+$("rhythm-btn").addEventListener("click", () => {
+  const r = state?.rhythm || {};
+  for (const [k, v] of Object.entries(r)) {
+    const f = rf.elements[k];
+    if (!f || !f.name) continue;
+    if (f.type === "checkbox") f.checked = Boolean(v);
+    else f.value = v ?? "";
+  }
+  for (const b of rf.querySelectorAll("[data-dayoff]")) b.checked = (r.daysOff || []).includes(Number(b.dataset.dayoff));
+  $("rhythm").showModal();
+});
+for (const id of ["rhythm-close", "rhythm-cancel"]) $(id).addEventListener("click", () => $("rhythm").close());
+rf.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = {};
+  for (const f of rf.elements) if (f.name) body[f.name] = f.type === "checkbox" ? f.checked : f.type === "number" ? Number(f.value) : f.value;
+  body.daysOff = [...rf.querySelectorAll("[data-dayoff]")].filter((b) => b.checked).map((b) => Number(b.dataset.dayoff));
+  try {
+    await post("/actions/rhythm", body);
+    $("rhythm").close();
+    toast("Rhythm saved. Everything has been re-planned around it.");
+  } catch {
+  } finally {
+    load();
+  }
+});
+
+// Pop-up reminders on this computer: the browser's permission for this site (Nova Desk pops them up
+// while it's open: one before each quest, a check-in when it should be done)
+function drawPopups() {
+  $("popups-btn").setAttribute("aria-pressed", String("Notification" in window && Notification.permission === "granted"));
+}
+$("popups-btn").addEventListener("click", async () => {
+  if (!("Notification" in window)) return toast("This browser can't show pop-ups. Reminders still show in Nova Desk.");
+  if (Notification.permission === "granted") return toast("Pop-up reminders are on. To turn them off, use this site's settings in the browser (the padlock by the address).");
+  const p = await Notification.requestPermission().catch(() => "default");
+  drawPopups();
+  toast(p === "granted" ? "Pop-up reminders on: one before each quest, and a check-in when it should be done." : "Pop-ups are blocked in this browser. Allow notifications for this site (the padlock by the address), then press it again.");
+});
+drawPopups();
+
 // Clicks inside the views (one listener for all of them)
 document.addEventListener("click", async (e) => {
   const t = e.target;
@@ -738,6 +860,31 @@ document.addEventListener("click", async (e) => {
     await post("/actions/replan", {});
     return load();
   }
+  // Today: Unblock a busy time, Stop a pulse, a Calendar card opens Calendar on its day
+  const ub = t.closest("[data-unblock]");
+  if (ub) {
+    ub.disabled = true;
+    try {
+      await post("/actions/blocks", { remove: true, id: ub.dataset.unblock });
+      say("Unblocked");
+    } finally {
+      load();
+    }
+    return;
+  }
+  const stop = t.closest("[data-stop]");
+  if (stop) {
+    stop.disabled = true;
+    try {
+      await act(stop.dataset.stop, "finish");
+      say("Stopped");
+    } finally {
+      load();
+    }
+    return;
+  }
+  const calDay = t.closest("[data-calday]");
+  if (calDay && window.NovaPlans) return openPanel(NovaPlans.calendarDay(calDay.dataset.calday));
   const fold = t.closest("[data-fold]");
   if (fold) {
     keep("doneOpen", fold.getAttribute("aria-expanded") !== "true");
@@ -926,4 +1073,9 @@ document.addEventListener("keydown", async (e) => {
 // The time words ("Today 15:00") move on by themselves
 setInterval(() => state && !document.querySelector("dialog[open]") && !document.querySelector(".dragging") && render(), 60_000);
 
-load().then(live);
+load().then(() => {
+  live();
+  // Opened to set your rhythm (Nova Desk's menu: Your rhythm): the sheet, once
+  if (new URLSearchParams(location.search).has("rhythm")) $("rhythm-btn").click();
+});
+loadCal().then(liveCal);

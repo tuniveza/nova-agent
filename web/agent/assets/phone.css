@@ -76,21 +76,13 @@ html:where([data-room="phone"]), :where(html[data-room="phone"]) body { overscro
 
 :where(html[data-room="phone"]) .main { overflow: hidden; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-auto-rows: auto; grid-template-areas: "pane"; gap: 8px; }
 
-:where(html[data-room="phone"]) .main > .chat, :where(html[data-room="phone"]) .main > #quests-panel { grid-area: pane; height: auto; min-height: 0; border-radius: 18px; }
+:where(html[data-room="phone"]) .main > .chat { grid-area: pane; height: auto; min-height: 0; border-radius: 18px; }
 
 :where(html[data-room="phone"]) .main > .suite-home { display: none; }
 
-:where(html[data-room="phone"]) .main[data-pane="chat"] > .board, :where(html[data-room="phone"]) .main[data-pane="quests"] > .chat { display: none; }
+:where(html[data-room="phone"]) .main[data-pane="quests"] > .chat { display: none; }
 
 /* Each pane scrolls inside itself (only one scrolling area at a time) */
-
-:where(html[data-room="phone"]) .side > .view { overflow-y: auto; overscroll-behavior: contain; }
-
-:where(html[data-room="phone"]) #view-today { overflow: hidden; }
-
-:where(html[data-room="phone"]) #view-today > .subpanel { overflow-y: auto; overscroll-behavior: contain; }
-
-:where(html[data-room="phone"]) .side-head { padding: 6px 8px 6px 12px; }
 
 /* Agent: the conversation, a row of suggestions you can swipe, and the message box at the bottom */
 

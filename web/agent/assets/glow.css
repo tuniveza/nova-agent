@@ -8,7 +8,7 @@
 }
 /* The big pieces: Talk to Nova Agent, Quests, an open panel (the header and the panel's
    top bar: /shared/topbar.css) */
-.main > .side.glass, .main > .chat.glass, .viewer > .viewer-body.glass {
+.main > .chat.glass, .viewer > .viewer-body.glass {
   border: 1px solid transparent;
   background:
     radial-gradient(60% 70% at 0% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%) padding-box,
@@ -18,8 +18,8 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
 }
 /* Their headings' rows get a fine glowing line under them */
-.side-head, .chat-head { border-bottom-color: transparent !important; position: relative; }
-.side-head::after, .chat-head::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 1px; pointer-events: none;
+.chat-head { border-bottom-color: transparent !important; position: relative; }
+.chat-head::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 1px; pointer-events: none;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--hi) 50%, transparent) 30%, color-mix(in srgb, var(--accent-2) 40%, transparent) 70%, transparent); }
 /* Pop-up windows (the Panels window, the Backend, your rhythm…) and the gear's sheet */
 .rh { background: radial-gradient(70% 40% at 0% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 65%) padding-box,
@@ -30,24 +30,21 @@ dialog.more-sheet { border-top: 1px solid transparent !important; background-ima
 /* Buttons, chips and round buttons glow the same way in every panel (/shared/buttons.css);
    the phone's menu tiles, links and any other button get the same soft light here */
 .more-grid button:hover { box-shadow: var(--glow-soft); border-color: color-mix(in srgb, var(--hi) 45%, transparent); }
-a:focus-visible:not(.btn, .chip, .mini), button:focus-visible:not(.btn, .icon-btn, .chip, .mini, .send, .spectrum-swatch, .seg > button, .subtabs > button) { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--hi) 70%, transparent), 0 0 18px -4px var(--hi); }
+a:focus-visible:not(.btn, .chip, .mini), button:focus-visible:not(.btn, .icon-btn, .chip, .mini, .send, .spectrum-swatch, .seg > button) { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--hi) 70%, transparent), 0 0 18px -4px var(--hi); }
 /* Typing boxes light up the same way */
 .composer textarea:focus, .rh input:focus, .rh textarea:focus, .rh select:focus { border-color: color-mix(in srgb, var(--hi) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi) 18%, transparent), 0 0 24px -8px var(--hi); }
 /* Cards inside the columns (quests, chat bubbles) get a hairline of the same light */
-.tl-item .card, .msg.bot .bubble { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 0 0 1px color-mix(in srgb, var(--hi) 10%, transparent); }
+.msg.bot .bubble { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 0 0 1px color-mix(in srgb, var(--hi) 10%, transparent); }
 /* Phones: the solid panels keep the glowing edge */
-:where(html[data-room="phone"]) .main > .side.glass, :where(html[data-room="phone"]) .main > .chat.glass, :where(html[data-room="phone"]) .viewer > .viewer-body.glass {
+:where(html[data-room="phone"]) .main > .chat.glass, :where(html[data-room="phone"]) .viewer > .viewer-body.glass {
     background: radial-gradient(60% 50% at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 62%) padding-box,
       linear-gradient(color-mix(in srgb, var(--panel) 88%, var(--void)), color-mix(in srgb, var(--panel) 88%, var(--void))) padding-box, var(--edge-glow) border-box; }
 
 /* ---- The columns' titles in the middle (their buttons stay on the right) ---- */
-.side-head { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 10px; }
-.side-head > .sec-title { grid-column: 2; justify-self: center; }
-.side-head > :not(.sec-title) { grid-column: 3; justify-self: end; }
-.suggest, .chips, .seg, .subtabs, .stats, .q-tags, .row-btns { justify-content: safe center; }
-:where(html[data-room="computer"]) .side-head, :where(html[data-room="computer"]) .chat-head { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 10px; }
-:where(html[data-room="computer"]) .side-head > .sec-title, :where(html[data-room="computer"]) .chat-head > .sec-title { grid-column: 2; justify-self: center; }
-:where(html[data-room="computer"]) .side-head > :not(.sec-title), :where(html[data-room="computer"]) .chat-head > :not(.sec-title) { grid-column: 3; justify-self: end; }
+.suggest, .chips, .seg, .row-btns { justify-content: safe center; }
+:where(html[data-room="computer"]) .chat-head { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 10px; }
+:where(html[data-room="computer"]) .chat-head > .sec-title { grid-column: 2; justify-self: center; }
+:where(html[data-room="computer"]) .chat-head > :not(.sec-title) { grid-column: 3; justify-self: end; }
 
 /* ---- The conversation in the middle: every message centred, with its words ---- */
 .log { align-items: center; }
@@ -58,17 +55,6 @@ a:focus-visible:not(.btn, .chip, .mini), button:focus-visible:not(.btn, .icon-bt
 /* ---- Quests: more of the day on one screen ----
    The next thing is a full card; the rest are slim one-line rows (time and title) that open on a
    tap. The day's heading and the "now" card are tighter too. */
-#view-today { gap: 8px; }
-#view-today > .day-head h3 { font-size: 16px; }
-#view-today .timeline { gap: 4px; }
-#view-today .tl-item:has(> .tl-card.compact) { gap: 8px; align-items: center; }
-#view-today .tl-item:has(> .tl-card.compact) .tl-time { font-size: 11px; line-height: 1.1; }
-#view-today .tl-item:has(> .tl-card.compact) .tl-time small { display: none; }
-#view-today .tl-card.compact { padding: 6px 12px; cursor: pointer; transition: background-color .2s, box-shadow .2s; }
-#view-today .tl-card.compact:hover { box-shadow: 0 0 0 1px color-mix(in srgb, var(--hi) 30%, transparent), 0 0 18px -8px var(--hi); }
-#view-today .tl-card.compact:not(.open) > :not(.tl-title) { display: none; }
-#view-today .tl-card.compact:not(.open) > .tl-title { font-size: 13px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#view-today .tl-card.compact.open { animation: quest-in .25s cubic-bezier(.2, .8, .2, 1); }
 
 /* ---- Scrollbars: slim, rounded, glowing in the theme's colours, wider when you're on them ---- */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -77,7 +63,7 @@ a:focus-visible:not(.btn, .chip, .mini), button:focus-visible:not(.btn, .icon-bt
 ::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { border-width: 2px; background: linear-gradient(180deg, color-mix(in srgb, var(--hi) 80%, #fff), var(--hi)) padding-box; }
 ::-webkit-scrollbar-corner { background: transparent; }
 /* The places that asked for the browser's thin bar get these instead (so they all match) */
-.log, .side > .view, #view-today > .subpanel, .suite-dlg .suite-groups, dialog.more-sheet, .sl-list { scrollbar-width: auto; scrollbar-color: auto; }
+.log, .suite-dlg .suite-groups, dialog.more-sheet, .sl-list { scrollbar-width: auto; scrollbar-color: auto; }
 @supports (-moz-appearance: none) { :where(*) { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--hi) 70%, var(--accent-2)) transparent; } }
 
 /* ---- The sky behind Nova Agent: a quiet Novacane nebula and a faint band of the galaxy. It takes on the colour of the app that's open (html[data-scene], set
@@ -113,17 +99,14 @@ html[data-scene="manual"] { --scene-own: var(--app-manual); }
   background: radial-gradient(130% 100% at 50% 45%, transparent 60%, rgba(0, 0, 0, .28)); }
 @media (prefers-reduced-motion: reduce) { html { transition: none; } }
 
-
 /* ---- Every window size, as usable as it can be ---- */
 /* The message box's hint stays on one line */
 .composer textarea::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* A computer window that isn't very wide: slimmer side columns, a shorter "New" button, smaller
    tool buttons, and the chat's suggestions in one row you can swipe */
 @media (max-width: 1280px) {
-  :where(html[data-room="computer"]) .main { grid-template-columns: minmax(340px, 1fr) minmax(210px, .55fr); gap: 10px; }
-  :where(html[data-room="computer"]) .strip-tools { gap: 3px; }
-  :where(html[data-room="computer"]) .strip-tools .icon-btn, :where(html[data-room="computer"]) .side-head .icon-btn, :where(html[data-room="computer"]) .chat-head .icon-btn { width: 28px; height: 28px; }
-  :where(html[data-room="computer"]) .side-head { padding: 6px 8px; }
+  :where(html[data-room="computer"]) .main { gap: 10px; }
+  :where(html[data-room="computer"]) .chat-head .icon-btn { width: 28px; height: 28px; }
   :where(html[data-room="computer"]) .sec-title { font-size: 13px; gap: 6px; }
   :where(html[data-room="computer"]) .sec-title > .pico.sec-ico { width: 20px; height: 20px; }
 }
@@ -140,8 +123,6 @@ html[data-scene="manual"] { --scene-own: var(--app-manual); }
   :where(html[data-room="computer"]) .status-line { height: 24px; font-size: 11px; }
 }
 @media (max-height: 660px) {
-  :where(html[data-room="computer"]) .side > .view { padding: 8px 10px; }
-  :where(html[data-room="computer"]) #view-today > .day-head .day-sub { display: none; }
   :where(html[data-room="computer"]) .main > .suite-home .suite-group h4 { display: none; }
   :where(html[data-room="computer"]) .main > .suite-home .suite-app b { font-size: 10.5px; }
 }
@@ -158,15 +139,8 @@ html[data-scene="manual"] { --scene-own: var(--app-manual); }
 /* ---- Quests is as big as what's in it: short when there's little (so they don't
    stand there empty), growing up to the full height when there's a lot (then scrolling inside).
    Their widths follow their contents too, within sensible limits; the chat takes the rest. ---- */
-:where(html[data-room="computer"]) .main:not(.viewing) { grid-template-columns: minmax(360px, 1fr) fit-content(clamp(240px, 28vw, 430px)); }
-:where(html[data-room="computer"]) .main > .side { align-self: start; max-height: 100%; min-width: 220px; }
-:where(html[data-room="computer"]) .main > .side > .view { min-height: 0; }
-:where(html[data-room="computer"]) #view-today { overflow: auto; }
 
 /* ---- Quests: the day's heading centred (the date, its line, and the counts) ---- */
-#view-today > .day-head, .day-head { display: flex !important; flex-direction: column; align-items: center !important; justify-content: center !important; text-align: center; gap: 6px; }
-#view-today > .day-head > div:first-child, .day-head > div:first-child { display: grid !important; justify-items: center; text-align: center; }
-.day-head .stats { justify-content: center; flex-wrap: wrap; }
 
 /* ---- The conversation: it scrolls (a visible scrollbar) and, in pages, one reply at a time ---- */
 .log { overflow-y: auto; }
@@ -181,92 +155,36 @@ html[data-scene="manual"] { --scene-own: var(--app-manual); }
 .chat { grid-template-rows: auto minmax(0, 1fr) auto auto !important; }
 :where(html[data-room="phone"]) .chat { grid-template-rows: minmax(0, 1fr) auto auto !important; }
 
-/* ---- Agent and Quests side by side (23 Oct 2026: Agent has the room the left column had). The brand
-   panel stays in the middle of the page, its own size (medallion.css), like the dock and the status panel. ---- */
-html:where([data-room="computer"]) { --side-w: clamp(250px, 26vw, 440px); }
-:where(html[data-room="computer"]) .main:not(.viewing) { grid-template-columns: minmax(340px, 1fr) var(--side-w) !important; }
+/* ---- Agent has the whole width (Quests' own section moved into Quests, 24 Oct 2026). The brand panel stays in
+   the middle of the page, its own size (medallion.css), like the dock and the status panel. ---- */
 :where(html[data-room="computer"]) .shell:not(:has(> .main.viewing)) > .topbar { width: var(--chat-w, auto); min-width: max-content; max-width: 100%;
     grid-template-columns: 1fr auto 1fr; justify-self: center; }
 :where(html[data-room="computer"]) .shell:not(:has(> .main.viewing)) > .topbar > .top-side.left { justify-self: start; }
 :where(html[data-room="computer"]) .shell:not(:has(> .main.viewing)) > .topbar > .top-side.right { justify-self: end; }
-@media (max-width: 1280px) { html:where([data-room="computer"]) { --side-w: clamp(220px, 24vw, 320px); } :where(html[data-room="computer"]) .topbar { gap: 8px; } :where(html[data-room="computer"]) .top-side { gap: 6px; } }
+@media (max-width: 1280px) { :where(html[data-room="computer"]) .topbar { gap: 8px; } :where(html[data-room="computer"]) .top-side { gap: 6px; } }
 /* The brand panel's small word above Nova Agent: just "Novacane", kept on every computer size */
 :where(html[data-room="computer"]) .topbar .brand .kicker { display: block !important; }
 
 /* Quests: as tall as what's in it, and once that's more than the room, they stop
    at the bottom and scroll inside (nothing goes off the screen) */
-:where(html[data-room="computer"]) .main:not(.viewing) > .side { display: flex !important; flex-direction: column; max-height: 100%; min-height: 0; }
-:where(html[data-room="computer"]) .main:not(.viewing) > .side > .side-head { flex: none; }
-:where(html[data-room="computer"]) .main:not(.viewing) > .side > .view { flex: 1 1 auto; min-height: 0; overflow-y: auto !important; }
-:where(html[data-room="computer"]) .main > #quests-panel > #view-today { overflow-y: auto !important; }
-:where(html[data-room="computer"]) .main > #quests-panel > #view-today > .subpanel { flex: none; overflow: visible; }
 /* With an app open, Quests steps aside completely (never over the app) */
-.main.viewing > .board, .main.viewing > .side { display: none !important; }
 
 /* Quests never shrinks to a sliver (while its contents load or refresh), and when
    its column is narrow the title and its buttons stack instead of crowding each other */
-:where(html[data-room="computer"]) .main:not(.viewing) > .side { min-height: min(220px, 100%); container-type: inline-size; }
-:where(html[data-room="computer"]) .main:not(.viewing) > .side > .view { min-height: 120px; }
-@container (max-width: 330px) {
-  .side-head { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; row-gap: 6px; padding-block: 8px !important; }
-  .side-head > .sec-title, .side-head > :not(.sec-title) { grid-column: 1 !important; justify-self: center !important; }
-}
 
 /* Quests always stays inside its own column (never under Agent) */
-:where(html[data-room="computer"]) .main:not(.viewing) > .side { min-width: 0 !important; width: 100%; max-width: 100%; justify-self: stretch; overflow: hidden; }
 :where(html[data-room="computer"]) .main:not(.viewing) > .chat { min-width: 0; }
 
 /* ---- Quests: easy to read, and nothing ever off the screen ----
    The whole pane (the day, the card for now, the tabs and the list) is one scrolling area, so a
    long title can't push the list out of sight; words wrap instead of being cut short; sizes a
    little larger and steadier; a narrow column puts each time above its card. */
-#quests-panel { container: quests / inline-size; }
-#quests-panel > #view-today { overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; }
-#quests-panel > #view-today > .subpanel { flex: none !important; overflow: visible !important; padding-right: 0; }
-#view-today > * { max-width: 100%; min-width: 0; }
 /* The list */
-#view-today .tl-time { font-size: 12.5px; color: var(--text); }
-#view-today .tl-time small { font-size: 11px; color: var(--muted); }
-#view-today .tl-item:has(> .tl-card.compact) .tl-time { font-size: 12px; }
-#view-today .tl-card { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
-#view-today .tl-title { line-height: 1.3; }
-#view-today .tl-card.compact:not(.open) > .tl-title { font-size: 14px; font-weight: 600; line-height: 1.35; white-space: normal; overflow: visible; text-overflow: clip; }
-#view-today .tl-meta { font-size: 13px; line-height: 1.45; }
-#view-today .prio { font-size: 11px; }
-#view-today .tl-label { margin: 0 0 6px; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--hi); }
 /* The quest that's on the card above, as its row: marked, quietly */
-#view-today .tl-item.is-now .tl-card.compact { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi) 45%, transparent); }
-#view-today .tl-item.is-now .tl-time { color: var(--hi); }
 /* Tags, the mode chip and the buttons: readable, and they wrap rather than poke out */
-#view-today .q-tags { min-width: 0; }
-#view-today :is(.q-tag, .m-tag, .risk-tag, .t-tag) { min-width: 0; max-width: 100%; font-size: 11px; letter-spacing: .04em; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; text-align: left; }
-#view-today .m-tag { text-transform: none; letter-spacing: .02em; }
-#view-today .qm-chip { min-width: 0; max-width: 100%; white-space: normal; overflow: visible; text-overflow: clip; text-align: left; overflow-wrap: anywhere; }
-#view-today .mini { max-width: 100%; font-size: 11.5px; padding: 6px 12px; letter-spacing: .03em; white-space: normal; text-align: center; }
-#view-today .subtabs button { font-size: 11px; letter-spacing: .06em; }
-#view-today .up-day li { font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; }
-#view-today .up-day li .qm-chip { vertical-align: middle; }
-#view-today .tl-card.done, #view-today .tl-card.quest.done { opacity: .7; }
 /* A refresh while you're looking: the cards don't play their entrance again */
-#view-today.quiet .subpanel, #view-today.quiet .tl-card.quest:not(.doing) { animation: none; }
-#view-today.quiet .tl-card.quest.doing { animation: quest-breathe 2.4s ease-in-out infinite; }
 /* A narrow column: each time sits above its card, so the card gets the full width */
-@container quests (max-width: 300px) {
-  #view-today .tl-item, #view-today .tl-item:has(> .tl-card.compact) { grid-template-columns: minmax(0, 1fr) !important; gap: 2px !important; }
-  #view-today .tl-time { display: flex; justify-content: center; gap: 4px; padding-top: 2px; text-align: center; }
-  #view-today .tl-time small { display: inline !important; }
-  #view-today .tl-time small::before { content: "– "; }
-  #view-today .now-line { margin: 18px 0 4px !important; }
-  #view-today .now-line::before { left: 0 !important; width: 100% !important; top: -16px; text-align: center !important; }
-}
 /* The day's counts: one quiet line of words (no boxes), so the list starts higher up */
-#view-today .day-head .stats { gap: 2px 14px; }
-#view-today .day-head .stat { padding: 0; border: 0; background: none; border-radius: 0; font-size: 12px; }
-#view-today .day-head .stat b { font-size: 15px; }
 /* A phone: the pane's name and its four buttons share one centred row when they fit */
-:where(html[data-room="phone"]) #quests-panel > .side-head { display: flex !important; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; padding: 6px 8px !important; }
-:where(html[data-room="phone"]) #quests-panel > .side-head > * { grid-column: auto !important; }
-:where(html[data-room="phone"]) #quests-panel > .side-head .strip-tools { gap: 3px; }
 /* A narrow side pane (Quests beside the chat at 1024 wide): its buttons wrap inside the pane instead
    of being cut off at its edge (15 Oct 2026) */
-.side-head .strip-tools { flex-wrap: wrap; justify-content: center; min-width: 0; max-width: 100%; }

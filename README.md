@@ -37,8 +37,8 @@ working. Run on a computer of its own, its pages open the online Nova Agent, so 
 address; set `NOVA_LOCAL_UI=1` in `.env` to keep using the pages there (when the internet is down).
 
 Open <https://nova.novacane.co.uk/agent/> (Nova Desk, the computer app) and you get one screen
-that fits without scrolling: **Agent**, with **Quests** (today's plan) beside it, and the
-**panels** along the bottom. Fixer, Computer, Observatory, Console, Manual and Index live in a
+that fits without scrolling: **Agent**, with the **panels** along the bottom. Today's plan is in
+**Quests**, a panel of its own (since 24 Oct 2026; it used to sit beside Agent). Fixer, Computer, Observatory, Console, Manual and Index live in a
 hidden **Backend**: hold the Nova Agent mark for a second, or triple-click it. On a phone,
 <https://nova.novacane.co.uk/phone/> is **Nova Phone**, the phone app; there, hold the Agent tile
 for the Backend.
@@ -114,10 +114,10 @@ cards and day cards ("make 31 October a Halloween day card"), look at the studio
 bookings, check the Acuity login, research anything on the web (with links to where it came
 from), look at any public webpage (it opens it in a browser of its own, never the Acuity one,
 and sees a screenshot and the page's contents), or ask how Nova Agent is doing. Whatever it changes shows
-up as a little chip under its reply, and the plan beside it redraws straight away.
+up as a little chip under its reply, and Quests redraws straight away.
 
-On a wide screen the two columns sit side by side above Nova Agent, all on one screen; on
-a phone or a very short window they stack (Agent first) and the page scrolls.
+Agent has the whole width above the panels, all on one screen. Reminders still pop up on Nova
+Desk while it's open (switch the system pop-ups on in Quests: the bell in its bar).
 
 ### Quests
 
@@ -668,7 +668,7 @@ Names only here; never commit `.env`.
 | `NOTIFY_CLIENTS` | `true` | Tick Acuity's "Send email to client" when cancelling |
 
 Your rhythm (wake, sleep, buffers, breaks, the daily cap, reminders, check-ins, briefings, phone
-alerts and pace limits) is set on the page with ⚙, or by asking Agent.
+alerts and pace limits) is set in Quests with the sun-over-the-horizon button, or by asking Agent.
 
 Everything Nova Agent writes at run time goes in `data/` (or `NOVA_DATA_DIR`), which git
 ignores: quests (`quests.json`), the calendar (`calendar.json`), the saved Acuity

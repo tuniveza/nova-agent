@@ -38,8 +38,14 @@
       <span class="streak" id="streak" hidden></span>
       <button class="icon-btn" id="search-btn" type="button" aria-label="Find a quest (/)" title="Find (/)" aria-controls="search-row" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
       <button class="icon-btn" id="calm-btn" type="button" aria-pressed="false" aria-label="Calm: fewer things on screen (C)" title="Calm (C)"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+      <button class="icon-btn" id="cal-btn" type="button" aria-label="Open Calendar" title="Open Calendar"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button>
+      <button class="icon-btn" id="rhythm-btn" type="button" aria-label="Your daily rhythm" title="Your daily rhythm: when you wake, work and sleep"><svg viewBox="0 0 24 24"><path d="M3 18h18M6 18a6 6 0 0 1 12 0"/><path d="M12 4v3M4.9 8.9l2 2M19.1 8.9l-2 2"/></svg></button>
+      <button class="icon-btn" id="popups-btn" type="button" aria-pressed="false" aria-label="Pop-up reminders on this computer" title="Pop-up reminders on this computer: one before each quest, and a check-in when it should be done"><svg viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>
     </div>
   </header>
+
+  <!-- Today in one line: when you're up, how full the day is (from Nova Desk's own Quests, 24 Oct 2026) -->
+  <p class="day-line" id="day-line" hidden></p>
 
   <!-- The quest on now (or up next), with its buttons: moved here from Nova Desk's own Quests (24 Oct 2026, the user) -->
   <section class="now-slot" id="now" aria-label="Quest on now" hidden></section>
@@ -163,11 +169,53 @@
     </dl>
   </dialog>
 
+  <!-- Your daily rhythm: the planner fits quests around it (from Nova Desk's own Quests, 24 Oct 2026) -->
+  <dialog class="sheet" id="rhythm" aria-labelledby="rh-title">
+    <form method="dialog" id="rhythm-form" autocomplete="off">
+      <div class="sheet-head">
+        <h2 id="rh-title">Your daily rhythm</h2>
+        <button class="icon-btn" type="button" id="rhythm-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="sheet-body">
+        <p class="rh-note">The planner fits quests around these, and re-plans the moment you save.</p>
+        <div class="rh-grid">
+          <label class="field"><span>Get up</span><input type="time" name="wake"></label>
+          <label class="field"><span>Go to sleep</span><input type="time" name="sleep"></label>
+          <label class="field"><span>Start-up (min)</span><input type="number" name="startUpMinutes" min="0" max="240" inputmode="numeric"></label>
+          <label class="field"><span>Wind-down (min)</span><input type="number" name="windDownMinutes" min="0" max="240" inputmode="numeric"></label>
+          <label class="field"><span>Buffer between (min)</span><input type="number" name="bufferMinutes" min="0" max="60" inputmode="numeric"></label>
+          <label class="field"><span>Break after (min)</span><input type="number" name="breakAfterMinutes" min="30" max="480" inputmode="numeric"></label>
+          <label class="field"><span>Break length (min)</span><input type="number" name="breakMinutes" min="0" max="120" inputmode="numeric"></label>
+          <label class="field"><span>Max quest hours a day</span><input type="number" name="maxQuestHoursPerDay" min="1" max="18" inputmode="numeric"></label>
+          <label class="field"><span>Remind before (min)</span><input type="number" name="remindMinutesBefore" min="0" max="120" inputmode="numeric"></label>
+          <label class="field"><span>Plan ahead (days)</span><input type="number" name="horizonDays" min="3" max="90" inputmode="numeric"></label>
+        </div>
+        <label class="field"><span>Home base (for travel)</span><input type="text" name="homeBase" maxlength="160"></label>
+        <div class="rh-checks">
+          <label><input type="checkbox" name="checkIns"> Check in when a quest should be finished</label>
+          <label><input type="checkbox" name="dailyBriefing"> Morning plan and evening wrap-up</label>
+          <label><input type="checkbox" name="phonePush"> Also send reminders to the staff phones</label>
+          <label><input type="checkbox" name="paceLimits"> <span><b>Pace limits</b> (safety): quests start a few minutes ahead, on 5-minute marks, with buffers and breaks. Off: right away, to the second, back to back.</span></label>
+        </div>
+        <fieldset class="field">
+          <legend>Days off (no quests at all)</legend>
+          <div class="days-off"><label><input type="checkbox" data-dayoff="1"><span>Mon</span></label><label><input type="checkbox" data-dayoff="2"><span>Tue</span></label><label><input type="checkbox" data-dayoff="3"><span>Wed</span></label><label><input type="checkbox" data-dayoff="4"><span>Thu</span></label><label><input type="checkbox" data-dayoff="5"><span>Fri</span></label><label><input type="checkbox" data-dayoff="6"><span>Sat</span></label><label><input type="checkbox" data-dayoff="0"><span>Sun</span></label></div>
+        </fieldset>
+      </div>
+      <div class="sheet-foot">
+        <span class="grow"></span>
+        <button class="btn ghost" type="button" id="rhythm-cancel">Cancel</button>
+        <button class="btn primary" type="submit">Save and re-plan</button>
+      </div>
+    </form>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-text"></span><button class="chip" id="toast-undo" type="button" hidden>Undo</button></div>
   <p class="sr" id="say" aria-live="polite"></p>
 </div>
 <script src="/shared/sfx.js"></script>
 <script src="/shared/quest-modes.js"></script>
+<script src="/agent/plans.js"></script>
 <script type="module" src="js/quests.js"></script>
 </body>
 </html>

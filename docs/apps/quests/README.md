@@ -1,11 +1,17 @@
 # Quests
 
-Every quest in one place. Write one the way you'd say it, tick it off, and choose how to see them: one thing at a time, a list, a board, or hour by hour. They're the same quests as Nova Agent's own (today's plan beside Agent), Notes and Portal: a change in one shows in all of them.
+Every quest in one place. Write one the way you'd say it, tick it off, and choose how to see them: one thing at a time, a list, a board, or hour by hour. They're the same quests as Nova Agent's own, Notes and Portal: a change in one shows in all of them.
 
 ## What's new
 
+- **Today's plan moved in from Nova Desk** (24 Oct 2026, the user: "get that quests section off this area of the nova desk and put it into quests"). Nova Desk's home is now Agent and the panels; everything its Quests section did is here:
+  - the **quest on now** (or up next) on its own card above every view: its mode, time, where it came from, a bar that fills as the time passes, and Start, Done, End quest, +15 min, Not now, Skip and which phones; tap its title for the details;
+  - **today in one line** under the bar: up and sleep times, how many quests, hours planned, done, at risk, and pace limits when they're off;
+  - in **Today**: Nova's **blocked time** (with **Unblock**) and **Calendar's note cards** (tap one: Calendar on that day) between the quests, **Pulses** (quick repeats, with **Stop**) and **Also coming up** (Calendar's cards with reminders, the next 7 days);
+  - **Calendar** and **your daily rhythm** (the sun over the horizon) in the bar; the rhythm sheet re-plans everything when you save; `/quests/?rhythm=1` opens it straight away;
+  - **Pop-up reminders**, the bell in the bar: lets this browser show system pop-ups (Nova Desk shows them while it's open).
 - **Quests opens in Today** (hour by hour) unless you choose another: the options row under the bar → **Opens in** Today, Focus, List or Board. Remembered on the device. Today's plan is no longer a separate icon in Plans: it's this view.
-- **Quests is a panel of its own**, in Nova Agent's Plans (and on the phone's bar): quick add in everyday words, Focus, List, Board and Today, steps, tags, drag to reorder, Calm, and keyboard shortcuts. Today's plan beside Agent is still there (**Today** on the bar).
+- **Quests is a panel of its own**, in Nova Agent's Plans (and on the phone's bar): quick add in everyday words, Focus, List, Board and Today, steps, tags, drag to reorder, Calm, and keyboard shortcuts. Today's plan beside Agent stayed there until 24 Oct 2026, when it moved in here (above).
 
 ## What it does
 
