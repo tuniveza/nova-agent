@@ -296,7 +296,6 @@
   // The tiles: every section in Nova Tabs (in their order, each once), less Today itself and the pages
   // about you and the team
   const NOT = new Set(["today", "me", "admin"]);
-  const NAMES = { calendar: "Bookings" };
   function today() {
     const P = window.NovaPillars;
     const grid = $("today-dash");
@@ -307,7 +306,7 @@
       for (const it of g.items) {
         if (!it.at || NOT.has(it.at) || seen.has(it.at)) continue;
         seen.add(it.at);
-        items.push({ ...it, name: NAMES[it.at] || it.name, icon: it.name, hue: P.hue(g.name) });
+        items.push({ ...it, icon: it.name, hue: P.hue(g.name) });
       }
     }
     cache.clear();
@@ -327,11 +326,13 @@
     const groups = P.now();
     const g = groups.find((x) => P.slug(x.name) === want) || groups[0];
     if (!g) return;
+    // (a Nova Tab that is one dashboard has no Overview: its one address, 25 Oct 2026, "get rid of old links")
+    if (g.dash && window.PortalPage) return window.PortalPage.go("/portal/?view=" + g.dash, { replace: true });
     $("view-group").style.setProperty("--g", P.hue(g.name));
     $("dash-title").replaceChildren(P.icon(g.name), el("span", "", g.name));
     cache.clear();
     const items = g.items.filter((i) => i.at);
-    const tiles = items.map((it) => tile({ ...it, name: it.at === "calendar" ? "Bookings" : it.name }, P));
+    const tiles = items.map((it) => tile(it, P));
     // (a Nova Tab with one section or none (Plans & Nova, You, Look & sound): its other items too, a tile
     // for each part, so its Overview is never one lone tile or a line of words in an empty pane; the user,
     // 25 Oct 2026: "there shouldn't be any blank sections")
@@ -388,7 +389,7 @@
   }
 
   // Inbox's dashboard (app.js showInbox): today's bookings along the top of Enquiries, each opening
-  // Booking tools (the user, 22 Oct 2026: "today can be in enquiries")
+  // Bookings (the user, 22 Oct 2026: "today can be in enquiries")
   function inboxToday() {
     const box = $("inbox-today");
     if (!box) return;
@@ -402,7 +403,7 @@
         for (const [name, time] of t.rows.slice(0, 3)) {
           const b = el("button", "it-booking");
           b.type = "button";
-          b.title = "Open Booking tools";
+          b.title = "Open Bookings";
           b.append(el("b", "", time), el("span", "", name));
           b.addEventListener("click", tools);
           parts.push(b);
@@ -410,7 +411,7 @@
         if (t.rows.length > 3) parts.push(el("span", "it-none", `+${t.rows.length - 3} more`));
         const talked = (t.small.split(" · ")[1] || "").trim();
         if (talked) parts.push(el("span", "it-small", talked));
-        const open = el("button", "chip it-tools", "Booking tools");
+        const open = el("button", "chip it-tools", "Bookings");
         open.type = "button";
         open.addEventListener("click", tools);
         parts.push(open);

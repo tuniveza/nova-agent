@@ -1,0 +1,195 @@
+/* Bookings, on one screen (bookings.js, 25 Oct 2026, the owner: "can you make the rest of nova portal as much as
+   possible dashboards please"): a panel each, drawn like Admin's (admin.css, dash.css .dash-tile). On a computer or a
+   tablet on its side with the room (the section 360px or more high, inside Nova Agent's 1280x720 and up): the week's
+   numbers in a row along the top; under them the month, the day picked in it (its bookings in pages of their own,
+   onescreen.js, when there are more than fit) and Approvals over Booking link, the three one height, filling the
+   section. Lower than that (1366x400) they go into pages, a panel a page. */
+#view-calendar .bk-grid.dash-grid { width: 100%; max-width: 1640px; margin: 0 auto; gap: 10px; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+#view-calendar .bk-week { grid-column: 1 / -1; }
+@media (min-height: 440px) {
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-calendar .bk-grid {
+    grid-template-columns: minmax(250px, 0.9fr) minmax(0, 1.6fr) minmax(230px, 0.85fr); grid-template-rows: auto minmax(0, 1fr);
+  }
+  /* (the section's whole height: the week on top, the rest below it, nothing scrolling; inside Nova Agent, where the
+     section's height is set, frame.css) */
+  html.embed:is([data-form="desktop"], [data-form="tablet-side"]) #view-calendar:not([hidden]) { display: flex; flex-direction: column; }
+  html.embed:is([data-form="desktop"], [data-form="tablet-side"]) #view-calendar > .bk-grid { flex: 1 1 auto; min-height: 0; margin-top: 0; }
+  /* (Approvals and Booking link: as many lines as their panel has room for, each line one line high: a line's
+     height, --bk-row, and the room counted in lines, so a line is there whole or not at all; the count above
+     says how many in all, and Open › has every one) */
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-calendar .bk-side .dash-rows { flex: 1 1 0; min-height: var(--bk-row); container: bkrows / size; }
+}
+
+.bk-panel { --bk-row: 28px; display: flex; flex-direction: column; margin: 0; padding: 10px 14px; gap: 6px; min-width: 0; min-height: 0; text-align: left; }
+.bk-panel .dash-rows { align-content: start; gap: 0; }
+.bk-panel .dash-rows li { box-sizing: border-box; min-width: 0; align-items: center; height: var(--bk-row); padding: 0; }
+/* (a line that only says what comes here, when nothing has: its words wrap, it's the only one) */
+.bk-panel .dash-rows li:not([role]) { height: auto; min-height: var(--bk-row); }
+.bk-panel .dash-rows li:not([role]) .dash-main { white-space: normal; }
+.bk-panel .dash-rows .dash-main { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.bk-panel .dash-side { font-size: 11px; }
+.bk-panel .ad-foot { margin-top: auto; }
+
+/* ---- The week: its name, its numbers and Ask Nova along one line (wrapping under each other when narrow) ---- */
+#view-calendar .bk-week { flex-direction: row; align-items: center; gap: 12px; padding: 8px 14px; }
+.bk-week > .pillar-ico { flex: none; width: 20px; height: 20px; color: var(--g, var(--hi)); }
+.bk-week > .pillar-ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#view-calendar #cal-smart { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; margin: 0; }
+#view-calendar #cal-smart > .smart-kicker { flex: 0 1 auto; max-width: 15em; font-size: 11px; letter-spacing: 0.08em; line-height: 1.4; color: var(--soft); }
+#view-calendar .smart-tiles { display: flex; flex-wrap: wrap; justify-content: center; flex: 1 1 auto; width: auto; gap: 6px; }
+#view-calendar .smart-tile { flex: 1 1 0; min-width: 100px; padding: 5px 8px; border-radius: 12px; }
+#view-calendar .smart-tile b { font-size: 16px; white-space: nowrap; }
+#view-calendar .smart-tile span { font-size: 10.5px; letter-spacing: 0.04em; white-space: nowrap; }
+#view-calendar .smart-ask { flex: none; letter-spacing: 0.06em; }
+/* (a narrow window, 1024x768: its name over Ask Nova at the left, the numbers beside them, not Ask Nova on a line of
+   its own under them) */
+#view-calendar .bk-week { container: bkweek / inline-size; }
+@container bkweek (max-width: 1080px) {
+  #view-calendar #cal-smart { display: grid; grid-template-columns: auto minmax(0, 1fr); justify-items: center; }
+  #view-calendar #cal-smart > .smart-kicker { grid-column: 1; grid-row: 1; }
+  #view-calendar #cal-smart > .smart-ask { grid-column: 1; grid-row: 2; }
+  #view-calendar #cal-smart > .smart-tiles { grid-column: 2; grid-row: 1 / span 2; width: 100%; }
+}
+
+/* ---- The month, and under it Today and Open Calendar, together in the middle of the panel ---- */
+#view-calendar .bk-month { gap: 6px; justify-content: center; }
+#view-calendar .bk-month > .cal { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; overflow: visible; }
+#view-calendar .cal-head { margin-bottom: 6px; }
+#view-calendar .cal-month { font-size: 16px; white-space: nowrap; }
+#view-calendar .cal-weekdays { margin-bottom: 4px; text-align: center; }
+#view-calendar .cal-weekdays span { font-size: 10.5px; letter-spacing: 0.06em; }
+/* (the days share the room the panel has, from 26px to a little taller than wide: in a tall window they were long
+   thin bars) */
+#view-calendar #cal-grid { flex: 0 1 auto; min-height: 0; gap: 4px; grid-auto-rows: minmax(26px, 72px); }
+#view-calendar #cal-grid > .cal-day { aspect-ratio: auto; min-height: 26px; gap: 2px; border-radius: 10px; }
+#view-calendar #cal-grid > .cal-blank { min-height: 26px; }
+#view-calendar .bk-month > .ad-foot { margin-top: 0; gap: 6px; flex-wrap: nowrap; }
+#view-calendar .bk-month > .ad-foot > * { padding: 0 12px; letter-spacing: 0.06em; white-space: nowrap; }
+
+/* ---- The day: its name, how full, free hours, what to show and Ask Nova, then its bookings in pages of their own ---- */
+#view-calendar .bk-day { container: bkday / inline-size; }
+#view-calendar .bk-day .cal-day-title { margin: 0; font-family: var(--f-display); font-size: 15px; letter-spacing: 0.02em; text-transform: none; color: #fff; white-space: normal; }
+/* (how full and its warnings a line each; its free hours, what to show and Ask Nova side by side when they fit) */
+#view-calendar #cal-day-smart { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 10px; margin: 0; }
+#view-calendar #cal-day-smart > :is(.smart-kicker, .load-meter, .smart-warn, .smart-note:not(.free-none)) { flex: 1 1 100%; }
+#view-calendar #cal-day-smart .load-meter { max-width: none; height: 6px; }
+/* (how full, and its meter beside it while there's room) */
+#view-calendar #cal-day-smart > .smart-kicker { flex: 0 1 auto; }
+#view-calendar #cal-day-smart > .load-meter { flex: 1 1 140px; }
+#view-calendar .bk-day .dash-tile-head { flex-wrap: wrap; row-gap: 4px; }
+#view-calendar .bk-ask { flex: none; display: flex; }
+#view-calendar .bk-ask .chip { min-height: 30px; padding: 0 12px; letter-spacing: 0.04em; }
+#view-calendar .bk-day .cal-day-title { flex: 1 1 12em; }
+#view-calendar #cal-day-smart :is(.smart-warn, .smart-note) { font-size: 12px; }
+#view-calendar #cal-day-smart .smart-kicker { font-size: 11px; letter-spacing: 0.1em; }
+#view-calendar #cal-day-smart .chip { letter-spacing: 0.08em; }
+#view-calendar #cal-day-list { flex: 1 1 auto; min-height: 48px; overflow-y: auto; scrollbar-width: thin; gap: 6px; align-content: start; grid-auto-rows: max-content; }
+/* (still a box that would scroll while it's in pages: onescreen.js finds the boxes inside a section by that, so when
+   the section is laid out again it's found and paged again, not left with every booking showing and drawn at half
+   size to fit, as it was the second time round; /shared/onescreen.css makes a paged box overflow: hidden) */
+#view-calendar #cal-day-list[data-os-paged] { overflow-y: auto !important; }
+#view-calendar #cal-day-list > .empty { margin: 0; padding: 14px; }
+/* A booking a line: its time, who and the session (a tap opens its details under it), its buttons at the end; when
+   the panel is narrow, its buttons under it */
+#view-calendar #cal-day-list > .card { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 4px 12px; padding: 6px 12px; border-radius: 12px; }
+@container bkday (min-width: 400px) { #view-calendar #cal-day-list > .cal-card { grid-template-columns: minmax(0, 1fr) auto; } }
+#view-calendar .cal-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; cursor: pointer; border-radius: 8px; }
+#view-calendar .cal-row:focus-visible { outline: 2px solid var(--g, var(--hi)); outline-offset: 2px; }
+#view-calendar #cal-day-list :is(.cal-time, .card-title, .cal-session) { margin: 0; }
+#view-calendar #cal-day-list .cal-time { font-size: 15px; white-space: nowrap; }
+#view-calendar #cal-day-list .card-title { font-size: 14px; }
+#view-calendar #cal-day-list .cal-session { font-size: 12.5px; }
+#view-calendar #cal-day-list .cal-card > .actions { margin: 0; gap: 6px; justify-content: flex-end; }
+#view-calendar #cal-day-list .cal-card > .actions .btn.small { min-height: 30px; padding: 0 12px; letter-spacing: 0.06em; }
+@media (pointer: coarse) { #view-calendar #cal-day-list .cal-card > .actions .btn.small { min-height: 40px; } }
+#view-calendar #cal-day-list .cal-card > .cal-more { grid-column: 1 / -1; grid-row: 2; margin: 0; font-size: 12.5px; }
+#view-calendar #cal-day-list .cal-card > .cal-more[hidden] { display: none; }
+/* (Calendar's note cards and quests that day, as lines too) */
+#view-calendar #cal-day-list > .suite-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+#view-calendar #cal-day-list > .suite-item > .alert-kind { margin: 0; }
+
+/* ---- Approvals over Booking link, sharing the column's height ---- */
+#view-calendar .bk-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; }
+#view-calendar .bk-side > .bk-panel { flex: 1 1 auto; }
+#view-calendar .bk-side .dash-rows li:not([role]) .dash-main { color: var(--muted); }
+/* (a line each while there's room for it: --bk-row high) */
+@container bkrows (max-height: 55.9px) { .dash-rows > li:nth-child(n+2) { display: none; } }
+@container bkrows (max-height: 83.9px) { .dash-rows > li:nth-child(n+3) { display: none; } }
+@container bkrows (max-height: 111.9px) { .dash-rows > li:nth-child(n+4) { display: none; } }
+@container bkrows (max-height: 139.9px) { .dash-rows > li:nth-child(n+5) { display: none; } }
+
+/* A little lower (1280x720, 1024x768): the same, closer together, so it's all on the one page */
+@media (min-height: 440px) and (max-height: 560px) {
+  #view-calendar .bk-grid.dash-grid { gap: 8px; }
+  #view-calendar .bk-panel { padding: 7px 12px; gap: 4px; }
+  #view-calendar .bk-week { padding: 5px 12px; }
+  #view-calendar .bk-side { gap: 8px; }
+  #view-calendar .cal-head { margin-bottom: 2px; }
+  #view-calendar .cal-head .icon-btn { width: 30px; height: 30px; min-height: 30px; }
+  #view-calendar #cal-grid { gap: 3px; }
+  #view-calendar .bk-panel .dash-big { font-size: 17px; }
+  #view-calendar .ad-foot :is(.btn.small, .chip) { min-height: 30px; }
+  #view-calendar .smart-tile { padding: 3px 8px; }
+  #view-calendar #cal-day-smart { gap: 4px 8px; }
+  #view-calendar #cal-day-smart .chip { min-height: 28px; padding: 0 10px; letter-spacing: 0.05em; }
+  #view-calendar #cal-day-smart :is(.smart-warn, .smart-note) { font-size: 11.5px; line-height: 1.35; }
+  #view-calendar #cal-day-list { gap: 4px; }
+  #view-calendar #cal-day-list > .card { padding: 3px 10px; }
+  #view-calendar #cal-day-list .cal-time { font-size: 14px; }
+  #view-calendar #cal-day-list .card-title { font-size: 13.5px; }
+  #view-calendar #cal-day-list .cal-session { font-size: 12px; }
+  #view-calendar #cal-day-list .cal-row { column-gap: 8px; }
+  #view-calendar #cal-day-list .cal-card > .actions { gap: 4px; }
+  #view-calendar #cal-day-list .cal-card > .actions .btn.small { padding: 0 9px; letter-spacing: 0.03em; }
+  /* (a slim day: its number over a row of smaller dots, so a busy day's dots stay inside it) */
+  #view-calendar .cal-dots { gap: 2px; height: 5px; flex-wrap: nowrap; }
+  #view-calendar .cal-dots i { width: 5px; height: 5px; box-shadow: 0 0 3px currentColor; }
+  #view-calendar .cal-dots b { font-size: 8px; line-height: 5px; }
+}
+
+/* Lower still (1366x400): in pages, low and wide, in the order they're in (onescreen.js turns pages in that order):
+   the month (its days slim rows, Today and Open Calendar beside it) with the week beside it; the day picked, its
+   bookings on the pages after it; Approvals and Booking link side by side */
+@media (max-height: 439px) {
+  #view-calendar .bk-grid.dash-grid { grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
+  #view-calendar .bk-week { grid-column: 2; grid-row: 1; }
+  #view-calendar .bk-month { grid-column: 1; grid-row: 1; flex-direction: row; align-items: center; gap: 12px; padding: 6px 12px; }
+  #view-calendar .bk-month > .cal { width: 360px; }
+  #view-calendar .bk-month > .ad-foot { flex-direction: column; flex-wrap: nowrap; }
+  #view-calendar :is(.bk-day, .bk-side) { grid-column: 1 / -1; }
+  #view-calendar .bk-side { flex-direction: row; }
+  #view-calendar .bk-side > .bk-panel { flex: 1 1 0; }
+  #view-calendar .cal-head { margin-bottom: 2px; }
+  #view-calendar .cal-head .icon-btn { width: 26px; height: 26px; min-height: 26px; }
+  #view-calendar .cal-weekdays { margin-bottom: 2px; }
+  #view-calendar #cal-grid { gap: 2px; grid-auto-rows: 21px; }
+  #view-calendar #cal-grid > :is(.cal-day, .cal-blank) { min-height: 21px; flex-direction: row; gap: 4px; border-radius: 6px; }
+  #view-calendar .cal-num { font-size: 12px; }
+  #view-calendar .cal-dots { gap: 2px; height: 5px; flex-wrap: nowrap; }
+  #view-calendar .cal-dots i { width: 5px; height: 5px; box-shadow: none; }
+  #view-calendar .cal-dots b { font-size: 9px; line-height: 5px; }
+  #view-calendar .bk-panel:not(.bk-month) { padding: 6px 12px; gap: 4px; }
+  #view-calendar .bk-approvals .dash-rows > li:nth-child(n+4), #view-calendar .bk-link .dash-rows > li:nth-child(n+3) { display: none; }
+  #view-calendar #cal-day-list { overflow: visible; }
+}
+
+/* A tall window (2000x1250): everything a size bigger, so the panels fill the section instead of sitting small in it */
+@media (min-height: 950px) {
+  #view-calendar .bk-grid.dash-grid { gap: 14px; max-width: 1760px; }
+  #view-calendar .bk-panel { --bk-row: 40px; padding: 16px 20px; gap: 10px; }
+  #view-calendar .bk-week { padding: 12px 20px; }
+  #view-calendar .bk-panel .dash-name { font-size: 17px; }
+  #view-calendar .bk-panel .dash-big { font-size: 26px; }
+  #view-calendar .bk-panel .dash-small { font-size: 13.5px; }
+  #view-calendar .bk-panel .dash-rows li { font-size: 15px; }
+  #view-calendar .bk-panel .dash-side { font-size: 12.5px; }
+  #view-calendar .smart-tile b { font-size: 21px; }
+  #view-calendar .smart-tile span { font-size: 11.5px; }
+  #view-calendar .cal-num { font-size: 16px; }
+  #view-calendar .cal-month { font-size: 21px; }
+  #view-calendar .ad-foot :is(.btn.small, .chip) { min-height: 40px; }
+  @container bkrows (max-height: 79.9px) { .dash-rows > li:nth-child(n+2) { display: none; } }
+  @container bkrows (max-height: 119.9px) { .dash-rows > li:nth-child(n+3) { display: none; } }
+  @container bkrows (max-height: 159.9px) { .dash-rows > li:nth-child(n+4) { display: none; } }
+  @container bkrows (max-height: 199.9px) { .dash-rows > li:nth-child(n+5) { display: none; } }
+}
