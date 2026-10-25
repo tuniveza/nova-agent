@@ -75,9 +75,11 @@ html:not([data-ui="rich"]) .col .ev > :is(strong, small, .ev-what) {
   display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: clip !important;
   -webkit-line-clamp: none !important; line-clamp: none !important; overflow-wrap: normal !important; hyphens: none !important;
 }
-html:not([data-ui="rich"]) .col .ev.ev-wrap > strong { white-space: normal !important; overflow: visible !important; overflow-wrap: anywhere !important; }
+/* (between its words: a word broken only when it's wider than the card on its own, never "Calend / ar", 25 Oct 2026) */
+html:not([data-ui="rich"]) .col .ev.ev-wrap > strong { white-space: normal !important; overflow: visible !important; overflow-wrap: break-word !important; word-break: normal !important; }
 html:not([data-ui="rich"]) .col .ev:is(.ev-small, .slim) > strong { font-size: 11px !important; line-height: 1.2 !important; }
-html:not([data-ui="rich"]) .col .ev.ev-tight { padding: 1px 3px !important; }
+/* (through --pad-x and --pad-y, so its icon pane keeps its room, cosmos.css) */
+html:not([data-ui="rich"]) .col .ev.ev-tight { --pad-x: 3px; --pad-y: 1px; }
 html:not([data-ui="rich"]) .col .ev.ev-tight > strong { line-height: 1.15 !important; }
 html:not([data-ui="rich"]) .col .ev.ev-clamp > strong {
   display: -webkit-box !important; -webkit-box-orient: vertical !important; overflow: visible clip !important;
@@ -98,7 +100,7 @@ html:not([data-ui="rich"]) .col .ev:is(.ev-clamp, .bare):not(.dragging):is(:hove
 html:not([data-ui="rich"]) .col .ev.ev-up:is(.ev-clamp, .bare):not(.dragging):is(:hover, :focus-visible) { top: auto !important; bottom: var(--ev-bottom, 0px) !important; max-height: none; }
 html:not([data-ui="rich"]) .col .ev.bare:not(.dragging):is(:hover, :focus-visible) { min-width: 7em; }
 html:not([data-ui="rich"]) .col .ev:is(.ev-clamp, .bare):not(.dragging):is(:hover, :focus-visible) > strong {
-  display: block !important; white-space: normal !important; overflow: visible !important; overflow-wrap: anywhere !important;
+  display: block !important; white-space: normal !important; overflow: visible !important; overflow-wrap: break-word !important;
   -webkit-line-clamp: none !important; line-clamp: none !important; }
 
 /* ---- A very short Calendar (a small phone on its side, a slim window): the bar in two slim rows, the +

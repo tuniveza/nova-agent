@@ -293,10 +293,11 @@ html[data-centred] .allday .pill { justify-content: center; }
 html[data-centred] .allday .pill span { flex: 0 1 auto; }
 .allday .daycard { min-height: 22px; }
 /* Narrow cards (several at the same time, or a phone's week) show only their title, wrapped */
-.ev.slim { padding: 2px 3px !important; border-left-width: 2px !important; }
+/* (its padding through --pad-x and --pad-y, so its icon pane keeps its room: the card's layout at the end of this file) */
+.ev.slim { --pad-x: 3px; --pad-y: 2px; border-left-width: 2px !important; }
 .ev.slim small, .ev.slim .ev-what { display: none; }
-.ev.slim strong { -webkit-line-clamp: 6; line-clamp: 6; font-size: 10.5px; line-height: 1.2; overflow-wrap: break-word; hyphens: auto; }
-.ev.thin { padding: 0 !important; }
+.ev.slim strong { -webkit-line-clamp: 6; line-clamp: 6; font-size: 11px; line-height: 1.2; overflow-wrap: break-word; hyphens: none; }
+.ev.thin { --pad-x: 0px; --pad-y: 0px; }
 .ev.thin strong { display: none; }
 /* The bar for changing a card's length shows when the pointer is on the card (always, on touch
    screens), so it never sits on top of a short card's time */
@@ -342,7 +343,10 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
 
 /* ================= Everything fits (scripts/check-fit.mjs) ================= */
 /* A long word (a link, a name with no spaces) breaks inside its card instead of being cut off at the side */
-.pill span, .pill > small, .ev strong, .daycard span, .row-item strong, .row-item small, .skychip span { overflow-wrap: anywhere; }
+.pill span, .pill > small, .daycard span, .row-item strong, .row-item small, .skychip span { overflow-wrap: anywhere; }
+/* (Week and Day: a title breaks between its words, a word only when it's wider than the card on its own: "anywhere"
+   broke "Calend / ar event" in a narrow card, 25 Oct 2026) */
+.ev strong { overflow-wrap: break-word; word-break: normal; hyphens: none; }
 /* A day card keeps its height in a busy day (it used to be squashed to a sliver under the cards) */
 .cell > .daycard, .cell > .num { flex-shrink: 0; }
 /* A short narrow card shows as many lines of its title as it has room for (set by cal.js), then … */
@@ -816,9 +820,10 @@ html.embed .bar { padding-top: 4px !important; }
   --kb: color-mix(in oklab, color-mix(in oklch, rgb(var(--k1)) 35%, var(--hi, #FF5FA8)) 70%, #fff);
   --kt: color-mix(in srgb, color-mix(in oklch, rgb(var(--k1)) 35%, var(--hi, #FF5FA8)) 22%, #fff); }
 /* (a short card: its title and time side by side on one line) */
-.tg .ev.short:not(.slim) { display: flex; align-items: center; gap: 6px; padding-block: 0 !important; }
+/* (its words in a column in the card's middle, with the rest, the card's layout at the end of this file: a short
+   card was a row of its own, its words to the left while the others' were centred, 25 Oct 2026) */
+.tg .ev.short:not(.slim) { --pad-y: 1px; }
 .tg .ev.short:not(.slim) strong { flex: 0 1 auto; min-width: 0; -webkit-line-clamp: 1; line-clamp: 1; }
-.tg .ev.short:not(.slim) small { flex: none; }
 .tg .ev.short .ev-what { display: none; }
 
 /* -- Day: the day in words beside it (a wider screen) or above it (a narrower one) -- */
@@ -1001,3 +1006,73 @@ html.embed .bar { padding-top: 4px !important; }
   color: #fff; background: rgb(0 0 0 / 0.24); border-inline-end: 1px solid rgb(255 255 255 / 0.16); }
 .ico-pane > .ico { inline-size: var(--pane-ico, 1.1em); block-size: var(--pane-ico, 1.1em); min-inline-size: 12px; min-block-size: 12px;
   stroke-width: 2.2; filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.35)); }
+
+/* ================= Week and Day cards: centred, with room round them, an icon pane and their hours =================
+   (25 Oct 2026, the user: "on the week type of note cards have subtle lines for each gap of time in the note card time
+   window", "can you center text, add padding and margin", "add a pane with icons that intelligently match up with what
+   each event, quest and whatever is in a note card" and "there shouldn't be hiding under element note cards") */
+/* (the room round each card, cal.js drawTimeGrid: 6px between two side by side, 3px from the column's edges) */
+.tg { --ev-gap: 3px; }
+/* Its padding and its icon pane's room as variables, kept low (:where) so a narrower card's own (.slim, .ev-tight,
+   .short) and its pane's place (.pane-top, .pane-slim, .pane-off) change them */
+:where(.tg .col) .ev { --pad-x: 6px; --pad-y: 4px; --pane-w: 20px; --pane-ico: 13px; --pane-room: 0px; --pane-top: 0px; --grip-room: 0px; }
+/* (a touch screen shows the bar for changing a card's length all the time, at its foot: room kept for it, so it never
+   sits on the last line of the words; tablet, iPad on its side, 25 Oct 2026) */
+@media (hover: none), (pointer: coarse) { :where(.tg .col) .ev:not(.ro) { --grip-room: 6px; } }
+:where(.tg .col) .ev.has-pane { --pane-room: var(--pane-w); }
+:where(.tg .col) .ev.pane-slim { --pane-w: 16px; --pane-ico: 12px; --pad-x: 4px; }
+:where(.tg .col) .ev.pane-top { --pane-room: 0px; --pane-top: 17px; --pane-ico: 12px; --pad-x: 4px; }
+:where(.tg .col) .ev:is(.pane-off, .thin, .bare) { --pane-room: 0px; --pane-top: 0px; }
+/* Its words (time, title, where, what it's for) one under the other across the card, lined up as Options' alignment
+   says (centred by default, /shared/look.js), in the card's middle; a tall card's at its top, under the hour it starts
+   (.tall, cal.js fitCards). ("safe": more words than room start at its top, its first line never cut off; fitCard
+   then fits them) */
+.tg .col .ev {
+  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; justify-content: safe center; row-gap: 1px;
+  padding: calc(var(--pad-y) + var(--pane-top)) var(--pad-x) calc(var(--pad-y) + var(--grip-room)) calc(var(--pad-x) + var(--pane-room)) !important;
+  isolation: isolate; }
+.tg .col .ev.tall { justify-content: flex-start; }
+/* (each line its own height, as before in a block: never squeezed by the column, its words drawn over the next line's;
+   what doesn't fit is fitCard's to fit) */
+.tg .col .ev > :is(strong, small, .ev-what) { flex-shrink: 0; }
+/* (a word with a hyphen in it whole on its line, cal.js keepWords; and each of its two times whole: a narrow card
+   broke "–20:00" after its dash, "12:00" / "–" / "20:00") */
+.tg .col .ev :is(.ev-nb, .ev-time > span) { white-space: nowrap; overflow-wrap: normal; }
+/* (the line for the time now runs under the cards, not through their words: it struck through "12:00–20:00 Maylea"
+   at 12:07; it shows across the free part of the day, its dot at the day's edge) */
+.tg .col .ev { z-index: 1; }
+.tg .col .ev.dragging { z-index: 5; }
+.tg .col .now-line { z-index: 0; }
+/* The icon pane: a strip down its left side, the icon level with its words (at the top of a tall card) */
+.tg .col .ev > .ico-pane { position: absolute; inset: 0 auto 0 0; inline-size: var(--pane-w); min-inline-size: 0; pointer-events: none; }
+.tg .col .ev.tall > .ico-pane { align-items: flex-start; padding-top: 7px; }
+/* (a narrow card: a band across its top, the title keeping the card's whole width under it) */
+.tg .col .ev.pane-top > .ico-pane { inset: 0 0 auto 0; inline-size: auto; block-size: var(--pane-top); align-items: center; padding-top: 0;
+  border-inline-end: 0; border-block-end: 1px solid rgb(255 255 255 / 0.16); }
+/* (thinner than that, no pane: a card too thin for a word shows its icon in its middle, .ev-sym) */
+.tg .col .ev:is(.pane-off, .thin, .bare) > .ico-pane { display: none; }
+/* Its hours: a faint line where each hour's line of the grid runs behind it, fainter at the half hours where the grid
+   draws those, so its length reads at a glance; under its words (isolation: its own layer), never over them. Lined up
+   with the grid's own (the card's top is var(--ev-top) down the column), and only as far as its real end (--ev-len):
+   a card drawn taller for its words doesn't say it lasts longer */
+.tg .col .ev::before { content: ""; position: absolute; inset: 0 0 auto 0; z-index: -1; block-size: min(100%, var(--ev-len, 100%)); pointer-events: none;
+  background-image: linear-gradient(rgb(255 255 255 / 0.13) 1px, transparent 1px), linear-gradient(rgb(255 255 255 / 0.055) 1px, transparent 1px);
+  background-size: 100% var(--hh), 100% calc(var(--hh) / 2); background-position: 0 calc(-1 * var(--ev-top, 0px)); background-repeat: repeat; }
+.tg.sparse .col .ev::before { background-image: linear-gradient(rgb(255 255 255 / 0.13) 1px, transparent 1px); background-size: 100% var(--hh); }
+/* (while it's carried somewhere, or opened out over its neighbours, its lines would be out of step with the grid's) */
+.tg .col .ev.dragging[style*="translate"]::before,
+.tg .col .ev:is(.ev-clamp, .bare):not(.dragging):is(:hover, :focus-visible)::before { opacity: 0; }
+
+/* ---- The icon pane on the List's rows, the day's rows (beside Day view, under a phone's month) and a short
+   Calendar's cards: a strip down the row's left edge, the row's words beside it. (The row's room for it beats each
+   layout's own padding, simple.css and above: the #pane-room in :is() only raises its weight, nothing has that id) ---- */
+.row-item.has-pane { --pane-w: 30px; --pane-ico: 16px; --pane-gap: 10px; position: relative; overflow: hidden; }
+.row-item.has-pane:is(.row-item, #pane-room) { padding-left: calc(var(--pane-w) + var(--pane-gap)) !important; }
+.row-item.has-pane > .ico-pane { position: absolute; inset: 0 auto 0 0; inline-size: var(--pane-w); pointer-events: none; }
+/* (slimmer beside Day view, in a short Calendar's cards and a short List) */
+:is(.dv-side, .list.agenda) .row-item.has-pane, html.cal-short .row-item.has-pane { --pane-w: 24px; --pane-ico: 14px; --pane-gap: 7px; }
+
+/* ---- The week's all-day row: the same pane, a strip at the card's start ---- */
+.allday :is(.pill, .daycard).has-pane { --pane-w: 20px; --pane-ico: 12px; position: relative; overflow: hidden; }
+.allday :is(.pill, .daycard).has-pane:is(.has-pane, #pane-room) { padding-left: calc(var(--pane-w) + 5px) !important; }
+.allday :is(.pill, .daycard).has-pane > .ico-pane { position: absolute; inset: 0 auto 0 0; inline-size: var(--pane-w); pointer-events: none; }
