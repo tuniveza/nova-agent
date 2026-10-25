@@ -619,7 +619,10 @@
           // (25 Oct 2026: Links pressed inside left Studio lit and the address on Studio)
           const path = frame.contentWindow.location.pathname;
           const at = safeAdminPage(path);
-          if (d && path.startsWith("/admin") && at !== frame.dataset.page && currentRoute().view === "admin") {
+          // (only one of its own tabs' pages: a form's answer, like /admin/codes after Add code, isn't a page
+          // to come back to)
+          const tab = d && [...d.querySelectorAll("nav a[href]")].some((a) => a.getAttribute("href") === path);
+          if (tab && at !== frame.dataset.page && currentRoute().view === "admin") {
             frame.dataset.page = at;
             history.replaceState(null, "", "/portal/?view=manage&page=" + encodeURIComponent(at));
             showAdminPage(at);
@@ -661,6 +664,13 @@
           };
           frame._look();
           d.adoptedStyleSheets = [...d.adoptedStyleSheets, look];
+          // (and a theme picked at the foot of an Admin page is the one for all of Nova Agent, as one picked in
+          // any panel is: with Nova Agent's look over the page, its own swatches changed nothing you could see)
+          const PANEL_LOOK = { cosmic: "novacane", ember: "solar", ocean: "pulsar", gold: "eclipse" };
+          frame.contentWindow.addEventListener("novathemechange", (e) => {
+            const id = e.detail && e.detail.id;
+            if (id && window.NovaLook) window.NovaLook.setTheme(PANEL_LOOK[id] || id);
+          });
           const css = Object.assign(d.createElement("link"), { rel: "stylesheet", href: "/shared/onescreen.css" });
           const js = Object.assign(d.createElement("script"), { src: "/shared/onescreen.js" });
           js.addEventListener("load", () => frame.contentWindow.NovaOneScreen && frame.contentWindow.NovaOneScreen.adopt(d.body));
