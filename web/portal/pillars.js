@@ -64,16 +64,7 @@
       })(8);
     });
   };
-  // (the choices under the heading, so they're on the page shown: in a short window the heading alone was)
-  const options = (heading) => () => {
-    $("options-btn").click();
-    when(() => [...document.querySelectorAll("#options-sheet .kicker")].find((k) => k.textContent.trim() === heading), (el) => (el.nextElementSibling || el).scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" }));
-  };
   const invoicer = (what) => () => window.NovaInvoicer && window.NovaInvoicer.open(what);
-  // (for the Overview's lines, dash.js: how things are set now)
-  const stored = (key) => { try { return localStorage.getItem(key); } catch (e) { return null; } };
-  const me = () => (window.PortalPage && window.PortalPage.me && window.PortalPage.me()) || {};
-  const look = () => (window.NovaOptions ? window.NovaOptions.get() : {});
 
   // ---- The pillars and their buttons (8 or so each; admin: only for admins) ----
   // glyph: a small mark for each; badge: the tab's count shown on it; at: the tab it lights up for
@@ -126,53 +117,22 @@
       { name: "Funnel", glyph: "⏷", badge: "funnel-badge", at: "funnel", run: tab("funnel") },
       { name: "Add prospects", glyph: "⇣", run: () => { tab("funnel")(); when("#funnel-import-open", (b) => ($("funnel-import").hidden ? b.click() : $("funnel-file").focus())); } },
     ] },
-    // (part and now: their Overview, dash.js. A Nova Tab with one section or none shows its other items there
-    // as tiles of lines that do them, each named by its part, with how it's set now beside it; the user,
-    // 25 Oct 2026: "there shouldn't be any blank sections")
-    { name: "Plans & Nova", glyph: "✧", badges: ["quest-badge"], items: [
-      { name: "Quests", glyph: "✧", badge: "quest-badge", at: "quests", run: tab("quests") },
-      { name: "Everyone's quests", glyph: "☷", admin: true, part: "Nova", now: () => "Admins", run: press("quests", '#quests-who [data-quests-who="everyone"]') },
-      { name: "Nova Agent", glyph: "✦", part: "Nova", now: () => "Its conversation", run: tab("agent") },
-      { name: "Ask Nova", glyph: "?", part: "Nova", now: () => "In Website bot", run: () => { tab("bot")(); when('#view-bot [data-mode="nova"]', (el) => { if (!el.classList.contains("active")) el.click(); if ($("bot-input")) $("bot-input").focus(); }); } },
-      { name: "Voice", glyph: "◎", part: "Nova", now: () => ($("voice") && !$("voice").hidden ? "Say a command" : "No microphone here"), run: () => ($("voice") && !$("voice").hidden ? $("voice").click() : say("Voice isn't available here.")) },
-      // (the voice panel opened for its switch: titled for it, not "Listening…" left from the last time it listened)
-      { name: "Hands-free", glyph: "◌", part: "Nova", now: () => (stored("nova-handsfree") === "on" ? "On" : "Off"), run: () => {
-        const on = stored("nova-handsfree") === "on";
-        $("voice-sheet").hidden = false;
-        $("voice-sheet").classList.remove("thinking");
-        if ($("voice-status")) $("voice-status").textContent = on ? "Hands-free is on" : "Hands-free is off";
-        if ($("voice-answer")) $("voice-answer").hidden = true;
-        if ($("handsfree-switch")) { $("handsfree-switch").checked = on; $("handsfree-switch").focus(); }
-      } },
-      // (My Index and the Manual are in Nova Agent's Backend now, 23 Oct 2026: hold Nova Agent's mark to open it)
+    // (Plans & Nova, You and Look & sound are one dashboard each, 25 Oct 2026, the owner: "can you make the rest
+    // of nova portal as much as possible dashboards please", after Admin's: personal.js. Plans & Nova is Quests,
+    // today's in place, with Nova Agent's panel beside them (Talk to Nova Agent, Ask Nova, Voice, the Hands-free
+    // switch; Everyone's quests is the Mine / Everyone switch over the quests). You is your planet, your account
+    // (Change email and Change password open in place, Sign out) and Google, How it works, All addresses and the
+    // studio, side by side. Look & sound is the settings themselves: Theme, Text & menu, Starting tab, Sound,
+    // Look and feel and the app (Install, Apps and links, Refresh everything, All options). Their Overviews and
+    // the buttons along the top that did these went: everything is on the dashboard)
+    { name: "Plans & Nova", glyph: "✧", dash: "quests", badges: ["quest-badge"], items: [
+      { name: "Quests", glyph: "✧", badge: "quest-badge", at: "quests", inDash: true, run: tab("quests") },
     ] },
-    { name: "You", glyph: "◐", items: [
-      { name: "Your profile", glyph: "◐", at: "me", run: go("/portal/?view=me") },
-      // (Re-roll planet re-rolls it, on your profile so you see the new one: its page doesn't ask first, and
-      // Back to my original planet is there beside it; 25 Oct 2026, the button does what it says)
-      { name: "Re-roll planet", glyph: "↻", part: "Your planet and name", run: press("/portal/?view=me", "#reroll") },
-      { name: "Edit your name", glyph: "✎", part: "Your planet and name", now: () => me().display_name || "", run: press("you", "#edit-name") },
-      { name: "Change email", glyph: "@", part: "Signing in", now: () => me().email || "", run: show("/portal/?view=me", "#email-card", "#email-new") },
-      { name: "Change password", glyph: "⚿", part: "Signing in", run: show("/portal/?view=me", "#password-card", "#password-new") },
-      { name: "All addresses", glyph: "⌘", part: "About Nova", now: () => "Copy or open", run: show("/portal/?view=me", "#addresses-list") },
-      { name: "How it works", glyph: "⚙", part: "About Nova", now: () => "What Nova runs on", run: show("/portal/?view=me", "#tech-list") },
-      { name: "Sign out", glyph: "⏻", part: "Signing in", run: show("/portal/?view=me", "#signout-card", "#sign-out") },
+    { name: "You", glyph: "◐", dash: "me", items: [
+      { name: "Your profile", glyph: "◐", at: "me", inDash: true, run: go("/portal/?view=me") },
     ] },
-    { name: "Look & sound", glyph: "◑", items: [
-      { name: "Options", glyph: "⚙", part: "Look", now: () => "Everything", run: () => $("options-btn").click() },
-      { name: "Theme", glyph: "◑", part: "Look", now: () => { const t = window.NovaThemes; const c = t && t.current(); const f = t && t.list.find((x) => x.id === c); return f ? f.name : ""; }, run: options("Theme") },
-      { name: "Text & menu", glyph: "A", part: "Look", now: () => { const o = look(); const w = [o.ui, o.align === "center" ? "centred" : o.align, o.size].filter(Boolean).join(" · "); return w.charAt(0).toUpperCase() + w.slice(1); }, run: options("Text") },
-      { name: "Starting tab", glyph: "⌂", part: "Look", now: () => { const c = document.querySelector(`#options-sheet [data-option="startTab"] [data-value="${CSS.escape(String(look().startTab || ""))}"]`); return c ? c.textContent.trim() : ""; }, run: options("Starting tab") },
-      { name: "Music on or off", glyph: "♫", part: "Sound and apps", now: () => ($("music") && $("music").getAttribute("aria-pressed") === "true" ? "On" : "Off"), run: () => $("music").click() },
-      { name: "Refresh everything", glyph: "↻", part: "Sound and apps", run: () => { $("options-btn").click(); when("#refresh", (el) => el.focus()); } },
-      // (its sheet in pages like every box in Portal, onescreen.js: in a short window it was a box that scrolled,
-      // its second app out of sight below; 25 Oct 2026)
-      { name: "Install the app", glyph: "⇩", part: "Sound and apps", run: () => {
-        if (!window.NovaInstall) return say("Installing isn't available here.");
-        window.NovaInstall.open();
-        when(".ni-sheet", (d) => window.NovaOneScreen && window.NovaOneScreen.adopt(d));
-      } },
-      { name: "Apps and links", glyph: "⌘", part: "Sound and apps", run: () => $("brand").click() },
+    { name: "Look & sound", glyph: "◑", dash: "look", items: [
+      { name: "Look & sound", glyph: "◑", at: "look", inDash: true, run: go("/portal/?view=look") },
     ] },
     // (Admin is one dashboard, 25 Oct 2026, the owner: "heavily simplify the nova portal - admin area and put
     // everything onto one screen as much as possible", then "get rid of old links please and just keep it simple
@@ -276,7 +236,7 @@
     // with your own Re-roll planet, Edit your name and Sign out beside someone else's planet, 25 Oct 2026)
     const me = window.PortalPage && window.PortalPage.me && window.PortalPage.me();
     if (p.get("id") && me && p.get("id") !== me.id) return "person";
-    if (v === "me" || v === "you" || p.get("id")) return "me";
+    if (v === "me" || p.get("id")) return "me";
     return (window.PortalApp && window.PortalApp.view) || v || "today";
   }
   // Each Nova Tab is its own tabbed dashboard, in Portal's backdrop (22 Oct 2026, the user: "turn the nova
@@ -607,9 +567,9 @@
     strip.replaceChildren(...parts);
     // (a group whose dashboard is all there is, Admin since 25 Oct 2026: on that dashboard the strip would be one
     // lone button for the page you're on, so it steps aside and the dashboard has the room; in one of its rooms,
-    // Google, Test stuff or Computer, it stays, as the way back)
+    // Google, Test stuff or Computer, it stays, as the way back; and You's, How it works and All addresses, part=)
     const q = new URLSearchParams(location.search);
-    strip.hidden = !!g.dash && q.get("view") === g.dash && !q.get("page") && !q.get("id") && tabs.children.length === 1 && !acts.length;
+    strip.hidden = !!g.dash && q.get("view") === g.dash && !q.get("page") && !q.get("id") && !q.get("part") && tabs.children.length === 1 && !acts.length;
   }
 
   // ---- The panel that slides out of a group ----
@@ -689,7 +649,7 @@
   // ---- Nova panes (22 Oct 2026, the user: "for all panes in the nova portal can we contain them in a nova
   // pane for easier identification"): every section is framed in its Nova Tab's colour, with its icon
   // beside its title, and named (data-pane: "Inbox · Enquiries") so it can be pointed at ----
-  const PANE_OF = { today: ["", "Today"], me: ["You", "Your profile"], profile: ["You", "Your profile"], admin: ["Admin", "Admin pages"], adminhome: ["Admin", ""] };
+  const PANE_OF = { today: ["", "Today"], me: ["You", "Your profile"], profile: ["You", "Your profile"], look: ["Look & sound", ""], admin: ["Admin", "Admin pages"], adminhome: ["Admin", ""] };
   // (a pane too small for its words, a phone's Inbox or anything on a phone on its side, turns into plain
   // text, terminal style: the user, 22 Oct 2026, "can the ui become more tui if it get so small that
   // area's are collapsing and can't see text"; dash.css [data-tui])

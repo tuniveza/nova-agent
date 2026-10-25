@@ -1,6 +1,6 @@
-// Settings → Addresses: every web address in the suite (from /shared/addresses.js), each with a
+// You → All addresses: every web address in the suite (from /shared/addresses.js), each with a
 // plain line, Copy and Open. Admins also see the ones other services use. portal.js calls
-// PortalAddresses.render(isAdmin) when Settings opens.
+// PortalAddresses.render(isAdmin) when your profile opens (its own page: /portal/?view=me&part=addresses).
 (function () {
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -32,8 +32,6 @@
         </section>`,
       )
       .join("");
-    // From "All addresses" in Apps and links: straight to this card
-    if (location.hash === "#addresses-card") requestAnimationFrame(() => document.getElementById("addresses-card")?.scrollIntoView({ block: "start" }));
   }
 
   document.addEventListener("click", (e) => {

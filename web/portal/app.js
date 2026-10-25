@@ -10,7 +10,7 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group", "inbox"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group", "inbox", "look"];
   // Inbox (22 Oct 2026, the user: "id like all of it on one dashboard instead of having to click around"):
   // Enquiries, Conversations and Alerts are one dashboard, side by side, with today's bookings at the top
   // of Enquiries. Any of the three (?view=enquiries, chats, alerts, or inbox) shows all three.
@@ -410,6 +410,8 @@
     $("main").classList.toggle("inbox-all", view === "inbox");
     if (view === "today") loadToday();
     if (view === "quests") loadQuests();
+    // (Plans & Nova's and Look & sound's dashboards, personal.js)
+    if ((view === "quests" || view === "look") && window.PortalPersonal) window.PortalPersonal.show(view);
     if (view === "inbox") loadEnquiries();
     if (view === "inbox" && window.NovaDash && window.NovaDash.inboxToday) window.NovaDash.inboxToday();
     if (view === "inbox") {

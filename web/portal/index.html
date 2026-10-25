@@ -37,6 +37,7 @@
 <link rel="stylesheet" href="/shared/onescreen.css">
 <link rel="stylesheet" href="/portal/dash.css">
 <link rel="stylesheet" href="/portal/admin.css">
+<link rel="stylesheet" href="/portal/personal.css">
 <link rel="stylesheet" href="/portal/frame.css">
 <link rel="stylesheet" href="/portal/pillars.css">
 <link rel="stylesheet" href="/portal/simple.css"><!-- Simple design (the default; Options → Look → Rich for the look before) -->
@@ -865,6 +866,16 @@
       <div id="dash-grid" class="dash-grid"></div>
     </section>
 
+    <!-- Look & sound, on one screen (personal.js, 25 Oct 2026, the owner: "can you make the rest of nova portal as
+         much as possible dashboards please"): the settings themselves side by side, Theme, Text & menu, Starting
+         tab, Sound, Look and feel and the app, each changed in place; its theme picker is drawn by themes.js
+         (into data-theme-list, as the page loads) and put in its panel. (data-os-nofill: in a short window its
+         pages are never topped up with the next panel drawn smaller, which left its words too small to read) -->
+    <section id="view-look" class="view lk" aria-label="Look &amp; sound" data-os-nofill hidden>
+      <div id="look-grid" class="dash-grid ad-grid lk-grid"></div>
+      <div class="theme-list" data-theme-list></div>
+    </section>
+
     <!-- Website bot: try NovaBot, the website's assistant, as clients see it (questions of your own go to Agent) -->
     <!-- (data-os-nofill: the conversation's words are never drawn smaller to fit more on a page) -->
     <section id="view-bot" class="view view-bot" data-os-nofill hidden>
@@ -1449,8 +1460,8 @@
         <a class="btn small ghost suite-open" href="/admin" target="_blank" rel="noopener" aria-label="Open the admin pages">Open</a>
       </li>
     </ul>
-    <!-- All addresses: every address in the suite with a copy button (Settings → Addresses) -->
-    <a class="links-admin suite-addresses" href="/portal/?view=me#addresses-card">All addresses, with copy buttons &rarr;</a>
+    <!-- All addresses: every address in the suite with a copy button (You → All addresses) -->
+    <a class="links-admin suite-addresses" href="/portal/?view=me&amp;part=addresses">All addresses, with copy buttons &rarr;</a>
     <!-- Every live and testing address, fetched from /app/api/links when opened (suite.js) -->
     <section class="links-section">
       <button id="links-toggle" class="links-toggle" type="button" aria-expanded="false" aria-controls="links-body">
@@ -1555,6 +1566,7 @@
 <script src="/portal/google.js"></script>
 <script src="/portal/desk.js"></script>
 <script src="/portal/admin.js"></script>
+<script src="/portal/personal.js"></script>
 <script src="/shared/addresses.js"></script>
 <script src="/portal/addresses.js"></script>
 <script src="/portal/portal.js"></script>

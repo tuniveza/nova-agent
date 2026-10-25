@@ -1,0 +1,179 @@
+/* Plans & Nova, You and Look & sound, each on one screen (personal.js, 25 Oct 2026, the owner: "can you make the
+   rest of nova portal as much as possible dashboards please"): Admin's look (admin.css, dash.css .dash-tile),
+   panels side by side on a computer or a tablet on its side, the same height in a row, in the middle of the
+   section; one after another on a phone. When Portal is short or narrow (a small window, or a tablet on its side
+   for Look & sound: the heights below), a panel a page, low and wide, as Admin's in a short window. */
+.ps-panel .dash-top:has(> .dash-big:empty) { display: none; }
+.ps-panel .dash-rows li:not([role]) { cursor: default; }
+.ps-panel .dash-rows li:not([role]):hover { background: none; }
+
+/* The Options sheet's own choices, laid out small for a panel (app.css .option-row, .option-switch) */
+.lk-opts { display: grid; gap: 4px; align-content: start; flex: 1; }
+.ps-panel .option-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; }
+#main .ps-panel :is(.option-row, .option-switch) > span { font-size: 13px; line-height: 1.3; color: var(--bright, #fff); text-align: left; }
+.ps-panel .option-row .chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin: 0; }
+.ps-panel .chips .chip { min-height: 28px; height: auto; padding: 3px 11px; font-size: 10.5px; letter-spacing: 0.08em; }
+.ps-panel .option-row input[type="range"] { flex: 1 1 140px; width: auto; max-width: 260px; }
+.ps-panel .option-switch { padding: 3px 10px; border-radius: 10px; gap: 10px; }
+.ps-panel .option-switch > span { flex: 1; min-width: 0; }
+.ps-start .lk-opts > .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+/* (the theme picker, a little smaller than in Options, so the panel holds it all) */
+.ps-theme > .theme-list { flex: 1; align-content: start; display: grid; }
+#view-look > [data-theme-list] { display: none; }
+.ps-theme .spectrum { gap: 8px; }
+.ps-theme .spectrum-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 2px; }
+.ps-theme .spectrum-swatch { padding: 4px 2px; gap: 3px; border-radius: 12px; }
+.ps-theme .spectrum-orb { width: 28px; height: 28px; }
+.ps-theme .spectrum-custom { padding: 4px 12px 4px 4px; gap: 4px 10px; }
+.ps-theme .spectrum-slider input[type="range"] { height: 22px; }
+/* (the app: its name and its buttons on one line) */
+.ps-app { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 16px; row-gap: 6px; }
+.ps-app > .dash-tile-head { flex: 0 1 auto; }
+.ps-app > .dash-tile-head .dash-name { flex: none; }
+.ps-app > .ad-foot { margin: 0; padding: 0; }
+
+/* Plans & Nova: the quests, and Nova Agent's panel at their side (one after the other on a phone) */
+.ps-nova { gap: 6px; }
+.ps-nova .pn-sync { margin: 0; font-size: 12px; text-align: left; }
+.pn-hf { align-items: center !important; }
+.pn-hf > .option-switch { flex: 1; min-width: 0; padding: 0; border: 0; background: none; }
+.pn-hf > .option-switch > span { font-size: 13px; color: var(--bright, #fff); text-align: left; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests.pn:not([hidden]) {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 300px); grid-template-rows: auto minmax(0, 1fr); column-gap: 14px; align-items: start;
+}
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests.pn > .view-head { grid-column: 1; grid-row: 1; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests.pn > #quests-body { grid-column: 1; grid-row: 2; min-height: 0; align-self: stretch; align-content: start; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests.pn > .ps-nova { grid-column: 2; grid-row: 1 / -1; align-self: start; }
+/* (inside Nova Agent the section has its height: the quests are a box of their own there, in pages when there are
+   more than fit, onescreen.js, and Nova Agent's panel stays beside every page) */
+html.embed:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests.pn > #quests-body { overflow-y: auto; }
+
+/* You: your planet, your account, and Google, How it works, All addresses and the studio */
+.pv:not(.yd) .yd-only, .pv:not(.yd) .yd-ico { display: none !important; }
+#view-profile.yd { --g: var(--soft); }
+#view-profile.yd > .panels { display: grid; gap: 10px; margin-top: 10px; }
+#view-profile.yd .panels > .group { margin: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; min-width: 0; text-align: left; }
+#view-profile.yd .panels > .group > .group-head,
+#view-profile.yd .cp-subhead > .group-head,
+#view-profile.yd :is(#google-title, #self-admin-title) {
+  display: flex; align-items: center; gap: 8px; margin: 0; padding: 0; text-align: left;
+  font-family: var(--f-display); font-stretch: 108%; font-weight: 800; font-size: 15px; letter-spacing: normal; text-transform: none; color: #fff;
+}
+#view-profile.yd .group-head::before, #view-profile.yd .group-head::after { display: none; }
+#view-profile.yd .yd-ico { flex: none; width: 20px; height: 20px; color: var(--g, var(--hi)); }
+#view-profile.yd .yd-ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#view-profile.yd .group-cards { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+#view-profile.yd .group-cards > .card { padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; gap: 8px; text-align: left; width: auto; max-width: none; }
+#view-profile.yd :is(#details-title, #signout-title, #signout-card > .hint, #self-admin > .hint, #tech-title, #addresses-title) { display: none; }
+/* (one-card groups, Google and the studio: the card's name is the panel's) */
+#view-profile.yd :is(.group[aria-labelledby="group-connect-head"], .group[aria-labelledby="group-admin-head"]) > .group-head { display: none; }
+#view-profile.yd .cp-subhead { display: flex; align-items: center; gap: 8px; }
+#view-profile.yd .cp-subhead > .group-head { flex: 1; }
+#view-profile.yd .cp-subhead > .hint, #view-profile.yd .cp-subhead > .card-title { display: none; }
+#view-profile.yd :is(.group[aria-labelledby="group-tech-head"], .group[aria-labelledby="group-addresses-head"]) > .group-cards { display: none; }
+#view-profile.yd .yd-sum { margin: 0; }
+#view-profile.yd .about-list > div { padding: 5px 2px; gap: 10px; }
+#view-profile.yd .about-list dd { font-size: 13.5px; }
+#view-profile.yd .about-list dd.mono { font-size: 12px; }
+#view-profile.yd #google-status { font-size: 13px; }
+#view-profile.yd .action-row, #view-profile.yd #signout-card, #view-profile.yd .yd-form-acts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 0; }
+#view-profile.yd :is(.action-row, #signout-card, .yd-form-acts) .btn { flex: 1 1 auto; min-height: 36px; justify-self: auto; }
+#view-profile.yd #signout-card { margin-top: auto; }
+/* (a form open in place: in place of your details and the buttons under them; the others stay shut) */
+#view-profile.yd:not([data-open="email"]) #email-card, #view-profile.yd:not([data-open="password"]) #password-card { display: none !important; }
+#view-profile.yd[data-open] :is(.details-card, #signout-card) { display: none; }
+#view-profile.yd .password-card form { gap: 8px; margin: 0; }
+#view-profile.yd .password-card .field input { max-width: 520px; }
+/* Your planet */
+#view-profile.yd > .hero { --stage: min(190px, 28vh); align-content: center; gap: 4px; padding: 10px 14px; min-width: 0; }
+#view-profile.yd .stage { margin: 0 auto; }
+#view-profile.yd .caption { margin: 0; font-size: 12px; }
+#view-profile.yd #p-kicker { display: none; }
+html #view-profile.yd .person-name { margin: 0; font-size: clamp(20px, 2vw, 28px); line-height: 1.1; }
+#view-profile.yd .identity { display: grid; gap: 4px; justify-items: center; }
+#view-profile.yd .since { margin: 0; }
+#view-profile.yd .hero-actions { width: 100%; max-width: none; }
+#view-profile.yd .action-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+#view-profile.yd .action-grid .btn { flex: 1 1 130px; min-height: 36px; }
+#view-profile.yd .name-form { display: grid; gap: 6px; width: min(100%, 360px); }
+
+/* One of its lists on its own (?view=me&part=tech|addresses): that list alone, the whole of it */
+#view-profile.yd-room > .hero { display: none; }
+#view-profile.yd-room[data-part="tech"] .panels > .group:not([aria-labelledby="group-tech-head"]),
+#view-profile.yd-room[data-part="addresses"] .panels > .group:not([aria-labelledby="group-addresses-head"]) { display: none; }
+#view-profile.yd-room > .panels { margin-top: 0; }
+
+/* ===== Room enough (Look & sound 600px tall, You 540px, and 900px wide or more): side by side ===== */
+@media (min-height: 600px) and (min-width: 900px) {
+  /* Look & sound: the theme down the left; Text & menu and Starting tab, then Sound and Look and feel, in two
+     even rows beside it; the app's four buttons along the foot */
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .lk-grid.dash-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "theme text start" "theme sound feel" "app app app";
+  }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .lk-grid > .ps-theme { grid-area: theme; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .lk-grid > .ps-text { grid-area: text; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .lk-grid > .ps-start { grid-area: start; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .lk-grid > .ps-sound { grid-area: sound; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .lk-grid > .ps-feel { grid-area: feel; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .lk-grid > .ps-app { grid-area: app; }
+  html.embed #view-look:not([hidden]) { display: flex; flex-direction: column; }
+  html.embed #view-look > .lk-grid { margin-block: auto; }
+}
+/* (You needs less height: side by side from 540px tall, a tablet on its side too) */
+@media (min-height: 540px) and (min-width: 900px) {
+  /* You: three columns, the planet, the account, and the other four down the third, one height together */
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd > .panels { display: contents; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd:not([hidden]) {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr); grid-template-rows: repeat(4, auto);
+    gap: 10px; align-content: center; width: 100%; max-width: 1640px; margin-inline: auto;
+  }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd:has(> .panels > .group[aria-labelledby="group-admin-head"][hidden]):not([hidden]) { grid-template-rows: repeat(3, auto); }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd > .hero { grid-column: 1; grid-row: 1 / -1; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .group[aria-labelledby="group-account-head"] { grid-column: 2; grid-row: 1 / -1; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .panels > .group:not([aria-labelledby="group-account-head"]) { grid-column: 3; }
+}
+
+/* ===== Short or narrow (Look & sound under 600px tall, You under 540px): a panel a page, low and wide ===== */
+@media (max-height: 599px), (max-width: 899px) {
+  /* Look & sound: its name along the top, its choices in columns under it (as admin.css html.win-short .ad-panel) */
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .lk-grid.dash-grid { grid-template-columns: minmax(0, 1fr); }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .ps-panel { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 16px; row-gap: 2px; padding: 8px 14px; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .ps-panel > .dash-tile-head { flex: 0 1 auto; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .ps-panel > .dash-top { flex: 1 1 auto; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .ps-panel > :is(.lk-opts, .theme-list) { order: 5; flex: 1 1 100%; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .lk-opts { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 18px; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .ps-sound .lk-opts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .ps-panel .option-switch > span { white-space: normal; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .ps-start .lk-opts { grid-template-columns: minmax(0, 1fr); }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) .ps-nova { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+}
+@media (max-height: 539px), (max-width: 899px) {
+  /* You: the planet beside your name and its buttons; the account's details in columns; each of the others its
+     name, its line and its button along one line */
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd > .hero { --stage: min(110px, 30vh); grid-template-columns: var(--stage) minmax(0, 1fr) minmax(0, 280px); column-gap: 18px; align-items: center; justify-items: center; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd > .hero > .stage { grid-column: 1; grid-row: 1 / span 2; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd > .hero > :is(.caption, .identity) { grid-column: 2; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd > .hero > .hero-actions { grid-column: 3; grid-row: 1 / span 2; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .action-grid { flex-direction: column; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .action-grid .btn { flex: none; width: 100%; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .about-list { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 18px; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .about-list > div:nth-child(-n+3) { border-top: 0; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .panels > .group:not([aria-labelledby="group-account-head"]) { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 16px; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .panels > .group:not([aria-labelledby="group-account-head"]) > * { flex: 1 1 auto; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .panels > .group > .cp-subhead { flex: 0 1 auto; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .cp-subhead > .group-head { flex: none; }
+  html:is([data-form="desktop"], [data-form="tablet-side"]) #view-profile.yd .group-cards > .card { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; display: flex; column-gap: 16px; }
+}
+
+/* A tall window (2000x1250): a size bigger, as Admin's */
+@media (min-height: 950px) {
+  #view-profile.yd > .hero { --stage: min(300px, 30vh); }
+  #view-profile.yd .panels > .group { padding: 16px 20px; gap: 10px; }
+  #view-profile.yd :is(.group-head, #google-title, #self-admin-title) { font-size: 17px; }
+  #view-profile.yd .about-list dd { font-size: 15px; }
+  #view-profile.yd .about-list > div { padding: 8px 2px; }
+  #view-profile.yd :is(.action-grid, .action-row, #signout-card) .btn { min-height: 42px; }
+  #main .ps-panel :is(.option-row, .option-switch) > span { font-size: 14.5px; }
+  .ps-panel .chips .chip { min-height: 36px; font-size: 11.5px; }
+}

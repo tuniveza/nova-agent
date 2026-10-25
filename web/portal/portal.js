@@ -12,7 +12,10 @@
 //             (?view=approvals&action=<id> points at one proposed booking change;
 //              ?view=campaigns&campaign=<id> at one email campaign;
 //              ?view=social&post=<id> at one social post, &comment=<id> at one comment)
-//   You       ?view=me: their planet, big and turning; re-roll it, rename, open their Index, sign out
+//   You       ?view=me: one dashboard (personal.js): your planet (re-roll it, rename), your account (email,
+//             password, sign out), Google, How it works, All addresses; ?view=me&part=tech|addresses one of those
+//             two lists on its own
+//   Look      ?view=look: Look & sound's dashboard (personal.js): the theme, text, starting tab, sound, the app
 //   Admin     ?view=manage (admins): one dashboard (admin.js): the admin pages, the crew (invite people;
 //             a person's page ?id=<someone> changes their role or switches them off), Google, Test stuff,
 //             Computer; ?view=manage&page=/admin/… one of Nova Bot's admin pages
@@ -60,7 +63,7 @@
   const isAdmin = () => Boolean(state.me && state.me.role === "admin");
   // The work tabs (app.js)
   const work = () => window.PortalApp;
-  const WORK = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group", "inbox"];
+  const WORK = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group", "inbox", "look"];
   // Tell the top-right badge (and other panels) that who's signed in has changed
   const changed = () => window.NovaPortal && window.NovaPortal.changed && window.NovaPortal.changed();
 
@@ -473,7 +476,7 @@
     if (view === "manage") return p.get("page") ? { view: "admin", page: safeAdminPage(p.get("page")) } : { view: "adminhome" };
     const id = p.get("id");
     if (id && (!state.me || id !== state.me.id)) return { view: "person", id };
-    if (view === "me" || view === "you" || id) return { view: "me" };
+    if (view === "me" || id) return { view: "me" };
     if (WORK.includes(view)) return { view: "work", tab: view };
     // Nothing asked for: Alerts from a Nova Agent notification, else the starting tab (Options)
     if (location.hash === "#nova") return { view: "work", tab: "alerts" };
@@ -484,7 +487,6 @@
   // Move to another screen inside the app (the address changes, so back and forward work;
   // switching work tabs replaces it instead, so Back leaves the page rather than stepping through tabs)
   function go(url, { replace = false } = {}) {
-    if (url === "/portal/?view=you") url = "/portal/?view=me";
     if (url !== location.pathname + location.search) history[replace ? "replaceState" : "pushState"](null, "", url);
     if (state.screen !== "app") return;
     renderRoute();
@@ -727,7 +729,8 @@
     $("google-card").hidden = !self;
     if (self) loadGoogle();
     $("tech-card").hidden = !self;
-    if (self && (changedPerson || fresh)) loadServices();
+    // (How it works' line on your dashboard says how many are set up once they're in, personal.js)
+    if (self && (changedPerson || fresh)) loadServices().then(() => window.PortalPersonal && window.PortalPersonal.services());
     $("addresses-card").hidden = !self;
     if (self && window.PortalAddresses) window.PortalAddresses.render(isAdmin());
 
@@ -769,6 +772,8 @@
       group.hidden = group.hasAttribute("data-away") || !cards;
       group.dataset.cards = String(cards); // (one card alone isn't stretched across the section: portal.css)
     }
+    // (your own: You's dashboard, its parts side by side, personal.js; someone else's stays a page)
+    if (window.PortalPersonal) window.PortalPersonal.you(self, person);
   }
 
   // Google, for the studio: Notes' Google Docs, and Calendar and Gmail for bookings. You sign
