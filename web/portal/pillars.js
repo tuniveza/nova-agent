@@ -36,22 +36,37 @@
   };
   const go = (url) => () => window.PortalPage && window.PortalPage.go(url, { replace: true });
   const press = (view, sel) => () => {
-    tab(view)();
+    (view.startsWith("/") ? go(view) : tab(view))();
     when(sel, (el) => el.click());
   };
   const show = (view, sel, focus) => () => {
     (view.startsWith("/") ? go(view) : tab(view))();
     when(sel, (el) => {
-      el.scrollIntoView({ block: "center", behavior: calm() ? "auto" : "smooth" });
-      const f = focus ? document.querySelector(focus) : el;
-      if (f && f.focus) f.focus({ preventScroll: true });
+      // (the box to type in, or the button, is what's wanted: its page is the one shown, in a short window
+      // the card's title alone was, with what it does on the next page and nothing focused; 25 Oct 2026)
+      const f = (focus && document.querySelector(focus)) || el;
+      // (and again while its section is laid out into pages, which can put it on another page and take the
+      // focus away from it, for a moment after)
+      (function land(tries) {
+        if (document.activeElement !== f) {
+          if (f !== el && window.NovaOneScreen) window.NovaOneScreen.reveal(f);
+          f.scrollIntoView({ block: "center", behavior: calm() ? "auto" : "smooth" });
+          if (f.focus) f.focus({ preventScroll: true });
+        }
+        if (focus && tries > 0) setTimeout(() => land(tries - 1), 200);
+      })(8);
     });
   };
+  // (the choices under the heading, so they're on the page shown: in a short window the heading alone was)
   const options = (heading) => () => {
     $("options-btn").click();
-    when(() => [...document.querySelectorAll("#options-sheet .kicker")].find((k) => k.textContent.trim() === heading), (el) => el.scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" }));
+    when(() => [...document.querySelectorAll("#options-sheet .kicker")].find((k) => k.textContent.trim() === heading), (el) => (el.nextElementSibling || el).scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" }));
   };
   const invoicer = (what) => () => window.NovaInvoicer && window.NovaInvoicer.open(what);
+  // (for the Overview's lines, dash.js: how things are set now)
+  const stored = (key) => { try { return localStorage.getItem(key); } catch (e) { return null; } };
+  const me = () => (window.PortalPage && window.PortalPage.me && window.PortalPage.me()) || {};
+  const look = () => (window.NovaOptions ? window.NovaOptions.get() : {});
 
   // ---- The pillars and their buttons (8 or so each; admin: only for admins) ----
   // glyph: a small mark for each; badge: the tab's count shown on it; at: the tab it lights up for
@@ -103,34 +118,53 @@
       { name: "Funnel", glyph: "⏷", badge: "funnel-badge", at: "funnel", run: tab("funnel") },
       { name: "Add prospects", glyph: "⇣", run: () => { tab("funnel")(); when("#funnel-import-open", (b) => ($("funnel-import").hidden ? b.click() : $("funnel-file").focus())); } },
     ] },
+    // (part and now: their Overview, dash.js. A Nova Tab with one section or none shows its other items there
+    // as tiles of lines that do them, each named by its part, with how it's set now beside it; the user,
+    // 25 Oct 2026: "there shouldn't be any blank sections")
     { name: "Plans & Nova", glyph: "✧", badges: ["quest-badge"], items: [
       { name: "Quests", glyph: "✧", badge: "quest-badge", at: "quests", run: tab("quests") },
-      { name: "Everyone's quests", glyph: "☷", admin: true, run: press("quests", '#quests-who [data-quests-who="everyone"]') },
-      { name: "Nova Agent", glyph: "✦", run: tab("agent") },
-      { name: "Ask Nova", glyph: "?", run: () => { tab("bot")(); when('#view-bot [data-mode="nova"]', (el) => { if (!el.classList.contains("active")) el.click(); if ($("bot-input")) $("bot-input").focus(); }); } },
-      { name: "Voice", glyph: "◎", run: () => ($("voice") && !$("voice").hidden ? $("voice").click() : say("Voice isn't available here.")) },
-      { name: "Hands-free", glyph: "◌", run: () => { $("voice-sheet").hidden = false; if ($("handsfree-switch")) $("handsfree-switch").focus(); } },
+      { name: "Everyone's quests", glyph: "☷", admin: true, part: "Nova", now: () => "Admins", run: press("quests", '#quests-who [data-quests-who="everyone"]') },
+      { name: "Nova Agent", glyph: "✦", part: "Nova", now: () => "Its conversation", run: tab("agent") },
+      { name: "Ask Nova", glyph: "?", part: "Nova", now: () => "In Website bot", run: () => { tab("bot")(); when('#view-bot [data-mode="nova"]', (el) => { if (!el.classList.contains("active")) el.click(); if ($("bot-input")) $("bot-input").focus(); }); } },
+      { name: "Voice", glyph: "◎", part: "Nova", now: () => ($("voice") && !$("voice").hidden ? "Say a command" : "No microphone here"), run: () => ($("voice") && !$("voice").hidden ? $("voice").click() : say("Voice isn't available here.")) },
+      // (the voice panel opened for its switch: titled for it, not "Listening…" left from the last time it listened)
+      { name: "Hands-free", glyph: "◌", part: "Nova", now: () => (stored("nova-handsfree") === "on" ? "On" : "Off"), run: () => {
+        const on = stored("nova-handsfree") === "on";
+        $("voice-sheet").hidden = false;
+        $("voice-sheet").classList.remove("thinking");
+        if ($("voice-status")) $("voice-status").textContent = on ? "Hands-free is on" : "Hands-free is off";
+        if ($("voice-answer")) $("voice-answer").hidden = true;
+        if ($("handsfree-switch")) { $("handsfree-switch").checked = on; $("handsfree-switch").focus(); }
+      } },
       // (My Index and the Manual are in Nova Agent's Backend now, 23 Oct 2026: hold Nova Agent's mark to open it)
     ] },
     { name: "You", glyph: "◐", items: [
       { name: "Your profile", glyph: "◐", at: "me", run: go("/portal/?view=me") },
-      { name: "Re-roll planet", glyph: "↻", run: show("/portal/?view=me", "#reroll") },
-      { name: "Edit your name", glyph: "✎", run: press("you", "#edit-name") },
-      { name: "Change email", glyph: "@", run: show("/portal/?view=me", "#email-card", "#email-new") },
-      { name: "Change password", glyph: "⚿", run: show("/portal/?view=me", "#password-card", "#password-new") },
-      { name: "All addresses", glyph: "⌘", run: show("/portal/?view=me", "#addresses-card") },
-      { name: "How it works", glyph: "⚙", run: show("/portal/?view=me", "#group-tech-head") },
-      { name: "Sign out", glyph: "⏻", run: show("/portal/?view=me", "#signout-card", "#sign-out") },
+      // (Re-roll planet re-rolls it, on your profile so you see the new one: its page doesn't ask first, and
+      // Back to my original planet is there beside it; 25 Oct 2026, the button does what it says)
+      { name: "Re-roll planet", glyph: "↻", part: "Your planet and name", run: press("/portal/?view=me", "#reroll") },
+      { name: "Edit your name", glyph: "✎", part: "Your planet and name", now: () => me().display_name || "", run: press("you", "#edit-name") },
+      { name: "Change email", glyph: "@", part: "Signing in", now: () => me().email || "", run: show("/portal/?view=me", "#email-card", "#email-new") },
+      { name: "Change password", glyph: "⚿", part: "Signing in", run: show("/portal/?view=me", "#password-card", "#password-new") },
+      { name: "All addresses", glyph: "⌘", part: "About Nova", now: () => "Copy or open", run: show("/portal/?view=me", "#addresses-list") },
+      { name: "How it works", glyph: "⚙", part: "About Nova", now: () => "What Nova runs on", run: show("/portal/?view=me", "#tech-list") },
+      { name: "Sign out", glyph: "⏻", part: "Signing in", run: show("/portal/?view=me", "#signout-card", "#sign-out") },
     ] },
     { name: "Look & sound", glyph: "◑", items: [
-      { name: "Options", glyph: "⚙", run: () => $("options-btn").click() },
-      { name: "Theme", glyph: "◑", run: options("Theme") },
-      { name: "Text & menu", glyph: "A", run: options("Text") },
-      { name: "Starting tab", glyph: "⌂", run: options("Starting tab") },
-      { name: "Music on or off", glyph: "♫", run: () => $("music").click() },
-      { name: "Refresh everything", glyph: "↻", run: () => { $("options-btn").click(); when("#refresh", (el) => el.focus()); } },
-      { name: "Install the app", glyph: "⇩", run: () => window.NovaInstall && window.NovaInstall.open() },
-      { name: "Apps and links", glyph: "⌘", run: () => $("brand").click() },
+      { name: "Options", glyph: "⚙", part: "Look", now: () => "Everything", run: () => $("options-btn").click() },
+      { name: "Theme", glyph: "◑", part: "Look", now: () => { const t = window.NovaThemes; const c = t && t.current(); const f = t && t.list.find((x) => x.id === c); return f ? f.name : ""; }, run: options("Theme") },
+      { name: "Text & menu", glyph: "A", part: "Look", now: () => { const o = look(); const w = [o.ui, o.align === "center" ? "centred" : o.align, o.size].filter(Boolean).join(" · "); return w.charAt(0).toUpperCase() + w.slice(1); }, run: options("Text") },
+      { name: "Starting tab", glyph: "⌂", part: "Look", now: () => { const c = document.querySelector(`#options-sheet [data-option="startTab"] [data-value="${CSS.escape(String(look().startTab || ""))}"]`); return c ? c.textContent.trim() : ""; }, run: options("Starting tab") },
+      { name: "Music on or off", glyph: "♫", part: "Sound and apps", now: () => ($("music") && $("music").getAttribute("aria-pressed") === "true" ? "On" : "Off"), run: () => $("music").click() },
+      { name: "Refresh everything", glyph: "↻", part: "Sound and apps", run: () => { $("options-btn").click(); when("#refresh", (el) => el.focus()); } },
+      // (its sheet in pages like every box in Portal, onescreen.js: in a short window it was a box that scrolled,
+      // its second app out of sight below; 25 Oct 2026)
+      { name: "Install the app", glyph: "⇩", part: "Sound and apps", run: () => {
+        if (!window.NovaInstall) return say("Installing isn't available here.");
+        window.NovaInstall.open();
+        when(".ni-sheet", (d) => window.NovaOneScreen && window.NovaOneScreen.adopt(d));
+      } },
+      { name: "Apps and links", glyph: "⌘", part: "Sound and apps", run: () => $("brand").click() },
     ] },
     { name: "Admin", glyph: "♛", admin: true, badges: ["tests-badge"], items: [
       { name: "Admin pages", glyph: "♛", admin: true, at: "admin", run: go("/portal/?view=manage") },
@@ -381,12 +415,34 @@
     // hidden, so its card opens from here)
     const b0 = badgeEl();
     if (b0 && matchMedia(COMPUTER).matches) btn.append(b0);
+    // (the badge's own button, unseen under the planet, isn't a stop of its own when tabbing along the Nova
+    // Tabs, and the focus it gets back when its card shuts goes to the planet: never to something unseen;
+    // 25 Oct 2026)
+    if (b0 && !b0.dataset.underPlanet) {
+      b0.dataset.underPlanet = "1";
+      // (badge.js loads after this file: its button is there once it's defined)
+      customElements.whenDefined("nova-portal-badge").then(() => {
+        const quiet = () => {
+          const chip = b0.shadowRoot && b0.shadowRoot.querySelector(".chip");
+          if (chip) chip.tabIndex = b0.closest(".tabs-planet") ? -1 : 0;
+        };
+        b0.addEventListener("change", quiet);
+        // (heard inside its own shadow root: a move from its card back to its button never reaches the page)
+        if (b0.shadowRoot) b0.shadowRoot.addEventListener("focusin", (e) => {
+          const home = b0.closest(".tabs-planet");
+          if (home && !b0.isOpen && e.target.classList && e.target.classList.contains("chip")) home.focus({ preventScroll: true });
+        });
+        quiet();
+      });
+    }
     btn.addEventListener("click", (e) => {
       const b = badgeEl();
       if (b && (e.target === b || b.contains(e.target))) return; // (the badge's own click, passed on below)
-      const chip = b && b.shadowRoot && b.shadowRoot.querySelector(".chip");
+      // (only the badge under the planet opens its card here: one left in the header is hidden inside Nova
+      // Desk, and its card with it, so then the planet opens your profile instead of nothing; 25 Oct 2026)
+      const chip = b && btn.contains(b) && b.shadowRoot && b.shadowRoot.querySelector(".chip");
       if (chip) chip.click();
-      else openPillar("You", true);
+      else go("/portal/?view=me")();
     });
     return btn;
   }

@@ -836,10 +836,12 @@
       const r = await busy($("email-save"), "Saving…", () => api(`/staff/${encodeURIComponent(person.id)}`, { method: "PATCH", body: { email, current: $("email-current").value } }));
       if (!r.ok) return setError("email-error", r.data.error || `That didn't work (error ${r.status}).`, form);
       $("email-current").value = "";
-      if (person.id === state.me.id) state.me = { ...state.me, ...r.data.staff };
-      if (state.crew) state.crew = state.crew.map((p) => (p.id === person.id ? { ...p, ...r.data.staff } : p));
-      renderProfile({ ...person, ...r.data.staff });
-      $("email-new").value = r.data.staff.email || email;
+      // (saved even when the answer leaves the person out: never "Cannot read properties…" after it worked)
+      const saved = r.data.staff || { email };
+      if (person.id === state.me.id) state.me = { ...state.me, ...saved };
+      if (state.crew) state.crew = state.crew.map((p) => (p.id === person.id ? { ...p, ...saved } : p));
+      renderProfile({ ...person, ...saved });
+      $("email-new").value = saved.email || email;
       sfx("done");
       toast(person.id === state.me.id ? `Saved. Sign in with ${email} from now on.` : `Saved. ${firstName(person.display_name)} signs in with ${email} from now on.`);
     } catch (err) {

@@ -370,3 +370,10 @@ html #main > .view[data-tui] .cal-day-title { margin: 2px 0; font-size: 10.5px; 
   #main.inbox-all .ib-filters[aria-expanded="true"] { border-color: rgba(var(--hi-rgb), 0.6); color: #fff; }
   #main.inbox-all > .view:not(.ib-tools-open) :is(#enq-chips, #enq-tools, #saved-panel, .ib-chat-chips, .settings-row, #alerts-clear) { display: none; }
 }
+
+/* (Plans & Nova, You, Look & sound: their Overview's tiles, a part each (dash.js partTiles), the same height
+   along a row instead of one short and one tall beside it; 25 Oct 2026, the user: no "oddly shaped uis") */
+#view-group .dash-grid:has(> .dash-parts) { align-items: stretch; }
+/* (a short window: their big title steps aside, ns/CLAUDE.md 2c.3, the group's name is lit in the Nova Tabs above;
+   with it, it was alone on the first page and the tiles started on the second) */
+html.win-short #view-group:has(.dash-parts) > .view-head { display: none; }

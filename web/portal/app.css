@@ -951,6 +951,9 @@ select option:checked { background: var(--accent); color: var(--on-accent); }
 
 /* ===================== Options sheet ===================== */
 .options-card { display: grid; gap: 6px; }
+/* (a computer or a tablet on its side: Options a little wider, so the themes are three rows, not four, and fit on
+   its first page with its title; 25 Oct 2026, page 1 of Options was its title alone) */
+html:is([data-form="desktop"], [data-form="tablet-side"]) .options-card { max-width: 760px; }
 .option-group { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
 .option-group:first-of-type { border-top: 0; }
 .option-group > .kicker { margin: 0; }
@@ -1478,3 +1481,45 @@ html:not([data-align="left"]) :is(.cp-field, .cl-field, .pv .invite-new .field) 
 html:not([data-align="left"]) :is(.cp-field, .cl-field, .pv .invite-new .field) { justify-items: center; }
 html:not([data-align="left"]) :is(.cp-field, .cl-field, .pv .invite-new .field) > :is(textarea, span) { justify-self: stretch; }
 #clients-search { width: min(100%, 720px); justify-self: center; margin-inline: auto; }
+
+/* Quests: Today / All quests and Mine / Everyone side by side under the title (index.html .quests-filters) */
+.quests-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; min-width: 0; }
+.quests-filters > .chips[hidden] { display: none; }
+html[data-align="left"] .quests-filters { justify-content: flex-start; }
+html[data-align="right"] .quests-filters { justify-content: flex-end; }
+/* (a computer, a tablet on its side: the title and its choices in one row, short enough to stay on every page of
+   Quests (onescreen.js keeps a title row only when it's small): stacked, it was on page 1 alone, and Today / All
+   quests / Mine / Everyone couldn't be changed from page 2 on; 25 Oct 2026) */
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests > .view-head { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; margin-bottom: 10px; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests > .view-head > h2 { flex: none; width: auto; margin: 0 !important; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests > .view-head > .pane-ico { margin: 0 -8px 0 0; }
+html:is([data-form="desktop"], [data-form="tablet-side"])[data-align="left"] #view-quests > .view-head { justify-content: flex-start; }
+html:is([data-form="desktop"], [data-form="tablet-side"])[data-align="right"] #view-quests > .view-head { justify-content: flex-end; }
+
+/* Your planet in the middle of the Nova Tabs (pillars.js planetTab): the badge sits unseen under it and its card
+   opens from there. Inside Nova Desk, /shared/inside.js hides every badge (display: none !important: the Desk's
+   own header has one), which took this one's card with it, so a click on the planet opened nothing; this one,
+   under the planet, is laid out (still unseen) so its card can open (25 Oct 2026, the user: "make sure every
+   button inside nova portal works") */
+nav.pillars .tabs-planet nova-portal-badge {
+  display: inline-flex !important; position: absolute !important; left: 50% !important; top: 50% !important; translate: -50% -50% !important;
+  width: 30px !important; height: 30px !important; overflow: hidden !important; opacity: 0 !important; pointer-events: none !important;
+}
+
+/* Quests with nothing in them: the words, then Ask Nova Agent and Add a quest under them (app.js questsEmpty) */
+.quests-empty { display: grid; gap: 12px; justify-items: center; }
+.quests-empty > p { margin: 0; }
+.quests-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+/* (a short window: Quests' title row, its line and Nothing planned with its buttons all on its first page) */
+html.win-short #view-quests > .view-head { margin-bottom: 4px; }
+html.win-short #view-quests .quests-filters .chip { height: 30px; min-height: 30px; }
+html.win-short #quests-sync { margin-bottom: 6px; }
+html.win-short .quests-empty { padding: 8px 16px; gap: 6px; }
+
+/* (a short window, ns/CLAUDE.md 2c.3, the big headings give up room first: Apps and links' and Options' sheets
+   use more of the height, with a slimmer title, so their first page has an app or a setting under the title, not
+   the title alone; 25 Oct 2026, the user: "there shouldn't be any blank sections") */
+html.win-short :is(#suite-sheet, #options-sheet) { padding-block: 8px; }
+html.win-short :is(#suite-sheet, #options-sheet) > .sheet-card { max-height: calc(100% - 8px); padding-top: 12px; padding-bottom: 12px; gap: 8px; }
+html.win-short :is(#suite-sheet, #options-sheet) .suite-head .kicker { display: none; }
+html.win-short :is(#suite-sheet, #options-sheet) .suite-head h3 { margin-top: 0; font-size: 17px; }

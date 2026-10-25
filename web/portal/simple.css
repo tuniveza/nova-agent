@@ -36,6 +36,13 @@ html:not([data-ui="rich"]) body nav.pillars .mini-pillar:is(.here, [aria-current
   background: color-mix(in srgb, var(--g, var(--hi)) 26%, var(--panel, #1a1030)) !important; border-color: var(--g, var(--hi)) !important; color: #fff !important;
 }
 html:not([data-ui="rich"]) body nav.pillars .mini-cap { display: inline-flex !important; align-items: center !important; gap: 6px !important; }
+/* (the group you're in, or the one open, the same chip as the rest: pillars.css stacks their icon over the
+   name for its dock look, which in a 36px chip pushed the icon out over the top and the count under it;
+   25 Oct 2026, the user: no "oddly shaped uis") */
+html:not([data-ui="rich"]) body nav.pillars .mini-pillar:is(.here, .open, [aria-current="true"]) .mini-cap {
+  flex-direction: row !important; gap: 6px !important; padding: 0 !important; min-height: 0 !important;
+  border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important;
+}
 html:not([data-ui="rich"]) body nav.pillars .mini-cap .pillar-ico { display: inline-grid !important; width: 18px !important; height: 18px !important; flex: none !important; color: var(--g, var(--hi)) !important; margin: 0 !important; padding: 0 !important; background: none !important; }
 html:not([data-ui="rich"]) body nav.pillars .mini-cap .pillar-ico svg { width: 100% !important; height: 100% !important; fill: none !important; stroke: currentColor !important; stroke-width: 1.8 !important; stroke-linecap: round !important; stroke-linejoin: round !important; }
 html:not([data-ui="rich"]) body nav.pillars .pillar-name { display: inline !important; font: inherit !important; color: inherit !important; }
@@ -65,6 +72,19 @@ html:not([data-ui="rich"]) body nav.pillars.all-hidden { position: fixed !import
 /* (a narrow Portal, a phone: each group as its icon and count, the one you're in with its name too, so the
    row is one or two lines, not four or five; every chip keeps its name for screen readers and on hover) */
 html:not([data-ui="rich"]) body nav.pillars { container-type: inline-size; }
+/* (!important: the "all: revert !important" above took it away, so these sizes never applied; not while everything's
+   away, when the row is only Show all, a button sized by what's in it; 25 Oct 2026) */
+html:not([data-ui="rich"]) body nav.pillars:not(.all-hidden) { container-type: inline-size !important; }
+/* (a computer window a little narrow, a tablet on its side: the row a little tighter first, smaller names, Hide all
+   as its eye alone (its name on hover and for screen readers), so it stays one line instead of leaving Hide all,
+   or Admin and Hide all, alone on a second; 25 Oct 2026, the user: no "oddly shaped uis"; ns/CLAUDE.md 2c.3:
+   navigation gives up room by shorter names first) */
+@container (max-width: 1200px) {
+  html:not([data-ui="rich"]) body nav.pillars.compact .pillar-caps { gap: 4px !important; padding: 4px !important; }
+  html:not([data-ui="rich"]) body nav.pillars .mini-pillar { padding: 0 8px !important; font-size: 11px !important; }
+  html:not([data-ui="rich"]) body nav.pillars .mini-cap { gap: 5px !important; }
+  html:not([data-ui="rich"]) body nav.pillars .hide-tab .pillar-name { display: none !important; }
+}
 @container (max-width: 640px) {
   html:not([data-ui="rich"]) body nav.pillars .mini-pillar:not(.here):not([aria-current="true"]) .pillar-name,
   html:not([data-ui="rich"]) body nav.pillars .pillars-toggle .pillar-name { display: none !important; }
