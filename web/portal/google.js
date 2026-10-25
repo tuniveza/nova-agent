@@ -365,6 +365,8 @@
     const w = window.open("about:blank", "_blank");
     try {
       const res = await K().api("google/sheet", { body: {} });
+      // (no address back: said, rather than a blank tab opening on nothing, 25 Oct 2026)
+      if (!res || !res.url) throw new Error("The Money sheet isn't ready yet: connect Google first (Portal → Admin → Google).");
       if (w) w.location.href = res.url;
       else window.open(res.url, "_blank", "noopener");
     } catch (err) {

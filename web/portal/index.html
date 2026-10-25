@@ -625,21 +625,26 @@
       <!-- (writing and changing an invoice happen in the Invoicer: "Write an invoice" opens it, 19 Oct 2026) -->
 
       <!-- Add an expense (with its receipt, kept on the studio PC) -->
-      <form id="money-expense-form" class="card mn-form cp" autocomplete="off" hidden>
+      <!-- (novalidate: a missing amount is said on the form, not by the browser, which can't point at a box on
+           another page; four boxes across, then the note, the receipt and Add it in one row, so Add it is never left
+           alone on a page of its own, 25 Oct 2026) -->
+      <form id="money-expense-form" class="card mn-form cp" autocomplete="off" novalidate hidden>
         <h3 class="card-title">Add an expense</h3>
-        <div class="cp-grid">
+        <div class="cp-grid mn-exp-grid">
           <label class="cp-field"><span>Amount (£)</span><input id="mn-exp-amount" type="text" inputmode="decimal" maxlength="12" required placeholder="49.99"></label>
           <label class="cp-field"><span>What for</span><select id="mn-exp-category"></select></label>
           <label class="cp-field"><span>Paid to (optional)</span><input id="mn-exp-supplier" type="text" maxlength="120" placeholder="e.g. Thomann"></label>
           <label class="cp-field"><span>Day</span><input id="mn-exp-day" type="date"></label>
         </div>
-        <label class="cp-field"><span>Note (optional)</span><input id="mn-exp-note" type="text" maxlength="500"></label>
-        <label class="cp-field"><span>Receipt (a photo or PDF, optional: kept on the studio computer)</span><input id="mn-exp-receipt" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"></label>
-        <p id="mn-exp-error" class="cp-error appr-result bad" role="alert"></p>
-        <div class="actions">
-          <button class="btn small" type="submit">Add it</button>
-          <button id="mn-exp-cancel" class="btn small ghost" type="button">Cancel</button>
+        <div class="cp-grid mn-exp-more">
+          <label class="cp-field"><span>Note (optional)</span><input id="mn-exp-note" type="text" maxlength="500"></label>
+          <label class="cp-field"><span>Receipt (a photo or PDF, optional: kept on the studio computer)</span><input id="mn-exp-receipt" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"></label>
+          <div class="actions">
+            <button class="btn small" type="submit">Add it</button>
+            <button id="mn-exp-cancel" class="btn small ghost" type="button">Cancel</button>
+          </div>
         </div>
+        <p id="mn-exp-error" class="cp-error appr-result bad" role="alert"></p>
       </form>
 
       <!-- Invoices, Expenses, or the tax year (totals, the accountant's export, invoice settings) -->
@@ -743,7 +748,9 @@
           <button id="clients-import-open" class="chip admin-only" type="button" aria-expanded="false" aria-controls="clients-import" hidden>Import a spreadsheet</button>
         </div>
         <!-- Add a client by hand (anyone signed in) -->
-        <form id="clients-add-form" class="card cl-form" autocomplete="off" hidden>
+        <!-- (novalidate: no name is said on the form, not left to the browser, which can't point at a box on another
+             page of the section: Add looked dead, 25 Oct 2026) -->
+        <form id="clients-add-form" class="card cl-form" autocomplete="off" novalidate hidden>
           <h3 class="card-title">Add a client</h3>
           <div class="cl-grid">
             <label class="cl-field"><span>Name</span><input id="add-name" type="text" maxlength="200" required></label>

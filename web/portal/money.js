@@ -386,7 +386,10 @@
   $("money-expense-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const k = K();
-    if (pence($("mn-exp-amount").value) === null) return k.setText("mn-exp-error", "Not saved: the amount in pounds, like 49.99.");
+    if (pence($("mn-exp-amount").value) === null) {
+      k.setText("mn-exp-error", "Not saved: the amount in pounds, like 49.99.");
+      return $("mn-exp-amount").focus();
+    }
     const button = e.submitter || $("money-expense-form").querySelector('[type="submit"]');
     button.disabled = true;
     try {
@@ -459,5 +462,6 @@
     card.querySelectorAll("button").forEach((b) => (b.disabled = false));
   }
 
-  window.PortalMoney = { load };
+  // show(part): Money opened at Invoices, Expenses or the tax year (the Overview's lines, dash.js)
+  window.PortalMoney = { load, show: setPart };
 })();

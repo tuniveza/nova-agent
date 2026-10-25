@@ -1407,6 +1407,39 @@ html:not([data-align="left"]) .cl-steps { padding-left: 0; list-style-position: 
 .cl-session.off .cl-when, .cl-session.off .cl-what { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
 .cl-when { color: var(--gold); font-size: 14px; }
 .cl-what { color: var(--bright); font-size: 14.5px; }
+/* ---- Clients, sized for the screen (25 Oct 2026, the user: "there shouldn't be any blank sections or oddly shaped
+   uis"). Each client's card was stretched across the whole section, two to a page (five pages for 13 people): now
+   they sit side by side, as many across as fit. A client's page is one column as wide as its Details form (860px)
+   instead of cards 1,400px across with a few words in the middle. Its facts are label over value, side by side
+   (each label was a long way from its value, Invoiced alone on a second row). The Details form is short enough to
+   sit on one page with its Save (it was cut in two, Save alone on the next page): Name, Email and Phone, then the
+   money, three across, with Notes beside them. Where their yes came from sits beside when (the day was left alone
+   at the left edge). ---- */
+#clients-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); align-items: stretch; }
+#clients-list > :is(.empty, .skeleton) { grid-column: 1 / -1; }
+/* (one column that always fills the page: left to size itself, a page holding only the Details form's Save drew
+   it 40px wide, since a form that sizes its own boxes by its width has no width of its own) */
+#client-page { grid-template-columns: minmax(0, 1fr); }
+#client-page > * { width: 100%; max-width: 860px; margin-inline: auto; box-sizing: border-box; }
+#client-page > [data-key="head"] { container-type: inline-size; }
+#client-page .cl-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@container (min-width: 640px) { #client-page .cl-facts { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@container (max-width: 300px) { #client-page .cl-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cl-fact { display: grid; align-content: start; gap: 2px; min-width: 0; }
+.cl-fact dd { overflow-wrap: anywhere; }
+@container (min-width: 621px) {
+  /* (the email's column wider, so a whole address shows; the three money boxes one size under them) */
+  #client-page .cl-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.3fr); }
+  #client-page .cl-field > input[inputmode="decimal"] { width: min(100%, 150px); }
+  #client-page .cl-field:has(> [data-field="notes"]) { grid-column: 4; grid-row: 1 / span 2; grid-template-rows: auto minmax(0, 1fr); }
+  #client-page .cl-field > textarea[data-field="notes"] { height: 100%; min-height: 0; resize: none; }
+}
+/* (a contact found: its facts label over value, side by side; in the middle like the rest, unless left-aligned) */
+.cl-found .cl-facts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); }
+html:not([data-align="left"]) .cl-found { justify-items: center; }
+.cl-ask { display: flex; flex-wrap: wrap; justify-content: center; align-items: end; gap: 10px; }
+.cl-ask > .cl-field { flex: 1 1 280px; }
+.cl-ask > .cl-field:has(> input[type="date"]) { flex: 0 1 220px; }
 
 /* ----- Campaigns: email newsletters, waiting for an admin's approval ----- */
 .cp input[type="datetime-local"], .cp input[type="email"] {

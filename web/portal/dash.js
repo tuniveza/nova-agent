@@ -134,7 +134,8 @@
       return {
         big: plural(d.total || list.length, "client"),
         small: `${list.filter((c) => c.nextBooked).length} with a session booked`,
-        rows: list.slice(0, 4).map((c) => [c.name || c.email || "A client", c.nextBooked ? "next " + (when(c.nextBooked) ? dayWord(when(c.nextBooked)) : "") : plural(c.sessionCount || 0, "session")]),
+        // (a line opens that client's page, not the whole list: 25 Oct 2026, "a tap on a row opens that very thing")
+        rows: list.slice(0, 4).map((c) => [c.name || c.email || "A client", c.nextBooked ? "next " + (when(c.nextBooked) ? dayWord(when(c.nextBooked)) : "") : plural(c.sessionCount || 0, "session"), c.id ? "/portal/?view=clients&client=" + c.id : ""]),
         empty: "No clients yet.",
       };
     },
@@ -142,10 +143,17 @@
       const d = await get("money");
       const s = d.summary || {};
       const rows = [];
-      if (s.owed) rows.push([`Owed: ${plural(s.owed.count || 0, "invoice")}`, pounds(s.owed.pence)]);
-      if (s.overdue) rows.push([`Overdue: ${plural(s.overdue.count || 0, "invoice")}`, pounds(s.overdue.pence)]);
-      if (s.month) rows.push(["In this month", pounds(s.month.inPence)]);
-      if (s.month) rows.push(["Out this month", pounds(s.month.outPence)]);
+      // Each line opens what it's about (25 Oct 2026): the invoices in the Invoicer (where everything for
+      // invoices is), the overdue ones picked out; money in and out on Money's tax year and expenses
+      const inv = (what) => () => window.NovaInvoicer && window.NovaInvoicer.open(what);
+      const part = (p) => () => {
+        if (window.PortalPage) window.PortalPage.go("/portal/?view=money", { replace: true });
+        if (window.PortalMoney && window.PortalMoney.show) window.PortalMoney.show(p);
+      };
+      if (s.owed) rows.push([`Owed: ${plural(s.owed.count || 0, "invoice")}`, pounds(s.owed.pence), inv({})]);
+      if (s.overdue) rows.push([`Overdue: ${plural(s.overdue.count || 0, "invoice")}`, pounds(s.overdue.pence), inv({ filter: "overdue" })]);
+      if (s.month) rows.push(["In this month", pounds(s.month.inPence), part("year")]);
+      if (s.month) rows.push(["Out this month", pounds(s.month.outPence), part("expenses")]);
       const waiting = (s.waitingApproval || 0) + (s.unconfirmedExpenses || 0);
       return { big: s.owed ? pounds(s.owed.pence) : "–", small: waiting ? `owed · ${waiting} waiting for approval` : "owed", rows, empty: "" };
     },
@@ -261,7 +269,8 @@
             // (a line opens that very thing: an enquiry, a chat; otherwise its section)
             li.tabIndex = 0;
             li.title = "Open: " + main;
-            const open = () => (at && window.PortalPage ? window.PortalPage.go(at, { replace: true }) : run(item));
+            // (at: an address in Portal, or what to do: Money's lines open the Invoicer or Money's part)
+            const open = () => (typeof at === "function" ? at() : at && window.PortalPage ? window.PortalPage.go(at, { replace: true }) : run(item));
             li.addEventListener("click", open);
             li.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
             ul.append(li);
