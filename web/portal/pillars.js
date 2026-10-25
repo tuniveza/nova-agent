@@ -73,7 +73,8 @@
       { name: "Approvals", glyph: "✓", badge: "approvals-badge", at: "approvals", run: tab("approvals") },
       { name: "Ask about this week", glyph: "✦", run: press("booking", "#view-calendar .smart-ask") },
       { name: "Booking link", glyph: "⛓", run: () => { tab("enquiries")(); say("Choose who it's for: Booking link is on their enquiry."); } },
-      { name: "Test booking", glyph: "⚑", admin: true, run: go("/portal/?view=manage&page=test-booking") },
+      // (the Admin page's own address: "test-booking" alone isn't one, so it opened the Admin start page, 25 Oct 2026)
+      { name: "Test booking", glyph: "⚑", admin: true, run: go("/portal/?view=manage&page=%2Fadmin%2Ftest-booking") },
     ] },
     { name: "Clients & Money", glyph: "£", badges: ["money-badge"], items: [
       { name: "Clients", glyph: "☺", at: "clients", run: tab("clients") },

@@ -1073,6 +1073,10 @@
     const editing = approvalEditing === a.id && a.status === "pending" && canDecide;
     const card = el("article", "card appr" + (a.status === "pending" ? "" : " done"));
     card.dataset.key = "act-" + a.id;
+    // One screen (onescreen.js): a proposal stays whole on its page, never its buttons alone on the next; an
+    // open one keeps its fields and buttons together instead (25 Oct 2026, the user: "there shouldn't be any
+    // blank sections or oddly shaped uis")
+    if (!editing) card.setAttribute("data-os-keep", "");
     card.dataset.sig = sig(a.status, a.summary, a.payload, a.reason, a.decidedByName, a.error, a.executedAt, canDecide, editing);
     const top = el("div", "card-top");
     const title = el("h3", "card-title", APPROVAL_KINDS[a.kind] || "Booking change");
@@ -1095,7 +1099,6 @@
     }
     const fields = APPROVAL_FIELDS[a.kind] || [];
     const box = editing ? approvalFields(a, fields) : null;
-    if (box) card.appendChild(box);
     const row = el("div", "actions");
     const ok = el("button", "btn small", editing ? "Approve with changes" : "Approve");
     ok.type = "button";
@@ -1107,7 +1110,11 @@
       edit.addEventListener("click", () => {
         if (!editing) {
           approvalEditing = a.id;
-          return loadApprovals();
+          // (its fields brought into view: on a smaller screen they're on the next page)
+          return loadApprovals().then(() => {
+            const form = document.querySelector('#approvals-list [data-key="act-' + CSS.escape(a.id) + '"] .appr-form');
+            if (form) setTimeout(() => form.scrollIntoView({ block: "nearest" }), 150);
+          });
         }
         decideApproval(card, "edit", { id: a.id, payload: editedPayload(a, box) });
       });
@@ -1134,7 +1141,16 @@
       decideApproval(card, "reject", { id: a.id });
     });
     row.appendChild(no);
-    card.appendChild(row);
+    if (box) {
+      // (open: what it is in one piece, its fields and buttons in another, each whole on a page)
+      const info = el("div", "appr-info");
+      info.setAttribute("data-os-keep", "");
+      info.append(...card.childNodes);
+      const form = el("div", "appr-form");
+      form.setAttribute("data-os-keep", "");
+      form.append(box, row);
+      card.append(info, form);
+    } else card.appendChild(row);
     return card;
   }
 
@@ -3749,8 +3765,11 @@
   }
 
   // Ask Nova (or NovaBot with the booking tools) something, ready to send
+  // (as its own address, so Back comes back to Booking tools: shown in place, the address still said Booking
+  // tools and Back skipped past it, 25 Oct 2026)
   function askAbout(mode, text) {
-    show("bot");
+    if (window.PortalPage && window.PortalPage.go) window.PortalPage.go("/portal/?view=bot");
+    else show("bot");
     const chip = document.querySelector(`#view-bot [data-mode="${mode}"]`);
     if (chip && !chip.classList.contains("active")) chip.click();
     setTimeout(() => {
@@ -3916,6 +3935,12 @@
         calPicked = key;
         drawMonth();
         drawDay(true);
+        // (its plan on another page, a very short window: turned to, so pressing a day always shows it;
+        // ‹ goes back to the month, 25 Oct 2026)
+        setTimeout(() => {
+          const title = $("cal-day-title");
+          if (title && title.closest("[data-os-off]") && window.NovaOneScreen) window.NovaOneScreen.reveal(title);
+        }, 150);
       });
       cells.push(cell);
     }
