@@ -436,7 +436,7 @@ export const COMMANDS = {
     subs: ["crew", "invite", "pages"],
     async run(ctx, [sub = "crew"]) {
       adminOnly(ctx);
-      if (sub === "invite") return ctx.open("/portal/?view=crew");
+      if (sub === "invite") return ctx.open("/portal/?view=manage");
       if (sub === "pages") return ctx.open("/portal/?view=manage");
       const r = await ctx.api("/staff");
       const list = firstList(r);

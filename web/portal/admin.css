@@ -1,0 +1,59 @@
+/* Admin, on one screen (admin.js, 25 Oct 2026, the owner: "heavily simplify the nova portal - admin area and put
+   everything onto one screen as much as possible"): a panel each, drawn like a Nova Tab's Overview tiles
+   (dash.css .dash-tile), in two even rows on a computer or a tablet on its side: the admin pages (their eight
+   lines in two columns) and the crew; then Google, Test stuff and Computer. Each row's panels are one height,
+   their buttons along the foot, and the two rows sit in the middle of the section. When the window is too short
+   for both rows they go into pages (onescreen.js), a row a page. */
+.ad-grid.dash-grid { margin: 0 auto; width: 100%; max-width: 1640px; align-items: stretch; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .ad-grid.dash-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .ad-grid > .ad-studio { grid-column: span 2; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .ad-studio .dash-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 22px; }
+/* (in the middle of the section, top to bottom, as a Nova Tab's Overview is, dash.css; not in a short window, where
+   they're in pages) */
+html.embed:not(.win-short) #view-adminhome:not([hidden]) { display: flex; flex-direction: column; }
+html.embed:not(.win-short) #view-adminhome > .ad-grid { margin-block: auto; }
+
+.ad-panel { margin: 0; padding: 10px 14px; gap: 6px; }
+.ad-panel .dash-rows { flex: 1; align-content: start; gap: 0; }
+.ad-panel .dash-rows li { align-items: center; min-height: 26px; padding: 2px 0; }
+.ad-panel .dash-side { font-size: 11px; }
+.ad-planet { flex: none; width: 24px; height: 24px; border-radius: 50%; }
+.ad-panel .dash-rows li:has(> .ad-planet) { justify-content: flex-start; }
+.ad-panel .dash-rows li:has(> .ad-planet) > .dash-main { flex: 1; }
+.ad-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: auto; padding-top: 2px; }
+.ad-foot:empty { display: none; }
+.ad-foot :is(.btn.small, .chip) { min-height: 32px; }
+.ad-hint { margin: 0; font-size: 11.5px; color: var(--muted); text-align: center; }
+
+/* Invite someone: in place of the panels while it's open, a form's width in the middle */
+.ad-invite { display: grid; gap: 12px; width: min(100%, 640px); margin: auto; align-self: center; }
+:is(.ad-grid, .ad-invite)[hidden] { display: none; }
+
+/* (a person's name never broken in two: their role and when they signed in wrap instead, 1024x768) */
+.ad-crew .dash-main { overflow-wrap: normal; min-width: max-content; }
+.ad-crew .dash-side { white-space: normal; text-align: right; }
+
+/* A short window (html.win-short, 1366x400): a panel a page, low and wide: its name, count and buttons along one
+   line, its lines in columns under them, so each panel is whole on its page at a size that can be read */
+html.win-short .ad-grid.dash-grid { grid-template-columns: minmax(0, 1fr); }
+html.win-short .ad-grid > .ad-studio { grid-column: auto; }
+html.win-short .ad-panel { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 16px; row-gap: 2px; padding: 8px 14px; }
+html.win-short .ad-panel > .dash-tile-head { flex: 0 1 auto; }
+html.win-short .ad-panel > .dash-top { flex: 1 1 auto; }
+html.win-short .ad-panel > .ad-foot { flex: none; margin: 0; padding: 0; }
+html.win-short .ad-panel > .dash-rows { order: 5; flex: 1 1 100%; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); column-gap: 22px; }
+html.win-short .ad-panel > .ad-hint { order: 6; flex: 1 1 100%; }
+
+/* A tall window (2000x1250): everything a size bigger, so the two rows fill the section instead of sitting small
+   in the middle of it */
+@media (min-height: 950px) {
+  html:not(.win-short) .ad-grid.dash-grid { gap: 14px; max-width: 1760px; }
+  html:not(.win-short) .ad-panel { padding: 16px 20px; gap: 10px; }
+  html:not(.win-short) .ad-panel .dash-name { font-size: 17px; }
+  html:not(.win-short) .ad-panel .dash-big { font-size: 26px; }
+  html:not(.win-short) .ad-panel .dash-small { font-size: 13.5px; }
+  html:not(.win-short) .ad-panel .dash-rows li { min-height: 38px; font-size: 15px; }
+  html:not(.win-short) .ad-panel .dash-side { font-size: 12.5px; }
+  html:not(.win-short) .ad-panel .ad-planet { width: 30px; height: 30px; }
+  html:not(.win-short) .ad-foot :is(.btn.small, .chip) { min-height: 40px; }
+}

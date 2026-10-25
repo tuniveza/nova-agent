@@ -68,7 +68,7 @@
       if (v === "money" || v === "invoices") return q.get("invoice") ? `#money/invoice/${id("invoice")}` : "#money";
       if (v === "quests") return "#quests";
       if (v === "missions") return "#agent/plan";
-      if (v === "manage" || v === "team" || v === "crew") return "#crew";
+      if (v === "manage") return "#crew";
       if (v === "google") return "#google";
       if (v === "tests") return "#tests";
       if (v === "profile" || v === "you") return "#you";

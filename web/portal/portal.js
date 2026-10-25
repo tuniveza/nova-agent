@@ -13,7 +13,9 @@
 //              ?view=campaigns&campaign=<id> at one email campaign;
 //              ?view=social&post=<id> at one social post, &comment=<id> at one comment)
 //   You       ?view=me: their planet, big and turning; re-roll it, rename, open their Index, sign out
-//   Crew      ?view=crew (admins): everyone as planets; invite people, change roles, switch accounts off
+//   Admin     ?view=manage (admins): one dashboard (admin.js): the admin pages, the crew (invite people;
+//             a person's page ?id=<someone> changes their role or switches them off), Google, Test stuff,
+//             Computer; ?view=manage&page=/admin/… one of Nova Bot's admin pages
 // Which one shows depends on the address (?invite=, ?view=, ?id=<someone>, ?next=) and on who's
 // signed in (/auth/me) or whether anyone exists yet (/auth/status).
 // The site's security rules allow no scripts or styles written inside the page, so it's all here.
@@ -443,21 +445,18 @@
     const badge = $("nav-me-planet");
     const url = planetUrl(me, 64, false);
     if (badge.getAttribute("src") !== url) badge.src = url;
-    $("open-crew").hidden = !isAdmin();
     $("open-admin").hidden = !isAdmin();
     $("nav-admin").hidden = !isAdmin();
     $("nav-admin-group").hidden = !isAdmin();
     $("nav-tests").hidden = !isAdmin();
     $("nav-google").hidden = !isAdmin();
     $("nav-desk").hidden = !isAdmin();
-    // (the crew page's "+ Invite someone" was never shown: admins get it)
-    $("invite-toggle").hidden = !isAdmin();
   }
   // The You tab lights up for my profile, the crew and someone's profile
   function markNav() {
     for (const tab of document.querySelectorAll(".tabs .tab")) {
       // (on a phone the You tab is under More, so More lights up)
-      const admin = currentRoute().view === "admin" || currentRoute().view === "crew";
+      const admin = ["admin", "adminhome"].includes(currentRoute().view);
       const on = admin ? tab.dataset.view === "admin" : tab.dataset.view === "you" || tab.id === "tab-more";
       if (tab.classList.contains("active") !== on) tab.classList.toggle("active", on);
       if (on) tab.setAttribute("aria-current", "page");
@@ -469,14 +468,12 @@
   function currentRoute() {
     const p = new URLSearchParams(location.search);
     const view = p.get("view") || "";
-    if (view === "crew") return { view: "crew" };
-    // (the address says "manage": ad blockers block "view=ad…"; an old "admin" one still works)
-    if (view === "manage" || view === "admin") return { view: "admin", page: safeAdminPage(p.get("page")) };
+    // Admin (the address says "manage": ad blockers block "view=ad…"): its dashboard (admin.js), or with a
+    // page one of Nova Bot's admin pages (25 Oct 2026: "heavily simplify … onto one screen")
+    if (view === "manage") return p.get("page") ? { view: "admin", page: safeAdminPage(p.get("page")) } : { view: "adminhome" };
     const id = p.get("id");
     if (id && (!state.me || id !== state.me.id)) return { view: "person", id };
     if (view === "me" || view === "you" || id) return { view: "me" };
-    // Computer is "desk" inside (view=computer works too)
-    if (view === "computer") return { view: "work", tab: "desk" };
     if (WORK.includes(view)) return { view: "work", tab: view };
     // Nothing asked for: Alerts from a Nova Agent notification, else the starting tab (Options)
     if (location.hash === "#nova") return { view: "work", tab: "alerts" };
@@ -562,16 +559,15 @@
       document.title = "Admin · Portal";
       return showAdminPage(route.page);
     }
-    if (route.view === "crew") {
+    if (route.view === "adminhome") {
       if (!isAdmin()) {
         history.replaceState(null, "", "/portal/");
-        toast("The crew page is for admins.", true);
+        toast("Admin is for admins.", true);
         return renderRoute();
       }
-      showView("view-crew");
-      showAdminPage("crew");
-      document.title = "The crew · Portal";
-      return loadCrew();
+      showView("view-adminhome");
+      document.title = "Admin · Portal";
+      return window.PortalAdmin && window.PortalAdmin.show({ fresh });
     }
     if (route.view === "me") {
       showView("view-profile");
@@ -586,23 +582,17 @@
     } catch (err) {
       if (state.screen !== "app") return;
       toast(err.message, true);
-      history.replaceState(null, "", isAdmin() ? "/portal/?view=crew" : "/portal/");
+      history.replaceState(null, "", isAdmin() ? "/portal/?view=manage" : "/portal/");
       renderRoute();
     }
   }
   // ===== Admin: the studio's admin pages, inside Portal =====
-  // Only Nova Bot's own /admin pages (never another site); "crew" is Portal's own crew page
+  // Only Nova Bot's own /admin pages (never another site)
   function safeAdminPage(page) {
     const p = String(page || "");
-    return p === "crew" || /^\/admin(\/[\w\/-]*)?$/.test(p) ? p : "/admin";
+    return /^\/admin(\/[\w\/-]*)?$/.test(p) ? p : "/admin";
   }
   function showAdminPage(page) {
-    for (const chip of document.querySelectorAll("[data-admin]")) {
-      const on = chip.dataset.admin === "/admin" ? page === "/admin" || (page.startsWith("/admin/") && !page.startsWith("/admin/google") && page !== "/admin/links" && !page.startsWith("/admin/test-booking")) : page.startsWith(chip.dataset.admin);
-      chip.classList.toggle("active", on);
-      chip.setAttribute("aria-selected", on ? "true" : "false");
-    }
-    if (page === "crew") return;
     const frame = $("admin-frame");
     if (!frame.dataset.oneScreen) {
       // One screen inside the frame too (onescreen.js): the Admin page's main part is cut into pages
@@ -615,8 +605,7 @@
         try {
           const d = frame.contentDocument;
           // A tab pressed inside the Admin page (its own row: Enquiries, Feedback, Links…): Portal's address
-          // and the chip lit above follow it, so Back, a reload and the chips all agree with what's showing
-          // (25 Oct 2026: Links pressed inside left Studio lit and the address on Studio)
+          // follows it, so Back and a reload agree with what's showing (25 Oct 2026)
           const path = frame.contentWindow.location.pathname;
           const at = safeAdminPage(path);
           // (only one of its own tabs' pages: a form's answer, like /admin/codes after Add code, isn't a page
@@ -625,7 +614,6 @@
           if (tab && at !== frame.dataset.page && currentRoute().view === "admin") {
             frame.dataset.page = at;
             history.replaceState(null, "", "/portal/?view=manage&page=" + encodeURIComponent(at));
-            showAdminPage(at);
           }
           if (!d || !d.body || d.documentElement.classList.contains("os-frame")) return;
           d.documentElement.classList.add("os-frame");
@@ -693,16 +681,12 @@
     clearTimeout(frame._again);
     frame._again = setTimeout(() => { if (frame.isConnected && frame.dataset.page === page && blank()) frame.src = page; }, 2500);
   }
-  for (const chip of document.querySelectorAll("[data-admin]")) {
-    chip.addEventListener("click", () => {
-      sfx("tab");
-      const page = chip.dataset.admin;
-      go(page === "crew" ? "/portal/?view=crew" : "/portal/?view=manage&page=" + encodeURIComponent(page), { replace: true });
-    });
-  }
 
   // One view at a time (the work tabs' views too); a view coming into sight fades in once (app.js)
   function showView(id) {
+    // (one view, never Inbox's three panes' layout left on from the Inbox: Admin's dashboard and a crew member's
+    // page were drawn as narrow panes after it, 25 Oct 2026)
+    $("main").classList.remove("inbox-all");
     if (work() && work().showOnly) return work().showOnly(id);
     for (const v of document.querySelectorAll("#main > .view")) v.hidden = v.id !== id;
   }
@@ -1225,59 +1209,7 @@
     ]);
   }
 
-  // ===== The crew (admins) =====
-
-  async function loadCrew() {
-    const grid = $("crew-grid");
-    if (!state.crew) grid.replaceChildren(el("p", "loading-line", "Gathering the crew…"));
-    try {
-      const data = await must("/staff");
-      state.crew = data.staff || [];
-      drawCrew();
-    } catch (err) {
-      if (state.screen !== "app") return;
-      grid.replaceChildren(el("p", "empty", err.message));
-    }
-  }
-  function drawCrew(newId) {
-    const crew = state.crew || [];
-    const invited = crew.filter((p) => p.status === "invited").length;
-    const off = crew.filter((p) => p.status === "disabled").length;
-    $("crew-count").textContent = [plural(crew.length, "person", "people"), invited ? `${invited} invited` : "", off ? `${off} switched off` : ""].filter(Boolean).join(" · ");
-    $("crew-grid").replaceChildren(...crew.map((p, i) => crewCard(p, i, p.id === newId)));
-  }
-  function crewCard(p, i, isNew) {
-    const self = state.me && p.id === state.me.id;
-    const a = el("a", `crew-card card-in ${p.status}`);
-    a.href = self ? "/portal/?view=me" : `/portal/?id=${encodeURIComponent(p.id)}`;
-    a.dataset.nav = self ? "me" : "person";
-    a.style.setProperty("--i", String(Math.min(i, 16)));
-    const badge = el("img", "crew-planet");
-    badge.src = planetUrl(p, 96, false);
-    badge.alt = "";
-    badge.width = 96;
-    badge.height = 96;
-    badge.loading = "lazy";
-    badge.decoding = "async";
-    // (a planet that didn't come, the connection blinking: asked for once more, then left out, the card's glow
-    // in its place, never a broken picture's empty frame, 25 Oct 2026: The crew opened with two)
-    badge.addEventListener("error", () => {
-      if (badge.dataset.again) return badge.style.setProperty("visibility", "hidden");
-      badge.dataset.again = "1";
-      setTimeout(() => (badge.src = planetUrl(p, 96, false) + "&again=1"), 1500);
-    });
-    const pills = [el("span", "pill " + (p.role === "admin" ? "admin" : "staff"), p.role === "admin" ? "Admin" : "Staff"), statusPill(p.status)];
-    if (self) pills.unshift(el("span", "pill you", "You"));
-    a.append(
-      el("span", "badge-wrap", [badge]),
-      el("p", "crew-name", p.display_name),
-      el("span", "crew-pills", pills),
-      el("p", "crew-seen", p.status === "invited" ? "Not joined yet" : p.last_login_at ? "Signed in " + ago(p.last_login_at) : "Never signed in")
-    );
-    a.setAttribute("aria-label", `${p.display_name}, ${p.role}, ${p.status}`);
-    if (isNew && !still()) a.classList.add("fresh");
-    return a;
-  }
+  // ===== The crew (admins): a line each on Admin's dashboard (admin.js), and inviting someone there =====
 
   // Inviting someone
   function setInviteRole(role) {
@@ -1287,10 +1219,15 @@
       chip.setAttribute("aria-pressed", String(chip.dataset.role === role));
     }
   }
+  // (on Admin's dashboard, in place of its panels while it's open: Cancel, or Done under the link, puts them back)
+  const inviting = (on) => {
+    $("admin-invite-wrap").hidden = !on;
+    $("admin-grid").hidden = on;
+  };
   function openInviteForm() {
     const form = $("invite-form-card");
     form.hidden = false;
-    $("invite-toggle").setAttribute("aria-expanded", "true");
+    inviting(true);
     $("inv-error").textContent = "";
     $("invite-result").replaceChildren();
     replay(form, "invite-new");
@@ -1298,9 +1235,8 @@
   }
   function closeInviteForm() {
     $("invite-form-card").hidden = true;
-    $("invite-toggle").setAttribute("aria-expanded", "false");
+    if (!$("invite-result").childElementCount) inviting(false);
   }
-  $("invite-toggle").addEventListener("click", () => ($("invite-form-card").hidden ? openInviteForm() : closeInviteForm()));
   $("inv-cancel").addEventListener("click", closeInviteForm);
   $("inv-role").addEventListener("click", (e) => {
     const chip = e.target.closest(".chip");
@@ -1319,12 +1255,14 @@
       sfx("done");
       form.reset();
       setInviteRole("staff");
-      closeInviteForm();
       const result = $("invite-result");
-      result.replaceChildren(inviteBox(data.staff, data.invite_url, data.invite_expires, () => result.replaceChildren()));
-      state.crew = [...(state.crew || []).filter((p) => p.id !== data.staff.id), { ...data.staff, invite_pending: true }];
-      drawCrew(data.staff.id);
-      result.scrollIntoView({ block: "nearest", behavior: still() ? "auto" : "smooth" });
+      result.replaceChildren(inviteBox(data.staff, data.invite_url, data.invite_expires, () => {
+        result.replaceChildren();
+        inviting(false);
+      }));
+      closeInviteForm();
+      // (the dashboard behind it drawn again, the new person on The crew's panel)
+      if (window.PortalAdmin) window.PortalAdmin.show({ fresh: true });
     } catch (err) {
       if (state.screen !== "app") return;
       setError("inv-error", err.message, form);
@@ -1332,7 +1270,7 @@
     }
   });
 
-  $("back-to-crew").addEventListener("click", () => go("/portal/?view=crew"));
+  $("back-to-crew").addEventListener("click", () => go("/portal/?view=manage"));
 
   // ===== Keeping an eye on the session (an admin may switch someone off; signing out elsewhere ends it) =====
   async function checkSession() {
@@ -1391,6 +1329,14 @@
     // Who's signed in, for the work tabs (Clients shows admins Sync and Import; Nova Bot checks again)
     isAdmin,
     me: () => state.me,
+    // (for Admin's dashboard, admin.js: the crew, and each one's planet)
+    crew: async () => {
+      const data = await must("/staff");
+      state.crew = data.staff || [];
+      return state.crew;
+    },
+    planetUrl: (person, size) => planetUrl(person, size, false),
+    invite: openInviteForm,
   };
 
   // ===== Start: who's here? =====

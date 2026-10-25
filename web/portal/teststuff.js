@@ -331,8 +331,9 @@
     live.replaceChildren(...nodes);
     live.hidden = false;
     // (pressed on a later page, this line is on the first: said where you are too, 25 Oct 2026)
+    // (and from Admin's dashboard, where Test stuff isn't showing at all)
     setTimeout(() => {
-      if (live.closest("[data-os-off]")) k.toast(undo ? text + " Put back is at the top of Test stuff." : text);
+      if (live.closest("[data-os-off], [hidden]")) k.toast(undo ? text + " Put back is at the top of Test stuff." : text);
     }, 150);
   }
 
@@ -442,5 +443,20 @@
   const tile = $("today-tests");
   if (tile) tile.addEventListener("click", () => K() && K().goView("tests"));
 
-  window.PortalTests = { load };
+  // (for Admin's dashboard, admin.js: how many, the first few, and Delete all likely from there)
+  function summary() {
+    const all = items();
+    const likely = all.filter((i) => i.confidence === "likely");
+    return {
+      ready: Boolean(bot || pc),
+      all: all.length,
+      likely: likely.length,
+      maybe: all.length - likely.length,
+      deletable: likely.filter((i) => !i.locked).length,
+      first: [...likely, ...all.filter((i) => i.confidence !== "likely")],
+      problem: !bot && !pc ? botProblem || pcProblem : "",
+    };
+  }
+  const removeLikely = () => remove(items().filter((i) => i.confidence === "likely"));
+  window.PortalTests = { load, summary, removeLikely };
 })();

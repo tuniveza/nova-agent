@@ -174,15 +174,15 @@
       } },
       { name: "Apps and links", glyph: "⌘", part: "Sound and apps", run: () => $("brand").click() },
     ] },
-    { name: "Admin", glyph: "♛", admin: true, badges: ["tests-badge"], items: [
-      { name: "Admin pages", glyph: "♛", admin: true, at: "admin", run: go("/portal/?view=manage") },
-      { name: "The crew", glyph: "☺", admin: true, at: "crew", run: go("/portal/?view=crew") },
-      { name: "Invite someone", glyph: "+", admin: true, run: () => { go("/portal/?view=crew")(); when("#invite-toggle", (el) => el.click()); } },
-      { name: "Google", glyph: "G", admin: true, at: "google", run: tab("google") },
-      // (the Admin page's own address, /admin/links: "links" alone isn't one, so it opened Studio, 25 Oct 2026)
-      { name: "Links", glyph: "⛓", admin: true, run: go("/portal/?view=manage&page=%2Fadmin%2Flinks") },
-      { name: "Test stuff", glyph: "⚑", admin: true, badge: "tests-badge", at: "tests", run: tab("tests") },
-      { name: "Computer", glyph: "▣", admin: true, at: "desk", run: tab("desk") },
+    // (Admin is one dashboard, 25 Oct 2026, the owner: "heavily simplify the nova portal - admin area and put
+    // everything onto one screen as much as possible", then "get rid of old links please and just keep it simple
+    // and optimized": admin.js, a panel each for the admin pages, the crew (and Invite someone), Google, Test stuff
+    // and Computer side by side; these open the whole of one in place, with only Admin along the top)
+    { name: "Admin", glyph: "♛", admin: true, dash: "manage", badges: ["tests-badge"], items: [
+      { name: "Admin pages", glyph: "♛", admin: true, at: "admin", inDash: true, run: go("/portal/?view=manage&page=%2Fadmin") },
+      { name: "Google", glyph: "G", admin: true, at: "google", inDash: true, run: tab("google") },
+      { name: "Test stuff", glyph: "⚑", admin: true, badge: "tests-badge", at: "tests", inDash: true, run: tab("tests") },
+      { name: "Computer", glyph: "▣", admin: true, at: "desk", inDash: true, run: tab("desk") },
     ] },
   ];
 
@@ -252,7 +252,7 @@
     "Plans & Nova": "star", Quests: "star", "Everyone's quests": "team", "Nova Agent": "agent", "Ask Nova": "ask", Voice: "mic", "Hands-free": "ear",
     You: "user", "Your profile": "user", "Re-roll planet": "planet", "Edit your name": "pen", "Change email": "at", "Change password": "key", "All addresses": "map", "How it works": "gear", "Sign out": "exit",
     "Look & sound": "palette", Options: "gear", Theme: "palette", "Text & menu": "text", "Starting tab": "start", "Music on or off": "music", "Refresh everything": "refresh", "Install the app": "install", "Apps and links": "apps",
-    Admin: "shield", "Admin pages": "shield", "The crew": "team", "Invite someone": "userplus", Google: "google", Links: "link", "Test stuff": "flask", Computer: "monitor",
+    Admin: "shield", "Admin pages": "shield", "The crew": "team", Google: "google", "Test stuff": "flask", Computer: "monitor",
   };
   function icon(name) {
     const span = document.createElement("span");
@@ -271,12 +271,11 @@
   function here() {
     const p = new URLSearchParams(location.search);
     const v = p.get("view") || "";
-    if (v === "manage" || v === "admin") return "admin";
-    if (v === "crew") return "crew";
-    // (a crew member's page, opened from The crew, is still the crew: Admin stays lit with its strip, not You
+    if (v === "manage") return "admin";
+    // (a crew member's page, opened from Admin, is still Admin: Admin stays lit with its strip, not You
     // with your own Re-roll planet, Edit your name and Sign out beside someone else's planet, 25 Oct 2026)
     const me = window.PortalPage && window.PortalPage.me && window.PortalPage.me();
-    if (p.get("id") && me && p.get("id") !== me.id) return "crew";
+    if (p.get("id") && me && p.get("id") !== me.id) return "person";
     if (v === "me" || v === "you" || p.get("id")) return "me";
     return (window.PortalApp && window.PortalApp.view) || v || "today";
   }
@@ -289,7 +288,10 @@
   // (a group with a dashboard of its own, like Inbox's, opens that instead of an Overview)
   const dashOf = () => {
     const p = new URLSearchParams(location.search);
-    const own = GROUPS.find((g) => g.dash && (g.dash === p.get("view") || g.items.some((i) => i.inDash && i.at === p.get("view"))));
+    // (where you really are, not what the address asked for: a crew member's page and the admin pages are Admin's)
+    const at = here();
+    const v = at === "person" || at === "admin" ? "manage" : at;
+    const own = GROUPS.find((g) => g.dash && (g.dash === v || g.items.some((i) => i.inDash && i.at === v)));
     return own ? slug(own.name) : p.get("view") === "group" ? p.get("g") || "" : "";
   };
   const dashUrl = (g) => (g.dash ? "/portal/?view=" + g.dash : "/portal/?view=group&g=" + slug(g.name));
@@ -682,7 +684,7 @@
   // ---- Nova panes (22 Oct 2026, the user: "for all panes in the nova portal can we contain them in a nova
   // pane for easier identification"): every section is framed in its Nova Tab's colour, with its icon
   // beside its title, and named (data-pane: "Inbox · Enquiries") so it can be pointed at ----
-  const PANE_OF = { today: ["", "Today"], me: ["You", "Your profile"], profile: ["You", "Your profile"], admin: ["Admin", "Admin pages"], crew: ["Admin", "The crew"] };
+  const PANE_OF = { today: ["", "Today"], me: ["You", "Your profile"], profile: ["You", "Your profile"], admin: ["Admin", "Admin pages"], adminhome: ["Admin", ""] };
   // (a pane too small for its words, a phone's Inbox or anything on a phone on its side, turns into plain
   // text, terminal style: the user, 22 Oct 2026, "can the ui become more tui if it get so small that
   // area's are collapsing and can't see text"; dash.css [data-tui])
@@ -715,7 +717,7 @@
         const g = groupsNow().find((x) => slug(x.name) === dashOf());
         group = g ? g.name : "";
         name = "Overview";
-      } else if (key === "profile" && here() === "crew") [group, name] = PANE_OF.crew; // (a crew member's page)
+      } else if (key === "profile" && here() === "person") [group, name] = ["Admin", "The crew"]; // (a crew member's page)
       else if (PANE_OF[key]) [group, name] = PANE_OF[key];
       else {
         const g = GROUPS.find((x) => x.items.some((i) => i.at === key));

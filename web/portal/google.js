@@ -320,7 +320,6 @@
   // the whole window), then back here. Nova Bot first gives a one-time pass (10 minutes), so
   // connecting works however you're signed in (the window to Google may not carry the sign-in).
   async function connect() {
-    if (!data) return;
     const standalone = matchMedia("(display-mode: standalone)").matches;
     // Opened straight away (browsers only allow a new window right after the press), filled in below
     const w = standalone ? null : window.open("about:blank", "nova-google", "width=520,height=720");
@@ -476,5 +475,6 @@
     });
   }
 
-  window.PortalGoogle = { load, openSheet, today, contactPicker };
+  // (connect: Connect again from Admin's dashboard too, admin.js)
+  window.PortalGoogle = { load, openSheet, today, contactPicker, connect };
 })();

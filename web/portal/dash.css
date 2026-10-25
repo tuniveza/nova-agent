@@ -426,9 +426,6 @@ html #main > .view[data-tui] .cal-day-title { margin: 2px 0; font-size: 10.5px; 
   #main.inbox-all > .view:not(.ib-tools-open) :is(#enq-chips, #enq-tools, #saved-panel, .ib-chat-chips, .settings-row, #alerts-clear) { display: none; }
 }
 
-/* Admin's Overview: the tiles in a row all the same height (25 Oct 2026, the owner: "there shouldn't be any
-   … oddly shaped uis"; Admin pages' two lines of words made it taller than The crew beside it) */
-#view-group[data-g="admin"] .dash-grid { align-items: stretch; }
 /* (Plans & Nova, You, Look & sound: their Overview's tiles, a part each (dash.js partTiles), the same height
    along a row instead of one short and one tall beside it; 25 Oct 2026, the user: no "oddly shaped uis") */
 #view-group .dash-grid:has(> .dash-parts) { align-items: stretch; }

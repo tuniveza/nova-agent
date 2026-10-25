@@ -36,6 +36,7 @@
 <link rel="stylesheet" href="/portal/funnel.css">
 <link rel="stylesheet" href="/shared/onescreen.css">
 <link rel="stylesheet" href="/portal/dash.css">
+<link rel="stylesheet" href="/portal/admin.css">
 <link rel="stylesheet" href="/portal/frame.css">
 <link rel="stylesheet" href="/portal/pillars.css">
 <link rel="stylesheet" href="/portal/simple.css"><!-- Simple design (the default; Options → Look → Rich for the look before) -->
@@ -893,13 +894,13 @@
     <!-- (data-os-nofill: its pages aren't topped up with the next row drawn smaller; a list of addresses drawn
          smaller grew more columns than fit, and What Nova runs on came out too small to read; 25 Oct 2026) -->
     <section id="view-profile" class="view pv" aria-labelledby="p-name" data-os-nofill hidden>
-      <button id="back-to-crew" class="btn small ghost back" type="button" data-sfx="close" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
-        The crew
-      </button>
-
-      <!-- The hero: their planet, big and turning, in its own little patch of sky -->
+      <!-- The hero: their planet, big and turning, in its own little patch of sky (and, on a crew member's page,
+           the way back to Admin in its corner: on a line of its own it had a page to itself, 25 Oct 2026) -->
       <div class="hero">
+        <button id="back-to-crew" class="btn small ghost back" type="button" data-sfx="close" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+          Admin
+        </button>
         <div id="stage" class="stage">
           <span class="stage-glow" aria-hidden="true"></span>
           <span class="stage-stars" aria-hidden="true"></span>
@@ -1097,13 +1098,9 @@
               <h3 id="self-admin-title" class="card-title">The studio</h3>
               <p class="hint">Invite people, change roles, and run the admin pages, all here in Portal.</p>
               <div class="action-row">
-                <a id="open-crew" class="btn ghost" href="/portal/?view=crew" data-nav="crew" hidden>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="3.2"/><circle cx="17" cy="10.5" r="2.4"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/><path d="M15 15c2.6-.4 4.6.8 5.5 3.5"/></svg>
-                  <span>The crew</span>
-                </a>
                 <a id="open-admin" class="btn ghost" href="/portal/?view=manage" data-nav="admin" hidden>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="M9.5 12h5M12 9.5v5"/></svg>
-                  <span>Admin pages</span>
+                  <span>Admin</span>
                 </a>
               </div>
             </section>
@@ -1132,36 +1129,15 @@
     </section>
 
 
-    <!-- Admin (admins only): the admin pages, shown here inside Portal, and the crew -->
-    <section id="view-admin" class="view pv admin-view" aria-label="Admin" hidden>
-      <div class="admin-switch" role="tablist" aria-label="Admin">
-        <button type="button" class="chip" data-admin="/admin">Studio</button>
-        <button type="button" class="chip" data-admin="crew">Crew</button>
-        <button type="button" class="chip" data-admin="/admin/google/setup">Google</button>
-        <button type="button" class="chip" data-admin="/admin/links">Links</button>
-        <button type="button" class="chip" data-admin="/admin/test-booking">Test booking</button>
-      </div>
-      <iframe id="admin-frame" class="admin-frame" title="Admin"></iframe>
-    </section>
-
-    <!-- The crew (admins only) -->
-    <section id="view-crew" class="view pv" aria-labelledby="crew-title" hidden>
-      <div class="admin-switch" role="tablist" aria-label="Admin">
-        <button type="button" class="chip" data-admin="/admin">Studio</button>
-        <button type="button" class="chip" data-admin="crew">Crew</button>
-        <button type="button" class="chip" data-admin="/admin/google/setup">Google</button>
-        <button type="button" class="chip" data-admin="/admin/links">Links</button>
-        <button type="button" class="chip" data-admin="/admin/test-booking">Test booking</button>
-      </div>
-      <div class="view-head">
-        <div>
-          <span class="kicker" id="crew-count"></span>
-          <h2 id="crew-title">The crew</h2>
-        </div>
-        <button id="invite-toggle" class="btn small" type="button" data-sfx="open" aria-expanded="false" aria-controls="invite-form-card" hidden>+ Invite someone</button>
-      </div>
-
-      <!-- Inviting someone: who, and what they can do -->
+    <!-- Admin (admins only), on one screen: a panel each for the admin pages, the crew, Google, Test stuff and
+         Computer, side by side; each opens the whole of it in place (admin.js). (25 Oct 2026: the row of chips
+         over the admin pages and The crew, Studio · Crew · Google · Links · Test booking, went: each is a line
+         on the dashboard now, and the admin pages keep their own tabs) -->
+    <section id="view-adminhome" class="view ad" aria-label="Admin" hidden>
+      <div id="admin-grid" class="dash-grid ad-grid" aria-live="polite"></div>
+      <!-- Inviting someone, in place of the panels while it's open (the crew's page of planets went: each person
+           is a line on the dashboard, opening their page): who, and what they can do; then the link -->
+      <div id="admin-invite-wrap" class="pv ad-invite" hidden>
       <form id="invite-form-card" class="card invite-new" hidden novalidate>
         <span class="kicker">New crew member</span>
         <h2 class="card-title">Invite someone</h2>
@@ -1190,9 +1166,14 @@
         </div>
       </form>
       <div id="invite-result"></div>
-
-      <div id="crew-grid" class="crew-grid" aria-live="polite"></div>
+      </div>
     </section>
+
+    <!-- The admin pages (Nova Bot's own), shown here inside Portal -->
+    <section id="view-admin" class="view pv admin-view" aria-label="Admin" hidden>
+      <iframe id="admin-frame" class="admin-frame" title="Admin"></iframe>
+    </section>
+
   </main>
 
   <!-- The sections, in groups: Today; Studio (clients, bookings, Approvals, Campaigns and Social); Plans (quests, alerts, Agent);
@@ -1573,6 +1554,7 @@
 <script src="/portal/teststuff.js"></script>
 <script src="/portal/google.js"></script>
 <script src="/portal/desk.js"></script>
+<script src="/portal/admin.js"></script>
 <script src="/shared/addresses.js"></script>
 <script src="/portal/addresses.js"></script>
 <script src="/portal/portal.js"></script>

@@ -219,11 +219,13 @@
     async desk() {
       const d = await get("desk");
       const v = d.vps || {};
-      const pct = (x) => (x && x.usedPct != null ? Math.round(x.usedPct) + "%" : x && x.percent != null ? Math.round(x.percent) + "%" : "");
+      // (how much is used, as Computer works it out, desk.js: the reply has total and free, never a percentage, so
+      // these lines were always left out, 25 Oct 2026)
+      const used = (x) => (x && x.total ? Math.round(((x.total - x.free) / x.total) * 100) + "% used" : "");
       return {
         big: v.reachable ? "Running" : "Can't reach it",
         small: v.lastBackup ? "Last backup " + ago(v.lastBackup) : "",
-        rows: [["Processor", pct(v.cpu)], ["Memory", pct(v.memory)], ["Disk", pct(v.disk)]].filter((r) => r[1]),
+        rows: [["Memory", used(v.memory)], ["Disk", used(v.disk)], ["Processors", v.cpu && v.cpu.load ? "busy " + v.cpu.load[0] : ""]].filter((r) => r[1]),
         empty: "",
       };
     },
@@ -233,8 +235,6 @@
     bot: "Try NovaBot as clients see it, or ask Nova about your bookings.",
     tests: "Things that look like tests or copies, to tidy away.",
     me: "Your planet, your name and your sign-in.",
-    crew: "Everyone on the team, their roles and invites.",
-    admin: "Links, the website bot's settings and the rest of the admin pages.",
   };
 
   // ---- Drawing ----
@@ -295,7 +295,7 @@
   }
   // The tiles: every section in Nova Tabs (in their order, each once), less Today itself and the pages
   // about you and the team
-  const NOT = new Set(["today", "me", "crew", "admin"]);
+  const NOT = new Set(["today", "me", "admin"]);
   const NAMES = { calendar: "Bookings" };
   function today() {
     const P = window.NovaPillars;
@@ -328,7 +328,6 @@
     const g = groups.find((x) => P.slug(x.name) === want) || groups[0];
     if (!g) return;
     $("view-group").style.setProperty("--g", P.hue(g.name));
-    $("view-group").dataset.g = P.slug(g.name); // (which group's Overview: dash.css)
     $("dash-title").replaceChildren(P.icon(g.name), el("span", "", g.name));
     cache.clear();
     const items = g.items.filter((i) => i.at);
