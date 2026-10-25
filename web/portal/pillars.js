@@ -137,7 +137,8 @@
       { name: "The crew", glyph: "☺", admin: true, at: "crew", run: go("/portal/?view=crew") },
       { name: "Invite someone", glyph: "+", admin: true, run: () => { go("/portal/?view=crew")(); when("#invite-toggle", (el) => el.click()); } },
       { name: "Google", glyph: "G", admin: true, at: "google", run: tab("google") },
-      { name: "Links", glyph: "⛓", admin: true, run: go("/portal/?view=manage&page=links") },
+      // (the Admin page's own address, /admin/links: "links" alone isn't one, so it opened Studio, 25 Oct 2026)
+      { name: "Links", glyph: "⛓", admin: true, run: go("/portal/?view=manage&page=%2Fadmin%2Flinks") },
       { name: "Test stuff", glyph: "⚑", admin: true, badge: "tests-badge", at: "tests", run: tab("tests") },
       { name: "Computer", glyph: "▣", admin: true, at: "desk", run: tab("desk") },
     ] },

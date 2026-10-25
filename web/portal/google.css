@@ -73,7 +73,10 @@
    shouldn't be any blank sections or oddly shaped uis"): the parts stood in one 680px column down the middle
    of a wide section, a page or two of them at a time, eight pages in all with most of each page empty. Now
    as many columns as fit (about 300px each), the parts in a row the same height, Sync now along their foot. */
-html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-list { width: 100%; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-list { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; }
+/* (in rows that wrap, each part 300px to 420px, a row's last ones in the middle: as a grid, a page with one
+   part left on it (a short screen, 1024x768) had it in the first column, the rest of the row empty) */
+html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-list > .gg-part { flex: 1 1 300px; min-width: min(100%, 300px); max-width: 420px; box-sizing: border-box; }
 html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-part { display: flex; flex-direction: column; align-items: center; }
 html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-part > .chip { margin-top: auto; }
 /* (its name sits over the parts on every page they're on, not a part of its own: as a part it could only

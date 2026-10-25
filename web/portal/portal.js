@@ -607,6 +607,10 @@
     if (!frame.dataset.oneScreen) {
       // One screen inside the frame too (onescreen.js): the Admin page's main part is cut into pages
       frame.dataset.oneScreen = "1";
+      // (a look changed, here or in another panel: once look.js has put it on, onto the Admin page too)
+      const relook = () => setTimeout(() => frame._look && frame._look(), 50);
+      window.addEventListener("novalookchange", relook);
+      window.addEventListener("storage", relook);
       frame.addEventListener("load", () => {
         try {
           const d = frame.contentDocument;
@@ -645,6 +649,18 @@
             ` html.os-frame body > main { padding-top: 0; padding-bottom: 0; } html.os-frame body > [data-os-pin] { margin-bottom: ${top}; }` +
             (head ? "" : ` html.os-frame body { padding-top: ${top}; }`));
           d.adoptedStyleSheets = [...d.adoptedStyleSheets, sheet];
+          // The colours chosen for all of Nova Agent on the Admin page too: the page has only its own theme
+          // (themes.js), not look.js's, so it stayed pink in Aurora's green (25 Oct 2026). Portal's look.js
+          // sheet is copied in, and again whenever the look changes.
+          const look = new frame.contentWindow.CSSStyleSheet();
+          frame._look = () => {
+            try {
+              const rules = [...document.adoptedStyleSheets].flatMap((s) => [...s.cssRules]);
+              look.replaceSync(rules.filter((r) => r.selectorText === "html:root" && r.style && r.style.getPropertyValue("--accent")).map((r) => r.cssText).join("\n"));
+            } catch (err) {}
+          };
+          frame._look();
+          d.adoptedStyleSheets = [...d.adoptedStyleSheets, look];
           const css = Object.assign(d.createElement("link"), { rel: "stylesheet", href: "/shared/onescreen.css" });
           const js = Object.assign(d.createElement("script"), { src: "/shared/onescreen.js" });
           js.addEventListener("load", () => frame.contentWindow.NovaOneScreen && frame.contentWindow.NovaOneScreen.adopt(d.body));
