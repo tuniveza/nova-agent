@@ -610,14 +610,38 @@
       frame.addEventListener("load", () => {
         try {
           const d = frame.contentDocument;
+          // A tab pressed inside the Admin page (its own row: Enquiries, Feedback, Links…): Portal's address
+          // and the chip lit above follow it, so Back, a reload and the chips all agree with what's showing
+          // (25 Oct 2026: Links pressed inside left Studio lit and the address on Studio)
+          const path = frame.contentWindow.location.pathname;
+          const at = safeAdminPage(path);
+          if (d && path.startsWith("/admin") && at !== frame.dataset.page && currentRoute().view === "admin") {
+            frame.dataset.page = at;
+            history.replaceState(null, "", "/portal/?view=manage&page=" + encodeURIComponent(at));
+            showAdminPage(at);
+          }
           if (!d || !d.body || d.documentElement.classList.contains("os-frame")) return;
           d.documentElement.classList.add("os-frame");
           const style = d.createElement("style");
           // (the whole page is the box: its header, with the Admin pages' own tabs, stays on every page
           // when there's room, and is on the first page only on a short screen)
-          style.textContent = "html.os-frame, html.os-frame body { height: 100%; overflow: hidden; } html.os-frame body { margin: 0; box-sizing: border-box; } html.os-frame body > main { padding-bottom: 12px; }";
-          const head = d.querySelector("body > header");
+          // (inside Nova Agent, /shared/inside.js has already put the header and the tabs in one .embed-head:
+          // that's what's pinned; looking only for "body > header" pinned nothing, so the tabs were on the
+          // first page only, drawn smaller with it, 25 Oct 2026)
+          const head = d.querySelector("body > .embed-head") || d.querySelector("body > header");
           if (head) head.setAttribute("data-os-pin", "");
+          // (the room round the page's main part is kept by the body and the pinned header, which the pages
+          // are measured against, not by the main part, which they aren't: with it there, a page that was
+          // measured as fitting didn't, so its last part went on to the next page and left a third of the
+          // first one empty, 25 Oct 2026: Referrals, Links, Test booking)
+          // (in a short frame, 1440x900's, the header with that room is over a fifth of it, so it's on the first
+          // page only, /shared/onescreen.js: kept on every page there, the Admin pages took a fifth more pages,
+          // their first pages a third full; in a taller one it stays on every page)
+          const main = d.querySelector("body > main");
+          const top = main ? getComputedStyle(main).paddingTop : "0px";
+          style.textContent = "html.os-frame, html.os-frame body { height: 100%; overflow: hidden; } html.os-frame body { margin: 0; box-sizing: border-box; padding-bottom: 12px; }" +
+            ` html.os-frame body > main { padding-top: 0; padding-bottom: 0; } html.os-frame body > [data-os-pin] { margin-bottom: ${top}; }` +
+            (head ? "" : ` html.os-frame body { padding-top: ${top}; }`);
           const css = Object.assign(d.createElement("link"), { rel: "stylesheet", href: "/shared/onescreen.css" });
           const js = Object.assign(d.createElement("script"), { src: "/shared/onescreen.js" });
           js.addEventListener("load", () => frame.contentWindow.NovaOneScreen && frame.contentWindow.NovaOneScreen.adopt(d.body));
@@ -718,8 +742,12 @@
     $("open-index-label").textContent = self ? "Open my Index" : `Open ${possessive(first2)} Index`;
 
     // A group with nothing to show (Connections for someone else, Admin for staff) steps aside
+    // (one put out of sight for good, data-away, stays so: Index, since 23 Oct 2026, had come back here on
+    // every profile, a page of its own with one button across the whole section, 25 Oct 2026)
     for (const group of document.querySelectorAll("#view-profile .panels > .group")) {
-      group.hidden = ![...group.querySelectorAll(".group-cards > .card")].some((c) => !c.hidden);
+      const cards = [...group.querySelectorAll(".group-cards > .card")].filter((c) => !c.hidden).length;
+      group.hidden = group.hasAttribute("data-away") || !cards;
+      group.dataset.cards = String(cards); // (one card alone isn't stretched across the section: portal.css)
     }
   }
 
@@ -1193,6 +1221,13 @@
     badge.height = 96;
     badge.loading = "lazy";
     badge.decoding = "async";
+    // (a planet that didn't come, the connection blinking: asked for once more, then left out, the card's glow
+    // in its place, never a broken picture's empty frame, 25 Oct 2026: The crew opened with two)
+    badge.addEventListener("error", () => {
+      if (badge.dataset.again) return badge.style.setProperty("visibility", "hidden");
+      badge.dataset.again = "1";
+      setTimeout(() => (badge.src = planetUrl(p, 96, false) + "&again=1"), 1500);
+    });
     const pills = [el("span", "pill " + (p.role === "admin" ? "admin" : "staff"), p.role === "admin" ? "Admin" : "Staff"), statusPill(p.status)];
     if (self) pills.unshift(el("span", "pill you", "You"));
     a.append(

@@ -68,3 +68,15 @@
 .gg-find { margin: 4px 0 10px; }
 .gg-find-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .gg-find-pick { min-height: 40px; max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+
+/* What's kept in step, side by side on a computer or a tablet on its side (25 Oct 2026, the owner: "there
+   shouldn't be any blank sections or oddly shaped uis"): the parts stood in one 680px column down the middle
+   of a wide section, a page or two of them at a time, eight pages in all with most of each page empty. Now
+   as many columns as fit (about 300px each), the parts in a row the same height, Sync now along their foot. */
+html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-list { width: 100%; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-part { display: flex; flex-direction: column; align-items: center; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-part > .chip { margin-top: auto; }
+/* (its name sits over the parts on every page they're on, not a part of its own: as a part it could only
+   start a page, so the first page held the account card and a band of empty section under it) */
+html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-parts { padding-top: 40px; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .gg-parts > .gg-h { position: absolute; top: 14px; left: 0; right: 0; text-align: center; }

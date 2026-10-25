@@ -173,6 +173,9 @@
     const k = K();
     const node = k.el("article", "card ts-card ts-" + item.confidence);
     node.dataset.key = "ts-" + item.key;
+    // (its title is what the thing is called, content rather than a button's words: it wraps in a narrow
+    // column instead of being cut, strict.ts's data-content-card)
+    node.dataset.contentCard = "";
     const titleId = "ts-t-" + item.key.replace(/[^\w-]/g, "_");
     node.setAttribute("aria-labelledby", titleId);
     const together = !apart.has(item.key);
@@ -327,6 +330,10 @@
     }
     live.replaceChildren(...nodes);
     live.hidden = false;
+    // (pressed on a later page, this line is on the first: said where you are too, 25 Oct 2026)
+    setTimeout(() => {
+      if (live.closest("[data-os-off]")) k.toast(undo ? text + " Put back is at the top of Test stuff." : text);
+    }, 150);
   }
 
   async function remove(list) {

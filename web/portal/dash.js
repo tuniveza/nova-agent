@@ -310,6 +310,7 @@
     const g = groups.find((x) => P.slug(x.name) === want) || groups[0];
     if (!g) return;
     $("view-group").style.setProperty("--g", P.hue(g.name));
+    $("view-group").dataset.g = P.slug(g.name); // (which group's Overview: dash.css)
     $("dash-title").replaceChildren(P.icon(g.name), el("span", "", g.name));
     cache.clear();
     const items = g.items.filter((i) => i.at);

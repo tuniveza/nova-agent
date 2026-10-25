@@ -83,3 +83,22 @@
 @media (prefers-reduced-motion: reduce) {
   .ts-card, .ts-live { transition: none; animation: none; }
 }
+
+/* Side by side on a computer or a tablet on its side (25 Oct 2026, the owner: "there shouldn't be any blank
+   sections or oddly shaped uis"): one card across the whole section left two cards a page, 16 pages for 29
+   things, each card a wide band with its words in a thin line down the middle. Now as many columns as fit
+   (about 400px each), every card in a row the same height, its buttons along its foot. */
+html:is([data-form="desktop"], [data-form="tablet-side"]) .ts .list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 10px; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .ts .ts-card { display: flex; flex-direction: column; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .ts .ts-card > .ts-actions { margin-top: auto; }
+/* (each list's name, "Likely tests · 20", sits over its cards on every page they're on, rather than being a
+   part of its own: as a part it could only start a page, so the first page held the filters and nothing
+   else, a band of empty section under them) */
+html:is([data-form="desktop"], [data-form="tablet-side"]) .ts .group { position: relative; padding-top: 26px; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .ts .group > .group-head { position: absolute; top: 0; left: 0; right: 0; margin: 0; }
+/* (a little tighter on a computer, so more fit a page: the touch sizes stay on a tablet) */
+html[data-form="desktop"] .ts .ts-card { padding: 12px 14px; gap: 6px; }
+html[data-form="desktop"] .ts .btn.small { min-height: 36px; }
+html[data-form="desktop"] .ts-summary { margin: 2px 0 8px; }
+html[data-form="desktop"] .ts-filters { margin-bottom: 8px; }
+html[data-form="desktop"] .ts-all { margin-bottom: 10px; }
