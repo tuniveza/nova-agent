@@ -139,13 +139,16 @@ export function parseQuick(input, today) {
     });
 
   const title = s.replace(/\s+/g, " ").replace(/\s(on|at|from|for)\s*$/i, "").trim();
+  // (what the words themselves said, for the new card window filling its boxes as you type: a day, a time, a
+  // length or "all day" named, 25 Oct 2026. Nothing below changes because of these.)
+  const said = { date: Boolean(date), time: start !== null, minutes: end !== null && start !== null ? end - start : length, allDay };
   if (!date && (start !== null || repeat || length)) date = today;
-  if (!date) return { title, found: false };
+  if (!date) return { title, found: false, location, said };
   if (start === null && !allDay) allDay = !length;
   const begin = allDay ? `${date}T00:00` : `${date}T${hhmm(start ?? 540)}`;
   const finish = allDay ? `${date}T23:59` : end !== null ? addMinutes(`${date}T00:00`, end) : addMinutes(begin, length || 60);
   const words = [allDay ? "all day" : `${hhmm(start ?? 540)}–${finish.slice(11)}`, ...found.filter((f) => f !== "all day"), location && `@ ${location}`].filter(Boolean);
-  return { found: true, title, start: begin, end: finish, allDay, repeat, location, date, words };
+  return { found: true, title, start: begin, end: finish, allDay, repeat, location, date, words, said };
 }
 
 // A date without a year: this year, or next year if it's already gone
