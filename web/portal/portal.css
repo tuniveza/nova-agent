@@ -337,6 +337,9 @@
 .pv .panels > .group + .group { margin-top: 0; }
 .pv .group-cards { display: grid; gap: 12px; align-items: start; }
 @media (min-width: 760px) { .pv .group-cards { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } }
+/* (a group with one card: the card at a card's size, in the middle, not a band across the section, 25 Oct
+   2026: a crew member's account card was 1340px wide around a role switch and one button) */
+@media (min-width: 760px) { .pv .group[data-cards="1"] > .group-cards { grid-template-columns: minmax(0, 560px); justify-content: center; } }
 .pv .action-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .pv .action-row .btn { flex: 1 1 160px; }
 .pv .signout-card .btn, .pv .memory-card .btn { justify-self: center; }

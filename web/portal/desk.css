@@ -45,3 +45,16 @@ html:not([data-align="left"]) .dk-row > :is(.dk-value, .dk-note) { text-align: l
   html .dk-row > * { text-align: center !important; }
   .dk-note, .dk-meter .dk-bar { grid-column: 1; }
 }
+
+/* At a sensible size on a computer or a tablet on its side (25 Oct 2026, the owner: "there shouldn't be any
+   blank sections or oddly shaped uis"):
+   - Open Computer is as wide as its words, in the middle, its arrow beside its name (it stood alone on a line
+     of its own, in a band across the whole section);
+   - each card is a full-width dashboard: its label · value rows side by side in as many columns as fit
+     (about 380px each), its title, sub-headings, problems and buttons across the top or the foot. One card
+     of rows down the middle of the screen had taken six pages, with a lone card stretched across each. */
+.dk-open { width: fit-content; max-width: 100%; margin-inline: auto; box-sizing: border-box; padding-inline: 28px; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .dk-grid { grid-template-columns: minmax(0, 1fr); }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .dk-card,
+html:is([data-form="desktop"], [data-form="tablet-side"]) .dk-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); column-gap: 24px; align-items: start; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .dk-card > :not(.dk-row) { grid-column: 1 / -1; }

@@ -5781,9 +5781,18 @@
     const size = Math.max(box.width, box.height) * 2;
     // Centred on the finger
     Object.assign(ring.style, { width: size + "px", height: size + "px", left: e.clientX - box.left - size / 2 + "px", top: e.clientY - box.top - size / 2 + "px" });
+    // (in a layer laid over the button, its shape, never inside it: a ring twice the button's size inside it
+    // read to the one-line rule (/shared/rules.js) as words spilling out, so a chip pressed just as a page
+    // redrew was shrunk to 72% for good, 25 Oct 2026: Admin's Studio and Links chips left smaller than the rest)
+    const clip = el("span", "ripple-clip");
+    clip.setAttribute("aria-hidden", "true");
+    clip.dataset.rules = "off";
+    clip.dataset.osOwn = "";
+    Object.assign(clip.style, { left: box.left + "px", top: box.top + "px", width: box.width + "px", height: box.height + "px", borderRadius: getComputedStyle(button).borderRadius });
+    clip.appendChild(ring);
     // Add it, and remove it when it's faded
-    button.appendChild(ring);
-    setTimeout(() => ring.remove(), 650);
+    document.body.appendChild(clip);
+    setTimeout(() => clip.remove(), 650);
   });
 
   // ===== Start =====

@@ -86,7 +86,9 @@
     }
     if (data.connected) {
       const row = el("div", "gg-row");
-      row.append(button(showSteps ? "Hide the setup steps" : "Show the setup steps", "chip", () => { showSteps = !showSteps; draw(); }));
+      // (shown: the steps come into sight, their title focused, so a page turns to them if they're on the next
+      // one; before, the press only changed this button's words, 25 Oct 2026)
+      row.append(button(showSteps ? "Hide the setup steps" : "Show the setup steps", "chip", () => { showSteps = !showSteps; draw(); if (showSteps) focusStep(); }));
       const off = button(disarm ? "Press again to disconnect" : "Disconnect", disarm ? "btn danger" : "btn ghost", disconnect);
       off.setAttribute("aria-live", "polite");
       row.append(off);
@@ -328,6 +330,12 @@
     } catch (err) {
       if (w) w.close();
       if (err.message !== "signed out") K().toast(err.message);
+      return;
+    }
+    // (no address back: say so, rather than sending the window to a page that isn't there)
+    if (!link || !link.url) {
+      if (w) w.close();
+      K().toast(link && link.message ? link.message : "Google's page didn't open: Nova Bot gave no address. Press Check again, then try once more.");
       return;
     }
     if (standalone) {

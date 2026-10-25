@@ -145,7 +145,8 @@
       { name: "The crew", glyph: "☺", admin: true, at: "crew", run: go("/portal/?view=crew") },
       { name: "Invite someone", glyph: "+", admin: true, run: () => { go("/portal/?view=crew")(); when("#invite-toggle", (el) => el.click()); } },
       { name: "Google", glyph: "G", admin: true, at: "google", run: tab("google") },
-      { name: "Links", glyph: "⛓", admin: true, run: go("/portal/?view=manage&page=links") },
+      // (the Admin page's own address, /admin/links: "links" alone isn't one, so it opened Studio, 25 Oct 2026)
+      { name: "Links", glyph: "⛓", admin: true, run: go("/portal/?view=manage&page=%2Fadmin%2Flinks") },
       { name: "Test stuff", glyph: "⚑", admin: true, badge: "tests-badge", at: "tests", run: tab("tests") },
       { name: "Computer", glyph: "▣", admin: true, at: "desk", run: tab("desk") },
     ] },
@@ -238,6 +239,10 @@
     const v = p.get("view") || "";
     if (v === "manage" || v === "admin") return "admin";
     if (v === "crew") return "crew";
+    // (a crew member's page, opened from The crew, is still the crew: Admin stays lit with its strip, not You
+    // with your own Re-roll planet, Edit your name and Sign out beside someone else's planet, 25 Oct 2026)
+    const me = window.PortalPage && window.PortalPage.me && window.PortalPage.me();
+    if (p.get("id") && me && p.get("id") !== me.id) return "crew";
     if (v === "me" || v === "you" || p.get("id")) return "me";
     return (window.PortalApp && window.PortalApp.view) || v || "today";
   }
@@ -654,7 +659,8 @@
         const g = groupsNow().find((x) => slug(x.name) === dashOf());
         group = g ? g.name : "";
         name = "Overview";
-      } else if (PANE_OF[key]) [group, name] = PANE_OF[key];
+      } else if (key === "profile" && here() === "crew") [group, name] = PANE_OF.crew; // (a crew member's page)
+      else if (PANE_OF[key]) [group, name] = PANE_OF[key];
       else {
         const g = GROUPS.find((x) => x.items.some((i) => i.at === key));
         const it = g && g.items.find((i) => i.at === key);
