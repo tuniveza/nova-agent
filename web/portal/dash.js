@@ -332,9 +332,60 @@
     $("dash-title").replaceChildren(P.icon(g.name), el("span", "", g.name));
     cache.clear();
     const items = g.items.filter((i) => i.at);
+    const tiles = items.map((it) => tile({ ...it, name: it.at === "calendar" ? "Bookings" : it.name }, P));
+    // (a Nova Tab with one section or none (Plans & Nova, You, Look & sound): its other items too, a tile
+    // for each part, so its Overview is never one lone tile or a line of words in an empty pane; the user,
+    // 25 Oct 2026: "there shouldn't be any blank sections")
+    if (items.length < 2) tiles.push(...partTiles(g, P));
+    // (and each of them whole on a page, drawn a little smaller if it must be: in a short window a tile's name
+    // was on one page and its lines on the next)
+    if (items.length < 2) for (const t of tiles) t.setAttribute("data-os-keep", "");
     // (how many tiles, so the grid is no wider than they need and sits in the middle: dash.css)
-    grid.style.setProperty("--n", String(Math.max(1, items.length)));
-    grid.replaceChildren(...(items.length ? items.map((it) => tile({ ...it, name: it.at === "calendar" ? "Bookings" : it.name }, P)) : [el("p", "dash-empty", "Everything in " + g.name + " is along the top.")]));
+    grid.style.setProperty("--n", String(Math.max(1, tiles.length)));
+    grid.replaceChildren(...(tiles.length ? tiles : [el("p", "dash-empty", "Everything in " + g.name + " is along the top.")]));
+  }
+  // A Nova Tab's other items (pillars.js: each one's part, and how it's set now), a tile per part: a line
+  // for each that does it, the same as its button along the top
+  function partTiles(g, P) {
+    const parts = new Map();
+    for (const it of g.items.filter((i) => !i.at)) {
+      const name = it.part || "Shortcuts";
+      if (!parts.has(name)) parts.set(name, []);
+      parts.get(name).push(it);
+    }
+    const nowOf = (it) => {
+      try {
+        return (it.now && it.now()) || "";
+      } catch (err) {
+        return "";
+      }
+    };
+    return [...parts].map(([name, list]) => {
+      const box = el("article", "dash-tile dash-parts");
+      box.dataset.key = "dash-part-" + P.slug(name);
+      const head = el("div", "dash-tile-head");
+      head.append(P.icon(list[0].name), el("h3", "dash-name", name));
+      const ul = el("ul", "dash-rows");
+      for (const it of list) {
+        const li = el("li");
+        const side = el("span", "dash-side", nowOf(it));
+        li.append(el("span", "dash-main", it.name), side);
+        li.tabIndex = 0;
+        li.title = it.name;
+        // (after it's done, the line says how it's set now: Music on, Hands-free off…)
+        const open = () => {
+          run(it);
+          setTimeout(() => (side.textContent = nowOf(it)), 900);
+        };
+        li.addEventListener("click", open);
+        li.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+        ul.append(li);
+      }
+      const body = el("div", "dash-body");
+      body.append(ul);
+      box.append(head, body);
+      return box;
+    });
   }
 
   // Inbox's dashboard (app.js showInbox): today's bookings along the top of Enquiries, each opening

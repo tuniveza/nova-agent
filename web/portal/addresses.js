@@ -9,9 +9,13 @@
     if (!box || !window.NovaAddresses) return;
     box.innerHTML = window.NovaAddresses.list(!!admin)
       .map(
+        // (each group's title and note one heading for the pages (.cp-subhead, onescreen.js): never its title
+        // at the foot of a page and its addresses on the next; 25 Oct 2026)
         (g) => `<section class="addr-group">
+          <div class="cp-subhead addr-group-head">
           <h4 class="addr-group-title">${esc(g.title)}${g.admin ? ' <span class="pill admin">Admins</span>' : ""}</h4>
           ${g.note ? `<p class="hint">${esc(g.note)}</p>` : ""}
+          </div>
           <ul class="addr-list">${g.items
             .map((i) => {
               const text = i.code || i.url;

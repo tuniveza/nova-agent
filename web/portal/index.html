@@ -809,14 +809,18 @@
     <section id="view-quests" class="view" hidden>
       <div class="view-head">
         <h2>Quests</h2>
-        <div class="chips" role="tablist">
-          <button class="chip active" data-quests="today" type="button">Today</button>
-          <button class="chip" data-quests="all" type="button">All quests</button>
-        </div>
-        <!-- Admins: just yours, or everyone's -->
-        <div class="chips" id="quests-who" role="group" aria-label="Whose quests" hidden>
-          <button class="chip active" data-quests-who="mine" type="button">Mine</button>
-          <button class="chip" data-quests-who="everyone" type="button">Everyone</button>
+        <!-- (the two choices side by side, one row: stacked, the title took so much of the page that the first
+             quest went to page 2 and page 1 was empty; 25 Oct 2026) -->
+        <div class="quests-filters">
+          <div class="chips" role="tablist">
+            <button class="chip active" data-quests="today" type="button">Today</button>
+            <button class="chip" data-quests="all" type="button">All quests</button>
+          </div>
+          <!-- Admins: just yours, or everyone's -->
+          <div class="chips" id="quests-who" role="group" aria-label="Whose quests" hidden>
+            <button class="chip active" data-quests-who="mine" type="button">Mine</button>
+            <button class="chip" data-quests-who="everyone" type="button">Everyone</button>
+          </div>
         </div>
       </div>
       <p class="hint" id="quests-sync">Synced from Nova Agent on the studio computer.</p>
@@ -875,7 +879,9 @@
 
     <!-- You: your planet and profile (portal.js) -->
     <!-- A profile: mine, or (from the crew) someone else's -->
-    <section id="view-profile" class="view pv" aria-labelledby="p-name" hidden>
+    <!-- (data-os-nofill: its pages aren't topped up with the next row drawn smaller; a list of addresses drawn
+         smaller grew more columns than fit, and What Nova runs on came out too small to read; 25 Oct 2026) -->
+    <section id="view-profile" class="view pv" aria-labelledby="p-name" data-os-nofill hidden>
       <button id="back-to-crew" class="btn small ghost back" type="button" data-sfx="close" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
         The crew
@@ -1037,12 +1043,17 @@
         </section>
 
         <!-- How it works: what each part of Nova runs on (the studio's own mail server for email…), and whether it's set up -->
+        <!-- (its title, the card's name and what it is, together over the card, one heading for the pages
+             (.cp-subhead, onescreen.js): split, they were left at the foot of a page with the list on the next;
+             25 Oct 2026, the user: no "oddly shaped uis") -->
         <section class="group" aria-labelledby="group-tech-head">
-          <h2 class="group-head" id="group-tech-head">How it works</h2>
+          <div class="cp-subhead pv-subhead">
+            <h2 class="group-head" id="group-tech-head">How it works</h2>
+            <h3 id="tech-title" class="card-title">What Nova runs on</h3>
+            <p class="hint">Each part of Nova and the service behind it. A green dot means it's set up.</p>
+          </div>
           <div class="group-cards">
             <section id="tech-card" class="card tech-card" aria-labelledby="tech-title" hidden>
-              <h3 id="tech-title" class="card-title">What Nova runs on</h3>
-              <p class="hint">Each part of Nova and the service behind it. A green dot means it's set up.</p>
               <ul id="tech-list" class="tech-list"><li class="hint">Checking…</li></ul>
               <div class="action-row">
                 <button class="btn ghost" type="button" id="tech-test-email" hidden>Send me a test email</button>
@@ -1055,11 +1066,13 @@
 
         <!-- Addresses: every web address in the suite, to open or copy (addresses.js) -->
         <section class="group" aria-labelledby="group-addresses-head">
-          <h2 class="group-head" id="group-addresses-head">Addresses</h2>
+          <div class="cp-subhead pv-subhead">
+            <h2 class="group-head" id="group-addresses-head">Addresses</h2>
+            <h3 id="addresses-title" class="card-title">All addresses</h3>
+            <p class="hint">Every part of Nova, online at nova.novacane.co.uk. Tap Copy to copy an address, or Open to go there.</p>
+          </div>
           <div class="group-cards">
             <section id="addresses-card" class="card addresses-card" aria-labelledby="addresses-title" hidden>
-              <h3 id="addresses-title" class="card-title">All addresses</h3>
-              <p class="hint">Every part of Nova, online at nova.novacane.co.uk. Tap Copy to copy an address, or Open to go there.</p>
               <div id="addresses-list" class="addresses-list"></div>
             </section>
           </div>
@@ -1385,7 +1398,7 @@
 <!-- The Nova Agent: every app in the family (opened by tapping the brand; suite.js) -->
 <div id="suite-sheet" class="sheet suite-sheet" hidden>
   <div class="sheet-card suite-card" role="dialog" aria-modal="true" aria-labelledby="suite-title">
-    <div class="suite-head">
+    <div class="suite-head" data-os-pin>
       <div>
         <span class="kicker">Novacane Studios</span>
         <h3 id="suite-title">Nova Agent</h3>
@@ -1473,8 +1486,9 @@
 
 <!-- Options: how Portal looks and behaves on this device (options.js; saved on this device) -->
 <div id="options-sheet" class="sheet options-sheet" hidden>
+  <!-- (its title and Close stay on every page of it, data-os-pin: page 1 was its title alone; 25 Oct 2026) -->
   <div class="sheet-card options-card" role="dialog" aria-modal="true" aria-labelledby="options-title">
-    <div class="suite-head">
+    <div class="suite-head" data-os-pin>
       <div>
         <span class="kicker">Portal</span>
         <h3 id="options-title">Options</h3>
@@ -1484,7 +1498,8 @@
       </button>
     </div>
 
-    <section class="option-group">
+    <!-- (the themes and their title together, data-os-keep: never "Theme" alone at the foot of a page) -->
+    <section class="option-group" data-os-keep>
       <p class="kicker">Theme</p>
       <div class="theme-list" data-theme-list></div>
     </section>

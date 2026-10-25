@@ -668,6 +668,22 @@ html.embed .pv .admin-frame { min-height: calc(100dvh - 120px); }
 @media (max-width: 520px) {
   .pv .addr { grid-template-columns: minmax(0, 1fr); }
 }
+/* Your profile on a wide screen (25 Oct 2026, the user: no "oddly shaped uis"): the long lists side by side
+   instead of each line stretched across the whole width (All addresses took nine pages of two or three),
+   and a card on its own no wider than it needs (Google's button was the width of the screen) */
+.pv .addr-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.pv .tech-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
+.pv :is(#google-card, #memory-card, #self-admin) { width: 100%; max-width: 640px; justify-self: center; }
+/* How it works and Addresses: the group's title, the card's name and what it is, one block over the card (index.html) */
+.pv .pv-subhead { display: grid; gap: 6px; margin: 0; justify-items: center; text-align: center; }
+.pv .pv-subhead > .group-head { width: 100%; margin: 0; }
+.pv .pv-subhead > .hint { margin: 0; max-width: 72ch; }
+html[data-align="left"] .pv .pv-subhead { justify-items: start; text-align: left; }
+html[data-align="right"] .pv .pv-subhead { justify-items: end; text-align: right; }
+.pv .addr-group-head { display: grid; gap: 4px; margin: 0; justify-items: center; text-align: center; }
+.pv .addr-group-head > * { margin: 0; }
+html[data-align="left"] .pv .addr-group-head { justify-items: start; text-align: left; }
+html[data-align="right"] .pv .addr-group-head { justify-items: end; text-align: right; }
 
 /* ===================== The phone's bar: the same family ===================== */
 @media (max-width: 760px) {

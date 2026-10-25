@@ -4191,8 +4191,12 @@
 
   // Get the plan and draw the open part
   async function loadQuests() {
+    // (an answer for the other choice, asked just before Mine / Everyone changed, is dropped: it came back
+    // last and put Mine back over Everyone's quests; 25 Oct 2026)
+    const who = questWho;
     try {
-      const data = await api(questWho === "everyone" ? "quests?who=everyone" : "quests");
+      const data = await api(who === "everyone" ? "quests?who=everyone" : "quests");
+      if (who !== questWho) return;
       lastQuests = data;
       drawWho();
       drawQuests();
@@ -4280,6 +4284,30 @@
     return card;
   }
 
+  // Nothing to show: the two ways to get a quest, one tap each, where the words say so (25 Oct 2026, the user:
+  // "make sure every button inside nova portal works"; "add a quest" had nothing to press). Adding one is in
+  // the Quests panel (inside Nova Agent its viewer; Portal on its own opens Nova Agent with it showing).
+  function questsEmpty(body, text) {
+    const row = el("div", "actions quests-empty-actions");
+    const ask = el("button", "btn small", "Ask Nova Agent");
+    ask.type = "button";
+    ask.addEventListener("click", () => $("nav-agent").click());
+    const add = el("button", "btn small ghost", "Add a quest");
+    add.type = "button";
+    add.addEventListener("click", () => {
+      try {
+        if (window.parent !== window && window.parent.NovaAgent && window.parent.NovaAgent.open && window.parent.NovaAgent.open("/quests/")) return;
+      } catch (err) {}
+      location.href = "/agent/?open=" + encodeURIComponent("/quests/");
+    });
+    row.append(ask, add);
+    const box = el("div", "empty quests-empty");
+    // (the words and their buttons never on two pages: in a short window the buttons went to a page of their own)
+    box.setAttribute("data-os-keep", "");
+    box.append(el("p", "", text), row);
+    reconcile(body, [box]);
+  }
+
   // Draw the open part of the Quests tab
   function drawQuests() {
     const body = $("quests-body");
@@ -4332,13 +4360,13 @@
       // Quests with no time yet (from Notes, or waiting for room in the plan)
       const unplanned = open.filter((q) => !q.start && (!current || q.id !== current.id));
       if (unplanned.length) cards.push(el("h3", "quest-day", "Not planned yet"), ...unplanned.map((q) => questCard(q)));
-      if (!cards.length) return emptyState(body, "Nothing planned. Ask Nova Agent, or add a quest.");
+      if (!cards.length) return questsEmpty(body, "Nothing planned. Ask Nova Agent, or add a quest.");
     }
 
     if (questTab === "all") {
       // Every quest, wherever it was made, grouped by how it's going (Waiting first, Done last)
       const live = quests.filter((q) => q.status !== "skipped");
-      if (!live.length) return emptyState(body, "No quests yet.");
+      if (!live.length) return questsEmpty(body, "No quests yet.");
       const modeOf = (q) => q.mode || (q.status === "done" ? "done" : q.status === "doing" ? "working" : "waiting");
       const order = window.NovaQuestModes ? NovaQuestModes.list.map((m) => m.id) : ["waiting", "soon", "working", "nearly", "longer", "questions", "done"];
       for (const mode of order) {
