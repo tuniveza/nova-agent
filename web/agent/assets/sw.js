@@ -13,7 +13,12 @@ self.addEventListener("install", () => self.skipWaiting());
 // visit's first panel opens fast)
 self.addEventListener("activate", (event) => {
   event.waitUntil(Promise.all([self.clients.claim(), self.registration.navigationPreload ? self.registration.navigationPreload.enable().catch(() => {}) : null]));
-  if (!slowLink()) event.waitUntil(checkList().then(() => new Promise((r) => setTimeout(r, 5000))).then(warm).catch(() => {}));
+  // (the warming is NOT part of starting up: a worker still starting up holds back every page it looks after
+  // until it's done, and fetching every panel's files took long enough that a page opening meanwhile, Portal's
+  // Admin pages in their frame, waited for good: a black box after each new version, 25 Oct 2026, the user: "DO
+  // YOU NOT SEE HOW THERE IS BLANK AREA'S HERE". It runs on its own; if the worker is stopped part-way, Nova
+  // Agent's page starts it again, below)
+  if (!slowLink()) checkList().then(() => new Promise((r) => setTimeout(r, 5000))).then(warm).catch(() => {});
 });
 
 // ---- Nova's files on the device ----
