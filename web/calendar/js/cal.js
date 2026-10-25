@@ -291,25 +291,56 @@ function pillHtml(e) {
   const what = whatOf(e);
   return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}">${phone() ? `<i class="pill-sym" aria-hidden="true">${symbolIcon(e)}</i>` : ""}${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
 }
-// A symbol for what a card is about (shown when its day is too small for words)
+// A symbol for what a card is about: its icon pane, its colours (data-kind) and, in the smallest days, the
+// card itself. The first match wins, so the more particular come first; whole words where a part of one
+// would match the wrong thing ("ep" in "deep", "eat" in "create", "ring" in "during"). (25 Oct 2026, the
+// user: "a pane with icons that intelligently match up with what each event, quest and whatever is")
 const SYMBOLS = [
-  [/birthday|bday/i, "cake"], [/\bdate\b|love|anniversary|valentine/i, "heart"],
-  [/record|recording|vocal|\bsing(s|ing|er)?\b|\bmic\b|podcast|voice|studio/i, "mic"], [/mix|master|beat|song|track|music|ep\b|album|release|gig|concert|rehears/i, "note"],
-  [/lesson|class|course|study|learn|tutor|school|exam/i, "cap"], [/listen|playlist|headphone|audio/i, "headphones"],
-  [/meet|meeting|call with|team|crew|band|session with|catch.?up/i, "people"], [/gym|workout|run|walk|yoga|train|exercise|steps/i, "dumbbell"],
-  [/lunch|dinner|breakfast|eat|food|cook|meal/i, "plate"], [/flight|fly|travel|trip|holiday|airport/i, "plane"],
-  [/phone|call\b|ring/i, "phone"], [/write|lyrics|note|journal|draft|edit\b|script/i, "pen"], [/video|film|reel|shoot|camera|youtube|tiktok/i, "film"],
-  [/read|book/i, "book"], [/email|mail|reply|send/i, "mail"],
+  [/birthday|\bbday\b/i, "cake"], [/\bdate\b|\blove\b|anniversary|valentine|girlfriend|boyfriend/i, "heart"],
+  [/doctor|dentist|\bgp\b|hospital|clinic|therap|physio|pharmac|vaccin|check.?up|optician|\bmeds?\b/i, "health"],
+  [/\bhair|barber|\bnails?\b|salon|\bwax/i, "scissors"], [/^(text|message|whatsapp|dm|ring|call)\b/i, "phone"],
+  [/\bfix|repair|\bbugs?\b|debug|maintenance|mechanic|plumber|electrician|\bui issue/i, "wrench"],
+  [/record|vocal|\bsing(s|ing|er)?\b|\bmic\b|podcast|voice.?over|studio|\bsession\b(?! with)/i, "mic"],
+  [/\bmix|\bmaster(ing)?\b|\bbeats?\b|\bsong|\btrack|music|\bep\b|album|release|\bgig\b|concert|rehears|\bdj\b|produc|guitar|piano|\bbass\b|drums?\b|synth|instrument/i, "note"],
+  [/lesson|\bclass|course|study|learn|tutor|school|\bexam|\buni\b|lecture/i, "cap"], [/listen|playlist|headphone|\baudio\b/i, "headphones"],
+  [/\bcod(e|ing)\b|deploy|website|\bapps?\b|develop|programm|\bserver|\bdev\b|computer|deep work|\bfocus/i, "laptop"],
+  [/invoice|\bpay\b|payment|\bbills?\b|\bbank|\brent\b|\btax\b|budget|money|salary|refund|£/i, "coin"],
+  [/\bshop|grocer|\bbuy\b|\border\b|amazon|pick.?up|\bcollect/i, "cart"],
+  [/\bmeet|call with|\bteam\b|\bcrew\b|\bband\b|session with|catch.?up|interview|viewing|\bguests?\b/i, "people"],
+  [/\bphone|\bcalls?\b|\bring\b|facetime|\bzoom\b/i, "phone"],
+  [/\bgym\b|workout|\brun\b|running|\bwalk|yoga|\btrain(ing)?\b|exercise|\bsteps\b|\bswim|cycl|football/i, "dumbbell"],
+  [/coffee|brunch|\bcaf[eé]|\btea\b/i, "coffee"],
+  [/lunch|dinner|breakfast|\beat(ing)?\b|\bfood|\bcook|\bmeal|\bbread\b|\beggs?\b|restaurant|\bbake/i, "plate"],
+  [/\bdriv(e|ing)\b|\bcar\b|\btaxi\b|\buber\b|petrol|\bmot\b/i, "car"],
+  [/flight|\bfly\b|travel|\btrip\b|holiday|airport|hotel/i, "plane"],
+  [/clean|\btidy|laundry|\bwash|hoover|chores|\bhouse\b|\bhome\b|carpet|\bmoving\b/i, "home"],
+  [/\bgifts?\b|\bpresents?\b|christmas|\bparty\b|celebrat/i, "gift"],
+  [/\bsleep|\bnap\b|\brest\b|\bbed\b|\bwake/i, "bed"],
+  [/\bpaint|\bdraw|\bart\b|design|artwork|\bphotos?\b/i, "brush"],
+  [/\bwrit(e|ing)|lyrics|journal|draft|\bedit\b|script|\bnotes?\b/i, "pen"], [/video|\bfilm|\breels?\b|\bshoot|camera|youtube|tiktok|\bstream/i, "film"],
+  [/\bread(ing)?\b|\bbooks?\b|library/i, "book"], [/e-?mail|\bmail\b|\breply\b|\bsend\b|newsletter/i, "mail"],
+  [/^✓|\btodo\b|to-do|\btasks?\b|remember|\bdone\b|\breview\b|\bplan(ning)?\b/i, "tick"],
 ];
+// (what Nova Agent puts on the calendar, by its kind, when its words say nothing more)
+const AGENT_SYMBOL = { quest: "quest", block: "laptop", mile: "flag", music: "note" };
 function symbolOf(e) {
   if (e.type === "booking") return "booking";
-  const text = `${titleOf(e)} ${(e.item && (e.item.notes || e.item.location)) || ""}`;
-  for (const [re, ico] of SYMBOLS) if (re.test(text)) return ico;
-  return e.ro ? "quest" : "card";
+  const it = e.item || {};
+  // (its title first: a card's notes or place only decide when its title says nothing)
+  for (const text of [titleOf(e), `${it.notes || ""} ${it.location || ""}`]) for (const [re, ico] of SYMBOLS) if (re.test(text)) return ico;
+  return e.ro ? AGENT_SYMBOL[String(it.id || "").split("-")[0]] || "quest" : "card";
 }
 // What each symbol means, in words (its tooltip)
-const SYMBOL_WORDS = { booking: "Studio booking", quest: "Quest", card: "Note card", mic: "Recording", note: "Music", cap: "Lesson", headphones: "Listening", people: "Meeting", dumbbell: "Exercise", plate: "Food", plane: "Travel", phone: "Call", pen: "Writing", film: "Video", book: "Reading", mail: "Email", cake: "Birthday", heart: "Someone special" };
+const SYMBOL_WORDS = { booking: "Studio booking", quest: "Quest", card: "Note card", mic: "Recording", note: "Music", cap: "Lesson", headphones: "Listening", people: "Meeting", dumbbell: "Exercise", plate: "Food", plane: "Travel", phone: "Call", pen: "Writing", film: "Video", book: "Reading", mail: "Email", cake: "Birthday", heart: "Someone special", health: "Health", scissors: "Hair and beauty", wrench: "Fixing", laptop: "Computer work", coin: "Money", cart: "Shopping", coffee: "Coffee", car: "Driving", home: "Home", gift: "Celebration", bed: "Rest", brush: "Art and design", tick: "To do", flag: "Milestone" };
 const symbolIcon = (e) => { const s = symbolOf(e); return window.NT && window.NT.presets ? window.NT.presets.icon(s, "", SYMBOL_WORDS[s] || "") : ""; };
+// A card's icon pane: the icon for what it's about, in a strip of its own at the card's start (every view's
+// cards use this one, so a card shows the same icon everywhere). A day card shows its kind of day's icon.
+// (decorative: the card's own title and tooltip say what it is)
+function iconPane(e) {
+  const kind = e.type === "day" ? "" : symbolOf(e);
+  const svg = window.NT && window.NT.presets ? window.NT.presets.icon(e.type === "day" ? presets().get(e.item.preset).icon : kind) : "";
+  return `<i class="ico-pane"${kind ? ` data-pane="${kind}"` : ""} aria-hidden="true">${svg}</i>`;
+}
 // What a card is for, in a line: its notes (first line), else where it is
 function whatOf(e) {
   const it = e.item || {};

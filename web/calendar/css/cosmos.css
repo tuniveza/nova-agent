@@ -596,6 +596,21 @@ html.embed .bar { padding-top: 4px !important; }
   --kind-heart: 200, 30, 90;
   --kind-booking: 170, 110, 20;
   --kind-quest: 91, 33, 182;
+  /* (more kinds for the icon pane, 25 Oct 2026) */
+  --kind-health: 200, 30, 90;
+  --kind-scissors: 190, 18, 60;
+  --kind-wrench: 71, 85, 140;
+  --kind-laptop: 67, 56, 202;
+  --kind-coin: 170, 110, 20;
+  --kind-cart: 205, 70, 60;
+  --kind-coffee: 180, 85, 50;
+  --kind-car: 29, 78, 216;
+  --kind-home: 134, 25, 143;
+  --kind-gift: 190, 24, 93;
+  --kind-bed: 67, 56, 202;
+  --kind-brush: 134, 25, 143;
+  --kind-tick: 13, 128, 128;
+  --kind-flag: 91, 33, 182;
 }
 [data-kind="card"] { --k1: var(--kind-card); --k2: 109, 40, 217; }
 [data-kind="mic"] { --k1: var(--kind-mic); --k2: 205, 70, 60; }
@@ -615,6 +630,20 @@ html.embed .bar { padding-top: 4px !important; }
 [data-kind="heart"] { --k1: var(--kind-heart); --k2: 157, 23, 77; }
 [data-kind="booking"] { --k1: var(--kind-booking); --k2: 134, 25, 143; }
 [data-kind="quest"] { --k1: var(--kind-quest); --k2: 8, 120, 160; }
+[data-kind="health"] { --k1: var(--kind-health); --k2: 205, 70, 60; }
+[data-kind="scissors"] { --k1: var(--kind-scissors); --k2: 134, 25, 143; }
+[data-kind="wrench"] { --k1: var(--kind-wrench); --k2: 109, 40, 217; }
+[data-kind="laptop"] { --k1: var(--kind-laptop); --k2: 8, 120, 160; }
+[data-kind="coin"] { --k1: var(--kind-coin); --k2: 190, 24, 93; }
+[data-kind="cart"] { --k1: var(--kind-cart); --k2: 170, 110, 20; }
+[data-kind="coffee"] { --k1: var(--kind-coffee); --k2: 157, 23, 77; }
+[data-kind="car"] { --k1: var(--kind-car); --k2: 8, 120, 160; }
+[data-kind="home"] { --k1: var(--kind-home); --k2: 205, 70, 60; }
+[data-kind="gift"] { --k1: var(--kind-gift); --k2: 109, 40, 217; }
+[data-kind="bed"] { --k1: var(--kind-bed); --k2: 91, 33, 182; }
+[data-kind="brush"] { --k1: var(--kind-brush); --k2: 8, 120, 160; }
+[data-kind="tick"] { --k1: var(--kind-tick); --k2: 29, 78, 216; }
+[data-kind="flag"] { --k1: var(--kind-flag); --k2: 190, 24, 93; }
 /* (only the cards: the new card window's own Note card / Day card switch has a data-kind too) */
 :is(.di, .pill, .ev, .row-item)[data-kind] { --c: var(--k1); --cc: rgb(var(--k1));
   /* Each kind's colours blended with Nova Agent's own (its theme's accent and second accent), so every
@@ -961,3 +990,14 @@ html.embed .bar { padding-top: 4px !important; }
 .ev.ev-t-start:not(.dragging):is(:hover, :focus-visible) .ev-time > .ev-t1 { display: inline-block; }
 .ev.slim .ev-time > .ev-t0 { padding-left: 2px; }
 .ev.slim .ev-time > .ev-t1, .ev.slim.ev-t-start .ev-time > .ev-t0 { padding-right: 2px; }
+
+/* The icon pane (25 Oct 2026, the user: "add a pane with icons that intelligently match up with what each
+   event, quest and whatever is in a note card"): cal.js iconPane() puts it at the start of every card, the
+   icon for what the card is about (symbolOf) in a darker strip of its own. Clear, never tiny: the icon is at
+   least 12px (20 Oct 2026, the user didn't want "horribly tiny icons"). Each view sets where it sits and its
+   size with --pane-w (the strip's width) and --pane-ico (the icon's). */
+.ico-pane { display: inline-flex; align-items: center; justify-content: center; flex: none; align-self: stretch;
+  inline-size: var(--pane-w, 1.7em); min-inline-size: 16px; margin: 0; padding: 0; font-style: normal;
+  color: #fff; background: rgb(0 0 0 / 0.24); border-inline-end: 1px solid rgb(255 255 255 / 0.16); }
+.ico-pane > .ico { inline-size: var(--pane-ico, 1.1em); block-size: var(--pane-ico, 1.1em); min-inline-size: 12px; min-block-size: 12px;
+  stroke-width: 2.2; filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.35)); }
