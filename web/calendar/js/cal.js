@@ -1593,17 +1593,96 @@ view.addEventListener("keydown", (e) => {
   }
 });
 
-// ---- Drag to move and resize (week and day) ----
+// ---- Drag to move: every view where cards sit on days (25 Oct 2026, the user: "left click on a note card make
+// it draggable") ----
+// Week and Day: a card moves by 15 minutes (and, in the week, across days) and stretches by its grip, as before.
+// Month (and the week's all-day strip): a card is lifted off its day, a copy of it follows the pointer, the day
+// under it lights up, and dropped there it moves to that day at the same time and for as long (a repeating one
+// asks which, as everywhere). A mouse picks a card up once it moves a few pixels, so a plain click still opens
+// it; a finger holds still for a moment first, so scrolling and swiping still work, and a hold let go without
+// moving opens the right-click menu for that card, as a long press does anywhere else. Escape puts it back.
+// Bookings and Nova Agent's plan can't be moved here: trying gives a little shake and says why, once.
 let drag = null;
 let justDragged = false;
+const settle = () => {
+  justDragged = true;
+  setTimeout(() => (justDragged = false), 50);
+};
+// (the time of a card on the day it's shown: a repeating one's own time that day)
+function occurrenceOf(id, date) {
+  return entries(date, date).find((e) => e.item.id === id && e.date === date) || null;
+}
 function startDrag(el, x, y, resize) {
-  drag = { el, x, y, resize, start: el.dataset.start, end: el.dataset.end, dMin: 0, dDay: 0, moved: false, colW: el.parentElement.getBoundingClientRect().width };
+  swipe = null; // (a finger's drag isn't also a swipe to the next week)
+  drag = { mode: "time", el, x, y, resize, start: el.dataset.start, end: el.dataset.end, dMin: 0, dDay: 0, moved: false, colW: el.parentElement.getBoundingClientRect().width, col: el.closest(".col[data-date]") };
   el.classList.add("dragging");
+  document.documentElement.classList.add("cal-dragging");
   if (navigator.vibrate) navigator.vibrate(12);
   sfx("lift");
 }
+// The day under the pointer: a month's day, a week's or day's column, a day's name above it, the all-day strip
+function dayAt(x, y) {
+  const el = document.elementFromPoint(x, y);
+  if (!el || !view.contains(el)) return "";
+  const at = el.closest(".cell[data-date], .col[data-date], .tg-day[data-goto]");
+  if (at) return at.dataset.date || at.dataset.goto;
+  const strip = el.closest(".allday > div");
+  if (strip) return (view.querySelectorAll(".col[data-date]")[[...strip.parentElement.children].indexOf(strip)] || {}).dataset?.date || "";
+  return "";
+}
+function startDayDrag(el, x, y) {
+  const id = el.dataset.id;
+  const date = el.dataset.date;
+  const e = occurrenceOf(id, date);
+  if (!e) return;
+  swipe = null;
+  // (the day it's lifted from: a card that runs over several days is on each of them)
+  const from = dayAt(x, y) || date;
+  const r = el.getBoundingClientRect();
+  const ghost = document.createElement("div");
+  ghost.className = "drag-ghost";
+  ghost.dataset.color = e.color;
+  ghost.setAttribute("aria-hidden", "true");
+  ghost.innerHTML = `<span class="dg-t">${e.allDay ? "" : `<b>${fmtTime(e.start)}</b> `}${esc(titleOf(e))}</span><span class="dg-to"></span>`;
+  ghost.style.width = `${Math.max(140, Math.min(260, r.width))}px`;
+  document.body.append(ghost);
+  drag = { mode: "day", el, id, date, from, to: from, e, x, y, dx: Math.min(x - r.left, 40), dy: y - r.top, ghost, moved: false, lit: [] };
+  el.classList.add("lifted");
+  document.documentElement.classList.add("cal-dragging");
+  placeGhost(x, y);
+  lightDay(from);
+  if (navigator.vibrate) navigator.vibrate(12);
+  sfx("lift");
+}
+function placeGhost(x, y) {
+  const g = drag.ghost;
+  const left = Math.max(4, Math.min(innerWidth - g.offsetWidth - 4, x - drag.dx));
+  const top = Math.max(4, Math.min(innerHeight - g.offsetHeight - 4, y - drag.dy));
+  g.style.transform = `translate(${left}px, ${top}px)`;
+}
+// (the day it'll land on lights up, and the lifted card says which day: "→ Tue 28 Oct")
+function lightDay(d) {
+  for (const el of drag.lit) el.classList.remove("drop-target");
+  drag.lit = d ? [...view.querySelectorAll(`.cell[data-date="${d}"], .col[data-date="${d}"], .tg-day[data-goto="${d}"]`)] : [];
+  for (const el of drag.lit) el.classList.add("drop-target");
+  if (drag.ghost) {
+    drag.ghost.querySelector(".dg-to").textContent = !d ? "Drop on a day" : d === drag.from ? "Stays here" : `→ ${dayLabel(d)}`;
+    drag.ghost.classList.toggle("nowhere", !d);
+  }
+}
 function moveDrag(x, y) {
   if (!drag) return;
+  if (drag.mode === "day") {
+    if (!drag.moved && Math.hypot(x - drag.x, y - drag.y) < 3) return;
+    drag.moved = true;
+    placeGhost(x, y);
+    const to = dayAt(x, y);
+    if (to === drag.to) return;
+    drag.to = to;
+    lightDay(to);
+    if (to) sfx("nudge");
+    return;
+  }
   const hh = hourHeight();
   const dMin = Math.round(((y - drag.y) / hh) * 4) * 15;
   const dDay = drag.resize || prefs.view !== "week" ? 0 : Math.round((x - drag.x) / drag.colW);
@@ -1616,28 +1695,58 @@ function moveDrag(x, y) {
     const len = Math.max(15, minutesBetween(drag.start, drag.end) + dMin);
     drag.el.style.height = `${(len / 60) * hh - 2}px`;
   } else drag.el.style.transform = `translate(${dDay * drag.colW}px, ${(dMin / 60) * hh}px)`;
-  // (its time chip says where it's going as it moves)
+  // (its time chip says where it's going as it moves, and the day it's going to lights up)
   const [t0, t1] = drag.el.querySelectorAll(".ev-time > span");
   if (t0 && t1) {
     t0.textContent = fmtTime(drag.resize ? drag.start : addMinutes(drag.start, dMin + dDay * 1440));
     t1.textContent = `–${fmtTime(addMinutes(drag.end, dMin + (drag.resize ? 0 : dDay * 1440)))}`;
   }
+  if (prefs.view === "week" && drag.col) {
+    const cols = [...view.querySelectorAll(".col[data-date]")];
+    const to = cols[cols.indexOf(drag.col) + dDay];
+    for (const c of cols) c.classList.toggle("drop-target", c === to && dDay !== 0);
+  }
 }
-function endDrag() {
+// Put down (or put back: Escape, the window losing focus, the browser taking the touch over)
+function clearDrag(d) {
+  document.documentElement.classList.remove("cal-dragging");
+  for (const el of view.querySelectorAll(".drop-target")) el.classList.remove("drop-target");
+  if (d.mode === "day") {
+    d.ghost.remove();
+    d.el.classList.remove("lifted");
+  } else d.el.classList.remove("dragging");
+}
+function cancelDrag() {
   if (!drag) return;
   const d = drag;
   drag = null;
-  d.el.classList.remove("dragging");
-  if (d.moved) sfx("place");
-  if (!d.moved || (!d.dMin && !d.dDay)) {
-    d.el.style.transform = "";
-    if (!d.moved) openExisting(d.el.dataset.type, d.el.dataset.id, d.el.dataset.date);
-    justDragged = true;
-    setTimeout(() => (justDragged = false), 50);
+  clearDrag(d);
+  settle();
+  if (d.mode === "time" && d.moved) render(); // (its place and time chip as they were)
+}
+function endDrag(touch = false) {
+  if (!drag) return;
+  const d = drag;
+  drag = null;
+  clearDrag(d);
+  settle();
+  // (held still and let go, by touch: the right-click menu for that card, js/menu.js)
+  if (!d.moved) {
+    if (d.mode === "time") d.el.style.transform = "";
+    if (touch) view.dispatchEvent(new CustomEvent("cal:menu", { detail: { target: d.el, x: d.x, y: d.y } }));
+    else if (d.mode === "time") openExisting(d.el.dataset.type, d.el.dataset.id, d.el.dataset.date);
     return;
   }
-  justDragged = true;
-  setTimeout(() => (justDragged = false), 50);
+  if (d.mode === "day") {
+    const it = data.get(d.id);
+    if (!it || !d.to || d.to === d.from) return;
+    sfx("place");
+    const days = dayNumber(d.to) - dayNumber(d.from);
+    changeOccurrence(it, d.date, d.e.start, { start: addMinutes(d.e.start, days * 1440), end: addMinutes(d.e.end, days * 1440) }, `Moved to ${dayLabel(addDays(d.e.start.slice(0, 10), days))}`);
+    return;
+  }
+  sfx("place");
+  if (!d.dMin && !d.dDay) return void (d.el.style.transform = "");
   const it = data.get(d.el.dataset.id);
   if (!it) return render();
   const start = d.resize ? d.start : addMinutes(d.start, d.dMin + d.dDay * 1440);
@@ -1645,40 +1754,66 @@ function endDrag() {
   if (end <= start) return render();
   changeOccurrence(it, d.el.dataset.date, d.start, { start, end }, "Moved");
 }
+// Bookings and Nova Agent's plan: a little shake, and why (once each time it's tried)
+let refused = false; // (and the click that ends that try doesn't open it)
+function cantMove(el) {
+  refused = true;
+  el.classList.remove("nope");
+  void el.offsetWidth;
+  el.classList.add("nope");
+  setTimeout(() => el.classList.remove("nope"), 450);
+  toast(el.dataset.type === "booking" ? "Bookings can't be moved here: they come from the studio's bookings." : "Nova Agent's plan can't be moved here: change it in Quests.");
+}
 let press = null;
+const pick = (p) => (p.ro ? cantMove(p.el) : p.day ? startDayDrag(p.el, p.x, p.y) : startDrag(p.el, p.x, p.y, p.resize));
 view.addEventListener("pointerdown", (e) => {
-  const el = e.target.closest(".ev[data-id]:not(.ro)");
-  if (!el || e.button > 0) return;
-  const resize = !!e.target.closest("[data-grip]");
-  if (e.pointerType === "mouse") {
-    press = { el, x: e.clientX, y: e.clientY, resize, mouse: true };
-  } else {
-    // Touch: hold for a moment to pick it up (so scrolling still works)
-    press = { el, x: e.clientX, y: e.clientY, resize, timer: setTimeout(() => press && startDrag(press.el, press.x, press.y, press.resize), 350) };
-  }
+  if (e.button > 0 || drag) return;
+  // (a card on the hours, a card in a month's day, a card in the week's all-day strip)
+  const el = e.target.closest(".ev[data-id], .cell[data-date] .di[data-id], .allday .pill[data-id]");
+  if (!el || el.dataset.type === "day") return;
+  const ro = el.classList.contains("ro");
+  const day = !el.matches(".ev");
+  // (Day view's one day: an all-day card has nowhere else to go)
+  if (day && !ro && el.closest(".allday") && prefs.view !== "week") return;
+  const resize = !day && !!e.target.closest("[data-grip]");
+  if (e.pointerType === "mouse") press = { el, x: e.clientX, y: e.clientY, resize, day, ro, mouse: true };
+  // Touch: hold for a moment to pick it up (so scrolling still works); a booking's hold is the menu's
+  else if (!ro) press = { el, x: e.clientX, y: e.clientY, resize, day, timer: setTimeout(() => press && (pick(press), (press = null)), 350) };
 });
 addEventListener("pointermove", (e) => {
   if (drag) return moveDrag(e.clientX, e.clientY);
-  if (press && press.mouse && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 4) startDrag(press.el, press.x, press.y, press.resize);
-  else if (press && !press.mouse && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) {
+  if (press && press.mouse && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 4) {
+    const p = press;
+    press = null;
+    pick(p);
+    if (drag) moveDrag(e.clientX, e.clientY);
+  } else if (press && !press.mouse && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) {
     clearTimeout(press.timer);
     press = null;
   }
 });
-addEventListener("pointerup", () => {
+addEventListener("pointerup", (e) => {
   if (press) clearTimeout(press.timer);
   press = null;
-  endDrag();
+  if (refused) (refused = false), settle();
+  endDrag(e.pointerType !== "mouse");
 });
 addEventListener("pointercancel", () => {
   if (press) clearTimeout(press.timer);
   press = null;
-  if (drag) {
-    drag.el.style.transform = "";
-    drag.el.classList.remove("dragging");
-    drag = null;
-  }
+  cancelDrag();
 });
+addEventListener("blur", () => {
+  press = null;
+  cancelDrag();
+});
+// Escape puts it back where it was
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || !drag) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  cancelDrag();
+}, true);
 // While something's picked up by touch, the page doesn't scroll
 document.addEventListener("touchmove", (e) => {
   if (drag) {
@@ -1686,7 +1821,7 @@ document.addEventListener("touchmove", (e) => {
     moveDrag(e.touches[0].clientX, e.touches[0].clientY);
   }
 }, { passive: false });
-document.addEventListener("touchend", () => drag && endDrag());
+document.addEventListener("touchend", () => drag && endDrag(true));
 
 // ---- Changing one time of a repeating event ----
 function askWhich(title = "Change which?") {
@@ -2359,8 +2494,36 @@ data.onChange(() => {
   if (!drag) render();
 });
 async function loadBookings() {
-  bookings = await data.bookings();
+  // (a booking from Google Calendar comes with no id, and a tap on it, or the right-click menu's Open, found
+  // nothing to open, 25 Oct 2026: it gets one from what it is, the same each time it's loaded)
+  bookings = (await data.bookings()).map((b) => (b && (b.id == null || b.id === "") ? { ...b, id: `gb-${b.start}-${hash32(JSON.stringify([b.session, b.name, b.end]))}` } : b));
   render();
+}
+// The right-click menu's quick changes (25 Oct 2026, the user: "can right click bring up a useful menu"): a card
+// moved a day or a week on, copied to the same day or another, given another colour. Each says what it did, with
+// Undo, and a repeating one asks which times, as the editor does.
+function shiftCard(it, date, days) {
+  const e = occurrenceOf(it.id, date);
+  if (!e || it.kind === "day") return;
+  return changeOccurrence(it, date, e.start, { start: addMinutes(e.start, days * 1440), end: addMinutes(e.end, days * 1440) }, `Moved to ${dayLabel(addDays(e.start.slice(0, 10), days))}`);
+}
+function copyCard(it, date, toDate = date, time = "") {
+  const e = occurrenceOf(it.id, date);
+  const from = e ? e.start : it.start;
+  const start = `${toDate}T${it.allDay ? from.slice(11, 16) : time || from.slice(11, 16)}`;
+  // (a new card of its own: not part of the series, and Google makes its own Meet link for it)
+  const { id, created, updated, base, meetUrl, exdates, ...rest } = it;
+  const same = toDate === date && !time;
+  const copy = data.save({ ...rest, kind: "event", title: same ? `${it.title || "(No title)"} (copy)` : it.title, start, end: addMinutes(start, minutesBetween(from, e ? e.end : it.end)), repeat: null, exdates: [] });
+  sfx("done");
+  toast(same ? "Duplicated" : `Copied to ${dayLabel(toDate)}${time ? ` at ${time}` : ""}`, () => data.remove(copy.id));
+  render();
+  return copy;
+}
+function recolour(it, date, color) {
+  const e = occurrenceOf(it.id, date);
+  if (!e || (it.color || "violet") === color) return;
+  return changeOccurrence(it, date, e.start, { color }, "Colour changed");
 }
 // For the right-click menu (js/menu.js): what's on a day, and the ways to add, open and delete cards
 window.NovaCalendar = {
@@ -2384,6 +2547,14 @@ window.NovaCalendar = {
   openDay(d) { cursor = d; setView("day"); },
   goToday() { cursor = today(); render(); },
   get view() { return prefs.view; },
+  // (and its quick changes, above; whether a card is being dragged)
+  colours: COLORS,
+  occurrence: occurrenceOf,
+  moveBy: shiftCard,
+  duplicate: copyCard,
+  recolour,
+  toast,
+  get dragging() { return !!drag; },
 };
 data.start();
 render();

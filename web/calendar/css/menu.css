@@ -8,27 +8,47 @@
 }
 @keyframes cm-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
 @media (prefers-reduced-motion: reduce) { .cm, .cl { animation: none !important; } }
-.cm-head { margin: 2px 8px 6px; font: 800 13px/1.2 var(--f-display, inherit); letter-spacing: .02em; color: var(--bright, #fff); white-space: nowrap; }
+.cm-head { display: grid; gap: 2px; margin: 2px 8px 6px; }
+/* (a card's title is content: it wraps, at most two lines, never cut mid-word) */
+.cm-head b { font: 800 13px/1.25 var(--f-display, inherit); letter-spacing: .02em; color: var(--bright, #fff); overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.cm-head small { font-size: 11.5px; font-weight: 600; color: var(--muted, #B997B5); white-space: nowrap; }
 .cm-group { padding: 4px 0; border-top: 1px solid rgba(var(--hi-rgb), .14); }
 .cm-head + .cm-group { border-top: 0; padding-top: 0; }
 .cm-title { margin: 2px 8px 2px; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--hi, #FF5FA8); white-space: nowrap; }
 .cm-item {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%; min-height: 32px; padding: 6px 10px;
+  display: flex; align-items: center; gap: 9px; width: 100%; min-height: 30px; padding: 5px 10px;
   border: 0; border-radius: 9px; background: transparent; color: var(--bright, #fff); font: 600 13.5px/1.2 var(--f-body, inherit);
   text-align: left; white-space: nowrap; cursor: pointer;
 }
-.cm-item small { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500; font-size: 11.5px; color: var(--muted, #B997B5); }
+.cm-item small { min-width: 0; margin-left: auto; padding-left: 10px; overflow: hidden; text-overflow: ellipsis; font-weight: 500; font-size: 11.5px; color: var(--muted, #B997B5); }
+.cm .cm-ico { width: 15px; height: 15px; flex: none; color: var(--hi, #FF5FA8); opacity: .9; }
+.cm-item.danger .cm-ico { color: inherit; }
+.cm-label { flex: none; }
+/* (Move to: Next day, Next week; the colours: swatches in a row) */
+.cm-row { display: flex; align-items: center; gap: 9px; min-height: 30px; padding: 2px 6px 2px 10px; color: var(--bright, #fff); font: 600 13.5px/1.2 var(--f-body, inherit); white-space: nowrap; }
+.cm-chips { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.cm-colours .cm-chips { margin-left: 0; gap: 3px; }
+.cm .cm-chip { width: auto; min-height: 26px; padding: 3px 9px; border-radius: 8px; border: 1px solid rgba(var(--hi-rgb), .28); background: rgba(var(--hi-rgb), .1); font-size: 12px; font-weight: 700; }
+.cm .cm-sw { width: 20px; min-height: 20px; height: 20px; padding: 0; border-radius: 50%; background: rgb(var(--c)); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .25); }
+.cm .cm-sw:is(:hover, :focus-visible) { background: rgb(var(--c)); box-shadow: 0 0 0 2px var(--panel, #1B1220), 0 0 0 4px rgba(var(--c), .8); }
+.cm .cm-sw[aria-checked="true"] { box-shadow: 0 0 0 2px var(--panel, #1B1220), 0 0 0 4px var(--bright, #fff); }
 .cm-item:is(:hover, :focus-visible):not([aria-disabled]) { outline: none; background: rgba(var(--hi-rgb), .18); }
 .cm-item.danger { color: color-mix(in oklab, var(--bad, #FF6B81) 80%, #fff); }
 .cm-item.danger:is(:hover, :focus-visible) { background: color-mix(in oklab, var(--bad, #FF6B81) 20%, transparent); }
 .cm-item[aria-disabled] { color: var(--muted, #B997B5); opacity: .55; cursor: default; }
 .cm-pick { margin: 2px 0 4px 10px; padding-left: 6px; border-left: 1px solid rgba(var(--hi-rgb), .25); }
 .cm-pick[hidden] { display: none; }
-/* (a short window: the groups side by side, so the menu fits without scrolling) */
-.cm.cm-wide { display: grid; grid-template-columns: repeat(2, minmax(200px, 1fr)); max-width: min(560px, calc(100vw - 16px)); column-gap: 6px; }
-.cm.cm-wide > .cm-head { grid-column: 1 / -1; }
-.cm.cm-wide > .cm-group { border-top: 0; }
-@media (pointer: coarse) { .cm-item { min-height: 40px; } }
+/* (a short window: each group's items in two columns, so the menu fits without scrolling) */
+.cm.cm-wide { max-width: min(580px, calc(100vw - 16px)); }
+.cm.cm-wide > .cm-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 6px; padding: 2px 0; }
+.cm.cm-wide .cm-pick { grid-column: 1 / -1; }
+.cm.cm-wide .cm-item, .cm.cm-wide .cm-row { min-height: 28px; }
+@media (pointer: coarse) {
+  .cm-item, .cm-row { min-height: 40px; }
+  .cm .cm-chip { min-height: 34px; }
+  .cm .cm-sw { width: 26px; height: 26px; min-height: 26px; }
+  .cm-colours .cm-chips { flex-wrap: wrap; }
+}
 
 /* The lists: a window in the middle, in pages that fit (nothing scrolls) */
 .cl-wrap { position: fixed; inset: 0; z-index: 44; display: grid; place-items: center; padding: 12px; background: rgb(0 0 0 / .5); }
@@ -72,3 +92,29 @@
   .cl-new, .cl-open, .cl-del { padding: 0 9px; font-size: 11.5px; }
   .cl-count { display: none; }
 }
+
+/* Dragging cards (js/cal.js, 25 Oct 2026, the user: "left click on a note card make it draggable"): a card that can
+   be moved shows a hand; held, it lifts; in the month a copy of it follows the pointer and says which day it'll land
+   on, and that day lights up. Bookings and Nova Agent's plan give a little shake. */
+#view .cell .di[data-id]:not(.ro), #view .allday .pill[data-id]:not(.ro) { cursor: grab; }
+#view :is(.ev, .di, .pill).ro[data-id] { cursor: pointer; }
+#view :is(.ev, .di, .pill)[data-id] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+html.cal-dragging, html.cal-dragging * { cursor: grabbing !important; -webkit-user-select: none; user-select: none; }
+html.cal-dragging #view .cell { scale: none; }
+#view .ev.dragging { box-shadow: 0 16px 34px -10px rgb(0 0 0 / .85), 0 0 0 2px rgba(var(--c, var(--hi-rgb)), .9); z-index: 6; }
+#view :is(.di, .pill).lifted { opacity: .35; outline: 1px dashed rgba(var(--c, var(--hi-rgb)), .8); outline-offset: 1px; }
+.drag-ghost {
+  position: fixed; left: 0; top: 0; z-index: 60; display: grid; gap: 2px; padding: 6px 9px; border-radius: 10px; pointer-events: none;
+  background: color-mix(in oklab, rgb(var(--c, var(--hi-rgb))) 26%, var(--panel, #1B1220)); border: 1px solid rgba(var(--c, var(--hi-rgb)), .85);
+  box-shadow: 0 18px 40px -12px rgb(0 0 0 / .9); rotate: -2deg; color: var(--bright, #fff); font: 600 12.5px/1.25 var(--f-body, inherit); text-align: left;
+}
+.drag-ghost .dg-t { overflow-wrap: anywhere; }
+.drag-ghost .dg-t b { color: rgb(var(--c, var(--hi-rgb))); }
+.drag-ghost .dg-to { font-size: 11px; font-weight: 800; letter-spacing: .02em; color: rgb(var(--c, var(--hi-rgb))); white-space: nowrap; }
+.drag-ghost.nowhere .dg-to { color: var(--muted, #B997B5); }
+#view .cell.drop-target { box-shadow: inset 0 0 0 2px var(--hi, #FF5FA8), inset 0 0 26px -8px var(--hi, #FF5FA8); }
+#view .col.drop-target { background-color: rgba(var(--hi-rgb), .08); box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), .45); }
+#view .tg-day.drop-target { color: var(--hi, #FF5FA8); box-shadow: inset 0 -2px 0 var(--hi, #FF5FA8); }
+#view .nope { animation: cal-nope .4s ease-in-out; }
+@keyframes cal-nope { 20%, 60% { translate: -3px 0; } 40%, 80% { translate: 3px 0; } }
+@media (prefers-reduced-motion: reduce) { #view .nope { animation: none; outline: 1px solid var(--bad, #FF6B81); } .drag-ghost { rotate: none; } }
