@@ -48,6 +48,11 @@
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many || one + "s"}`;
   const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
   const when = (v) => {
+    // (the booking calendar's times come as the feed writes them, "20261027T180000Z", which Date.parse can't
+    // read: read as UTC, like Booking tools does (app.js feedDate). Unread, the Bookings tile always said
+    // "0 today · 0 bookings coming up" with the month full of bookings, 25 Oct 2026)
+    const feed = String(v || "").match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);
+    if (feed) return new Date(Date.UTC(+feed[1], +feed[2] - 1, +feed[3], +feed[4], +feed[5]));
     const t = typeof v === "number" ? v : Date.parse(String(v || "").replace(/^(\d{4}-\d\d-\d\d) /, "$1T"));
     return t ? new Date(t) : null;
   };
