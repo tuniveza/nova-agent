@@ -340,7 +340,9 @@
     </section>
 
     <!-- Enquiries -->
-    <section id="view-enquiries" class="view ib">
+    <!-- (data-os-nofill: its rows and filters are already as small as they read; an enquiry or the saved replies
+         opened in place turn to the next page instead of drawing the whole pane smaller, 25 Oct 2026) -->
+    <section id="view-enquiries" class="view ib" data-os-nofill>
       <div class="view-head">
         <h2 id="enq-title">Enquiries</h2>
         <!-- The inbox: every enquiry is in one of these places (Spam is a folder: nothing is deleted) -->
@@ -372,6 +374,9 @@
           <textarea id="saved-body" rows="4" maxlength="4000" placeholder="The reply…" required></textarea>
           <div class="actions">
             <button id="saved-cancel" class="btn small ghost" type="button" hidden>Cancel</button>
+            <!-- (opened in place it can be on a page of its own, away from the button that opened it: a way to
+                 close it from here, 25 Oct 2026) -->
+            <button id="saved-close" class="btn small ghost" type="button">Close</button>
             <button id="saved-save" class="btn small" type="submit">Add saved reply</button>
           </div>
         </form>
@@ -382,7 +387,9 @@
       <div id="enquiry-thread" class="thread" hidden>
         <div id="thread-head"></div>
         <div id="thread-list" class="list thread-list" aria-live="polite"></div>
-        <form id="thread-form" class="card thread-form" autocomplete="off">
+        <!-- (data-os-keep: the reply box is one thing, never cut between pages: in a small pane its Reply / Note
+             chips were on one page and the box to write in on the next, 25 Oct 2026) -->
+        <form id="thread-form" class="card thread-form" autocomplete="off" data-os-keep>
           <div class="thread-form-top">
             <div class="chips" role="tablist" aria-label="Reply by email, WhatsApp or text, or a note">
               <button class="chip active" data-mode="reply" type="button" aria-pressed="true">Reply</button>
@@ -408,7 +415,9 @@
     </section>
 
     <!-- Conversations -->
-    <section id="view-chats" class="view" hidden>
+    <!-- (data-os-nofill, as Enquiries: its one-line rows are as small as they read, and a conversation opened here
+         keeps its words full size; drawn smaller, its title row ran under the page bar, 25 Oct 2026) -->
+    <section id="view-chats" class="view" data-os-nofill hidden>
       <div class="view-head">
         <h2 id="chats-title">Conversations</h2>
         <button id="chats-back" class="chip" type="button" hidden>&larr; All conversations</button>
@@ -845,7 +854,8 @@
     </section>
 
     <!-- Website bot: try NovaBot, the website's assistant, as clients see it (questions of your own go to Agent) -->
-    <section id="view-bot" class="view view-bot" hidden>
+    <!-- (data-os-nofill: the conversation's words are never drawn smaller to fit more on a page) -->
+    <section id="view-bot" class="view view-bot" data-os-nofill hidden>
       <div class="view-head">
         <h2>Website bot</h2>
         <div class="chips" role="tablist">
@@ -859,7 +869,8 @@
         <button id="bot-agent" class="btn small ghost" type="button">Ask Nova Agent instead</button>
       </div>
       <p class="hint" id="bot-hint">Ask about your bookings, enquiries and alerts: "What time is Eric's session?", "Any new enquiries?". These conversations aren't saved.</p>
-      <div id="bot-messages" class="bot-messages" aria-live="polite"></div>
+      <!-- (the box to write in above the conversation; each question and its answer is put just under it, the
+           newest first, so the first page always has both, 25 Oct 2026) -->
       <form id="bot-form" class="bot-form">
         <textarea id="bot-input" rows="1" placeholder="Ask NovaBot…" aria-label="Message NovaBot"></textarea>
         <button class="btn" type="submit">Send</button>

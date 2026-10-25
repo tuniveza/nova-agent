@@ -388,6 +388,37 @@ main {
 .lc-hint { margin: 8px 0 0; font-size: 12.5px; }
 .view-bot { display: flex; flex-direction: column; min-height: calc(100vh - 220px); min-height: calc(100dvh - 220px); }
 .bot-messages { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+/* (the box to write in, then each question with its answer, the newest first: after one answer the tab turned
+   to the page with the answer and the message box was on the next page, 25 Oct 2026, the user: "make sure
+   every button inside nova portal works". Before the first message, the hint stands in the middle of the
+   empty space, the box to write in under it, instead of a blank gap) */
+.view-bot > .bot-form { margin: 0 0 12px; }
+.bot-turn { display: flex; flex-direction: column; gap: 12px; }
+.bot-turn + .bot-turn { padding-top: 12px; border-top: 1px solid var(--line); }
+/* (everything keeps its own height: on a short window the tab turns pages rather than drawing its parts over
+   each other) */
+.view-bot > :not(.os-pager) { flex-shrink: 0; }
+.view-bot:not(:has(> .bot-turn)) > #bot-hint { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; margin: 0; }
+/* (inside Nova Desk: the pane its full reading width whatever page shows. It was as wide as the page showing,
+   400px beside a wide empty screen when only the message box was on it, 25 Oct 2026) */
+html.embed #main > #view-bot:not([hidden]) { width: 100%; }
+/* (a short Nova Desk window, 1280×720 and smaller: the title, its chips and the words about it slimmer, so
+   the conversation and the box to write in fit with them on one page; before, the box was alone on a second
+   page under a wide empty space) */
+@media (max-height: 640px) {
+  html.embed #view-bot > .view-head { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; min-height: 0; margin-bottom: 6px; }
+  html.embed #view-bot > .view-head > h2 { margin: 0 !important; font-size: 17px; line-height: 30px; }
+  html.embed #view-bot > .view-head .chip { min-height: 28px; height: 28px; padding: 0 10px; font-size: 9.5px; }
+  html.embed #view-bot > .bot-about { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; margin: 0 0 6px; padding: 6px 10px; border-radius: 14px; }
+  html.embed #view-bot > .bot-about .hint { font-size: 12px; }
+  html.embed #view-bot > .bot-about .btn { min-height: 26px; height: 26px; padding: 0 10px; font-size: 9px; letter-spacing: 0.12em; }
+  html.embed #view-bot > #bot-hint { margin: 0 0 6px; font-size: 12.5px; }
+  html.embed #view-bot > .bot-form { margin: 0 0 8px; padding: 6px; }
+  html.embed #view-bot > .bot-form textarea { min-height: 40px; }
+  html.embed #view-bot .bot-turn { gap: 6px; }
+  html.embed #view-bot .bot-turn + .bot-turn { padding-top: 8px; }
+  html.embed #view-bot .bubble { padding: 7px 12px; font-size: 14px; line-height: 1.4; }
+}
 .bubble {
   align-self: flex-start; max-width: 88%; padding: 10px 14px; border-radius: 18px 18px 18px 6px;
   background: rgba(var(--panel-2-rgb), 0.8); border: 1px solid var(--line);
@@ -491,6 +522,8 @@ main {
   .sheet-card::before { display: none; }
 }
 #sheet-result { display: grid; gap: 10px; }
+/* (no problem to show: no empty gap between Make link and Close, 25 Oct 2026) */
+#sheet-error:empty { display: none; }
 .row { display: flex; gap: 10px; }
 .row .btn { flex: 1; }
 
@@ -1389,6 +1422,9 @@ html:not([data-align="left"]) .cp-facts > dd { text-align: left !important; }
 .ib-places .chip { min-height: 34px; padding: 0 12px; }
 .ib-pick { flex: 0 1 auto; width: auto; max-width: min(100%, 280px); padding: 7px 10px; font-size: 14px; text-overflow: ellipsis; }
 .ib-label { flex: 1 1 110px; max-width: 200px; padding: 7px 10px; font-size: 14px; }
+.ib-sort-end { display: flex; align-items: center; gap: 8px; flex: 1 1 210px; min-width: 0; }
+.ib-sort-end .ib-label { max-width: none; }
+.ib-sort-end .btn { flex: none; }
 .thread-form-top .ib-pick { margin-left: auto; }
 /* (and the "To" line beside it wraps a long address instead of pushing the box wide) */
 .thread-form-top { min-width: 0; }
