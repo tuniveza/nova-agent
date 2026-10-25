@@ -152,49 +152,131 @@ html.embed .bar { padding-top: 8px; }
 .sw { width: 14px; height: 14px; border-radius: 4px; }
 .sw.ev { background: rgb(199, 164, 255); } .sw.day { background: var(--gold); } .sw.quest { background: rgb(167, 139, 250); opacity: .6; } .sw.book { background: rgb(242, 217, 160); opacity: .7; }
 
-/* ---- Sheet: add or change ---- */
+/* ---- Sheet: add or change a note card or a day card ----
+   (25 Oct 2026, the owner: "can you rework the note card creation gui it's very clunky and not very simple to do".)
+   The smart "What and when?" box, the line saying it back, quick picks for the day, time and length, the exact
+   boxes, then More. cal.js (layoutSheet) picks the layout that fits the window without scrolling and marks it
+   in data-layout: "" one column, "split" the essentials in two columns, "side" More beside, "below" More under,
+   "side split" both, "step" More as a page of its own. */
 .scrim { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.55); }
 .sheet {
-  position: fixed; z-index: 31; left: 50%; bottom: 0; transform: translateX(-50%); width: min(560px, 100vw);
-  max-height: calc(100dvh - 24px); display: flex; flex-direction: column; border-radius: 22px 22px 0 0;
-  background: var(--panel); border: 1px solid rgba(var(--hi-rgb), .22); border-bottom: 0;
-  box-shadow: 0 -20px 60px -20px rgba(0,0,0,.9); animation: up .22s ease-out;
+  position: fixed; z-index: 31; left: 50%; top: 50%; transform: translate(-50%, -50%); box-sizing: border-box; width: min(640px, calc(100vw - 24px));
+  max-height: calc(100dvh - 16px); display: flex; flex-direction: column; border-radius: 22px;
+  background: var(--panel); border: 1px solid rgba(var(--hi-rgb), .22);
+  box-shadow: 0 -20px 60px -20px rgba(0,0,0,.9); animation: pop .18s ease-out;
 }
+.sheet:is([data-layout~="split"], [data-layout="side"]) { width: min(1100px, calc(100vw - 24px)); }
+.sheet:is([data-layout="side split"], [data-layout="step"]) { width: min(1300px, calc(100vw - 24px)); }
+.sheet.small { width: min(400px, calc(100vw - 24px)); }
+/* Phones: a sheet from the bottom, the full width */
+html[data-form^="phone"] .sheet:not(.small) { left: 0; top: auto; bottom: 0; transform: none; width: 100vw; max-height: 100dvh; border-radius: 22px 22px 0 0; border-bottom: 0; animation: up-full .22s ease-out; }
+@media (max-width: 719px) { html:not([data-form]) .sheet:not(.small) { left: 0; top: auto; bottom: 0; transform: none; width: 100vw; max-height: 100dvh; border-radius: 22px 22px 0 0; border-bottom: 0; animation: up-full .22s ease-out; } }
+/* (it arrives growing a little, never sliding: a sheet sliding in from past the edge was taken for one that
+   doesn't fit, and drawn smaller for good by onescreen.js) */
+@keyframes up { from { transform: translate(-50%, 0) scale(.97); opacity: 0; } }
+@keyframes up-full { from { transform: scale(.97); opacity: 0; } }
+@keyframes pop { from { transform: translate(-50%, -50%) scale(.97); opacity: 0; } }
 .sheet form { display: flex; flex-direction: column; min-height: 0; flex: 1; }
-@media (min-width: 720px) {
-  .sheet { bottom: auto; top: 50%; transform: translate(-50%, -50%); border-radius: 22px; border-bottom: 1px solid rgba(var(--hi-rgb), .22); max-height: calc(100dvh - 48px); animation: pop .18s ease-out; }
-}
-@keyframes up { from { transform: translate(-50%, 30px); opacity: 0; } }
-@keyframes pop { from { transform: translate(-50%, -48%); opacity: 0; } }
-.sheet-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(var(--hi-rgb), .12); }
+.sheet-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid rgba(var(--hi-rgb), .12); }
 .sheet-head h2 { flex: 1; margin: 0; font: 800 17px/1.2 var(--f-display); color: var(--bright); }
-.save { height: 40px; padding: 0 18px; border-radius: var(--nb-radius, 12px); border: 0; font-weight: 700; }
-.sheet-body { padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
-.sheet-body > *, .group > *, .custom > * { min-width: 0; }
+/* (a new card: the Note card / Day card switch stands in the title's place; the title is still read out) */
+#sheet:not(.is-edit) #sheet-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sheet-head .kinds { flex: 1; max-width: 340px; margin-inline: auto; }
+.save { height: 40px; padding: 0 20px; border-radius: var(--nb-radius, 12px); border: 0; font-weight: 700; flex: none; }
+.sheet-body { padding: 12px 14px calc(14px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+.sheet[data-layout="side"] .sheet-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.sheet[data-layout="side split"] .sheet-body { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 18px; }
+.sheet-body > *, .group > *, .custom > *, .pane > *, .col-what > *, .col-when > * { min-width: 0; }
+.pane, .col-what, .col-when, .group { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.pane[hidden], .group[hidden] { display: none !important; }
+.sheet[data-layout~="split"] .pane-main { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); grid-template-areas: "what when" "foot when"; column-gap: 18px; grid-template-rows: auto 1fr; }
+.sheet[data-layout~="split"] .col-what { grid-area: what; }
+.sheet[data-layout~="split"] .col-when { grid-area: when; }
+.sheet[data-layout~="split"] .foot { grid-area: foot; align-self: end; }
+.sheet[data-layout^="side"] .pane-more { border-left: 1px solid rgba(var(--hi-rgb), .12); padding-left: 18px; }
+/* (beside the essentials, the notes take the height left over, so long notes show more lines) */
+.sheet[data-layout^="side"] .pane-more { align-self: stretch; display: flex; flex-direction: column; }
+.sheet[data-layout^="side"] .pane-more > textarea { flex: 1 1 64px; }
+.sheet[data-layout="below"] .pane-more { border-top: 1px solid rgba(var(--hi-rgb), .12); padding-top: 14px; }
+/* More on a page of its own: its parts flow down columns side by side, so it fits a short window too */
+.sheet[data-layout="step"] .pane-more { display: block; columns: 300px; column-gap: 20px; }
+.sheet[data-layout="step"] .pane-more > .group:not([hidden]) { display: contents; }
+.sheet[data-layout="step"] .pane-more :is(.group > *, .art-head, textarea) { break-inside: avoid; margin-bottom: 10px; }
+.sheet[data-layout="step"] .pane-more :is(textarea, .group > input) { display: block; width: 100%; }
+.sheet[data-layout="step"] .sheet-head .kinds { display: none; }
+/* (its rows' names above their picks, so each pick list has the column's whole width and stays on one line) */
+.sheet[data-layout="step"] .pane-more > .group > .row:not(.where-row) { flex-direction: column; align-items: stretch; gap: 3px; min-height: 0; }
+.sheet[data-layout="step"] .pane-more > .group > .row:not(.where-row) > span:first-child { width: auto; font-size: 12.5px; }
+
+/* The boxes: one look (16px words, so iPhones don't zoom in) */
 .sheet input, .sheet select, .sheet textarea { max-width: 100%; }
 .sheet input[type="text"], .sheet input[type="date"], .sheet input[type="time"], .sheet input[type="number"], .sheet select, .sheet textarea {
   min-width: 0; height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid rgba(var(--hi-rgb), .18); background: var(--deep); font-size: 16px; color: var(--bright);
 }
-.sheet textarea { height: auto; padding: 10px 12px; resize: vertical; }
-.sheet input.big { height: 50px; font-size: 18px; font-weight: 600; }
+.sheet textarea { height: auto; min-height: 64px; padding: 10px 12px; resize: none; }
+/* The smart box: the icon for what it's about at its start, live */
+.smart { position: relative; }
+.sheet input.big { width: 100%; height: 52px; padding-left: 50px; font-size: 18px; font-weight: 600; }
+.smart-ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; display: grid; place-items: center; color: var(--hi); pointer-events: none; }
+.smart-ico .ico { width: 22px; height: 22px; }
+.readback { margin: -4px 4px 0; min-height: 2.7em; font-size: 13.5px; line-height: 1.35; color: var(--hi); overflow-wrap: anywhere; }
+.readonly { margin: 0; padding: 10px 12px; border-radius: 12px; background: rgba(var(--gold-rgb), .1); color: var(--gold); font-size: 13.5px; }
 .kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 3px; border-radius: 12px; background: var(--deep); }
-.kinds button { height: 36px; border: 0; border-radius: 9px; background: none; color: var(--muted); font-weight: 600; }
-.quick input { width: 100%; border-style: dashed !important; }
-.quick-hint { margin: 4px 2px 0; font-size: 12.5px; color: var(--hi); min-height: 1em; }
-.quick-hint:empty { display: none; }
-.group { display: grid; gap: 10px; }
-.row { display: flex; align-items: center; gap: 8px; min-height: 44px; }
-.row > span:first-child { width: 84px; flex: none; color: var(--muted); font-size: 14px; }
+.kinds button { height: 36px; border: 0; border-radius: 9px; background: none; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.kinds[hidden] { display: none; }
+/* Rows: a name, then the picks or boxes */
+.row { display: flex; align-items: center; gap: 8px; min-height: 40px; }
+.row > span:first-child { width: 72px; flex: none; color: var(--muted); font-size: 13.5px; white-space: nowrap; }
 .row input[type="date"] { flex: 1.3; } .row input[type="time"] { flex: 1; } .row select { flex: 1; }
 .row.stack { align-items: flex-start; flex-direction: column; gap: 6px; }
 .row.stack > span:first-child { width: auto; }
-.toggle { cursor: pointer; justify-content: space-between; }
+/* Quick picks: one line each (the ones that don't fit are left out by cal.js, never cut) */
+.qchips { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap !important; overflow: hidden; padding: 2px; margin: -2px 0; }
+.qchips button { flex: none; white-space: nowrap; }
+.qchips button[hidden] { display: none; }
+.qchips small { margin-left: 3px; font-size: 11.5px; font-weight: 600; opacity: .7; }
+/* Exactly: From [date][time] to [date][time] */
+.exact { display: grid; grid-template-columns: 72px minmax(0, 1.35fr) minmax(0, 1fr) auto minmax(0, 1.35fr) minmax(0, 1fr); gap: 6px; }
+.exact.allday { grid-template-columns: 72px minmax(0, 1fr) auto minmax(0, 1fr); }
+.exact > span:first-child { width: auto; }
+/* (too narrow for one line, beside More or on a phone: From on one line, to on the next, so no date is cut) */
+.col-when { container-type: inline-size; }
+@container (max-width: 600px) {
+  .exact { grid-template-columns: 72px minmax(0, 1.35fr) minmax(0, 1fr); }
+  .exact.allday { grid-template-columns: 72px minmax(0, 1fr); }
+  .exact .to { padding: 0; }
+}
+.exact .to { color: var(--muted); font-size: 13.5px; padding-inline: 2px; }
+.sheet .exact input { width: 100%; padding: 0 8px; }
+.yearly { gap: 10px; flex: none; color: var(--muted); font-size: 13.5px; white-space: nowrap; }
+.toggle { cursor: pointer; justify-content: space-between; display: inline-flex; align-items: center; }
 .toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .switch { width: 46px; height: 28px; border-radius: 999px; background: rgba(var(--muted-rgb), .3); position: relative; transition: background .2s; flex: none; }
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .2s; }
 .toggle input:checked + .switch { background: var(--hi); }
 .toggle input:checked + .switch::after { transform: translateX(18px); }
 .toggle input:focus-visible + .switch { outline: 2px solid var(--hi); outline-offset: 2px; }
+/* The foot: More (saying what's set inside it), and Duplicate / Delete for a card that's there already */
+.foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.more-btn { flex: 1 1 240px; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 12px; border-radius: 12px; border: 1px dashed rgba(var(--hi-rgb), .32); background: none; color: var(--text); text-align: left; cursor: pointer; }
+.more-btn:hover { border-style: solid; background: rgba(var(--hi-rgb), .06); }
+.more-btn b { flex: none; font-weight: 700; color: var(--bright); }
+.more-btn small { flex: 1; min-width: 0; color: var(--muted); font-size: 12.5px; line-height: 1.25; overflow-wrap: anywhere; }
+.more-btn small.set { color: var(--hi); }
+.more-btn[aria-expanded="true"] small { visibility: hidden; }
+.more-btn svg { width: 18px; height: 18px; flex: none; margin-left: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.sheet[data-layout="below"] .more-btn svg { transform: rotate(90deg); }
+.more-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+.sheet[data-layout="below"] .more-btn[aria-expanded="true"] svg { transform: rotate(-90deg); }
+.back-btn { display: none; }
+.more-pages { display: inline-flex; align-items: center; gap: 4px; flex: none; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.more-pages[hidden], .pane-more [data-off] { display: none !important; }
+.more-pages .icon-btn { width: 36px; height: 36px; }
+.sheet.paged .back-more { display: none; }
+.sheet[data-layout="step"] .back-btn { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; height: 40px; white-space: nowrap; padding: 0 12px 0 6px; border: 0; border-radius: 12px; background: none; color: var(--hi); font-weight: 700; cursor: pointer; }
+.back-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.where-row { flex-wrap: wrap; }
+.where-row input[type="text"] { flex: 1 1 180px; }
 .custom { display: grid; gap: 8px; padding: 10px; border-radius: 14px; background: rgba(var(--deep-rgb), .6); }
 .custom input[type="number"] { width: 72px; flex: none; }
 .wd, .chips, .colors { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -203,13 +285,60 @@ html.embed .bar { padding-top: 8px; }
 }
 .colors button { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; background: rgb(var(--c)); }
 .colors button[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px rgb(var(--c)); }
-.readonly { margin: 0; padding: 10px 12px; border-radius: 12px; background: rgba(var(--gold-rgb), .1); color: var(--gold); font-size: 13.5px; }
-.actions { display: flex; gap: 8px; justify-content: space-between; padding-top: 4px; }
+.actions { display: flex; gap: 8px; justify-content: flex-end; }
+.actions[hidden] { display: none; }
 .actions button, .which button { height: 44px; padding: 0 16px; border-radius: var(--nb-radius, 12px); font-weight: 600; }
 .ghost, .danger { border: 1px solid transparent; }
-.sheet.small { width: min(400px, 100vw); }
 .which { display: grid; gap: 8px; }
 .which button:not(.ghost) { border: 1px solid transparent; }
+/* A short window (Nova Desk at 1366×400): slimmer, so the essentials still fit */
+@media (max-height: 420px) {
+  .sheet { max-height: calc(100dvh - 10px); }
+  .sheet-head { padding: 5px 10px; }
+  .sheet-head .icon-btn { width: 36px; height: 36px; }
+  .save { height: 36px; }
+  .kinds button { height: 30px; }
+  .sheet-body { padding: 8px 12px 10px; gap: 10px; }
+  .pane, .col-what, .col-when, .group { gap: 6px; }
+  .row { min-height: 36px; }
+  .sheet input[type="text"], .sheet input[type="date"], .sheet input[type="time"], .sheet input[type="number"], .sheet select { height: 36px; }
+  .sheet input.big { height: 44px; }
+  .wd button, .chips button { height: 32px; }
+  .colors button { width: 28px; height: 28px; }
+  .more-btn { min-height: 38px; }
+  .actions button { height: 38px; }
+  .readback { margin-top: -2px; }
+  .art-head { min-height: 56px !important; }
+  .art-head.is-day { flex-direction: row !important; flex-wrap: wrap; align-items: center !important; }
+  .art-head.is-day .dc-title { flex: 1 1 auto; font-size: 18px; }
+  .sheet textarea { min-height: 52px; }
+  .custom { padding: 6px 8px; gap: 4px; }
+  .wd { gap: 4px; }
+  .wd button { min-width: 34px; padding: 0 8px; }
+  .aes-opt { height: 32px !important; }
+  .theme-opt { height: 30px !important; }
+  :is(.aes-grid, .theme-grid) { gap: 4px !important; }
+  .row.stack { gap: 3px; }
+  .sheet[data-layout="step"] .pane-more :is(.group > *, .art-head, textarea) { margin-bottom: 4px; }
+  .sheet[data-layout="step"] { max-height: calc(100dvh - 6px); }
+  .sheet[data-layout="step"] .sheet-body { padding-block: 6px; }
+  .aes-opt .dc-title { font-size: 12px; }
+}
+/* Phones: touch-sized (tap targets 40px and up; the boxes 52px, the suite's one field size) */
+html[data-form^="phone"] .row > span:first-child { width: auto; min-width: 60px; font-size: 13px; }
+html[data-form^="phone"] .sheet :is(input[type="text"], input[type="date"], input[type="time"], input[type="number"], select):not(.big) { height: 52px; }
+html[data-form^="phone"] .sheet :is(.wd, .chips) button { height: 42px; padding-inline: 10px; }
+html[data-form^="phone"] .qchips { gap: 5px; }
+html[data-form^="phone"] .colors button { width: 40px; height: 40px; }
+html[data-form="phone-side"] .sheet-body { padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right)); }
+html[data-form="phone-side"] .sheet :is(input[type="text"], input[type="date"], input[type="time"], input[type="number"], select):not(.big) { height: 44px; }
+html[data-form="phone-side"] .sheet :is(.wd, .chips) button { height: 40px; }
+html[data-form^="phone"] .exact { grid-template-columns: 60px minmax(0, 1.35fr) minmax(0, 1fr) auto minmax(0, 1.35fr) minmax(0, 1fr); }
+html[data-form^="phone"] .exact.allday { grid-template-columns: 60px minmax(0, 1fr) auto minmax(0, 1fr); }
+@container (max-width: 600px) {
+  html[data-form^="phone"] .exact { grid-template-columns: 60px minmax(0, 1.35fr) minmax(0, 1fr); }
+  html[data-form^="phone"] .exact.allday { grid-template-columns: 60px minmax(0, 1fr); }
+}
 
 /* ---- Toast ---- */
 .toast {
@@ -240,13 +369,6 @@ html.embed .bar { padding-top: 8px; }
   .tg { grid-template-columns: 38px var(--day-cols, repeat(var(--cols), minmax(0, 1fr))); }
   .ev { padding: 1px 3px; font-size: 11px; }
   .ev small { display: none; }
-}
-@media (max-width: 719px) {
-  .row > span:first-child { width: 64px; font-size: 13.5px; }
-  .row.when { flex-wrap: wrap; }
-  .row.when input[type="date"] { flex: 1 1 140px; }
-  .row.when input[type="time"] { flex: 1 1 96px; }
-  .sheet input[type="date"], .sheet input[type="time"] { padding: 0 8px; }
 }
 @media (max-width: 380px) { .chip.today { padding: 0 8px; } .icon-btn { width: 36px; height: 36px; } }
 

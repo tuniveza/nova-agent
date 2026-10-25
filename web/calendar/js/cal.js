@@ -1993,11 +1993,36 @@ async function changeOccurrence(it, date, was, changes, word = "Saved", chosen =
 }
 
 // ---- The editor ----
+// (25 Oct 2026, the owner: "can you rework the note card creation gui it's very clunky and not very simple to do".)
+// One way in: the "What and when?" box at the top is the title, and it understands typing ("Mix review Friday 2pm
+// 1h", quickadd.js): the day, time, length, repeat and place below fill in as you type, and the line under it says
+// back what will be saved in plain words. Quick picks (Today, Tomorrow, the next days; Soon, Morning, Afternoon,
+// Evening, All day; 30 min to 3 hours) instead of pickers, with the exact dates and times still there. The rest
+// (repeat, reminders, phones, colour, place, Meet, notes, artwork) is under More, which remembers whether it was
+// open; it opens beside the essentials when there's room, below them on a phone, or as a page of its own (with
+// Back) when neither fits, so the window never scrolls. Enter saves. Closing with something typed keeps it for a
+// moment (Undo in the message) instead of asking.
 const form = $("form");
-let editing = null; // { mode: "new" | "edit", kind, item?, date?, was?, ro? }
+let editing = null; // { mode: "new" | "edit", kind, item?, date?, was?, ro?, more? }
 let picked = { reminders: [], color: "violet", days: [], aesthetic: "nebula", theme: "app" };
 // The artwork being edited: a note card's seed and subject, a day card's salt
 let art = { seed: 0, subject: "auto", salt: "", tempId: "" };
+// The smart box: base (the day, time and length before the words said otherwise, or the last quick pick),
+// last (what the words said at the last letter), title (the words left once the day and time are taken out)
+let smart = { base: { date: "", time: "09:00", len: 60 }, last: {}, title: "" };
+const MORE = "nova-calendar/more";
+const moreWanted = () => {
+  try {
+    return localStorage.getItem(MORE) === "1";
+  } catch {
+    return false;
+  }
+};
+const rememberMore = (on) => {
+  try {
+    localStorage.setItem(MORE, on ? "1" : "0");
+  } catch {}
+};
 
 // The "Google Meet link" tick and, once Google made one, the link
 function fillMeet(it) {
@@ -2011,7 +2036,7 @@ function fillMeet(it) {
 function fillChips() {
   $("f-reminders").innerHTML = REMINDERS.map(([m, l]) => `<button type="button" data-min="${m}" aria-pressed="${picked.reminders.includes(m)}">${l}</button>`).join("");
   fillPhones();
-  $("f-colors").innerHTML = COLORS.map((c) => `<button type="button" data-color="${c}" data-pick="${c}" aria-pressed="${picked.color === c}" aria-label="${c}"></button>`).join("");
+  $("f-colors").innerHTML = COLORS.map((c) => `<button type="button" data-color="${c}" data-pick="${c}" aria-pressed="${picked.color === c}" aria-label="${c}" title="${c[0].toUpperCase() + c.slice(1)}"></button>`).join("");
   $("f-days").innerHTML = [1, 2, 3, 4, 5, 6, 0].map((d) => `<button type="button" data-day="${d}" aria-pressed="${picked.days.includes(d)}">${WD[d].slice(0, 2)}</button>`).join("");
   $("aes-grid").innerHTML = presets()
     .aesthetics()
@@ -2021,6 +2046,7 @@ function fillChips() {
   $("theme-grid").innerHTML =
     `<button type="button" class="theme-opt" data-theme-pick="app" aria-pressed="${picked.theme === "app"}"><i style="${themeStyle(appTheme())}"></i>App theme</button>` +
     themes.map((t) => `<button type="button" class="theme-opt" data-theme-pick="${t.id}" aria-pressed="${picked.theme === t.id}" title="${esc(t.tag)}"><i style="${themeStyle(t.id)}"></i>${esc(t.name)}</button>`).join("");
+  moreSummary();
 }
 $("aes-grid").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-aes]");
@@ -2036,7 +2062,8 @@ $("theme-grid").addEventListener("click", (e) => {
   fillChips();
   refreshSheetArt();
 });
-// The artwork at the top of the sheet: a note card's picture, or a day card's header
+// The artwork in More: a note card's picture, or a day card's header (painted only while More shows: the
+// painter, cosmos.js, isn't loaded for a card made without opening More)
 function sheetDay() {
   return { id: (editing && editing.item && editing.item.id) || art.tempId, artSalt: art.salt, aesthetic: picked.aesthetic, theme: picked.theme };
 }
@@ -2045,7 +2072,8 @@ function refreshSheetArt() {
   const head = $("art-head");
   const show = !editing.ro || (editing.item && editing.item.kind === "day");
   head.hidden = !show;
-  if (!show) return;
+  $("art-title").textContent = cardTitle() || (editing.kind === "day" ? presets().get($("d-preset").value).label : "");
+  if (!show || $("pane-more").hidden) return;
   const isDay = editing.kind === "day";
   $("note-subject").hidden = isDay;
   $("note-subject").value = art.subject;
@@ -2053,7 +2081,6 @@ function refreshSheetArt() {
   // A day card's header wears its theme and title style; a note card's picture just shows
   head.setAttribute("style", `${isDay ? `${themeStyle(dayTheme(sheetDay()))};` : ""}--art:${src ? `url('${src}')` : "none"}`);
   head.className = `art-head${isDay ? ` is-day aes-${picked.aesthetic}` : ""}${src ? "" : " loading"}`;
-  $("art-title").textContent = $("f-title").value || (isDay ? presets().get($("d-preset").value).label : "");
 }
 $("note-subject").innerHTML = `<option value="auto">Art: surprise me</option>${SUBJECTS.map((x) => `<option value="${x}">Art: ${x === "blackhole" ? "Black hole" : x[0].toUpperCase() + x.slice(1)}</option>`).join("")}`;
 $("note-subject").addEventListener("change", () => {
@@ -2074,14 +2101,10 @@ $("art-save").addEventListener("click", (e) => {
     return needCosmos();
   }
   const isDay = editing.kind === "day";
-  const name = ($("f-title").value || (isDay ? "day card" : "note card")).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "card";
+  const name = (cardTitle() || (isDay ? "day card" : "note card")).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "card";
   e.currentTarget.download = `${name}.png`;
   e.currentTarget.href = isDay ? dayArt(sheetDay(), 1920, 640, "image/png") : noteArt({ id: art.tempId, art: { seed: art.seed, subject: art.subject } }, $("f-sdate").value || cursor, 1920, 1080, "image/png");
 });
-$("f-title").addEventListener("input", () => {
-  $("art-title").textContent = $("f-title").value || (editing && editing.kind === "day" ? presets().get($("d-preset").value).label : "");
-});
-$("f-sdate").addEventListener("change", () => refreshSheetArt());
 // Which phones get the reminders: the owner's (the default), or the ones picked here.
 // The list comes from Nova Bot (the phones with notifications on, and whose they are).
 let phoneList = null;
@@ -2094,6 +2117,7 @@ async function loadPhones() {
     phoneList = [];
   }
   fillPhones();
+  relayout();
   return phoneList;
 }
 function fillPhones() {
@@ -2121,6 +2145,7 @@ $("f-reminders").addEventListener("click", (e) => {
   const m = Number(b.dataset.min);
   picked.reminders = picked.reminders.includes(m) ? picked.reminders.filter((x) => x !== m) : [...picked.reminders, m];
   fillChips();
+  layoutSheet();
   if (picked.reminders.length) void loadPhones();
 });
 $("f-colors").addEventListener("click", (e) => {
@@ -2133,50 +2158,337 @@ $("f-days").addEventListener("click", (e) => {
   const d = Number(b.dataset.day);
   picked.days = picked.days.includes(d) ? picked.days.filter((x) => x !== d) : [...picked.days, d];
   fillChips();
-});
-$("f-allday").addEventListener("change", () => {
-  $("f-stime").hidden = $("f-etime").hidden = $("f-allday").checked;
+  readBack();
 });
 $("f-repeat").addEventListener("change", () => {
   $("custom").hidden = $("f-repeat").value !== "custom";
   syncCustom();
+  told();
+  layoutSheet();
 });
-$("f-freq").addEventListener("change", syncCustom);
-$("f-ends").addEventListener("change", syncCustom);
+["f-interval", "f-until", "f-count"].forEach((id) => $(id).addEventListener("change", told));
+$("f-freq").addEventListener("change", () => (syncCustom(), told(), layoutSheet()));
+$("f-ends").addEventListener("change", () => (syncCustom(), told(), layoutSheet()));
 function syncCustom() {
   $("f-days").hidden = $("f-freq").value !== "weekly";
   $("f-until").hidden = $("f-ends").value !== "until";
   $("f-count").hidden = $("f-ends").value !== "count";
 }
+["f-location", "f-notes", "d-location"].forEach((id) => $(id).addEventListener("input", () => (moreSummary(), id === "d-location" || readBack(), updateIcon())));
+$("f-meet").addEventListener("change", moreSummary);
+
+// ---- When: the quick picks and the exact boxes ----
 // Start moves, end follows (keeping the length)
 let lastStart = "";
 function startStamp() {
   return `${$("f-sdate").value}T${$("f-allday").checked ? "00:00" : $("f-stime").value || "09:00"}`;
 }
+const endStamp = () => `${$("f-edate").value || $("f-sdate").value}T${$("f-allday").checked ? "00:00" : $("f-etime").value || "10:00"}`;
+function followStart() {
+  const now = startStamp();
+  if (lastStart && $("f-edate").value) {
+    const end = addMinutes(endStamp(), minutesBetween(lastStart, now));
+    $("f-edate").value = end.slice(0, 10);
+    if (!$("f-allday").checked) $("f-etime").value = end.slice(11, 16);
+  }
+  lastStart = now;
+}
 ["f-sdate", "f-stime"].forEach((id) =>
   $(id).addEventListener("change", () => {
-    const now = startStamp();
-    if (lastStart && $("f-edate").value) {
-      const end = addMinutes(`${$("f-edate").value}T${$("f-etime").value || "10:00"}`, minutesBetween(lastStart, now));
-      $("f-edate").value = end.slice(0, 10);
-      $("f-etime").value = end.slice(11, 16);
-    }
-    lastStart = now;
+    followStart();
+    if (id === "f-sdate") smart.base.date = $("f-sdate").value;
+    else smart.base.time = $("f-stime").value || smart.base.time;
+    told();
+    if (id === "f-sdate") refreshSheetArt();
   })
 );
+["f-edate", "f-etime"].forEach((id) =>
+  $(id).addEventListener("change", () => {
+    const len = minutesBetween(startStamp(), endStamp());
+    if (len > 0 && !$("f-allday").checked) smart.base.len = len;
+    told();
+  })
+);
+// (move the start to this day and/or time; the end keeps the length)
+function moveStart(date, time) {
+  if (date) $("f-sdate").value = date;
+  if (time) $("f-stime").value = time;
+  followStart();
+}
+function setLength(mins) {
+  const end = addMinutes(startStamp(), mins);
+  $("f-edate").value = end.slice(0, 10);
+  $("f-etime").value = end.slice(11, 16);
+}
+function setAllDay(on) {
+  if ($("f-allday").checked === on) return;
+  $("f-allday").checked = on;
+  if (!on) {
+    // back to a time: the last one picked (not the midnight an all-day card keeps)
+    if (!$("f-stime").value || $("f-stime").value === "00:00") $("f-stime").value = smart.base.time;
+    if ($("f-edate").value <= $("f-sdate").value) $("f-edate").value = $("f-sdate").value;
+    lastStart = startStamp();
+    setLength(smart.base.len);
+  } else {
+    if ($("f-edate").value < $("f-sdate").value) $("f-edate").value = $("f-sdate").value;
+    lastStart = startStamp();
+  }
+  showTimes();
+}
+function showTimes() {
+  const all = $("f-allday").checked;
+  $("f-stime").hidden = $("f-etime").hidden = all;
+  $("exact").classList.toggle("allday", all);
+}
+const TIMES = [["09:00", "Morning"], ["14:00", "Afternoon"], ["19:00", "Evening"]];
+const LENGTHS = [30, 60, 90, 120, 180];
+const lengthWords = (m) => (m < 60 ? `${m} min` : m === 90 ? "1½ hours" : m % 60 === 0 ? `${m / 60} hour${m === 60 ? "" : "s"}` : `${Math.floor(m / 60)} h ${m % 60} min`);
+// A day in words: "Today, Sunday 25 Oct", "Friday 30 Oct" (and its year when it isn't this one)
+function sayDay(d, long = true) {
+  if (!d) return "";
+  const name = `${long ? WD_LONG[weekday(d)] : WD[weekday(d)]} ${Number(d.slice(8))} ${MONTHS[Number(d.slice(5, 7)) - 1].slice(0, 3)}${d.slice(0, 4) !== today().slice(0, 4) ? ` ${d.slice(0, 4)}` : ""}`;
+  return d === today() ? `Today, ${name}` : d === addDays(today(), 1) ? `Tomorrow, ${name}` : name;
+}
+// The quick picks, showing which one is on
+function fillQuick() {
+  if (!editing) return;
+  const isDay = editing.kind === "day";
+  const date = isDay ? $("d-date").value : $("f-sdate").value;
+  const days = Array.from({ length: 7 }, (_, i) => addDays(today(), i));
+  // (a day further off, opened from the month, shows first so it's clear which day it is)
+  const list = date && !days.includes(date) ? [date, ...days] : days;
+  $("q-day").innerHTML = list
+    .map((d, i) => `<button type="button" data-date="${d}" aria-pressed="${d === date}"${d === date ? " data-keep" : ""} title="${sayDay(d)}">${d === today() ? "Today" : d === addDays(today(), 1) ? "Tomorrow" : `${WD[weekday(d)]} ${Number(d.slice(8))}${days.includes(d) ? "" : ` ${MONTHS[Number(d.slice(5, 7)) - 1].slice(0, 3)}`}`}</button>`)
+    .join("");
+  if (!isDay) {
+    const all = $("f-allday").checked;
+    const at = $("f-stime").value;
+    const soon = date === today() ? nextHalfHour() : "";
+    const times = [...(soon && !TIMES.some(([t]) => t === soon) ? [[soon, "Soon"]] : []), ...TIMES];
+    $("q-time").innerHTML =
+      times.map(([t, w]) => `<button type="button" data-time="${t}" aria-pressed="${!all && at === t}" title="${w}: ${t}">${w} <small>${t}</small></button>`).join("") +
+      `<button type="button" data-allday="1" data-keep aria-pressed="${all}" title="The whole day, no time">All day</button>`;
+    const len = all ? 0 : minutesBetween(startStamp(), endStamp());
+    $("q-len").innerHTML = LENGTHS.map((m) => `<button type="button" data-len="${m}" aria-pressed="${len === m}">${lengthWords(m)}</button>`).join("");
+  }
+  trimQuick();
+}
+// Quick picks that don't fit their row are left out (the exact boxes cover them): the far days first.
+// (never the one that's on, or All day)
+function trimQuick() {
+  for (const row of [$("q-day"), $("q-time"), $("q-len")]) {
+    const chips = [...row.children];
+    chips.forEach((c) => (c.hidden = false));
+    if (!row.clientWidth) continue;
+    for (let i = chips.length - 1; i >= 0 && row.scrollWidth > row.clientWidth + 1; i--) if (!chips[i].hasAttribute("data-keep")) chips[i].hidden = true;
+  }
+}
+$("q-day").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-date]");
+  if (!b || !editing || editing.ro) return;
+  smart.base.date = b.dataset.date;
+  if (editing.kind === "day") $("d-date").value = b.dataset.date;
+  else moveStart(b.dataset.date, null);
+  sfx("tap");
+  told();
+  refreshSheetArt();
+});
+$("q-time").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b || !editing || editing.ro) return;
+  if (b.dataset.allday) setAllDay(!$("f-allday").checked);
+  else {
+    smart.base.time = b.dataset.time;
+    if ($("f-allday").checked) {
+      $("f-stime").value = b.dataset.time;
+      setAllDay(false);
+    } else moveStart(null, b.dataset.time);
+  }
+  sfx("tap");
+  told();
+});
+$("q-len").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-len]");
+  if (!b || !editing || editing.ro) return;
+  smart.base.len = Number(b.dataset.len);
+  setAllDay(false);
+  setLength(smart.base.len);
+  sfx("tap");
+  told();
+});
 
+// ---- The smart box ----
+// The title as it will be saved: a new card's words without the day, time and place they named
+function cardTitle() {
+  const raw = $("f-title").value.trim();
+  return editing && editing.mode === "new" && !editing.ro ? smart.title.trim() || (smart.last.any ? "" : raw) : raw;
+}
+// What the words say fills the boxes, as you type. Only what the words changed since the last letter is put in,
+// so a quick pick made after typing stays until the words say something new about it.
+function applySmart() {
+  if (!editing || editing.mode !== "new" || editing.ro) return;
+  const r = parseQuick($("f-title").value, today());
+  const said = r.said || {};
+  const now = {
+    date: said.date ? r.date : "",
+    time: said.time ? r.start.slice(11, 16) : "",
+    len: said.minutes ? String(said.minutes) : "",
+    allDay: said.allDay ? "1" : "",
+    repeat: r.repeat ? JSON.stringify(r.repeat) : "",
+    place: r.location || "",
+  };
+  now.any = Object.values(now).some(Boolean);
+  const was = smart.last;
+  smart.last = now;
+  smart.title = r.title || "";
+  const changed = (k) => (was[k] || "") !== now[k];
+  if (editing.kind === "day") {
+    if (changed("date")) $("d-date").value = now.date || smart.base.date;
+    if (changed("repeat")) $("d-yearly").checked = Boolean(r.repeat && r.repeat.freq === "yearly");
+    if (changed("place")) $("d-location").value = now.place;
+  } else {
+    if (changed("date")) moveStart(now.date || smart.base.date, null);
+    if (changed("allDay")) setAllDay(Boolean(now.allDay));
+    if (changed("time") && !now.allDay) {
+      if ($("f-allday").checked) setAllDay(false);
+      moveStart(null, now.time || smart.base.time);
+    }
+    if (changed("len") && !$("f-allday").checked) setLength(Number(now.len) || smart.base.len);
+    if (changed("repeat")) {
+      // ("every Monday" starts on the next Monday; a plain "weekly" on the card's own weekday)
+      const rep = r.repeat && (r.repeat.freq === "weekly" && !r.repeat.byDay ? { freq: "weekly", byDay: [weekday($("f-sdate").value)] } : r.repeat);
+      fillRepeat(rep || null);
+      fillChips();
+    }
+    if (changed("place")) $("f-location").value = now.place;
+  }
+  told();
+  if (changed("repeat")) relayout();
+}
+$("f-title").addEventListener("input", () => {
+  if (editing && editing.mode === "new") applySmart();
+  else told();
+  $("art-title").textContent = cardTitle() || (editing && editing.kind === "day" ? presets().get($("d-preset").value).label : "");
+});
+// Enter saves (also from the other boxes: the form's own Save)
+$("f-title").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.isComposing) {
+    e.preventDefault();
+    form.requestSubmit();
+  }
+});
+// The icon for what it's about, beside the title, as you type (the same icon the card will wear: symbolOf)
+function updateIcon() {
+  if (!editing) return;
+  const NTp = window.NT && window.NT.presets;
+  if (!NTp) return;
+  const isDay = editing.kind === "day";
+  const sym = isDay ? presets().get($("d-preset").value).icon : symbolOf({ type: "event", ro: false, item: { title: cardTitle(), notes: $("f-notes").value, location: $("f-location").value } });
+  const words = isDay ? presets().get($("d-preset").value).label : SYMBOL_WORDS[sym] || "Note card";
+  const box = $("f-ico");
+  if (box.dataset.sym === sym) return;
+  box.dataset.sym = sym;
+  box.title = words;
+  box.innerHTML = NTp.icon(sym, "", words);
+}
+// The line under the box: what will be saved, in plain words ("Friday 30 Oct, 14:00–15:00 · 1 hour")
+function readBack() {
+  if (!editing) return;
+  const out = [];
+  const raw = $("f-title").value.trim();
+  const title = cardTitle();
+  if (editing.mode === "new" && !editing.ro && title && title !== raw) out.push(`“${title}”`);
+  if (editing.kind === "day") {
+    out.push(sayDay($("d-date").value) || "Pick a day");
+    if ($("d-yearly").checked) out.push("every year");
+  } else {
+    const s = startStamp();
+    const e = endStamp();
+    const sd = s.slice(0, 10);
+    const ed = e.slice(0, 10);
+    if (!sd) out.push("Pick a day");
+    else if ($("f-allday").checked) out.push(ed > sd ? `${sayDay(sd)} to ${sayDay(ed, false)}, all day` : `${sayDay(sd)}, all day`);
+    else if (e <= s) out.push(`${sayDay(sd)}, ${s.slice(11)} (the end is before the start: it will be 1 hour)`);
+    else if (ed === sd) out.push(`${sayDay(sd)}, ${s.slice(11)}–${e.slice(11)}`, lengthWords(minutesBetween(s, e)));
+    else out.push(`${sayDay(sd)} ${s.slice(11)} to ${sayDay(ed, false)} ${e.slice(11)}`);
+    const rep = sd ? readRepeat(s) : null;
+    if (rep) out.push(describeRepeat(rep).replace(/^E/, "e"));
+    const where = $("f-location").value.trim();
+    if (where) out.push(`at ${where}`);
+  }
+  $("quick-hint").textContent = out.join(" · ");
+}
+// More's button says what's set inside it, so nothing set there is out of sight
+function moreSummary() {
+  if (!editing) return;
+  const bits = [];
+  if (editing.kind === "day") {
+    if ($("d-location").value.trim()) bits.push(`At ${$("d-location").value.trim()}`);
+    if ($("f-notes").value.trim()) bits.push("Notes");
+  } else {
+    const rep = $("f-sdate").value ? readRepeat(startStamp()) : null;
+    if (rep) bits.push(describeRepeat(rep));
+    const rem = picked.reminders;
+    if (rem.length) bits.push(rem.length > 1 ? `${rem.length} reminders` : rem[0] === 0 ? "Reminder at the start" : `Reminder ${(REMINDERS.find(([m]) => m === rem[0]) || [0, ""])[1]} before`);
+    if ($("f-location").value.trim()) bits.push(`At ${$("f-location").value.trim()}`);
+    if ($("f-meet").checked) bits.push("Meet link");
+    if ($("f-notes").value.trim()) bits.push("Notes");
+  }
+  $("more-sum").textContent = bits.length ? bits.join(" · ") : editing.kind === "day" ? "Title style, theme, place, notes, artwork" : "Repeat, reminders, colour, place, notes, artwork";
+  $("more-sum").classList.toggle("set", bits.length > 0);
+}
+// (something changed: the quick picks, the line under the box, the icon and More's words follow)
+function told() {
+  fillQuick();
+  readBack();
+  updateIcon();
+  moreSummary();
+  // (a longer line under the box, or More's words, can need another layout)
+  const body = $("sheet").querySelector(".sheet-body");
+  if (!$("sheet").hidden && body.scrollHeight > body.clientHeight + 1) relayout();
+}
+
+function placeholder() {
+  const kind = editing.kind;
+  $("f-title").placeholder = editing.mode !== "new" ? (kind === "day" ? "Title" : "What") : fitWords($("f-title"), kind === "day" ? ["What day? Mum's birthday 3 Nov every year", "What day? Mum's birthday 3 Nov", "What day?"] : ["What and when? Mix review Friday 2pm 1h", "What and when? Mix review Fri 2pm", "What and when?"]);
+}
+// The longest of these words that fits in the box, whole (its example is never cut off at the side)
+let measurer = null;
+function fitWords(input, choices) {
+  const room = input.clientWidth - parseFloat(getComputedStyle(input).paddingLeft) - parseFloat(getComputedStyle(input).paddingRight) - 4;
+  if (!(room > 0)) return choices[0];
+  measurer = measurer || document.createElement("canvas").getContext("2d");
+  const cs = getComputedStyle(input);
+  measurer.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  return choices.find((t) => measurer.measureText(t).width <= room) || choices[choices.length - 1];
+}
+// ---- Note card or day card ----
 function setKind(kind) {
   editing.kind = kind;
-  document.querySelectorAll("#kinds button").forEach((b) => b.classList.toggle("on", b.dataset.kind === kind));
-  document.querySelectorAll(".group").forEach((g) => (g.hidden = g.dataset.for !== kind));
-  $("quick").hidden = !(editing.mode === "new" && kind === "event");
-  $("f-notes").placeholder = kind === "day" ? "About this day" : "What's it about?";
+  document.querySelectorAll("#kinds button").forEach((b) => {
+    b.classList.toggle("on", b.dataset.kind === kind);
+    b.setAttribute("aria-selected", String(b.dataset.kind === kind));
+  });
+  document.querySelectorAll("#sheet .group").forEach((g) => (g.hidden = g.dataset.for !== kind));
+  $("f-notes").placeholder = kind === "day" ? "About this day" : "Notes: what's it about?";
+  placeholder();
   $("sheet-title").textContent = `${editing.mode === "new" ? "New" : editing.ro ? "" : "Change"} ${kind === "day" ? "day card" : "note card"}`.trim().replace(/^./, (c) => c.toUpperCase());
+  // (a new card: the words typed so far are read again for this kind)
+  if (editing.mode === "new") {
+    smart.last = {};
+    applySmart();
+  }
+  told();
   refreshSheetArt();
+  layoutSheet(true);
 }
 $("kinds").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-kind]");
-  if (b && editing && editing.mode === "new") setKind(b.dataset.kind);
+  if (b && editing && editing.mode === "new" && b.dataset.kind !== editing.kind) {
+    sfx("tap");
+    setKind(b.dataset.kind);
+    $("f-title").focus();
+  }
 });
 // Presets for day cards
 $("d-preset").innerHTML = presets()
@@ -2190,39 +2502,16 @@ $("d-preset").addEventListener("change", () => {
   if (p.aesthetic) picked.aesthetic = p.aesthetic;
   if (p.theme) picked.theme = p.theme;
   if (p.info && !$("f-notes").value) $("f-notes").value = p.info;
+  if (editing && editing.mode === "new") applySmart();
   fillChips();
+  told();
   refreshSheetArt();
 });
-
-// Quick add: fill the form as you type
-$("quick-input").addEventListener("input", () => {
-  const r = parseQuick($("quick-input").value, today());
-  if (!r.found) {
-    $("quick-hint").textContent = "";
-    $("f-title").value = r.title || "";
-    return;
-  }
-  $("f-title").value = r.title;
-  fillWhen(r.start, r.end, r.allDay);
-  if (r.location) $("f-location").value = r.location;
-  if (r.repeat) {
-    $("f-repeat").value = "custom";
-    $("f-freq").value = r.repeat.freq;
-    $("f-interval").value = 1;
-    picked.days = r.repeat.byDay || (r.repeat.freq === "weekly" ? [weekday(r.date)] : []);
-    $("f-ends").value = "never";
-    $("custom").hidden = false;
-    syncCustom();
-    fillChips();
-  }
-  $("quick-hint").textContent = `${dayLabel(r.date)} · ${r.words.join(" · ")}`;
+$("d-date").addEventListener("change", () => {
+  smart.base.date = $("d-date").value;
+  told();
 });
-$("quick-input").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    form.requestSubmit();
-  }
-});
+$("d-yearly").addEventListener("change", told);
 
 function fillWhen(start, end, allDay) {
   $("f-allday").checked = !!allDay;
@@ -2230,7 +2519,7 @@ function fillWhen(start, end, allDay) {
   $("f-stime").value = start.slice(11, 16);
   $("f-edate").value = end.slice(0, 10);
   $("f-etime").value = allDay ? "10:00" : end.slice(11, 16);
-  $("f-stime").hidden = $("f-etime").hidden = !!allDay;
+  showTimes();
   lastStart = startStamp();
 }
 function fillRepeat(r) {
@@ -2259,37 +2548,177 @@ function readRepeat(start) {
   });
 }
 
+// ---- More, and fitting the window ----
+// The layouts, tried in order until the window holds it without scrolling (measured, so it holds at every size):
+//   ""          the essentials, one column           "split"  the essentials in two columns (a short, wide window)
+//   "side"      More beside the essentials           "below"  More under them (a phone upright)
+//   "side split" both, three columns                  "step"   More as a page of its own, with Back
+// auto: laid out because of something other than asking for More (opening, switching kind, the window changing):
+// More then stays open only if it fits with the essentials; a page of its own waits to be asked for.
+function layoutSheet(auto = false) {
+  const sheet = $("sheet");
+  if (sheet.hidden || !editing) return;
+  const body = sheet.querySelector(".sheet-body");
+  const roomBeside = innerWidth >= 900;
+  const tries = editing.more ? (roomBeside ? ["side", "side split", "step"] : ["below", "step"]) : ["", "split"];
+  moreParts().forEach((el) => el.removeAttribute("data-off"));
+  $("more-pages").hidden = true;
+  for (const t of tries) {
+    if (t === "step" && auto) {
+      editing.more = false;
+      return layoutSheet();
+    }
+    sheet.dataset.layout = t;
+    $("pane-more").hidden = !editing.more;
+    $("pane-main").hidden = t === "step";
+    trimQuick();
+    if (body.scrollHeight <= body.clientHeight + 1) break;
+  }
+  pageMore(body);
+  const open = Boolean(editing.more);
+  $("more-btn").setAttribute("aria-expanded", String(open));
+  $("more-word").textContent = open ? "Less" : "More";
+  placeholder();
+  if (open) refreshSheetArt();
+}
+// (laid out again by itself: a page of its own for More is fine while working in More, or already on it)
+// (where the last press or focus was: Safari doesn't focus a button when it's clicked, so focus alone can't tell)
+let workingIn = "";
+["pointerdown", "focusin"].forEach((type) =>
+  $("sheet").addEventListener(type, (e) => (workingIn = $("pane-more").contains(e.target) ? "more" : $("pane-main").contains(e.target) ? "main" : workingIn))
+);
+const relayout = () => layoutSheet(!($("sheet").dataset.layout === "step" || workingIn === "more"));
+// More on its own page and still too tall (a phone, a short window, with a custom repeat and phones to pick):
+// in pages of whole parts, ‹ 1 / 2 › in the bar at the top, never a part cut off or drawn smaller
+let morePages = [], morePage = 0;
+function moreParts() {
+  return [...$("pane-more").children].flatMap((el) => (el.classList.contains("group") ? (el.hidden ? [] : [...el.children]) : [el])).filter((el) => !el.hidden);
+}
+function pageMore(body) {
+  const parts = moreParts();
+  parts.forEach((el) => el.removeAttribute("data-off"));
+  morePages = [];
+  const step = $("sheet").dataset.layout === "step";
+  const fits = () => body.scrollHeight <= body.clientHeight + 1;
+  if (step && !fits()) {
+    $("more-pages").hidden = false; // (its room in the bar counts)
+    $("sheet").classList.add("paged");
+    for (let start = 0; start < parts.length; ) {
+      let end = start + 1;
+      for (; end <= parts.length; end++) {
+        parts.forEach((el, i) => el.toggleAttribute("data-off", i < start || i >= end));
+        if (!fits()) break;
+      }
+      end = Math.max(start + 1, end - 1);
+      morePages.push([start, end]);
+      start = end;
+    }
+  }
+  $("more-pages").hidden = morePages.length < 2;
+  $("sheet").classList.toggle("paged", morePages.length > 1);
+  if (morePages.length < 2) return parts.forEach((el) => el.removeAttribute("data-off"));
+  morePage = Math.min(morePage, morePages.length - 1);
+  showMorePage(parts);
+}
+function showMorePage(parts = moreParts()) {
+  const [a, b] = morePages[morePage];
+  parts.forEach((el, i) => el.toggleAttribute("data-off", i < a || i >= b));
+  $("more-page").textContent = `${morePage + 1} / ${morePages.length}`;
+  $("more-prev").disabled = morePage === 0;
+  $("more-next").disabled = morePage === morePages.length - 1;
+}
+$("more-prev").addEventListener("click", () => morePage > 0 && (morePage--, showMorePage(), sfx("tap")));
+$("more-next").addEventListener("click", () => morePage < morePages.length - 1 && (morePage++, showMorePage(), sfx("tap")));
+function setMore(on, remember = true) {
+  if (!editing) return;
+  editing.more = on;
+  morePage = 0;
+  workingIn = on ? "more" : "main";
+  if (remember) rememberMore(on);
+  layoutSheet();
+  sfx("tap");
+  if ($("sheet").dataset.layout === "step") $("more-back").focus();
+}
+$("more-btn").addEventListener("click", () => setMore(!editing.more));
+// (Back from More's own page: the essentials again; More stays wanted for a bigger window)
+$("more-back").addEventListener("click", () => {
+  setMore(false, false);
+  $("more-btn").focus();
+});
+let sheetResize = 0;
+addEventListener("resize", () => {
+  if ($("sheet").hidden) return;
+  cancelAnimationFrame(sheetResize);
+  sheetResize = requestAnimationFrame(() => relayout());
+});
+// (and when something inside grows after it was laid out: fonts arriving, the artwork's title style, the
+// phones list: only when it no longer fits, so this never goes round in circles)
+if (window.ResizeObserver) {
+  const grew = new ResizeObserver(() => {
+    const body = $("sheet").querySelector(".sheet-body");
+    if (!$("sheet").hidden && body.scrollHeight > body.clientHeight + 1) {
+      cancelAnimationFrame(sheetResize);
+      sheetResize = requestAnimationFrame(() => relayout());
+    }
+  });
+  grew.observe($("pane-main"));
+  grew.observe($("pane-more"));
+}
+
 function showSheet() {
+  workingIn = "";
   $("scrim").hidden = false;
   $("sheet").hidden = false;
+  layoutSheet(true);
   sfx("open");
 }
-function closeSheet() {
+// Closing a new card with something typed in it: no question, but it can come back (Undo in the message)
+let closedDraft = null;
+function typedSomething() {
+  return Boolean(editing && editing.mode === "new" && !editing.ro && ($("f-title").value.trim() || $("f-notes").value.trim() || $("f-location").value.trim() || $("d-location").value.trim()));
+}
+function closeSheet(done = false) {
+  const draft = !done && typedSomething() ? { editing, picked, art, smart } : null;
   $("sheet").hidden = true;
   $("scrim").hidden = true;
   editing = null;
+  closedDraft = draft;
+  if (draft)
+    toast(`${draft.editing.kind === "day" ? "Day card" : "Note card"} not saved`, () => {
+      if (closedDraft !== draft || editing) return;
+      ({ editing, picked, art, smart } = draft);
+      closedDraft = null;
+      showSheet();
+      setTimeout(() => $("f-title").focus(), 60);
+    });
 }
-$("sheet-close").addEventListener("click", closeSheet);
+$("sheet-close").addEventListener("click", () => closeSheet());
 $("scrim").addEventListener("click", () => {
   if ($("which").hidden) closeSheet();
 });
 
 function resetForm() {
   form.reset();
+  closedDraft = null;
   $("quick-hint").textContent = "";
   $("readonly").hidden = true;
   form.querySelectorAll("input, select, textarea, .chips button, .colors button, .wd button").forEach((el) => (el.disabled = false));
   $("save").hidden = false;
   $("actions").hidden = false;
   $("kinds").hidden = false;
+  $("sheet").classList.remove("is-edit", "is-ro");
+  $("f-ico").dataset.sym = "";
+  smart = { base: { date: "", time: "09:00", len: 60 }, last: {}, title: "" };
 }
 
 function openNew({ date = cursor, time, kind = "event", special } = {}) {
   resetForm();
-  editing = { mode: "new", kind };
+  editing = { mode: "new", kind, more: moreWanted() };
   picked = { reminders: [], color: "violet", days: [], aesthetic: "nebula", theme: "app" };
   art = { seed: randomSeed(), subject: "auto", salt: Math.random().toString(36).slice(2, 10), tempId: data.uid() };
-  const start = `${date}T${time || (date === today() ? nextHalfHour() : "09:00")}`;
+  const at = time || (date === today() ? nextHalfHour() : "09:00");
+  smart.base = { date, time: at, len: 60 };
+  const start = `${date}T${at}`;
   fillWhen(start, addMinutes(start, 60), false);
   fillRepeat(null);
   fillMeet(null);
@@ -2308,9 +2737,10 @@ function openNew({ date = cursor, time, kind = "event", special } = {}) {
   }
   fillChips();
   $("actions").hidden = true;
+  $("sheet").hidden = false; // (measured from here on)
   setKind(kind);
   showSheet();
-  setTimeout(() => (kind === "event" && !time ? $("quick-input") : $("f-title")).focus(), 60);
+  setTimeout(() => $("f-title").focus(), 60);
 }
 function nextHalfHour() {
   const n = localStamp();
@@ -2325,7 +2755,9 @@ function openExisting(type, id, date) {
   if (!it) return;
   resetForm();
   const ro = isAgent(id);
-  editing = { mode: "edit", kind: it.kind === "day" ? "day" : "event", item: it, date, ro };
+  // (More opens by itself when the card has something in it there, if there's room)
+  const filled = Boolean((it.kind === "day" ? it.info : it.body) || it.location || it.repeat || (it.reminders || []).length || it.meet);
+  editing = { mode: "edit", kind: it.kind === "day" ? "day" : "event", item: it, date, ro, more: moreWanted() || filled };
   picked = { reminders: [...(it.reminders || [])], phones: [...(it.phones || [])], color: it.color || "violet", days: [], aesthetic: it.aesthetic || "nebula", theme: it.theme || "app" };
   if (picked.reminders.length) void loadPhones();
   art = it.art ? { seed: it.art.seed >>> 0, subject: it.art.subject || "auto", salt: it.artSalt || "", tempId: it.id } : { seed: hash32(String(it.id)), subject: "auto", salt: it.artSalt || "", tempId: it.id };
@@ -2336,11 +2768,13 @@ function openExisting(type, id, date) {
     $("d-preset").value = it.preset || "custom";
     $("d-yearly").checked = it.repeat === "yearly";
     $("d-location").value = it.location || "";
+    smart.base.date = $("d-date").value;
   } else {
     // This time of it (for a repeating one, the one tapped)
     const length = minutesBetween(it.start, it.end);
     const start = it.repeat && date ? `${date}${it.start.slice(10)}` : it.start;
     editing.was = start;
+    smart.base = { date: start.slice(0, 10), time: it.allDay ? "09:00" : start.slice(11, 16), len: it.allDay ? 60 : length };
     fillWhen(start, addMinutes(start, length), it.allDay);
     fillRepeat(it.repeat);
     $("f-location").value = it.location || "";
@@ -2348,21 +2782,26 @@ function openExisting(type, id, date) {
   }
   fillChips();
   $("kinds").hidden = true;
+  $("sheet").classList.add("is-edit");
+  $("sheet").hidden = false;
   setKind(editing.kind);
-  if (ro) {
-    form.querySelectorAll("input, select, textarea, .chips button, .colors button, .wd button").forEach((el) => (el.disabled = true));
-    $("readonly").textContent = "Part of Nova Agent's plan. Change it in Quests, or ask Nova Agent.";
-    $("readonly").hidden = false;
-    $("save").hidden = true;
-    $("actions").hidden = true;
-  }
+  if (ro) readOnly("Part of Nova Agent's plan. Change it in Quests, or ask Nova Agent.");
   showSheet();
+}
+// Looked at, not changed (Nova Agent's plan, a studio booking): every box and pick switched off
+function readOnly(words) {
+  form.querySelectorAll("input, select, textarea, .chips button, .colors button, .wd button").forEach((el) => (el.disabled = true));
+  $("readonly").textContent = words;
+  $("readonly").hidden = false;
+  $("save").hidden = true;
+  $("actions").hidden = true;
+  $("sheet").classList.add("is-ro");
 }
 function openBooking(id) {
   const b = bookings.find((x) => String(x.id) === String(id));
   if (!b) return;
   resetForm();
-  editing = { mode: "edit", kind: "event", ro: true, booking: true };
+  editing = { mode: "edit", kind: "event", ro: true, booking: true, more: true };
   picked = { reminders: [], color: "violet", days: [], aesthetic: "nebula", theme: "app" };
   $("f-title").value = [b.session, b.name].filter(Boolean).join(" · ");
   const s = fromFeed(b.start);
@@ -2372,26 +2811,24 @@ function openBooking(id) {
   $("f-notes").value = [b.when, b.phone, b.email, b.price && `Price: ${b.price}`, ...(b.extra || []).map(([k, v]) => `${k}: ${v}`)].filter(Boolean).join("\n");
   fillChips();
   $("kinds").hidden = true;
+  $("sheet").classList.add("is-edit");
+  $("sheet").hidden = false;
   setKind("event");
   $("sheet-title").textContent = "Studio booking";
-  form.querySelectorAll("input, select, textarea, .chips button, .colors button, .wd button").forEach((el) => (el.disabled = true));
-  $("readonly").textContent = "A booking from the studio's bookings. It's read-only here.";
+  readOnly("A booking from the studio's bookings. It's read-only here.");
   // Its Google Calendar event, where it can be looked at in full
   if (/^https:\/\//.test(String(b.link || ""))) {
     const open = document.createElement("a");
     Object.assign(open, { href: b.link, target: "_blank", rel: "noopener", textContent: "Open in Google Calendar" });
     $("readonly").append(" ", open);
   }
-  $("readonly").hidden = false;
-  $("save").hidden = true;
-  $("actions").hidden = true;
   showSheet();
 }
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!editing || editing.ro) return;
-  const title = $("f-title").value.trim();
+  const title = cardTitle().slice(0, 120);
   if (editing.kind === "day") {
     const date = $("d-date").value;
     if (!date) return toast("Pick a date");
@@ -2400,7 +2837,7 @@ form.addEventListener("submit", async (e) => {
     const dateKept = editing.item && editing.item.repeat === "yearly" && $("d-yearly").checked ? `${editing.item.date.slice(0, 4)}${date.slice(4)}` : date;
     const before = editing.item ? { ...editing.item } : null;
     const saved = data.save({ ...base, kind: "day", title: title || p.title || p.label, date: dateKept, preset: $("d-preset").value, repeat: $("d-yearly").checked ? "yearly" : "none", info: $("f-notes").value, location: $("d-location").value.trim(), aesthetic: picked.aesthetic, theme: picked.theme, artSalt: art.salt });
-    closeSheet();
+    closeSheet(true);
     sfx("done");
     toast(before ? "Saved" : "Day card added", () => (before ? data.save(before) : data.remove(saved.id)));
     cursor = date;
@@ -2431,7 +2868,7 @@ form.addEventListener("submit", async (e) => {
   if (!fields.repeat) fields.exdates = [];
   if (editing.mode === "new") {
     const saved = data.save(fields);
-    closeSheet();
+    closeSheet(true);
     sfx("done");
     toast("Note card added", () => data.remove(saved.id));
     cursor = start.slice(0, 10);
@@ -2446,7 +2883,7 @@ form.addEventListener("submit", async (e) => {
   // (The rules: edits.js)
   const which = (await whichTimes(it, was || it.start, fields, () => askWhich())) ?? null;
   if (it.repeat && !ruleChanged && !which) return;
-  closeSheet();
+  closeSheet(true);
   sfx("done");
   // A repeating one whose rule was changed: the new rule is for the whole series
   if (ruleChanged) {
@@ -2464,7 +2901,7 @@ $("delete").addEventListener("click", () => {
   if (!editing || !editing.item) return;
   const it = editing.item;
   const date = editing.date;
-  closeSheet();
+  closeSheet(true);
   void removeCard(it, date);
 });
 // Delete a note card or day card (a repeating one asks which), with Undo (also the right-click menu's)
@@ -2486,7 +2923,7 @@ $("duplicate").addEventListener("click", () => {
   if (!editing || !editing.item) return;
   const it = editing.item;
   const kind = editing.kind;
-  const values = { title: $("f-title").value, notes: $("f-notes").value, start: startStamp(), end: `${$("f-edate").value}T${$("f-etime").value}`, allDay: $("f-allday").checked, location: $("f-location").value };
+  const values = { title: $("f-title").value, notes: $("f-notes").value, start: startStamp(), end: `${$("f-edate").value}T${$("f-etime").value}`, allDay: $("f-allday").checked, location: $("f-location").value, dlocation: $("d-location").value };
   openNew({ date: kind === "day" ? $("d-date").value : values.start.slice(0, 10), kind });
   $("f-title").value = `${values.title} (copy)`;
   $("f-notes").value = values.notes;
@@ -2497,15 +2934,20 @@ $("duplicate").addEventListener("click", () => {
     fillRepeat(it.repeat);
     fillChips();
     art.subject = (it.art && it.art.subject) || "auto";
-    refreshSheetArt();
   } else {
     $("d-preset").value = it.preset || "custom";
     $("d-yearly").checked = it.repeat === "yearly";
+    $("d-location").value = values.dlocation;
     picked.aesthetic = it.aesthetic || "nebula";
     picked.theme = it.theme || "app";
     fillChips();
-    refreshSheetArt();
   }
+  // (the copy's title is taken as it is: its words aren't read for a day and time again until it's typed in)
+  smart.title = $("f-title").value;
+  smart.last = {};
+  told();
+  refreshSheetArt();
+  layoutSheet(true);
 });
 
 // ---- Backup: download everything, or bring a backup in (this Calendar's or the old one's) ----
