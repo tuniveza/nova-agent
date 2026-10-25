@@ -723,7 +723,9 @@
       <div id="clients-browse">
         <div class="cl-tools">
           <input id="clients-search" type="search" placeholder="Search by name, email or phone" aria-label="Search clients" autocomplete="off" enterkeyhint="search">
-          <div class="chips wrap" role="tablist" id="clients-chips" aria-label="Show">
+          <!-- (these two rows of chips wrap onto more rows themselves; /shared/rules.js's last-resort shrinking leaves
+               them alone: it measured some mid-change and left them at 9px beside 11px ones, 25 Oct 2026) -->
+          <div class="chips wrap" role="tablist" id="clients-chips" aria-label="Show" data-rules="off">
             <button class="chip active" data-filter="all" type="button" aria-pressed="true">All</button>
             <button class="chip" data-filter="owing" type="button" aria-pressed="false">Owes money</button>
             <button class="chip" data-filter="lapsed" type="button" aria-pressed="false">Not booked since</button>
@@ -734,7 +736,7 @@
             <input id="clients-since" type="month" aria-label="Month">
           </label>
         </div>
-        <div class="settings-row cl-actions">
+        <div class="settings-row cl-actions" data-rules="off">
           <button id="clients-add" class="chip" type="button" aria-expanded="false">Add a client</button>
           <button id="clients-contacts-open" class="chip" type="button" aria-expanded="false" aria-controls="clients-contacts">Import from contacts</button>
           <button id="clients-sync" class="chip admin-only" type="button" hidden>Sync now</button>

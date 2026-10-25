@@ -313,6 +313,8 @@
     $("dash-title").replaceChildren(P.icon(g.name), el("span", "", g.name));
     cache.clear();
     const items = g.items.filter((i) => i.at);
+    // (how many tiles, so the grid is no wider than they need and sits in the middle: dash.css)
+    grid.style.setProperty("--n", String(Math.max(1, items.length)));
     grid.replaceChildren(...(items.length ? items.map((it) => tile({ ...it, name: it.at === "calendar" ? "Bookings" : it.name }, P)) : [el("p", "dash-empty", "Everything in " + g.name + " is along the top.")]));
   }
 

@@ -12,6 +12,15 @@
 .dk-card { display: grid; gap: 6px; min-width: 0; }
 .dk-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin-bottom: 4px; }
 .dk-head .card-title { margin: 0; }
+/* (centred, the default: the card's name in its middle and its state at the right edge, so the state no longer
+   pushes the name off-centre; each label ends at the middle and its value starts there, and a note sits under
+   its value. 25 Oct 2026, the user: "these all need centering properly") */
+html:not([data-align="left"]) .dk-head { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+html:not([data-align="left"]) .dk-head > .card-title { grid-column: 2; }
+html:not([data-align="left"]) .dk-head > .dk-state { grid-column: 3; justify-self: end; }
+html:not([data-align="left"]) .dk-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; }
+html:not([data-align="left"]) .dk-row > .dk-label { text-align: right !important; }
+html:not([data-align="left"]) .dk-row > :is(.dk-value, .dk-note) { text-align: left !important; }
 .dk-state { font-size: 14px; font-weight: 600; color: var(--bright); white-space: nowrap; }
 .dk-state.off { color: var(--muted); }
 .dk-sub { margin: 10px 0 2px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
@@ -32,6 +41,7 @@
 .dk-actions .btn { min-height: 44px; }
 
 @media (max-width: 480px) {
-  .dk-row { grid-template-columns: minmax(0, 1fr); }
+  html .dk-row { grid-template-columns: minmax(0, 1fr); }
+  html .dk-row > * { text-align: center !important; }
   .dk-note, .dk-meter .dk-bar { grid-column: 1; }
 }

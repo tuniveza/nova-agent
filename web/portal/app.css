@@ -1249,10 +1249,20 @@ html.embed .listening-bar { top: 0; }
 .cl-actions { margin-bottom: 12px; }
 .cl-form { display: grid; gap: 12px; margin: 0 0 14px; min-width: 0; }
 .cl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; min-width: 0; }
+/* (Name, Email and Phone share the form's width, three across: the Notes box under them spans every column, so
+   auto-fit kept all eight 220px columns and the three boxes sat at the left. One under the other when the form
+   is narrow. 25 Oct 2026, the user: "these all need centering properly") */
+.cl-form { container-type: inline-size; }
+.cl-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@container (max-width: 560px) { .cl-grid { grid-template-columns: minmax(0, 1fr); } }
 .cl-field { display: grid; gap: 4px; min-width: 0; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
 .cl-field textarea { resize: vertical; min-height: 64px; }
 .cl-wide { grid-column: 1 / -1; }
 .cl-steps { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; color: var(--text); font-size: 14.5px; line-height: 1.45; }
+/* (centred: each step's number beside its words, not left behind at the card's edge, 25 Oct 2026) */
+html:not([data-align="left"]) .cl-steps { padding-left: 0; list-style-position: inside; }
+html:not([data-align="left"]) .cl-form .cl-field:has(> input[type="file"]) { justify-items: center; }
+html:not([data-align="left"]) .cl-form input[type="file"] { width: min(100%, 460px); }
 .cl-small { margin: 0; font-size: 12.5px; }
 .cl-error { margin: 0; }
 .cl-error:empty { display: none; }
@@ -1305,6 +1315,10 @@ html.embed .listening-bar { top: 0; }
 /* One-to-one emails, under the campaigns */
 .cp-subhead { display: flex; align-items: center; gap: 10px; margin: 26px 0 6px; min-width: 0; }
 .cp-subhead .group-head { flex: 1; margin: 0; min-width: 0; }
+/* (centred: the heading keeps its line right across, as the other headings do, and its button sits in the
+   middle under it, as the section's own button sits under its name; it was alone at the far edge. 25 Oct 2026) */
+html:not([data-align="left"]) .cp-subhead { justify-content: center; flex-wrap: wrap; row-gap: 8px; }
+html:not([data-align="left"]) .cp-subhead > .group-head { flex: 1 1 100%; margin-inline: 0 !important; }
 .cp-subhead .chip { flex: none; }
 .cp-tick { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: var(--text); min-width: 0; }
 .cp-tick input { margin-top: 3px; flex: none; width: 18px; height: 18px; accent-color: var(--accent, currentColor); }
@@ -1313,6 +1327,14 @@ html.embed .listening-bar { top: 0; }
 .cp-optout input { min-width: 0; width: 100%; color: var(--bright); }
 .cp-card .card-title { overflow-wrap: anywhere; }
 .cp-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px 14px; margin: 12px 0 0; }
+/* (each label beside its own value, the pair on one row: laid out as one long row of cells, a label could end
+   up three cells from its value, "Owed … £325.50". Centred (the default): the labels end at the card's
+   middle and the values start there, so every pair reads across the middle. 25 Oct 2026, the user: "these
+   all need centering properly") */
+.cp-facts { grid-template-columns: minmax(0, auto) minmax(0, 1fr); align-items: baseline; gap: 6px 14px; }
+html:not([data-align="left"]) .cp-facts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+html:not([data-align="left"]) .cp-facts > dt { text-align: right !important; }
+html:not([data-align="left"]) .cp-facts > dd { text-align: left !important; }
 .cp-facts dt { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted); }
 .cp-facts dd { margin: 2px 0 0; color: var(--bright); font-size: 14.5px; overflow-wrap: anywhere; }
 /* The email as people will get it: its own sandboxed page, scrolled inside, never wider than the card */

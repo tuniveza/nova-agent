@@ -66,3 +66,9 @@ button.sc-tile:hover, button.sc-tile:focus-visible { border-color: var(--line-st
 .sc-tools .card { margin: 0; display: grid; gap: 8px; align-content: start; }
 .sc-tools p { margin: 0; font-size: 14px; color: var(--text); }
 .sc-tools a.btn { text-decoration: none; justify-self: start; }
+
+/* Ideas, trends and ads: both cards alike, their words in the middle and their button centred under them at
+   its own size (one stretched across its card while the other sat at the left, 25 Oct 2026, the user: "these
+   all need centering properly") */
+#social-tools > .card { display: flex; flex-direction: column; align-items: center; }
+#social-tools > .card > .btn { width: auto; min-width: min(100%, 240px); margin-top: auto; justify-content: center; }
