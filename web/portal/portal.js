@@ -612,26 +612,36 @@
           const d = frame.contentDocument;
           if (!d || !d.body || d.documentElement.classList.contains("os-frame")) return;
           d.documentElement.classList.add("os-frame");
-          const style = d.createElement("style");
           // (the whole page is the box: its header, with the Admin pages' own tabs, stays on every page
           // when there's room, and is on the first page only on a short screen)
-          style.textContent = "html.os-frame, html.os-frame body { height: 100%; overflow: hidden; } html.os-frame body { margin: 0; box-sizing: border-box; } html.os-frame body > main { padding-bottom: 12px; }";
+          // (a constructed sheet, not a <style>: the site's rules (CSP) block a written-in style, so the box's
+          // sizing never applied and every load said so in the console, 25 Oct 2026)
+          const sheet = new frame.contentWindow.CSSStyleSheet();
+          sheet.replaceSync("html.os-frame, html.os-frame body { height: 100%; overflow: hidden; } html.os-frame body { margin: 0; box-sizing: border-box; } html.os-frame body > main { padding-bottom: 12px; }");
+          d.adoptedStyleSheets = [...d.adoptedStyleSheets, sheet];
           const head = d.querySelector("body > header");
           if (head) head.setAttribute("data-os-pin", "");
           const css = Object.assign(d.createElement("link"), { rel: "stylesheet", href: "/shared/onescreen.css" });
           const js = Object.assign(d.createElement("script"), { src: "/shared/onescreen.js" });
           js.addEventListener("load", () => frame.contentWindow.NovaOneScreen && frame.contentWindow.NovaOneScreen.adopt(d.body));
-          d.head.append(style, css);
+          d.head.append(css);
           d.body.append(js);
         } catch (err) {
           // (another site's page: left as it is)
         }
       });
     }
-    if (frame.dataset.page !== page) {
+    // (and loaded for sure: when its first load was cut short, as when Nova's service worker takes over just after
+    // a deploy, the frame stayed an empty page for good, a black box under the Admin pages' tabs. Opening it again,
+    // or a moment after it should have loaded, it's loaded again if it's still empty. 25 Oct 2026, the user: "DO YOU
+    // NOT SEE HOW THERE IS BLANK AREA'S HERE")
+    const blank = () => { try { const w = frame.contentWindow; return !w || w.location.href === "about:blank"; } catch (err) { return false; } };
+    if (frame.dataset.page !== page || blank()) {
       frame.dataset.page = page;
       frame.src = page;
     }
+    clearTimeout(frame._again);
+    frame._again = setTimeout(() => { if (frame.isConnected && frame.dataset.page === page && blank()) frame.src = page; }, 2500);
   }
   for (const chip of document.querySelectorAll("[data-admin]")) {
     chip.addEventListener("click", () => {
