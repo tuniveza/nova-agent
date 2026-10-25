@@ -161,8 +161,12 @@ html[data-form^="phone"] #main.inbox-all > .view > .hint { display: none; }
    an enquiry opens in place (▾ or a tap), a conversation opens on a tap ---- */
 #enquiry-list, #chat-list { gap: 5px; }
 #enquiry-list > .card, #chat-list > .card, html[data-align] #enquiry-list.list > .card, html[data-align] #chat-list.list > .card { padding: 4px 6px 4px 8px; border-radius: 11px; box-shadow: none; }
-#enquiry-list > .card:not(.open) > :not(.ib-line), #chat-list > .card > :not(.ib-line) { display: none; }
-#enquiry-list > .card > .ib-line, #chat-list > .card > .ib-line { display: flex; }
+/* (only a chat in the list is one line: a chat opened in place, its mark, its messages and the reply box,
+   is shown whole. It was drawn as three empty slivers, 25 Oct 2026) */
+#enquiry-list > .card:not(.open) > :not(.ib-line), #chat-list > .card:where(.tappable) > :not(.ib-line) { display: none; }
+/* (:where: no stronger than before, so a narrow pane's two-line rows below still win) */
+#enquiry-list > .card > .ib-line, #chat-list > .card:where(.tappable) > .ib-line { display: flex; }
+#chat-list > .card:not(.tappable), html[data-align] #chat-list.list > .card:not(.tappable) { padding: 10px 12px; }
 #enquiry-list > .card.open, html[data-align] #enquiry-list.list > .card.open { padding: 8px 12px 10px; }
 #enquiry-list > .card.open > .ib-line { margin-bottom: 4px; }
 .ib-line { align-items: center; gap: 8px; min-height: 28px; text-align: left; cursor: pointer; }
@@ -180,11 +184,31 @@ html .ib-line .al-title { flex: 1; min-width: 0; text-align: left !important; di
 
 /* ---- The Inbox panes, compact: small titles, the page bar in the title row, small filter chips ---- */
 #main.inbox-all > .view > .view-head { min-height: 30px; margin-bottom: 6px; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 8px; }
-/* (room for the page bar at the end of the title's line; the filters go on the line under it) */
-#main.inbox-all > .view > .view-head::after { content: ""; order: 1; flex: 0 0 112px; }
+/* (room for the page bar at the end of the title's line; the filters go on the line under it)
+   (the room is kept by the title row's own padding, not a spacer beside the title: in a narrow pane the
+   spacer wrapped onto the next line and the page bar sat over the title or Delete all, 25 Oct 2026, the
+   user: "there shouldn't be any … oddly shaped uis". The filters' line takes the full width back) */
+#main.inbox-all > .view > .view-head { --ib-bar: 124px; padding-inline-end: var(--ib-bar); }
+/* (a button beside the title keeps its size and goes to the next line when there's no room: squeezed, its
+   words ran under the page bar, "All conversations" on a tablet, 25 Oct 2026) */
+#main.inbox-all > .view > .view-head > :is(button, .chip) { flex-shrink: 0; }
+#main.inbox-all > .view > .view-head::after { content: none; }
+#main.inbox-all > .view > .view-head:has(> .chips)::after { content: ""; order: 1; flex: 0 0 100%; height: 0; }
+#main.inbox-all > .view > .view-head > .chips { max-width: calc(100% + var(--ib-bar)); margin-inline-end: calc(-1 * var(--ib-bar)); margin-top: -4px; }
+/* (centred, or to the right, as Options say: said here, as the filters reaching into that room hide the
+   spare room the centring looks for) */
+html[data-align="center"] #main.inbox-all > .view > .view-head { justify-content: center; }
+html[data-align="right"] #main.inbox-all > .view > .view-head { justify-content: flex-end; }
 #main.inbox-all > .view > .view-head > .chips { order: 2; }
 html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { margin: 0 !important; font-size: 17px; line-height: 30px; }
 #main.inbox-all > .view[data-os-paged] > .os-pager { top: 8px; right: 10px; bottom: auto; left: auto; transform: none; padding: 2px; }
+/* (the page bar's room at the top of every page: a page whose title row is on the first page only (too tall
+   to keep on each) starts under the bar, not beside it. An enquiry opened there had its ▾ under the bar, so
+   it couldn't be closed, 25 Oct 2026, the user: "make sure every button inside nova portal works". The room
+   is in the pane's top, and the title row reaches back up into it, so the first page looks as before and the
+   pages are cut to the room there really is) */
+html #main.inbox-all > .view.nova-pane:not([hidden]) { padding-top: 40px; }
+html #main.inbox-all > .view.nova-pane > .view-head { margin-top: -30px; }
 html #main.inbox-all > .view[data-os-paged] > .os-pager button { width: 30px; height: 24px; min-width: 0; min-height: 0; font-size: 15px; }
 #main.inbox-all > .view[data-os-paged] > .os-pager .os-count { min-width: 38px; font-size: 10px; }
 #main.inbox-all .chips .chip { min-height: 26px; height: 26px; padding: 0 9px; font-size: 9.5px; letter-spacing: 0.1em; }
@@ -195,6 +219,20 @@ html #main.inbox-all > .view[data-os-paged] > .os-pager button { width: 30px; he
 #main.inbox-all #enq-tools { gap: 6px; margin-bottom: 6px; }
 #main.inbox-all #enq-tools input { height: 32px; min-height: 32px; padding: 0 12px; font-size: 13px; }
 #main.inbox-all #enq-tools .btn { height: 32px; min-height: 32px; font-size: 10px; }
+/* (the saved replies' form as compact as the search above it, so in a small pane it stays on the page with
+   the list instead of a page of its own after a lone line, 25 Oct 2026) */
+#main.inbox-all #saved-panel { gap: 8px; padding: 10px 12px; }
+#main.inbox-all .ib-saved-form :is(input, textarea) { padding: 7px 12px; font-size: 13px; }
+#main.inbox-all .ib-saved-form textarea { min-height: 0; height: 72px; }
+#main.inbox-all .ib-saved-form .btn { height: 30px; min-height: 30px; font-size: 10px; }
+/* (an enquiry open in a pane: its buttons and its sort row the size of the pane's other controls, so a small
+   pane shows them together rather than each on a page of its own under a wide empty space, 25 Oct 2026) */
+#main.inbox-all #enquiry-list > .card.open .actions { gap: 6px; }
+#main.inbox-all #enquiry-list > .card.open .actions .btn { height: 32px; min-height: 32px; padding: 0 14px; font-size: 10px; }
+#main.inbox-all #enquiry-list > .card.open .ib-sort { gap: 6px; margin-top: 8px; padding-top: 8px; }
+#main.inbox-all #enquiry-list > .card.open .ib-places .chip { min-height: 28px; height: 28px; }
+#main.inbox-all #enquiry-list > .card.open :is(.ib-pick, .ib-label) { padding: 5px 10px; font-size: 13px; }
+#main.inbox-all #enquiry-list > .card.open .ib-sort .btn { height: 30px; min-height: 30px; font-size: 10px; }
 html #main.inbox-all > .view > .hint { text-align: left; }
 html #main.inbox-all #view-alerts .settings-row { justify-content: flex-start; }
 #main.inbox-all .it-tools { min-height: 24px; height: 24px; padding: 0 9px; font-size: 9px; letter-spacing: 0.1em; }
@@ -214,7 +252,8 @@ html[data-form^="phone"] #main.inbox-all .ib-filters { display: inline-flex; ord
 html[data-form^="phone"] #main.inbox-all .ib-filters[aria-expanded="true"] { border-color: rgba(var(--hi-rgb), 0.6); color: #fff; }
 html[data-form^="phone"] #main.inbox-all > .view:not(.ib-tools-open) :is(#enq-chips, #enq-tools, #saved-panel, .ib-chat-chips, .settings-row, #alerts-clear) { display: none; }
 html[data-form^="phone"] #main.inbox-all > .view > .hint { display: none; }
-html[data-form^="phone"] #main.inbox-all > .view > .view-head::after { flex-basis: 100px; }
+html[data-form^="phone"] #main.inbox-all > .view > .view-head { --ib-bar: 100px; }
+html[data-form^="phone"] #main.inbox-all > .view:not(.ib-tools-open) > .view-head::after { content: none; }
 @media (max-width: 640px) {
   #main.inbox-all > .view > .view-head { min-height: 26px; margin-bottom: 4px; }
   html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 15px; line-height: 26px; }
@@ -229,10 +268,14 @@ html[data-form^="phone"] #main.inbox-all > .view > .view-head::after { flex-basi
   html .group-strip .gs-tab { height: 26px; min-height: 0; }
   html .group-strip :is(.gs-act, .gs-more) { height: 24px; min-height: 0; }
   html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 13px; line-height: 24px; }
-  #main.inbox-all > .view > .view-head { min-height: 24px; margin-bottom: 2px; }
-  #main.inbox-all > .view > .view-head::after { flex-basis: 64px; }
+  /* (as tall as the page bar beside it, so the line under the title starts below the bar, not under it) */
+  #main.inbox-all > .view > .view-head { min-height: 30px; margin-bottom: 2px; }
+  #main.inbox-all > .view > .view-head { --ib-bar: 84px; }
+  #main.inbox-all > .view:not(.ib-tools-open) > .view-head::after { content: none; }
   #main.inbox-all > .view[data-os-paged] > .os-pager { top: 3px; right: 4px; }
   #main.inbox-all > .view[data-os-paged] > .os-pager .os-count { display: none; }
+  html #main.inbox-all > .view.nova-pane:not([hidden]) { padding-top: 37px; }
+  html #main.inbox-all > .view.nova-pane > .view-head { margin-top: -32px; }
   #main.inbox-all .inbox-today { margin-bottom: 4px; }
 }
 /* (a narrow pane, whatever the screen: its title smaller so it clears the page bar, and each row's
@@ -240,6 +283,11 @@ html[data-form^="phone"] #main.inbox-all > .view > .view-head::after { flex-basi
 #main.inbox-all > .view:not([hidden]) { container-type: inline-size; }
 @container (max-width: 360px) {
   html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 14px; }
+}
+/* (a narrow pane: the page bar without its count, so the title keeps its line) */
+@container (max-width: 340px) {
+  #main.inbox-all > .view > .view-head { --ib-bar: 84px; }
+  #main.inbox-all > .view[data-os-paged] > .os-pager .os-count { display: none; }
 }
 @container (max-width: 280px) {
   html.embed #main.inbox-all > .view > .view-head > h2, html:not(.embed) #main.inbox-all > .view > .view-head > h2 { font-size: 11.5px; }
@@ -293,6 +341,9 @@ html.embed #main > .view[data-tui] > .view-head > h2, html:not(.embed) #main > .
 }
 html #main > .view[data-tui] > .view-head > h2::before { content: "▌"; }
 #main > .view[data-tui] > .view-head::after { flex-basis: 74px; }
+#main.inbox-all > .view[data-tui] > .view-head { --ib-bar: 86px; }
+html #main.inbox-all > .view.nova-pane[data-tui]:not([hidden]) { padding-top: 21px; }
+html #main.inbox-all > .view.nova-pane[data-tui] > .view-head { margin-top: -18px; }
 html #main > .view[data-tui][data-os-paged] > .os-pager { top: 2px; right: 4px; bottom: auto; left: auto; transform: none; padding: 0; gap: 0; border-radius: 2px; background: rgb(6 4 14 / .9); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
 html #main > .view[data-tui][data-os-paged] > .os-pager button { width: 20px; height: 17px; min-width: 0; min-height: 0; border-radius: 2px; border: 0; background: none; font: 700 13px/1 var(--f-mono, monospace); }
 html #main > .view[data-tui][data-os-paged] > .os-pager .os-count { min-width: 30px; font-size: 9.5px; }

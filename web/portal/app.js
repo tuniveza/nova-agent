@@ -380,6 +380,9 @@
     }).observe(main, { childList: true });
     if (window.NovaForm) window.NovaForm.on(soon);
   }
+  // Something just opened in place (an enquiry, an alert, the saved replies) is turned to, when the pane
+  // turns pages: it lands on the next page otherwise, and the tap looked as if it did nothing (25 Oct 2026)
+  const turnTo = (node) => node && window.NovaOneScreen && window.NovaOneScreen.reveal && requestAnimationFrame(() => window.NovaOneScreen.reveal(node));
   function enter(node) {
     node.classList.remove("view-enter");
     if (calm()) return;
@@ -781,7 +784,8 @@
     // On a phone an enquiry is one line (what, who, when) until it's tapped
     card.addEventListener("click", (e) => {
       if (e.target.closest("a, button, select, input, label")) return;
-      card.classList.toggle("open");
+      if (card.classList.toggle("open")) turnTo(card.querySelector(".card-top"));
+      more.setAttribute("aria-expanded", String(card.classList.contains("open")));
     });
     // (Inbox's dashboard, 22 Oct 2026: one line each, its state, who and what, how long ago; a tap opens
     // the whole card in place, like Alerts)
@@ -793,7 +797,11 @@
     more.type = "button";
     more.setAttribute("aria-label", "Open this enquiry: " + (q.subject || q.name));
     more.setAttribute("aria-expanded", "false");
-    more.addEventListener("click", () => more.setAttribute("aria-expanded", String(card.classList.toggle("open"))));
+    more.addEventListener("click", () => {
+      const opened = card.classList.toggle("open");
+      more.setAttribute("aria-expanded", String(opened));
+      if (opened) turnTo(card.querySelector(".card-top"));
+    });
     line.append(el("span", "ib-state ib-" + (q.status || "done"), state), el("span", "al-title", [q.name, q.subject].filter(Boolean).join(" · ") || "Enquiry"), agoText, more);
     line.title = (q.subject || "Enquiry") + " · " + q.name;
     card.append(line);
@@ -888,8 +896,11 @@
     const saveLabel = () => label.value.trim() !== (q.label || "") && sortEnquiry(q, { label: label.value.trim() }, label.value.trim() ? "Labelled “" + label.value.trim() + "”" : "Label cleared");
     label.addEventListener("keydown", (e) => e.key === "Enter" && (e.preventDefault(), label.blur()));
     label.addEventListener("change", saveLabel);
-    row.appendChild(label);
-    row.appendChild(button("Spam", "btn small ghost", () => sortEnquiry(q, { state: "spam" }, SORT_SAID.spam)));
+    // (the label and Spam together, so they wrap as a pair: Spam was left alone on a line of its own,
+    // 25 Oct 2026, the user: "there shouldn't be any … oddly shaped uis")
+    const end = el("div", "ib-sort-end");
+    end.append(label, button("Spam", "btn small ghost", () => sortEnquiry(q, { state: "spam" }, SORT_SAID.spam)));
+    row.appendChild(end);
     return row;
   }
 
@@ -972,8 +983,34 @@
     $("saved-panel").hidden = !open;
     $("saved-open").setAttribute("aria-expanded", String(open));
     if (open) loadSaved(true);
+    if (open) turnTo($("saved-panel"));
   });
   $("saved-cancel").addEventListener("click", resetSavedForm);
+  // The search box's words, shorter when the box is too narrow for them all: a box's words can't wrap, and
+  // they were cut at "…message or" in a narrow pane (25 Oct 2026, the user: "there shouldn't be any … oddly
+  // shaped uis"). Its label for screen readers keeps the whole of it.
+  (() => {
+    const box = $("enq-search");
+    const words = [box.placeholder, "Search enquiries", "Search"];
+    const pen = document.createElement("canvas").getContext("2d");
+    const fit = () => {
+      if (!box.clientWidth || !pen) return;
+      const ps = getComputedStyle(box, "::placeholder");
+      const cs = getComputedStyle(box);
+      pen.font = `${ps.fontStyle} ${ps.fontWeight} ${ps.fontSize} ${ps.fontFamily}`;
+      if ("letterSpacing" in pen) pen.letterSpacing = ps.letterSpacing === "normal" ? "0px" : ps.letterSpacing;
+      const room = box.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0) - 6;
+      const said = words.find((w) => pen.measureText(w).width <= room) || words[words.length - 1];
+      if (box.placeholder !== said) box.placeholder = said;
+    };
+    if (window.ResizeObserver) new ResizeObserver(fit).observe(box);
+  })();
+  // Close: as pressing Saved replies again, and back to the page with that button
+  $("saved-close").addEventListener("click", () => {
+    resetSavedForm();
+    if (!$("saved-panel").hidden) $("saved-open").click();
+    turnTo($("saved-open"));
+  });
   $("saved-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const save = $("saved-save");
@@ -3415,8 +3452,12 @@
       $("sheet-email").href =
         "mailto:" + encodeURIComponent(sheetEnquiry.email) + "?subject=" + encodeURIComponent("Booking your session at Novacane") + "&body=" + encodeURIComponent(body);
       $("sheet-result").hidden = false;
+      // (on a small screen the link is on the sheet's next page: turned to, or Make link looked as if it did
+      // nothing, 25 Oct 2026)
+      turnTo($("sheet-result"));
     } catch (err) {
       $("sheet-error").textContent = err.message;
+      turnTo($("sheet-error"));
     }
   });
 
@@ -4595,6 +4636,7 @@
       const opened = card.classList.toggle("open");
       more.setAttribute("aria-expanded", String(opened));
       more.setAttribute("aria-label", (opened ? "Close this alert: " : "Open this alert: ") + n.title);
+      if (opened) turnTo(top);
     });
     card.append(line);
     // Then every detail (coloured), and how many phones it reached
@@ -4767,13 +4809,19 @@
 
   // ===== Ask NovaBot =====
 
-  function addBubble(text, me) {
+  // Each question and its answer together, the newest first, just under the box to write in (25 Oct 2026,
+  // the user: "make sure every button inside nova portal works"): with the newest last, under the box, once
+  // there was more than fits, the answer and the box to write in were on different pages. Now the first page
+  // always has the box and the newest answer; older ones are on the pages after it.
+  function addBubble(text, me, turn) {
     const bubble = el("div", "bubble" + (me ? " me" : ""));
     linkify(bubble, text);
     // NovaBot's answer arriving: a soft two-note chime (not for "is typing…")
     if (!me && !/typing…$/.test(text) && window.NovaSfx) window.NovaSfx.play("message");
-    $("bot-messages").appendChild(bubble);
-    bubble.scrollIntoView({ block: "end", behavior: "smooth" });
+    turn.appendChild(bubble);
+    // (in pages: the page with the box to write in, turned to a frame later, once the pages are cut again)
+    if (window.NovaOneScreen && window.NovaOneScreen.reveal) turnTo($("bot-form"));
+    else bubble.scrollIntoView({ block: "nearest", behavior: "smooth" });
     return bubble;
   }
 
@@ -4811,9 +4859,13 @@
     if (!text) return;
     box.value = "";
     fitInput();
-    addBubble(text, true);
+    // (each one a part of its own in the tab, so the pages are cut between them)
+    const turn = el("div", "bot-turn");
+    turn.setAttribute("aria-live", "polite");
+    $("bot-form").after(turn);
+    addBubble(text, true, turn);
     botHistory.push({ role: "user", content: text });
-    const typing = addBubble((botMode === "nova" ? "Nova" : "NovaBot") + " is typing…", false);
+    const typing = addBubble((botMode === "nova" ? "Nova" : "NovaBot") + " is typing…", false, turn);
     typing.classList.add("typing");
     try {
       // Nova answers from the studio's data; NovaBot as it would for a customer
@@ -4822,12 +4874,12 @@
           ? (await api("ask", { body: { question: text, history: botHistory.slice(0, -1) } })).answer
           : (await api("chat", { body: { messages: botHistory } })).reply;
       typing.remove();
-      addBubble(reply, false);
+      addBubble(reply, false, turn);
       botHistory.push({ role: "assistant", content: reply });
     } catch (err) {
       typing.remove();
       botHistory.pop();
-      if (err.message !== "signed out") addBubble("Couldn't reach NovaBot: " + err.message, false);
+      if (err.message !== "signed out") addBubble("Couldn't reach NovaBot: " + err.message, false, turn);
     }
   }
 
@@ -4846,7 +4898,7 @@
   $("bot-agent").addEventListener("click", () => $("nav-agent").click());
   $("bot-clear").addEventListener("click", () => {
     botHistory.length = 0;
-    $("bot-messages").replaceChildren();
+    document.querySelectorAll("#view-bot > .bot-turn").forEach((t) => t.remove());
     $("bot-input").focus();
   });
 
