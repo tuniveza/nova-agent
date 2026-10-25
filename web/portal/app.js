@@ -2643,10 +2643,10 @@
   $("contacts-cancel").addEventListener("click", () => showContactsForm(false));
   // What's found (or why not) is turned to when it's on another page of the section (onescreen.js): it showed
   // below the form, a page on, so opening a contact card looked like it did nothing (25 Oct 2026)
-  const turnTo = (box) => box.firstElementChild && window.NovaOneScreen && window.NovaOneScreen.reveal(box.firstElementChild);
+  const turnToFirst = (box) => box.firstElementChild && window.NovaOneScreen && window.NovaOneScreen.reveal(box.firstElementChild);
   const showContacts = (nodes) => {
     $("contacts-result").replaceChildren(...nodes);
-    turnTo($("contacts-result"));
+    turnToFirst($("contacts-result"));
   };
 
   // A contact card (.vcf: one or more vCards, 2.1 to 4.0) -> [{ name, emails, phones, addresses, organisation, birthday, notes }]
@@ -2857,7 +2857,7 @@
   });
   const showImport = (nodes) => {
     $("import-result").replaceChildren(...nodes);
-    turnTo($("import-result"));
+    turnToFirst($("import-result"));
   };
   $("clients-import").addEventListener("submit", async (e) => {
     e.preventDefault();
