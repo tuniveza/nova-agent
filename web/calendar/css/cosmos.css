@@ -746,18 +746,40 @@ html.embed .bar { padding-top: 4px !important; }
    down "horribly tiny icons" and "awful small boxed icons", so it's part of the card, not a little box. The
    card's words sit in the room beside it.) */
 .grid.textual .di[data-kind] { flex-wrap: nowrap !important; align-items: stretch !important; justify-content: flex-start !important; padding-left: 0 !important; column-gap: 0 !important; }
-.grid.textual .di > .ico-pane { --pane-w: max(16px, 1.65em); --pane-ico: max(12px, 1.2em); margin-right: 3px; border-start-start-radius: inherit; border-end-start-radius: inherit;
-  background: linear-gradient(180deg, color-mix(in oklab, rgb(var(--k1, var(--hi-rgb))) 82%, #fff), color-mix(in oklab, rgb(var(--k1, var(--hi-rgb))) 72%, #000));
-  border-inline-end: 1px solid rgb(255 255 255 / .22); }
+/* (its tile, the glossy one every view's cards have, .ico-pane at the end of this file: in from the card's left edge,
+   its padding keeping it in from the top and the foot) */
+/* (a card of two or three lines: its tile stays a tile, max-block-size, at its top beside the first line, as a tall
+   week card's) */
+.grid.textual .di > .ico-pane { --pane-w: max(16px, 1.65em); --pane-ico: max(12px, 1.2em); --tile-r: 4px; margin-right: 4px; border-width: 0 0 0 2px;
+  max-block-size: calc(var(--pane-ico) + 10px); }
 .grid.textual .di > .di-in { flex: 1 1 auto; min-width: 0; align-self: center; text-align: inherit; }
 html:not([data-centred]) .grid.textual .di > .di-in { text-align: left; }
 /* (a day card in the month: its kind of day's icon in a pane at its start, its name in the room beside it) */
 .grid.textual .cell > .daycard:has(> .ico-pane) { align-items: stretch; padding-left: 0 !important; overflow: hidden; gap: 0; }
-.grid.textual .cell > .daycard > .ico-pane { --pane-w: max(18px, 1.75em); --pane-ico: max(12px, 1.15em); margin-right: 4px; border-start-start-radius: inherit; border-end-start-radius: inherit; }
+.grid.textual .cell > .daycard > .ico-pane { --pane-w: max(18px, 1.75em); --pane-ico: max(12px, 1.15em); --tile-r: 4px; margin-right: 4px; }
 .grid.textual .cell > .daycard:has(> .ico-pane) > span { flex: 1 1 auto; align-self: center; }
 /* (a phone's days are too narrow for a pane beside their words: their cards' colours say what they are, and the
    chosen day's list under the month has each card's icon) */
 @media (max-width: 719px) { .grid.textual .di > .ico-pane, .grid.textual .cell > .daycard > .ico-pane { display: none !important; } .grid.textual .di[data-kind] { padding-left: 2px !important; } }
+
+/* ================= The month named once, inside it; its cards' words easy to read (25 Oct 2026) =================
+   The user: "can you take the october date text and put it within the calender; remove the october from the note
+   cards" and "can you make note card text more readable and decent sized". */
+/* (the month's name over the weekdays, cal.js drawMonth: a slim line in the display face and the theme's colours, the
+   way the bar's title is written; the bar can be hidden while you work, this can't. Lined up as Options' alignment
+   says, centred by default) */
+.month > .wk-head > .wk-month { grid-column: 1 / -1; justify-self: center; display: block; margin: 0; padding: 3px 2px 0;
+  font: 800 13px/1.25 var(--f-display, "Archivo", sans-serif); letter-spacing: .05em; white-space: nowrap;
+  background: linear-gradient(90deg, var(--bright, #F6ECFF), var(--hi, #FF5FA8)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+html:not([data-centred]) .month > .wk-head > .wk-month { justify-self: start; margin-left: 10px; }
+/* (a greyed day from the month before or after: its month's short name quieter than its day, cal.js dayWords) */
+.num .n-of { font-style: normal; font-weight: 600; opacity: .8; }
+/* (a card's title white on its colours, the clearest it can be; its time in its own colour on a darker chip, so it
+   stands out from the title and reads at a glance) */
+@media (min-width: 720px) {
+  .grid.textual .di[data-kind] .di-t { color: #fff !important; }
+  .grid.textual .di[data-kind] b { padding: 0 .3em; margin-right: .1em; border-radius: .35em; background: rgb(0 0 0 / .3); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .14); text-shadow: none; }
+}
 
 /* ================= The month in the theme's colour (22 Oct 2026) =================
    The user: "theme it so the overall theme color is strongly prevalent in the coloring of all elements
@@ -1038,11 +1060,28 @@ html:not([data-centred]) .grid.textual .di > .di-in { text-align: left; }
    icon for what the card is about (symbolOf) in a darker strip of its own. Clear, never tiny: the icon is at
    least 12px (20 Oct 2026, the user didn't want "horribly tiny icons"). Each view sets where it sits and its
    size with --pane-w (the strip's width) and --pane-ico (the icon's). */
+/* In Nova's own look (25 Oct 2026, the user: "can you theme the icons so they fit the novacane studios / nova desk / nova
+   phone aesthetic"): a small glossy tile like Nova Desk's dock icons, its gradient the card's kind colour (--k1, or a
+   day card's own --c) blended with the theme's accents (--accent, --accent-2, --hi, /shared/themes.css), so it follows
+   the theme picked in Portal or Options; a lit top edge, a sheen over its top half, a soft glow in the theme's highlight,
+   its icon bright white with a faint glow of its own (the sheen and glow a set height, so a tall card's tile isn't one
+   long gloss). The tile sits a little in from the card's edge: a clear border
+   (--tile-gap) the tile's colours stop at (padding-box), so the strip keeps its width and the words their room. Still
+   (no animation: nothing runs on and on, the phones' battery rule). */
 .ico-pane { display: inline-flex; align-items: center; justify-content: center; flex: none; align-self: stretch;
-  inline-size: var(--pane-w, 1.7em); min-inline-size: 16px; margin: 0; padding: 0; font-style: normal;
-  color: #fff; background: rgb(0 0 0 / 0.24); border-inline-end: 1px solid rgb(255 255 255 / 0.16); }
+  inline-size: var(--pane-w, 1.7em); min-inline-size: 16px; margin: 0; padding: 0; font-style: normal; color: #fff;
+  --pk: var(--k1, var(--c, var(--accent-rgb, 176, 29, 104)));
+  border: 0 solid transparent; border-width: var(--tile-gap, 2px) 0 var(--tile-gap, 2px) var(--tile-gap, 2px); border-radius: var(--tile-r, 5px);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / .34), rgb(255 255 255 / .1) 8px, transparent 11px) padding-box,
+    radial-gradient(120% 24px at 50% 0%, color-mix(in srgb, var(--hi, #FF5FA8) 55%, transparent), transparent) padding-box,
+    linear-gradient(160deg, color-mix(in oklab, color-mix(in oklab, rgb(var(--pk)) 70%, var(--hi, #FF5FA8)) 88%, #000),
+      color-mix(in oklab, color-mix(in oklab, rgb(var(--pk)) 55%, var(--accent-2, #7A1F86)) 50%, #000)) padding-box;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .6), inset 0 0 0 1px rgb(255 255 255 / .2), inset 0 -3px 5px -2px rgb(0 0 0 / .4),
+    inset 0 0 7px color-mix(in srgb, var(--hi, #FF5FA8) 30%, transparent);
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--hi, #FF5FA8) 40%, transparent)); }
 .ico-pane > .ico { inline-size: var(--pane-ico, 1.1em); block-size: var(--pane-ico, 1.1em); min-inline-size: 12px; min-block-size: 12px;
-  stroke-width: 2.2; filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.35)); }
+  stroke-width: 2.2; color: #fff; filter: drop-shadow(0 0 2.5px color-mix(in srgb, var(--hi, #FF5FA8) 75%, transparent)) drop-shadow(0 1px 1px rgb(0 0 0 / .45)); }
 
 /* ================= Week and Day cards: centred, with room round them, an icon pane and their hours =================
    (25 Oct 2026, the user: "on the week type of note cards have subtle lines for each gap of time in the note card time
@@ -1082,10 +1121,11 @@ html:not([data-centred]) .grid.textual .di > .di-in { text-align: left; }
 .tg .col .now-line { z-index: 0; }
 /* The icon pane: a strip down its left side, the icon level with its words (at the top of a tall card) */
 .tg .col .ev > .ico-pane { position: absolute; inset: 0 auto 0 0; inline-size: var(--pane-w); min-inline-size: 0; pointer-events: none; }
-.tg .col .ev.tall > .ico-pane { align-items: flex-start; padding-top: 7px; }
+/* (a tall card: the tile only at its top, round its icon, like a dock icon, not a gloss the card's whole height) */
+.tg .col .ev.tall > .ico-pane { align-items: center; padding-top: 0; inset: 3px auto auto 0; block-size: calc(var(--pane-w) + var(--tile-gap, 2px)); border-width: 0 0 0 var(--tile-gap, 2px); }
 /* (a narrow card: a band across its top, the title keeping the card's whole width under it) */
 .tg .col .ev.pane-top > .ico-pane { inset: 0 0 auto 0; inline-size: auto; block-size: var(--pane-top); align-items: center; padding-top: 0;
-  border-inline-end: 0; border-block-end: 1px solid rgb(255 255 255 / 0.16); }
+  border-width: var(--tile-gap, 2px) var(--tile-gap, 2px) 0; }
 /* (thinner than that, no pane: a card too thin for a word shows its icon in its middle, .ev-sym) */
 .tg .col .ev:is(.pane-off, .thin, .bare) > .ico-pane { display: none; }
 /* Its hours: a faint line where each hour's line of the grid runs behind it, fainter at the half hours where the grid
@@ -1103,7 +1143,7 @@ html:not([data-centred]) .grid.textual .di > .di-in { text-align: left; }
 /* ---- The icon pane on the List's rows, the day's rows (beside Day view, under a phone's month) and a short
    Calendar's cards: a strip down the row's left edge, the row's words beside it. (The row's room for it beats each
    layout's own padding, simple.css and above: the #pane-room in :is() only raises its weight, nothing has that id) ---- */
-.row-item.has-pane { --pane-w: 30px; --pane-ico: 16px; --pane-gap: 10px; position: relative; overflow: hidden; }
+.row-item.has-pane { --pane-w: 30px; --pane-ico: 16px; --pane-gap: 10px; --tile-gap: 3px; --tile-r: 7px; position: relative; overflow: hidden; }
 .row-item.has-pane:is(.row-item, #pane-room) { padding-left: calc(var(--pane-w) + var(--pane-gap)) !important; }
 .row-item.has-pane > .ico-pane { position: absolute; inset: 0 auto 0 0; inline-size: var(--pane-w); pointer-events: none; }
 /* (slimmer beside Day view, in a short Calendar's cards and a short List) */

@@ -355,12 +355,19 @@ function skyChip(x) {
 }
 
 // The day in words, with smaller forms for smaller days (the CSS shows the one that fits), always
-// written the British way whatever the browser's language: "Nineteenth Day October", "19 Oct",
-// "19/10", "19"; and, between the longest and "19 Oct", the day in a word: "Nineteenth"
+// written the British way whatever the browser's language: "Nineteenth", "19th", "19". The month is
+// named once, over the weekdays (drawMonth), never in each day (25 Oct 2026, the user: "take the october
+// date text and put it within the calender; remove the october from the note cards"). A day from the month
+// before or after still says whose it is, quietly: "Twenty-eighth · Sep", then "28 Sep", "28/9", "28"
+// (its second form is already short: where "· Sep" doesn't fit, every day steps to the next form, fitMonthNow,
+// and this month's days still say "Twenty-eighth")
 const ORD = ["", "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth", "Eleventh", "Twelfth", "Thirteenth", "Fourteenth", "Fifteenth", "Sixteenth", "Seventeenth", "Eighteenth", "Nineteenth", "Twentieth", "Twenty-first", "Twenty-second", "Twenty-third", "Twenty-fourth", "Twenty-fifth", "Twenty-sixth", "Twenty-seventh", "Twenty-eighth", "Twenty-ninth", "Thirtieth", "Thirty-first"];
-function dayWords(d) {
+const ORD_END = (n) => (n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th");
+function dayWords(d, out = false) {
   const day = Number(d.slice(8)), mon = Number(d.slice(5, 7));
-  return `<span class="n-long">${ORD[day]} Day ${MONTHS[mon - 1]}</span><span class="n-word">${ORD[day]}</span><span class="n-mid">${day} ${MONTHS[mon - 1].slice(0, 3)}</span><span class="n-short">${day}/${mon}</span><span class="n-min">${day}</span>`;
+  const m3 = MONTHS[mon - 1].slice(0, 3);
+  if (out) return `<span class="n-long">${ORD[day]} <i class="n-of">· ${m3}</i></span><span class="n-word">${day} <i class="n-of">${m3}</i></span><span class="n-mid">${day} <i class="n-of">${m3}</i></span><span class="n-short">${day}/${mon}</span><span class="n-min">${day}</span>`;
+  return `<span class="n-long">${ORD[day]}</span><span class="n-word">${ORD[day]}</span><span class="n-mid">${day}${ORD_END(day)}</span><span class="n-short">${day}</span><span class="n-min">${day}</span>`;
 }
 // The month's cards as a list, a page at a time, as the week's and the day's on a very short Calendar: where
 // there's no room for its days, and where even one week alone can't hold its busiest day's cards (fitDays):
@@ -414,13 +421,18 @@ function drawMonth() {
       const what = [...days.slice(1), ...rest];
       const style = [days.length ? themeStyle(dayTheme(days[0].item)) : "", what.length ? `--mix: ${kindTint(what)}` : ""].filter(Boolean).join("; ");
       cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${list.length ? " data-content-card" : ""}${style ? ` style="${style}"` : ""} aria-label="${dayLabel(d)}${list.length ? `: ${esc(list.map(titleOf).join(", "))}` : ""}">
-      <span class="num"${phone() ? "" : ` data-goto="${d}" title="Open ${dayLabel(d)} in Day view"`}>${dayWords(d)}</span>${days.slice(0, 1).map(monthDayCard).join("")}${sky1.map(skyChip).join("")}${moonWords(d)}${what.length ? `<p class="dayinfo" data-guard="off">${what.map(infoLine).join("")}</p>` : ""}</button>`;
+      <span class="num"${phone() ? "" : ` data-goto="${d}" title="Open ${dayLabel(d)} in Day view"`}>${dayWords(d, d.slice(0, 7) !== cursor.slice(0, 7))}</span>${days.slice(0, 1).map(monthDayCard).join("")}${sky1.map(skyChip).join("")}${moonWords(d)}${what.length ? `<p class="dayinfo" data-guard="off">${what.map(infoLine).join("")}</p>` : ""}</button>`;
       continue;
     }
     cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${days.length ? ` style="${themeStyle(dayTheme(days[0].item))}"` : ""} aria-label="${dayLabel(d)}${list.length ? `, ${list.length} item${list.length > 1 ? "s" : ""}` : ""}">
-      <span class="num">${dayWords(d)}</span>${moonMark(d)}${days.slice(0, 1).map(pillHtml).join("")}${sky.map(skyChip).join("")}${fits.map(pillHtml).join("")}${rest.length - fits.length + Math.max(0, days.length - 1) > 0 ? `<span class="more" data-n="${rest.length - fits.length + Math.max(0, days.length - 1)}">+${rest.length - fits.length + Math.max(0, days.length - 1)} more</span>` : ""}</button>`;
+      <span class="num">${dayWords(d, d.slice(0, 7) !== cursor.slice(0, 7))}</span>${moonMark(d)}${days.slice(0, 1).map(pillHtml).join("")}${sky.map(skyChip).join("")}${fits.map(pillHtml).join("")}${rest.length - fits.length + Math.max(0, days.length - 1) > 0 ? `<span class="more" data-n="${rest.length - fits.length + Math.max(0, days.length - 1)}">+${rest.length - fits.length + Math.max(0, days.length - 1)} more</span>` : ""}</button>`;
   }
-  const heads = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => `<span>${phone() ? w[0] : w}</span>`).join("");
+  // (the month's name once, inside the month itself, over its weekdays: Nova Desk's bars hide while you work, and
+  // the title went with them, 25 Oct 2026, the user: "take the october date text and put it within the calender".
+  // Its days no longer say the month, dayWords. A slim line of its own, cosmos.css .wk-month; a phone's bar is
+  // always in sight, so its tiny month keeps the room)
+  const caption = phone() ? "" : `<b class="wk-month">${MONTHS[Number(cursor.slice(5, 7)) - 1]} ${cursor.slice(0, 4)}</b>`;
+  const heads = caption + ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => `<span>${phone() ? w[0] : w}</span>`).join("");
   // (on a computer the strip of this month's special days goes: each is written in its own day now,
   // and the strip ran off the side)
   // (the month fits its own words, fitMonth: Nova's shared fitting, rules.js, is told to leave its days
@@ -523,7 +535,7 @@ function infoLine(e) {
 // "Also …", "More in Day view" or "More", and a card whose title was too long for one line went first, so a
 // quiet day with one long title showed no card at all). Now, in turn:
 //   1. a card's title wraps onto more lines rather than hide;
-//   2. a busy day's words step down a size at a time, to 10px at the least on a computer (still easy to read),
+//   2. a busy day's words step down a size at a time, to 11.5px at the least on a computer (still easy to read),
 //      then its cards go slimmer; a title is never cut short with …;
 //   3. a week whose busiest day still needs more room gets a taller row, the quieter weeks giving up theirs
 //      (never lower than --wk-min, so an empty day still has room to tap);
@@ -532,12 +544,14 @@ function infoLine(e) {
 //      time (drawMonthList). Nothing is cut and nothing hidden.
 // (22 Oct 2026, the user: "fix visual animation delay, glitching and or lag": every day is measured together,
 // one layout a step for the whole month, never a layout per day)
-// (each step: its words' size, and whether its cards are slim, their lines closer. Never under 10px on a computer
+// (each step: its words' size, and whether its cards are slim, their lines closer. Never under 11.5px on a computer
 // and never a title cut short with …: a day that still doesn't fit gets a taller week, and the weeks go onto more
 // pages; only when one week alone can't hold it, the list (25 Oct 2026, the lead: "readable text before more weeks
 // per page"; ns/CLAUDE.md 2c.3: content text stays readable, what doesn't fit goes into pages). A phone's days are
 // tiny, so smaller)
-const DI_STEPS = { desk: [[12], [11.5], [11], [10.5], [10], [10, true]], phone: [[10], [9.5], [9], [8.5], [8.5, true], [8, true], [7.5, true]] };
+// (a computer's cards open at 13px and never go under 11.5px, 25 Oct 2026, the user: "can you make note card text more
+// readable and decent sized"; more weeks go onto pages instead, the same rule as ever: nothing cut, nothing hidden)
+const DI_STEPS = { desk: [[13], [12.5], [12], [11.5], [11.5, true]], phone: [[10], [9.5], [9], [8.5], [8.5, true], [8, true], [7.5, true]] };
 const diSteps = () => (phone() ? DI_STEPS.phone : DI_STEPS.desk);
 const WK_MIN = 58; // (a week's lowest, when the grid doesn't say: cosmos.css --wk-min)
 function setStep(c, k) {

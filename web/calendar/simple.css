@@ -32,39 +32,48 @@ html:not([data-ui="rich"])[data-room="phone"] .month > .grid.textual { grid-auto
 /* (elsewhere the strip wraps instead of sliding sideways: it ran 82px past its box) */
 html:not([data-ui="rich"]) .month > .strip { display: flex !important; flex-wrap: wrap !important; justify-content: center !important; gap: 4px !important; overflow: visible !important; mask-image: none !important; -webkit-mask-image: none !important; }
 
-/* ---- Each day: its width decides words or bars ---- */
+/* ---- Each day: its width decides words or bars, on a phone only. A computer's or a tablet's cards always say what
+   they are, however narrow the window: their titles wrap and the weeks go onto more pages (cal.js fitDays), never
+   bars (25 Oct 2026, the user, of a narrower Desk window's month of coloured bars: "this is stupid for note cards
+   this shouldn't look like this … should be still readable text") ---- */
 html:not([data-ui="rich"]) .month .grid > .cell { container: day / inline-size !important; }
 @container day (max-width: 110px) {
   /* its cards as bars: every one, each in its own colour, no words (all of them: a day never hides a card, 25 Oct
      2026; a busy day's week is taller, cal.js fitDays) */
-  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo, html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo.fit-hide {
+  html:not([data-ui="rich"])[data-form^="phone"] .month .grid.textual > .cell > .dayinfo, html:not([data-ui="rich"])[data-form^="phone"] .month .grid.textual > .cell > .dayinfo.fit-hide {
     display: flex !important; flex-direction: column !important; gap: 2px !important; padding: 0 2px !important; margin: 2px 0 0 !important;
     overflow: visible !important; background: none !important; border: 0 !important; box-shadow: none !important;
   }
-  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di, html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di.fit-hide {
+  html:not([data-ui="rich"])[data-form^="phone"] .month .grid.textual > .cell > .dayinfo > .di, html:not([data-ui="rich"])[data-form^="phone"] .month .grid.textual > .cell > .dayinfo > .di.fit-hide {
     display: block !important; flex: none !important; height: 4px !important; min-height: 4px !important; padding: 0 !important; margin: 0 !important;
     border-radius: 2px !important; border: 0 !important; box-shadow: none !important; font-size: 0 !important; line-height: 0 !important;
     background: rgb(var(--k1, var(--c, var(--hi-rgb, 255, 95, 168)))) !important;
   }
-  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di.ro { opacity: .7 !important; }
-  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di > *, html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di-also { display: none !important; }
+  html:not([data-ui="rich"])[data-form^="phone"] .month .grid.textual > .cell > .dayinfo > .di.ro { opacity: .7 !important; }
+  html:not([data-ui="rich"])[data-form^="phone"] .month .grid.textual > .cell > .dayinfo > .di > *, html:not([data-ui="rich"])[data-form^="phone"] .month .grid.textual > .cell > .dayinfo > .di-also { display: none !important; }
   /* a special day, the moon's name: a small gold bar too, its name in the day's plan and on hover */
-  html:not([data-ui="rich"]) .month .grid.textual > .cell > :is(.skychip, .daycard, .pill) {
+  html:not([data-ui="rich"])[data-form^="phone"] .month .grid.textual > .cell > :is(.skychip, .daycard, .pill) {
     display: block !important; height: 4px !important; min-height: 4px !important; width: auto !important; padding: 0 !important; margin: 2px 2px 0 !important;
     border-radius: 2px !important; border: 0 !important; font-size: 0 !important; line-height: 0 !important; overflow: hidden !important;
     background: var(--gold, #F2C14E) !important; box-shadow: none !important;
   }
-  html:not([data-ui="rich"]) .month .grid.textual > .cell > :is(.skychip, .daycard, .pill) > * { display: none !important; }
+  html:not([data-ui="rich"])[data-form^="phone"] .month .grid.textual > .cell > :is(.skychip, .daycard, .pill) > * { display: none !important; }
 }
 
-/* ---- A day with room (a computer): its cards in words, never smaller than 10px; when they don't all fit at that
-   size the Calendar's fitter gives the week more height, then pages the weeks (cal.js fitDays), never hiding a
-   card, cutting its title short or shrinking it to 8px ---- */
+/* ---- A day with room (a computer): its cards in words, never smaller than 11.5px, opening at 13px; when they don't
+   all fit at that size the Calendar's fitter gives the week more height, then pages the weeks (cal.js fitDays), never
+   hiding a card, cutting its title short or shrinking it (25 Oct 2026, the user: "can you make note card text more
+   readable and decent sized"; it went down to 10px before). A phone's tiny days keep their own sizes ---- */
 html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo { font-size: max(10px, var(--di-fs, 11px)) !important; }
 html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo :is(.di-also, .di-t) { font-size: inherit !important; }
 /* (its time never under 11px, the least that reads, 24 Oct 2026: it's what the user looks for on a card) */
 html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo b { font-size: max(11px, var(--di-fs, 11px)) !important; }
 html:not([data-ui="rich"]) .month .grid.textual > .cell > :is(.skychip, .daycard) { font-size: max(10px, var(--chip-fs, 10px)) !important; }
+@media (min-width: 720px) {
+  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo, html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo b { font-size: max(11.5px, var(--di-fs, 13px)) !important; }
+  /* (a day card, its kind of day's name, the same size as the note cards under it) */
+  html:not([data-ui="rich"]) .month .grid.textual > .cell > .daycard { font-size: max(11.5px, var(--di-fs, 13px)) !important; }
+}
 
 /* ---- Week and Day: a card always shows its title (23 Oct 2026, the user's week had blocks with no words: a
    title that didn't fit on one line was taken away). cal.js fitCard, in turn: one line; onto more lines
