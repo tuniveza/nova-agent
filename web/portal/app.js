@@ -2199,7 +2199,13 @@
     const contact = [c.email, c.phone].filter(Boolean).join(" · ");
     card.appendChild(el("p", "card-who", contact || "No email or phone yet"));
     const facts = el("dl", "cl-facts");
-    const fact = (label, value) => value && facts.append(el("dt", "", label), el("dd", "", value));
+    // (each label with its value, in a box of their own: label over value, side by side, 25 Oct 2026)
+    const fact = (label, value) => {
+      if (!value) return;
+      const pair = el("div", "cl-fact");
+      pair.append(el("dt", "", label), el("dd", "", value));
+      facts.append(pair);
+    };
     fact("Last booked", c.lastBooked ? ukDay(c.lastBooked, true) : "Not yet");
     fact("Next booked", c.nextBooked ? ukDay(c.nextBooked, true) : "Nothing booked");
     fact("Sessions", String(c.sessionCount || 0));
@@ -2472,7 +2478,15 @@
     e.preventDefault();
     const form = $("clients-add-form");
     const body = { name: $("add-name").value.trim(), email: $("add-email").value.trim(), phone: $("add-phone").value.trim(), notes: $("add-notes").value.trim() };
-    if (!body.name) return $("add-name").focus();
+    if (!body.name) {
+      toast("Type their name first");
+      return $("add-name").focus();
+    }
+    // (the browser's own email check, now said here)
+    if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+      toast("That email doesn't look right");
+      return $("add-email").focus();
+    }
     const button = form.querySelector("button[type=submit]");
     button.disabled = true;
     try {
@@ -2545,7 +2559,13 @@
   };
   $("clients-contacts-open").addEventListener("click", () => showContactsForm($("clients-contacts").hidden));
   $("contacts-cancel").addEventListener("click", () => showContactsForm(false));
-  const showContacts = (nodes) => $("contacts-result").replaceChildren(...nodes);
+  // What's found (or why not) is turned to when it's on another page of the section (onescreen.js): it showed
+  // below the form, a page on, so opening a contact card looked like it did nothing (25 Oct 2026)
+  const turnTo = (box) => box.firstElementChild && window.NovaOneScreen && window.NovaOneScreen.reveal(box.firstElementChild);
+  const showContacts = (nodes) => {
+    $("contacts-result").replaceChildren(...nodes);
+    turnTo($("contacts-result"));
+  };
 
   // A contact card (.vcf: one or more vCards, 2.1 to 4.0) -> [{ name, emails, phones, addresses, organisation, birthday, notes }]
   function readVcards(text) {
@@ -2598,10 +2618,12 @@
       box.appendChild(el("p", "cl-found-name", c.name || c.phones[0] || c.emails[0] || "No name"));
       if (want.length === 9 && has(c)) box.appendChild(el("p", "cl-done cl-small", "Has that number"));
       const facts = el("dl", "cl-facts");
+      // (label over value, each pair together: a label was left at a row's end with its value on the next)
       const fact = (label, value) => {
         if (!value) return;
-        facts.appendChild(el("dt", "", label));
-        facts.appendChild(el("dd", "", value));
+        const pair = el("div", "cl-fact");
+        pair.append(el("dt", "", label), el("dd", "", value));
+        facts.appendChild(pair);
       };
       fact("Phone", c.phones.join("\n"));
       fact("Email", c.emails.join("\n"));
@@ -2751,7 +2773,10 @@
     importText = "";
     $("import-file").value = "";
   });
-  const showImport = (nodes) => $("import-result").replaceChildren(...nodes);
+  const showImport = (nodes) => {
+    $("import-result").replaceChildren(...nodes);
+    turnTo($("import-result"));
+  };
   $("clients-import").addEventListener("submit", async (e) => {
     e.preventDefault();
     const csv = importText || $("import-text").value;

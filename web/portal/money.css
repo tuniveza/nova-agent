@@ -73,3 +73,24 @@
 @media (min-width: 1100px) {
   .today-groups .group:first-child .today-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
+
+/* ---- Clients & Money sweep (25 Oct 2026, the user: "there shouldn't be any blank sections or oddly shaped uis") ----
+   Add an expense: the amount, what for, who and the day four across, then the note, the receipt and Add it in one
+   row, so the form is short enough to sit on one page with its Add it (it was cut in two: the boxes on one page, Add
+   it alone on the next). Two across, then one, as the form narrows. */
+#money-expense-form { container-type: inline-size; }
+#money-expense-form .mn-exp-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+#money-expense-form .mn-exp-more { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; }
+#money-expense-form .mn-exp-more > .actions { margin: 0; flex-wrap: nowrap; }
+@container (max-width: 620px) {
+  #money-expense-form .mn-exp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #money-expense-form .mn-exp-more { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  #money-expense-form .mn-exp-more > .actions { grid-column: 1 / -1; justify-content: center; }
+}
+@container (max-width: 420px) { #money-expense-form :is(.mn-exp-grid, .mn-exp-more) { grid-template-columns: minmax(0, 1fr); } }
+#money-expense-form .cp-field > :is(input:not([type="file"]), select) { width: 100%; }
+#money-expense-form .cp-field > span { overflow-wrap: anywhere; }
+/* The tax year's cards (the year, for the accountant, invoice settings) and the expenses side by side where there's
+   room, not each stretched across the whole section; month headings and the empty words span the row */
+#view-money #money-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-items: stretch; }
+#view-money #money-list > :is(.group-head, .empty, .skeleton, .mn-invoicer) { grid-column: 1 / -1; }
