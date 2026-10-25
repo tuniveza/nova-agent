@@ -605,6 +605,11 @@
       parts.push(box);
     }
     strip.replaceChildren(...parts);
+    // (a group whose dashboard is all there is, Admin since 25 Oct 2026: on that dashboard the strip would be one
+    // lone button for the page you're on, so it steps aside and the dashboard has the room; in one of its rooms,
+    // Google, Test stuff or Computer, it stays, as the way back)
+    const q = new URLSearchParams(location.search);
+    strip.hidden = !!g.dash && q.get("view") === g.dash && !q.get("page") && !q.get("id") && tabs.children.length === 1 && !acts.length;
   }
 
   // ---- The panel that slides out of a group ----
