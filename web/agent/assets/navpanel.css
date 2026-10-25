@@ -190,8 +190,14 @@ html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar > #nav-panel .nav-btn:
 html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup[data-group] button { background: transparent !important; box-shadow: none !important; border: 1px solid transparent !important; }
 html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup[data-group] button::before { display: none !important; }
 html[data-nav="strip"]:not([data-ui="rich"]) body #tabbar .tgroup[data-group] button:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--hi, #FF5FA8) 14%, transparent) !important; border-color: color-mix(in srgb, var(--hi, #FF5FA8) 35%, transparent) !important; }
-/* (the drawer handle right over Home, as in the dock: navpanel.js fitStrip says where Home is) */
-html[data-nav="strip"] body div.shell > #tabbar > .dock-handle { left: var(--strip-home, 50%) !important; }
+/* (the drawer handle in the middle of the bar's top edge, as on the dock; over Home it sat left of the middle and
+   looked knocked sideways, 25 Oct 2026, the user: "the nova handle fucks up") */
+html[data-nav="strip"] body div.shell > #tabbar > .dock-handle { left: 50% !important; }
+/* (and on this slim bar no tab rising out of it: the tab took its colour from the bar's background, whose see-through
+   layers came out nearly black on the tab, a dark lump on a bright bar in every theme. The glowing handle sits
+   on the bar's top edge instead, half on it, so it's plainly part of the bar; the dock keeps its tab) */
+html[data-nav="strip"] body div.shell > #tabbar > .dock-handle { top: -9px !important; height: 18px !important; padding-top: 0 !important; place-items: center !important; }
+html[data-nav="strip"] body div.shell > #tabbar > .dock-handle::before, html[data-nav="strip"] body div.shell > #tabbar > .dock-handle::after { display: none !important; }
 /* (the status line under it: its words only, no box of its own) */
 html[data-nav="strip"] body div.shell > .status-line.status-line { border: 0 !important; background: none !important; box-shadow: none !important; }
 html[data-nav="strip"] body div.shell > .status-line.status-line::before, html[data-nav="strip"] body div.shell > .status-line.status-line::after { display: none !important; }

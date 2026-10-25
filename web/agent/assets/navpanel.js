@@ -306,7 +306,7 @@
   let stripKey = "";
   function fitStrip() {
     const bar = $("tabbar");
-    if (nav.dataset.where !== "strip" || !bar) { if (bar && bar.dataset.fit) { delete bar.dataset.fit; bar.style.removeProperty("--strip-home"); } stripKey = ""; return; }
+    if (nav.dataset.where !== "strip" || !bar) { if (bar && bar.dataset.fit) delete bar.dataset.fit; stripKey = ""; return; }
     const row = bar.querySelector(":scope > .tg-row");
     const key = `${shell.clientWidth}|${row ? row.childElementCount : 0}|${document.fonts ? document.fonts.status : ""}`;
     if (key === stripKey) return;
@@ -318,23 +318,12 @@
       // (nothing reaches past the bar's ends)
       if (!row || bar.scrollWidth <= bar.clientWidth + 1) break;
     }
-    placeHandle();
   }
-  // (the drawer handle on the bar's top edge right over Home, as in the dock: looked at again when the bar's own
-  // size changes, its places' names coming in; it only moves the handle, so nothing else is laid out again)
-  function placeHandle() {
-    const bar = $("tabbar");
-    if (nav.dataset.where !== "strip" || !bar) return;
-    const h = btn("home");
-    const hr = h.getBoundingClientRect(), br = bar.getBoundingClientRect();
-    const x = `${Math.round(hr.left + hr.width / 2 - br.left - bar.clientLeft)}px`;
-    if (bar.style.getPropertyValue("--strip-home") !== x) bar.style.setProperty("--strip-home", x);
-  }
-  if ("ResizeObserver" in window) {
-    new ResizeObserver(() => requestAnimationFrame(fitStrip)).observe(shell);
-    const tilesBar = $("tabbar");
-    if (tilesBar) new ResizeObserver(() => requestAnimationFrame(placeHandle)).observe(tilesBar);
-  }
+  // (the drawer handle sits in the middle of the bar's top edge, navpanel.css, as on the dock: it used to sit over
+  // Home, which on this bar is left of the middle, so it looked knocked sideways, and its tab, painted from the
+  // bar before it moved, showed the wrong part of the bar's colours. 25 Oct 2026, the user: "when the nova desk
+  // is around this window size the nova handle fucks up")
+  if ("ResizeObserver" in window) new ResizeObserver(() => requestAnimationFrame(fitStrip)).observe(shell);
   // (and when the places on the bar are drawn again, phone.js: their names may need a different fit)
   {
     const tilesBar = $("tabbar");
