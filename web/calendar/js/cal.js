@@ -407,10 +407,13 @@ function drawMonth() {
     const room = Math.max(1, max - sky.length);
     const fits = rest.slice(0, room);
     if (textual) {
+      // (a day holding cards is marked data-content-card: its button is a square of note cards whose titles wrap
+      // rather than hide, ns/CLAUDE.md 2.3, not a button's own words. Its own name, the one thing in it that's a
+      // name, is still held to one line, fitMonthNow; a day with no cards keeps the Fixer's one-line check)
       const sky1 = days.length ? [] : skyDays(d).slice(0, 1);
       const what = [...days.slice(1), ...rest];
       const style = [days.length ? themeStyle(dayTheme(days[0].item)) : "", what.length ? `--mix: ${kindTint(what)}` : ""].filter(Boolean).join("; ");
-      cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${style ? ` style="${style}"` : ""} aria-label="${dayLabel(d)}${list.length ? `: ${esc(list.map(titleOf).join(", "))}` : ""}">
+      cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${list.length ? " data-content-card" : ""}${style ? ` style="${style}"` : ""} aria-label="${dayLabel(d)}${list.length ? `: ${esc(list.map(titleOf).join(", "))}` : ""}">
       <span class="num"${phone() ? "" : ` data-goto="${d}" title="Open ${dayLabel(d)} in Day view"`}>${dayWords(d)}</span>${days.slice(0, 1).map(monthDayCard).join("")}${sky1.map(skyChip).join("")}${moonWords(d)}${what.length ? `<p class="dayinfo" data-guard="off">${what.map(infoLine).join("")}</p>` : ""}</button>`;
       continue;
     }
@@ -520,8 +523,8 @@ function infoLine(e) {
 // "Also …", "More in Day view" or "More", and a card whose title was too long for one line went first, so a
 // quiet day with one long title showed no card at all). Now, in turn:
 //   1. a card's title wraps onto more lines rather than hide;
-//   2. a busy day's words step down a size at a time, then its cards go slimmer, to 9px at the least on a
-//      computer; last of all a title longer than two lines ends with … (all of it in its tooltip and a tap away);
+//   2. a busy day's words step down a size at a time, to 10px at the least on a computer (still easy to read),
+//      then its cards go slimmer; a title is never cut short with …;
 //   3. a week whose busiest day still needs more room gets a taller row, the quieter weeks giving up theirs
 //      (never lower than --wk-min, so an empty day still has room to tap);
 //   4. when the weeks still don't all fit, they go in pages of whole weeks, the page bar under them (pageWeeks);
@@ -529,19 +532,20 @@ function infoLine(e) {
 //      time (drawMonthList). Nothing is cut and nothing hidden.
 // (22 Oct 2026, the user: "fix visual animation delay, glitching and or lag": every day is measured together,
 // one layout a step for the whole month, never a layout per day)
-// (each step: its words' size, whether its cards are slim, their lines closer, and whether a title longer than two
-// lines ends with … (its whole title in its tooltip, and a tap opens it). 9px only on the busiest days; the two-line
-// titles only as the very last step, where its week can't have the room even on a page of its own with others:
-// otherwise a narrow window had a page for each week. A phone's days are tiny, so smaller)
-const DI_STEPS = { desk: [[12], [11.5], [11], [10.5], [10], [10, true], [9.5, true], [9, true], [9, true, true]], phone: [[10], [9.5], [9], [8.5], [8.5, true], [8, true], [7.5, true], [7.5, true, true]] };
+// (each step: its words' size, and whether its cards are slim, their lines closer. Never under 10px on a computer
+// and never a title cut short with …: a day that still doesn't fit gets a taller week, and the weeks go onto more
+// pages; only when one week alone can't hold it, the list (25 Oct 2026, the lead: "readable text before more weeks
+// per page"; ns/CLAUDE.md 2c.3: content text stays readable, what doesn't fit goes into pages). A phone's days are
+// tiny, so smaller)
+const DI_STEPS = { desk: [[12], [11.5], [11], [10.5], [10], [10, true]], phone: [[10], [9.5], [9], [8.5], [8.5, true], [8, true], [7.5, true]] };
 const diSteps = () => (phone() ? DI_STEPS.phone : DI_STEPS.desk);
 const WK_MIN = 58; // (a week's lowest, when the grid doesn't say: cosmos.css --wk-min)
 function setStep(c, k) {
-  const [fs, slim, clamp] = diSteps()[k];
+  const [fs, slim] = diSteps()[k];
   c.dataset.step = String(k);
   c.style.setProperty("--di-fs", `${fs}px`);
   const card = c.querySelector(":scope > .dayinfo");
-  if (card) { card.classList.toggle("slim", !!slim); card.classList.toggle("clamp", !!clamp); }
+  if (card) card.classList.toggle("slim", !!slim);
 }
 // How tall each day is at each step: the weeks only as tall as what's in them and every day from its top
 // (.wk-measure, cosmos.css), so each day's own height is what its cards need; one layout a step, every day at once

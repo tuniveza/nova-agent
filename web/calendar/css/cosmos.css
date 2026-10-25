@@ -739,10 +739,6 @@ html.embed .bar { padding-top: 4px !important; }
 .grid.textual .dayinfo.slim .di, .grid.textual .dayinfo.slim .di-in { line-height: 1.22 !important; }
 /* (its time chip, never under 11px, simple.css, on the same line as the smaller title without making that line taller) */
 .grid.textual .dayinfo.slim .di b { line-height: 1.05 !important; vertical-align: baseline !important; }
-/* (the very last step on the busiest days, cal.js DI_STEPS: a title longer than two lines ends with …, the card's
-   tooltip has all of it and a tap opens it; never the card itself hidden) */
-.grid.textual .dayinfo.clamp .di-in { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
-  padding-inline-end: 2px; /* (room for the … at the end of a full line, which stood 2px past it) */ }
 /* (the title flows on from its time, onto the next line where it must, not as a block of its own under it) */
 .grid.textual .di .di-t { display: inline !important; }
 /* (the icon pane, cal.js iconPane: a strip down the card's left edge, the card's own height, in the colour of
