@@ -1,11 +1,17 @@
 // The right-click menu (22 Oct 2026, the user: "right click opens up a popup … with create note card,
 // remove note card, view note card list also create day card, remove day card and view day card list;
 // etc."). A right-click anywhere on the calendar (a day, a time in Week or Day view, a card, the list),
-// or a long press on a phone, opens it for that day:
-//   - on a card: open it, or delete it;
-//   - Note cards: create one (at the time pressed, in Week or Day view), delete one of the day's, see them all;
-//   - Day cards: create (or change) the day's, delete it, see them all;
-//   - and Day view, Today.
+// or a long press on a phone, opens it for what was pressed.
+// Made more useful on 25 Oct 2026 (the user: "on the nova calender can right click bring up a useful menu"):
+//   - on a note card: Open, Duplicate, Move to the next day or the next week, its colour (the swatches are in
+//     the menu), Copy title, Copy card (to paste on another day), Join Google Meet when it has a link, Delete;
+//   - on a day card: Change, Copy title, Delete; on a booking or Nova Agent's plan, only what can be done with
+//     it (Open, Open in Google Calendar where it has a page there, Copy title): nothing that would do nothing;
+//   - on a day or a time: New note card (at the time pressed, in Week or Day view), Paste the copied card,
+//     New (or change) the day card, Remove the day card or one of the day's note cards (only when there's
+//     one), the note card list and the day card list, Day view, Today;
+//   - from a card, "More for this day" shows the day's menu in its place.
+// Every change says what it did, with Undo; a repeating card asks which times. No confirm boxes.
 // "See them all" opens a list that fits the screen in pages (no scrolling), each card with Open and Delete.
 // What it does is cal.js's own (window.NovaCalendar): the same windows, the same Undo.
 (function () {
@@ -15,8 +21,11 @@
   if (!view) return;
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const sfx = (n) => window.NovaSfx && window.NovaSfx.play && window.NovaSfx.play(n);
+  const icon = (name) => (window.NT && window.NT.presets ? window.NT.presets.icon(name, "cm-ico") : "");
+  const COLOUR_NAMES = { violet: "Violet", rose: "Rose", blue: "Blue", teal: "Teal", green: "Green", amber: "Amber", orange: "Orange", red: "Red", grey: "Grey" };
   let menu = null;
   let back = null; // what had focus before, to go back to
+  let copied = null; // the card Copy card keeps, to paste on another day: { id, date }
 
   // ---- What was pressed: the day, a time (Week and Day view), a card ----
   function placeOf(target, y) {
@@ -38,7 +47,7 @@
       const mins = Math.max(0, Math.min(23 * 60 + 30, from * 60 + Math.floor((((y - r.top) / r.height) * hours * 60) / 30) * 30));
       time = `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
     }
-    return { date, time, card: card ? { type: card.dataset.type, id: card.dataset.id, date: card.dataset.date || date } : null };
+    return { date, time, card: card ? { type: card.dataset.type, id: card.dataset.id, date: card.dataset.date || date, text: card.textContent.replace(/\s+/g, " ").trim() } : null };
   }
 
   // ---- The menu ----
@@ -50,7 +59,62 @@
     back = null;
   }
   const item = (act, label, opts = {}) =>
-    `<button type="button" role="menuitem" class="cm-item${opts.danger ? " danger" : ""}" data-act="${act}"${opts.data ? ` data-arg="${esc(opts.data)}"` : ""}${opts.off ? ' aria-disabled="true" tabindex="-1"' : ""}>${esc(label)}${opts.note ? `<small>${esc(opts.note)}</small>` : ""}</button>`;
+    `<button type="button" role="menuitem" class="cm-item${opts.danger ? " danger" : ""}" data-act="${act}"${opts.data ? ` data-arg="${esc(opts.data)}"` : ""}${opts.title ? ` title="${esc(opts.title)}"` : ""}>${icon(opts.icon || "card")}<span class="cm-label">${esc(label)}</span>${opts.note ? `<small>${esc(opts.note)}</small>` : ""}</button>`;
+  const group = (label, html) => (html ? `<div class="cm-group" role="group" aria-label="${esc(label)}">${html}</div>` : "");
+  const timeOf = (e) => (!e ? "" : e.allDay ? "All day" : `${e.start.slice(11, 16)}–${e.end.slice(11, 16)}`);
+
+  // What a card's menu offers: what can be done with that kind of card, nothing that would do nothing
+  function cardItems(cal, place, e) {
+    const c = place.card;
+    const it = c.type !== "booking" ? cal.get(c.id) : null;
+    if (c.type === "booking") {
+      // (a booking from Google Calendar has no id of its own here, so it can't be opened by one: its page in
+      // Google Calendar shows it in full instead)
+      const b = place.e && place.e.item;
+      const link = b && /^https:\/\//.test(String(b.link || "")) ? b.link : "";
+      const own = b && b.id != null && String(b.id) !== "";
+      return group("This booking", (own ? item("open", "Open", { icon: "booking", note: "Studio booking" }) : "") + (link ? item("google", "Open in Google Calendar", { icon: "right", data: link }) : "") + item("copy-title", "Copy title", { icon: "upload" }));
+    }
+    if (!it) return "";
+    if (cal.isAgent(it.id)) return group("Nova Agent's plan", item("open", "Open", { icon: "quest", note: "Nova Agent's plan" }) + item("copy-title", "Copy title", { icon: "upload" }));
+    if (c.type === "day") return group("This day card", item("open", "Change this day card", { icon: "sparkle" }) + item("copy-title", "Copy title", { icon: "upload" }) + item("delete-this", "Delete this day card", { icon: "close", danger: true }));
+    const now = it.color || "violet";
+    const day = (n) => cal.dayLabel(cal.addDays((e ? e.start : it.start).slice(0, 10), n));
+    let html = item("open", "Open", { icon: "pen" });
+    html += item("duplicate", "Duplicate", { icon: "card", note: "same day and time" });
+    html += `<div class="cm-row" role="group" aria-label="Move">${icon("right")}<span class="cm-label">Move to</span><span class="cm-chips">
+      <button type="button" role="menuitem" class="cm-item cm-chip" data-act="move" data-arg="1" title="${esc(day(1))}">Next day</button>
+      <button type="button" role="menuitem" class="cm-item cm-chip" data-act="move" data-arg="7" title="${esc(day(7))}">Next week</button></span></div>`;
+    html += `<div class="cm-row cm-colours" role="group" aria-label="Colour">${icon("brush")}<span class="cm-chips">${cal.colours
+      .map((k) => `<button type="button" role="menuitemradio" class="cm-item cm-sw" data-act="colour" data-arg="${k}" data-color="${k}" aria-checked="${k === now}" aria-label="${COLOUR_NAMES[k] || k}" title="${COLOUR_NAMES[k] || k}"></button>`)
+      .join("")}</span></div>`;
+    html += item("copy-title", "Copy title", { icon: "upload" });
+    html += item("copy-card", "Copy card", { icon: "pin", note: "paste on any day" });
+    if (/^https:\/\/meet\.google\.com\//.test(it.meetUrl || "")) html += item("meet", "Join Google Meet", { icon: "people", data: it.meetUrl });
+    html += item("delete-this", "Delete", { icon: "close", danger: true });
+    return group("This note card", html);
+  }
+  // What a day's menu offers (and a time's, in Week and Day view)
+  function dayItems(cal, place) {
+    const d = place.date;
+    const notes = place.notes;
+    const dayCard = place.dayCard;
+    const src = copied && cal.get(copied.id);
+    const at = place.time ? `at ${place.time}` : "";
+    let make = item("new-note", "New note card", { icon: "plus", note: at });
+    if (src) make += item("paste", `Paste “${src.title || "(No title)"}”`, { icon: "download", note: at || "same time" });
+    make += dayCard ? item("edit-day", "Change the day card", { icon: "sparkle", note: cal.titleOf({ type: "day", item: dayCard }) }) : item("new-day", "New day card", { icon: "sparkle" });
+    let take = "";
+    if (dayCard) take += item("remove-day", "Remove day card", { icon: "close", danger: true, note: cal.titleOf({ type: "day", item: dayCard }) });
+    if (notes.length) {
+      take += item("remove-note", "Remove note card", { icon: "close", danger: true, note: notes.length === 1 ? cal.titleOf(notes[0]) : `${notes.length} on this day: pick one` });
+      take += `<div class="cm-pick" hidden>${notes.map((e) => item("delete-note", `Delete “${cal.titleOf(e)}”`, { icon: "close", danger: true, data: `${e.item.id}|${e.date}`, note: e.allDay ? "" : e.start.slice(11, 16) })).join("")}</div>`;
+    }
+    let go = item("list-note", "Note card list", { icon: "card" }) + item("list-day", "Day card list", { icon: "star" });
+    if (cal.view !== "day") go += item("day-view", "Open in Day view", { icon: "clock" });
+    if (d !== cal.today()) go += item("today", "Go to today", { icon: "flag" });
+    return group("New", make) + group("Remove", take) + group("See", go);
+  }
 
   function open(x, y, place) {
     const cal = C();
@@ -58,70 +122,82 @@
     close();
     back = document.activeElement;
     const d = place.date;
-    const on = cal.entriesOn(d);
-    const notes = on.filter((e) => e.type === "event" && !e.ro);
-    const dayCard = cal.dayCardOn(d);
-    const card = place.card && place.card.type !== "booking" ? cal.get(place.card.id) : null;
-    let html = `<p class="cm-head">${esc(cal.dayLabel(d))}${place.time ? ` · ${place.time}` : ""}</p>`;
+    place.notes = cal.entriesOn(d).filter((e) => e.type === "event" && !e.ro);
+    place.dayCard = cal.dayCardOn(d);
+    const e = place.card && place.card.type !== "booking" ? cal.occurrence(place.card.id, place.card.date) : null;
+    // (a booking by its words as well: bookings from Google Calendar have no id)
+    const on = !place.card ? null : place.card.type === "booking" ? cal.entriesOn(d).find((x) => x.type === "booking" && String(x.item.id ?? "") === place.card.id && place.card.text.includes(cal.titleOf(x).replace(/\s+/g, " ").trim())) || null : cal.entriesOn(d).find((x) => String(x.item.id) === place.card.id) || e;
+    place.e = on;
+    let head;
+    let html;
     if (place.card) {
-      const e = on.find((x) => x.item.id === place.card.id) || null;
-      const name = e ? cal.titleOf(e) : card ? card.title || "" : "";
-      const word = place.card.type === "day" ? "day card" : place.card.type === "booking" ? "booking" : cal.isAgent(place.card.id) ? "quest" : "note card";
-      html += `<div class="cm-group" role="group" aria-label="This ${word}">`;
-      html += item("open", `Open this ${word}`, { note: name });
-      if (card && !cal.isAgent(card.id)) html += item("delete-this", `Delete this ${word}`, { danger: true });
-      html += `</div>`;
+      head = `<p class="cm-head"><b>${esc(on ? cal.titleOf(on) : "")}</b><small>${esc(cal.dayLabel(place.card.date))}${on ? ` · ${esc(timeOf(on))}` : ""}</small></p>`;
+      html = cardItems(cal, place, e) + group("This day", item("day-more", `More for ${cal.dayLabel(d)}`, { icon: "plus", note: "›" }));
+    } else {
+      head = `<p class="cm-head"><b>${esc(cal.dayLabel(d))}${place.time ? ` · ${place.time}` : ""}</b></p>`;
+      html = dayItems(cal, place);
     }
-    html += `<div class="cm-group" role="group" aria-label="Note cards"><p class="cm-title">Note cards</p>`;
-    html += item("new-note", "Create note card", { note: place.time ? `at ${place.time}` : "" });
-    html += item("remove-note", "Remove note card", notes.length ? { note: notes.length === 1 ? cal.titleOf(notes[0]) : `${notes.length} on this day: pick one` } : { off: true, note: "none on this day" });
-    html += `<div class="cm-pick" hidden>${notes.map((e) => item("delete-note", `Delete “${cal.titleOf(e)}”`, { danger: true, data: `${e.item.id}|${e.date}` })).join("")}</div>`;
-    html += item("list-note", "View note card list");
-    html += `</div><div class="cm-group" role="group" aria-label="Day cards"><p class="cm-title">Day cards</p>`;
-    html += dayCard ? item("edit-day", "Change the day card", { note: cal.titleOf({ type: "day", item: dayCard }) }) : item("new-day", "Create day card");
-    html += item("remove-day", "Remove day card", dayCard ? { danger: true, note: cal.titleOf({ type: "day", item: dayCard }) } : { off: true, note: "none on this day" });
-    html += item("list-day", "View day card list");
-    html += `</div><div class="cm-group" role="group" aria-label="Go to">`;
-    html += item("day-view", "Open in Day view");
-    if (d !== cal.today()) html += item("today", "Go to today");
-    html += `</div>`;
-
     menu = document.createElement("div");
     menu.className = "cm";
     menu.setAttribute("role", "menu");
-    menu.setAttribute("aria-label", `${cal.dayLabel(d)}: note cards and day cards`);
-    menu.innerHTML = html;
+    menu.setAttribute("aria-label", place.card ? `${on ? cal.titleOf(on) : "This card"}: what to do` : `${cal.dayLabel(d)}: note cards and day cards`);
+    menu.innerHTML = head + html;
     document.body.append(menu);
-    place.dayCard = dayCard;
-    place.notes = notes;
-    menu.addEventListener("click", (e) => act(e, place));
+    menu.addEventListener("click", (ev) => act(ev, place));
     menu.addEventListener("keydown", keys);
+    menu.addEventListener("contextmenu", (ev) => ev.preventDefault());
+    place.x = x;
+    place.y = y;
     fit(x, y);
     sfx("open");
     first()?.focus({ preventScroll: true });
   }
-  // On screen, next to where it was pressed: never off an edge (a short window: two columns)
+  // On screen, next to where it was pressed: to its left or above it when there's no room to the right or below,
+  // never off an edge (a short window: its items in two columns)
   function fit(x, y) {
     menu.classList.remove("cm-wide");
-    const room = innerHeight - 16;
-    if (menu.offsetHeight > room) menu.classList.add("cm-wide");
+    menu.style.left = "8px";
+    menu.style.top = "8px";
+    // (scrollHeight: the shared fitting, fit.js, may already have capped its height)
+    if (menu.scrollHeight > innerHeight - 16) menu.classList.add("cm-wide");
     const w = menu.offsetWidth, h = menu.offsetHeight;
-    const left = Math.max(8, Math.min(x, innerWidth - w - 8));
-    const top = Math.max(8, Math.min(y, innerHeight - h - 8));
-    menu.style.left = `${left}px`;
-    menu.style.top = `${top}px`;
+    const left = x + w + 8 <= innerWidth ? x : x - w >= 8 ? x - w : innerWidth - w - 8;
+    const top = y + h + 8 <= innerHeight ? y : y - h >= 8 ? y - h : innerHeight - h - 8;
+    menu.style.left = `${Math.max(8, left)}px`;
+    menu.style.top = `${Math.max(8, top)}px`;
   }
   const enabled = () => [...menu.querySelectorAll(".cm-item:not([aria-disabled])")].filter((b) => b.offsetParent);
   const first = () => enabled()[0];
   function keys(e) {
     const list = enabled();
     const i = list.indexOf(document.activeElement);
-    if (e.key === "Escape") { e.preventDefault(); close(); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); list[(i + 1) % list.length]?.focus(); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); list[(i - 1 + list.length) % list.length]?.focus(); }
+    const inRow = document.activeElement && document.activeElement.closest(".cm-chips");
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === "ArrowDown" || (inRow && e.key === "ArrowRight")) { e.preventDefault(); list[(i + 1) % list.length]?.focus(); }
+    else if (e.key === "ArrowUp" || (inRow && e.key === "ArrowLeft")) { e.preventDefault(); list[(i - 1 + list.length) % list.length]?.focus(); }
     else if (e.key === "Home") { e.preventDefault(); list[0]?.focus(); }
     else if (e.key === "End") { e.preventDefault(); list[list.length - 1]?.focus(); }
     else if (e.key === "Tab") { e.preventDefault(); list[(i + (e.shiftKey ? -1 : 1) + list.length) % list.length]?.focus(); }
+  }
+
+  // Copy words: the clipboard (Nova Desk lets its panels write to it), else the older way
+  function copyText(text) {
+    const cal = C();
+    const done = () => cal.toast("Title copied");
+    const old = () => {
+      const t = document.createElement("textarea");
+      t.value = text;
+      t.setAttribute("readonly", "");
+      t.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
+      document.body.append(t);
+      t.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch {}
+      t.remove();
+      cal.toast(ok ? "Title copied" : "Couldn't copy here: open the card and copy its title.");
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, old);
+    else old();
   }
 
   function act(e, place) {
@@ -135,16 +211,35 @@
       const pick = menu.querySelector(".cm-pick");
       pick.hidden = !pick.hidden;
       b.setAttribute("aria-expanded", String(!pick.hidden));
-      fit(parseFloat(menu.style.left), parseFloat(menu.style.top));
+      fit(place.x, place.y);
       if (!pick.hidden) pick.querySelector(".cm-item")?.focus();
       return;
     }
+    // (from a card: the day's own menu, in the same place)
+    if (a === "day-more") {
+      const keep = back;
+      open(place.x, place.y, { date: d, time: "", card: null });
+      back = keep;
+      return;
+    }
     close();
-    if (a === "open") return cal.openExisting(place.card.type, place.card.id, place.card.date);
-    if (a === "delete-this") { const it = cal.get(place.card.id); return it && cal.removeCard(it, place.card.date); }
+    const c = place.card;
+    const it = c && c.type !== "booking" ? cal.get(c.id) : null;
+    if (a === "open") return cal.openExisting(c.type, c.id, c.date);
+    if (a === "delete-this") return it && cal.removeCard(it, c.date);
+    if (a === "duplicate") return it && cal.duplicate(it, c.date);
+    if (a === "move") return it && cal.moveBy(it, c.date, Number(b.dataset.arg));
+    if (a === "colour") return it && cal.recolour(it, c.date, b.dataset.arg);
+    if (a === "copy-title") return copyText(place.e ? cal.titleOf(place.e) : (it && it.title) || "");
+    if (a === "copy-card") {
+      copied = { id: c.id, date: c.date };
+      return cal.toast("Card copied: right-click a day and choose Paste");
+    }
+    if (a === "google" || a === "meet") return void window.open(b.dataset.arg, "_blank", "noopener");
+    if (a === "paste") { const src = copied && cal.get(copied.id); return src && cal.duplicate(src, copied.date, d, place.time); }
     if (a === "new-note") return cal.openNew({ date: d, time: place.time || undefined });
     if (a === "remove-note") { const e1 = place.notes[0]; return e1 && cal.removeCard(e1.item, e1.date); }
-    if (a === "delete-note") { const [id, date] = b.dataset.arg.split("|"); const it = cal.get(id); return it && cal.removeCard(it, date); }
+    if (a === "delete-note") { const [id, date] = b.dataset.arg.split("|"); const one = cal.get(id); return one && cal.removeCard(one, date); }
     if (a === "list-note") return showList("note");
     if (a === "new-day") return cal.openNew({ date: d, kind: "day" });
     if (a === "edit-day") return cal.openExisting("day", place.dayCard.id, d);
@@ -158,6 +253,8 @@
   const typing = (t) => t.closest("input, textarea, select, [contenteditable]");
   document.addEventListener("contextmenu", (e) => {
     if (!C() || !view.contains(e.target) || typing(e.target)) return;
+    // (a card being dragged: a phone's own long press doesn't open the menu over it; letting go does)
+    if (C().dragging) return e.preventDefault();
     const place = placeOf(e.target, e.clientY);
     // (the keyboard's menu key: next to what has focus)
     let { clientX: x, clientY: y } = e;
@@ -174,7 +271,8 @@
     const t = e.touches[0];
     const target = e.target;
     press = { x: t.clientX, y: t.clientY, timer: setTimeout(() => {
-      if (!press) return;
+      // (a card picked up to drag: its menu comes when it's let go without moving, from cal.js)
+      if (!press || C().dragging) return (press = null);
       const place = placeOf(target, press.y);
       if (!place.date) return;
       pressed = Date.now();
@@ -188,10 +286,21 @@
   const stop = () => { if (press) { clearTimeout(press.timer); press = null; } };
   view.addEventListener("touchend", stop, { passive: true });
   view.addEventListener("touchcancel", stop, { passive: true });
+  // (a card held by touch and let go without moving: cal.js asks for its menu)
+  view.addEventListener("cal:menu", (e) => {
+    stop();
+    const { target, x, y } = e.detail || {};
+    if (!target || !target.isConnected) return;
+    const place = placeOf(target, y);
+    if (!place.date) return;
+    pressed = Date.now();
+    open(x, y, place);
+  });
   // (the tap that ends a long press doesn't also open the day)
   view.addEventListener("click", (e) => { if (Date.now() - pressed < 700) { e.stopPropagation(); e.preventDefault(); } }, true);
   // Away: a press outside, the window changing
   document.addEventListener("pointerdown", (e) => { if (menu && !menu.contains(e.target)) close(); }, true);
+  document.addEventListener("keydown", (e) => { if (menu && e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } }, true);
   addEventListener("resize", close);
   addEventListener("blur", close);
   view.addEventListener("scroll", close, true);
