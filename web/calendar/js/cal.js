@@ -1714,7 +1714,10 @@ function occurrenceOf(id, date) {
 }
 function startDrag(el, x, y, resize) {
   swipe = null; // (a finger's drag isn't also a swipe to the next week)
-  drag = { mode: "time", el, x, y, resize, start: el.dataset.start, end: el.dataset.end, dMin: 0, dDay: 0, moved: false, colW: el.parentElement.getBoundingClientRect().width, col: el.closest(".col[data-date]") };
+  // (each day's column where it is as the card's lifted: a busy day's column is wider than the others, so the
+  // day the card goes to is the column under the pointer, not a count of the first column's widths)
+  const cols = [...view.querySelectorAll(".col[data-date]")].map((c) => ({ c, r: c.getBoundingClientRect() }));
+  drag = { mode: "time", el, x, y, resize, start: el.dataset.start, end: el.dataset.end, dMin: 0, dDay: 0, moved: false, cols, col: el.closest(".col[data-date]") };
   el.classList.add("dragging");
   document.documentElement.classList.add("cal-dragging");
   if (navigator.vibrate) navigator.vibrate(12);
@@ -1785,7 +1788,10 @@ function moveDrag(x, y) {
   }
   const hh = hourHeight();
   const dMin = Math.round(((y - drag.y) / hh) * 4) * 15;
-  const dDay = drag.resize || prefs.view !== "week" ? 0 : Math.round((x - drag.x) / drag.colW);
+  const home = drag.cols.findIndex((k) => k.c === drag.col);
+  let over = drag.cols.findIndex((k) => x >= k.r.left && x < k.r.right);
+  if (over < 0) over = x < (drag.cols[0] || {}).r?.left ? 0 : drag.cols.length - 1;
+  const dDay = drag.resize || prefs.view !== "week" || home < 0 ? 0 : over - home;
   if (dMin === drag.dMin && dDay === drag.dDay) return;
   sfx("nudge");
   drag.dMin = dMin;
@@ -1794,7 +1800,7 @@ function moveDrag(x, y) {
   if (drag.resize) {
     const len = Math.max(15, minutesBetween(drag.start, drag.end) + dMin);
     drag.el.style.height = `${(len / 60) * hh - 2}px`;
-  } else drag.el.style.transform = `translate(${dDay * drag.colW}px, ${(dMin / 60) * hh}px)`;
+  } else drag.el.style.transform = `translate(${dDay && drag.cols[home + dDay] ? drag.cols[home + dDay].r.left - drag.cols[home].r.left : 0}px, ${(dMin / 60) * hh}px)`;
   // (its time chip says where it's going as it moves, and the day it's going to lights up)
   const [t0, t1] = drag.el.querySelectorAll(".ev-time > span");
   if (t0 && t1) {
@@ -1802,9 +1808,8 @@ function moveDrag(x, y) {
     t1.textContent = `–${fmtTime(addMinutes(drag.end, dMin + (drag.resize ? 0 : dDay * 1440)))}`;
   }
   if (prefs.view === "week" && drag.col) {
-    const cols = [...view.querySelectorAll(".col[data-date]")];
-    const to = cols[cols.indexOf(drag.col) + dDay];
-    for (const c of cols) c.classList.toggle("drop-target", c === to && dDay !== 0);
+    const to = drag.cols[home + dDay];
+    for (const { c } of drag.cols) c.classList.toggle("drop-target", !!to && c === to.c && dDay !== 0);
   }
 }
 // Put down (or put back: Escape, the window losing focus, the browser taking the touch over)
