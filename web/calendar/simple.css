@@ -35,7 +35,8 @@ html:not([data-ui="rich"]) .month > .strip { display: flex !important; flex-wrap
 /* ---- Each day: its width decides words or bars ---- */
 html:not([data-ui="rich"]) .month .grid > .cell { container: day / inline-size !important; }
 @container day (max-width: 110px) {
-  /* its cards as bars: every one, up to four, each in its own colour; no "Also …" line, no words */
+  /* its cards as bars: every one, each in its own colour, no words (all of them: a day never hides a card, 25 Oct
+     2026; a busy day's week is taller, cal.js fitDays) */
   html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo, html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo.fit-hide {
     display: flex !important; flex-direction: column !important; gap: 2px !important; padding: 0 2px !important; margin: 2px 0 0 !important;
     overflow: visible !important; background: none !important; border: 0 !important; box-shadow: none !important;
@@ -47,7 +48,6 @@ html:not([data-ui="rich"]) .month .grid > .cell { container: day / inline-size !
   }
   html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di.ro { opacity: .7 !important; }
   html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di > *, html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di-also { display: none !important; }
-  html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo > .di:nth-of-type(n+5) { display: none !important; }
   /* a special day, the moon's name: a small gold bar too, its name in the day's plan and on hover */
   html:not([data-ui="rich"]) .month .grid.textual > .cell > :is(.skychip, .daycard, .pill) {
     display: block !important; height: 4px !important; min-height: 4px !important; width: auto !important; padding: 0 !important; margin: 2px 2px 0 !important;
@@ -57,9 +57,10 @@ html:not([data-ui="rich"]) .month .grid > .cell { container: day / inline-size !
   html:not([data-ui="rich"]) .month .grid.textual > .cell > :is(.skychip, .daycard, .pill) > * { display: none !important; }
 }
 
-/* ---- A day with room (a computer): its cards in words, never smaller than 10px; when they don't all fit at
-   that size the Calendar's fitter steps the rest out ("More in Day view") rather than shrinking them to 8px ---- */
-html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo { font-size: max(10px, var(--di-fs, 11px)) !important; }
+/* ---- A day with room (a computer): its cards in words, never smaller than 9px (only the busiest days go under
+   10px); when they don't all fit at that size the Calendar's fitter gives the week more height, then pages the
+   weeks (cal.js fitDays), never hiding a card or shrinking it to 8px ---- */
+html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo { font-size: max(9px, var(--di-fs, 11px)) !important; }
 html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo :is(.di-also, .di-t) { font-size: inherit !important; }
 /* (its time never under 11px, the least that reads, 24 Oct 2026: it's what the user looks for on a card) */
 html:not([data-ui="rich"]) .month .grid.textual > .cell > .dayinfo b { font-size: max(11px, var(--di-fs, 11px)) !important; }

@@ -359,14 +359,24 @@ function dayWords(d) {
   const day = Number(d.slice(8)), mon = Number(d.slice(5, 7));
   return `<span class="n-long">${ORD[day]} Day ${MONTHS[mon - 1]}</span><span class="n-word">${ORD[day]}</span><span class="n-mid">${day} ${MONTHS[mon - 1].slice(0, 3)}</span><span class="n-short">${day}/${mon}</span><span class="n-min">${day}</span>`;
 }
+// The month's cards as a list, a page at a time, as the week's and the day's on a very short Calendar: where
+// there's no room for its days, and where even one week alone can't hold its busiest day's cards (fitDays):
+// every card still shows, never one hidden behind "More" (25 Oct 2026, the user: "there shouldn't be hiding
+// under element note cards")
+function drawMonthList() {
+  // (a list made for the room: the short Calendar's slimmer rows, simple.css html.cal-short; render() sets it
+  // afresh each time, so a taller window gets its days back)
+  document.documentElement.classList.add("cal-short");
+  const from = `${cursor.slice(0, 7)}-01`;
+  const days = Array.from({ length: 31 }, (_, i) => addDays(from, i)).filter((d) => d.slice(0, 7) === from.slice(0, 7));
+  return drawAgenda(days, `in ${MONTHS[Number(from.slice(5, 7)) - 1]}`);
+}
+// A day card in the month, with its kind of day's icon in a pane at its start, as the note cards have
+const monthDayCard = (e) => pillHtml(e).replace('data-type="day"><span>', `data-type="day">${iconPane(e)}<span>`);
 function drawMonth() {
   // (Simple look on a very short Calendar: no room for six weeks of days, so the month's cards as a list, as
   // the week's and the day's)
-  if (short()) {
-    const from = `${cursor.slice(0, 7)}-01`;
-    const days = Array.from({ length: 31 }, (_, i) => addDays(from, i)).filter((d) => d.slice(0, 7) === from.slice(0, 7));
-    return drawAgenda(days, `in ${MONTHS[Number(from.slice(5, 7)) - 1]}`);
-  }
+  if (short()) return drawMonthList();
   const first = `${cursor.slice(0, 7)}-01`;
   const start = mondayOf(first);
   const nextMonth = Number(cursor.slice(5, 7)) === 12 ? `${Number(cursor.slice(0, 4)) + 1}-01-01` : `${cursor.slice(0, 4)}-${pad(Number(cursor.slice(5, 7)) + 1)}-01`;
@@ -398,7 +408,7 @@ function drawMonth() {
       const what = [...days.slice(1), ...rest];
       const style = [days.length ? themeStyle(dayTheme(days[0].item)) : "", what.length ? `--mix: ${kindTint(what)}` : ""].filter(Boolean).join("; ");
       cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${style ? ` style="${style}"` : ""} aria-label="${dayLabel(d)}${list.length ? `: ${esc(list.map(titleOf).join(", "))}` : ""}">
-      <span class="num"${phone() ? "" : ` data-goto="${d}" title="Open ${dayLabel(d)} in Day view"`}>${dayWords(d)}</span>${days.slice(0, 1).map(pillHtml).join("")}${sky1.map(skyChip).join("")}${moonWords(d)}${what.length ? `<p class="dayinfo" data-guard="off">${what.map(infoLine).join("")}</p>` : ""}</button>`;
+      <span class="num"${phone() ? "" : ` data-goto="${d}" title="Open ${dayLabel(d)} in Day view"`}>${dayWords(d)}</span>${days.slice(0, 1).map(monthDayCard).join("")}${sky1.map(skyChip).join("")}${moonWords(d)}${what.length ? `<p class="dayinfo" data-guard="off">${what.map(infoLine).join("")}</p>` : ""}</button>`;
       continue;
     }
     cells += `<button type="button" class="cell${d.slice(0, 7) !== cursor.slice(0, 7) ? " out" : ""}${d === t ? " today" : ""}${d === cursor ? " sel" : ""}${days.length ? " has-day" : ""}" data-date="${d}"${days.length ? ` style="${themeStyle(dayTheme(days[0].item))}"` : ""} aria-label="${dayLabel(d)}${list.length ? `, ${list.length} item${list.length > 1 ? "s" : ""}` : ""}">
@@ -417,6 +427,8 @@ function drawMonth() {
   // a moment that then changed in ways its size didn't show, and cards were left cut, 22 Oct 2026)
   for (const t of lateFits) clearTimeout(t);
   const drawn = view.querySelector(".month .grid");
+  // (no room for even one week of it: the month went to its list, drawMonthList)
+  if (!drawn) return;
   // (these always fit: what they're for changes nothing the skip below can see)
   lateFits = [700, 2500].map((ms) => setTimeout(() => { if (drawn.isConnected) fitMonth(true); }, ms));
   // (the days' size changing without the window's, a scroll bar coming or going: they fit again)
@@ -430,8 +442,9 @@ function drawMonth() {
     })).disconnect();
     monthSize.observe(grid);
     // (a day's card losing room to what comes in after the month is drawn, its moon or a special day:
-    // that day fits again; at most a few times each, so two changes can't chase each other, 22 Oct 2026,
-    // the user: "I don't want it cut at any size of the screen at any point")
+    // the month fits again if a day is now cut (its weeks share the height, so it's the whole month); at most
+    // a few times, so two changes can't chase each other, 22 Oct 2026, the user: "I don't want it cut at any
+    // size of the screen at any point")
     (cardSize ||= new ResizeObserver((list) => {
       for (const { target: card } of list) {
         const now = `${card.clientWidth}x${card.clientHeight}`;
@@ -445,13 +458,15 @@ function drawMonth() {
       if (resized.size) refitSoon = setTimeout(() => {
         const now = Date.now();
         if (now - refitWindow > 60000) { refitWindow = now; refitCount = 0; }
-        if (refitCount++ < 30) fitInfoAll([...resized].filter((card) => card.isConnected && card.parentElement).map((card) => card.parentElement));
+        if (refitCount++ < 30 && [...resized].some((card) => card.isConnected)) fitMonth(true);
         resized.clear();
       }, 100);
     })).disconnect();
     // (each card's size as it was fitted: the month is often fitted while its panel is still opening, at
     // another size, and the first size seen after must count as a change)
-    for (const card of grid.querySelectorAll(":scope > .cell > .dayinfo")) {
+    // (and each little card in them: its words growing inside a card of the same size, a font arriving late, leave
+    // the card's size alone, so they're watched too, 25 Oct 2026)
+    for (const card of grid.querySelectorAll(":scope > .cell > .dayinfo, :scope > .cell > .dayinfo > .di")) {
       card.dataset.size = `${card.clientWidth}x${card.clientHeight}`;
       cardSize.observe(card);
     }
@@ -482,129 +497,101 @@ function kindTint(list) {
   }
   return mix;
 }
-// Each item in a day, as a little note card: its time (not for all-day ones) and its title (a tap opens it).
-// (20 Oct 2026, the user: "on every item in a calender day can we fit every single note card minification
-// … onto the entire calender day square"; and with "the gigantic today panel" gone, the month has the
+// Each item in a day, as a little note card: its icon pane, its time (not for all-day ones) and its title (a tap
+// opens it). (20 Oct 2026, the user: "on every item in a calender day can we fit every single note card
+// minification … onto the entire calender day square"; and with "the gigantic today panel" gone, the month has the
 // whole width: a tap on a day's empty space starts a note card on it, a tap on its name opens Day view)
+// (data-content-card: its title is what's on it, not a button's words, so it wraps rather than hides, ns/CLAUDE.md
+// 2.3; the icon pane at its start, iconPane, a strip down its left edge: 25 Oct 2026, the user: "a pane with icons
+// that intelligently match up with what each event, quest and whatever is in a note card")
 function infoLine(e) {
   // (a quest's striped card already says it's a quest: no "QUEST:" in front of its title here)
   const title = titleOf(e).replace(/^quest:\s*/i, "");
   // (on a phone just the title: its time is in the chosen day's list under the month)
-  return `<span class="di${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(SYMBOL_WORDS[symbolOf(e)] || "")}: ${esc(titleOf(e))}${e.allDay ? "" : `, ${fmtTime(e.start)}–${fmtTime(e.end)}`}"><span class="di-in">${e.allDay || phone() ? "" : `<b>${fmtTime(e.start)}</b> `}<span class="di-t">${esc(title)}</span></span></span>`;
+  return `<span class="di${e.ro ? " ro" : ""}" data-content-card data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(SYMBOL_WORDS[symbolOf(e)] || "")}: ${esc(titleOf(e))}${e.allDay ? "" : `, ${fmtTime(e.start)}–${fmtTime(e.end)}`}">${iconPane(e)}<span class="di-in">${e.allDay || phone() ? "" : `<b>${fmtTime(e.start)}</b> `}<span class="di-t">${esc(title)}</span></span></span>`;
 }
 // (data-guard="off": this fits itself; /shared/onescreen.js's last-resort shrinking leaves it alone, as the
 // two fought over it, 22 Oct 2026)
-// A day's card fits its day: what doesn't fit steps out of the card from the end, named on its last
-// line ("Also Lunch with Sam, Call mum"); when even that's too long it says the rest is in the day's
-// list (a tap on it shows that list). Nothing is cut short and there are no numbers.
-// (22 Oct 2026, the user: "fix visual animation delay, glitching and or lag": every day in the month goes
-// through the steps together, each step one layout for all of them, instead of a layout per try per day,
-// thousands of them on a tablet. The steps and what they end with are the same. Each step hands back what
-// it needs measured (its test, over, or another read); fitInfoAll runs them all, and the answers come back in.)
-function fitInfo(c) { fitInfoAll([c]); }
-function fitInfoAll(cells) {
-  stepAll(cells);
-  // (a week's days share its height: as the busier days in a row get smaller the row can get shorter, and a
-  // day that fitted earlier no longer does. So once more for any day left cut, now its neighbours are done,
-  // until none are, at most four rounds; each round only makes things smaller, so it settles)
-  for (let round = 0; round < 4; round++) {
-    const cut = cells.filter((c) => { const card = c.querySelector(":scope > .dayinfo"); return card && !card.classList.contains("fit-hide") && cardCut(c, card); });
-    if (!cut.length) break;
-    stepAll(cut);
-  }
-  // (each card's size as fitted, so its own fitting never reads as a change that fits it again: that ran on
-  // and on, 30 rounds a minute, keeping a tablet busy while nothing happened)
-  for (const c of cells) { const card = c.querySelector(":scope > .dayinfo"); if (card) card.dataset.size = `${card.clientWidth}x${card.clientHeight}`; }
+// Every card in a day shows in that day, whole (25 Oct 2026, the user: "fix the visibility issues on the calender;
+// there shouldn't be hiding under element note cards". Before, what didn't fit stepped out of the day behind
+// "Also …", "More in Day view" or "More", and a card whose title was too long for one line went first, so a
+// quiet day with one long title showed no card at all). Now, in turn:
+//   1. a card's title wraps onto more lines rather than hide;
+//   2. a busy day's words step down a size at a time, then its cards go slimmer, to 9px at the least on a
+//      computer; last of all a title longer than two lines ends with … (all of it in its tooltip and a tap away);
+//   3. a week whose busiest day still needs more room gets a taller row, the quieter weeks giving up theirs
+//      (never lower than --wk-min, so an empty day still has room to tap);
+//   4. when the weeks still don't all fit, they go in pages of whole weeks, the page bar under them (pageWeeks);
+//   5. when even one week alone can't hold its busiest day, the month shows as a list of its cards, a page at a
+//      time (drawMonthList). Nothing is cut and nothing hidden.
+// (22 Oct 2026, the user: "fix visual animation delay, glitching and or lag": every day is measured together,
+// one layout a step for the whole month, never a layout per day)
+// (each step: its words' size, whether its cards are slim, their lines closer, and whether a title longer than two
+// lines ends with … (its whole title in its tooltip, and a tap opens it). 9px only on the busiest days; the two-line
+// titles only as the very last step, where its week can't have the room even on a page of its own with others:
+// otherwise a narrow window had a page for each week. A phone's days are tiny, so smaller)
+const DI_STEPS = { desk: [[12], [11.5], [11], [10.5], [10], [10, true], [9.5, true], [9, true], [9, true, true]], phone: [[10], [9.5], [9], [8.5], [8.5, true], [8, true], [7.5, true], [7.5, true, true]] };
+const diSteps = () => (phone() ? DI_STEPS.phone : DI_STEPS.desk);
+const WK_MIN = 58; // (a week's lowest, when the grid doesn't say: cosmos.css --wk-min)
+function setStep(c, k) {
+  const [fs, slim, clamp] = diSteps()[k];
+  c.dataset.step = String(k);
+  c.style.setProperty("--di-fs", `${fs}px`);
+  const card = c.querySelector(":scope > .dayinfo");
+  if (card) { card.classList.toggle("slim", !!slim); card.classList.toggle("clamp", !!clamp); }
 }
-function stepAll(cells) {
-  let live = [];
-  // (the steps' changes, all days at once; then all the measuring, one layout; then the next step)
-  for (const c of cells) { const g = fitInfoSteps(c); const r = g.next(); if (!r.done) live.push({ g, over: r.value }); }
-  while (live.length) {
-    const said = live.map((x) => x.over());
-    const next = [];
-    live.forEach((x, i) => { const r = x.g.next(said[i]); if (!r.done) next.push({ g: x.g, over: r.value }); });
-    live = next;
+// How tall each day is at each step: the weeks only as tall as what's in them and every day from its top
+// (.wk-measure, cosmos.css), so each day's own height is what its cards need; one layout a step, every day at once
+function measureDays(grid, cells) {
+  const n = diSteps().length;
+  const h = cells.map(() => []);
+  grid.classList.add("wk-measure");
+  for (let k = 0; k < n; k++) {
+    for (const c of cells) setStep(c, k);
+    cells.forEach((c, i) => { h[i][k] = Math.ceil(c.getBoundingClientRect().height); });
   }
+  grid.classList.remove("wk-measure");
+  return h;
 }
-// (a day's card running over: what fitInfoSteps' test checks)
+// (a day's card running over: what the last look checks)
 function cardCut(c, card) {
   if (c.scrollHeight > c.clientHeight + 1 || card.scrollWidth > card.clientWidth + 1) return true;
   if ([...card.querySelectorAll(":scope > *, .di-in")].some((k) => k.offsetParent && k.scrollWidth > k.clientWidth + 1)) return true;
   const r = card.getBoundingClientRect();
   return [...card.children].some((k) => { const b = k.getBoundingClientRect(); return b.height > 0 && (b.bottom > r.bottom + 0.5 || b.right > r.right + 0.5); });
 }
-function* fitInfoSteps(c) {
-  const card = c.querySelector(":scope > .dayinfo");
-  if (!card) return;
-  for (const x of card.querySelectorAll(".di-also")) x.remove();
-  card.classList.remove("fit-hide");
-  c.removeAttribute("title");
-  const lines = [...card.querySelectorAll(".di")];
-  for (const l of lines) l.classList.remove("fit-hide");
-  // (the card can't grow past its day: what doesn't fit shows as the card itself running over)
-  // (measured by where its little cards end, to the pixel: rounding let a card's bottom edge go under the day's)
-  // (a card whose words run past its side counts too: they're on one line, so it needs smaller words or room)
-  const over = () => cardCut(c, card);
-  // (every card in sight first: the words a step smaller at a time, down to a size still easy to read)
-  // (a busy day's cards sit two side by side before the words get small)
-  c.style.removeProperty("--di-fs");
-  card.classList.remove("two", "slim");
-  // (then, on the busiest days, slimmer cards: tighter lines, less padding)
-  // (a phone's days are too narrow for two side by side: smaller words, then slimmer cards)
-  // (on a computer each card is one line, so they stay one under the other while the words get smaller;
-  // two side by side only when even the smallest one-under-the-other doesn't fit)
-  const steps = phone() ? [[false, false, [10, 9.5, 9, 8.5]], [false, true, [8.5, 8, 7.5]]] : [[false, false, [12, 11.5, 11, 10.5, 10, 9.5, 9]], [false, true, [9, 8.5, 8]], [true, true, [9, 8.5, 8]]];
-  for (const [two, slim, sizes] of steps) {
-    card.classList.toggle("two", two && lines.length > 1);
-    card.classList.toggle("slim", slim);
-    for (const fs of sizes) {
-      c.style.setProperty("--di-fs", `${fs}px`);
-      if (!(yield over)) return;
-    }
+// The month's days fitted (steps 1 to 5 above). False when even one week can't hold its busiest day.
+function fitDays(grid, cells) {
+  const last = diSteps().length - 1;
+  const cs = getComputedStyle(grid);
+  const gap = parseFloat(cs.rowGap) || 0;
+  const room = grid.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const min = parseFloat(cs.getPropertyValue("--wk-min")) || (phone() ? 48 : WK_MIN);
+  const h = measureDays(grid, cells);
+  // (what each week needs: its busiest day at its smallest step)
+  const need = Array.from({ length: Math.ceil(cells.length / 7) }, (_, w) => Math.max(min, ...h.slice(w * 7, w * 7 + 7).map((x) => x[last])));
+  const shown = pageWeeks(grid, cells, need, room, gap);
+  if (!shown) return false;
+  // (each week shown at least as tall as it needs; the room left shared out between them)
+  grid.style.gridTemplateRows = shown.map((w) => `minmax(${need[w]}px, 1fr)`).join(" ");
+  // (each day the biggest words that fit the height its week ended up with)
+  const vis = cells.filter((c) => !c.classList.contains("wk-off"));
+  const at = new Map(cells.map((c, i) => [c, i]));
+  const tall = vis.map((c) => c.getBoundingClientRect().height);
+  vis.forEach((c, j) => {
+    const k = h[at.get(c)].findIndex((x) => x <= tall[j] + 0.5);
+    setStep(c, k < 0 ? last : k);
+  });
+  // (then one look: a day still running over by a rounding takes the next step down)
+  for (let round = 0; round < last; round++) {
+    const cut = vis.filter((c) => { const card = c.querySelector(":scope > .dayinfo"); return card && Number(c.dataset.step) < last && cardCut(c, card); });
+    if (!cut.length) break;
+    for (const c of cut) setStep(c, Number(c.dataset.step) + 1);
   }
-  // (then as many cards as fit, one under the other, and the rest named: on a computer one-line cards
-  // don't fit two side by side)
-  if (!phone()) {
-    card.classList.remove("two");
-    card.classList.add("slim");
-    c.style.setProperty("--di-fs", "9px");
-  }
-  const also = document.createElement("span");
-  also.className = "di-also";
-  also.dataset.goto = c.dataset.date;
-  card.append(also);
-  const out = [];
-  const WORDS = ["More in Day view", "More"];
-  const say = (short) => {
-    const names = out.map((l) => l.querySelector(".di-t").textContent);
-    also.textContent = short ? WORDS[short - 1] : `${out.length === lines.length ? "" : "Also "}${names.join(", ")}`;
-    also.title = names.join(", ");
-  };
-  // (first the cards too long for their one line step out, wherever they are; the others keep their place)
-  const wide = (l) => [l, l.querySelector(".di-in")].some((k) => k && k.scrollWidth > k.clientWidth + 1);
-  // (measured with every other day's: a read handed back like the tests)
-  const wides = yield () => lines.filter(wide);
-  for (const l of wides) l.classList.add("fit-hide");
-  out.push(...lines.filter((l) => l.classList.contains("fit-hide")));
-  for (const short of [0, 1, 2]) {
-    if (!out.length) break;
-    say(short);
-    if (!(yield over)) return;
-  }
-  // (then from the end, until the rest fit)
-  for (let i = lines.length - 1; i >= 0; i--) {
-    if (lines[i].classList.contains("fit-hide")) continue;
-    lines[i].classList.add("fit-hide");
-    out.splice(0, out.length, ...lines.filter((l) => l.classList.contains("fit-hide")));
-    for (const short of [0, 1, 2]) {
-      say(short);
-      if (!(yield over)) return;
-    }
-  }
-  // (a day too small for even a word: no card; its titles are its tooltip, and all of it is in its list)
-  card.classList.add("fit-hide");
-  c.title = out.map((l) => l.querySelector(".di-t").textContent).join(", ");
+  // (each card's size as fitted, so its own fitting never reads as a change that fits it again: that ran on and on,
+  // 30 rounds a minute, keeping a tablet busy while nothing happened)
+  for (const card of grid.querySelectorAll(":scope > .cell > .dayinfo, :scope > .cell > .dayinfo > .di")) card.dataset.size = `${card.clientWidth}x${card.clientHeight}`;
+  return true;
 }
 // A phone's day and sky names, each on its one line in its tiny day: a little smaller at a time and,
 // when even the smallest is too long, its last words step out (the whole name is its tooltip)
@@ -635,33 +622,45 @@ function fitChips(c) {
 // words back), and a day that still can't hold all its cards shows the rest as "+N" (all of them
 // are in its list). When the chosen day sits below the month, the month keeps the screen's height.
 const STEPS = ["fit-1", "fit-2", "fit-3", "sym"];
-// Whole weeks a few at a time on a short screen (22 Oct 2026, the one device model; ns/CLAUDE.md 2c):
-// where the weeks keep a readable height (cosmos.css --wk-min) and they don't all fit, the month shows as
-// many whole weeks as fit, with the page bar (the same as everywhere: ‹ 1 / 3 ›) to turn to the others,
-// the weekday names staying above. It opens on the chosen day's week and keeps its page while the month
-// stays the same. (The general page bar took the grid's days one by one, not by the week.)
-let weekAt = 0, weekAtOf = "";
-const WK_BAR = 44; // (the room kept under the weeks for the bar)
-function pageWeeks(grid, cells) {
-  for (const c of cells) c.classList.remove("wk-off");
+// Whole weeks a few at a time when they don't all fit (22 Oct 2026, the one device model; ns/CLAUDE.md 2c): the
+// month shows as many whole weeks as fit, each as tall as its busiest day needs (fitDays), with the page bar (the
+// same as everywhere: ‹ 1 / 3 ›) to turn to the others, the weekday names staying above. Pages are as even as
+// they can be (5 weeks as 3 and 2, not 4 and 1). It opens on the chosen day's week and keeps its page while the
+// month stays the same. (The general page bar took the grid's days one by one, not by the week.) Hands back the
+// weeks shown, or null when even one week alone is taller than the room (the month then goes to its list).
+let weekAt = 0, weekAtOf = "", weekPages = [];
+function pageWeeks(grid, cells, need, room, gap) {
   let bar = grid.querySelector(":scope > .wk-pager");
-  const cs = getComputedStyle(grid);
-  const min = parseFloat(cs.getPropertyValue("--wk-min")) || 0;
-  const gap = parseFloat(cs.rowGap) || 0;
-  const weeks = Math.ceil(cells.length / 7);
-  const room = grid.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) + (grid.classList.contains("wk-paged") ? WK_BAR : 0);
-  const fits = (h) => Math.max(1, Math.floor((h + gap) / (min + gap)));
-  if (!min || fits(room) >= weeks) {
-    grid.classList.remove("wk-paged", "wk-tiny");
+  const weeks = need.length;
+  const all = [...Array(weeks).keys()];
+  const tall = (ws) => ws.reduce((a, w) => a + need[w], 0) + gap * Math.max(0, ws.length - 1);
+  grid.classList.remove("wk-tiny");
+  if (tall(all) <= room) {
+    grid.classList.remove("wk-paged");
     if (bar) bar.remove();
-    return;
+    for (const c of cells) c.classList.remove("wk-off");
+    weekPages = [all];
+    return all;
   }
+  // (the room under the weeks kept for the bar, cosmos.css .wk-paged, comes off each page's)
+  const padWas = parseFloat(getComputedStyle(grid).paddingBottom) || 0;
   grid.classList.add("wk-paged");
-  // (not even one week at the readable height under the week bar, a very short screen: the week takes the
-  // height there is, its days showing what fits and "More", never cut, 22 Oct 2026)
-  grid.classList.toggle("wk-tiny", room - WK_BAR + gap < min + gap);
-  const per = fits(room - WK_BAR);
-  const pages = Math.ceil(weeks / per);
+  const per = room - ((parseFloat(getComputedStyle(grid).paddingBottom) || 0) - padWas);
+  if (Math.max(...need) > per) {
+    grid.classList.remove("wk-paged");
+    return null;
+  }
+  // (as many weeks on each page as fit, in order; then, if the same number of pages can be even, even)
+  const greedy = [];
+  for (let w = 0; w < weeks; ) {
+    const page = [w++];
+    while (w < weeks && tall([...page, w]) <= per) page.push(w++);
+    greedy.push(page);
+  }
+  const size = Math.ceil(weeks / greedy.length);
+  const even = [];
+  for (let w = 0; w < weeks; w += size) even.push(all.slice(w, w + size));
+  const pages = (weekPages = even.length === greedy.length && even.every((p) => tall(p) <= per) ? even : greedy);
   // (a new month opens on the chosen day's week, or its first; turning keeps to whole pages)
   const first = cells[0] && cells[0].dataset.date;
   if (first !== weekAtOf) {
@@ -669,16 +668,17 @@ function pageWeeks(grid, cells) {
     const at = cells.findIndex((c) => c.dataset.date === cursor);
     weekAt = at >= 0 ? Math.floor(at / 7) : 0;
   }
-  const page = Math.min(pages - 1, Math.floor(Math.min(weekAt, weeks - 1) / per));
-  cells.forEach((c, i) => c.classList.toggle("wk-off", Math.floor(Math.floor(i / 7) / per) !== page));
+  const page = Math.max(0, pages.findIndex((p) => p.includes(Math.min(weekAt, weeks - 1))));
+  cells.forEach((c, i) => c.classList.toggle("wk-off", !pages[page].includes(Math.floor(i / 7))));
   if (!bar) {
     bar = document.createElement("nav");
     bar.className = "os-pager wk-pager";
     bar.setAttribute("aria-label", "Weeks");
     bar.innerHTML = '<button type="button" class="os-prev" aria-label="Earlier weeks">‹</button><span class="os-count" aria-live="polite"></span><button type="button" class="os-next" aria-label="Later weeks">›</button>';
     const turn = (by) => {
-      const now = Number(bar.dataset.page) + by, step = Number(bar.dataset.per);
-      weekAt = Math.max(0, now * step);
+      const to = weekPages[Number(bar.dataset.page) + by];
+      if (!to) return;
+      weekAt = to[0];
       fitMonth();
     };
     bar.querySelector(".os-prev").addEventListener("click", () => turn(-1));
@@ -686,10 +686,10 @@ function pageWeeks(grid, cells) {
     grid.append(bar);
   }
   bar.dataset.page = String(page);
-  bar.dataset.per = String(per);
-  bar.querySelector(".os-count").textContent = `${page + 1} / ${pages}`;
+  bar.querySelector(".os-count").textContent = `${page + 1} / ${pages.length}`;
   bar.querySelector(".os-prev").disabled = page <= 0;
-  bar.querySelector(".os-next").disabled = page >= pages - 1;
+  bar.querySelector(".os-next").disabled = page >= pages.length - 1;
+  return pages[page];
 }
 // (what the month was last fitted to: the same drawing at the same size with the same fonts and week page
 // needs nothing done, and the late fits, the fonts' and the sizes' calls come often; each fit is a dozen or
@@ -705,13 +705,20 @@ function fitMonth(always = false) {
     // (a late fit: one look first, and the steps only if a day is cut: one layout instead of a dozen)
     if (grid.classList.contains("textual") && ![...grid.querySelectorAll(":scope > .cell > .dayinfo:not(.fit-hide)")].some((card) => cardCut(card.parentElement, card))) return;
   }
-  fitMonthNow(grid);
+  // (no room for even one week's busiest day: its cards as a list instead, never hidden)
+  if (fitMonthNow(grid) === false) {
+    fitted = null;
+    return drawMonthList();
+  }
   // (the size as it ended up: a fit can change it, the week bar coming or going)
   fitted = { grid, key: `${grid.clientWidth}x${grid.clientHeight}|${fontGen}|${weekAt}` };
 }
 function fitMonthNow(grid) {
   const cells = [...grid.children].filter((c) => !c.classList.contains("wk-pager"));
-  pageWeeks(grid, cells);
+  // (every week in sight and of its own height while the month is measured; fitDays then pages them)
+  for (const c of cells) c.classList.remove("wk-off");
+  grid.classList.remove("wk-paged", "wk-tiny");
+  grid.style.removeProperty("grid-template-rows");
   // (a title that doesn't fit its one line counts as not fitting too)
   const cutTitle = (c) => [...c.querySelectorAll(".pill:not(.fit-hide) > span, .daycard > span")].some((s) => s.offsetParent && s.scrollWidth > s.clientWidth + 1);
   const over = (c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1 || cutTitle(c);
@@ -736,8 +743,12 @@ function fitMonthNow(grid) {
   // to the plan, pushed the last weeks off the bottom of a short screen; 22 Oct 2026)
   if (grid.classList.contains("textual")) {
     if (phone()) for (const c of cells) fitChips(c);
-    fitInfoAll(cells);
-    return;
+    return fitDays(grid, cells);
+  }
+  {
+    const cs = getComputedStyle(grid);
+    const min = parseFloat(cs.getPropertyValue("--wk-min")) || WK_MIN;
+    pageWeeks(grid, cells, Array(Math.ceil(cells.length / 7)).fill(min), grid.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom), parseFloat(cs.rowGap) || 0);
   }
   // (each step for every day at once: all the measuring, then all the changes, one layout a step)
   for (const step of STEPS) { const overs = cells.filter(over); for (const c of overs) c.classList.add(step); }

@@ -387,12 +387,14 @@ html[data-centred] .allday .pill span { flex: 0 1 auto; }
 /* (the weeks on other pages are out of the way; the week bar sits in the room kept under the weeks, at the
    left, clear of the round + at the bottom right and of the day's plan under or beside the month) */
 .month > .grid > .cell.wk-off, .month > .grid.textual > .cell.wk-off { display: none !important; }
-.month > .grid.wk-paged { position: relative; padding-bottom: 44px !important; }
+.month > .grid.wk-paged { position: relative; padding-bottom: 40px !important; }
+/* (a touch screen's page bar is taller: more room under the weeks for it) */
+html:not([data-form="desktop"]) .month > .grid.wk-paged { padding-bottom: 48px !important; }
 /* (a very short screen: the week shown takes the room there is, cal.js pageWeeks wk-tiny; and the holiday
    line steps aside, the days themselves show them) */
 .month > .grid.wk-tiny { grid-auto-rows: minmax(0, 1fr) !important; }
 @media (max-height: 420px) { .month > .strip { display: none !important; } }
-.month > .grid > .wk-pager { left: 8px; right: auto; bottom: 4px; transform: none; }
+.month > .grid > .wk-pager { left: 8px; right: auto; bottom: 1px; transform: none; }
 /* A booking's name: a long word breaks inside the card instead of being cut at its side, and what
    doesn't fit in its lines ends with … (tap the card for all of it) */
 .pill span { overflow-wrap: anywhere; text-overflow: ellipsis; }
@@ -500,7 +502,7 @@ html[data-centred] .grid.textual .dayinfo { text-align: center; }
 /* ================= Every item a little note card, filling its day (20 Oct 2026, later) =================
    The month has the whole width (no Today panel on a computer). In each day every item is its own small
    card in its colour (time, then title, wrapping rather than cut short), sharing out the day's whole
-   height; on a busy day the words step down in size until all of them fit (cal.js fitInfo) */
+   height; on a busy day the words step down in size until all of them fit (cal.js fitDays) */
 .month:not(:has(> .dayplan)) { grid-template-columns: minmax(0, 1fr) !important; }
 .grid.textual .cell > .num { cursor: pointer; }
 .grid.textual .cell > .num:hover { box-shadow: inset 0 0 0 1px rgba(var(--hi-rgb), .55); }
@@ -699,13 +701,12 @@ html.embed .bar { padding-top: 4px !important; }
 @media (prefers-reduced-motion: reduce) { .grid.textual .di[data-kind]:hover, .ev[data-kind]:hover, .row-item.note[data-kind]:hover { transform: none; } }
 
 /* A card's words never break part-way through (21 Oct 2026, the user: "make sure text doesn't line break
-   on an unfinished sentence"): on a computer each card's time and title stay on one line (cal.js fitInfo
-   makes the words smaller, then shows what doesn't fit by name or as "More in Day view"); on a phone's tiny
-   days a title can go onto a second line only between whole words, never inside one */
-.grid.textual .di, .grid.textual .di-in, .grid.textual .di-t, .grid.textual .di-also { white-space: nowrap !important; overflow-wrap: normal !important; word-break: normal !important; hyphens: manual !important; }
-@media (max-width: 719px) {
-  .grid.textual .di, .grid.textual .di-in, .grid.textual .di-t, .grid.textual .di-also { white-space: normal !important; }
-}
+   on an unfinished sentence"): a title goes onto another line only between whole words. On a computer too
+   now: a card's title is content, so it wraps rather than hides (25 Oct 2026, the user: "there shouldn't be
+   hiding under element note cards"; ns/CLAUDE.md 2.3, data-content-card). Only a single word longer than its
+   whole card breaks inside it, rather than run out of the card. Its time stays in one piece. */
+.grid.textual .di, .grid.textual .di-in, .grid.textual .di-t { white-space: normal !important; overflow-wrap: break-word !important; word-break: normal !important; hyphens: manual !important; }
+.grid.textual .di b { white-space: nowrap !important; }
 /* Taller plastic cards (21 Oct 2026, the user: "make the plastic cards have higher height"): on a computer
    the cards share out the day's height, each up to 30px tall with its words in the middle (never one card
    stretched over the whole day); a busy day's cards give up that room before their words get smaller */
@@ -717,6 +718,46 @@ html.embed .bar { padding-top: 4px !important; }
   .grid.textual .dayinfo { gap: 3px !important; }
   .grid.textual .dayinfo.slim { gap: 2px !important; }
 }
+
+/* ================= Every card in sight, each with its icon pane (25 Oct 2026) =================
+   The user: "fix the visibility issues on the calender; there shouldn't be hiding under element note cards"
+   and "add a pane with icons that intelligently match up with what each event, quest and whatever is".
+   Every card in a day shows, its title wrapping onto more lines rather than hiding; a week whose busiest day
+   needs more room gets a taller row, and weeks that still don't fit go in pages (cal.js fitDays, pageWeeks).
+   (the month measured: each week only as tall as what's in it and every day from its top, so a day's height is
+   what its cards need, cal.js measureDays; only for that moment, inside one script run, so it's never seen) */
+.month > .grid.wk-measure { grid-template-rows: none !important; grid-auto-rows: auto !important; align-items: start !important; align-content: start !important; }
+.month > .grid.wk-measure > .cell { height: auto !important; min-height: 0 !important; }
+.month > .grid.wk-measure > .cell > .dayinfo { flex: none !important; }
+/* (a slim card's lines closer together, and the cards a pixel apart: a busy day's cards take less height before
+   their week grows) */
+.grid.textual .dayinfo.slim { gap: 1px !important; }
+.grid.textual .dayinfo.slim .di, .grid.textual .dayinfo.slim .di-in { line-height: 1.22 !important; }
+/* (its time chip, never under 11px, simple.css, on the same line as the smaller title without making that line taller) */
+.grid.textual .dayinfo.slim .di b { line-height: 1.05 !important; vertical-align: baseline !important; }
+/* (the very last step on the busiest days, cal.js DI_STEPS: a title longer than two lines ends with …, the card's
+   tooltip has all of it and a tap opens it; never the card itself hidden) */
+.grid.textual .dayinfo.clamp .di-in { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+  padding-inline-end: 2px; /* (room for the … at the end of a full line, which stood 2px past it) */ }
+/* (the title flows on from its time, onto the next line where it must, not as a block of its own under it) */
+.grid.textual .di .di-t { display: inline !important; }
+/* (the icon pane, cal.js iconPane: a strip down the card's left edge, the card's own height, in the colour of
+   what the card is about (data-kind, --k1), its icon white and never under 12px; 20 Oct 2026 the user turned
+   down "horribly tiny icons" and "awful small boxed icons", so it's part of the card, not a little box. The
+   card's words sit in the room beside it.) */
+.grid.textual .di[data-kind] { flex-wrap: nowrap !important; align-items: stretch !important; justify-content: flex-start !important; padding-left: 0 !important; column-gap: 0 !important; }
+.grid.textual .di > .ico-pane { --pane-w: max(16px, 1.65em); --pane-ico: max(12px, 1.2em); margin-right: 3px; border-start-start-radius: inherit; border-end-start-radius: inherit;
+  background: linear-gradient(180deg, color-mix(in oklab, rgb(var(--k1, var(--hi-rgb))) 82%, #fff), color-mix(in oklab, rgb(var(--k1, var(--hi-rgb))) 72%, #000));
+  border-inline-end: 1px solid rgb(255 255 255 / .22); }
+.grid.textual .di > .di-in { flex: 1 1 auto; min-width: 0; align-self: center; text-align: inherit; }
+html:not([data-centred]) .grid.textual .di > .di-in { text-align: left; }
+/* (a day card in the month: its kind of day's icon in a pane at its start, its name in the room beside it) */
+.grid.textual .cell > .daycard:has(> .ico-pane) { align-items: stretch; padding-left: 0 !important; overflow: hidden; gap: 0; }
+.grid.textual .cell > .daycard > .ico-pane { --pane-w: max(18px, 1.75em); --pane-ico: max(12px, 1.15em); margin-right: 4px; border-start-start-radius: inherit; border-end-start-radius: inherit; }
+.grid.textual .cell > .daycard:has(> .ico-pane) > span { flex: 1 1 auto; align-self: center; }
+/* (a phone's days are too narrow for a pane beside their words: their cards' colours say what they are, and the
+   chosen day's list under the month has each card's icon) */
+@media (max-width: 719px) { .grid.textual .di > .ico-pane, .grid.textual .cell > .daycard > .ico-pane { display: none !important; } .grid.textual .di[data-kind] { padding-left: 2px !important; } }
 
 /* ================= The month in the theme's colour (22 Oct 2026) =================
    The user: "theme it so the overall theme color is strongly prevalent in the coloring of all elements
@@ -871,7 +912,7 @@ html.embed .bar { padding-top: 4px !important; }
 /* Nothing cut off in a day's little cards (22 Oct 2026, the user: "WHY IN THE ENTIRE NOVA-SUITE ANATOMY THERE
    IS STILL OFFSCREEN ELEMENTS"): a title's letters (and emoji) stood 1.5-3px taller than its tight line and
    were clipped at the card's edge. Each title and time is its own small block on lines tall enough for its
-   letters, so the card holds all of it; cal.js fitInfo then fits the cards to the day as before */
+   letters, so the card holds all of it; cal.js fitDays then fits the cards to the day as before */
 .grid.textual .di .di-t, .grid.textual .di b { display: inline-block; max-width: 100%; vertical-align: top; line-height: 1.3; }
 .grid.textual .di, .grid.textual .di-in { line-height: 1.3 !important; }
 /* (the "Also …" line under them too: its letters on a line tall enough for them) */
