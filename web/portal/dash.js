@@ -54,6 +54,8 @@
   const hhmm = (d) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
   const dayWord = (d) => (dayKey(d) === dayKey(new Date()) ? "Today" : d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" }));
   const bookingName = (b) => [b.session, b.name].filter(Boolean).join(" · ") || "Booking";
+  // (Outreach's campaigns and posts: their status as Campaigns and Social word it, app.js / social.js)
+  const OUT_WORDS = { draft: "Draft", pending_approval: "Waiting", approved: "Approved", scheduled: "Scheduled", posting: "Posting…", manual: "Post by hand", posted: "Posted", sent: "Sent", failed: "Didn't go", rejected: "Rejected" };
 
   // ---- What each section's tile says: { big, small, rows: [[main, side]], empty } ----
   const TILES = {
@@ -151,7 +153,9 @@
       return {
         big: plural(list.length, "campaign"),
         small: `${a.everyone || 0} can be emailed (${a.fans || 0} fans, ${a.clients || 0} clients)`,
-        rows: list.slice(0, 4).map((c) => [c.subject || "(No subject)", c.status || ""]),
+        // (the status in the words Campaigns uses, never the stored code like "pending_approval", 25 Oct 2026;
+        // a line opens that very campaign, ?campaign= as Agent's links do)
+        rows: list.slice(0, 4).map((c) => [c.subject || "(No subject)", OUT_WORDS[c.status] || c.status || "", "/portal/?view=campaigns&campaign=" + c.id]),
         empty: "No campaigns yet.",
       };
     },
@@ -161,7 +165,7 @@
       return {
         big: plural((d.posts || []).length, "post"),
         small: on.length ? "Connected: " + on.join(", ") : "Not connected to Meta yet: posts wait to be posted by hand",
-        rows: (d.posts || []).slice(0, 4).map((p) => [String(p.text || p.caption || p.body || "A post").split("\n")[0], p.status || ""]),
+        rows: (d.posts || []).slice(0, 4).map((p) => [String(p.text || p.caption || p.body || "A post").split("\n")[0], OUT_WORDS[p.status] || p.status || "", "/portal/?view=social&post=" + p.id]),
         empty: "No posts yet.",
       };
     },

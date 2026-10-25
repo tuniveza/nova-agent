@@ -39,6 +39,13 @@
     tab(view)();
     when(sel, (el) => el.click());
   };
+  // A form behind a toggle (Write a campaign, One-to-one email, Write a post): opened if it's shut, and if
+  // it's already open, turned to and its first box focused, never shut by the very button that says
+  // "Write…" (25 Oct 2026: a second press hid the form; Add prospects already worked this way)
+  const openForm = (view, toggle, form, focus) => () => {
+    tab(view)();
+    when(toggle, (b) => ($(form) && !$(form).hidden ? when(focus, (f) => f.focus({ preventScroll: true })) : b.click()));
+  };
   const show = (view, sel, focus) => () => {
     (view.startsWith("/") ? go(view) : tab(view))();
     when(sel, (el) => {
@@ -92,11 +99,11 @@
     ] },
     { name: "Outreach", glyph: "➶", badges: ["campaigns-badge", "social-badge", "funnel-badge"], items: [
       { name: "Campaigns", glyph: "✉", badge: "campaigns-badge", at: "campaigns", run: tab("campaigns") },
-      { name: "Write a campaign", glyph: "✎", run: press("campaigns", "#campaigns-new") },
-      { name: "One-to-one email", glyph: "➝", run: press("campaigns", "#outreach-new") },
+      { name: "Write a campaign", glyph: "✎", run: openForm("campaigns", "#campaigns-new", "campaigns-form", "#cp-new-subject") },
+      { name: "One-to-one email", glyph: "➝", run: openForm("campaigns", "#outreach-new", "outreach-form", "#or-new-email") },
       { name: "Don't email again", glyph: "⊘", run: show("campaigns", "#outreach-optout", "#or-optout-email") },
       { name: "Social", glyph: "◈", badge: "social-badge", at: "social", run: tab("social") },
-      { name: "Write a post", glyph: "✎", run: press("social", "#social-new") },
+      { name: "Write a post", glyph: "✎", run: openForm("social", "#social-new", "social-form", "#sc-new-fields textarea") },
       { name: "Fan sign-up link", glyph: "⛓", run: show("campaigns", "#campaigns-signup") },
       { name: "Ads Manager", glyph: "↗", run: () => window.open("https://adsmanager.facebook.com/", "_blank", "noopener") },
       // The outreach funnel (funnel.js): its dashboard, and adding a list of prospects

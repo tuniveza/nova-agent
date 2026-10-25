@@ -1338,6 +1338,28 @@ html:not([data-align="left"]) .cp-facts > dd { text-align: left !important; }
 /* The email as people will get it: its own sandboxed page, scrolled inside, never wider than the card */
 .cp-preview { display: block; width: 100%; max-width: 100%; height: 420px; margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(var(--void-rgb), 0.35); }
 .cp-plain { margin: 12px 0 0; max-height: 240px; overflow: auto; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.35); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 14px; line-height: 1.55; }
+/* A card showing its email (a campaign or one-to-one email waiting for approval, one opened with Show the
+   email, a funnel prospect's email) on a computer: the email beside who it's to and the buttons, not under
+   them. Under them, the card was taller than the section, so it went over three pages: the facts, then the
+   email alone stretched right across the window (lines 1,300px long), then the Approve row alone on an
+   otherwise empty page, so the email and its Approve button were never on screen together (25 Oct 2026,
+   the button sweep). The email column is half the card, no wider than an email is drawn (680px), so the
+   buttons beside it stay on one row. The rows are fixed (nine, then one that takes what's left) so the email
+   can run down all of them while the left column's parts sit one under another, close together; the email is
+   the card's last part there (app.js placeEmails), so the page cutting keeps the buttons with the facts. */
+@media (min-width: 900px) {
+  :is(#view-campaigns, #view-funnel) .cp-card:has(> :is(.cp-preview, .cp-plain)) {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, min(680px, 50%)); grid-template-rows: repeat(9, auto) 1fr;
+    column-gap: 22px; row-gap: 0; align-content: start;
+  }
+  :is(#view-campaigns, #view-funnel) .cp-card:has(> :is(.cp-preview, .cp-plain)) > * { grid-column: 1; }
+  :is(#view-campaigns, #view-funnel) .cp-card:has(> :is(.cp-preview, .cp-plain)) > :is(.cp-preview, .cp-plain) { grid-column: 2; grid-row: 1 / -1; margin-top: 0; align-self: stretch; }
+  /* (the preview fills the column's height, at least a readable 200px, more on a tall screen; not so tall
+     that a card that would sit under the section's name is sent to the next page, leaving the first one
+     empty, as it did at 1280 x 720 with 280px) */
+  :is(#view-campaigns, #view-funnel) .cp-card > .cp-preview { height: 100%; min-height: clamp(200px, 36vh, 480px); }
+  :is(#view-campaigns, #view-funnel) .cp-card > .cp-plain { font-size: 13.5px; line-height: 1.5; }
+}
 .cp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr)); gap: 8px; margin: 12px 0 0; }
 .cp-stat { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.3); min-width: 0; }
 .cp-stat b { color: var(--bright); font-size: 18px; font-weight: 600; }
