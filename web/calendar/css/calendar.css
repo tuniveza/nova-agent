@@ -100,13 +100,14 @@ html.embed .bar { padding-top: 8px; }
 .list h4:first-child { margin-top: 0; }
 
 /* ---- Week and day: the time grid ---- */
-.tg { display: grid; grid-template-columns: 46px repeat(var(--cols), minmax(0, 1fr)); min-width: 0; }
+/* (--day-cols: a busy day wider than a quiet one, cal.js dayCols; unset, the days share the width evenly) */
+.tg { display: grid; grid-template-columns: 46px var(--day-cols, repeat(var(--cols), minmax(0, 1fr))); min-width: 0; }
 .tg-head { position: sticky; top: 0; z-index: 3; background: var(--deep); border-bottom: 1px solid rgba(var(--hi-rgb), .12); }
 .tg-day { padding: 6px 2px 4px; text-align: center; cursor: pointer; border: 0; background: none; color: var(--muted); }
 .tg-day b { display: block; font: 800 17px/1.1 var(--f-display); color: var(--bright); }
 .tg-day small { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .tg-day.today b { color: var(--hi); }
-.allday { grid-column: 2 / -1; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 2px; padding: 2px 0 4px; }
+.allday { grid-column: 2 / -1; display: grid; grid-template-columns: var(--day-cols, repeat(var(--cols), minmax(0, 1fr))); gap: 2px; padding: 2px 0 4px; }
 .allday > div { display: grid; gap: 2px; min-width: 0; align-content: start; padding: 0 2px; }
 .hours { position: relative; }
 .hour { height: var(--hh); border-top: 1px solid rgba(var(--hi-rgb), .07); font-size: 10.5px; color: var(--muted); padding-right: 6px; text-align: right; transform: translateY(-.7em); }
@@ -236,7 +237,7 @@ html.embed .bar { padding-top: 8px; }
   .daycard, .skychip { padding: 0 3px; min-height: 15px; font-size: 9px; gap: 2px; }
   .daycard .ico, .skychip .ico { width: 10px; height: 10px; }
   .more { font-size: 9px; padding-left: 2px; }
-  .tg { grid-template-columns: 38px repeat(var(--cols), minmax(0, 1fr)); }
+  .tg { grid-template-columns: 38px var(--day-cols, repeat(var(--cols), minmax(0, 1fr))); }
   .ev { padding: 1px 3px; font-size: 11px; }
   .ev small { display: none; }
 }

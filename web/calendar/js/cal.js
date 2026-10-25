@@ -283,13 +283,16 @@ function titleText() {
   return query ? "Search" : `From ${dayLabel(cursor)}`;
 }
 
-function pillHtml(e) {
+// (opts.pane: with its icon pane, the week's all-day row; an options object, not a flag, as the month passes
+// pillHtml straight to map(), whose second argument is the index)
+function pillHtml(e, opts) {
+  const pane = !!(opts && opts.pane === true);
   if (e.type === "day") {
-    return `<div class="daycard themed" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><span>${esc(titleOf(e))}</span></div>`;
+    return `<div class="daycard themed${pane ? " has-pane" : ""}" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day">${pane ? iconPane(e) : ""}<span>${esc(titleOf(e))}</span></div>`;
   }
   // The title on one line (a day too small for it shows the symbol; the title is its tooltip) and, under it, what it's for
   const what = whatOf(e);
-  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}">${phone() ? `<i class="pill-sym" aria-hidden="true">${symbolIcon(e)}</i>` : ""}${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
+  return `<div class="pill${e.ro ? " ro" : ""}${e.type === "booking" ? " book" : ""}${pane ? " has-pane" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" title="${esc(titleOf(e))}${what ? ` — ${esc(what)}` : ""}">${pane ? iconPane(e) : phone() ? `<i class="pill-sym" aria-hidden="true">${symbolIcon(e)}</i>` : ""}${e.allDay ? "" : `<b>${fmtTime(e.start)}</b>`}<span>${esc(titleOf(e))}</span>${what ? `<small>${esc(what)}</small>` : ""}</div>`;
 }
 // A symbol for what a card is about: its icon pane, its colours (data-kind) and, in the smallest days, the
 // card itself. The first match wins, so the more particular come first; whole words where a part of one
@@ -807,6 +810,8 @@ function stripHtml() {
 
 // (data-content-card: a card's title is what's on it, not a button's name: it may wrap, the Fixer reads it as
 // text, src/fixer/strict.ts, the user, 23 Oct 2026; it's still a button to press and to the keyboard)
+// (data-rules="off": so /shared/rules.js doesn't take it for a button's name either and squeeze it onto one line at
+// 10.8px: a row with its icon pane, "Calendar event · Maylea", had its title wrap and was shrunk, 25 Oct 2026)
 function rowHtml(e) {
   const where = e.type === "booking" ? e.item.phone || e.item.email || "" : e.item.location || "";
   const sub = [
@@ -820,14 +825,15 @@ function rowHtml(e) {
   ].filter(Boolean).join(" · ");
   if (e.type === "day") {
     const p = presets().get(e.item.preset);
-    return `<li><button type="button" class="row-item day themed" data-content-card style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day"><time class="ico-time"><span class="kind-pill">${esc(p.label)}</span></time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
+    return `<li><button type="button" class="row-item day themed has-pane" data-content-card data-rules="off" style="${themeStyle(dayTheme(e.item))}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="day">${iconPane(e)}<time class="ico-time"><span class="kind-pill">${esc(p.label)}</span></time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
   }
   const when = e.allDay ? "All day" : `${fmtTime(e.start)}<br>${fmtTime(e.end)}`;
   const art = e.type === "event" && !e.ro;
   // Quests and bookings have no picture: their symbol sits in its place, so every row's times line up
   // (and what it is, in a word in a pill, where a boxed symbol was: "Quest", "Booking", "Recording")
   const lead = art ? `<span class="art" data-art-note="${esc(e.item.id)}" data-date="${e.date}"></span>` : `<span class="row-sym"><span class="kind-pill">${esc(kindWord(e))}</span></span>`;
-  return `<li><button type="button" class="row-item note has-art${e.ro ? " ro" : ""}" data-content-card data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${lead}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
+  // (its icon pane first, a strip down its left edge, cosmos.css: the same icon as the card in Week and Day)
+  return `<li><button type="button" class="row-item note has-art has-pane${e.ro ? " ro" : ""}" data-content-card data-rules="off" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}">${iconPane(e)}${lead}<time>${when}</time><span><strong>${esc(titleOf(e))}</strong>${sub ? `<small>${esc(sub)}</small>` : ""}</span></button></li>`;
 }
 // What a card is, in a word ("Quest", "Studio booking", "Recording", "Note card")
 const kindWord = (e) => (e.type === "booking" ? "Booking" : SYMBOL_WORDS[symbolOf(e)] || "Note card");
@@ -1074,10 +1080,14 @@ function layoutColumn(evs) {
 // after the dash ("11:00–" over "12:00"), never through a time.
 // (a card with room for a single line of its words, too narrow for both times and its title, shows when it
 // starts, "12:45": .ev-t-start, fitCard; the whole window is in its tooltip, read aloud and in it when it opens)
+// A title's words with a hyphen inside them ("6-10", "11-2", "e-mail") kept whole on their line: a narrow card broke
+// them after the hyphen, "6-" over "10 Aaliyah", 25 Oct 2026 (escaped already: its words are whole entities)
+const keepWords = (html) => html.replace(/\S*\w-\w\S*/g, '<span class="ev-nb">$&</span>');
 function timeChip(e, from = e.start) {
   return `<span class="ev-time" aria-hidden="true"><span class="ev-t0">${fmtTime(from)}</span><span class="ev-t1">–${fmtTime(e.end)}</span></span>`;
 }
-function drawTimeGrid(n) {
+// (more: hours added after the last, cal.js below: a card at the grid's foot with more words than room)
+function drawTimeGrid(n, more = 0) {
   // (Simple look on a very short Calendar, as simple.css: no room for hours, so the cards as a list, each with
   // its day; a card opens as anywhere. The same for the week on an upright phone, where seven columns of hours
   // left each day 20px, too thin to read or tap: its hours are in Day view, and on its side)
@@ -1154,6 +1164,7 @@ function drawTimeGrid(n) {
         else h0--;
       }
     }
+    h1 += more;
     h0 = Math.max(0, h0);
     h1 = Math.min(24, h1);
     H = h1 - h0;
@@ -1166,7 +1177,9 @@ function drawTimeGrid(n) {
     // (the day in a word on a computer, "Nineteenth", as in the month)
     .map((d) => `<button type="button" class="tg-day${d === t ? " today" : ""}" data-goto="${d}"><small>${WD[weekday(d)]}</small><b${phone() ? "" : ' class="tg-word"'}>${phone() ? Number(d.slice(8)) : ORD[Number(d.slice(8))]}</b>${moonMark(d, 12)}</button>`)
     .join("");
-  const alldayCols = days.map((d) => `<div>${onDay(all, d).filter((e) => e.allDay).map(pillHtml).join("")}</div>`).join("");
+  const alldayCols = days.map((d) => `<div>${onDay(all, d).filter((e) => e.allDay).map((e) => pillHtml(e, { pane: true })).join("")}</div>`).join("");
+  // (how many cards sit side by side at the busiest moment of each day: dayCols widens a busy day by it)
+  const crowd = days.map(() => 1);
   // The hours, each named, and the hour the grid ends at named at its foot (it ended at 22:00's line with a
   // card at 22:27 under it, and looked cut off, 23 Oct 2026); the days' columns with their cards
   const body = () => {
@@ -1177,19 +1190,25 @@ function drawTimeGrid(n) {
         // (laid out by the room each card takes, as drawn: cards that touch sit side by side)
         const key = (m) => String(m).padStart(4, "0");
         const placed = layoutColumn(shown[i].map((x) => ({ start: key(x.v0), end: key(x.v1), x })));
+        crowd[i] = Math.max(1, ...placed.map((p) => p.cols));
         const blocks = placed
           .map((p) => {
-            const { e, v0, v1 } = p.x;
+            const { e, v0, v1, m0, m1 } = p.x;
             const top = `calc(var(--hh) * ${(v0 / 60 - h0).toFixed(3)})`;
             const height = `max(18px, calc(var(--hh) * ${((v1 - v0) / 60).toFixed(3)} - 2px))`;
             const w = 100 / p.cols;
             // (no wider than a card is easy to read, --ev-max: Day view's one column is the whole grid wide, and
             // a card stretched across it had its words floating in the middle, 23 Oct 2026, the user: "horrible
             // stretched ui elements"; cards at the same time sit side by side from the left, as in the week)
-            const left = `calc(min(${(p.col * w).toFixed(4)}%, ${p.col} * var(--ev-max, 100vw)) + 2px)`;
-            const width = `calc(min(${(w * p.span).toFixed(4)}%, ${p.span} * var(--ev-max, 100vw)) - 4px)`;
+            // (--ev-gap, cosmos.css: the room round each card, from its neighbours and the column's edges; 25 Oct
+            // 2026, the user: "can you center text, add padding and margin")
+            const left = `calc(min(${(p.col * w).toFixed(4)}%, ${p.col} * var(--ev-max, 100vw)) + var(--ev-gap, 2px))`;
+            const width = `calc(min(${(w * p.span).toFixed(4)}%, ${p.span} * var(--ev-max, 100vw)) - 2 * var(--ev-gap, 2px))`;
+            // (--ev-len: how long it really is, from where it's drawn: the hour lines inside it, cosmos.css, stop at
+            // its real end even when it's drawn taller for its words, so they never say it lasts longer than it does)
+            const len = `calc(var(--hh) * ${((Math.max(m1, m0) - v0) / 60).toFixed(3)})`;
             const what = whatOf(e) && whatOf(e) !== e.item.location ? whatOf(e) : "";
-            return `<div class="ev${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="--ev-top:${top};top:var(--ev-top);height:${height};left:${left};width:${width}" tabindex="0" role="button" data-content-card aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}"><strong>${timeChip(e)} ${esc(titleOf(e))}</strong>${e.item.location ? `<small>${esc(e.item.location)}</small>` : ""}${what ? `<em class="ev-what">${esc(what)}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
+            return `<div class="ev has-pane${e.ro ? " ro" : ""}" data-color="${esc(e.color)}" data-kind="${symbolOf(e)}" data-id="${esc(e.item.id)}" data-date="${e.date}" data-type="${e.type}" data-start="${e.start}" data-end="${e.end}" style="--ev-top:${top};--ev-len:${len};top:var(--ev-top);height:${height};left:${left};width:${width}" tabindex="0" role="button" data-content-card aria-label="${esc(titleOf(e))}, ${fmtTime(e.start)} to ${fmtTime(e.end)}">${iconPane(e)}<strong>${timeChip(e)} ${keepWords(esc(titleOf(e)))}</strong>${e.item.location ? `<small>${esc(e.item.location)}</small>` : ""}${what ? `<em class="ev-what">${esc(what)}</em>` : ""}${e.ro ? "" : '<span class="grip" data-grip="1"></span>'}</div>`;
           })
           .join("");
         const line = d === t ? `<div class="now-line" style="top:calc(var(--hh) * ${at(d, now)})"></div>` : "";
@@ -1227,7 +1246,59 @@ function drawTimeGrid(n) {
   }
   // (short hours: every other hour named, so the names never crowd each other)
   tg.classList.toggle("sparse", gridHh < 24);
+  if (n > 1) dayCols(tg, crowd, spans.map((list) => list.length > 0));
   fitCards(tg);
+  // A card at the foot of the grid with no room under it to grow for its words (fitCard): the grid once more with an
+  // hour after its last, so its title shows whole rather than ending "…" (25 Oct 2026: "22:00–22:01 ✓ 🍞 Eat bread"
+  // was "22:00–22:01 …" at the 23:00 line of a short window)
+  const under = (el) => [...el.parentElement.querySelectorAll(":scope > .ev")].some((o) => o !== el && o.offsetTop >= el.offsetTop + el.offsetHeight - 1 && o.offsetLeft < el.offsetLeft + el.offsetWidth && o.offsetLeft + o.offsetWidth > el.offsetLeft);
+  if (!more && h1 < 24 && [...tg.querySelectorAll(".col .ev.ev-clamp")].some((el) => !under(el))) drawTimeGrid(n, 1);
+}
+// A busy day a little wider than a quiet one, so cards at the same time each keep room to read (25 Oct 2026, the
+// user: "on the week type of note cards can you center text, add padding and margin" and "there shouldn't be hiding
+// under element note cards"): four cards at once on a Sunday had 48px each, their titles broken mid-word,
+// "Calend / ar event", or cut with "…". Cards never sit over each other; the busy day takes the room from the quiet
+// ones instead. Each day wants: a card's least width (EV_MIN) for each card side by side at its busiest; a day with
+// one card at a time, a card's comfortable width (EV_SOLO); and always its name ("Twenty-second") whole. What's left
+// over is shared to make the narrowest days wider first; when there isn't room for all of it, every day keeps its
+// name's width and the rest is shared by how much more each wants. A week with no busy day stays even.
+// (--day-cols, cosmos.css: the week's columns, its all-day row and its day names share it)
+const EV_MIN = 96; // a card's least width that reads, with its icon pane and its room round it
+const EV_SOLO = 150; // a day's one card: its time and title on a line
+function dayCols(tg, crowd, busy) {
+  const cols = [...tg.querySelectorAll(":scope > .col")];
+  const room = cols.reduce((s, c) => s + c.getBoundingClientRect().width, 0);
+  const n = cols.length;
+  if (!n || !room) return;
+  const even = room / n;
+  tg.style.removeProperty("--day-cols");
+  if (crowd.every((c) => c * EV_MIN <= even)) return;
+  // (its name's width, from its words themselves (its box fills the column), with its pill's padding; never more
+  // than an even share)
+  const range = document.createRange();
+  const wordsW = (el) => (range.selectNodeContents(el), range.getBoundingClientRect().width);
+  const names = [...tg.querySelectorAll(".tg-day")].map((d) => Math.min(even, Math.max(0, ...[...d.querySelectorAll(":scope > :is(small, b)")].map(wordsW)) + 28));
+  const least = cols.map((_, i) => names[i] || 0);
+  const want = cols.map((_, i) => Math.max(least[i], crowd[i] > 1 ? crowd[i] * EV_MIN : busy[i] ? Math.min(even, EV_SOLO) : 0));
+  const total = want.reduce((s, x) => s + x, 0);
+  let widths;
+  if (total <= room) {
+    // (the level the narrowest days are raised to, so the widths add up to the room)
+    let lo = 0;
+    let hi = room;
+    for (let k = 0; k < 30; k++) {
+      const mid = (lo + hi) / 2;
+      if (want.reduce((s, x) => s + Math.max(mid, x), 0) > room) hi = mid;
+      else lo = mid;
+    }
+    widths = want.map((x) => Math.max(lo, x));
+  } else {
+    const more = want.map((x, i) => x - least[i]);
+    const extra = more.reduce((s, x) => s + x, 0);
+    const spare = room - least.reduce((s, x) => s + x, 0);
+    widths = least.map((x, i) => x + (extra ? (more[i] * spare) / extra : 0));
+  }
+  tg.style.setProperty("--day-cols", widths.map((w) => `minmax(0, ${(w / even).toFixed(3)}fr)`).join(" "));
 }
 // (the grid drawn again whenever its size changes, and its cards looked over once more a moment after they're drawn
 // and when the fonts are in: a card fitted before its fonts or the page had settled was left with its title on one
@@ -1265,14 +1336,26 @@ function fitCards(tg, onlyCut = false) {
   // (every card measured first, then each one set: one layout for them all, not one a card)
   const evs = [...tg.querySelectorAll(".col .ev")];
   const sizes = evs.map((el) => [el.offsetWidth, el.clientHeight]);
+  const simple = document.documentElement.dataset.ui !== "rich";
   evs.forEach((el, i) => {
     const [w, h] = sizes[i];
+    // Its icon pane (cosmos.css): a strip down its left side, slimmer on a narrowish card; on a narrow one a band
+    // across its top, so the title keeps the card's whole width (fitCard takes it away if even so its title can't
+    // show); thinner than a word, none (it shows the icon in its middle instead, fitCard .bare)
+    // (Rich look: no fitCard to take the band away again, so a band only where there's height for it)
+    const top = w >= 40 && w < 84 && (simple || h >= 46);
+    el.classList.toggle("pane-top", top);
+    el.classList.toggle("pane-slim", !top && w >= (simple ? 84 : 56) && w < 112);
+    el.classList.toggle("pane-off", !top && w < (simple ? 40 : 56));
     el.classList.toggle("slim", w < 76);
     el.classList.toggle("thin", w < 30);
     // As many lines of its title as fit its height (a short card can't show six)
-    if (w < 76) el.style.setProperty("--lines", String(Math.max(1, Math.floor((h - 4) / 12.6))));
+    if (w < 76) el.style.setProperty("--lines", String(Math.max(1, Math.floor((h - (top ? 20 : 4)) / 12.6))));
     // (a short card: its title and time on one line)
     el.classList.toggle("short", h < 34);
+    // (a tall card, two hours or more: its words at its top, under the hour it starts, not floating in the middle
+    // of a long block; a shorter one has them in its middle)
+    el.classList.toggle("tall", h >= 80);
   });
   // (Simple look: each of a card's lines whole on one line, or not there; a card too small for even its
   // title is just its colour, its words on hover and read aloud: never cut short or broken up)
@@ -1362,7 +1445,8 @@ function fitCard(el) {
   // (a short card shows its title and time side by side: the title alone when it needs the room)
   if (!fits() && el.classList.contains("short")) for (const l of lines) l.classList.add("ev-off");
   if (!fits()) el.classList.add("ev-small");
-  // (its words onto more lines: the title alone in the card, not side by side with the time)
+  // (its words onto more lines: the title alone in the card, not side by side with the time; between words, already
+  // at the smaller size, a word broken only when it's wider than the card on its own, simple.css)
   if (!fits()) el.classList.add("ev-wrap"), el.classList.remove("short");
   // (its edges and lines a little closer, so its time and title take one more line before any is cut short: a card
   // 30px tall had room for two lines of words, and showed one, 24 Oct 2026)
@@ -1392,6 +1476,11 @@ function fitCard(el) {
   }
   // (still more words than room, even so: as many lines as there's room for, ending "…")
   const clamp = !bare && !fits();
+  // (its icon pane a band across its top, and its title still can't show: the band gives its room to the words)
+  if ((bare || clamp) && el.classList.contains("pane-top")) {
+    el.classList.replace("pane-top", "pane-off");
+    return fitCard(el);
+  }
   el.classList.toggle("ev-clamp", clamp);
   const lineCount = Math.max(1, Math.floor((inner() - title.getBoundingClientRect().top) / (parseFloat(getComputedStyle(title).lineHeight) || 13)));
   if (clamp) el.style.setProperty("--lines", String(lineCount));
