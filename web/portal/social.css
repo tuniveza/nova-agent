@@ -22,6 +22,9 @@ button.sc-tile:hover, button.sc-tile:focus-visible { border-color: var(--line-st
 .sc-check input { margin: 0; accent-color: rgb(var(--glow-rgb)); }
 .sc-drop { display: grid; gap: 6px; justify-items: start; padding: 14px; border-radius: 16px; border: 1px dashed var(--line-strong); background: rgba(var(--void-rgb), 0.25); min-width: 0; }
 .sc-drop.over { background: rgba(var(--glow-rgb), 0.12); }
+/* (centred, the default: "Add pictures or videos" in the middle over its centred words, not alone at the box's
+   left edge, 25 Oct 2026, the button sweep) */
+html:not([data-align="left"]) .sc-drop { justify-items: center; }
 .sc-drop p { margin: 0; color: var(--muted); font-size: 13px; }
 .sc-drop input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
@@ -49,10 +52,36 @@ button.sc-tile:hover, button.sc-tile:focus-visible { border-color: var(--line-st
 .sc-hand .sc-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
 .sc-hand .sc-row input { flex: 1 1 200px; min-width: 0; }
 .sc-hand a.btn { text-decoration: none; }
+/* (the link boxes drawn like Portal's other boxes: a link box had no style of its own and showed as a flat
+   grey bar, 25 Oct 2026, the button sweep) */
+.sc-hand .sc-row input[type="url"] { padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(var(--void-rgb), 0.6); color: var(--bright); font-size: 15px; }
+/* (centred, the default: a post's one or two pictures in the middle with everything else, not stuck at the
+   card's left edge; each no wider than 140px, as before when there were many) */
+html:not([data-align="left"]) .sc-media { grid-template-columns: repeat(auto-fit, minmax(min(100%, 110px), 140px)); justify-content: center; }
+/* A post's card on a computer: the post (pictures and words) beside its facts and buttons, not under them, as
+   Campaigns' emails are (app.css): under them a post by hand went over three pages, its buttons alone on the
+   last (25 Oct 2026, the button sweep). The post is the card's last part there (app.js placeEmails) so the
+   page cutting keeps the buttons with the facts. */
+.sc-post > :first-child { margin-top: 0; }
+.sc-post { margin-top: 12px; min-width: 0; }
+@media (min-width: 900px) {
+  #view-social .sc-card:has(> .sc-post) {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, min(620px, 46%)); grid-template-rows: repeat(9, auto) 1fr;
+    column-gap: 22px; row-gap: 0; align-content: start;
+  }
+  #view-social .sc-card:has(> .sc-post) > * { grid-column: 1; }
+  #view-social .sc-card:has(> .sc-post) > .sc-post { grid-column: 2; grid-row: 1 / -1; margin-top: 0; align-self: start; }
+}
 .card.sc-card.picked, .card.sc-comment.picked { box-shadow: 0 0 0 1px var(--line-strong), 0 0 24px -8px rgba(var(--glow-rgb), 0.55); }
 
 /* The planner: what's coming up, by day */
-.sc-day { margin: 14px 0 6px; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.sc-day { margin: 14px 0 6px; font-family: var(--f-mono); font-size: 11px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+/* "Coming up" and its first day as one heading, so the page cutting (/shared/onescreen.js, which keeps a
+   heading with what it heads) never leaves the two of them at the foot of a page with the post they head on
+   the next (25 Oct 2026, the button sweep) */
+.sc-coming { flex-wrap: wrap; row-gap: 0; margin: 0; }
+.sc-coming > .group-head { flex: 1 1 100%; margin-inline: 0 !important; }
+.sc-coming > .sc-day { flex: 1 1 100%; margin-bottom: 0; }
 
 /* Comments */
 .sc-head { margin-top: 22px; }

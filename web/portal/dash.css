@@ -13,6 +13,10 @@
 html.embed:not(.win-short) #view-group:not([hidden]) { display: flex; flex-direction: column; }
 html.embed:not(.win-short) #view-group > .dash-grid { margin-block: auto; }
 #view-group .dash-grid > .dash-empty { grid-column: 1 / -1; text-align: center; font-size: 14px; }
+/* (a Nova Tab's tiles side by side are one height, the tallest's: Outreach's were three heights in a row,
+   Campaigns short, Social taller, Funnel tallest, 25 Oct 2026, the button sweep; not in a short window,
+   html.win-short, where the tiles go into pages and a stretched one would only make more of them) */
+html:not(.win-short) #view-group .dash-grid { align-items: stretch; }
 /* Today's tiles: how many across is worked out from the section's own width (a container), not the grid's, so when
    the page's fitting draws the grid a little smaller to fit the screen (/shared/onescreen.js: zoom) it stays the
    same number across and the tiles don't jump into new places (23 Oct 2026: they went from five across to six,

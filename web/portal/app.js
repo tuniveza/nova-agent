@@ -1238,6 +1238,35 @@
   let campaignPicked = null; // the ?campaign= one already pointed at
   const campaignOpen = new Set(); // sent or decided ones whose email is showing
   const campaignDetail = new Map(); // id -> { updatedAt, previewHtml, log } (fetched once per version)
+  // A card's email (a campaign's preview, a one-to-one email's words, a funnel prospect's email) goes beside
+  // the card's facts and buttons on a computer (app.css, 25 Oct 2026, the button sweep). There it's the card's
+  // last part, because the page cutting (/shared/onescreen.js) takes a card's parts in order: with the email
+  // in the middle, a long one pushed the buttons onto a page of their own, away from the email they approve.
+  // On a narrower screen it's back in its place under the facts, above the buttons.
+  // (the "why" box Reject opens, turned to and ready to type in: on a long card it could open on the next
+  // page of the section, out of sight, 25 Oct 2026, the button sweep)
+  const whyBox = (key) => {
+    const input = document.querySelector('[data-key="' + CSS.escape(key) + '"] .cp-reject input');
+    if (input) input.focus();
+  };
+  const emailWide = matchMedia("(min-width: 900px)");
+  // (Social's posts too, social.js: a post's pictures and words, under its platforms on a narrower screen)
+  function placeEmails() {
+    for (const card of document.querySelectorAll("#view-campaigns .cp-card, #view-funnel .cp-card, #view-social .sc-card")) {
+      const mail = card.querySelector(":scope > :is(.cp-preview, .cp-plain, .sc-post)");
+      if (!mail) continue;
+      if (emailWide.matches) {
+        if (mail !== card.lastElementChild) card.append(mail);
+      } else if (mail === card.lastElementChild) {
+        const chips = mail.matches(".sc-post") && card.querySelector(":scope > .sc-chips");
+        const after = card.querySelector(":scope > :is(.cp-log, .cp-reject, .actions, .card-foot)");
+        if (chips) chips.after(mail);
+        else if (after) card.insertBefore(mail, after);
+      }
+    }
+  }
+  for (const id of ["view-campaigns", "view-funnel", "view-social"]) if ($(id)) new MutationObserver(placeEmails).observe($(id), { childList: true, subtree: true });
+  emailWide.addEventListener("change", placeEmails);
   // The one-to-one emails under the campaigns (their own block below); the badge counts both kinds
   let campaignsWaitingN = 0;
   let outreachWaitingN = 0;
@@ -1440,7 +1469,7 @@
         button("Reject", "ghost", () => {
           campaignRejecting = c.id;
           campaignEditing = null;
-          loadCampaigns();
+          loadCampaigns().then(() => whyBox("cp-" + c.id));
         });
         button("Send me a test", "ghost", () => testCampaign(card, c));
       }
@@ -1847,7 +1876,7 @@
         button("Reject", "ghost", () => {
           outreachRejecting = o.id;
           outreachEditing = null;
-          loadOutreach();
+          loadOutreach().then(() => whyBox("or-" + o.id));
         });
         button("Send me a test", "ghost", () => testOutreach(card, o));
       }
@@ -2035,7 +2064,7 @@
     if (!email) return;
     try {
       const r = await api("outreach/optouts", { body: { email } });
-      toast("Recorded: " + r.email + " won't get one-to-one emails again" + (r.stopped ? " (" + r.stopped + " waiting stopped)" : ""));
+      toast("Recorded: " + (r.email || email) + " won't get one-to-one emails again" + (r.stopped ? " (" + r.stopped + " waiting stopped)" : ""));
     } catch (err) {
       if (err.message !== "signed out") toast("Not recorded: " + err.message);
       return;

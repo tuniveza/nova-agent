@@ -104,11 +104,21 @@
     // Coming up, by day (UK)
     const coming = posts.filter((p) => ["approved", "scheduled", "posting"].includes(p.status)).sort(by("postAt", 1));
     if (coming.length) {
-      nodes.push(el("h3", "group-head", "Coming up"));
+      // ("Coming up" and the first day are one heading, the days headings of their own: the page cutting keeps a
+      // heading with what it heads, but only one, so the two were left at a page's foot, 25 Oct 2026)
+      const head = el("div", "cp-subhead sc-coming");
+      const title = el("h3", "group-head", "Coming up");
+      title.id = "social-coming"; // (the Scheduled tile goes here)
+      head.append(title);
+      nodes.push(head);
       let day = "";
       for (const p of coming) {
         const d = p.postAt ? dayName(p.postAt) : "Now";
-        if (d !== day) nodes.push(el("p", "sc-day", (day = d)));
+        if (d !== day) {
+          const label = el("h4", "sc-day", (day = d));
+          if (head.children.length === 1) head.append(label);
+          else nodes.push(label);
+        }
         nodes.push(card(p));
       }
     }
@@ -125,6 +135,12 @@
     if (want && picked !== "p" + want) pointAt($("social-list"), "sc-" + want, "p" + want);
   }
 
+  // The "why" box Reject opens, turned to and ready to type in: on a long card it could open on the next page
+  // of the section, out of sight, with nothing seeming to happen (25 Oct 2026, the button sweep)
+  function whyBox(key) {
+    const input = document.querySelector('[data-key="' + CSS.escape(key) + '"] .cp-reject input');
+    if (input) input.focus();
+  }
   function pointAt(list, key, mark) {
     const node = list.querySelector('[data-key="' + CSS.escape(key) + '"]');
     if (!node) return;
@@ -150,7 +166,9 @@
     const scrollTo = (id) => () => $(id).scrollIntoView({ block: "start", behavior: K().calm() ? "auto" : "smooth" });
     tile(String(posts.filter(waiting).length), "Waiting for approval", "", scrollTo("social-list"));
     const next = posts.filter((p) => p.status === "scheduled" && p.postAt).sort((a, b) => a.postAt.localeCompare(b.postAt))[0];
-    tile(String(posts.filter((p) => p.status === "scheduled").length), "Scheduled", next ? "Next: " + K().ukWhen(next.postAt) : "");
+    // (Scheduled goes to what's coming up, as Waiting and Comments go to theirs: it looked the same as them
+    // but did nothing when pressed, 25 Oct 2026, the button sweep; with nothing coming up, to the posts)
+    tile(String(posts.filter((p) => p.status === "scheduled").length), "Scheduled", next ? "Next: " + K().ukWhen(next.postAt) : "", () => scrollTo($("social-coming") ? "social-coming" : "social-list")());
     const f = data.followers || {};
     for (const p of ALL) {
       if (!f[p]) continue;
@@ -445,12 +463,16 @@
       fields(editing.state, box);
       card.appendChild(box);
     } else {
+      // (the post itself, its pictures and words, kept together: on a computer it goes beside the card's facts
+      // and buttons, social.css, so a post and its Approve are on screen together, 25 Oct 2026)
+      const post = el("div", "sc-post");
       if (p.media.length) {
         const media = el("div", "sc-media");
         for (const m of p.media) media.appendChild(thumb(m));
-        card.appendChild(media);
+        post.appendChild(media);
       }
-      if (p.caption) card.appendChild(el("div", "cp-plain", p.caption));
+      if (p.caption) post.appendChild(el("div", "cp-plain", p.caption));
+      if (post.children.length) card.appendChild(post);
       const facts = el("dl", "cp-facts");
       const fact = (label, value) => value && facts.append(el("dt", "", label), el("dd", "", value));
       if (p.status === "posted") fact("Posted", k.ukWhen(p.postedAt));
@@ -528,6 +550,7 @@
           rejecting = "post:" + p.id;
           editing = null;
           draw();
+          whyBox("sc-" + p.id);
         });
       }
       button(logOpen.has(p.id) ? "Hide history" : "History", "ghost", async () => {
@@ -753,6 +776,7 @@
           button("Reject", "ghost", () => {
             rejecting = "comment:" + c.id;
             draw();
+            whyBox("scc-" + c.id);
           });
         }
         button(c.handled ? "Not dealt with" : "Dealt with", "ghost", () => decide(card, "social/comments/" + c.id + "/handled", { handled: !c.handled }));
