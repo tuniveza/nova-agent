@@ -698,7 +698,9 @@
     const first = drawer && drawer.querySelector(".pillar-btn");
     if (first && byHand && matchMedia("(pointer: fine)").matches) first.focus({ preventScroll: true });
   }
-  const sig = () => [hidden, here(), dashOf(), admin(), openName, ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
+  // (the address too: a dashboard and a room opened from it can be the same place to here(), Admin and one of its
+  // admin pages, and the strip, hidden on the dashboard, has to come back in the room as the way back, 26 Oct 2026)
+  const sig = () => [hidden, here(), dashOf(), location.search, admin(), openName, ...["new-badge", "alert-badge", "approvals-badge", "money-badge", "campaigns-badge", "social-badge", "quest-badge", "tests-badge"].map(count)].join("|");
 
   // ---- In place of the tab panel ----
   function place() {
