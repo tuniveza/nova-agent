@@ -295,7 +295,6 @@
   // The tiles: every section in Nova Tabs (in their order, each once), less Today itself and the pages
   // about you, your look and the team
   const NOT = new Set(["today", "me", "look", "admin"]);
-  const NAMES = { calendar: "Bookings" };
   function today() {
     const P = window.NovaPillars;
     const grid = $("today-dash");
