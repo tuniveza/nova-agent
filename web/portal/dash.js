@@ -306,7 +306,7 @@
       for (const it of g.items) {
         if (!it.at || NOT.has(it.at) || seen.has(it.at)) continue;
         seen.add(it.at);
-        items.push({ ...it, name: NAMES[it.at] || it.name, icon: it.name, hue: P.hue(g.name) });
+        items.push({ ...it, icon: it.name, hue: P.hue(g.name) });
       }
     }
     cache.clear();
@@ -332,7 +332,7 @@
     $("dash-title").replaceChildren(P.icon(g.name), el("span", "", g.name));
     cache.clear();
     const items = g.items.filter((i) => i.at);
-    const tiles = items.map((it) => tile({ ...it, name: it.at === "calendar" ? "Bookings" : it.name }, P));
+    const tiles = items.map((it) => tile(it, P));
     // (Plans & Nova, You and Look & sound, the Nova Tabs with one section or none, are dashboards of their own
     // since 25 Oct 2026, personal.js: their tiles of other items went with their Overviews)
     // (how many tiles, so the grid is no wider than they need and sits in the middle: dash.css)
@@ -340,7 +340,7 @@
     grid.replaceChildren(...(tiles.length ? tiles : [el("p", "dash-empty", "Everything in " + g.name + " is along the top.")]));
   }
   // Inbox's dashboard (app.js showInbox): today's bookings along the top of Enquiries, each opening
-  // Booking tools (the user, 22 Oct 2026: "today can be in enquiries")
+  // Bookings (the user, 22 Oct 2026: "today can be in enquiries")
   function inboxToday() {
     const box = $("inbox-today");
     if (!box) return;
@@ -354,7 +354,7 @@
         for (const [name, time] of t.rows.slice(0, 3)) {
           const b = el("button", "it-booking");
           b.type = "button";
-          b.title = "Open Booking tools";
+          b.title = "Open Bookings";
           b.append(el("b", "", time), el("span", "", name));
           b.addEventListener("click", tools);
           parts.push(b);
@@ -362,7 +362,7 @@
         if (t.rows.length > 3) parts.push(el("span", "it-none", `+${t.rows.length - 3} more`));
         const talked = (t.small.split(" · ")[1] || "").trim();
         if (talked) parts.push(el("span", "it-small", talked));
-        const open = el("button", "chip it-tools", "Booking tools");
+        const open = el("button", "chip it-tools", "Bookings");
         open.type = "button";
         open.addEventListener("click", tools);
         parts.push(open);

@@ -399,8 +399,8 @@
     if (INBOX.includes(view)) view = "inbox";
     currentView = view;
     document.querySelectorAll(".tabs .tab").forEach((t) => {
-      // (Portal's bookings month lights Booking tools: the Calendar item opens the Calendar panel)
-      const on = t.id === "nav-booking-tools" ? view === "calendar" : t.dataset.view === "calendar" ? false : t.dataset.view === (view === "inbox" ? asked : view) || (t.id === "tab-more" && (MORE.includes(asked) || view === "calendar"));
+      // (the Calendar tab opens the Calendar panel, so it's never lit: Bookings is Portal's own, under More)
+      const on = t.dataset.view === "calendar" ? false : t.dataset.view === (view === "inbox" ? asked : view) || (t.id === "tab-more" && (MORE.includes(asked) || view === "calendar"));
       if (t.classList.contains("active") !== on) t.classList.toggle("active", on);
       if (on) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
@@ -423,7 +423,9 @@
       }
       openChatId ? openChat(openChatId, openChatName) : loadChats();
     }
+    // (Bookings' dashboard: the month, its day and its week here; Approvals and Booking link beside them, bookings.js)
     if (view === "calendar") loadCalendar();
+    if (view === "calendar" && window.PortalBookings) window.PortalBookings.show();
     if (view === "approvals") loadApprovals();
     if (view === "campaigns") loadCampaigns();
     if (view === "social" && window.PortalSocial) window.PortalSocial.load();
@@ -453,7 +455,7 @@
 
   // One calendar: the Calendar panel has everything, the studio's bookings too. Inside Nova Agent it
   // opens in Nova Agent's viewer; Portal on its own opens Nova Agent with Calendar showing.
-  // (Portal's own bookings month, /portal/?view=calendar, still works: the starting tab, voice.)
+  // (Portal's own bookings month is Bookings' dashboard, /portal/?view=calendar: the starting tab, voice.)
   // (with a day, "2026-10-22": Calendar opens on that day)
   function openCalendar(day) {
     const at = "/calendar/" + (typeof day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(day) ? "?day=" + day : "");
@@ -463,10 +465,8 @@
     location.href = "/agent/?open=" + encodeURIComponent(at);
   }
   $("cal-open-panel").addEventListener("click", () => openCalendar());
-  // Booking tools: Portal's own bookings month (this week at a glance, free slots), one tap away
-  const openBookingTools = () => window.PortalPage && window.PortalPage.go("/portal/?view=calendar", { replace: true });
-  $("nav-booking-tools").addEventListener("click", openBookingTools);
-  $("today-booking-tools").addEventListener("click", openBookingTools);
+  // Bookings' dashboard (this week at a glance, the month, free hours), one tap away from Today
+  $("today-booking-tools").addEventListener("click", () => window.PortalPage && window.PortalPage.go("/portal/?view=calendar", { replace: true }));
 
   // Inside Nova Agent Portal's own top bar steps aside: Voice, Music, Options and the other apps
   // are in the side menu (or the row of sections) instead, doing just what their top-bar buttons do
@@ -512,9 +512,7 @@
       item.type = "button";
       const icon = tab.querySelector("svg, img").cloneNode(true);
       icon.removeAttribute("id");
-      const hint = tab.querySelector(".tab-hint");
       const name = el("span", "more-name", tab.querySelector("span:not(.badge)").textContent);
-      if (hint) name.append(el("small", "more-hint", hint.textContent));
       item.append(icon, name);
       const badge = tab.querySelector(".badge");
       if (badge && !badge.hidden) item.appendChild(el("span", "badge", badge.textContent));
@@ -3799,6 +3797,7 @@
   // One Calendar card or quest, in the Calendar tab
   function suiteCard(item) {
     const card = el("article", "card cal-card suite-item " + item.kind);
+    card.setAttribute("data-os-keep", ""); // (whole on its page in Bookings' day panel)
     card.appendChild(el("span", "alert-kind " + (item.kind === "quest" ? "quest" : "other"), item.kind === "quest" ? "Quest" : item.kind === "day" ? "Calendar · day" : "Calendar"));
     if (item.time) card.appendChild(el("p", "cal-time", item.time));
     card.appendChild(el("h3", "card-title", item.title));
@@ -3862,8 +3861,8 @@
   }
 
   // Ask Nova (or NovaBot with the booking tools) something, ready to send
-  // (as its own address, so Back comes back to Booking tools: shown in place, the address still said Booking
-  // tools and Back skipped past it, 25 Oct 2026)
+  // (as its own address, so Back comes back to Bookings: shown in place, the address still said Booking tools
+  // and Back skipped past it, 25 Oct 2026)
   function askAbout(mode, text) {
     if (window.PortalPage && window.PortalPage.go) window.PortalPage.go("/portal/?view=bot");
     else show("bot");
@@ -3933,7 +3932,8 @@
     parts.push(el("p", "smart-kicker", `${(f.booked / 60).toFixed(1).replace(/\.0$/, "")}h of ${OPEN_HOURS}h booked · ${pct}% full${f.takings ? " · £" + Math.round(f.takings).toLocaleString("en-GB") + " of sessions" : ""}`), meter);
     // Warnings
     for (const [a, b] of f.clashes) parts.push(el("p", "smart-warn", `⚠ Clash: ${a.name || a.session} and ${b.name || b.session} overlap at ${clock(b.from)}`));
-    for (const [a, b] of f.tight) parts.push(el("p", "smart-note", `⏱ Tight changeover: ${a.name || a.session} ends ${a.to ? clock(a.to) : ""}, ${b.name || b.session} starts ${clock(b.from)}`));
+    // (the tight changeovers on one line: one line each pushed the day's bookings onto a second page, 25 Oct 2026)
+    if (f.tight.length) parts.push(el("p", "smart-note", `⏱ Tight changeover${f.tight.length > 1 ? "s" : ""}: ` + f.tight.map(([a, b]) => `${a.name || a.session} ends ${a.to ? clock(a.to) : ""}, ${b.name || b.session} starts ${clock(b.from)}`).join(" · ")));
     // Free slots, each one tap from a booking link
     if (f.free.length) {
       const row = el("div", "free-slots");
@@ -3946,7 +3946,12 @@
         row.appendChild(slot);
       }
       parts.push(row);
-    } else if (calPicked >= dayKey(new Date())) parts.push(el("p", "smart-note", "Fully booked within opening hours."));
+    } else if (calPicked >= dayKey(new Date())) {
+      // (today after the last free hour has gone isn't "fully booked": it said so at 11 pm with nothing booked,
+      // 25 Oct 2026)
+      const full = f.load >= 0.85 || calPicked !== dayKey(new Date());
+      parts.push(el("p", "smart-note free-none", full ? "Fully booked within opening hours." : "No free hour left today."));
+    }
     // What to show, and Ask Nova
     const tools = el("div", "smart-tools");
     const filters = el("div", "chips");
@@ -3962,7 +3967,11 @@
     const ask = el("button", "chip smart-ask", "✦ Ask Nova about this day");
     ask.type = "button";
     ask.addEventListener("click", () => askAbout("nova", `What's on ${name}? Anything I should know: who's in, what's paid, clashes, and free time.`));
-    tools.append(filters, ask);
+    // (beside the day's name on Bookings' dashboard, so its bookings have the room under it)
+    const slot = $("cal-day-ask");
+    if (slot) redraw(slot, calPicked, [ask]);
+    tools.append(filters);
+    if (!slot) tools.append(ask);
     parts.push(tools);
     redraw(box, calPicked + calFilter, parts);
   }
@@ -4117,19 +4126,52 @@
     drawDay(true);
   }
 
-  // One booking, as a card
+  // One booking, as a line on Bookings' dashboard: its time, who and which session, its buttons; a tap on it opens its
+  // details in place (25 Oct 2026, "as much as possible dashboards": as whole cards, a day of five bookings was eight
+  // pages of half a card each in the day's panel)
+  const calOpen = new Set(); // the bookings whose details are open
   function calCard(b) {
     // The card, edged in the session's colour
-    const card = el("article", "card cal-card");
+    const key = b.start + "|" + (b.name || "") + "|" + (b.session || "");
+    const open = calOpen.has(key);
+    const card = el("article", "card cal-card" + (open ? " open" : ""));
     card.style.setProperty("--c", sessionColour(b.session));
-    // The time ("14:15 – 16:15")
-    card.appendChild(el("p", "cal-time", clock(b.from) + (b.to ? " – " + clock(b.to) : "")));
-    // The customer's name, then the session
-    card.appendChild(el("h3", "card-title", b.name || "Booking"));
-    card.appendChild(el("p", "cal-session", b.session || ""));
-    // Price, phone, email and any form answers, coloured
+    card.setAttribute("data-content-card", "");
+    // (whole on its page, never its time on one page and its buttons on the next)
+    card.setAttribute("data-os-keep", "");
+    // The time ("14:15 – 16:15"), the customer's name and the session
+    const row = el("div", "cal-row");
+    row.append(el("p", "cal-time", clock(b.from) + (b.to ? " – " + clock(b.to) : "")), el("h3", "card-title", b.name || "Booking"), el("p", "cal-session", b.session || ""));
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-expanded", String(open));
+    row.title = open ? "Hide the details" : "Show the details: price, phone, email and their answers";
+    card.appendChild(row);
+    // Price, phone, email and any form answers, coloured (shown once it's opened)
     const lines = [b.price && "Price: " + b.price, b.phone && "Phone: " + b.phone, b.email && "Email: " + b.email, ...(b.extra || []).map(([l, v]) => l + ": " + v)].filter(Boolean);
-    if (lines.length) card.appendChild(richDetails(lines.join("\n")));
+    if (lines.length) {
+      const more = richDetails(lines.join("\n"));
+      more.classList.add("cal-more");
+      more.hidden = !open;
+      card.appendChild(more);
+      const flip = () => {
+        const now = !calOpen.has(key);
+        if (now) calOpen.add(key);
+        else calOpen.delete(key);
+        card.classList.toggle("open", now);
+        more.hidden = !now;
+        row.setAttribute("aria-expanded", String(now));
+        row.title = now ? "Hide the details" : "Show the details: price, phone, email and their answers";
+        if (now) turnTo(more);
+      };
+      row.addEventListener("click", flip);
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          flip();
+        }
+      });
+    }
     // Buttons: call, email, open it (Google Calendar, or Calendar on that day)
     const actions = el("div", "actions");
     if (b.phone) {
@@ -5884,5 +5926,6 @@
   //  showOnly: portal.js shows its own views the same way)
   // kit: the helpers Social (social.js), Funnel (funnel.js), Money (money.js) and Test stuff (teststuff.js) draw with
   const kit = { api, el, reconcile, redraw, setText, setBadge, syncCounts, emptyState, sig, when, ukWhen, ukLocal, ukToIso, calm, toast, goView, get running() { return running; }, get view() { return currentView; } };
-  window.PortalApp = { VIEWS, start, stop, show, showOnly, openOptions, kit, get view() { return currentView; } };
+  // (bookingLink: the Booking link sheet for an enquiry, from Bookings' dashboard, bookings.js)
+  window.PortalApp = { VIEWS, start, stop, show, showOnly, openOptions, kit, bookingLink: (q) => openSheet(q), get view() { return currentView; } };
 })();

@@ -31,7 +31,7 @@
   }
   const say = (text) => (window.PortalApp && window.PortalApp.kit ? window.PortalApp.kit.toast(text) : console.log(text));
   const tab = (view) => () => {
-    const t = view === "agent" ? $("nav-agent") : view === "booking" ? $("nav-booking-tools") : document.querySelector(`.tabs .tab[data-view="${view}"]`);
+    const t = view === "agent" ? $("nav-agent") : document.querySelector(`.tabs .tab[data-view="${view}"]`);
     if (t) t.click();
   };
   const go = (url) => () => window.PortalPage && window.PortalPage.go(url, { replace: true });
@@ -80,14 +80,13 @@
       { name: "Saved replies", glyph: "❏", run: press("enquiries", "#saved-open") },
       { name: "Notifications", glyph: "◉", run: press("alerts", "#alerts-notify") },
     ] },
-    { name: "Bookings", glyph: "◷", badges: ["approvals-badge"], items: [
-      { name: "Calendar", glyph: "▦", run: tab("calendar") },
-      { name: "Booking tools", glyph: "◫", at: "calendar", run: tab("booking") },
-      { name: "Approvals", glyph: "✓", badge: "approvals-badge", at: "approvals", run: tab("approvals") },
-      { name: "Ask about this week", glyph: "✦", run: press("booking", "#view-calendar .smart-ask") },
-      { name: "Booking link", glyph: "⛓", run: () => { tab("enquiries")(); say("Choose who it's for: Booking link is on their enquiry."); } },
-      // (the Admin page's own address: "test-booking" alone isn't one, so it opened the Admin start page, 25 Oct 2026)
-      { name: "Test booking", glyph: "⚑", admin: true, run: go("/portal/?view=manage&page=%2Fadmin%2Ftest-booking") },
+    // (Bookings is one dashboard, 25 Oct 2026, the owner: "can you make the rest of nova portal as much as possible
+    // dashboards please": bookings.js, the week, the month, its day, Approvals and Booking link side by side, with
+    // Open Calendar, Ask Nova about this week and Test booking on it; only Approvals has a room of its own, for
+    // deciding one, with Bookings along the top as the way back)
+    { name: "Bookings", glyph: "◷", dash: "calendar", badges: ["approvals-badge"], items: [
+      { name: "Bookings", glyph: "◷", at: "calendar", inDash: true, run: go("/portal/?view=calendar") },
+      { name: "Approvals", glyph: "✓", badge: "approvals-badge", at: "approvals", inDash: true, run: tab("approvals") },
     ] },
     { name: "Clients & Money", glyph: "£", badges: ["money-badge"], items: [
       { name: "Clients", glyph: "☺", at: "clients", run: tab("clients") },
@@ -157,11 +156,9 @@
     spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 17l.7 1.8 1.8.7-1.8.7L19 22l-.7-1.8-1.8-.7 1.8-.7Z"/>',
     ring: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M2 4l2 2M22 4l-2 2"/>',
     calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
-    tools: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M8 17.5h6"/>',
     check: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
-    flag: '<path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/>',
     users: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/>',
     userplus: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>',
     sync: '<path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/>',
@@ -206,7 +203,7 @@
   };
   const ICON_OF = {
     Inbox: "inbox", Today: "home", Enquiries: "mail", Conversations: "chat", Alerts: "bell", "Saved replies": "note", "Website bot": "spark", Notifications: "ring",
-    Bookings: "calendar", Calendar: "calendar", "Booking tools": "tools", Approvals: "check", "Ask about this week": "spark", "Booking link": "link", "Test booking": "flag",
+    Bookings: "calendar", Calendar: "calendar", Approvals: "check", "Ask about this week": "spark", "Booking link": "link",
     "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync clients": "sync", "Import clients": "import", "Import from contacts": "phone", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt",
     Outreach: "megaphone", Campaigns: "megaphone", "Write a campaign": "pen", "One-to-one email": "send", "Don't email again": "block", Social: "camera", "Write a post": "pen", "Fan sign-up link": "link", "Ads Manager": "out", Funnel: "funnel", "Add prospects": "import",
     "Plans & Nova": "star", Quests: "star", "Everyone's quests": "team", "Nova Agent": "agent", "Ask Nova": "ask", Voice: "mic", "Hands-free": "ear",
@@ -649,7 +646,7 @@
   // ---- Nova panes (22 Oct 2026, the user: "for all panes in the nova portal can we contain them in a nova
   // pane for easier identification"): every section is framed in its Nova Tab's colour, with its icon
   // beside its title, and named (data-pane: "Inbox · Enquiries") so it can be pointed at ----
-  const PANE_OF = { today: ["", "Today"], me: ["You", "Your profile"], profile: ["You", "Your profile"], look: ["Look & sound", ""], admin: ["Admin", "Admin pages"], adminhome: ["Admin", ""] };
+  const PANE_OF = { today: ["", "Today"], me: ["You", "Your profile"], profile: ["You", "Your profile"], look: ["Look & sound", ""], admin: ["Admin", "Admin pages"], adminhome: ["Admin", ""], calendar: ["Bookings", ""] };
   // (a pane too small for its words, a phone's Inbox or anything on a phone on its side, turns into plain
   // text, terminal style: the user, 22 Oct 2026, "can the ui become more tui if it get so small that
   // area's are collapsing and can't see text"; dash.css [data-tui])

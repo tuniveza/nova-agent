@@ -58,10 +58,6 @@
   html.embed .tabs > .tab.embed-only.active::after { display: none; }
   /* Counts: a little pill after the name, never on top of it */
   .tabs .badge { position: static; margin: 0 0 0 2px; box-shadow: 0 0 10px rgba(var(--glow-rgb), 0.55); }
-  /* Booking tools' hint is for the More list; here its name says enough (and it's on hover) */
-  .tabs .tab-hint,
-  html:not(.embed) #nav-booking-tools .tab-hint { display: none; }
-  html:not(.embed) #nav-booking-tools { flex-wrap: nowrap; min-height: 40px; }
 
   /* The groups: a small label after a hairline (Today needs none: it's first) */
   .tabs > .tab-group,
@@ -96,9 +92,6 @@
 }
 @media (min-width: 1024px) {
   main, html.embed main { margin-left: max(24px, calc((100% - 1080px) / 2)); margin-right: max(24px, calc((100% - 1080px) / 2)); width: auto; padding-top: 26px; }
-  /* The calendar's month stays in view under the header and the tabs */
-  #view-calendar > .cal,
-  html.embed #view-calendar > .cal { top: calc(var(--top-h, 61px) + var(--htabs-h, 52px) + 24px); }
 }
 @media (min-width: 761px) and (prefers-reduced-motion: reduce) {
   .tabs::before, .tabs::after { transition: none; }

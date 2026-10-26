@@ -16,8 +16,6 @@ html.embed #main > .view:not([hidden]) {
 }
 @media (min-width: 761px) {
   html.embed main { padding-bottom: 12px; }
-  /* Sticky bits stick to the top of the section's own box now, not under the page's header */
-  html.embed #view-calendar > .cal { top: 0; }
 }
 
 /* ---- Today, side by side on a computer: the numbers on the left, today's calendar and the new

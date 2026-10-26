@@ -38,6 +38,7 @@
 <link rel="stylesheet" href="/portal/dash.css">
 <link rel="stylesheet" href="/portal/admin.css">
 <link rel="stylesheet" href="/portal/personal.css">
+<link rel="stylesheet" href="/portal/bookings.css">
 <link rel="stylesheet" href="/portal/frame.css">
 <link rel="stylesheet" href="/portal/pillars.css">
 <link rel="stylesheet" href="/portal/simple.css"><!-- Simple design (the default; Options → Look → Rich for the look before) -->
@@ -303,9 +304,9 @@
       </div>
       <!-- Everything in one section (22 Oct 2026, the user: "rather then it being tabs you click to open an
            area it's all in one section"): a live tile for every section, its count and its latest things,
-           each line opening that very thing (dash.js); Booking tools and Test stuff along the top -->
+           each line opening that very thing (dash.js); Bookings and Test stuff along the top -->
       <div class="today-actions">
-        <button id="today-booking-tools" class="chip today-tools" type="button">Booking tools · week at a glance and free slots</button>
+        <button id="today-booking-tools" class="chip today-tools" type="button">Bookings · week at a glance and free slots</button>
         <!-- Admins: what looks like test stuff (teststuff.js; hidden when there's nothing) -->
         <button id="today-tests" class="chip today-tools" type="button" hidden><span id="today-tests-n">Things look like tests</span> · look</button>
       </div>
@@ -434,37 +435,53 @@
       <div id="chat-list" class="list" aria-busy="true"><div class="skeleton short"></div><div class="skeleton short"></div><div class="skeleton short"></div></div>
     </section>
 
-    <!-- Calendar: every booking in the studio's booking calendar -->
-    <!-- Booking tools (19 Oct 2026: "Calendar" is only ever the Calendar panel; this is Portal's own month) -->
-    <section id="view-calendar" class="view" hidden>
-      <div class="view-head">
-        <h2>Booking tools</h2>
-        <!-- One calendar: the Calendar panel has everything (the studio's bookings too) -->
-        <button id="cal-open-panel" class="chip" type="button">Open the Calendar panel</button>
-      </div>
-      <p class="hint">The studio's bookings, with this week at a glance. Calendar's note cards and quests show here too.</p>
-      <!-- The smart part: this week at a glance (drawn by app.js) -->
-      <div id="cal-smart" class="cal-smart"></div>
-      <div class="cal">
-        <div class="cal-head">
-          <button id="cal-prev" class="icon-btn" type="button" aria-label="Previous month">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
-          </button>
-          <div class="cal-title">
-            <span id="cal-month" class="cal-month"></span>
-            <button id="cal-today" class="chip" type="button">Today</button>
+    <!-- Bookings, on one screen (25 Oct 2026, the owner: "can you make the rest of nova portal as much as possible
+         dashboards please", after Admin's "put everything onto one screen as much as possible" and "get rid of old
+         links please and just keep it simple and optimized"): its Overview, Booking tools and the four buttons
+         along the top are this one dashboard (/portal/?view=calendar), a panel each side by side: the week's
+         numbers along the top; the month; the day picked in it, its free hours and its bookings; Approvals and
+         Booking link beside them (bookings.js, bookings.css). Approvals' own room (?view=approvals) is the one
+         place left to go, for deciding one. ("Calendar" is only ever the Calendar panel, 19 Oct 2026: Open
+         Calendar, under the month.) -->
+    <section id="view-calendar" class="view bk" aria-label="Bookings" hidden>
+      <div class="dash-grid bk-grid">
+        <!-- The week of the day picked: its numbers in a row, and Ask Nova about it (app.js drawSmartWeek) -->
+        <article class="dash-tile bk-panel bk-week" data-key="bk-week" data-os-keep>
+          <span class="bk-ico" data-icon="Ask about this week"></span>
+          <div id="cal-smart" class="cal-smart"></div>
+        </article>
+        <!-- The month: a day pressed is shown beside it -->
+        <article class="dash-tile bk-panel bk-month" data-key="bk-month" data-os-keep>
+          <div class="cal">
+            <div class="cal-head">
+              <button id="cal-prev" class="icon-btn" type="button" aria-label="Previous month">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+              <div class="cal-title">
+                <span id="cal-month" class="cal-month"></span>
+              </div>
+              <button id="cal-next" class="icon-btn" type="button" aria-label="Next month">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
+            </div>
+            <div class="cal-weekdays" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+            <div id="cal-grid" class="cal-grid" role="grid" aria-label="Bookings this month"></div>
           </div>
-          <button id="cal-next" class="icon-btn" type="button" aria-label="Next month">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-          </button>
-        </div>
-        <div class="cal-weekdays" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
-        <div id="cal-grid" class="cal-grid" role="grid" aria-label="Bookings this month"></div>
+          <!-- Today, under the month (beside its name, the name wrapped in a narrow panel); and one calendar: the
+               Calendar panel has everything (the studio's bookings, note cards and day cards too) -->
+          <div class="ad-foot"><button id="cal-today" class="chip" type="button">Today</button><button id="cal-open-panel" class="btn small ghost" type="button">Open Calendar →</button></div>
+        </article>
+        <!-- The day picked: how full it is, warnings, free hours (each one a booking link), what to show, Ask Nova
+             about it, then its bookings, note cards and quests -->
+        <article class="dash-tile bk-panel bk-day" data-key="bk-day">
+          <div class="dash-tile-head"><span class="bk-ico" data-icon="Calendar"></span><h3 id="cal-day-title" class="dash-name cal-day-title"></h3><span id="cal-day-ask" class="bk-ask"></span></div>
+          <div id="cal-day-smart" class="cal-day-smart"></div>
+          <!-- (data-os-nofill: its bookings in pages at their own size, never drawn smaller to squeeze one more in) -->
+          <div id="cal-day-list" class="list" data-os-nofill></div>
+        </article>
+        <!-- Approvals and Booking link (bookings.js) -->
+        <div id="bk-side" class="bk-side"></div>
       </div>
-      <h3 id="cal-day-title" class="cal-day-title"></h3>
-      <!-- The picked day: how full it is, warnings, free slots, filters and Ask Nova -->
-      <div id="cal-day-smart" class="cal-day-smart"></div>
-      <div id="cal-day-list" class="list"></div>
     </section>
 
     <!-- Approvals: booking changes waiting for an admin (nothing changes until one approves) -->
@@ -1222,11 +1239,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       <span>Calendar</span>
     </button>
-    <!-- Booking tools: Portal's own bookings month (this week at a glance, free slots, Ask Nova) -->
-    <button class="tab tab-more" id="nav-booking-tools" type="button" title="Booking tools: week at a glance and free slots">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3M8 17.5h6"/></svg>
-      <span>Booking tools</span><small class="tab-hint">Week at a glance and free slots</small>
-    </button>
     <!-- Approvals: booking changes Agent proposed, waiting for an admin's Approve -->
     <button class="tab tab-more" data-view="approvals" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8.5 15.5l2.2 2.2 4.8-4.8"/></svg>
@@ -1538,7 +1550,7 @@
 
     <section class="option-group">
       <p class="kicker">Starting tab</p>
-      <div class="chips wrap" data-option="startTab"><button class="chip" type="button" data-value="today">Today</button><button class="chip" type="button" data-value="enquiries">Enquiries</button><button class="chip" type="button" data-value="chats">Conversations</button><button class="chip" type="button" data-value="calendar">Booking tools</button><button class="chip" type="button" data-value="clients">Clients</button><button class="chip" type="button" data-value="money">Money</button><button class="chip" type="button" data-value="approvals">Approvals</button><button class="chip" type="button" data-value="campaigns">Campaigns</button><button class="chip" type="button" data-value="social">Social</button><button class="chip" type="button" data-value="quests">Quests</button><button class="chip" type="button" data-value="alerts">Alerts</button><button class="chip" type="button" data-value="bot">Website bot</button><button class="chip" type="button" data-value="you">You</button></div>
+      <div class="chips wrap" data-option="startTab"><button class="chip" type="button" data-value="today">Today</button><button class="chip" type="button" data-value="enquiries">Enquiries</button><button class="chip" type="button" data-value="chats">Conversations</button><button class="chip" type="button" data-value="calendar">Bookings</button><button class="chip" type="button" data-value="clients">Clients</button><button class="chip" type="button" data-value="money">Money</button><button class="chip" type="button" data-value="approvals">Approvals</button><button class="chip" type="button" data-value="campaigns">Campaigns</button><button class="chip" type="button" data-value="social">Social</button><button class="chip" type="button" data-value="quests">Quests</button><button class="chip" type="button" data-value="alerts">Alerts</button><button class="chip" type="button" data-value="bot">Website bot</button><button class="chip" type="button" data-value="you">You</button></div>
     </section>
 
     <section class="option-group option-actions">
@@ -1567,6 +1579,7 @@
 <script src="/portal/desk.js"></script>
 <script src="/portal/admin.js"></script>
 <script src="/portal/personal.js"></script>
+<script src="/portal/bookings.js"></script>
 <script src="/shared/addresses.js"></script>
 <script src="/portal/addresses.js"></script>
 <script src="/portal/portal.js"></script>
