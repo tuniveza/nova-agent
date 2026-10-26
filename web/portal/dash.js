@@ -146,16 +146,12 @@
       const s = d.summary || {};
       const rows = [];
       // Each line opens what it's about (25 Oct 2026): the invoices in the Invoicer (where everything for
-      // invoices is), the overdue ones picked out; money in and out on Money's tax year and expenses
+      // invoices is), the overdue ones picked out; money in there too, money out on every expense (money.js)
       const inv = (what) => () => window.NovaInvoicer && window.NovaInvoicer.open(what);
-      const part = (p) => () => {
-        if (window.PortalPage) window.PortalPage.go("/portal/?view=money", { replace: true });
-        if (window.PortalMoney && window.PortalMoney.show) window.PortalMoney.show(p);
-      };
       if (s.owed) rows.push([`Owed: ${plural(s.owed.count || 0, "invoice")}`, pounds(s.owed.pence), inv({})]);
       if (s.overdue) rows.push([`Overdue: ${plural(s.overdue.count || 0, "invoice")}`, pounds(s.overdue.pence), inv({ filter: "overdue" })]);
-      if (s.month) rows.push(["In this month", pounds(s.month.inPence), part("year")]);
-      if (s.month) rows.push(["Out this month", pounds(s.month.outPence), part("expenses")]);
+      if (s.month) rows.push(["In this month", pounds(s.month.inPence), inv({ accounts: true })]);
+      if (s.month) rows.push(["Out this month", pounds(s.month.outPence), "/portal/?view=money&page=expenses"]);
       const waiting = (s.waitingApproval || 0) + (s.unconfirmedExpenses || 0);
       return { big: s.owed ? pounds(s.owed.pence) : "–", small: waiting ? `owed · ${waiting} waiting for approval` : "owed", rows, empty: "" };
     },

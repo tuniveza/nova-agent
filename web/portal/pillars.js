@@ -57,7 +57,15 @@
       })(8);
     });
   };
-  const invoicer = (what) => () => window.NovaInvoicer && window.NovaInvoicer.open(what);
+  // (the choices under the heading, so they're on the page shown: in a short window the heading alone was)
+  const options = (heading) => () => {
+    $("options-btn").click();
+    when(() => [...document.querySelectorAll("#options-sheet .kicker")].find((k) => k.textContent.trim() === heading), (el) => (el.nextElementSibling || el).scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" }));
+  };
+  // (for the Overview's lines, dash.js: how things are set now)
+  const stored = (key) => { try { return localStorage.getItem(key); } catch (e) { return null; } };
+  const me = () => (window.PortalPage && window.PortalPage.me && window.PortalPage.me()) || {};
+  const look = () => (window.NovaOptions ? window.NovaOptions.get() : {});
 
   // ---- The pillars and their buttons (8 or so each; admin: only for admins) ----
   // glyph: a small mark for each; badge: the tab's count shown on it; at: the tab it lights up for
@@ -81,20 +89,13 @@
       { name: "Bookings", glyph: "◷", at: "calendar", inDash: true, run: go("/portal/?view=calendar") },
       { name: "Approvals", glyph: "✓", badge: "approvals-badge", at: "approvals", inDash: true, run: tab("approvals") },
     ] },
-    { name: "Clients & Money", glyph: "£", badges: ["money-badge"], items: [
-      { name: "Clients", glyph: "☺", at: "clients", run: tab("clients") },
-      { name: "Add a client", glyph: "+", run: press("clients", "#clients-add") },
-      { name: "Sync clients", glyph: "↻", admin: true, run: press("clients", "#clients-sync") },
-      { name: "Import clients", glyph: "⇣", admin: true, run: press("clients", "#clients-import-open") },
-      // (a phone number given, its contact found: the phone's contacts, Google Contacts or a contact card)
-      { name: "Import from contacts", glyph: "☎", run: () => {
-        tab("clients")();
-        when("#clients-contacts-open", (b) => ($("clients-contacts").hidden ? b.click() : $("contacts-phone").focus()));
-      } },
-      { name: "Money", glyph: "£", badge: "money-badge", at: "money", run: tab("money") },
-      { name: "Write an invoice", glyph: "✎", run: invoicer({ new: true }) },
-      { name: "Add an expense", glyph: "−", run: press("money", "#money-expense-new") },
-      { name: "Invoicer", glyph: "£", run: invoicer({}) },
+    // (Clients & Money is one dashboard, 25 Oct 2026, the owner: "can you make the rest of nova portal as much as
+    // possible dashboards please": money.js, a panel each for Clients, Money, Expenses, the tax year and the invoice
+    // settings, with Add a client, the imports, Sync, Write an invoice, the Invoicer and Add an expense on them; the
+    // whole client list (and a client's page) is opened from its panel, with only Clients & Money along the top)
+    { name: "Clients & Money", glyph: "£", dash: "money", badges: ["money-badge"], items: [
+      { name: "Clients", glyph: "☺", at: "clients", inDash: true, run: tab("clients") },
+      { name: "Money", glyph: "£", badge: "money-badge", at: "money", inDash: true, run: tab("money") },
     ] },
     // (Outreach is one dashboard, 25 Oct 2026, the owner: "can you make the rest of nova portal as much as possible
     // dashboards please": outreach-dash.js, To approve across all three, the Funnel, Campaigns and Social side by
@@ -150,13 +151,10 @@
     link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
     users: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/>',
     userplus: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>',
-    sync: '<path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/>',
     import: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
-    phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/>',
     pound: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5a2.8 2.8 0 0 0-5 1.7V16M8.5 13h4.5M8.5 16H15"/>',
     pen: '<path d="M16 3l5 5L8 21H3v-5Z"/>',
     receipt: '<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2Z"/><path d="M9 8h6M9 12h6"/>',
-    alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/>',
     megaphone: '<path d="M3 11v3a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1Z"/><path d="M16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/>',
     camera: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
     star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9Z"/>',
@@ -189,9 +187,9 @@
   };
   const ICON_OF = {
     Inbox: "inbox", Today: "home", Enquiries: "mail", Conversations: "chat", Alerts: "bell", "Saved replies": "note", "Website bot": "spark", Notifications: "ring",
-    Bookings: "calendar", Calendar: "calendar", Approvals: "check", "Ask about this week": "spark", "Booking link": "link",
-    "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync clients": "sync", "Import clients": "import", "Import from contacts": "phone", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt",
-    Outreach: "megaphone", "To approve": "check", Campaigns: "megaphone", Social: "camera", Funnel: "funnel",
+    Bookings: "calendar", Calendar: "calendar", Approvals: "check", "Ask about this week": "spark", "Booking link": "link", "Booking tools": "tools", "Test booking": "flag",
+    "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync clients": "sync", "Import clients": "import", "Import from contacts": "phone", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt", Expenses: "receipt", "Tax year": "calendar", "Invoice settings": "gear",
+    Outreach: "megaphone", "To approve": "check", Campaigns: "megaphone", Social: "camera", Funnel: "funnel", "Write a campaign": "pen", "One-to-one email": "send", "Don't email again": "block", "Write a post": "pen", "Fan sign-up link": "link", "Ads Manager": "out", "Add prospects": "import",
     "Plans & Nova": "star", Quests: "star", "Everyone's quests": "team", "Nova Agent": "agent", "Ask Nova": "ask", Voice: "mic", "Hands-free": "ear",
     You: "user", "Your profile": "user", "Re-roll planet": "planet", "Edit your name": "pen", "Change email": "at", "Change password": "key", "All addresses": "map", "How it works": "gear", "Sign out": "exit",
     "Look & sound": "palette", Options: "gear", Theme: "palette", "Text & menu": "text", "Starting tab": "start", "Music on or off": "music", "Refresh everything": "refresh", "Install the app": "install", "Apps and links": "apps",

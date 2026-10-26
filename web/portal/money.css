@@ -1,70 +1,68 @@
-/* Portal → Money: invoices, payments and expenses (money.js). Built on Campaigns' pieces (cp-…). */
+/* Clients & Money, on one screen (money.js, 25 Oct 2026, the owner: "can you make the rest of nova portal as much as
+   possible dashboards please"). Its panels are drawn as Admin's are (admin.css: .ad-grid, .ad-panel, .ad-foot, three
+   across on a computer or a tablet on its side, a panel a page in a short window, a size bigger in a tall window):
+   Clients two wide in the first row, its lines in two columns, beside Money; then Expenses, the tax year and the
+   invoice settings. The forms open in place of the panels; every expense (page=expenses) is cards, by month. */
 
-.mn-head-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.mn .mn-parts { margin: 4px auto 14px; display: flex; width: fit-content; }
+/* (in the middle of the section, top to bottom, as Admin's dashboard is; not in a short window, where it's in pages) */
+html.embed:not(.win-short) #view-money:not([hidden]) { display: flex; flex-direction: column; }
+html.embed:not(.win-short) #view-money > .cm-grid { margin-block: auto; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .cm-grid > .cm-clients { grid-column: span 2; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .cm-clients .dash-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 22px; }
+html.win-short .cm-grid > .cm-clients { grid-column: auto; }
+
+/* Clients: the search and the filters on one line under the count (one-line box at most 360px), wrapping as it
+   narrows; in a short window, a line of their own under the name */
+.cm-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.cm-tools .cm-search {
+  flex: 1 1 220px; width: auto; max-width: 360px; min-width: 0; min-height: 34px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(var(--void-rgb), 0.6); color: var(--bright); font-size: 14px;
+}
+.cm-filters { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.cm-filters .chip { min-height: 30px; }
+html.win-short .cm-panel > .cm-tools { order: 4; flex: 1 1 100%; }
+/* (a very short window, 1366x400: one line of the clients that matter now, so the panel is whole on its page at a
+   size that reads, not drawn smaller under 11px; the rest are a tap away, Open ›) */
+@media (max-height: 520px) {
+  html.win-short .cm-panel.cm-clients > .dash-rows { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  html.win-short .cm-clients .dash-rows li:nth-child(n+5) { display: none; }
+}
+.cm-panel .dash-rows li.cm-empty { cursor: default; color: var(--muted); font-size: 12.5px; }
+.cm-panel .dash-rows li.cm-empty:hover { background: none; }
+.cm-panel .dash-rows li.cm-warn .dash-side { color: var(--bad); }
+.cm-panel .ad-foot a.chip { text-decoration: none; }
+/* (a client's name never broken in two: what's beside it wraps instead) */
+.cm-clients .dash-main { overflow-wrap: normal; }
+.cm-clients .dash-side { white-space: normal; text-align: right; }
+@media (min-height: 950px) {
+  html:not(.win-short) .cm-tools .cm-search { min-height: 40px; font-size: 15px; }
+  html:not(.win-short) .cm-filters .chip { min-height: 36px; }
+}
+
+/* Every expense: its title and + Add an expense on one line, so the title kept on every page is short */
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-money > .view-head.cm-room { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-money > .view-head.cm-room > h2 { flex: none; width: auto; margin: 0 !important; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-money > .view-head.cm-room > .pane-ico { margin: 0 -8px 0 0; }
+
+/* The forms, one at a time, in place of the panels (and of every expense) while it's open, in the middle */
+#view-money:has(> .cm-forms > form:not([hidden])) > :not(.cm-forms) { display: none !important; }
+html.embed #view-money > .cm-forms:has(> form:not([hidden])) { margin-block: auto; }
+.cm-forms { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; min-width: 0; align-self: stretch; }
+.cm-forms:not(:has(> form:not([hidden]))) { display: none; }
+
 /* The kinds of box Portal's own rules don't dress (dates, numbers, search, email, a file) look like the rest */
-.mn input:is([type="date"], [type="number"], [type="search"], [type="email"], [type="file"]) {
+.mn input:is([type="date"], [type="number"], [type="search"], [type="email"], [type="file"]):not(.cm-search) {
   width: 100%; min-width: 0; max-width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px;
   background: rgba(var(--void-rgb), 0.6); color: var(--bright); font-size: 16px;
 }
 .mn input[type="file"] { padding: 9px 12px; font-size: 14px; }
 .mn input[type="file"]::file-selector-button { margin-right: 10px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(var(--panel-2-rgb), 0.55); color: var(--text); font: inherit; cursor: pointer; }
 
-/* The four tiles: in, out, owed, overdue */
-.mn-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; margin: 0 0 14px; }
-.mn-summary:empty { display: none; }
-.mn-tile {
-  display: grid; gap: 2px; justify-items: center; min-width: 0; padding: 12px 10px; border-radius: 16px;
-  border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.35); color: var(--text); text-align: center; font: inherit; cursor: pointer;
-}
-.mn-tile b { font-family: var(--f-display, inherit); font-size: 20px; color: var(--bright); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.mn-tile span { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.mn-tile.warn b { color: var(--bad); }
-.mn-tile.warn { border-color: rgba(var(--bad-rgb), 0.45); }
-.mn-tile:focus-visible { outline: 2px solid var(--hi); outline-offset: 3px; }
-
 .mn-form { display: grid; gap: 12px; margin: 0 0 14px; min-width: 0; }
 
-/* Invoice lines: a row each (stacked on a phone) */
-.mn-lines { display: grid; gap: 8px; min-width: 0; }
-.mn-lines-head, .mn-line { display: grid; grid-template-columns: minmax(0, 1fr) 84px 110px 96px 40px; gap: 8px; align-items: center; min-width: 0; }
-.mn-lines-head { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.mn-line input { min-width: 0; width: 100%; color: var(--bright); }
-.mn-line-total { text-align: right; font-variant-numeric: tabular-nums; color: var(--bright); font-size: 14.5px; overflow-wrap: anywhere; }
-.mn-line .icon-btn, .mn-line-remove { width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; }
-.mn-add-line { justify-self: start; }
-@media (max-width: 640px) {
-  .mn-lines-head { display: none; }
-  .mn-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; padding: 10px; border-radius: 14px; border: 1px solid var(--line); }
-  .mn-line .mn-line-desc { grid-column: 1 / -1; }
-  .mn-line .mn-line-total { grid-column: 1 / 3; text-align: left; }
-  .mn-line .mn-line-remove { grid-column: 3; grid-row: 3; }
-}
-
-.mn-totals { display: grid; grid-template-columns: auto auto; justify-content: end; gap: 4px 18px; margin: 0; font-size: 14.5px; }
-.mn-totals dt { color: var(--muted); }
-.mn-totals dd { margin: 0; text-align: right; color: var(--bright); font-variant-numeric: tabular-nums; }
-.mn-totals .big { font-weight: 700; font-size: 16px; }
-
-/* Cards */
+/* Cards (every expense) */
 .mn-card .card-title { overflow-wrap: anywhere; }
-.mn-card.overdue { border-color: rgba(var(--bad-rgb), 0.45); }
-.mn-amount { font-variant-numeric: tabular-nums; }
-.mn-lines-read { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; color: var(--text); }
-.mn-lines-read li { display: flex; justify-content: space-between; gap: 12px; min-width: 0; overflow-wrap: anywhere; }
-.mn-lines-read li span:last-child { flex: none; font-variant-numeric: tabular-nums; color: var(--bright); }
-.mn-sub { margin: 14px 0 6px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
-.mn-log { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 13.5px; color: var(--text); overflow-wrap: anywhere; }
-.mn-log li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
-.mn-log .btn { min-height: 30px; }
-.mn-inline { display: grid; gap: 10px; margin: 12px 0 0; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.35); min-width: 0; }
-.mn-reminder { white-space: pre-wrap; overflow-wrap: anywhere; margin: 10px 0 0; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(var(--void-rgb), 0.35); font-size: 14px; line-height: 1.5; color: var(--text); }
 .mn-receipt { color: var(--hi); }
-.mn-cats { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
-.mn-cats li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 14px; }
-.mn-bar { grid-column: 1 / -1; height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--hi), transparent); opacity: 0.7; }
-.mn-export { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.mn-export a { text-decoration: none; }
 
 /* Today: the Studio tiles make room for Invoices overdue */
 @media (min-width: 761px) and (max-width: 1099px) {
@@ -82,15 +80,19 @@
 #money-expense-form .mn-exp-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 #money-expense-form .mn-exp-more { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; }
 #money-expense-form .mn-exp-more > .actions { margin: 0; flex-wrap: nowrap; }
+/* (changing one: Save, Confirm it, Remove and Cancel under the note and the receipt, not squeezing them) */
+#money-expense-form .mn-exp-more:has(> .actions > #mn-exp-remove:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+#money-expense-form .mn-exp-more:has(> .actions > #mn-exp-remove:not([hidden])) > .actions { grid-column: 1 / -1; justify-content: center; }
 @container (max-width: 620px) {
   #money-expense-form .mn-exp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #money-expense-form .mn-exp-more { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  #money-expense-form .mn-exp-more > .actions { grid-column: 1 / -1; justify-content: center; }
+  #money-expense-form .mn-exp-more > .actions { grid-column: 1 / -1; justify-content: center; flex-wrap: wrap; }
 }
 @container (max-width: 420px) { #money-expense-form :is(.mn-exp-grid, .mn-exp-more) { grid-template-columns: minmax(0, 1fr); } }
 #money-expense-form .cp-field > :is(input:not([type="file"]), select) { width: 100%; }
 #money-expense-form .cp-field > span { overflow-wrap: anywhere; }
-/* The tax year's cards (the year, for the accountant, invoice settings) and the expenses side by side where there's
-   room, not each stretched across the whole section; month headings and the empty words span the row */
-#view-money #money-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-items: stretch; }
-#view-money #money-list > :is(.group-head, .empty, .skeleton, .mn-invoicer) { grid-column: 1 / -1; }
+/* Every expense side by side where there's room, not each stretched across the whole section, and a month with one
+   or two in the middle, not left at the edge; month headings and the empty words span the row */
+#view-money #money-list { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; }
+#view-money #money-list > .card { flex: 1 1 320px; max-width: 440px; min-width: 0; }
+#view-money #money-list > :is(.group-head, .empty, .skeleton) { flex: 1 1 100%; }

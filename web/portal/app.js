@@ -2128,8 +2128,9 @@
   // (?view=clients&client=<id>, so Back returns to the list): contact and notes, money in pounds,
   // marketing consent and its history, and their sessions. Marketing consent is NO for everyone
   // until someone records a yes with where it came from and when; every change is kept, with who.
-  // Admins also get "Sync now" (the studio's bookings and enquiries) and "Import a spreadsheet"
-  // (an appointments or clients CSV). Money is pounds as text ("120.00"); times UK.
+  // Adding a client, Import from contacts and (admins) Import a spreadsheet are forms on Clients & Money's
+  // dashboard (money.js opens them, PortalClients below; 25 Oct 2026, "as much as possible dashboards"), and
+  // Sync now is a button there. Money is pounds as text ("120.00"); times UK.
   let clientFilter = "all"; // all | owing | lapsed | enquiry
   let clientSearch = "";
   let clientSearchTimer = 0;
@@ -2171,9 +2172,6 @@
   }
 
   async function loadClients() {
-    const admin = isAdminHere();
-    for (const b of document.querySelectorAll("#view-clients .admin-only")) if (b.hidden === admin) b.hidden = !admin;
-    if (!admin) $("clients-import").hidden = true;
     const id = openClientId();
     if (id) return openClient(id);
     closeClient();
@@ -2213,7 +2211,7 @@
     if (clientFilter === "owing") return "Nobody owes anything.";
     if (clientFilter === "lapsed") return "Everyone who booked before then has booked again since.";
     if (clientFilter === "enquiry") return "No clients from enquiries only.";
-    return isAdminHere() ? "No clients yet. Press Sync now, or import a spreadsheet." : "No clients yet. They appear here as people book and send enquiries.";
+    return isAdminHere() ? "No clients yet. Sync them or import a spreadsheet on Clients & Money." : "No clients yet. They appear here as people book and send enquiries.";
   }
 
   // Their marketing consent as a badge
@@ -2538,34 +2536,38 @@
       loadClients();
     }, 250);
   });
+  function setClientFilter(filter) {
+    clientFilter = filter;
+    for (const c of document.querySelectorAll("#clients-chips .chip")) {
+      const on = c.dataset.filter === filter;
+      if (c.classList.contains("active") !== on) c.classList.toggle("active", on);
+      c.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+    $("clients-since-row").hidden = clientFilter !== "lapsed";
+  }
   for (const chip of document.querySelectorAll("#clients-chips .chip")) {
     chip.addEventListener("click", () => {
-      clientFilter = chip.dataset.filter;
-      for (const c of document.querySelectorAll("#clients-chips .chip")) {
-        const on = c === chip;
-        if (c.classList.contains("active") !== on) c.classList.toggle("active", on);
-        c.setAttribute("aria-pressed", on ? "true" : "false");
-      }
-      $("clients-since-row").hidden = clientFilter !== "lapsed";
+      setClientFilter(chip.dataset.filter);
       loadClients();
     });
   }
   $("clients-since").addEventListener("change", () => clientFilter === "lapsed" && $("clients-since").value && loadClients());
   $("clients-back").addEventListener("click", () => goClient(null));
 
+  // The forms on Clients & Money's dashboard, one at a time, each in place of its panels while it's open
+  // (money.css): opening one shuts the others, the expense form too
+  const FORMS = ["clients-add-form", "clients-contacts", "clients-import", "money-expense-form"];
+  const onlyForm = (id) => FORMS.forEach((f) => ($(f).hidden = f !== id));
+  // (what was added or imported shows on the dashboard behind the form, or the list if that's where it's open)
+  const clientsChanged = () => (currentView === "clients" ? loadClients() : window.PortalMoney && window.PortalMoney.load());
+
   // Add a client by hand. Nova Bot refuses a duplicate and says which one it is: that one opens.
   const showAddForm = (on) => {
-    $("clients-add-form").hidden = !on;
-    $("clients-add").setAttribute("aria-expanded", on ? "true" : "false");
     if (on) {
-      $("clients-import").hidden = true;
-      $("clients-import-open").setAttribute("aria-expanded", "false");
-      $("clients-contacts").hidden = true;
-      $("clients-contacts-open").setAttribute("aria-expanded", "false");
+      onlyForm("clients-add-form");
       $("add-name").focus();
-    }
+    } else $("clients-add-form").hidden = true;
   };
-  $("clients-add").addEventListener("click", () => showAddForm($("clients-add-form").hidden));
   $("add-cancel").addEventListener("click", () => showAddForm(false));
   $("clients-add-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -2588,7 +2590,7 @@
       showAddForm(false);
       toast("Added " + body.name);
       if (data.client && data.client.id) goClient(data.client.id);
-      else loadClients();
+      else clientsChanged();
     } catch (err) {
       if (err.message === "signed out") return;
       const d = err.data || {};
@@ -2600,25 +2602,6 @@
       } else toast(err.message);
     } finally {
       button.disabled = false;
-    }
-  });
-
-  // Admins: sync from the studio's bookings and enquiries now
-  $("clients-sync").addEventListener("click", async () => {
-    const b = $("clients-sync");
-    b.disabled = true;
-    b.textContent = "Syncing…";
-    try {
-      const r = await api("clients/sync", { body: {} });
-      const c = r.clients || {};
-      const s = r.sessions || {};
-      toast(c.added || c.updated || s.added || s.updated ? "Synced: " + (c.added || 0) + " new clients, " + (s.added || 0) + " new sessions" : "Synced: already up to date");
-      loadClients();
-    } catch (err) {
-      if (err.message !== "signed out") toast("Couldn't sync: " + err.message);
-    } finally {
-      b.disabled = false;
-      b.textContent = "Sync now";
     }
   });
 
@@ -2640,17 +2623,11 @@
   $("contacts-pick").hidden = !contactsPicker();
   if (contactsPicker()) $("contacts-how").textContent = "Find this number looks in the studio's Google Contacts. Choose from this phone's contacts opens your contact book.";
   const showContactsForm = (on) => {
-    $("clients-contacts").hidden = !on;
-    $("clients-contacts-open").setAttribute("aria-expanded", on ? "true" : "false");
     if (on) {
-      showAddForm(false);
-      $("clients-import").hidden = true;
-      $("clients-import-open").setAttribute("aria-expanded", "false");
-      $("clients-contacts").scrollIntoView({ block: "nearest", behavior: calm() ? "auto" : "smooth" });
+      onlyForm("clients-contacts");
       $("contacts-phone").focus();
-    }
+    } else $("clients-contacts").hidden = true;
   };
-  $("clients-contacts-open").addEventListener("click", () => showContactsForm($("clients-contacts").hidden));
   $("contacts-cancel").addEventListener("click", () => showContactsForm(false));
   // What's found (or why not) is turned to when it's on another page of the section (onescreen.js): it showed
   // below the form, a page on, so opening a contact card looked like it did nothing (25 Oct 2026)
@@ -2761,7 +2738,7 @@
         button.textContent = "Added";
         button.disabled = true;
       }
-      loadClients();
+      clientsChanged();
     } catch (err) {
       button.disabled = false;
       if (err.message === "signed out") return;
@@ -2837,16 +2814,7 @@
   });
 
   // Admins: import an appointments or clients spreadsheet (a chosen file, or pasted)
-  $("clients-import-open").addEventListener("click", () => {
-    const on = $("clients-import").hidden;
-    $("clients-import").hidden = !on;
-    $("clients-import-open").setAttribute("aria-expanded", on ? "true" : "false");
-    if (on) showAddForm(false), ($("clients-contacts").hidden = true), $("clients-contacts-open").setAttribute("aria-expanded", "false"), $("clients-import").scrollIntoView({ block: "nearest", behavior: calm() ? "auto" : "smooth" });
-  });
-  $("import-cancel").addEventListener("click", () => {
-    $("clients-import").hidden = true;
-    $("clients-import-open").setAttribute("aria-expanded", "false");
-  });
+  $("import-cancel").addEventListener("click", () => ($("clients-import").hidden = true));
   $("import-file").addEventListener("change", () => {
     const file = $("import-file").files[0];
     importText = "";
@@ -2897,7 +2865,7 @@
       $("import-file").value = "";
       $("import-text").value = "";
       toast("Imported");
-      loadClients();
+      clientsChanged();
     } catch (err) {
       if (err.message !== "signed out") showImport([el("p", "error", "Not imported: " + err.message)]);
     } finally {
@@ -2905,6 +2873,19 @@
       b.textContent = "Import";
     }
   });
+
+  // Clients & Money's dashboard (money.js): its buttons open these forms, and its filters and search open the
+  // whole list narrowed (the same as the chips and the search box here: no address of their own)
+  window.PortalClients = {
+    add: () => showAddForm(true),
+    contacts: () => showContactsForm(true),
+    sheet: () => isAdminHere() && onlyForm("clients-import"),
+    list({ filter = "all", search = "" } = {}) {
+      setClientFilter(filter);
+      clientSearch = $("clients-search").value = search;
+      goClient(null);
+    },
+  };
 
   // The list refreshes now and then while it's on screen (calmly: only changed cards are redrawn)
   setInterval(() => !document.hidden && running && currentView === "clients" && !openClientId() && document.activeElement !== $("clients-search") && loadClients(), 60000);

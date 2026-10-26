@@ -1290,7 +1290,6 @@ html[data-align="right"] #approvals-list > .card.appr .card-top { justify-conten
 .cl-tools { display: grid; gap: 10px; margin: 0 0 12px; min-width: 0; }
 .cl-since { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 10px; color: var(--muted); font-size: 14px; }
 .cl-since input[type="month"] { width: auto; max-width: 100%; }
-.cl-actions { margin-bottom: 12px; }
 .cl-form { display: grid; gap: 12px; margin: 0 0 14px; min-width: 0; }
 .cl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; min-width: 0; }
 /* (Name, Email and Phone share the form's width, three across: the Notes box under them spans every column, so
