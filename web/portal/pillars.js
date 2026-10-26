@@ -57,15 +57,6 @@
       })(8);
     });
   };
-  // (the choices under the heading, so they're on the page shown: in a short window the heading alone was)
-  const options = (heading) => () => {
-    $("options-btn").click();
-    when(() => [...document.querySelectorAll("#options-sheet .kicker")].find((k) => k.textContent.trim() === heading), (el) => (el.nextElementSibling || el).scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" }));
-  };
-  // (for the Overview's lines, dash.js: how things are set now)
-  const stored = (key) => { try { return localStorage.getItem(key); } catch (e) { return null; } };
-  const me = () => (window.PortalPage && window.PortalPage.me && window.PortalPage.me()) || {};
-  const look = () => (window.NovaOptions ? window.NovaOptions.get() : {});
 
   // ---- The pillars and their buttons (8 or so each; admin: only for admins) ----
   // glyph: a small mark for each; badge: the tab's count shown on it; at: the tab it lights up for
