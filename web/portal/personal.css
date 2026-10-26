@@ -47,6 +47,13 @@ html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests.pn > .ps-
 /* (inside Nova Agent the section has its height: the quests are a box of their own there, in pages when there are
    more than fit, onescreen.js, and Nova Agent's panel stays beside every page) */
 html.embed:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests.pn > #quests-body { overflow-y: auto; }
+/* (nothing planned: the quests' heading and their empty box and Nova Agent's panel together in the middle of the
+   section, side by side, not one short line at the top and an empty screen under it, 26 Oct 2026, the user: "there
+   shouldn't be any blank sections") */
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests.pn:not([hidden]):has(.quests-empty-actions) {
+  grid-template-columns: minmax(0, 620px) minmax(240px, 300px); grid-template-rows: auto auto; justify-content: center; align-content: center;
+}
+html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests.pn:has(.quests-empty-actions) > .ps-nova { align-self: center; }
 
 /* You: your planet, your account, and Google, How it works, All addresses and the studio */
 .pv:not(.yd) .yd-only, .pv:not(.yd) .yd-ico { display: none !important; }
