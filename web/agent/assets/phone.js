@@ -220,7 +220,7 @@
   if (right) right.append(gear);
 
   // ---- The bar along the bottom: every place in Nova Agent, always there ----
-  // Apps (Portal, Agent, Calendar, Notes, Board) · Plans (Quests); Invoicer on its own at the left end, Nova
+  // Apps (Portal, Agent, Calendar, Notes, Board, Quests); Invoicer on its own at the left end, Nova
   // on its own at the right end (Lossless: in the Panels window, behind the gear). Any other panel in the
   // Panels window joins Tools (none now). Fixer, Computer, Observatory, Console, Manual and Index are in the
   // Backend (23 Oct 2026), so the eight places left are bigger (phone.css). Every place stays on the bar on
@@ -228,8 +228,9 @@
   const SKIP = ['/admin/links', '/lossless/']; // All links and Lossless: behind the gear (the Panels window), not on the bar
   const GROUPS = [
     ['solo', '', ['/invoicer/']], // Invoicer: on its own, in no group, at the left end
-    ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/']], // Portal first, Agent second
-    ['tasks', 'Plans', ['/quests/']],
+    // (Quests is one of the Apps, and the Plans group went: 26 Oct 2026, the user: "make quests a part of the app section
+    // on the nova dock please; plans section can be removed")
+    ['apps', 'Apps', ['/portal/', 'pane:chat', '/calendar/', '/notes/', '/board/', '/quests/']], // Portal first, Agent second
     ['tools', 'Tools', []], // (any panel in the Panels window not placed elsewhere joins Tools)
     ['end', '', ['/visualizer']], // Nova: on its own, in no group, at the right end (Lossless: in the Panels window)
   ];

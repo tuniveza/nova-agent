@@ -3,7 +3,9 @@
 // The six live in chat.html's <dialog id="backend">, off the dock, the tiles and the Panels window. It opens by:
 //   - pressing and holding Nova Agent's mark in the top bar for about a second (it pulses while held, and a phone
 //     that can gives one short, soft buzz when it opens);
-//   - clicking the mark three times with a mouse.
+//   - clicking the mark three times with a mouse;
+//   - a double tap on Home in the navigation panel (navpanel.js; 26 Oct 2026, the user: "if you double tap home it
+//     will open up the hidden backend apps").
 // A normal tap or click on the mark still does what it always did (Nova Agent's own page). With a mouse that one
 // click waits a moment (under half a second) in case it's the start of three. Esc, the ✕, a tap outside it or a
 // phone's Back closes it (phone.js closes any open window on Back). window.NovaBackend = { open, close }.

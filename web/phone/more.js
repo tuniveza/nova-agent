@@ -12,7 +12,7 @@
   const GROUPS = [
     ["Studio", [["inbox", "Inbox", "portal"], ["inbox/alerts", "Alerts", "portal"], ["inbox/approvals", "Approvals", "portal"], ["calendar", "Calendar", "calendar"], ["clients", "Clients", "portal"], ["money", "Money", "invoicer"], ["bookings", "Booking tools", "calendar"], ["bot", "Website bot", "portal"]]],
     ["Outreach", [["outreach", "Campaigns", "portal"], ["outreach/one", "One-to-one", "portal"], ["outreach/social", "Social", "portal"], ["outreach/funnel", "Funnel", "portal"]]],
-    ["Plans", [["agent", "Agent", "chat"], ["agent/plan", "Today's plan", "missions"], ["quests", "Quests", "quests"], ["notes", "Notes", "notes"], ["board", "Board", "board"]]],
+    ["Apps", [["agent", "Agent", "chat"], ["agent/plan", "Today's plan", "missions"], ["quests", "Quests", "quests"], ["notes", "Notes", "notes"], ["board", "Board", "board"]]],
     ["Helpers", [["lossless", "Lossless", "lossless"], ["visualizer", "Nova", "visualizer"]]],
     ["You", [["you", "Your profile", "portal"], ["inbox/alert/phone", "Notifications", "portal"]]],
     ["Admin", [["crew", "The crew", "portal"], ["google", "Google", "portal"], ["tests", "Test stuff", "portal"], ["admin/referrals", "Referrals", "portal"], ["admin/links", "Links", "portal"], ["admin/test-booking", "Test booking", "portal"]]],

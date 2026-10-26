@@ -156,7 +156,8 @@
   function draw() {
     btn("back").disabled = at <= 0;
     btn("forward").disabled = at >= list.length - 1;
-    btn("home").disabled = viewer.hidden;
+    // (Home looks off on Nova Agent's own page but still hears taps: a double tap on it opens the Backend, below)
+    btn("home").setAttribute("aria-disabled", String(viewer.hidden));
     const cur = list[at];
     const where = whereEl;
     const text = cur ? label(cur) : "";
@@ -194,13 +195,22 @@
     const first = menu.querySelector(".nav-item.here") || menu.querySelector(".nav-item");
     if (first && matchMedia("(pointer: fine)").matches) first.focus({ preventScroll: true });
   }
+  let homeTap = 0;
   nav.addEventListener("click", (e) => {
     const b = e.target.closest("[data-nav]");
     if (!b || b.disabled) return;
     const k = b.dataset.nav;
     if (k === "back") back();
     else if (k === "forward") forward();
-    else if (k === "home") home();
+    else if (k === "home") {
+      // A double tap on Home opens the Backend (Computer, Observatory, Console, Manual, Index: backend.js), as holding
+      // Nova Agent's mark does (26 Oct 2026, the user: "if you double tap home it will open up the hidden backend
+      // apps"). The first tap goes home as always, at once; the second within 400 ms opens the Backend over it.
+      const now = performance.now();
+      if (now - homeTap < 400) { homeTap = 0; if (window.NovaBackend) window.NovaBackend.open(); return; }
+      homeTap = now;
+      if (b.getAttribute("aria-disabled") !== "true") home();
+    }
     else if (k === "reload") reload();
     else if (k === "list") openMenu(menu.hidden);
     else if (k === "apps") openApps();

@@ -997,11 +997,6 @@
           <div class="bk-tile"><a class="suite-app" href="/calendar/" data-inside="/calendar/" aria-describedby="su-d-calendar"><span class="pico" data-p="calendar" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-calendar"/></svg></span><b>Calendar</b></a><small id="su-d-calendar">The one Nova Agent plans into</small></div>
           <div class="bk-tile"><a class="suite-app" href="/notes/" data-inside="/notes/" aria-describedby="su-d-notes"><span class="pico" data-p="notes" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-notes"/></svg></span><b>Notes</b></a><small id="su-d-notes">Notes and documents, Google Docs export</small></div>
           <div class="bk-tile"><a class="suite-app" href="/board/" data-inside="/board/" aria-describedby="su-d-board"><span class="pico" data-p="board" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-board"/></svg></span><b>Board</b></a><small id="su-d-board">A table to lay notes, the calendar, Agent's answers, pictures and links out on</small></div>
-        </div>
-      </div>
-      <div class="suite-group tools tasks">
-        <h4>Plans</h4>
-        <div class="suite-grid">
           <div class="bk-tile"><a class="suite-app" href="/quests/" data-inside="/quests/" aria-describedby="su-d-quests"><span class="pico" data-p="quests" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#pi-quests"/></svg></span><b>Quests</b></a><small id="su-d-quests">Every quest: add in your own words, Focus, List, Board, Today</small></div>
         </div>
       </div>
@@ -1025,7 +1020,7 @@
     <div class="suite-top">
       <span class="kicker">Nova Agent</span>
       <h3 id="backend-title">Backend</h3>
-      <p class="backend-hint">The tools behind Nova Agent. Hold its mark for a second, or click it three times, to come back here.</p>
+      <p class="backend-hint">The tools behind Nova Agent. Double-tap Home, hold its mark for a second, or click it three times, to come back here.</p>
       <button type="button" class="icon-btn suite-x" id="backend-close" aria-label="Close" data-sfx="close">✕</button>
     </div>
     <div class="suite-groups">
@@ -2143,10 +2138,10 @@
   // "Fixer · Tools · Nova Agent"; opening, reloading or sharing that address opens it again.
   const PLACES = [
     ['portal', 'apps', '/portal/'], ['calendar', 'apps', '/calendar/'], ['notes', 'apps', '/notes/'], ['board', 'apps', '/board/'], ['index', 'apps', '/app/memory/'],
-    ['quests', 'plans', '/quests/'], ['fixer', 'tools', '/fixer/'], ['computer', 'tools', '/computer/'], ['lossless', 'tools', '/lossless/'],
+    ['quests', 'apps', '/quests/'], ['fixer', 'tools', '/fixer/'], ['computer', 'tools', '/computer/'], ['lossless', 'tools', '/lossless/'],
     ['observatory', 'helpers', '/observatory/'], ['console', 'helpers', '/console/'], ['invoicer', '', '/invoicer/'], ['nova', '', '/visualizer'],
   ];
-  const GROUP_NAMES = { apps: 'Apps', plans: 'Plans', tools: 'Tools', helpers: 'Helpers' };
+  const GROUP_NAMES = { apps: 'Apps', tools: 'Tools', helpers: 'Helpers' };
   // (the Backend's panels keep their addresses, which Nova Bot knows, and say "Backend" in the tab's title)
   const BACKEND = new Set(['index', 'fixer', 'computer', 'observatory', 'console']);
   function placeOf(href) {
