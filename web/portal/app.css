@@ -1501,9 +1501,6 @@ html:not([data-align="left"]) .cp-subhead > .group-head { flex: 1 1 100%; margin
 .cp-subhead .chip { flex: none; }
 .cp-tick { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: var(--text); min-width: 0; }
 .cp-tick input { margin-top: 3px; flex: none; width: 18px; height: 18px; accent-color: var(--accent, currentColor); }
-.cp-optout { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin: 6px 0 18px; min-width: 0; }
-.cp-optout .cp-field { flex: 1 1 220px; }
-.cp-optout input { min-width: 0; width: 100%; color: var(--bright); }
 .cp-card .card-title { overflow-wrap: anywhere; }
 .cp-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px 14px; margin: 12px 0 0; }
 /* (each label beside its own value, the pair on one row: laid out as one long row of cells, a label could end

@@ -1,0 +1,70 @@
+/* Outreach, on one screen (outreach-dash.js, 25 Oct 2026, the owner: "can you make the rest of nova portal as much
+   as possible dashboards please"): four panels drawn as Admin's are (admin.css .ad-panel, .ad-foot), in two even
+   rows on a computer or a tablet on its side: To approve (three fifths) and the Funnel; then Campaigns and Social,
+   half each. Each row's panels are one height, their buttons along the foot, and the two rows sit in the middle of
+   the section. A short window: a panel a page, low and wide (admin.css's html.win-short .ad-panel). */
+.od-grid.dash-grid { margin: 0 auto; width: 100%; max-width: 1640px; align-items: stretch; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .od-grid.dash-grid { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .od-grid > .od-approve { grid-column: span 6; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .od-grid > .od-funnel { grid-column: span 4; }
+html:is([data-form="desktop"], [data-form="tablet-side"]) .od-grid > :is(.od-campaigns, .od-social) { grid-column: span 5; }
+html.embed:not(.win-short) #view-outreach:not([hidden]) { display: flex; flex-direction: column; }
+html.embed:not(.win-short) #view-outreach > :is(.od-grid, .od-write) { margin-block: auto; }
+
+/* A line waiting for approval: its kind, its words and who or when (a tap opens it in its room), then Approve and
+   Reject; Reject's "why" box under it. The line itself isn't a link (its buttons are), so no pointer or glow on it */
+.od-panel .dash-rows li.od-item { flex-wrap: wrap; align-items: center; column-gap: 8px; row-gap: 4px; cursor: auto; }
+.od-panel .dash-rows li.od-item:hover { background: none; }
+.od-what { flex: 1 1 260px; min-width: 0; display: flex; align-items: baseline; gap: 10px; margin: 0; padding: 3px 6px; border: 0; border-radius: 6px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.od-what:is(:hover, :focus-visible) { background: color-mix(in oklab, var(--g, var(--hi)) 12%, transparent); outline: none; }
+.od-what > .dash-main { flex: 1; }
+.od-kind { flex: none; min-width: 6.5em; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); }
+.od-acts { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-left: auto; }
+.od-panel .dash-rows li.od-item { padding: 1px 0; }
+.od-panel .od-acts .btn.small, .od-why .btn.small { min-height: 28px; }
+/* (a line's words never broken inside a word, a letter a line in a narrow column: they wrap between words, and how
+   it is now beside them wraps too, as Admin's crew, admin.css) */
+.od-panel .dash-main { overflow-wrap: normal; }
+.od-panel li:not(.od-item) > .dash-side { flex: 0 1 auto; min-width: 0; white-space: normal; text-align: right; }
+.od-note { flex: none; margin-left: auto; font-size: 11px; color: var(--muted); }
+.od-why { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.od-why input { flex: 1 1 220px; min-width: 0; max-width: 520px; color: var(--bright); }
+.od-problem { flex: 1 1 100%; margin: 0; text-align: right; }
+.od-panel a.chip { text-decoration: none; }
+
+/* The forms, in place of the panels while one is open, a form's width in the middle (app.css's "Forms at a sensible
+   size": the forms themselves are 860px at most) */
+.od-write { display: grid; gap: 12px; width: min(100%, 860px); margin-inline: auto; }
+#view-outreach:not(:has(> .od-write > :not([hidden]))) > .od-write,
+#view-outreach:has(> .od-write > :not([hidden])) > .od-grid { display: none; }
+.od-write .cp-form { margin: 0; }
+.od-signup .cp-signup { margin: 0; }
+.od-signup > .actions { justify-content: center; margin-top: 10px; }
+
+/* A short window (1366x400): a panel a page (admin.css lays each out low and wide) */
+html.win-short .od-grid.dash-grid { grid-template-columns: minmax(0, 1fr); }
+html.win-short .od-grid > .od-panel { grid-column: auto; }
+/* (the lines waiting for approval, each with its buttons, one under another across the page: in admin.css's columns
+   of 260px their words came out a letter a line) */
+html.win-short .od-approve > .dash-rows { grid-template-columns: minmax(0, 1fr); }
+
+/* A tall window (2000x1250): a size bigger, as Admin's (admin.css), the lines waiting for approval too */
+@media (min-height: 950px) {
+  html:not(.win-short) .od-grid.dash-grid { gap: 14px; max-width: 1760px; }
+  html:not(.win-short) .od-kind { font-size: 12px; }
+  html:not(.win-short) .od-panel .od-acts .btn.small, html:not(.win-short) .od-why .btn.small { min-height: 36px; }
+}
+
+/* (the forms a little closer set on the dashboard, so the whole of one, its Save too, is on one page at 1440x900:
+   its big writing box was pushing Save onto a second page) */
+.od-write .cp-form { gap: 8px; }
+.od-write .cp-form textarea { min-height: 96px; height: clamp(96px, 24vh, 260px); }
+/* (Write a post: its words on the left, where, the pictures and when on the right, so Save is on the same page) */
+html:is([data-form="desktop"], [data-form="tablet-side"]):not(.win-short) #outreach-write #sc-new-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; align-items: start; }
+html:is([data-form="desktop"], [data-form="tablet-side"]):not(.win-short) #outreach-write #sc-new-fields > * { grid-column: 2; }
+html:is([data-form="desktop"], [data-form="tablet-side"]):not(.win-short) #outreach-write #sc-new-fields > .cp-wide { grid-column: 1; grid-row: 1 / span 4; align-self: stretch; grid-template-rows: auto minmax(0, 1fr); }
+html:is([data-form="desktop"], [data-form="tablet-side"]):not(.win-short) #outreach-write #sc-new-fields > .cp-wide > textarea { height: 100%; }
+html:is([data-form="desktop"], [data-form="tablet-side"]):not(.win-short) #outreach-write #sc-new-fields > .sc-count { grid-column: 1; grid-row: 5; }
+/* (a one-to-one email has more to fill in above its words: a smaller box for them) */
+.od-write #outreach-form textarea { height: clamp(80px, 16vh, 240px); }
+.od-write .cp-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }

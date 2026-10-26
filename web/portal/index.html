@@ -37,6 +37,7 @@
 <link rel="stylesheet" href="/shared/onescreen.css">
 <link rel="stylesheet" href="/portal/dash.css">
 <link rel="stylesheet" href="/portal/admin.css">
+<link rel="stylesheet" href="/portal/outreach-dash.css">
 <link rel="stylesheet" href="/portal/frame.css">
 <link rel="stylesheet" href="/portal/pillars.css">
 <link rel="stylesheet" href="/portal/simple.css"><!-- Simple design (the default; Options → Look → Rich for the look before) -->
@@ -475,71 +476,119 @@
       <div id="approvals-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
     </section>
 
+    <!-- Outreach (25 Oct 2026, the owner: "can you make the rest of nova portal as much as possible dashboards
+         please"): one dashboard, outreach-dash.js. To approve (everything waiting across Campaigns, Social and the
+         Funnel, approved or rejected right there), the Funnel, Campaigns and Social side by side, each with its
+         buttons; the forms open here in place of the panels. The rooms below keep the long lists, each opened from
+         its panel's Open ›. -->
+    <section id="view-outreach" class="view cp od" aria-label="Outreach" data-os-nofill hidden>
+      <div id="outreach-grid" class="dash-grid od-grid" aria-live="polite"></div>
+      <!-- The forms, one at a time in place of the panels, a form's width in the middle (their code: app.js,
+           social.js, funnel.js) -->
+      <div id="outreach-write" class="od-write">
+        <form id="campaigns-form" class="card cp-form" autocomplete="off" hidden>
+          <h3 class="card-title">Write a campaign</h3>
+          <label class="cp-field"><span>Subject</span><input id="cp-new-subject" type="text" maxlength="150" required></label>
+          <label class="cp-field"><span>The email</span><textarea id="cp-new-body" rows="8" maxlength="20000" required placeholder="Short paragraphs with a blank line between them. **Bold** for the one thing that matters. Full links (https://…). Sign it Novacane Studios."></textarea></label>
+          <div class="cp-grid">
+            <label class="cp-field"><span>Who it goes to</span><select id="cp-new-audience"><option value="fans">Fans</option><option value="clients">Studio clients</option><option value="everyone">Everyone</option></select></label>
+            <label class="cp-field"><span>Send at (UK time; empty: as soon as it's approved)</span><input id="cp-new-when" type="datetime-local"></label>
+          </div>
+          <p class="hint cp-small">The footer (who it's from, why they're getting it, and the unsubscribe link) is added for you.</p>
+          <p id="cp-new-error" class="cp-error appr-result bad" role="alert"></p>
+          <div class="actions">
+            <button class="btn small" type="submit">Save for approval</button>
+            <button id="cp-new-cancel" class="btn small ghost" type="button">Cancel</button>
+          </div>
+        </form>
+        <form id="outreach-form" class="card cp-form" autocomplete="off" hidden>
+          <h3 class="card-title">Write a one-to-one email</h3>
+          <div class="cp-grid">
+            <label class="cp-field"><span>Who it's to</span><select id="or-new-kind">
+              <option value="business">A business</option>
+              <option value="client">A studio client</option>
+              <option value="reply">Someone who wrote in</option>
+            </select></label>
+            <label class="cp-field"><span>Their email</span><input id="or-new-email" type="email" maxlength="200" required></label>
+            <label class="cp-field"><span>Their name (optional)</span><input id="or-new-name" type="text" maxlength="100"></label>
+            <label class="cp-field" id="or-new-org-wrap"><span>Business or organisation</span><input id="or-new-org" type="text" maxlength="120"></label>
+          </div>
+          <label class="cp-tick" id="or-new-booking-wrap" hidden><input id="or-new-booking" type="checkbox"> <span>It's about their own booking (clients who haven't said yes to studio news can only get these)</span></label>
+          <label class="cp-field"><span>Subject</span><input id="or-new-subject" type="text" maxlength="150" required></label>
+          <label class="cp-field"><span>The email</span><textarea id="or-new-body" rows="8" maxlength="10000" required placeholder="Hi Sam, … One clear ask. Signed Novacane Studios."></textarea></label>
+          <p class="hint cp-small">The footer (who it's from, why they're getting it, and a "don't email me again" link) is added for you.</p>
+          <p id="or-new-error" class="cp-error appr-result bad" role="alert"></p>
+          <div class="actions">
+            <button class="btn small" type="submit">Save for approval</button>
+            <button id="or-new-cancel" class="btn small ghost" type="button">Cancel</button>
+          </div>
+        </form>
+        <!-- Someone replied "no thanks": record it, and they're never emailed this way again -->
+        <form id="outreach-optout" class="card cp-form" autocomplete="off" hidden>
+          <h3 class="card-title">Don't email again</h3>
+          <label class="cp-field"><span>Someone replied “no thanks”? Their email</span><input id="or-optout-email" type="email" maxlength="200" required></label>
+          <div class="actions">
+            <button class="btn small" type="submit">Don't email them again</button>
+            <button id="or-optout-close" class="btn small ghost" type="button">Close</button>
+          </div>
+        </form>
+        <!-- The fan sign-up link (for SoundCloud and socials), with who's opted in (app.js drawSignup) -->
+        <div id="od-signup" class="od-signup" hidden>
+          <div id="campaigns-signup" class="list cp-signup"></div>
+          <div class="actions"><button id="od-signup-close" class="btn small ghost" type="button">Close</button></div>
+        </div>
+        <!-- Write a post (anyone signed in): it waits for an admin's approval -->
+        <form id="social-form" class="card cp-form sc-form" autocomplete="off" hidden>
+          <h3 class="card-title">Write a post</h3>
+          <div id="sc-new-fields" class="sc-fields"></div>
+          <p id="sc-new-error" class="cp-error appr-result bad" role="alert"></p>
+          <div class="actions">
+            <button class="btn small" type="submit">Save for approval</button>
+            <button id="sc-new-cancel" class="btn small ghost" type="button">Cancel</button>
+          </div>
+        </form>
+        <!-- Add prospects: a CSV (Name, Company/Project, Bio/Notes, Email; Role, Status, Last_Sent, Message_Id read too) -->
+        <form id="funnel-import" class="card cp-form" autocomplete="off" hidden>
+          <h3 class="card-title">Add prospects</h3>
+          <p class="appr-why">A CSV with the headings Name, Company/Project, Bio/Notes and Email (Role, Status, Last_Sent and Message_Id are read too, so people an old sheet says were emailed or replied are never emailed again). Each address goes on once. Personal mailboxes (Gmail, iCloud…) stay on the list but can't be emailed this way: under UK law they have to opt in first.</p>
+          <label class="cp-field"><span>CSV file</span><input id="funnel-file" type="file" accept=".csv,text/csv,text/plain"></label>
+          <label class="cp-field"><span>Or paste the rows (with the heading row)</span><textarea id="funnel-paste" rows="4" maxlength="1000000" placeholder="Name,Company/Project,Bio/Notes,Email"></textarea></label>
+          <p id="funnel-import-result" class="appr-result" role="status"></p>
+          <div class="actions">
+            <button class="btn small" type="submit">Add them</button>
+            <button id="funnel-sample" class="btn small ghost" type="button">Sample file</button>
+            <button id="funnel-import-cancel" class="btn small ghost" type="button">Close</button>
+          </div>
+        </form>
+      </div>
+      <!-- Their buttons (the rooms' code runs them), moved onto the panels each time the dashboard is drawn -->
+      <div hidden>
+        <button id="campaigns-new" class="btn small" type="button" aria-expanded="false" aria-controls="campaigns-form">Write a campaign</button>
+        <button id="outreach-new" class="chip" type="button" aria-expanded="false" aria-controls="outreach-form">One-to-one email</button>
+        <button id="social-new" class="btn small" type="button" aria-expanded="false" aria-controls="social-form">Write a post</button>
+        <button id="funnel-import-open" class="chip" type="button" aria-expanded="false" aria-controls="funnel-import">Add prospects</button>
+      </div>
+    </section>
+
     <!-- Campaigns: email newsletters to opted-in fans and clients (sent by Nova Bot through the studio's own mail server).
-         Agent and staff write drafts; nothing is sent until an admin approves one here (or on its card
-         under Agent's reply). Waiting ones first (with a preview of the email), then scheduled and sent
-         ones (with how they did), and the fan sign-up link to share. -->
+         Agent and staff write drafts; nothing is sent until an admin approves one here, on Outreach's dashboard
+         (or on its card under Agent's reply). Waiting ones first (with a preview of the email), then scheduled and
+         sent ones (with how they did). Writing one, the fan sign-up link and "don't email again" are on the
+         dashboard (25 Oct 2026). -->
     <section id="view-campaigns" class="view cp" hidden>
       <div class="view-head">
         <h2>Campaigns</h2>
-        <button id="campaigns-new" class="chip" type="button" aria-expanded="false" aria-controls="campaigns-form">Write one</button>
       </div>
       <p class="hint" id="campaigns-hint">Emails to fans and clients who opted in. Nothing is sent until an admin approves it.</p>
-      <!-- Write a campaign (anyone signed in): it waits for an admin's approval like Agent's drafts -->
-      <form id="campaigns-form" class="card cp-form" autocomplete="off" hidden>
-        <h3 class="card-title">Write a campaign</h3>
-        <label class="cp-field"><span>Subject</span><input id="cp-new-subject" type="text" maxlength="150" required></label>
-        <label class="cp-field"><span>The email</span><textarea id="cp-new-body" rows="8" maxlength="20000" required placeholder="Short paragraphs with a blank line between them. **Bold** for the one thing that matters. Full links (https://…). Sign it Novacane Studios."></textarea></label>
-        <div class="cp-grid">
-          <label class="cp-field"><span>Who it goes to</span><select id="cp-new-audience"><option value="fans">Fans</option><option value="clients">Studio clients</option><option value="everyone">Everyone</option></select></label>
-          <label class="cp-field"><span>Send at (UK time; empty: as soon as it's approved)</span><input id="cp-new-when" type="datetime-local"></label>
-        </div>
-        <p class="hint cp-small">The footer (who it's from, why they're getting it, and the unsubscribe link) is added for you.</p>
-        <p id="cp-new-error" class="cp-error appr-result bad" role="alert"></p>
-        <div class="actions">
-          <button class="btn small" type="submit">Save for approval</button>
-          <button id="cp-new-cancel" class="btn small ghost" type="button">Cancel</button>
-        </div>
-      </form>
       <div id="campaigns-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
       <!-- One-to-one emails: a personal email to one venue, label, brand, client or someone who wrote in.
            Agent and staff write them; Nova Bot checks the person may be emailed (UK law) and adds the
-           footer with a "don't email me again" link; nothing is sent until an admin approves it here. -->
+           footer with a "don't email me again" link; nothing is sent until an admin approves it. -->
       <div class="cp-subhead">
         <h3 class="group-head">One-to-one emails</h3>
-        <button id="outreach-new" class="chip" type="button" aria-expanded="false" aria-controls="outreach-form">Write one</button>
       </div>
       <p class="hint cp-small" id="outreach-hint">A personal email to one person. Nothing is sent until an admin approves it.</p>
-      <form id="outreach-form" class="card cp-form" autocomplete="off" hidden>
-        <h3 class="card-title">Write a one-to-one email</h3>
-        <div class="cp-grid">
-          <label class="cp-field"><span>Who it's to</span><select id="or-new-kind">
-            <option value="business">A business</option>
-            <option value="client">A studio client</option>
-            <option value="reply">Someone who wrote in</option>
-          </select></label>
-          <label class="cp-field"><span>Their email</span><input id="or-new-email" type="email" maxlength="200" required></label>
-          <label class="cp-field"><span>Their name (optional)</span><input id="or-new-name" type="text" maxlength="100"></label>
-          <label class="cp-field" id="or-new-org-wrap"><span>Business or organisation</span><input id="or-new-org" type="text" maxlength="120"></label>
-        </div>
-        <label class="cp-tick" id="or-new-booking-wrap" hidden><input id="or-new-booking" type="checkbox"> <span>It's about their own booking (clients who haven't said yes to studio news can only get these)</span></label>
-        <label class="cp-field"><span>Subject</span><input id="or-new-subject" type="text" maxlength="150" required></label>
-        <label class="cp-field"><span>The email</span><textarea id="or-new-body" rows="8" maxlength="10000" required placeholder="Hi Sam, … One clear ask. Signed Novacane Studios."></textarea></label>
-        <p class="hint cp-small">The footer (who it's from, why they're getting it, and a "don't email me again" link) is added for you.</p>
-        <p id="or-new-error" class="cp-error appr-result bad" role="alert"></p>
-        <div class="actions">
-          <button class="btn small" type="submit">Save for approval</button>
-          <button id="or-new-cancel" class="btn small ghost" type="button">Cancel</button>
-        </div>
-      </form>
       <div id="outreach-list" class="list"></div>
-      <!-- Someone replied "no thanks": record it, and they're never emailed this way again -->
-      <form id="outreach-optout" class="cp-optout" autocomplete="off">
-        <label class="cp-field"><span>Someone replied “no thanks”? Their email</span><input id="or-optout-email" type="email" maxlength="200" required></label>
-        <button class="btn small ghost" type="submit">Don't email them again</button>
-      </form>
-      <!-- The fan sign-up link (for SoundCloud and socials), with who's opted in -->
-      <div id="campaigns-signup" class="list cp-signup"></div>
     </section>
 
     <!-- Social: Facebook and Instagram posts (posted by Nova Bot through Meta), drawn by social.js.
@@ -551,20 +600,9 @@
     <section id="view-social" class="view cp sc" hidden>
       <div class="view-head">
         <h2>Social</h2>
-        <button id="social-new" class="chip" type="button" aria-expanded="false" aria-controls="social-form">Write a post</button>
       </div>
       <p class="hint" id="social-hint">Facebook and Instagram posts. Nothing is posted until an admin approves it.</p>
       <div id="social-glance" class="sc-glance" aria-live="polite"></div>
-      <!-- Write a post (anyone signed in): it waits for an admin's approval -->
-      <form id="social-form" class="card cp-form sc-form" autocomplete="off" hidden>
-        <h3 class="card-title">Write a post</h3>
-        <div id="sc-new-fields" class="sc-fields"></div>
-        <p id="sc-new-error" class="cp-error appr-result bad" role="alert"></p>
-        <div class="actions">
-          <button class="btn small" type="submit">Save for approval</button>
-          <button id="sc-new-cancel" class="btn small ghost" type="button">Cancel</button>
-        </div>
-      </form>
       <div id="social-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
       <h3 class="group-head sc-head" id="social-comments-head">Comments</h3>
       <div id="social-comments" class="list"></div>
@@ -581,7 +619,6 @@
       <div class="view-head">
         <h2>Funnel</h2>
         <div class="fn-head">
-          <button id="funnel-import-open" class="chip" type="button" aria-expanded="false" aria-controls="funnel-import">Add prospects</button>
           <button id="funnel-draft" class="chip" type="button">Write drafts</button>
           <button id="funnel-run" class="chip" type="button" aria-pressed="false">Start sending</button>
           <a id="funnel-export" class="chip" href="/app/api/funnel/export.csv" download>Export CSV</a>
@@ -591,19 +628,6 @@
       <p class="hint">First emails to artists, producers, engineers, managers, labels and podcasters, sent slowly from the studio's Gmail. Nothing goes until an admin approves it, and anyone can pause it.</p>
       <div id="funnel-status" class="fn-status" aria-live="polite"></div>
       <div id="funnel-glance" class="fn-glance"></div>
-      <!-- Add prospects: a CSV (Name, Company/Project, Bio/Notes, Email; Role, Status, Last_Sent, Message_Id read too) -->
-      <form id="funnel-import" class="card cp-form" autocomplete="off" hidden>
-        <h3 class="card-title">Add prospects</h3>
-        <p class="appr-why">A CSV with the headings Name, Company/Project, Bio/Notes and Email (Role, Status, Last_Sent and Message_Id are read too, so people an old sheet says were emailed or replied are never emailed again). Each address goes on once. Personal mailboxes (Gmail, iCloud…) stay on the list but can't be emailed this way: under UK law they have to opt in first.</p>
-        <label class="cp-field"><span>CSV file</span><input id="funnel-file" type="file" accept=".csv,text/csv,text/plain"></label>
-        <label class="cp-field"><span>Or paste the rows (with the heading row)</span><textarea id="funnel-paste" rows="4" maxlength="1000000" placeholder="Name,Company/Project,Bio/Notes,Email"></textarea></label>
-        <p id="funnel-import-result" class="appr-result" role="status"></p>
-        <div class="actions">
-          <button class="btn small" type="submit">Add them</button>
-          <button id="funnel-sample" class="btn small ghost" type="button">Sample file</button>
-          <button id="funnel-import-cancel" class="btn small ghost" type="button">Close</button>
-        </div>
-      </form>
       <section id="funnel-warmup" class="card fn-warmup" aria-label="The warm-up"></section>
       <div id="funnel-filter" class="chips fn-filter" role="group" aria-label="Show"></div>
       <div id="funnel-bulk" class="actions fn-bulk"></div>
@@ -1555,6 +1579,7 @@
 <script src="/portal/google.js"></script>
 <script src="/portal/desk.js"></script>
 <script src="/portal/admin.js"></script>
+<script src="/portal/outreach-dash.js"></script>
 <script src="/shared/addresses.js"></script>
 <script src="/portal/addresses.js"></script>
 <script src="/portal/portal.js"></script>

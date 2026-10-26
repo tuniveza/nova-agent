@@ -66,12 +66,15 @@
       got = await k.api("social");
     } catch (err) {
       if (window.PortalApp.view === "social" && err.message !== "signed out") k.emptyState($("social-list"), err.status === 404 ? "Social isn't switched on yet: Nova Bot needs its update." : "Couldn't load the posts: " + err.message);
+      if (window.PortalOutreach && err.message !== "signed out") window.PortalOutreach.took("social", null, err);
       return;
     }
     data = got;
     const posts = data.posts || [];
     k.setBadge("social-badge", posts.filter((p) => p.status === "pending_approval" || p.status === "manual").length);
     k.syncCounts();
+    // (Outreach's dashboard: what's waiting, coming up and to answer, outreach-dash.js)
+    if (window.PortalOutreach) window.PortalOutreach.took("social", data);
     if (window.PortalApp.view !== "social") return;
     // (a post being edited isn't redrawn under someone's fingers: refreshes wait until it's saved)
     if (!editing) draw();
@@ -797,12 +800,7 @@
     ideas.append(el("h3", "card-title", "Ideas and trends"), el("p", "", "Nova Agent looks at how recent posts did and what's trending for studios and artists right now, then suggests posts with captions and times. You can change the question before sending it."));
     const ask = el("button", "btn small", "Ask Nova Agent");
     ask.type = "button";
-    ask.addEventListener("click", () => {
-      try {
-        if (window.parent !== window && window.parent.NovaAgent && window.parent.NovaAgent.agent) return void window.parent.NovaAgent.agent(IDEAS_PROMPT);
-      } catch (err) {}
-      location.href = "/agent/";
-    });
+    ask.addEventListener("click", askIdeas);
     ideas.appendChild(ask);
     const ads = el("div", "card");
     ads.append(el("h3", "card-title", "Paid ads"), el("p", "", "Ads are set up, paid for and checked in Meta's Ads Manager. Nova never spends money or runs ads."));
@@ -814,7 +812,15 @@
     $("social-tools").replaceChildren(ideas, ads);
   }
 
+  // Ideas and trends: Nova Agent asked (here, and from Outreach's dashboard)
+  function askIdeas() {
+    try {
+      if (window.parent !== window && window.parent.NovaAgent && window.parent.NovaAgent.agent) return void window.parent.NovaAgent.agent(IDEAS_PROMPT);
+    } catch (err) {}
+    location.href = "/agent/";
+  }
+
   document.addEventListener("visibilitychange", () => !document.hidden && window.PortalApp && window.PortalApp.view === "social" && load());
 
-  window.PortalSocial = { load };
+  window.PortalSocial = { load, ideas: askIdeas };
 })();
