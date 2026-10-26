@@ -39,13 +39,6 @@
     (view.startsWith("/") ? go(view) : tab(view))();
     when(sel, (el) => el.click());
   };
-  // A form behind a toggle (Write a campaign, One-to-one email, Write a post): opened if it's shut, and if
-  // it's already open, turned to and its first box focused, never shut by the very button that says
-  // "Write…" (25 Oct 2026: a second press hid the form; Add prospects already worked this way)
-  const openForm = (view, toggle, form, focus) => () => {
-    tab(view)();
-    when(toggle, (b) => ($(form) && !$(form).hidden ? when(focus, (f) => f.focus({ preventScroll: true })) : b.click()));
-  };
   const show = (view, sel, focus) => () => {
     (view.startsWith("/") ? go(view) : tab(view))();
     when(sel, (el) => {
@@ -103,18 +96,14 @@
       { name: "Add an expense", glyph: "−", run: press("money", "#money-expense-new") },
       { name: "Invoicer", glyph: "£", run: invoicer({}) },
     ] },
-    { name: "Outreach", glyph: "➶", badges: ["campaigns-badge", "social-badge", "funnel-badge"], items: [
-      { name: "Campaigns", glyph: "✉", badge: "campaigns-badge", at: "campaigns", run: tab("campaigns") },
-      { name: "Write a campaign", glyph: "✎", run: openForm("campaigns", "#campaigns-new", "campaigns-form", "#cp-new-subject") },
-      { name: "One-to-one email", glyph: "➝", run: openForm("campaigns", "#outreach-new", "outreach-form", "#or-new-email") },
-      { name: "Don't email again", glyph: "⊘", run: show("campaigns", "#outreach-optout", "#or-optout-email") },
-      { name: "Social", glyph: "◈", badge: "social-badge", at: "social", run: tab("social") },
-      { name: "Write a post", glyph: "✎", run: openForm("social", "#social-new", "social-form", "#sc-new-fields textarea") },
-      { name: "Fan sign-up link", glyph: "⛓", run: show("campaigns", "#campaigns-signup") },
-      { name: "Ads Manager", glyph: "↗", run: () => window.open("https://adsmanager.facebook.com/", "_blank", "noopener") },
-      // The outreach funnel (funnel.js): its dashboard, and adding a list of prospects
-      { name: "Funnel", glyph: "⏷", badge: "funnel-badge", at: "funnel", run: tab("funnel") },
-      { name: "Add prospects", glyph: "⇣", run: () => { tab("funnel")(); when("#funnel-import-open", (b) => ($("funnel-import").hidden ? b.click() : $("funnel-file").focus())); } },
+    // (Outreach is one dashboard, 25 Oct 2026, the owner: "can you make the rest of nova portal as much as possible
+    // dashboards please": outreach-dash.js, To approve across all three, the Funnel, Campaigns and Social side by
+    // side, with the writing and the rest of the old buttons along the top on their panels; these are the rooms
+    // for the long lists, opened from their panels, with only Outreach along the top as the way back)
+    { name: "Outreach", glyph: "➶", dash: "outreach", badges: ["campaigns-badge", "social-badge", "funnel-badge"], items: [
+      { name: "Campaigns", glyph: "✉", badge: "campaigns-badge", at: "campaigns", inDash: true, run: tab("campaigns") },
+      { name: "Social", glyph: "◈", badge: "social-badge", at: "social", inDash: true, run: tab("social") },
+      { name: "Funnel", glyph: "⏷", badge: "funnel-badge", at: "funnel", inDash: true, run: tab("funnel") },
     ] },
     // (Plans & Nova, You and Look & sound are one dashboard each, 25 Oct 2026, the owner: "can you make the rest
     // of nova portal as much as possible dashboards please", after Admin's: personal.js. Plans & Nova is Quests,
@@ -169,10 +158,7 @@
     receipt: '<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2Z"/><path d="M9 8h6M9 12h6"/>',
     alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/>',
     megaphone: '<path d="M3 11v3a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1Z"/><path d="M16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/>',
-    send: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/>',
-    block: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
     camera: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
-    out: '<path d="M14 3h7v7"/><path d="M21 3 11 13"/><path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/>',
     star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9Z"/>',
     team: '<circle cx="12" cy="7" r="3"/><circle cx="5" cy="10" r="2.5"/><circle cx="19" cy="10" r="2.5"/><path d="M7 21a5 5 0 0 1 10 0M1 20a4 4 0 0 1 5-3.9M23 20a4 4 0 0 0-5-3.9"/>',
     agent: '<path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4Z"/>',
@@ -205,7 +191,7 @@
     Inbox: "inbox", Today: "home", Enquiries: "mail", Conversations: "chat", Alerts: "bell", "Saved replies": "note", "Website bot": "spark", Notifications: "ring",
     Bookings: "calendar", Calendar: "calendar", Approvals: "check", "Ask about this week": "spark", "Booking link": "link",
     "Clients & Money": "pound", Clients: "users", "Add a client": "userplus", "Sync clients": "sync", "Import clients": "import", "Import from contacts": "phone", Money: "pound", "Write an invoice": "pen", "Add an expense": "receipt", "Overdue invoices": "alert", Invoicer: "receipt",
-    Outreach: "megaphone", Campaigns: "megaphone", "Write a campaign": "pen", "One-to-one email": "send", "Don't email again": "block", Social: "camera", "Write a post": "pen", "Fan sign-up link": "link", "Ads Manager": "out", Funnel: "funnel", "Add prospects": "import",
+    Outreach: "megaphone", "To approve": "check", Campaigns: "megaphone", Social: "camera", Funnel: "funnel",
     "Plans & Nova": "star", Quests: "star", "Everyone's quests": "team", "Nova Agent": "agent", "Ask Nova": "ask", Voice: "mic", "Hands-free": "ear",
     You: "user", "Your profile": "user", "Re-roll planet": "planet", "Edit your name": "pen", "Change email": "at", "Change password": "key", "All addresses": "map", "How it works": "gear", "Sign out": "exit",
     "Look & sound": "palette", Options: "gear", Theme: "palette", "Text & menu": "text", "Starting tab": "start", "Music on or off": "music", "Refresh everything": "refresh", "Install the app": "install", "Apps and links": "apps",
@@ -647,6 +633,7 @@
   // pane for easier identification"): every section is framed in its Nova Tab's colour, with its icon
   // beside its title, and named (data-pane: "Inbox · Enquiries") so it can be pointed at ----
   const PANE_OF = { today: ["", "Today"], me: ["You", "Your profile"], profile: ["You", "Your profile"], look: ["Look & sound", ""], admin: ["Admin", "Admin pages"], adminhome: ["Admin", ""], calendar: ["Bookings", ""] };
+  PANE_OF.outreach = ["Outreach", ""]; // (Outreach's dashboard, outreach-dash.js)
   // (a pane too small for its words, a phone's Inbox or anything on a phone on its side, turns into plain
   // text, terminal style: the user, 22 Oct 2026, "can the ui become more tui if it get so small that
   // area's are collapsing and can't see text"; dash.css [data-tui])

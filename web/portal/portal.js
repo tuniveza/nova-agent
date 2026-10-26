@@ -12,6 +12,8 @@
 //             (?view=approvals&action=<id> points at one proposed booking change;
 //              ?view=campaigns&campaign=<id> at one email campaign;
 //              ?view=social&post=<id> at one social post, &comment=<id> at one comment)
+//   Outreach  ?view=outreach: one dashboard (outreach-dash.js): what's waiting for approval across Campaigns, Social
+//             and the Funnel, approved or rejected there; the funnel's sending; the forms; their rooms from it
 //   You       ?view=me: one dashboard (personal.js): your planet (re-roll it, rename), your account (email,
 //             password, sign out), Google, How it works, All addresses; ?view=me&part=tech|addresses one of those
 //             two lists on its own
@@ -63,7 +65,7 @@
   const isAdmin = () => Boolean(state.me && state.me.role === "admin");
   // The work tabs (app.js)
   const work = () => window.PortalApp;
-  const WORK = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group", "inbox", "look"];
+  const WORK = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group", "inbox", "look", "outreach"];
   // Tell the top-right badge (and other panels) that who's signed in has changed
   const changed = () => window.NovaPortal && window.NovaPortal.changed && window.NovaPortal.changed();
 

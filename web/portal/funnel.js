@@ -58,7 +58,7 @@
 
   // ===== Loading =====
 
-  async function load() {
+  async function load(opts) {
     const k = K();
     if (!k.running) return;
     let got;
@@ -66,14 +66,18 @@
       got = await k.api("funnel");
     } catch (err) {
       if (window.PortalApp.view === "funnel" && err.message !== "signed out") k.emptyState($("funnel-list"), err.status === 404 ? "The funnel isn't switched on yet: Nova Bot needs its update." : "Couldn't load the funnel: " + err.message);
+      if (window.PortalOutreach && err.message !== "signed out") window.PortalOutreach.took("funnel", null, err);
       return;
     }
-    const first = !data;
+    // (the room just opened, not a refresh: Outreach's dashboard reads it too, so "first" is each time it's opened)
+    const first = !data || Boolean(opts && opts.entered);
     data = got;
     k.setBadge("funnel-badge", data.canDecide ? data.prospects.filter((p) => p.step === "approve").length : 0);
     k.syncCounts();
+    // (Outreach's dashboard: sending or paused, the warm-up, what's to approve, outreach-dash.js)
+    if (window.PortalOutreach) window.PortalOutreach.took("funnel", data);
     if (window.PortalApp.view !== "funnel") return;
-    // The first time: start on whatever needs doing
+    // Opened: start on whatever needs doing (or what the address asks for, ?funnel=approve…)
     if (first) {
       const c = (f) => data.prospects.filter((p) => p.step === f || p.status === f).length;
       filter = c("approve") && data.canDecide ? "approve" : c("write") ? "write" : c("warming") ? "warming" : data.prospects.length ? "all" : "approve";

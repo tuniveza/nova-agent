@@ -10,7 +10,7 @@
   const $ = (id) => document.getElementById(id);
   let enquiryFilter = "all";
   // The work tabs (the You tab and the crew are portal.js's)
-  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group", "inbox", "look"];
+  const VIEWS = ["today", "enquiries", "chats", "calendar", "clients", "money", "approvals", "campaigns", "social", "funnel", "quests", "alerts", "bot", "tests", "google", "desk", "group", "inbox", "look", "outreach"];
   // Inbox (22 Oct 2026, the user: "id like all of it on one dashboard instead of having to click around"):
   // Enquiries, Conversations and Alerts are one dashboard, side by side, with today's bookings at the top
   // of Enquiries. Any of the three (?view=enquiries, chats, alerts, or inbox) shows all three.
@@ -428,8 +428,10 @@
     if (view === "calendar" && window.PortalBookings) window.PortalBookings.show();
     if (view === "approvals") loadApprovals();
     if (view === "campaigns") loadCampaigns();
+    // Outreach's dashboard (outreach-dash.js: it asks the loaders below, which hand it what they find)
+    if (view === "outreach" && window.PortalOutreach) window.PortalOutreach.show();
     if (view === "social" && window.PortalSocial) window.PortalSocial.load();
-    if (view === "funnel" && window.PortalFunnel) window.PortalFunnel.load();
+    if (view === "funnel" && window.PortalFunnel) window.PortalFunnel.load({ entered: true });
     if (view === "clients") loadClients();
     // (Today's "Invoices overdue" too)
     if ((view === "money" || view === "today") && window.PortalMoney) window.PortalMoney.load();
@@ -1367,12 +1369,16 @@
       data = await api("campaigns");
     } catch (err) {
       if (currentView === "campaigns" && err.message !== "signed out") emptyState(list, "Couldn't load campaigns: " + err.message);
+      if (window.PortalOutreach && err.message !== "signed out") window.PortalOutreach.took("campaigns", null, err);
       return;
     }
     const all = data.campaigns || [];
     campaignsWaitingN = all.filter((c) => c.status === "pending_approval").length;
     setBadge("campaigns-badge", campaignsWaitingN + outreachWaitingN);
     syncCounts();
+    // (Outreach's dashboard: what's waiting, who can be emailed; and the fan sign-up link, which is on it)
+    if (window.PortalOutreach) window.PortalOutreach.took("campaigns", data);
+    drawSignup(data);
     if (currentView !== "campaigns") return;
     setText("campaigns-hint", data.canDecide ? "Emails to fans and clients who opted in. Nothing is sent until you approve it." : "Emails to fans and clients who opted in. An admin approves these (signed in to Portal in a browser); nothing is sent until then.");
     const want = pickedCampaign();
@@ -1391,7 +1397,6 @@
     if (sent.length) nodes.push(el("h3", "group-head", "Sent"), ...sent.map(card));
     if (rejected.length) nodes.push(el("h3", "group-head", "Rejected"), ...rejected.map(card));
     reconcile(list, nodes);
-    drawSignup(data);
     // Pointed at one (from a notification or Agent's card): bring it into view, once
     if (want && campaignPicked !== String(want)) {
       const node = list.querySelector('[data-key="cp-' + CSS.escape(String(want)) + '"]');
@@ -1674,7 +1679,8 @@
     toast("A test is on its way to your own email (marked [TEST])");
   }
 
-  // The fan sign-up link (for SoundCloud and socials), with who's opted in
+  // The fan sign-up link (for SoundCloud and socials), with who's opted in: on Outreach's dashboard, behind its
+  // button (25 Oct 2026)
   function drawSignup(data) {
     const a = data.audiences || {};
     const card = el("article", "card");
@@ -1748,6 +1754,9 @@
     loadCampaigns();
   });
 
+  // (Outreach's dashboard reads the campaigns, and the one-to-one emails with them, through here)
+  window.PortalCampaigns = { load: loadCampaigns };
+
   // Campaigns refresh while they're on screen (not while one's fields are open, or one's being written); the badge every minute
   const campaignBusy = () => campaignEditing !== null || campaignRejecting !== null || !$("campaigns-form").hidden || outreachBusy();
   setInterval(() => !document.hidden && running && currentView === "campaigns" && !campaignBusy() && loadCampaigns(), 20000);
@@ -1794,12 +1803,14 @@
       data = await api("outreach");
     } catch (err) {
       if (currentView === "campaigns" && err.message !== "signed out") emptyState(list, "Couldn't load the one-to-one emails: " + err.message);
+      if (window.PortalOutreach && err.message !== "signed out") window.PortalOutreach.took("outreach", null, err);
       return;
     }
     const all = data.outreach || [];
     outreachWaitingN = all.filter((o) => o.status === "pending_approval").length;
     setBadge("campaigns-badge", campaignsWaitingN + outreachWaitingN);
     syncCounts();
+    if (window.PortalOutreach) window.PortalOutreach.took("outreach", data);
     if (currentView !== "campaigns") return;
     setText("outreach-hint", data.canDecide ? "A personal email to one person. Nothing is sent until you approve it." : "A personal email to one person. An admin approves these (signed in to Portal in a browser); nothing is sent until then.");
     const want = pickedOutreach();
