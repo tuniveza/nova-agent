@@ -615,55 +615,106 @@
       </div>
     </section>
 
-    <!-- Money: invoices to clients, payments and the studio's expenses (Nova Bot's src/money.js; drawn by
-         money.js). Anyone signed in writes invoices, records payments and adds expenses; an admin,
-         signed in to Portal in a browser, approves each invoice and reminder before it's emailed to the
-         client, and looks after the bank details and the accountant's export. Receipts' photos are kept
-         on the studio PC. -->
-    <section id="view-money" class="view mn" hidden>
-      <div class="view-head">
-        <h2>Money</h2>
-        <div class="mn-head-actions">
-          <button id="money-new" class="chip" type="button" title="Opens the Invoicer with a new invoice">Write an invoice</button>
-          <button id="money-expense-new" class="chip" type="button" aria-expanded="false" aria-controls="money-expense-form">Add an expense</button>
-        </div>
+    <!-- Clients & Money, on one screen (money.js, 25 Oct 2026, the owner: "can you make the rest of nova portal as
+         much as possible dashboards please"): a panel each for Clients, Money, Expenses, the tax year and the invoice
+         settings, side by side. (The Overview, the Clients and Money tabs and seven buttons along the top went: each
+         is on a panel now.) Everything for invoices opens the Invoicer. The whole client list and a client's page are
+         Clients (/portal/?view=clients); every expense is /portal/?view=money&page=expenses. Anyone signed in adds
+         clients and expenses; an admin, signed in to Portal in a browser, syncs and imports clients, approves invoices
+         (in the Invoicer) and downloads the accountant's spreadsheets. Receipts' photos are kept on the studio PC. -->
+    <!-- (data-os-nofill, on the dashboard: a page that has room left isn't topped up with the next panel drawn
+         smaller: in a short window that drew Clients and Money at under 11px, 25 Oct 2026; money.js) -->
+    <section id="view-money" class="view mn" aria-label="Clients &amp; Money" data-os-nofill hidden>
+      <!-- (page=expenses: every expense, by month, each confirmed, changed or removed where it is, under this title,
+           which stays on every page of them, onescreen.js) -->
+      <div class="view-head cm-room" hidden>
+        <h2>Expenses</h2>
+        <button id="money-expense-new" class="chip" type="button">+ Add an expense</button>
       </div>
-      <p class="hint" id="money-hint">Invoices, payments and expenses. Every invoice button opens the Invoicer, where everything for invoices is done. Nothing is emailed to a client until an admin approves it.</p>
-      <!-- In and out this month, owed, overdue (each tile opens its part) -->
-      <div id="money-summary" class="mn-summary" aria-live="polite"></div>
-
-      <!-- (writing and changing an invoice happen in the Invoicer: "Write an invoice" opens it, 19 Oct 2026) -->
-
-      <!-- Add an expense (with its receipt, kept on the studio PC) -->
-      <!-- (novalidate: a missing amount is said on the form, not by the browser, which can't point at a box on
-           another page; four boxes across, then the note, the receipt and Add it in one row, so Add it is never left
-           alone on a page of its own, 25 Oct 2026) -->
-      <form id="money-expense-form" class="card mn-form cp" autocomplete="off" novalidate hidden>
-        <h3 class="card-title">Add an expense</h3>
-        <div class="cp-grid mn-exp-grid">
-          <label class="cp-field"><span>Amount (£)</span><input id="mn-exp-amount" type="text" inputmode="decimal" maxlength="12" required placeholder="49.99"></label>
-          <label class="cp-field"><span>What for</span><select id="mn-exp-category"></select></label>
-          <label class="cp-field"><span>Paid to (optional)</span><input id="mn-exp-supplier" type="text" maxlength="120" placeholder="e.g. Thomann"></label>
-          <label class="cp-field"><span>Day</span><input id="mn-exp-day" type="date"></label>
-        </div>
-        <div class="cp-grid mn-exp-more">
-          <label class="cp-field"><span>Note (optional)</span><input id="mn-exp-note" type="text" maxlength="500"></label>
-          <label class="cp-field"><span>Receipt (a photo or PDF, optional: kept on the studio computer)</span><input id="mn-exp-receipt" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"></label>
-          <div class="actions">
-            <button class="btn small" type="submit">Add it</button>
-            <button id="mn-exp-cancel" class="btn small ghost" type="button">Cancel</button>
+      <div id="cm-grid" class="dash-grid ad-grid cm-grid" aria-live="polite"></div>
+      <div id="money-list" class="list cm-room" aria-busy="true" hidden><div class="skeleton"></div><div class="skeleton"></div></div>
+      <!-- The forms, each in place of the panels while it's open (money.css): Add a client, Import from contacts,
+           Import a spreadsheet (admins), Add an expense -->
+      <div class="cm-forms cl">
+        <!-- Add a client by hand (anyone signed in) -->
+        <!-- (novalidate: no name is said on the form, not left to the browser, which can't point at a box on another
+             page of the section: Add looked dead, 25 Oct 2026) -->
+        <form id="clients-add-form" class="card cl-form" autocomplete="off" novalidate hidden>
+          <h3 class="card-title">Add a client</h3>
+          <div class="cl-grid">
+            <label class="cl-field"><span>Name</span><input id="add-name" type="text" maxlength="200" required></label>
+            <label class="cl-field"><span>Email</span><input id="add-email" type="email" maxlength="200"></label>
+            <label class="cl-field"><span>Phone</span><input id="add-phone" type="tel" maxlength="40"></label>
+            <label class="cl-field cl-wide"><span>Notes</span><textarea id="add-notes" rows="2" maxlength="4000"></textarea></label>
           </div>
-        </div>
-        <p id="mn-exp-error" class="cp-error appr-result bad" role="alert"></p>
-      </form>
-
-      <!-- Invoices, Expenses, or the tax year (totals, the accountant's export, invoice settings) -->
-      <div class="chips mn-parts" role="group" aria-label="Show">
-        <button class="chip active" type="button" data-mn="invoices" aria-pressed="true">Invoices</button>
-        <button class="chip" type="button" data-mn="expenses" aria-pressed="false">Expenses</button>
-        <button class="chip" type="button" data-mn="year" aria-pressed="false">Tax year</button>
+          <p class="hint cl-small">Marketing consent starts as no. Turn it on from their page once they've said yes.</p>
+          <div class="actions">
+            <button class="btn small" type="submit">Add</button>
+            <button id="add-cancel" class="btn small ghost" type="button">Cancel</button>
+          </div>
+        </form>
+        <!-- Import from contacts (anyone signed in): a phone number finds who it is (the studio's Google
+             Contacts), or they're picked from this phone's contacts, or a contact card (.vcf) is opened;
+             what's found is shown, and only Add adds them -->
+        <form id="clients-contacts" class="card cl-form" autocomplete="off" hidden>
+          <h3 class="card-title">Import from contacts</h3>
+          <label class="cl-field"><span>Their phone number</span><input id="contacts-phone" type="tel" inputmode="tel" maxlength="40" placeholder="07700 900123" autocomplete="off"></label>
+          <div class="actions cl-contact-ways">
+            <button id="contacts-find" class="btn small" type="submit">Find this number</button>
+            <button id="contacts-pick" class="btn small ghost" type="button" hidden>Choose from this phone's contacts</button>
+            <label class="btn small ghost cl-file-btn"><input id="contacts-file" type="file" accept=".vcf,text/vcard,text/x-vcard" multiple>Open a contact card</label>
+          </div>
+          <p class="hint cl-small" id="contacts-how">Find this number looks in the studio's Google Contacts. On an iPhone: Contacts → the person → Share Contact → Save to Files, then Open a contact card here.</p>
+          <div id="contacts-result" class="cl-result" aria-live="polite"></div>
+          <div class="actions">
+            <button id="contacts-cancel" class="btn small ghost" type="button">Close</button>
+          </div>
+        </form>
+        <!-- Import a spreadsheet (admins): an appointments or clients spreadsheet (CSV) -->
+        <form id="clients-import" class="card cl-form" autocomplete="off" hidden>
+          <h3 class="card-title">Import a spreadsheet</h3>
+          <ol class="cl-steps">
+            <li>A clients list (CSV): a Name column (or First Name and Last Name), and Email or Phone.</li>
+            <li>An appointments list (CSV): the same, plus a Start Time column. Old booking-system exports work.</li>
+            <li>Choose a file below (or paste what's in it) and press Import. One file at a time; importing the same file again changes nothing.</li>
+          </ol>
+          <label class="cl-field"><span>The CSV file</span><input id="import-file" type="file" accept=".csv,text/csv,text/plain"></label>
+          <label class="cl-field"><span>Or paste it here</span><textarea id="import-text" rows="4" spellcheck="false" placeholder="Start Time,End Time,First Name,Last Name,…"></textarea></label>
+          <p class="hint cl-small">Importing never turns marketing consent on, and never overwrites contact details someone has already filled in.</p>
+          <!-- (what was imported above Import and Close, so Close is on the page it's turned to, 25 Oct 2026) -->
+          <div id="import-result" class="cl-result" aria-live="polite"></div>
+          <div class="actions">
+            <button id="import-go" class="btn small" type="submit">Import</button>
+            <button id="import-cancel" class="btn small ghost" type="button">Close</button>
+          </div>
+        </form>
+        <!-- Add an expense (with its receipt, kept on the studio PC) -->
+        <!-- (novalidate: a missing amount is said on the form, not by the browser, which can't point at a box on
+             another page; four boxes across, then the note, the receipt and Add it in one row, so Add it is never left
+             alone on a page of its own, 25 Oct 2026) -->
+        <form id="money-expense-form" class="card mn-form cp" autocomplete="off" novalidate hidden>
+          <h3 class="card-title">Add an expense</h3>
+          <div class="cp-grid mn-exp-grid">
+            <label class="cp-field"><span>Amount (£)</span><input id="mn-exp-amount" type="text" inputmode="decimal" maxlength="12" required placeholder="49.99"></label>
+            <label class="cp-field"><span>What for</span><select id="mn-exp-category"></select></label>
+            <label class="cp-field"><span>Paid to (optional)</span><input id="mn-exp-supplier" type="text" maxlength="120" placeholder="e.g. Thomann"></label>
+            <label class="cp-field"><span>Day</span><input id="mn-exp-day" type="date"></label>
+          </div>
+          <div class="cp-grid mn-exp-more">
+            <label class="cp-field"><span>Note (optional)</span><input id="mn-exp-note" type="text" maxlength="500"></label>
+            <label class="cp-field"><span>Receipt (a photo or PDF, optional: kept on the studio computer)</span><input id="mn-exp-receipt" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"></label>
+            <!-- (one opened from Expenses to change: Confirm it, if Agent noted it, and Remove beside Save, so a line
+                 on the panel opens all there is to do with it, 25 Oct 2026) -->
+            <div class="actions">
+              <button id="mn-exp-save" class="btn small" type="submit">Add it</button>
+              <button id="mn-exp-confirm" class="btn small ghost" type="button" hidden>Confirm it</button>
+              <button id="mn-exp-remove" class="btn small ghost" type="button" hidden>Remove</button>
+              <button id="mn-exp-cancel" class="btn small ghost" type="button">Cancel</button>
+            </div>
+          </div>
+          <p id="mn-exp-error" class="cp-error appr-result bad" role="alert"></p>
+        </form>
       </div>
-      <div id="money-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div></div>
     </section>
 
     <!-- Test stuff (admins): things that look like tests or copies, with why, where, when, by whom and
@@ -728,8 +779,9 @@
 
     <!-- Clients: everyone who's booked a session, sent an enquiry, been imported from a spreadsheet
          or added by hand (Nova Bot's client list). Search, filters, a client's page
-         (sessions, contact, notes, money in pounds, marketing consent and its history); admins
-         also sync from the studio's bookings and import a spreadsheet. -->
+         (sessions, contact, notes, money in pounds, marketing consent and its history). Opened from
+         Clients & Money's dashboard (Open ›, a client's line, a filter), where clients are added, synced
+         and imported (25 Oct 2026: its row of buttons and their forms are on the dashboard now). -->
     <section id="view-clients" class="view cl" hidden>
       <div class="view-head">
         <h2 id="clients-title">Clients</h2>
@@ -738,8 +790,8 @@
       <div id="clients-browse">
         <div class="cl-tools">
           <input id="clients-search" type="search" placeholder="Search by name, email or phone" aria-label="Search clients" autocomplete="off" enterkeyhint="search">
-          <!-- (these two rows of chips wrap onto more rows themselves; /shared/rules.js's last-resort shrinking leaves
-               them alone: it measured some mid-change and left them at 9px beside 11px ones, 25 Oct 2026) -->
+          <!-- (this row of chips wraps onto more rows itself; /shared/rules.js's last-resort shrinking leaves
+               it alone: it measured some chips mid-change and left them at 9px beside 11px ones, 25 Oct 2026) -->
           <div class="chips wrap" role="tablist" id="clients-chips" aria-label="Show" data-rules="off">
             <button class="chip active" data-filter="all" type="button" aria-pressed="true">All</button>
             <button class="chip" data-filter="owing" type="button" aria-pressed="false">Owes money</button>
@@ -751,63 +803,6 @@
             <input id="clients-since" type="month" aria-label="Month">
           </label>
         </div>
-        <div class="settings-row cl-actions" data-rules="off">
-          <button id="clients-add" class="chip" type="button" aria-expanded="false">Add a client</button>
-          <button id="clients-contacts-open" class="chip" type="button" aria-expanded="false" aria-controls="clients-contacts">Import from contacts</button>
-          <button id="clients-sync" class="chip admin-only" type="button" hidden>Sync now</button>
-          <button id="clients-import-open" class="chip admin-only" type="button" aria-expanded="false" aria-controls="clients-import" hidden>Import a spreadsheet</button>
-        </div>
-        <!-- Add a client by hand (anyone signed in) -->
-        <!-- (novalidate: no name is said on the form, not left to the browser, which can't point at a box on another
-             page of the section: Add looked dead, 25 Oct 2026) -->
-        <form id="clients-add-form" class="card cl-form" autocomplete="off" novalidate hidden>
-          <h3 class="card-title">Add a client</h3>
-          <div class="cl-grid">
-            <label class="cl-field"><span>Name</span><input id="add-name" type="text" maxlength="200" required></label>
-            <label class="cl-field"><span>Email</span><input id="add-email" type="email" maxlength="200"></label>
-            <label class="cl-field"><span>Phone</span><input id="add-phone" type="tel" maxlength="40"></label>
-            <label class="cl-field cl-wide"><span>Notes</span><textarea id="add-notes" rows="2" maxlength="4000"></textarea></label>
-          </div>
-          <p class="hint cl-small">Marketing consent starts as no. Turn it on from their page once they've said yes.</p>
-          <div class="actions">
-            <button class="btn small" type="submit">Add</button>
-            <button id="add-cancel" class="btn small ghost" type="button">Cancel</button>
-          </div>
-        </form>
-        <!-- Import from contacts (anyone signed in): a phone number finds who it is (the studio's Google
-             Contacts), or they're picked from this phone's contacts, or a contact card (.vcf) is opened;
-             what's found is shown, and only Add adds them -->
-        <form id="clients-contacts" class="card cl-form" autocomplete="off" hidden>
-          <h3 class="card-title">Import from contacts</h3>
-          <label class="cl-field"><span>Their phone number</span><input id="contacts-phone" type="tel" inputmode="tel" maxlength="40" placeholder="07700 900123" autocomplete="off"></label>
-          <div class="actions cl-contact-ways">
-            <button id="contacts-find" class="btn small" type="submit">Find this number</button>
-            <button id="contacts-pick" class="btn small ghost" type="button" hidden>Choose from this phone's contacts</button>
-            <label class="btn small ghost cl-file-btn"><input id="contacts-file" type="file" accept=".vcf,text/vcard,text/x-vcard" multiple>Open a contact card</label>
-          </div>
-          <p class="hint cl-small" id="contacts-how">Find this number looks in the studio's Google Contacts. On an iPhone: Contacts → the person → Share Contact → Save to Files, then Open a contact card here.</p>
-          <div id="contacts-result" class="cl-result" aria-live="polite"></div>
-          <div class="actions">
-            <button id="contacts-cancel" class="btn small ghost" type="button">Close</button>
-          </div>
-        </form>
-        <!-- Import a spreadsheet (admins): an appointments or clients spreadsheet (CSV) -->
-        <form id="clients-import" class="card cl-form" autocomplete="off" hidden>
-          <h3 class="card-title">Import a spreadsheet</h3>
-          <ol class="cl-steps">
-            <li>A clients list (CSV): a Name column (or First Name and Last Name), and Email or Phone.</li>
-            <li>An appointments list (CSV): the same, plus a Start Time column. Old booking-system exports work.</li>
-            <li>Choose a file below (or paste what's in it) and press Import. One file at a time; importing the same file again changes nothing.</li>
-          </ol>
-          <label class="cl-field"><span>The CSV file</span><input id="import-file" type="file" accept=".csv,text/csv,text/plain"></label>
-          <label class="cl-field"><span>Or paste it here</span><textarea id="import-text" rows="4" spellcheck="false" placeholder="Start Time,End Time,First Name,Last Name,…"></textarea></label>
-          <p class="hint cl-small">Importing never turns marketing consent on, and never overwrites contact details someone has already filled in.</p>
-          <div class="actions">
-            <button id="import-go" class="btn small" type="submit">Import</button>
-            <button id="import-cancel" class="btn small ghost" type="button">Close</button>
-          </div>
-          <div id="import-result" class="cl-result" aria-live="polite"></div>
-        </form>
         <p class="hint" id="clients-count" aria-live="polite"></p>
         <div id="clients-list" class="list" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
       </div>
