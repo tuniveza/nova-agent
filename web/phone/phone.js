@@ -187,9 +187,7 @@
     const s = d && (d.staff || d.user);
     if (!s || !s.id) return;
     const me = { id: s.id, display_name: s.display_name || "", role: s.role || "staff", email: s.email || "", created_at: s.created_at || "", planet: s.planet ? { name: s.planet.name || "", description: s.planet.description || "" } : null, at: Date.now() };
-    const was = stored(ME, null);
     store.set(ME, JSON.stringify(me));
-    if (!was || was.id !== me.id) paintMe();
     // (Colour from my planet: the planet's colours come with who you are)
     const c = s.planet && s.planet.colors;
     if (c && c.glow) {
@@ -209,19 +207,6 @@
       try { fn(data || {}); } catch (err) {}
     }
   }
-  // The planet in the title bar's More button (your planet + name, a tap away from every main screen)
-  function paintMe() {
-    const m = me(), btn = left.querySelector("a.more-btn");
-    if (!btn) return;
-    let img = btn.querySelector(".top-me");
-    if (!m) return img && img.remove();
-    const src = `/staff/${encodeURIComponent(m.id)}/planet.svg?size=64`;
-    if (img && img.getAttribute("src") === src) return;
-    if (!img) { img = document.createElement("img"); img.className = "top-me"; img.alt = ""; img.width = 20; img.height = 20; img.decoding = "async"; btn.append(img); }
-    img.src = src;
-  }
-  // (a planet that can't be drawn, as in the preview, isn't shown at all)
-  document.addEventListener("error", (e) => { if (e.target && e.target.classList && e.target.classList.contains("top-me")) e.target.hidden = true; }, true);
   // Each place's code, run when it's first opened (ns CLAUDE.md 2e: what's needed first comes first), and the
   // rest fetched quietly once the first screen is up, so a tap on a tile is still quick. "*": a module. Today also
   // shows Inbox's rows, the Calendar and Quests.
@@ -405,7 +390,6 @@
     document.title = t === "Nova Phone" ? t : `${t} · Nova Phone`;
     // (Back on a screen inside another; on a main screen, More: every place and the look)
     left.innerHTML = back ? `<a class="icon-btn" href="${esc(back)}" aria-label="Back">${icon("back")}</a>` : `<a class="icon-btn more-btn${current().id === "more" ? " lit" : ""}" href="#more" aria-label="More: you, every place, settings and the look">${icon("more")}</a>`;
-    if (!back) paintMe();
     right.innerHTML = action ? (action.href ? `<a class="icon-btn lit" href="${esc(action.href)}" aria-label="${esc(action.label)}">${icon(action.icon || "plus")}</a>` : `<button type="button" class="icon-btn lit" aria-label="${esc(action.label)}">${icon(action.icon || "plus")}</button>`) : "";
     if (action && action.run) right.querySelector("button").addEventListener("click", action.run);
   }
@@ -429,7 +413,7 @@
     }
     // (401: not signed in. 403 is "not for this sign-in": an error the place shows in its own words)
     if (res.status === 401) {
-      if (String(path).startsWith("/auth/me")) { store.set(ME, ""); paintMe(); }
+      if (String(path).startsWith("/auth/me")) { store.set(ME, ""); }
       throw Object.assign(new Error("Sign in first"), { signIn: true });
     }
     const data = res.headers.get("content-type")?.includes("json") ? await res.json().catch(() => null) : await res.text();

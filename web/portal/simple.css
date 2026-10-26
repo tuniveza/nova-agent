@@ -51,13 +51,6 @@ html:not([data-ui="rich"]) body nav.pillars .pillar-badge {
   border-radius: 999px !important; background: var(--hi, #FF5FA8) !important; color: var(--on-hi, #160a14) !important; font: 700 11px/1 var(--f-body, system-ui), sans-serif !important;
   position: static !important; margin: 0 !important;
 }
-/* your planet: a round chip that opens your card */
-html:not([data-ui="rich"]) body nav.pillars .tabs-planet {
-  display: inline-grid !important; place-items: center !important; position: relative !important; box-sizing: border-box !important;
-  width: 36px !important; height: 36px !important; padding: 0 !important; margin: 0 !important; border-radius: 50% !important; overflow: hidden !important; cursor: pointer !important;
-  border: 1px solid color-mix(in srgb, var(--hi) 35%, transparent) !important; background: var(--void, #06040D) !important;
-}
-html:not([data-ui="rich"]) body nav.pillars .tabs-planet img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
 /* Hide all: the same chip; when everything's away, Show all is a round button, top right */
 html:not([data-ui="rich"]) body nav.pillars .pillars-toggle {
   display: inline-flex !important; align-items: center !important; gap: 6px !important; height: 36px !important; padding: 0 12px !important; border-radius: 999px !important; cursor: pointer !important;
@@ -66,7 +59,6 @@ html:not([data-ui="rich"]) body nav.pillars .pillars-toggle {
 html:not([data-ui="rich"]) body nav.pillars.all-hidden { position: fixed !important; top: 8px !important; right: 8px !important; margin: 0 !important; z-index: 40 !important; }
 @media (pointer: coarse) {
   html:not([data-ui="rich"]) body nav.pillars :is(.mini-pillar, .pillars-toggle) { height: 40px !important; }
-  html:not([data-ui="rich"]) body nav.pillars .tabs-planet { width: 40px !important; height: 40px !important; }
 }
 
 /* (a narrow Portal, a phone: each group as its icon and count, the one you're in with its name too, so the

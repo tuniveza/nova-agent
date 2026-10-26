@@ -333,69 +333,10 @@
     node.style.setProperty("--ringw", `${Math.round(55 + rnd() * 35)}%`);
     node.style.setProperty("--ringh", `${Math.round(28 + rnd() * 22)}%`);
   }
-  // Your planet, the badge's own (the planet alone: no glow ring round it)
-  let planetSrc = "";
+
+  // (the planet that sat in the middle of the tabs went, 26 Oct 2026, the user: "can you remove this entirely from nova
+  // desk and nova phone; then keep the one on the status bar please": your planet is on Nova Desk's status bar)
   const COMPUTER = "(min-width: 761px) and (min-height: 481px), (min-width: 761px) and (pointer: fine)";
-  let theBadge = null;
-  const badgeEl = () => theBadge || (theBadge = document.getElementById("portal-badge") || document.querySelector("nova-portal-badge"));
-  function findPlanet() {
-    const b = badgeEl();
-    const pic = b && b.shadowRoot && b.shadowRoot.querySelector(".orb img");
-    const src = pic && pic.getAttribute("src") ? pic.getAttribute("src").replace(/size=\d+/, "size=96").replace(/&(animate|halo|spin)=\d/g, "") + "&halo=0" : "";
-    if (src !== planetSrc) {
-      planetSrc = src;
-      for (const img of document.querySelectorAll(".tabs-planet img")) { img.src = src; img.hidden = !src; }
-    }
-    const s = b && b.data && b.data.staff;
-    for (const btn of document.querySelectorAll(".tabs-planet")) {
-      const t = s ? `${String(s.display_name || "You").trim().split(/\s+/)[0]}: your Portal card` : "Your Portal card";
-      if (btn.title !== t) { btn.title = t; btn.setAttribute("aria-label", t); }
-    }
-  }
-  function planetTab() {
-    const btn = el("button", "tabs-planet");
-    btn.type = "button";
-    btn.innerHTML = '<img alt="" width="44" height="44" hidden><span class="tabs-planet-ghost" aria-hidden="true"></span>';
-    const img = btn.querySelector("img");
-    if (planetSrc) { img.src = planetSrc; img.hidden = false; }
-    // (the badge itself, unseen, under the planet: inside Nova Agent its own place, Portal's header, is
-    // hidden, so its card opens from here)
-    const b0 = badgeEl();
-    if (b0 && matchMedia(COMPUTER).matches) btn.append(b0);
-    // (the badge's own button, unseen under the planet, isn't a stop of its own when tabbing along the Nova
-    // Tabs, and the focus it gets back when its card shuts goes to the planet: never to something unseen;
-    // 25 Oct 2026)
-    if (b0 && !b0.dataset.underPlanet) {
-      b0.dataset.underPlanet = "1";
-      // (badge.js loads after this file: its button is there once it's defined)
-      customElements.whenDefined("nova-portal-badge").then(() => {
-        const quiet = () => {
-          const chip = b0.shadowRoot && b0.shadowRoot.querySelector(".chip");
-          if (chip) chip.tabIndex = b0.closest(".tabs-planet") ? -1 : 0;
-        };
-        b0.addEventListener("change", quiet);
-        // (heard inside its own shadow root: a move from its card back to its button never reaches the page)
-        if (b0.shadowRoot) b0.shadowRoot.addEventListener("focusin", (e) => {
-          const home = b0.closest(".tabs-planet");
-          if (home && !b0.isOpen && e.target.classList && e.target.classList.contains("chip")) home.focus({ preventScroll: true });
-        });
-        quiet();
-      });
-    }
-    btn.addEventListener("click", (e) => {
-      const b = badgeEl();
-      if (b && (e.target === b || b.contains(e.target))) return; // (the badge's own click, passed on below)
-      // (only the badge under the planet opens its card here: one left in the header is hidden inside Nova
-      // Desk, and its card with it, so then the planet opens your profile instead of nothing; 25 Oct 2026)
-      const chip = b && btn.contains(b) && b.shadowRoot && b.shadowRoot.querySelector(".chip");
-      if (chip) chip.click();
-      else go("/portal/?view=me")();
-    });
-    return btn;
-  }
-  // (these checks rest while Portal is out of sight: a hidden tab, or behind another panel; 22 Oct 2026)
-  setInterval(() => !document.hidden && findPlanet(), 1500);
-  setTimeout(findPlanet, 300);
 
   // A panel of their own, matching Nova Agent's top panel (20 Oct 2026, the user: "seperate the nova tabs
   // and smooth the edges from the top panel"): on a computer, inside Nova Agent, the tabs are a separate
@@ -441,9 +382,6 @@
       mini.append(cap);
       mini.addEventListener("click", () => openGroup(g));
       caps.append(mini);
-      // (a computer, 20 Oct 2026, the user: "put the planet in the center of that tab panel"): your
-      // planet in the middle of the tabs, four groups either side; it opens your Portal card
-      if (caps.children.length === Math.ceil(groups.length / 2)) caps.append(planetTab());
     }
     // (Hide all: a tab of its own at the end, with its title, in the same look as the groups)
     const hideTab = el("button", "mini-pillar hide-tab");

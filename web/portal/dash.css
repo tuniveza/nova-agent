@@ -416,7 +416,6 @@ html #main > .view[data-tui] .cal-day-title { margin: 2px 0; font-size: 10.5px; 
   html body .pillars.compact .mini-cap, html body .pillars.compact .mini-pillar.open .mini-cap, html body .pillars.compact .mini-pillar.here .mini-cap { flex-direction: row !important; gap: 4px !important; padding: 3px 2px !important; min-height: 0 !important; }
   html body .pillars.compact .mini-cap .pillar-ico { width: 20px !important; height: 20px !important; padding: 4px; border-radius: 6px; }
   html body .pillars.compact .mini-cap .pillar-badge { top: -4px; right: 0; }
-  html body .pillars.compact .tabs-planet img { width: 26px !important; height: 26px !important; }
   html body .pillars.compact .mini-cap .pillar-name { font-size: 10.5px !important; letter-spacing: -0.01em; }
   /* (the Inbox panes: their lines of explanation step aside and the filters go behind each pane's small
      button, as on a phone, so the rows get the height) */

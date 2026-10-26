@@ -1591,16 +1591,6 @@ html:is([data-form="desktop"], [data-form="tablet-side"]) #view-quests > .view-h
 html:is([data-form="desktop"], [data-form="tablet-side"])[data-align="left"] #view-quests > .view-head { justify-content: flex-start; }
 html:is([data-form="desktop"], [data-form="tablet-side"])[data-align="right"] #view-quests > .view-head { justify-content: flex-end; }
 
-/* Your planet in the middle of the Nova Tabs (pillars.js planetTab): the badge sits unseen under it and its card
-   opens from there. Inside Nova Desk, /shared/inside.js hides every badge (display: none !important: the Desk's
-   own header has one), which took this one's card with it, so a click on the planet opened nothing; this one,
-   under the planet, is laid out (still unseen) so its card can open (25 Oct 2026, the user: "make sure every
-   button inside nova portal works") */
-nav.pillars .tabs-planet nova-portal-badge {
-  display: inline-flex !important; position: absolute !important; left: 50% !important; top: 50% !important; translate: -50% -50% !important;
-  width: 30px !important; height: 30px !important; overflow: hidden !important; opacity: 0 !important; pointer-events: none !important;
-}
-
 /* Quests with nothing in them: the words, then Ask Nova Agent and Add a quest under them (app.js questsEmpty) */
 .quests-empty { display: grid; gap: 12px; justify-items: center; }
 .quests-empty > p { margin: 0; }

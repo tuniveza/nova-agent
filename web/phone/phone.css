@@ -522,7 +522,6 @@ button.sum { border: 1px solid rgba(var(--hi-rgb), .14); font: inherit; cursor: 
 /* ---- Nova Phone as a whole (the shell, 23 Oct 2026) ---- */
 /* your planet on the More button, a tap from every main screen (More opens on your card) */
 .more-btn { position: relative; }
-.top-me { position: absolute; right: 4px; bottom: 4px; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 0 2px var(--void); background: rgba(var(--hi-rgb), .2); }
 /* a number on a tile in More, as on the Nova tiles */
 .tile { position: relative; }
 .tile .tab-badge { top: 0; right: calc(50% - 40px); }
